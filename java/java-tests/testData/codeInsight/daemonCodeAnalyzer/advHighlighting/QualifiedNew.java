@@ -7,6 +7,8 @@ class A {
     b.new inner();
     new A.inner();
     b.new <error descr="Qualified class reference is not allowed in qualified new">A</error>.inner();
+    new A.inner() {};
+    b.new <error descr="Qualified class reference is not allowed in qualified new">A</error>.inner() {};
   }
   class inner {}
 

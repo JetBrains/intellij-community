@@ -696,6 +696,17 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
             }
 
             List<Exception> exceptions = new ArrayList<Exception>();
+            if (buildingResult.getProblems() != null) {
+              for (ModelProblem problem : buildingResult.getProblems()) {
+                if (problem.getException() != null) {
+                  exceptions.add(problem.getException());
+                }
+                else {
+                  exceptions.add(new RuntimeException(problem.getMessage()));
+                }
+              }
+            }
+
             loadExtensions(project, exceptions);
 
             //Artifact projectArtifact = project.getArtifact();
@@ -1029,6 +1040,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       if (each == null) continue;
 
       Maven3ServerGlobals.getLogger().info(each);
+      myConsoleWrapper.info("Validation error:", each);
 
       if (each instanceof IllegalStateException && each.getCause() != null) {
         each = each.getCause();
@@ -1056,11 +1068,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         problems.add(MavenProjectProblem.createStructureProblem(path, causeMessage));
       }
       else if (each.getStackTrace().length > 0 && each.getClass().getPackage().getName().equals("groovy.lang")) {
+        myConsoleWrapper.error("Maven server structure problem", each);
         StackTraceElement traceElement = each.getStackTrace()[0];
         problems.add(MavenProjectProblem.createStructureProblem(
           traceElement.getFileName() + ":" + traceElement.getLineNumber(), each.getMessage()));
       }
       else {
+        myConsoleWrapper.error("Maven server structure problem", each);
         problems.add(MavenProjectProblem.createStructureProblem(path, each.getMessage()));
       }
     }

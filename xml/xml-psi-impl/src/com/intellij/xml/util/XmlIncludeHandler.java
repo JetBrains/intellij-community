@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class XmlIncludeHandler {
@@ -39,7 +38,8 @@ public class XmlIncludeHandler {
 
     List<PsiReference> references = Arrays.asList(xmlAttributeValue.getReferences());
     if (references.size() > 0) {
-      Collections.sort(references, (reference1, reference2) -> reference2.getRangeInElement().getStartOffset() - reference1.getRangeInElement().getStartOffset());
+      references.sort(
+        (reference1, reference2) -> reference2.getRangeInElement().getStartOffset() - reference1.getRangeInElement().getStartOffset());
       PsiElement target = references.get(0).resolve();
       if (target instanceof XmlFile) {
         return (XmlFile) target;

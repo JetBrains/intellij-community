@@ -1,22 +1,6 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
-import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
@@ -34,12 +18,12 @@ import java.util.Collection;
 public abstract class FileIndexFacade {
   protected final Project myProject;
 
-  protected FileIndexFacade(final Project project) {
+  protected FileIndexFacade(@NotNull Project project) {
     myProject = project;
   }
 
   public static FileIndexFacade getInstance(Project project) {
-    return ServiceManager.getService(project, FileIndexFacade.class);
+    return project.getService(FileIndexFacade.class);
   }
 
   public abstract boolean isInContent(@NotNull VirtualFile file);
@@ -51,8 +35,7 @@ public abstract class FileIndexFacade {
   public abstract boolean isExcludedFile(@NotNull VirtualFile file);
   public abstract boolean isUnderIgnored(@NotNull VirtualFile file);
 
-  @Nullable
-  public abstract Module getModuleForFile(@NotNull VirtualFile file);
+  public abstract @Nullable Module getModuleForFile(@NotNull VirtualFile file);
 
   /**
    * Checks if {@code file} is an ancestor of {@code baseDir} and none of the files
@@ -73,21 +56,18 @@ public abstract class FileIndexFacade {
     return true;
   }
 
-  @NotNull public abstract ModificationTracker getRootModificationTracker();
+  public abstract @NotNull ModificationTracker getRootModificationTracker();
 
   /**
    * @return descriptions of all modules which are unloaded from the project
    * @see UnloadedModuleDescription
    */
-  @NotNull
-  public abstract Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
+  public abstract @NotNull Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
 
   /**
    * @return true if the {@code file} is {@link #isInContent} except when it's in {@link #isInLibraryClasses} and not in {@link #isInLibrarySource}
    */
   public boolean isInProjectScope(@NotNull VirtualFile file) {
-    if (file instanceof VirtualFileWindow) return true;
-
     if (isInLibraryClasses(file) && !isInSourceContent(file)) return false;
 
     return isInContent(file);

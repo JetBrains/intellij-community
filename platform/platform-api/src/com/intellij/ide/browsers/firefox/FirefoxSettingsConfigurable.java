@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.firefox;
 
 import com.intellij.ide.IdeBundle;
@@ -6,21 +6,22 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.PathUtil;
+import java.io.File;
+import java.util.List;
+import java.util.Objects;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.event.DocumentEvent;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import java.io.File;
-import java.util.List;
 
 public class FirefoxSettingsConfigurable implements Configurable {
   private static final FileChooserDescriptor PROFILES_INI_CHOOSER_DESCRIPTOR = createProfilesIniChooserDescriptor();
@@ -60,8 +61,8 @@ public class FirefoxSettingsConfigurable implements Configurable {
 
   @Override
   public boolean isModified() {
-    return !Comparing.equal(mySettings.getProfile(), getConfiguredProfileName()) ||
-           !Comparing.equal(mySettings.getProfilesIniPath(), getConfiguredProfileIniPath());
+    return !Objects.equals(mySettings.getProfile(), getConfiguredProfileName()) ||
+           !Objects.equals(mySettings.getProfilesIniPath(), getConfiguredProfileIniPath());
   }
 
   @Nullable
@@ -73,7 +74,7 @@ public class FirefoxSettingsConfigurable implements Configurable {
   @Nullable
   private String getConfiguredProfileName() {
     String selected = (String)myProfileCombobox.getSelectedItem();
-    return Comparing.equal(defaultProfile, selected) ? null : selected;
+    return Objects.equals(defaultProfile, selected) ? null : selected;
   }
 
   @Override

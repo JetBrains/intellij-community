@@ -15,6 +15,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -100,6 +101,10 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
 
     void performFix(@NotNull Project project, @NotNull PsiMethodCallExpression call);
 
+    default boolean canPreview() {
+      return true;
+    }
+    
     @NotNull
     default String getReplacement() {
       throw new UnsupportedOperationException("Either getFixName or getReplacement must be defined in subclass: " + getClass());
@@ -263,6 +268,11 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       else {
         myReplacementMethod = "Arrays.copyOfRange";
       }
+    }
+
+    @Override
+    public boolean canPreview() {
+      return false; // stores smart pointers
     }
 
     @Override
@@ -618,6 +628,11 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     @Override
     public String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.redundant.collection.operation.fix.family.name");
+    }
+
+    @Override
+    public @Nullable LocalQuickFix getFileModifierForPreview(@NotNull PsiFile target) {
+      return myHandler.canPreview() ? this : null;
     }
 
     @Override

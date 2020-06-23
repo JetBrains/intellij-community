@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -56,9 +56,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
   @Override
   public void mouseMoved(@NotNull EditorMouseEvent e) {
-    final LogicalPosition position  = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
-
-    handleInputFocusMovement(position, false);
+    handleInputFocusMovement(e.getLogicalPosition(), false);
   }
 
   private void handleInputFocusMovement(LogicalPosition position, boolean caret) {
@@ -134,7 +132,6 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
-    if (event.getOldLength() == event.getNewLength()) return;
     // to handle backspace & delete (backspace strangely is not reported to the caret listener)
     handleInputFocusMovement(editor.getCaretModel().getLogicalPosition(), true);
     updateEditorInlays();
@@ -321,8 +318,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
 
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
-      return getFontMetrics(editor).stringWidth(myText) + 12;
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      return getFontMetrics(inlay.getEditor()).stringWidth(myText) + 12;
     }
 
     private static Font getFont() {

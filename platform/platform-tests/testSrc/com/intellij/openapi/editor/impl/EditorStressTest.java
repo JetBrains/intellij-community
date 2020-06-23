@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -180,7 +180,7 @@ public class EditorStressTest extends AbstractEditorTest {
       foldingModel.runBatchFoldingOperation(foldingModel::clearFoldRegions);
     }
   }
-  
+
   private static class ChangeBulkModeState implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
@@ -188,7 +188,7 @@ public class EditorStressTest extends AbstractEditorTest {
       document.setInBulkUpdate(!document.isInBulkUpdate());
     }
   }
-  
+
   private static class ChangeEditorVisibility implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
@@ -210,12 +210,14 @@ public class EditorStressTest extends AbstractEditorTest {
   private static class RemoveInlay implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
-      List<Inlay> inlays = editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength());
-      if (!inlays.isEmpty()) Disposer.dispose(inlays.get(random.nextInt(inlays.size())));
+      List<Inlay<?>> inlays = editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength());
+      if (!inlays.isEmpty()) {
+        Disposer.dispose(inlays.get(random.nextInt(inlays.size())));
+      }
     }
   }
 
-  private static class UpdateInlay implements Action {
+  private static final class UpdateInlay implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       List<Inlay<? extends MyInlayRenderer>> inlays =

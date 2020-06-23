@@ -818,6 +818,17 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-31517
+  public void testNameDefinedAndUsedInsideDocstring() {
+    doTestByText("\"\"\"\n" +
+                 ">>> def foo(bar):\n" +
+                 "...     print(bar)\n" +
+                 "\n" +
+                 ">>> foo(\"Hello\")\n" +
+                 "Hello\n" +
+                 "\"\"\"");
+  }
+
   // PY-37755 PY-2700
   public void testGlobalResolveAttribute() {
     doTest();

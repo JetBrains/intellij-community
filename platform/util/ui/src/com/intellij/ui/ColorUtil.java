@@ -5,6 +5,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.MathUtil;
 import com.intellij.util.NotNullProducer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public class ColorUtil {
     final float[] hsb = Color.RGBtoHSB(r, g, b, null);
     float brightness = hsb[2];
     for (int i = 0; i < howMuch; i++) {
-      brightness = Math.min(1, Math.max(0, brightness * hackValue));
+      brightness = MathUtil.clamp(brightness * hackValue, 0, 1);
       if (brightness == 0 || brightness == 1) break;
     }
     return Color.getHSBColor(hsb[0], hsb[1], brightness);

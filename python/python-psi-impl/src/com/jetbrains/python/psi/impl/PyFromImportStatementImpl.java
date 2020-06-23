@@ -58,7 +58,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   @Override
   @Nullable
   public PyReferenceExpression getImportSource() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getReferenceExpressionTokens(), 0);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getReferenceExpressionTokens(), 0);
   }
 
   @Override

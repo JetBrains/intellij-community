@@ -456,6 +456,7 @@
             <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="AllIcons.Actions.Copy"/>
             <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction"/>
             <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" />
+            <action id="CopyFileName" class="com.intellij.ide.actions.CopyFileNameProvider"/>
             <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider"/>
             <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider"/>
             <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider"/>
@@ -684,8 +685,11 @@
           <separator/>
           <action id="ReopenClosedTab" class="com.intellij.openapi.fileEditor.impl.ReopenClosedTabAction"/>
           <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="AllIcons.Actions.SplitVertically"/>
-          <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction"
-                  icon="AllIcons.Actions.SplitHorizontally"/>
+          <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="AllIcons.Actions.SplitHorizontally"/>
+          <action id="StretchSplitToTop" class="com.intellij.ide.actions.StretchSplitAction$StretchToTop"/>
+          <action id="StretchSplitToLeft" class="com.intellij.ide.actions.StretchSplitAction$StretchToLeft"/>
+          <action id="StretchSplitToBottom" class="com.intellij.ide.actions.StretchSplitAction$StretchToBottom"/>
+          <action id="StretchSplitToRight" class="com.intellij.ide.actions.StretchSplitAction$StretchToRight"/>
           <action id="MoveTabRight" class="com.intellij.ide.actions.MoveTabRightAction"/>
           <action id="MoveTabDown" class="com.intellij.ide.actions.MoveTabDownAction"/>
           <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.SplitterAction$ChangeOrientation"/>
@@ -1011,7 +1015,7 @@
         <separator/>
         <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.migLayout.DebugMigLayoutAction"/>
         <action id="ShowcaseUiDslAction" internal="true" class="com.intellij.ui.layout.ShowcaseUiDslAction"/>
-        <action id="WebBrowser" class="com.intellij.internal.WebBrowser"/>
+        <action id="WebBrowser" class="com.intellij.internal.jcef.WebBrowser"/>
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" popup="true"/>
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction"/>
@@ -1197,6 +1201,7 @@
     <group id="CopyReferencePopupGroup">
       <group id="CopyFileReference">
         <reference ref="CopyAbsolutePath" />
+        <reference ref="CopyFileName" />
         <reference ref="CopyPathWithLineNumber" />
         <reference ref="CopyContentRootPath" />
         <reference ref="CopySourceRootPath" />
@@ -1223,5 +1228,10 @@
     <action class="com.intellij.ide.plugins.InstallFromDiskAction" id="plugin.InstallFromDiskAction"/>
 
     <action class="com.intellij.openapi.editor.actions.ShowFontsUsedByEditorAction" id="ShowFontsUsedByEditor"/>
+    <group id="AnalyzeStacktraceToolbar"/>
+
+    <group id="ReaderModeActionGroup" class="com.intellij.codeInsight.actions.ReaderModeActionGroup">
+      <action id="ReaderModeAction" class="com.intellij.codeInsight.actions.ReaderModeAction" icon="AllIcons.Actions.Edit"/>
+    </group>
   </actions>
 </idea-plugin>

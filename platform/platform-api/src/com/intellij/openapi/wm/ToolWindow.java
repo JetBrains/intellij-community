@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
@@ -12,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.util.List;
 
 /**
  * Tool windows expose UI for specific functionality, like "Project" or "Favorites".
@@ -219,16 +220,6 @@ public interface ToolWindow extends BusyObject {
    */
   void remove();
 
-  class Border extends EmptyBorder {
-    public Border() {
-      this(true, true, true, true);
-    }
-
-    public Border(boolean top, boolean left, boolean right, boolean bottom) {
-      super(top ? 2 : 0, left ? 2 : 0, right ? 2 : 0, bottom ? 2 : 0);
-    }
-  }
-
   /**
    * @deprecated Not used anymore.
    */
@@ -236,4 +227,6 @@ public interface ToolWindow extends BusyObject {
   default ActionCallback getActivation() {
     return ActionCallback.DONE;
   }
+
+  void setTitleActions(@NotNull List<AnAction> actions);
 }

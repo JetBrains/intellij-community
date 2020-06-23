@@ -31,6 +31,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -101,6 +102,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,6 +117,7 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.Vector;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -168,7 +171,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private int myHistoryIndex;
   private boolean mySkipFocusGain;
 
-  public static final Key<JBPopup> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
+  public static final Key<ConcurrentHashMap<ClientId, JBPopup>> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
 
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
@@ -906,7 +909,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               @Override
               public void navigate(boolean requestFocus) {
                 Executor executor = findExecutor((RunnerAndConfigurationSettings)config);
-                RunDialog.editConfiguration(project, (RunnerAndConfigurationSettings)config, "Edit Configuration", executor);
+                RunDialog.editConfiguration(project, (RunnerAndConfigurationSettings)config,
+                                            LangBundle.message("dialog.title.edit.configuration"), executor);
               }
 
               @Override
@@ -1332,7 +1336,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
           // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
-          myList.getEmptyText().setText("Searching...");
+          myList.getEmptyText().setText(IdeBundle.message("label.choosebyname.searching"));
 
           if (myList.getModel() instanceof SearchListModel) {
             myAlarm.cancelAllRequests();
@@ -2046,11 +2050,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               .setShowShadow(false)
               .setShowBorder(false)
               .createPopup();
-            project.putUserData(SEARCH_EVERYWHERE_POPUP, myPopup);
+            ConcurrentHashMap<ClientId, JBPopup> map = project.getUserData(SEARCH_EVERYWHERE_POPUP);
+            if (map == null) {
+              map = new ConcurrentHashMap<>();
+              project.putUserData(SEARCH_EVERYWHERE_POPUP, map);
+            }
+            map.put(ClientId.getCurrent(), myPopup);
             //myPopup.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             myPopup.getContent().setBorder(null);
             Disposer.register(myPopup, () -> {
-              project.putUserData(SEARCH_EVERYWHERE_POPUP, null);
+              Objects.requireNonNull(project.getUserData(SEARCH_EVERYWHERE_POPUP)).remove(ClientId.getCurrent());
               ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 resetFields();
                 myNonProjectCheckBox.setSelected(false);
@@ -2232,7 +2241,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         final JBScrollPane pane = new JBScrollPane();
         final int extraWidth = pane.getVerticalScrollBar().getWidth() + 1;
         final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
-        sz = new Dimension(Math.min(getPopupMaxWidth(), Math.max(getField().getWidth(), sz.width + extraWidth)), Math.min(getPopupMaxWidth(), sz.height + extraHeight));
+        sz = new Dimension(MathUtil.clamp(sz.width + extraWidth, getField().getWidth(), getPopupMaxWidth()), Math.min(getPopupMaxWidth(), sz.height + extraHeight));
         sz.width += 20;
       }
       else {

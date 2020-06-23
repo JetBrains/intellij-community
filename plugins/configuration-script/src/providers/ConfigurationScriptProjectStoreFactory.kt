@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.containers.ContainerUtil
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactory {
@@ -22,7 +22,7 @@ private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactory {
 
 private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(project) {
   internal val isConfigurationFileListenerAdded = AtomicBoolean()
-  private val storages = ContainerUtil.newConcurrentMap<Class<Any>, ReadOnlyStorage>()
+  private val storages = ConcurrentHashMap<Class<Any>, ReadOnlyStorage>()
 
   internal fun configurationFileChanged() {
     if (storages.isNotEmpty()) {

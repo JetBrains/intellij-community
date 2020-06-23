@@ -1,13 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -24,6 +27,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -35,10 +39,14 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
+import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
+import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
 public class VcsProjectLog implements Disposable {
@@ -52,7 +60,7 @@ public class VcsProjectLog implements Disposable {
   @NotNull private final VcsLogTabsManager myTabsManager;
 
   @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
-  @NotNull private final Disposable myMessageBusConnections = Disposer.newDisposable();
+  @NotNull private final Disposable myListenersDisposable = Disposer.newDisposable();
   @NotNull private final ExecutorService myExecutor;
   private volatile boolean myDisposeStarted = false;
   private int myRecreatedLogCount = 0;
@@ -66,13 +74,13 @@ public class VcsProjectLog implements Disposable {
     myTabsManager = new VcsLogTabsManager(project, myMessageBus, uiProperties, this);
 
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
-    myMessageBus.connect(myMessageBusConnections).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    myMessageBus.connect(myListenersDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (myProject != project) return;
 
         myDisposeStarted = true;
-        Disposer.dispose(myMessageBusConnections);
+        Disposer.dispose(myListenersDisposable);
         disposeLog(false);
         myExecutor.shutdown();
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -86,8 +94,10 @@ public class VcsProjectLog implements Disposable {
     });
   }
 
-  private void subscribeToMappingsChanges() {
-    myMessageBus.connect(myMessageBusConnections).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
+  private void subscribeToMappingsAndPluginsChanges() {
+    MessageBusConnection connection = myMessageBus.connect(myListenersDisposable);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
+    connection.subscribe(DynamicPluginListener.TOPIC, new MyDynamicPluginUnloader());
   }
 
   @Nullable
@@ -153,21 +163,23 @@ public class VcsProjectLog implements Disposable {
 
   @CalledInAwt
   private void recreateOnError(@NotNull Throwable t) {
-    if ((++myRecreatedLogCount) % RECREATE_LOG_TRIES == 0) {
-      String message = VcsLogBundle.message("vcs.log.recreated.due.to.corruption",
-                                            myRecreatedLogCount,
-                                            LOG_CACHE,
-                                            ApplicationNamesInfo.getInstance().getFullProductName(),
-                                            t.getMessage());
-      LOG.error(message, t);
+    myRecreatedLogCount++;
+    String logMessage = "Recreating Vcs Log after storage corruption. Recreated count " + myRecreatedLogCount;
+    if (myRecreatedLogCount % RECREATE_LOG_TRIES == 0) {
+      LOG.error(logMessage, t);
 
       VcsLogManager manager = getLogManager();
       if (manager != null && manager.isLogVisible()) {
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+        String balloonMessage = VcsLogBundle.message("vcs.log.recreated.due.to.corruption",
+                                                     VcsLogUtil.getVcsDisplayName(myProject, manager),
+                                                     myRecreatedLogCount,
+                                                     LOG_CACHE,
+                                                     ApplicationNamesInfo.getInstance().getFullProductName());
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, balloonMessage, MessageType.ERROR);
       }
     }
     else {
-      LOG.debug("Recreating VCS Log after storage corruption", t);
+      LOG.debug(logMessage, t);
     }
 
     disposeLog(true);
@@ -342,8 +354,48 @@ public class VcsProjectLog implements Disposable {
 
       VcsProjectLog projectLog = getInstance(project);
 
-      projectLog.subscribeToMappingsChanges();
+      projectLog.subscribeToMappingsAndPluginsChanges();
       projectLog.createLogInBackground(false);
+    }
+  }
+
+  private class MyDynamicPluginUnloader implements DynamicPluginListener {
+    private final Set<PluginId> affectedPlugins = new HashSet<>();
+
+    @Override
+    public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+      if (hasLogExtensions(pluginDescriptor)) {
+        disposeLog(true);
+      }
+    }
+
+    @Override
+    public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      if (hasLogExtensions(pluginDescriptor)) {
+        affectedPlugins.add(pluginDescriptor.getPluginId());
+        LOG.debug("Disposing Vcs Log before unloading " + pluginDescriptor.getPluginId());
+        disposeLog(false);
+      }
+    }
+
+    @Override
+    public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      if (affectedPlugins.remove(pluginDescriptor.getPluginId())) {
+        LOG.debug("Recreating Vcs Log after unloading " + pluginDescriptor.getPluginId());
+        // createLog calls between beforePluginUnload and pluginUnloaded are technically not prohibited
+        // so just in case, recreating log here
+        disposeLog(true);
+      }
+    }
+
+    private boolean hasLogExtensions(@NotNull IdeaPluginDescriptor descriptor) {
+      for (VcsLogProvider logProvider : LOG_PROVIDER_EP.getExtensions(myProject)) {
+        if (logProvider.getClass().getClassLoader() == descriptor.getPluginClassLoader()) return true;
+      }
+      for (CustomVcsLogUiFactoryProvider factory : LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.getExtensions(myProject)) {
+        if (factory.getClass().getClassLoader() == descriptor.getPluginClassLoader()) return true;
+      }
+      return false;
     }
   }
 

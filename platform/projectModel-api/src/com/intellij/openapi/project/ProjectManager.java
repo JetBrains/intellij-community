@@ -19,7 +19,8 @@ import java.nio.file.Path;
  */
 @ApiStatus.NonExtendable
 public abstract class ProjectManager {
-  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>("Project open and close events", ProjectManagerListener.class);
+  @Topic.AppLevel
+  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class);
 
   /**
    * @return {@code ProjectManager} instance

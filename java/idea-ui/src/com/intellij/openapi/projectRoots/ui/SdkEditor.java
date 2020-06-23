@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.ui;
 
-import com.google.common.collect.Lists;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.plugins.newui.TwoLineProgressIndicator;
 import com.intellij.openapi.Disposable;
@@ -21,7 +20,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracke
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -170,11 +168,11 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   @Override
   public boolean isModified() {
-    boolean isModified = !Comparing.equal(mySdk.getName(), myInitialName);
+    boolean isModified = !Objects.equals(mySdk.getName(), myInitialName);
     if (myIsDownloading) return isModified;
 
     isModified =
-      isModified || !Comparing.equal(FileUtil.toSystemIndependentName(getHomeValue()), FileUtil.toSystemIndependentName(myInitialPath));
+      isModified || !Objects.equals(FileUtil.toSystemIndependentName(getHomeValue()), FileUtil.toSystemIndependentName(myInitialPath));
     for (PathEditor pathEditor : myPathEditors.values()) {
       isModified = isModified || pathEditor.isModified();
     }
@@ -188,7 +186,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   public void apply() throws ConfigurationException {
     if (myIsDownloading) return;
 
-    if (!Comparing.equal(myInitialName, mySdk.getName())) {
+    if (!Objects.equals(myInitialName, mySdk.getName())) {
       if (mySdk.getName().isEmpty()) {
         throw new ConfigurationException(ProjectBundle.message("sdk.list.name.required.error"));
       }
@@ -326,7 +324,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private String suggestSdkName(final String homePath) {
     final String currentName = mySdk.getName();
     final String suggestedName = ((SdkType)mySdk.getSdkType()).suggestSdkName(currentName, homePath);
-    if (Comparing.equal(currentName, suggestedName)) return currentName;
+    if (Objects.equals(currentName, suggestedName)) return currentName;
     String newSdkName = suggestedName;
     final Set<String> allNames = new HashSet<>();
     Sdk[] sdks = mySdkModel.getSdks();
@@ -374,7 +372,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     final SdkType sdkType = (SdkType)sdk.getSdkType();
     List<AdditionalDataConfigurable> configurables = myAdditionalDataConfigurables.get(sdkType);
     if (configurables == null) {
-      configurables = Lists.newArrayList();
+      configurables = new ArrayList<>();
       myAdditionalDataConfigurables.put(sdkType, configurables);
 
 

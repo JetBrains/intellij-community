@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -137,7 +137,7 @@ class ServiceTreeView extends ServiceView {
     for (int i = 0; i < rows.length; i++) {
       objectRows.add(Pair.create(objects.get(i), rows[i]));
     }
-    Collections.sort(objectRows, Comparator.comparing(pair -> pair.second));
+    objectRows.sort(Comparator.comparing(pair -> pair.second));
     return ContainerUtil.mapNotNull(objectRows, pair -> ObjectUtils.tryCast(pair.first, ServiceViewItem.class));
   }
 
@@ -307,21 +307,61 @@ class ServiceTreeView extends ServiceView {
             return item == null ? null : myTreeModel.findPath(item.getValue(), item.getRootContributor().getClass());
           });
         Promises.collectResults(pathPromises, true).onProcessed(paths -> {
-          if (paths != null && !paths.isEmpty() && !paths.equals(selectedPaths)) {
-            Promise<?> newSelectPromise = TreeUtil.promiseSelect(myTree, paths.stream().map(PathSelectionVisitor::new));
-            cancelSelectionUpdate();
-            if (newSelectPromise instanceof AsyncPromise) {
-              ((AsyncPromise<?>)newSelectPromise).onError(t -> {
-                if (t instanceof CancellationException) {
-                  TreeUtil.promiseExpand(myTree, paths.stream().map(path -> new PathSelectionVisitor(path.getParentPath())));
+          if (paths != null && !paths.isEmpty()) {
+            if (!paths.equals(selectedPaths)) {
+              Promise<?> newSelectPromise = TreeUtil.promiseSelect(myTree, paths.stream().map(PathSelectionVisitor::new));
+              cancelSelectionUpdate();
+              if (newSelectPromise instanceof AsyncPromise) {
+                ((AsyncPromise<?>)newSelectPromise).onError(t -> {
+                  if (t instanceof CancellationException) {
+                    TreeUtil.promiseExpand(myTree, paths.stream().map(path -> new PathSelectionVisitor(path.getParentPath())));
+                  }
+                });
+              }
+              myUpdateSelectionPromise = newSelectPromise;
+            }
+            else {
+              AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+                TreePath[] selectionPaths = myTree.getSelectionPaths();
+                if (selectionPaths != null && isSelectionUpdateNeeded(new SmartList<>(selectionPaths), paths)) {
+                  myTree.setSelectionPaths(paths.toArray(new TreePath[0]));
                 }
               });
             }
-            myUpdateSelectionPromise = newSelectPromise;
           }
         });
       });
     });
+  }
+
+  /**
+   * @return {@code true} if selection and updated paths are equal but contain at least one nonidentical element, otherwise {@code false}
+   */
+  private static boolean isSelectionUpdateNeeded(List<TreePath> selectionPaths, List<TreePath> updatedPaths) {
+    if (selectionPaths.size() != updatedPaths.size()) return false;
+
+    boolean result = false;
+    for (int i = 0; i < selectionPaths.size(); i++) {
+      TreePath selectionPath = selectionPaths.get(i);
+      TreePath updatedPath = updatedPaths.get(i);
+      do {
+        if (updatedPath == null) return false;
+
+        Object selectedComponent = selectionPath.getLastPathComponent();
+        Object updatedComponent = updatedPath.getLastPathComponent();
+        if (selectedComponent != updatedComponent) {
+          if (!selectedComponent.equals(updatedComponent)) return false;
+
+          result = true;
+        }
+        selectionPath = selectionPath.getParentPath();
+        updatedPath = updatedPath.getParentPath();
+      }
+      while (selectionPath != null);
+
+      if (updatedPath != null) return false;
+    }
+    return result;
   }
 
   @Override

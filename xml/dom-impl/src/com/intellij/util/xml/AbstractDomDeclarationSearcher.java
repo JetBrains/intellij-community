@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.pom.PomDeclarationSearcher;
@@ -32,15 +18,16 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearcher {
 
   @Override
-  public void findDeclarationsAt(@NotNull PsiElement psiElement, int offsetInElement, Consumer<PomTarget> consumer) {
-    if (!(psiElement instanceof XmlToken)) return;
-
-    final IElementType tokenType = ((XmlToken)psiElement).getTokenType();
-
-    final DomManager domManager = DomManager.getDomManager(psiElement.getProject());
+  public void findDeclarationsAt(@NotNull PsiElement token, int offsetInElement, Consumer<PomTarget> consumer) {
+    if (!(token instanceof XmlToken)) return;
+    final PsiElement element = token.getParent();
+    if (element == null) return;
+    final IElementType tokenType = ((XmlToken)token).getTokenType();
+    final PsiElement parentElement = element.getParent();
+    final DomManager domManager = DomManager.getDomManager(token.getProject());
     final DomElement nameElement;
-    if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && psiElement.getParent() instanceof XmlText && psiElement.getParent().getParent() instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)psiElement.getParent().getParent();
+    if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && element instanceof XmlText && parentElement instanceof XmlTag) {
+      final XmlTag tag = (XmlTag)parentElement;
       for (XmlText text : tag.getValue().getTextElements()) {
         if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)text)) {
           return;
@@ -48,13 +35,16 @@ public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearc
       }
 
       nameElement = domManager.getDomElement(tag);
-    } else if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && psiElement.getParent() instanceof XmlAttributeValue && psiElement.getParent().getParent() instanceof XmlAttribute) {
-      final PsiElement attributeValue = psiElement.getParent();
-      if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)attributeValue)) {
+    }
+    else if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN &&
+             element instanceof XmlAttributeValue &&
+             parentElement instanceof XmlAttribute) {
+      if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {
         return;
       }
-      nameElement = domManager.getDomElement((XmlAttribute)attributeValue.getParent());
-    } else {
+      nameElement = domManager.getDomElement((XmlAttribute)parentElement);
+    }
+    else {
       return;
     }
 

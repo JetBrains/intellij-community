@@ -58,7 +58,7 @@ public class GetJPDADialog extends DialogWrapper {
     JLabel label2 = new JLabel(JPDA_URL);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         BrowserUtil.browse(JPDA_URL);
         return true;
       }

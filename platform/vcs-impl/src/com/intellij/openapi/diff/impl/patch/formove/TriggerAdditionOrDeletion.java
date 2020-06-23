@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,89 +16,84 @@ import java.util.*;
 
 import static com.intellij.util.Functions.identity;
 import static com.intellij.vcsUtil.VcsUtil.groupByRoots;
+import static java.util.Objects.requireNonNull;
 
 public class TriggerAdditionOrDeletion {
-  private final Collection<FilePath> myExisting;
-  private final Collection<FilePath> myDeleted;
-  private final Set<FilePath> myAffected;
-  private final Project myProject;
   private static final Logger LOG = Logger.getInstance(TriggerAdditionOrDeletion.class);
+
+  private final Project myProject;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
-  private Map<AbstractVcs, List<FilePath>> myPreparedAddition;
-  private Map<AbstractVcs, List<FilePath>> myPreparedDeletion;
+  private final Set<FilePath> myExisting = new HashSet<>();
+  private final Set<FilePath> myDeleted = new HashSet<>();
+  private final Set<FilePath> myAffected = new HashSet<>();
 
-  public TriggerAdditionOrDeletion(final Project project) {
+  private final Map<AbstractVcs, Set<FilePath>> myPreparedAddition = new HashMap<>();
+  private final Map<AbstractVcs, Set<FilePath>> myPreparedDeletion = new HashMap<>();
+
+  public TriggerAdditionOrDeletion(@NotNull Project project) {
     myProject = project;
-    myExisting = new HashSet<>();
-    myDeleted = new HashSet<>();
-    myAffected = new HashSet<>();
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
   }
 
-  public void addExisting(final Collection<? extends FilePath> files) {
+  public void addExisting(@NotNull Collection<? extends FilePath> files) {
     myExisting.addAll(files);
   }
 
-  public void addDeleted(final Collection<? extends FilePath> files) {
+  public void addDeleted(@NotNull Collection<? extends FilePath> files) {
     myDeleted.addAll(files);
   }
 
-  public void prepare() {
-    if (myExisting.isEmpty() && myDeleted.isEmpty()) return;
+  public Set<FilePath> getAffected() {
+    return myAffected;
+  }
 
-    if (! myExisting.isEmpty()) {
+  public void prepare() {
+    if (!myExisting.isEmpty()) {
       processAddition();
     }
-    if (! myDeleted.isEmpty()) {
+    if (!myDeleted.isEmpty()) {
       processDeletion();
     }
   }
 
   public void processIt() {
-    if (myPreparedDeletion != null) {
-      for (Map.Entry<AbstractVcs, List<FilePath>> entry : myPreparedDeletion.entrySet()) {
-        final AbstractVcs vcs = entry.getKey();
-        final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
-        if (localChangesProvider == null) continue;
-        final List<FilePath> filePaths = entry.getValue();
-        if (vcs.fileListenerIsSynchronous()) {
-          myAffected.addAll(filePaths);
-          continue;
-        }
-        myAffected.addAll(filePaths);
-       localChangesProvider.scheduleMissingFileForDeletion(filePaths);
-      }
+    final List<FilePath> incorrectFilePath = new ArrayList<>();
+
+    for (Map.Entry<AbstractVcs, Set<FilePath>> entry : myPreparedDeletion.entrySet()) {
+      final AbstractVcs vcs = entry.getKey();
+      final CheckinEnvironment localChangesProvider = requireNonNull(vcs.getCheckinEnvironment());
+
+      final List<FilePath> filePaths = new ArrayList<>(entry.getValue());
+      if (filePaths.isEmpty()) continue;
+
+      localChangesProvider.scheduleMissingFileForDeletion(filePaths);
     }
-    if (myPreparedAddition != null) {
-      final List<FilePath> incorrectFilePath = new ArrayList<>();
-      for (Map.Entry<AbstractVcs, List<FilePath>> entry : myPreparedAddition.entrySet()) {
-        final AbstractVcs vcs = entry.getKey();
-        final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
-        if (localChangesProvider == null) continue;
-        final List<FilePath> filePaths = entry.getValue();
-        if (vcs.fileListenerIsSynchronous()) {
-          myAffected.addAll(filePaths);
-          continue;
+
+    for (Map.Entry<AbstractVcs, Set<FilePath>> entry : myPreparedAddition.entrySet()) {
+      final AbstractVcs vcs = entry.getKey();
+      final CheckinEnvironment localChangesProvider = requireNonNull(vcs.getCheckinEnvironment());
+
+      final List<FilePath> filePaths = new ArrayList<>(entry.getValue());
+      if (filePaths.isEmpty()) continue;
+
+      final List<VirtualFile> virtualFiles = new ArrayList<>();
+      for (FilePath path : filePaths) {
+        VirtualFile vf = path.getVirtualFile();
+        if (vf == null) {
+          incorrectFilePath.add(path);
         }
-        myAffected.addAll(filePaths);
-        final List<VirtualFile> virtualFiles = new ArrayList<>();
-        ContainerUtil.process(filePaths, path -> {
-          VirtualFile vf = path.getVirtualFile();
-          if (vf == null) {
-            incorrectFilePath.add(path);
-          }
-          else {
-            virtualFiles.add(vf);
-          }
-          return true;
-        });
-        localChangesProvider.scheduleUnversionedFilesForAddition(virtualFiles);
+        else {
+          virtualFiles.add(vf);
+        }
       }
-      //if some errors occurred  -> notify
-      if (!incorrectFilePath.isEmpty()) {
-        notifyAndLogFiles(incorrectFilePath);
-      }
+
+      localChangesProvider.scheduleUnversionedFilesForAddition(virtualFiles);
+    }
+
+    //if some errors occurred  -> notify
+    if (!incorrectFilePath.isEmpty()) {
+      notifyAndLogFiles(incorrectFilePath);
     }
   }
 
@@ -122,39 +103,38 @@ public class TriggerAdditionOrDeletion {
     VcsNotifier.getInstance(myProject).notifyImportantWarning(VcsBundle.message("patch.apply.new.files.warning"), message);
   }
 
-  public Set<FilePath> getAffected() {
-    return myAffected;
-  }
-
   private void processDeletion() {
     Map<VcsRoot, List<FilePath>> map = groupByRoots(myProject, myDeleted, identity());
 
-    myPreparedDeletion = new HashMap<>();
     for (VcsRoot vcsRoot : map.keySet()) {
-      if (vcsRoot != null) {
-        AbstractVcs vcs = vcsRoot.getVcs();
-        if (vcs != null) {
-          final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
-          if (localChangesProvider == null) continue;
-          final boolean takeDirs = vcs.areDirectoriesVersionedItems();
+      AbstractVcs vcs = vcsRoot.getVcs();
+      if (vcs == null) continue;
 
-          final Collection<FilePath> files = map.get(vcsRoot);
-          final List<FilePath> toBeDeleted = new ArrayList<>();
-          for (FilePath file : files) {
-            final FilePath parent = file.getParentPath();
-            if ((takeDirs || (!file.isDirectory())) && parent != null && parent.getIOFile().exists()) {
-              toBeDeleted.add(file);
-            }
+      final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
+      if (localChangesProvider == null) continue;
+      final boolean takeDirs = vcs.areDirectoriesVersionedItems();
+
+      final Collection<FilePath> files = map.get(vcsRoot);
+      final List<FilePath> toBeDeleted = new ArrayList<>();
+      for (FilePath file : files) {
+        if (takeDirs || !file.isDirectory()) {
+          FilePath parent = file.getParentPath();
+          if (parent != null && parent.getIOFile().exists()) {
+            toBeDeleted.add(file);
           }
-          if (toBeDeleted.isEmpty()) return;
-          if (!vcs.fileListenerIsSynchronous()) {
-            for (FilePath filePath : toBeDeleted) {
-              myVcsFileListenerContextHelper.ignoreDeleted(filePath);
-            }
-          }
-          List<FilePath> paths = myPreparedDeletion.computeIfAbsent(vcs, key -> new ArrayList<>());
-          paths.addAll(toBeDeleted);
         }
+      }
+
+      if (toBeDeleted.isEmpty()) return;
+      myAffected.addAll(toBeDeleted);
+
+      if (!vcs.fileListenerIsSynchronous()) {
+        for (FilePath filePath : toBeDeleted) {
+          myVcsFileListenerContextHelper.ignoreDeleted(filePath);
+        }
+
+        Set<FilePath> paths = myPreparedDeletion.computeIfAbsent(vcs, key -> new HashSet<>());
+        paths.addAll(toBeDeleted);
       }
     }
   }
@@ -162,55 +142,51 @@ public class TriggerAdditionOrDeletion {
   private void processAddition() {
     Map<VcsRoot, List<FilePath>> map = groupByRoots(myProject, myExisting, identity());
 
-    myPreparedAddition = new HashMap<>();
     for (VcsRoot vcsRoot : map.keySet()) {
-      if (vcsRoot != null) {
-        AbstractVcs vcs = vcsRoot.getVcs();
-        if (vcs != null) {
-          final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
-          if (localChangesProvider == null) continue;
-          final boolean takeDirs = vcs.areDirectoriesVersionedItems();
+      AbstractVcs vcs = vcsRoot.getVcs();
+      if (vcs == null) continue;
 
-          final Collection<FilePath> files = map.get(vcsRoot);
-          final List<FilePath> toBeAdded;
-          if (takeDirs) {
-            final RecursiveCheckAdder adder = new RecursiveCheckAdder(vcsRoot.getPath());
-            for (FilePath file : files) {
-              adder.process(file);
-            }
-            toBeAdded = adder.getToBeAdded();
-          }
-          else {
-            toBeAdded = new ArrayList<>();
-            for (FilePath file : files) {
-              if (!file.isDirectory()) {
-                toBeAdded.add(file);
-              }
-            }
-          }
-          if (toBeAdded.isEmpty()) {
-            return;
-          }
-          Collections.sort(toBeAdded, FilePathByPathComparator.getInstance());
-          if (!vcs.fileListenerIsSynchronous()) {
-            for (FilePath filePath : toBeAdded) {
-              myVcsFileListenerContextHelper.ignoreAdded(filePath.getVirtualFile());
-            }
-          }
-          List<FilePath> paths = myPreparedAddition.computeIfAbsent(vcs, key -> new ArrayList<>());
-          paths.addAll(toBeAdded);
+      final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
+      if (localChangesProvider == null) continue;
+      final boolean takeDirs = vcs.areDirectoriesVersionedItems();
+
+      final Collection<FilePath> files = map.get(vcsRoot);
+      final List<FilePath> toBeAdded = new ArrayList<>();
+      if (takeDirs) {
+        final RecursiveCheckAdder adder = new RecursiveCheckAdder(vcsRoot.getPath());
+        for (FilePath file : files) {
+          adder.process(file);
         }
+        toBeAdded.addAll(adder.getToBeAdded());
+      }
+      else {
+        for (FilePath file : files) {
+          if (!file.isDirectory()) {
+            toBeAdded.add(file);
+          }
+        }
+      }
+
+      if (toBeAdded.isEmpty()) return;
+      myAffected.addAll(toBeAdded);
+
+      if (!vcs.fileListenerIsSynchronous()) {
+        for (FilePath filePath : ContainerUtil.sorted(toBeAdded, FilePathByPathComparator.getInstance())) {
+          myVcsFileListenerContextHelper.ignoreAdded(filePath.getVirtualFile());
+        }
+
+        Set<FilePath> paths = myPreparedAddition.computeIfAbsent(vcs, key -> new HashSet<>());
+        paths.addAll(toBeAdded);
       }
     }
   }
 
   private static class RecursiveCheckAdder {
-    private final Set<FilePath> myToBeAdded;
+    private final Set<FilePath> myToBeAdded = new HashSet<>();
     private final VirtualFile myRoot;
 
     private RecursiveCheckAdder(final VirtualFile root) {
       myRoot = root;
-      myToBeAdded = new HashSet<>();
     }
 
     public void process(final FilePath path) {
@@ -230,8 +206,8 @@ public class TriggerAdditionOrDeletion {
       }
     }
 
-    public List<FilePath> getToBeAdded() {
-      return new ArrayList<>(myToBeAdded);
+    public Collection<FilePath> getToBeAdded() {
+      return myToBeAdded;
     }
   }
 }

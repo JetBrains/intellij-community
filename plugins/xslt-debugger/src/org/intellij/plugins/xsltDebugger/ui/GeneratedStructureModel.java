@@ -24,7 +24,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.StringInterner;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 import org.jetbrains.annotations.NonNls;
@@ -57,7 +56,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
   private static Interner<String> getInterner() {
     Interner<String> interner = SoftReference.dereference(ourSharedInterner);
     if (interner == null) {
-      interner = new StringInterner();
+      interner = Interner.createStringInterner();
       ourSharedInterner = new WeakReference<>(interner);
     }
     return interner;

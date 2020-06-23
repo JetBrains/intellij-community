@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -11,6 +12,7 @@ import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubAccountCombobox
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.RecordUniqueValidator
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.chain
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
@@ -30,18 +32,20 @@ class GithubShareDialog(project: Project,
   private val GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
 
   private val repositoryTextField = JBTextField(project.name)
-  private val privateCheckBox = JBCheckBox("Private", false)
+  private val privateCheckBox = JBCheckBox(GithubBundle.message("share.dialog.private"), false)
   private val remoteTextField = JBTextField(if (existingRemotes.isEmpty()) "origin" else "github")
   private val descriptionTextArea = JTextArea()
   private val accountSelector = GithubAccountCombobox(accounts, defaultAccount) { switchAccount(it) }
-  private val existingRepoValidator = RecordUniqueValidator(repositoryTextField, "Repository with selected name already exists")
-  private val existingRemoteValidator = RecordUniqueValidator(remoteTextField, "Remote with selected name already exists")
+  private val existingRepoValidator = RecordUniqueValidator(repositoryTextField,
+                                                            GithubBundle.message("share.error.repo.with.selected.name.exists"))
+  private val existingRemoteValidator = RecordUniqueValidator(remoteTextField,
+                                                              GithubBundle.message("share.error.remote.with.selected.name.exists"))
     .apply { records = existingRemotes }
   private var accountInformationLoadingError: ValidationInfo? = null
 
   init {
-    title = "Share Project On GitHub"
-    setOKButtonText("Share")
+    title = GithubBundle.message("share.on.github")
+    setOKButtonText(GithubBundle.message("share.button"))
     init()
     DialogUtils.invokeLaterAfterDialogShown(this) { switchAccount(accountSelector.selectedItem as GithubAccount) }
   }
@@ -51,16 +55,16 @@ class GithubShareDialog(project: Project,
       accountInformationLoadingError = null
       accountInformationSupplier(account, window).let {
         privateCheckBox.isEnabled = it.first
-        if (!it.first) privateCheckBox.toolTipText = "Your account doesn't support private repositories"
+        if (!it.first) privateCheckBox.toolTipText = GithubBundle.message("share.error.private.repos.not.supported")
         else privateCheckBox.toolTipText = null
         existingRepoValidator.records = it.second
       }
     }
     catch (e: Exception) {
-      accountInformationLoadingError = if (e is ProcessCanceledException) {
-        ValidationInfo("Cannot load information for $account:\nProcess cancelled")
-      }
-      else ValidationInfo("Cannot load information for $account:\n$e")
+      val errorText = GithubBundle.message("share.dialog.account.info.load.error.prefix", account) +
+                      if (e is ProcessCanceledException) GithubBundle.message("share.dialog.account.info.load.process.canceled")
+                      else e.message
+      accountInformationLoadingError = ValidationInfo(errorText)
       privateCheckBox.isEnabled = false
       privateCheckBox.toolTipText = null
       existingRepoValidator.records = emptySet()
@@ -69,20 +73,20 @@ class GithubShareDialog(project: Project,
   }
 
   override fun createCenterPanel() = panel {
-    row("Repository name:") {
+    row(GithubBundle.message("share.dialog.repo.name")) {
       cell {
         repositoryTextField(growX, pushX)
         privateCheckBox()
       }
     }
-    row("Remote:") {
+    row(GithubBundle.message("share.dialog.remote")) {
       remoteTextField(growX, pushX)
     }
-    row("Description:") {
+    row(GithubBundle.message("share.dialog.description")) {
       scrollPane(descriptionTextArea)
     }
     if (accountSelector.isEnabled) {
-      row("Share by:") {
+      row(GithubBundle.message("share.dialog.share.by")) {
         accountSelector(growX, pushX)
       }
     }
@@ -91,16 +95,16 @@ class GithubShareDialog(project: Project,
   override fun doValidateAll(): List<ValidationInfo> {
     val repositoryNamePatternMatchValidator: Validator = {
       if (!GITHUB_REPO_PATTERN.matcher(repositoryTextField.text).matches()) ValidationInfo(
-        "Invalid repository name. Name should consist of letters, numbers, dashes, dots and underscores",
+        GithubBundle.message("share.validation.invalid.repo.name"),
         repositoryTextField)
       else null
     }
 
     return listOf({ accountInformationLoadingError },
-                  chain({ notBlank(repositoryTextField, "No repository name selected") },
+                  chain({ notBlank(repositoryTextField, GithubBundle.message("share.validation.no.repo.name")) },
                         repositoryNamePatternMatchValidator,
                         existingRepoValidator),
-                  chain({ notBlank(remoteTextField, "No remote name selected") },
+                  chain({ notBlank(remoteTextField, GithubBundle.message("share.validation.no.remote.name")) },
                         existingRemoteValidator)
     ).mapNotNull { it() }
   }

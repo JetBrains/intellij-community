@@ -47,7 +47,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
@@ -546,15 +549,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @NotNull
-  public List<TextEditorHighlightingPass> getPassesToShowProgressFor(Document document) {
-    List<TextEditorHighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
-    List<TextEditorHighlightingPass> result = new ArrayList<>(allPasses.size());
-    for (TextEditorHighlightingPass pass : allPasses) {
-      if (pass.getDocument() == document || pass.getDocument() == null) {
-        result.add(pass);
-      }
-    }
-    return result;
+  public List<ProgressableTextEditorHighlightingPass> getPassesToShowProgressFor(@NotNull Document document) {
+    List<HighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
+    return allPasses.stream()
+      .map(p->p instanceof ProgressableTextEditorHighlightingPass ? (ProgressableTextEditorHighlightingPass)p : null)
+      .filter(p-> p != null && p.getDocument() == document)
+      .sorted(Comparator.comparingInt(p->p.getId()))
+      .collect(Collectors.toList());
   }
 
   boolean isAllAnalysisFinished(@NotNull PsiFile file) {
@@ -664,7 +665,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
    * @param includeFixRange states whether the rage of a fix associated with an info should be taken into account during the range checking
    * @param highestPriorityOnly states whether to include all infos or only the ones with the highest HighlightSeverity
    * @param minSeverity the minimum HighlightSeverity starting from which infos are considered for collection
-   * @return
    */
   @Nullable
   public HighlightInfo findHighlightsByOffset(@NotNull Document document,
@@ -824,10 +824,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
       Collection<FileEditor> activeEditors = dca.getSelectedEditors();
       boolean updateByTimerEnabled = dca.isUpdateByTimerEnabled();
-      PassExecutorService.log(dca.getUpdateProgress(), null, "Update Runnable. myUpdateByTimerEnabled:",
-                              updateByTimerEnabled, " something disposed:",
-                              PowerSaveMode.isEnabled() || !myProject.isInitialized(), " activeEditors:",
-                              activeEditors);
+      if (PassExecutorService.LOG.isDebugEnabled()) {
+        PassExecutorService.log(dca.getUpdateProgress(), null, "Update Runnable. myUpdateByTimerEnabled:",
+                                updateByTimerEnabled, " something disposed:",
+                                PowerSaveMode.isEnabled() || !myProject.isInitialized(), " activeEditors:", activeEditors);
+      }
       if (!updateByTimerEnabled) return;
 
       if (activeEditors.isEmpty()) return;
@@ -841,12 +842,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         // restart when everything committed
         dca.myPsiDocumentManager.performLaterWhenAllCommitted(this);
         return;
-      }
-      if (RefResolveService.ENABLED &&
-          !RefResolveService.getInstance(myProject).isUpToDate() &&
-          RefResolveService.getInstance(myProject).getQueueSize() == 1) {
-        return; // if the user have just typed in something, wait until the file is re-resolved
-        // (or else it will blink like crazy since unused symbols calculation depends on resolve service)
       }
 
       Map<FileEditor, HighlightingPass[]> passes = new THashMap<>(activeEditors.size());
@@ -862,9 +857,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       if (HeavyProcessLatch.INSTANCE.isRunning()) {
         boolean hasPasses = false;
         for (Map.Entry<FileEditor, HighlightingPass[]> entry : passes.entrySet()) {
-          HighlightingPass[] filtered = Arrays.stream(entry.getValue()).filter(DumbService::isDumbAware).toArray(HighlightingPass[]::new);
-          entry.setValue(filtered);
-          hasPasses |= filtered.length != 0;
+          HighlightingPass[] dumbAwarePasses = Arrays.stream(entry.getValue()).filter(DumbService::isDumbAware).toArray(HighlightingPass[]::new);
+          entry.setValue(dumbAwarePasses);
+          hasPasses |= dumbAwarePasses.length != 0;
         }
         if (!hasPasses) {
           HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() ->
@@ -886,7 +881,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @NotNull
-  private synchronized DaemonProgressIndicator createUpdateProgress(@NotNull Collection<FileEditor> fileEditors) {
+  private synchronized DaemonProgressIndicator createUpdateProgress(@NotNull Collection<? extends FileEditor> fileEditors) {
     DaemonProgressIndicator old = myUpdateProgress;
     if (!old.isCanceled()) {
       old.cancel();
@@ -901,9 +896,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   private static class MyDaemonProgressIndicator extends DaemonProgressIndicator {
     private final Project myProject;
-    private Collection<FileEditor> myFileEditors;
+    private Collection<? extends FileEditor> myFileEditors;
 
-    MyDaemonProgressIndicator(@NotNull Project project, @NotNull Collection<FileEditor> fileEditors) {
+    MyDaemonProgressIndicator(@NotNull Project project, @NotNull Collection<? extends FileEditor> fileEditors) {
       myFileEditors = fileEditors;
       myProject = project;
     }
@@ -956,12 +951,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       return activeTextEditors;
     }
 
-    Collection<FileEditor> result = new THashSet<>();
+    Collection<FileEditor> result = new THashSet<>(activeTextEditors.size());
     Collection<VirtualFile> files = new THashSet<>(activeTextEditors.size());
     if (!app.isUnitTestMode()) {
       // editors in tabs
       FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
-      for (FileEditor tabEditor : fileEditorManager.getSelectedEditors()) {
+      for (FileEditor tabEditor : fileEditorManager.getSelectedEditorWithRemotes()) {
         if (!tabEditor.isValid()) continue;
         VirtualFile file = fileEditorManager.getFile(tabEditor);
         if (file != null) {

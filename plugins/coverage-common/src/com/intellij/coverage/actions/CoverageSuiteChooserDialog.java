@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.actions;
 
 import com.intellij.CommonBundle;
@@ -165,7 +165,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     groupSuites(grouped, myCoverageManager.getSuites(), myEngine);
     final CoverageSuitesBundle currentSuite = myCoverageManager.getCurrentSuitesBundle();
     final List<CoverageRunner> runners = new ArrayList<>(grouped.keySet());
-    Collections.sort(runners, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
+    runners.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     for (CoverageRunner runner : runners) {
       final DefaultMutableTreeNode runnerNode = new DefaultMutableTreeNode(getCoverageRunnerTitle(runner));
       final Map<String, List<CoverageSuite>> providers = grouped.get(runner);
@@ -178,7 +178,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
           runnerNode.add(remoteNode);
         }
         final List<CoverageSuite> suites = providers.get(providersKey);
-        Collections.sort(suites, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
+        suites.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
         for (CoverageSuite suite : suites) {
           final CheckedTreeNode treeNode = new CheckedTreeNode(suite);
           treeNode.setChecked(currentSuite != null && currentSuite.contains(suite) ? Boolean.TRUE : Boolean.FALSE);

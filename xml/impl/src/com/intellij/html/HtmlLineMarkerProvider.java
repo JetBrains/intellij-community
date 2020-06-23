@@ -21,7 +21,7 @@ import java.util.Map;
  */
 public class HtmlLineMarkerProvider implements LineMarkerProvider {
   @Override
-  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull final PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
     if (element instanceof PsiWhiteSpace) return null;
     final Language language = element.getLanguage();
 
@@ -39,7 +39,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
   }
 
   @Override
-  public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(final @NotNull List<? extends PsiElement> elements, final @NotNull Collection<? super LineMarkerInfo<?>> result) {
     Map<LineMarkerProvider, List<PsiElement>> embeddedLineMarkersWorkItems = null;
 
     for(PsiElement element:elements) {

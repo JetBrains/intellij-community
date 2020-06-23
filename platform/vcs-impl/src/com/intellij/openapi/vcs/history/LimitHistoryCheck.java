@@ -22,6 +22,8 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.openapi.util.SystemInfo.isMac;
+
 public class LimitHistoryCheck {
   @NotNull private final Project myProject;
   @NotNull private final String myFilePath;
@@ -47,7 +49,8 @@ public class LimitHistoryCheck {
     ++myCount;
     if (isOver()) {
       if (!myWarningShown) {
-        String message = VcsBundle.message("file.history.exceeded.limit.message", myLimit, myFilePath);
+        String path = isMac? VcsBundle.message("vcs.settings.path.mac") : VcsBundle.message("vcs.settings.path");
+        String message = VcsBundle.message("file.history.exceeded.limit.message", myLimit, myFilePath) + path;
         VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING);
         myWarningShown = true;
       }

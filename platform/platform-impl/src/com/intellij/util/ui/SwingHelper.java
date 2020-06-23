@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +15,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.SystemInfo;
@@ -367,7 +367,7 @@ public class SwingHelper {
     }
   }
 
-  public static void setLongestAsPrototype(@NotNull JComboBox comboBox, @NotNull List<String> variants) {
+  private static void setLongestAsPrototype(@NotNull JComboBox comboBox, @NotNull List<String> variants) {
     Object prototypeDisplayValue = comboBox.getPrototypeDisplayValue();
     String prototypeDisplayValueStr = null;
     if (prototypeDisplayValue instanceof String) {
@@ -649,7 +649,7 @@ public class SwingHelper {
     return comp;
   }
 
-  private static class CopyLinkAction extends AnAction {
+  private static class CopyLinkAction extends DumbAwareAction {
 
     private final String myUrl;
 
@@ -670,7 +670,7 @@ public class SwingHelper {
     }
   }
 
-  private static class OpenLinkInBrowser extends AnAction {
+  private static class OpenLinkInBrowser extends DumbAwareAction {
 
     private final String myUrl;
 
@@ -724,15 +724,14 @@ public class SwingHelper {
     final String currentSubstring = text.substring(0, currentLen);
     int realWidth = fm.stringWidth(currentSubstring);
 
+    int delta = 0;
     if (realWidth >= availableWidth) {
-      int delta = 0;
       for (int i = currentLen - 1; i >= 0; i--) {
         if ((realWidth - delta) < availableWidth) return text.substring(0, i) + ELLIPSIS;
         delta += fm.charWidth(currentSubstring.charAt(i));
       }
-      return text.substring(0, 1) + ELLIPSIS;
+      return text.charAt(0) + ELLIPSIS;
     } else {
-      int delta = 0;
       for (int i = currentLen; i < text.length(); i++) {
         if ((realWidth + delta) >= availableWidth) return text.substring(0, i) + ELLIPSIS;
         delta += fm.charWidth(text.charAt(i));

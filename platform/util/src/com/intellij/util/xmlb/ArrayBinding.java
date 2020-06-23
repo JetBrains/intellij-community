@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.MutableAccessor;
@@ -17,15 +17,13 @@ final class ArrayBinding extends AbstractCollectionBinding  {
     super(valueClass.getComponentType(), accessor);
   }
 
-  @NotNull
   @Override
-  protected String getCollectionTagName(@Nullable Object target) {
+  protected @NotNull String getCollectionTagName(@Nullable Object target) {
     return "array";
   }
 
   @Override
-  @NotNull
-  protected Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
+  protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     int size = elements.size();
     Object[] result = ArrayUtil.newArray(itemType, size);
     for (int i = 0; i < size; i++) {

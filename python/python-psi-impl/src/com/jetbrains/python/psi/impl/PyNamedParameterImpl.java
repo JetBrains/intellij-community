@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 /**
  * @author yole
  */
-public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub> implements PyNamedParameter {
+public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub> implements PyNamedParameter, ContributedReferenceHost {
   public PyNamedParameterImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -150,7 +150,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     if (stub != null && stub.getDefaultValueText() == null) {
       return null;
     }
-    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     if (nodes.length > 0) {
       return (PyExpression)nodes[0].getPsi();
     }

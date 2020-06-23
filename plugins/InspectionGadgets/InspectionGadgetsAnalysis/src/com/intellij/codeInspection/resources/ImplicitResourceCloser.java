@@ -5,6 +5,7 @@ package com.intellij.codeInspection.resources;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiVariable;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public interface ImplicitResourceCloser {
@@ -16,5 +17,6 @@ public interface ImplicitResourceCloser {
    * @param variable {@link AutoCloseable} variable to check
    * @return true if variable closed properly
    */
+  @Contract(pure = true)
   boolean isSafelyClosed(@NotNull PsiVariable variable);
 }

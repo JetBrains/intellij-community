@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -22,10 +22,7 @@ import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -45,7 +42,6 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +87,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private boolean myApplyCompleted = false;
   private boolean myDisposeCompleted = false;
   private final Disposable myDisposable = Disposer.newDisposable();
-  
+
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   public void addListener(@NotNull ColorAndFontSettingsListener listener) {
@@ -224,7 +220,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @NotNull
   public Collection<EditorColorsScheme> getOrderedSchemes() {
     List<EditorColorsScheme> schemes = new ArrayList<>(mySchemes.values());
-    Collections.sort(schemes, EditorColorSchemesComparator.INSTANCE);
+    schemes.sort(EditorColorSchemesComparator.INSTANCE);
     return schemes;
   }
 
@@ -444,7 +440,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       });
     }
     extensions.addAll(ColorAndFontPanelFactory.EP_NAME.getExtensionList());
-    Collections.sort(extensions, (f1, f2) -> {
+    extensions.sort((f1, f2) -> {
       if (f1 instanceof DisplayPrioritySortable) {
         if (f2 instanceof DisplayPrioritySortable) {
           int result1 = ((DisplayPrioritySortable)f1).getPriority().compareTo(((DisplayPrioritySortable)f2).getPriority());
@@ -615,7 +611,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     List<Pair<NamedScope, NamedScopesHolder>> list = new ArrayList<>(namedScopes);
 
-    Collections.sort(list, (o1, o2) -> o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName()));
+    list.sort((o1, o2) -> o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName()));
     for (Pair<NamedScope,NamedScopesHolder> pair : list) {
       NamedScope namedScope = pair.getFirst();
       String name = namedScope.getName();
@@ -1325,7 +1321,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @NotNull
     @Override
-    @Nls
+    @NlsContexts.ConfigurableName
     public String getDisplayName() {
       return myFactory.getPanelDisplayName();
     }

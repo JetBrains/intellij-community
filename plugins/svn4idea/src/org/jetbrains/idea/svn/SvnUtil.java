@@ -688,9 +688,7 @@ public class SvnUtil {
 
   @NotNull
   public static IllegalArgumentException createIllegalArgument(@NotNull Exception e) {
-    IllegalArgumentException runtimeException = new IllegalArgumentException();
-    runtimeException.initCause(e);
-    return runtimeException;
+    return new IllegalArgumentException(e);
   }
 
   @Nullable

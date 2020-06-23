@@ -99,7 +99,7 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
       String title = GitBundle.message("delete.remote.tag.operation.failed.to.delete.tag.on.remotes",
                                        myTagName,
                                        remotesCount);
-      VcsNotifier.getInstance(myProject).notifyError(title, result.getErrorOutputWithReposIndication());
+      VcsNotifier.getInstance(myProject).notifyError(title, result.getErrorOutputWithReposIndication(), true);
     }
   }
 

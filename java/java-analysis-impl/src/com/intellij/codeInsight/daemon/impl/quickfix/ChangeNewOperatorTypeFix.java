@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ChangeNewOperatorTypeFix implements IntentionAction {
+public final class ChangeNewOperatorTypeFix implements IntentionAction {
   private final PsiType myType;
   private final PsiNewExpression myExpression;
 
@@ -70,29 +71,29 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     if (toType instanceof PsiArrayType) {
       final PsiExpression[] originalExpressionArrayDimensions = originalExpression.getArrayDimensions();
       caretOffset = 0;
-      @NonNls String text = "new " + toType.getDeepComponentType().getCanonicalText() + "[";
+      @NonNls StringBuilder text = new StringBuilder("new " + toType.getDeepComponentType().getCanonicalText() + "[");
       if (originalExpressionArrayDimensions.length > 0) {
-        text += commentTracker.text(originalExpressionArrayDimensions[0]);
+        text.append(commentTracker.text(originalExpressionArrayDimensions[0]));
       }
       else {
-        text += "0";
+        text.append("0");
         caretOffset = -2;
       }
-      text += "]";
+      text.append("]");
       for (int i = 1; i < toType.getArrayDimensions(); i++) {
-        text += "[";
+        text.append("[");
         String arrayDimension = "";
         if (originalExpressionArrayDimensions.length > i) {
           arrayDimension = commentTracker.text(originalExpressionArrayDimensions[i]);
-          text += arrayDimension;
+          text.append(arrayDimension);
         }
-        text += "]";
+        text.append("]");
         if (caretOffset < 0) {
           caretOffset -= arrayDimension.length() + 2;
         }
       }
 
-      newExpression = (PsiNewExpression)factory.createExpressionFromText(text, originalExpression);
+      newExpression = (PsiNewExpression)factory.createExpressionFromText(text.toString(), originalExpression);
       if (caretOffset < 0) {
         selection = new UnfairTextRange(caretOffset, caretOffset+1);
       } else {
@@ -197,5 +198,10 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     }
 
     return inheritorSubstitutor;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new ChangeNewOperatorTypeFix(myType, PsiTreeUtil.findSameElementInCopy(myExpression, target));
   }
 }

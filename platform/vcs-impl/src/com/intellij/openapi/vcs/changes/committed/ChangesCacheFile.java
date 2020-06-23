@@ -121,7 +121,7 @@ public class ChangesCacheFile {
 
   public List<CommittedChangeList> writeChanges(final List<? extends CommittedChangeList> changes) throws IOException {
     // the list and index are sorted in direct chronological order
-    Collections.sort(changes, CommittedChangeListByDateComparator.ASCENDING);
+    changes.sort(CommittedChangeListByDateComparator.ASCENDING);
     return writeChanges(changes, null);
   }
 

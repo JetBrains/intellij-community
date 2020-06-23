@@ -60,6 +60,7 @@ import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
+import static com.intellij.util.MathUtil.clamp;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.ui.JBUI.Borders.emptyLeft;
@@ -69,7 +70,6 @@ import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitExecutors;
 import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitHandlerFactories;
 import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.getPresentableText;
 import static java.lang.Math.max;
-import static java.lang.Math.min;
 import static java.util.Arrays.asList;
 import static java.util.Collections.*;
 
@@ -836,7 +836,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     public void layoutContainer(@NotNull Container parent) {
       Rectangle bounds = parent.getBounds();
       int preferredWidth = myOptions.getPreferredSize().width;
-      int optionsWidth = myOptions.isEmpty() ? 0 : max(min(myMaxOptionsWidth, preferredWidth), myMinOptionsWidth);
+      int optionsWidth = myOptions.isEmpty() ? 0 : clamp(preferredWidth, myMinOptionsWidth, myMaxOptionsWidth);
       myPanel.setBounds(new Rectangle(0, 0, bounds.width - optionsWidth, bounds.height));
       myOptions.setBounds(new Rectangle(bounds.width - optionsWidth, 0, optionsWidth, bounds.height));
     }

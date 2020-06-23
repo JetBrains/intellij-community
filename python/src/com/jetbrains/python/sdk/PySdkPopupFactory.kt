@@ -105,13 +105,13 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     override fun actionPerformed(e: AnActionEvent) = switchToSdk(sdk)
   }
 
-  private inner class InterpreterSettingsAction : DumbAwareAction(PyBundle.message("python.sdk.popup.interpreter.settings")) {
+  private inner class InterpreterSettingsAction : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.interpreter.settings")) {
     override fun actionPerformed(e: AnActionEvent) {
       PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
     }
   }
 
-  private inner class AddInterpreterAction : DumbAwareAction(PyBundle.message("python.sdk.popup.add.interpreter")) {
+  private inner class AddInterpreterAction : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.add.interpreter")) {
 
     override fun actionPerformed(e: AnActionEvent) {
       val model = PyConfigurableInterpreterList.getInstance(project).model

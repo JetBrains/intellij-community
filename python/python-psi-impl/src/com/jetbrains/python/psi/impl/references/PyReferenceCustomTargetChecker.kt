@@ -10,8 +10,8 @@ import com.intellij.psi.PsiReference
  */
 interface PyReferenceCustomTargetChecker {
   companion object {
-    val EP_NAME = ExtensionPointName.create<PyReferenceCustomTargetChecker>("Pythonid.pyReferenceCustomTargetChecker")
-    fun isReferenceTo(reference: PsiReference, to: PsiElement) = EP_NAME.extensions.firstOrNull { it.isReferenceTo(reference, to) } != null
+    private val EP_NAME = ExtensionPointName.create<PyReferenceCustomTargetChecker>("Pythonid.pyReferenceCustomTargetChecker")
+    fun isReferenceTo(reference: PsiReference, to: PsiElement) = EP_NAME.extensions.any { it.isReferenceTo(reference, to) }
   }
 
   fun isReferenceTo(reference: PsiReference, to: PsiElement): Boolean

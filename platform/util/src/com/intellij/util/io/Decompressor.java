@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.List;
@@ -205,12 +207,18 @@ public abstract class Decompressor {
   }
 
   @Nullable private Condition<? super String> myFilter = null;
+  @Nullable private Condition<? super Entry> myEntryFilter = null;
   @Nullable private List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
   @Nullable private Consumer<? super File> myConsumer;
 
   public Decompressor filter(@Nullable Condition<? super String> filter) {
     myFilter = filter;
+    return this;
+  }
+
+  public Decompressor filterEntries(@Nullable Condition<? super Entry> filter) {
+    myEntryFilter = filter;
     return this;
   }
 
@@ -252,6 +260,10 @@ public abstract class Decompressor {
           }
         }
 
+        if (myEntryFilter != null && !myEntryFilter.value(entry)) {
+          continue;
+        }
+
         if (myPathsPrefix != null) {
           entry = entry.mapPathPrefix(myPathsPrefix);
           if (entry == null) continue;
@@ -286,12 +298,17 @@ public abstract class Decompressor {
             break;
 
           case SYMLINK:
-            if (StringUtil.isEmpty(entry.linkTarget) ||
-                !FileUtil.isAncestor(outputDir, new File(FileUtil.toCanonicalPath(outputFile.getParent() + '/' + entry.linkTarget)), true)) {
-              throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget);
+            if (StringUtil.isEmpty(entry.linkTarget)) {
+              throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
             }
-            FileUtil.createParentDirs(outputFile);
-            Files.createSymbolicLink(outputFile.toPath(), Paths.get(entry.linkTarget));
+            try {
+              Path outputTarget = Paths.get(entry.linkTarget);
+              FileUtil.createParentDirs(outputFile);
+              Files.createSymbolicLink(outputFile.toPath(), outputTarget);
+            }
+            catch (InvalidPathException e) {
+              throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget, e);
+            }
             break;
         }
 
@@ -308,14 +325,14 @@ public abstract class Decompressor {
   //<editor-fold desc="Internal interface">
   protected Decompressor() { }
 
-  private enum Type {FILE, DIR, SYMLINK}
+  public enum Type {FILE, DIR, SYMLINK}
 
-  protected static class Entry {
-    final String name;
-    final Type type;
-    final boolean isWritable;
-    final boolean isExecutable;
-    final String linkTarget;
+  public static class Entry {
+    public final String name;
+    public final Type type;
+    public final boolean isWritable;
+    public final boolean isExecutable;
+    public final String linkTarget;
 
     protected Entry(String name, boolean isDirectory) {
       this(name, isDirectory ? Type.DIR : Type.FILE, true, false, null);

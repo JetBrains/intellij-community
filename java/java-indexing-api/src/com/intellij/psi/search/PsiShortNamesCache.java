@@ -113,7 +113,7 @@ public abstract class PsiShortNamesCache {
                                         @NotNull final Processor<? super PsiMethod> processor,
                                         @NotNull GlobalSearchScope scope,
                                         @Nullable IdFilter filter) {
-    return processMethodsWithName(name, scope, method -> processor.process(method));
+    return processMethodsWithName(name, scope, processor);
   }
 
   public boolean processAllMethodNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {

@@ -5,12 +5,12 @@ package org.jetbrains.plugins.gradle.service.project.open
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -45,8 +45,8 @@ fun linkAndRefreshGradleProject(projectFilePath: String, project: Project) {
   GradleOpenProjectProvider().linkToExistingProject(projectFile, project)
 }
 
-fun setupGradleSettings(settings: GradleProjectSettings, projectDirectory: String, project: Project, projectSdk: Sdk? = null) =
-  GradleOpenProjectProvider().setupGradleSettings(settings, projectDirectory, project, projectSdk)
+fun setupGradleSettings(project: Project, settings: GradleProjectSettings, projectDirectory: String, gradleVersion: GradleVersion) =
+  GradleOpenProjectProvider().setupGradleSettings(project, settings, projectDirectory, gradleVersion)
 
 private fun validateGradleProject(projectFilePath: String, project: Project): ValidationInfo? {
   val systemSettings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID)

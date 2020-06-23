@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
@@ -51,7 +52,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.NAME.add.function.$0.to.module.$1", myIdentifier, myModuleName);
+    return PyPsiBundle.message("QFIX.NAME.add.function.$0.to.module.$1", myIdentifier, myModuleName);
   }
 
   @Override
@@ -121,7 +122,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
     }
     catch (IncorrectOperationException ignored) {
       // we failed. tell about this
-      PyUiUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.function"), MessageType.ERROR);
+      PyUiUtil.showBalloon(project, PyPsiBundle.message("QFIX.failed.to.add.function"), MessageType.ERROR);
     }
   }
 

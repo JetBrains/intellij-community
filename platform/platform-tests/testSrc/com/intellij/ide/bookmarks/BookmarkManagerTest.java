@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.openapi.application.WriteAction;
@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -16,7 +15,6 @@ import com.intellij.testFramework.TestFileType;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.ComponentAdapter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -85,12 +83,6 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   }
 
   public void testBookmarkLineRemove() {
-    List<ComponentAdapter> adapters = getProject().getPicoContainer().getComponentAdaptersOfType(ChangeListManagerImpl.class);
-    LOG.debug(adapters.size() + " adapters:");
-    for (ComponentAdapter adapter : adapters) {
-      LOG.debug(String.valueOf(adapter));
-    }
-
     @Language("JAVA")
     @NonNls String text =
       "public class Test {\n" +

@@ -20,10 +20,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +38,14 @@ public class PyKeywordTypedHandler extends TypedHandlerDelegate {
   public Result beforeCharTyped(char character, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
     if (!(fileType instanceof PythonFileType)) return Result.CONTINUE; // else we'd mess up with other file types!
     if (character == ':') {
-      Result res = getOverTypeResult(editor, file);
-      if (res == Result.STOP) {
-        return res;
+      final Document document = editor.getDocument();
+      final int offset = editor.getCaretModel().getOffset();
+      if (offset < document.getTextLength() && document.getCharsSequence().charAt(offset) == ':') {
+        PsiDocumentManager.getInstance(project).commitDocument(document);
+        Result res = getOverTypeResult(editor, file);
+        if (res == Result.STOP) {
+          return res;
+        }
       }
       PyUnindentingInsertHandler.unindentAsNeeded(project, editor, file);
     }
@@ -47,20 +53,16 @@ public class PyKeywordTypedHandler extends TypedHandlerDelegate {
   }
 
   @Nullable
-  public Result getOverTypeResult(Editor editor, PsiFile file) {
-    final Document document = editor.getDocument();
+  private static Result getOverTypeResult(Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
 
     PsiElement token = file.findElementAt(offset - 1);
-    if (token == null || offset >= document.getTextLength()) return Result.CONTINUE; // sanity check: beyond EOL
+    if (token == null) return Result.CONTINUE; // sanity check: beyond EOL
 
-    PsiElement here_elt = file.findElementAt(offset);
-    if (here_elt == null) return Result.CONTINUE;
-    if (here_elt instanceof PyStringLiteralExpression || here_elt.getParent() instanceof PyStringLiteralExpression) return Result.CONTINUE;
+    PsiElement elem = file.findElementAt(offset);
+    if (elem == null) return Result.CONTINUE;
 
-    // double colons aren't found in Python's syntax, so we can safely overtype a colon everywhere but strings.
-    String here_text = here_elt.getText();
-    if (":".equals(here_text)) {
+    if (elem.getNode().getElementType() == PyTokenTypes.COLON) {
       editor.getCaretModel().moveToOffset(offset + 1); // overtype, that is, jump over
       return Result.STOP;
     }

@@ -31,11 +31,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
+class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
   private final ModuleGrouper myGrouper;
   private final boolean myFlattenModules;
 
-  public ModuleGroupingRule(Project project, boolean flattenModules) {
+  ModuleGroupingRule(@NotNull Project project, boolean flattenModules) {
     myGrouper = ModuleGrouper.instanceFor(project);
     myFlattenModules = flattenModules;
   }

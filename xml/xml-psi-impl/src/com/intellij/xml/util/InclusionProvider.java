@@ -2,7 +2,6 @@
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
@@ -12,6 +11,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,14 +29,19 @@ final class InclusionProvider implements CachedValueProvider<PsiElement[]> {
   }
 
   public static PsiElement @NotNull [] getIncludedTags(XmlTag xincludeTag) {
-    if (!XmlTagImpl.shouldProcessIncludesNow()) return PsiElement.EMPTY_ARRAY;
+    if (!XmlTagImpl.shouldProcessIncludesNow()) {
+      IdempotenceChecker.logTrace("!shouldProcessIncludesNow");
+      return PsiElement.EMPTY_ARRAY;
+    }
     return CachedValuesManager.getCachedValue(xincludeTag, new InclusionProvider(xincludeTag));
   }
 
   @Override
   public Result<PsiElement[]> compute() {
-    PsiElement[] result = RecursionManager.doPreventingRecursion(myXincludeTag, true,
-                                                                 (NullableComputable<PsiElement[]>)() -> computeInclusion(myXincludeTag));
+    PsiElement[] result = RecursionManager.doPreventingRecursion(myXincludeTag, true, () -> computeInclusion(myXincludeTag));
+    if (result == null) {
+      IdempotenceChecker.logTrace("InclusionProvider recursion prevented");
+    }
     return Result.create(result == null ? PsiElement.EMPTY_ARRAY : result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
   }
 
@@ -62,11 +67,17 @@ final class InclusionProvider implements CachedValueProvider<PsiElement[]> {
 
   private static PsiElement @Nullable [] computeInclusion(final XmlTag xincludeTag) {
     final XmlFile included = XmlIncludeHandler.resolveXIncludeFile(xincludeTag);
+    if (IdempotenceChecker.isLoggingEnabled()) {
+      IdempotenceChecker.logTrace("InclusionProvider resolved file=" + included);
+    }
     final XmlDocument document = included != null ? included.getDocument() : null;
     final XmlTag rootTag = document != null ? document.getRootTag() : null;
     if (rootTag != null) {
       final String xpointer = xincludeTag.getAttributeValue("xpointer", XmlPsiUtil.XINCLUDE_URI);
       final XmlTag[] includeTag = extractXpointer(rootTag, xpointer);
+      if (IdempotenceChecker.isLoggingEnabled()) {
+        IdempotenceChecker.logTrace("InclusionProvider found " + includeTag.length + " tags by " + xpointer);
+      }
       PsiElement[] result = new PsiElement[includeTag.length];
       for (int i = 0; i < includeTag.length; i++) {
         result[i] = new IncludedXmlTag(includeTag[i], xincludeTag.getParentTag());

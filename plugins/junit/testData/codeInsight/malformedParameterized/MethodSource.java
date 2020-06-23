@@ -2,6 +2,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestReporter;
+import org.junit.jupiter.api.TestInstance;
 
 import java.util.Iterator;
 import java.util.stream.Stream;
@@ -157,4 +158,15 @@ class MethodSourceMalformed {
       return new String[]{"a", "b"};
     }
   }
+}
+
+interface MyInterface {
+    String[] data();
+}
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+abstract class MyTestBaseClass implements MyInterface {
+    @ParameterizedTest
+    @MethodSource("data")
+    void myTest(String param) { }
 }

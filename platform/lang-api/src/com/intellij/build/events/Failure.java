@@ -16,7 +16,9 @@
 package com.intellij.build.events;
 
 import com.intellij.notification.Notification;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -26,9 +28,11 @@ import java.util.List;
  */
 public interface Failure {
   @Nullable
+  @BuildEventsNls.Message
   String getMessage();
 
   @Nullable
+  @BuildEventsNls.Description
   String getDescription();
 
   @Nullable

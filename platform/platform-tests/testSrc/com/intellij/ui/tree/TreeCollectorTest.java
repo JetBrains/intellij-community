@@ -234,7 +234,7 @@ public class TreeCollectorTest {
     }
 
     private static void measureExecutionTime(String method, Runnable runnable) {
-      System.err.println(String.format("%,12d ms to " + method, TimeoutUtil.measureExecutionTime(runnable::run)));
+      System.err.printf("%,12d ms to %s%n", TimeoutUtil.measureExecutionTime(runnable::run), method);
     }
 
 

@@ -185,7 +185,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     }
     PsiElement[] srcs = new PsiElement[DST_NUM];
     for (int i=0; i<DST_NUM; i+=1) {
-      PsiElement src = marks.get("<src" + (i + 1) + ">").getParent().getParent().getParent(); // ident -> target expr
+      PsiElement src = marks.get("<src" + (i + 1) + ">").getParent().getParent(); // ident -> target expr
       Assert.assertTrue(src instanceof PyExpression);
       srcs[i] = src;
     }

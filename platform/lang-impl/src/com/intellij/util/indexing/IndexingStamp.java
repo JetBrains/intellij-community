@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -43,10 +44,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
 
-  private static final int VERSION = 15 + (SharedIndicesData.ourFileSharedIndicesEnabled ? 15 : 0) + (SharedIndicesData.DO_CHECKS ? 15 : 0);
-  private static final ConcurrentMap<ID<?, ?>, IndexVersion> ourIndexIdToCreationStamp = ContainerUtil.newConcurrentMap();
+  private static final int VERSION = 15;
+  private static final ConcurrentMap<ID<?, ?>, IndexVersion> ourIndexIdToCreationStamp = new ConcurrentHashMap<>();
   private static final long ourVfsCreationStamp = FSRecords.getCreationTimestamp();
-  
+
   static final int INVALID_FILE_ID = 0;
 
   private IndexingStamp() {}
@@ -106,13 +107,13 @@ public class IndexingStamp {
       );
     }
   }
-  
+
   public static synchronized void rewriteVersion(@NotNull ID<?,?> indexId, final int version) throws IOException {
+    if (FileBasedIndex.USE_IN_MEMORY_INDEX) return;
     File file = IndexInfrastructure.getVersionFile(indexId);
     if (FileBasedIndexImpl.LOG.isDebugEnabled()) {
       FileBasedIndexImpl.LOG.debug("Rewriting " + file + "," + version);
     }
-    SharedIndicesData.beforeSomeIndexVersionInvalidation();
     IndexVersion newIndexVersion = getIndexVersion(indexId).nextVersion(version, FSRecords.getCreationTimestamp());
 
     if (file.exists()) {
@@ -122,9 +123,8 @@ public class IndexingStamp {
       file.getParentFile().mkdirs();
     }
     try (final DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
-      @Nullable
       @Override
-      public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
+      public @Nullable DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
         try {
           return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
         }
@@ -147,30 +147,83 @@ public class IndexingStamp {
 
   private static final int OUR_INDICES_TIMESTAMP_INCREMENT = SystemProperties.getIntProperty("idea.indices.timestamp.resolution", 1);
 
-  public static boolean versionDiffers(@NotNull ID<?,?> indexId, final int currentIndexVersion) {
+  public static IndexVersionDiff versionDiffers(@NotNull ID<?,?> indexId, int currentIndexVersion) {
     IndexVersion version = getIndexVersion(indexId);
+    if (version.myIndexVersion == -1) return new IndexVersionDiff.InitialBuild(currentIndexVersion);
+
     if (version.myIndexVersion != currentIndexVersion) {
-      FileBasedIndexImpl.LOG.info("index version changed for '" + indexId + "'; old = " + version.myIndexVersion + ", new = " + currentIndexVersion);
-      return true;
+      return new IndexVersionDiff.VersionChanged(version.myIndexVersion, currentIndexVersion, "index version");
     }
+
     if (version.myCommonIndicesVersion != VERSION) {
-      FileBasedIndexImpl.LOG.info("common index version changed for '" + indexId + "'; old = " + version.myIndexVersion + ", new = " + currentIndexVersion);
-      return true;
+      return new IndexVersionDiff.VersionChanged(version.myCommonIndicesVersion, VERSION, "common index version");
     }
+
     if (version.myVfsCreationStamp != ourVfsCreationStamp) {
-      FileBasedIndexImpl.LOG.info("vfs creation stamp changed; old = " + version.myIndexVersion + ", new = " + currentIndexVersion);
-      return true;
+      return new IndexVersionDiff.VersionChanged(version.myVfsCreationStamp, ourVfsCreationStamp, "vfs creation stamp");
     }
-    return false;
+
+    return IndexVersionDiff.UP_TO_DATE;
   }
-  
+
+  public interface IndexVersionDiff {
+    @NotNull
+    String getLogText();
+
+    IndexVersionDiff UP_TO_DATE = new IndexVersionDiff() {
+      @Override
+      public @NotNull String getLogText() {
+        return "";
+      }
+    };
+
+    class InitialBuild implements IndexVersionDiff {
+      private final int myVersion;
+
+      public InitialBuild(int version) {myVersion = version;}
+
+      @Override
+      public @NotNull String getLogText() {
+        return "(v = " + myVersion + ")";
+      }
+    }
+
+    class CorruptedRebuild implements IndexVersionDiff {
+      private final int myVersion;
+
+      public CorruptedRebuild(int version) {myVersion = version;}
+
+      @Override
+      public @NotNull String getLogText() {
+        return "(corrupted, v = " + myVersion + ")";
+      }
+    }
+
+    class VersionChanged implements IndexVersionDiff {
+      private final long myPreviousVersion;
+      private final long myActualVersion;
+      private final String myVersionType;
+
+      public VersionChanged(long previousVersion, long actualVersion, String type) {
+        myPreviousVersion = previousVersion;
+        myActualVersion = actualVersion;
+        myVersionType = type;
+      }
+
+      @Override
+      public @NotNull String getLogText() {
+        return "(" + myVersionType + " : " + myPreviousVersion + " -> " + myActualVersion + ")";
+      }
+    }
+  }
+
   public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
     IndexVersion version = getIndexVersion(indexName);
     return version.myModificationCount;
   }
 
   private static final IndexVersion NON_EXISTING_INDEX_VERSION = new IndexVersion(0, -1, -1);
-  
+
   private static @NotNull IndexVersion getIndexVersion(@NotNull ID<?, ?> indexName) {
     IndexVersion version = ourIndexIdToCreationStamp.get(indexName);
     if (version != null) return version;
@@ -195,9 +248,11 @@ public class IndexingStamp {
     return version;
   }
 
-  public static boolean isFileIndexedStateCurrent(int fileId, ID<?, ?> indexName) {
+  public static FileIndexingState isFileIndexedStateCurrent(int fileId, ID<?, ?> indexName) {
     try {
-      return getIndexStamp(fileId, indexName) == getIndexCreationStamp(indexName);
+      long stamp = getIndexStamp(fileId, indexName);
+      if (stamp == 0) return FileIndexingState.NOT_INDEXED;
+      return stamp == getIndexCreationStamp(indexName) ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
@@ -206,7 +261,7 @@ public class IndexingStamp {
       }
     }
 
-    return false;
+    return FileIndexingState.OUT_DATED;
   }
 
   public static void setFileIndexedStateCurrent(int fileId, ID<?, ?> id) {
@@ -396,8 +451,7 @@ public class IndexingStamp {
     }
   }
 
-  @NotNull
-  public static List<ID<?,?>> getNontrivialFileIndexedStates(int fileId) {
+  public static @NotNull List<ID<?,?>> getNontrivialFileIndexedStates(int fileId) {
     if (fileId != INVALID_FILE_ID) {
       Lock readLock = getStripedLock(fileId).readLock();
       readLock.lock();

@@ -35,7 +35,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final ChangeInfoCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
   private final Runnable myListChangeListener;
-  private String myOperationName;
+  private final String myOperationName;
 
   public static void rollbackChanges(final Project project, final Collection<? extends Change> changes) {
     final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
@@ -99,11 +99,11 @@ public class RollbackChangesDialog extends DialogWrapper {
     myBrowser.setInclusionChangedListener(myListChangeListener);
     Disposer.register(getDisposable(), myBrowser);
 
-    myOperationName = operationNameByChanges(project, myBrowser.getAllChanges());
-    myBrowser.setToggleActionTitle("&Include in " + StringUtil.toLowerCase(myOperationName));
-    setOKButtonText(myOperationName);
+    String operationName = operationNameByChanges(project, myBrowser.getAllChanges());
+    setOKButtonText(operationName);
 
-    myOperationName = UIUtil.removeMnemonic(myOperationName);
+    myOperationName = UIUtil.removeMnemonic(operationName);
+    myBrowser.setToggleActionTitle("&Include in " + StringUtil.toLowerCase(myOperationName));
     setTitle(VcsBundle.message("changes.action.rollback.custom.title", myOperationName));
     setCancelButtonText(CommonBundle.getCloseButtonText());
 

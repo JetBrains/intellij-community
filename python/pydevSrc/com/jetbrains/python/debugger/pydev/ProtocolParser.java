@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
@@ -13,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.xmlpull.mxp1.MXParser;
 
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -317,7 +317,7 @@ public class ProtocolParser {
 
   public static @NotNull List<Pair<String, Boolean>> parseSmartStepIntoVariants(String text) throws PyDebuggerException {
     XppReader reader = openReader(text, false);
-    List<Pair<String, Boolean>> variants = Lists.newArrayList();
+    List<Pair<String, Boolean>> variants = new ArrayList<>();
     while (reader.hasMoreChildren()) {
       reader.moveDown();
       String variantName = read(reader, "name", true);
@@ -329,8 +329,8 @@ public class ProtocolParser {
   }
 
   private static void parseArrayHeaderData(XppReader reader, ArrayChunkBuilder result) throws PyDebuggerException {
-    List<String> rowHeaders = Lists.newArrayList();
-    List<ArrayChunk.ColHeader> colHeaders = Lists.newArrayList();
+    List<String> rowHeaders = new ArrayList<>();
+    List<ArrayChunk.ColHeader> colHeaders = new ArrayList<>();
     reader.moveDown();
     while (reader.hasMoreChildren()) {
       reader.moveDown();

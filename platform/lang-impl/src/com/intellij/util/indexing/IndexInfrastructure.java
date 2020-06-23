@@ -9,7 +9,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -96,7 +95,10 @@ public class IndexInfrastructure {
       if (relativePath.length() > 0) relativePath = File.separator + relativePath;
       indexDir = new File(PathManager.getIndexRoot() + relativePath, indexName);
     }
-    indexDir.mkdirs();
+    if (!FileBasedIndex.USE_IN_MEMORY_INDEX) {
+      // TODO should be created automatically with storages
+      indexDir.mkdirs();
+    }
     return indexDir;
   }
 
@@ -151,7 +153,7 @@ public class IndexInfrastructure {
       if (ourDoParallelIndicesInitialization) {
         ExecutorService taskExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
           "IndexInfrastructure.DataInitialization.RunParallelNestedInitializationTasks", PooledThreadExecutor.INSTANCE,
-          CacheUpdateRunner.indexingThreadCount());
+          UnindexedFilesUpdater.getNumberOfIndexingThreads());
 
         for (ThrowableRunnable<?> callable : myNestedInitializationTasks) {
           taskExecutor.execute(() -> executeNestedInitializationTask(callable, proceedLatch));

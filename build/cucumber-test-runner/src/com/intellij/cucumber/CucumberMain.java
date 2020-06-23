@@ -28,7 +28,6 @@ import cucumber.runtime.io.MultiLoader;
 import cucumber.runtime.io.Resource;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
 import org.jetbrains.annotations.NotNull;
-import sun.net.www.ParseUtil;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -69,7 +68,7 @@ public class CucumberMain {
 
   public static URL fileToEncodedURL(String path) {
     try {
-      return ParseUtil.fileToEncodedURL(new File(path));
+      return new File(path).toURI().toURL();
     } catch (MalformedURLException e) {
       return null;
     }

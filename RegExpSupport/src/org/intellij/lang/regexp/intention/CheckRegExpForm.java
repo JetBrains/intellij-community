@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -84,6 +85,7 @@ public class CheckRegExpForm {
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         editor.putUserData(CHECK_REG_EXP_EDITOR, Boolean.TRUE);
+        editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
       }
@@ -98,6 +100,7 @@ public class CheckRegExpForm {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
+        editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
       }
@@ -176,19 +179,19 @@ public class CheckRegExpForm {
     mySampleText.setBackground(result == RegExpMatchResult.MATCHES ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
     switch (result) {
       case MATCHES:
-        myMessage.setText("Matches!");
+        myMessage.setText(RegExpBundle.message("intention.balloon.matches"));
         break;
       case NO_MATCH:
-        myMessage.setText("No match");
+        myMessage.setText(RegExpBundle.message("intention.balloon.no.match"));
         break;
       case TIMEOUT:
-        myMessage.setText("Pattern is too complex");
+        myMessage.setText(RegExpBundle.message("intention.balloon.pattern.is.too.complex"));
         break;
       case BAD_REGEXP:
-        myMessage.setText("Bad pattern");
+        myMessage.setText(RegExpBundle.message("intention.balloon.bad.pattern"));
         break;
       case INCOMPLETE:
-        myMessage.setText("More input expected");
+        myMessage.setText(RegExpBundle.message("intention.balloon.more.input.expected"));
         break;
       default:
         throw new AssertionError();

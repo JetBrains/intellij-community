@@ -408,7 +408,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       }
       ProblemHighlightType highlightType =
         migration.isShouldWarn() ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.INFORMATION;
-      String message = "Can be replaced with '" + migration.getReplacement() + "' call";
+      String message = JavaBundle.message("inspection.stream.api.migration.can.be.replaced.with.call", migration.getReplacement());
       TextRange range = getRange(migration.isShouldWarn(), statement, myIsOnTheFly);
       myHolder.registerProblem(statement, message, highlightType, range.shiftRight(-statement.getTextOffset()), fixes);
     }

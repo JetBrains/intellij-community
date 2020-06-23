@@ -5,6 +5,7 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ public class ConfigureBranchContextDialog extends DialogWrapper {
   protected ConfigureBranchContextDialog(Project project) {
     super(project);
     myProject = project;
-    setTitle("Branch Workspace Settings");
+    setTitle(TaskBundle.message("branch.workspace.settings"));
 
     myReloadContext.setSelected(VcsConfiguration.getInstance(project).RELOAD_CONTEXT);
     myReloadContext.addActionListener(e -> myShowNotification.setEnabled(myReloadContext.isSelected()));

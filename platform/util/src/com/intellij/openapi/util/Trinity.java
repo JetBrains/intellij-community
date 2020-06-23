@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -42,7 +44,8 @@ public class Trinity<A, B, C> {
     return third;
   }
 
-  public static <A, B, C> Trinity<A, B, C> create(A first, B second, C third) {
+  @Contract(value = "_, _, _ -> new", pure = true)
+  public static <A, B, C> @NotNull Trinity<A, B, C> create(A first, B second, C third) {
     return new Trinity<>(first, second, third);
   }
 
@@ -59,9 +62,9 @@ public class Trinity<A, B, C> {
   @Override
   public final boolean equals(Object o){
     return o instanceof Trinity
-           && Comparing.equal(first, ((Trinity)o).first)
-           && Comparing.equal(second, ((Trinity)o).second)
-           && Comparing.equal(third, ((Trinity)o).third);
+           && Comparing.equal(first, ((Trinity<?,?,?>)o).first)
+           && Comparing.equal(second, ((Trinity<?,?,?>)o).second)
+           && Comparing.equal(third, ((Trinity<?,?,?>)o).third);
   }
 
   @Override

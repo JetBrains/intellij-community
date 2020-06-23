@@ -56,6 +56,7 @@ public class PluginHeaderPanel {
     myName.setFont(UIUtil.getLabelFont().deriveFont(4f + UIUtil.getLabelFont().getSize()));
 
     //data
+    //noinspection HardCodedStringLiteral
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
     myCategory.setText(plugin.getCategory() == null ? IdeBundle.message("label.category.unknown") : StringUtil.toUpperCase(plugin.getCategory()));
     String versionText;

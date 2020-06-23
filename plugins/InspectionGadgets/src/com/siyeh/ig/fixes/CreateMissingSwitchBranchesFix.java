@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
@@ -9,12 +11,13 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-public class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
+public final class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
   private final Set<String> myNames;
 
   public CreateMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, Set<String> names) {
@@ -53,5 +56,11 @@ public class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
     List<PsiSwitchLabelStatementBase> addedLabels = CreateSwitchBranchesUtil
       .createMissingBranches(switchBlock, allEnumConstants, myNames, caseExtractor);
     CreateSwitchBranchesUtil.createTemplate(switchBlock, addedLabels);
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiSwitchBlock block = myBlock.getElement();
+    return block == null ? null : new CreateMissingSwitchBranchesFix(PsiTreeUtil.findSameElementInCopy(block, target), myNames);
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.IProperty;
@@ -22,7 +8,6 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
@@ -32,9 +17,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.graph.*;
 import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +28,7 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-public class ResourceBundlePropertiesUpdateManager {
+public final class ResourceBundlePropertiesUpdateManager {
   private final static Logger LOG = Logger.getInstance(ResourceBundlePropertiesUpdateManager.class);
 
   private final ResourceBundle myResourceBundle;
@@ -88,7 +73,7 @@ public class ResourceBundlePropertiesUpdateManager {
     final IProperty property = propertiesFile.findPropertyByKey(key);
     if (property != null) {
       final String oldValue = property.getValue();
-      if (!Comparing.equal(oldValue, value)) {
+      if (!Objects.equals(oldValue, value)) {
         property.setValue(value);
         myCodeStyleManager.reformat(property.getPsiElement());
       }
@@ -206,7 +191,7 @@ public class ResourceBundlePropertiesUpdateManager {
     if (acyclic) {
       if (isAlphaSorted[0]) {
         final List<String> sortedNodes = new ArrayList<>(generator.getNodes());
-        Collections.sort(sortedNodes, String.CASE_INSENSITIVE_ORDER);
+        sortedNodes.sort(String.CASE_INSENSITIVE_ORDER);
         return Pair.create(sortedNodes, true);
       } else {
         final List<String> dfsNodes = dfstBuilder.getSortedNodes();
@@ -253,7 +238,7 @@ public class ResourceBundlePropertiesUpdateManager {
       if (myKeyIndices.containsKey(key)) {
         final IntArrayList indices = myKeyIndices.get(key);
         for (int i = 0; i < indices.size(); i++) {
-          final int searchIdx = indices.getQuick(i) + 1;
+          final int searchIdx = indices.getInt(i) + 1;
           if (searchIdx < myKeys.size()) {
             final String nextProperty = myKeys.get(searchIdx);
             if (nextProperty != null) {

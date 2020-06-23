@@ -46,6 +46,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
                     "import p1.ArrayList;\n" +
                     "\n" +
                     "import java.util.*;\n" +
+                    "\n" +
                     "public class Optimize {\n" +
                     "    Class[] c = {\n" +
                     "            Collection.class,\n" +
@@ -215,6 +216,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
                           "\n" +
                           "import static p.p2.B.C;\n" +
                           "import static p.p2.B.*;\n" +
+                          "\n" +
                           "public class A {\n" +
                           "    public static void main( String[] args )\n" +
                           "    {\n" +

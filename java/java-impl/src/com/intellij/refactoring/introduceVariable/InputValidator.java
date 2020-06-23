@@ -29,21 +29,15 @@ import java.util.HashSet;
 
 public class InputValidator implements IntroduceVariableBase.Validator {
   private final Project myProject;
-  private final PsiElement myAnchorStatementIfAll;
-  private final PsiElement myAnchorStatement;
   private final ExpressionOccurrenceManager myOccurenceManager;
   private final IntroduceVariableBase myIntroduceVariableBase;
 
   @Override
   public boolean isOK(IntroduceVariableSettings settings) {
     String name = settings.getEnteredName();
-    final PsiElement anchor;
-    final boolean replaceAllOccurrences = settings.isReplaceAllOccurrences();
-    if (replaceAllOccurrences) {
-      anchor = myAnchorStatementIfAll;
-    } else {
-      anchor = myAnchorStatement;
-    }
+    PsiExpression[] occurrences = settings.getReplaceChoice().filter(myOccurenceManager);
+    final PsiElement anchor = IntroduceVariableBase.getAnchor(occurrences);
+    if (anchor == null) return true;
     final PsiElement scope = anchor.getParent();
     if(scope == null) return true;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -59,13 +53,8 @@ public class InputValidator implements IntroduceVariableBase.Validator {
       }
     };
     JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(anchor, name, scope, anchor, visitor);
-    if (replaceAllOccurrences) {
-      final PsiExpression[] occurences = myOccurenceManager.getOccurrences();
-      for (PsiExpression occurence : occurences) {
-        IntroduceVariableBase.checkInLoopCondition(occurence, conflicts);
-      }
-    } else {
-      IntroduceVariableBase.checkInLoopCondition(myOccurenceManager.getMainOccurence(), conflicts);
+    for (PsiExpression occurence : occurrences) {
+      IntroduceVariableBase.checkInLoopCondition(occurence, conflicts);
     }
 
     if (conflicts.size() > 0) {
@@ -78,13 +67,9 @@ public class InputValidator implements IntroduceVariableBase.Validator {
 
   public InputValidator(final IntroduceVariableBase introduceVariableBase,
                         Project project,
-                        PsiElement anchorStatementIfAll,
-                        PsiElement anchorStatement,
                         ExpressionOccurrenceManager occurenceManager) {
     myIntroduceVariableBase = introduceVariableBase;
     myProject = project;
-    myAnchorStatementIfAll = anchorStatementIfAll;
-    myAnchorStatement = anchorStatement;
     myOccurenceManager = occurenceManager;
   }
 }

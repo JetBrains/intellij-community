@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.export;
 
 import com.intellij.application.options.codeStyle.properties.*;
@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.containers.MultiMap;
 import org.editorconfig.Utils;
-import org.editorconfig.configmanagement.EncodingManager;
+import org.editorconfig.configmanagement.ConfigEncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.configmanagement.StandardEditorConfigProperties;
 import org.editorconfig.configmanagement.extended.EditorConfigIntellijNameUtil;
@@ -68,7 +68,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
     if (myProject != null) {
       String encoding = Utils.getEncoding(myProject);
       if (encoding != null) {
-        myGeneralOptions.put(EncodingManager.charsetKey, encoding);
+        myGeneralOptions.put(ConfigEncodingManager.charsetKey, encoding);
       }
     }
     String lineSeparator = Utils.getLineSeparatorString(mySettings.getLineSeparator());
@@ -147,7 +147,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
         if (pattern != null) {
           write("\n[" + pattern + "]\n");
         }
-        Collections.sort(optionValueList, PAIR_COMPARATOR);
+        optionValueList.sort(PAIR_COMPARATOR);
         writeProperties(optionValueList, myCommentOutProperties);
         return true;
       }

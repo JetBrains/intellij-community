@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.AttachmentFactory;
@@ -183,8 +183,7 @@ public final class EditorUtil {
 
   public static int getVisualLineEndOffset(@NotNull Editor editor, int line) {
     VisualPosition endLineVisualPosition = new VisualPosition(line, getLastVisualLineColumnNumber(editor, line));
-    LogicalPosition endLineLogicalPosition = editor.visualToLogicalPosition(endLineVisualPosition);
-    return editor.logicalPositionToOffset(endLineLogicalPosition);
+    return editor.visualPositionToOffset(endLineVisualPosition);
   }
 
   public static float calcVerticalScrollProportion(@NotNull Editor editor) {
@@ -677,7 +676,7 @@ public final class EditorUtil {
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
     int line = editor instanceof EditorImpl ? editor.yToVisualLine(y) : y / editor.getLineHeight();
-    return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
+    return editor.visualToLogicalPosition(new VisualPosition(line, 0)).line;
   }
 
   /**
@@ -688,7 +687,7 @@ public final class EditorUtil {
     int visualLine = editor.yToVisualLine(y);
     int visualLineStartY = editor.visualLineToY(visualLine);
     if (y < visualLineStartY || y >= visualLineStartY + editor.getLineHeight()) return -1;
-    return visualLine > 0 ? editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line : 0;
+    return editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line;
   }
 
   public static boolean isAtLineEnd(@NotNull Editor editor, int offset) {
@@ -866,6 +865,22 @@ public final class EditorUtil {
   }
 
   /**
+   * Tells whether given inlay element is invisible due to folding of text in editor
+   */
+  public static boolean isInlayFolded(@NotNull Inlay inlay) {
+    Editor editor = inlay.getEditor();
+    Inlay.Placement placement = inlay.getPlacement();
+    int offset = inlay.getOffset();
+    if (placement == Inlay.Placement.AFTER_LINE_END) {
+      offset = DocumentUtil.getLineEndOffset(offset, editor.getDocument());
+    }
+    else if ((placement == Inlay.Placement.ABOVE_LINE || placement == Inlay.Placement.BELOW_LINE) && !inlay.isRelatedToPrecedingText()) {
+      offset--;
+    }
+    return editor.getFoldingModel().isOffsetCollapsed(offset);
+  }
+
+  /**
    * Returns top Y coordinate of editor visual line's area. The latter includes visual line itself and block inlays related to it.
    */
   public static int getVisualLineAreaStartY(@NotNull Editor editor, int visualLine) {
@@ -960,7 +975,7 @@ public final class EditorUtil {
     LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
     int offset = editor.logicalPositionToOffset(logicalPosition);
     if (!logicalPosition.equals(editor.offsetToLogicalPosition(offset))) return false; // virtual space
-    List<Inlay> inlays = editor.getInlayModel().getInlineElementsInRange(offset, offset);
+    List<Inlay<?>> inlays = editor.getInlayModel().getInlineElementsInRange(offset, offset);
     if (!inlays.isEmpty()) {
       VisualPosition inlaysStart = editor.offsetToVisualPosition(offset);
       if (inlaysStart.line == visualPosition.line) {

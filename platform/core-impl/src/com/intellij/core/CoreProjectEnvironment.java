@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -61,7 +61,7 @@ public class CoreProjectEnvironment {
     myProject.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
 
     myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(myPsiManager));
-    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
+    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myProject)));
     myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myProject));
     myProject.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
     myProject.registerService(DumbService.class, new MockDumbService(myProject));

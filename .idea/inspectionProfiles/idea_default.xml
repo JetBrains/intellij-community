@@ -200,6 +200,9 @@
     <inspection_tool class="CommaExpressionJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ComparisonOfShortAndChar" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="ComparisonToNaN" enabled="true" level="ERROR" enabled_by_default="true" />
+    <inspection_tool class="ConditionalBreakInInfiniteLoop" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="noConversionToDoWhile" value="true" />
+    </inspection_tool>
     <inspection_tool class="ConditionalExpressionWithIdenticalBranches" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ConflictingAnnotations" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ConfusingOctalEscape" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -208,9 +211,10 @@
     </inspection_tool>
     <inspection_tool class="ConstantConditionalExpressionJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ConstantConditions" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="Tests" level="WARNING" enabled="false">
+      <scope name="Tests" level="WARNING" enabled="true">
         <option name="SUGGEST_NULLABLE_ANNOTATIONS" value="false" />
         <option name="DONT_REPORT_TRUE_ASSERT_STATEMENTS" value="false" />
+        <option name="REPORT_UNSOUND_WARNINGS" value="false" />
       </scope>
       <scope name="runtime.classes" level="WARNING" enabled="false">
         <option name="SUGGEST_NULLABLE_ANNOTATIONS" value="true" />

@@ -1,5 +1,3 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.parser;
 
@@ -16,87 +14,24 @@ import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class EditorConfigParser implements PsiParser, LightPsiParser {
 
-  @Override
   public ASTNode parse(IElementType t, PsiBuilder b) {
     parseLight(t, b);
     return b.getTreeBuilt();
   }
 
-  @Override
   public void parseLight(IElementType t, PsiBuilder b) {
     boolean r;
     b = adapt_builder_(t, b, this, null);
     Marker m = enter_section_(b, 0, _COLLAPSE_, null);
-    if (t == ASTERISK_PATTERN) {
-      r = asterisk_pattern(b, 0);
-    }
-    else if (t == CHAR_CLASS) {
-      r = char_class(b, 0);
-    }
-    else if (t == CHAR_CLASS_EXCLAMATION) {
-      r = char_class_exclamation(b, 0);
-    }
-    else if (t == CHAR_CLASS_LETTER) {
-      r = char_class_letter(b, 0);
-    }
-    else if (t == DOUBLE_ASTERISK_PATTERN) {
-      r = double_asterisk_pattern(b, 0);
-    }
-    else if (t == FLAT_OPTION_KEY) {
-      r = flat_option_key(b, 0);
-    }
-    else if (t == FLAT_PATTERN) {
-      r = flat_pattern(b, 0);
-    }
-    else if (t == HEADER) {
-      r = header(b, 0);
-    }
-    else if (t == OPTION) {
-      r = option(b, 0);
-    }
-    else if (t == OPTION_VALUE_IDENTIFIER) {
-      r = option_value_identifier(b, 0);
-    }
-    else if (t == OPTION_VALUE_LIST) {
-      r = option_value_list(b, 0);
-    }
-    else if (t == OPTION_VALUE_PAIR) {
-      r = option_value_pair(b, 0);
-    }
-    else if (t == PATTERN) {
-      r = pattern(b, 0);
-    }
-    else if (t == PATTERN_ENUMERATION) {
-      r = pattern_enumeration(b, 0);
-    }
-    else if (t == QUALIFIED_KEY_PART) {
-      r = qualified_key_part(b, 0);
-    }
-    else if (t == QUALIFIED_OPTION_KEY) {
-      r = qualified_option_key(b, 0);
-    }
-    else if (t == QUESTION_PATTERN) {
-      r = question_pattern(b, 0);
-    }
-    else if (t == ROOT_DECLARATION) {
-      r = root_declaration(b, 0);
-    }
-    else if (t == ROOT_DECLARATION_KEY) {
-      r = root_declaration_key(b, 0);
-    }
-    else if (t == ROOT_DECLARATION_VALUE) {
-      r = root_declaration_value(b, 0);
-    }
-    else if (t == SECTION) {
-      r = section(b, 0);
-    }
-    else {
-      r = parse_root_(t, b, 0);
-    }
+    r = parse_root_(t, b);
     exit_section_(b, 0, m, t, r, true, TRUE_CONDITION);
   }
 
-  protected boolean parse_root_(IElementType t, PsiBuilder b, int l) {
+  protected boolean parse_root_(IElementType t, PsiBuilder b) {
+    return parse_root_(t, b, 0);
+  }
+
+  static boolean parse_root_(IElementType t, PsiBuilder b, int l) {
     return editorConfigFile(b, l + 1);
   }
 
@@ -844,14 +779,12 @@ public class EditorConfigParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  final static Parser not_header_parser_ = new Parser() {
-    @Override
+  static final Parser not_header_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return not_header(b, l + 1);
     }
   };
-  final static Parser not_next_entry_parser_ = new Parser() {
-    @Override
+  static final Parser not_next_entry_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return not_next_entry(b, l + 1);
     }

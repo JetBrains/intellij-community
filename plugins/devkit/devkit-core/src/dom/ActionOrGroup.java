@@ -24,12 +24,12 @@ public interface ActionOrGroup extends DomElement {
   @NotNull
   @NameValue
   @Stubbed
-  @Required(value = false)
+  @Required(false)
   GenericAttributeValue<String> getId();
 
   @NotNull
   @Stubbed
-  @Required(value = false)
+  @Required(false)
   GenericAttributeValue<String> getIcon();
 
   @NotNull
@@ -38,12 +38,12 @@ public interface ActionOrGroup extends DomElement {
 
   @NotNull
   @Stubbed
-  @Required(value = false)
+  @Required(false)
   GenericAttributeValue<String> getText();
 
   @NotNull
   @Stubbed
-  @Required(value = false)
+  @Required(false)
   GenericAttributeValue<String> getDescription();
 
   @NotNull

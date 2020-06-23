@@ -54,9 +54,9 @@ public class JavaMethodResolveHelper {
                                                                                                                                       languageLevel, containingFile);
     myProcessor = new MethodResolverProcessor(argumentList, containingFile, new PsiConflictResolver[]{resolver}) {
       @Override
-      protected MethodCandidateInfo createCandidateInfo(@NotNull final PsiMethod method, @NotNull final PsiSubstitutor substitutor,
-                                                        final boolean staticProblem,
-                                                        final boolean accessible, final boolean varargs) {
+      protected @NotNull MethodCandidateInfo createCandidateInfo(@NotNull final PsiMethod method, @NotNull final PsiSubstitutor substitutor,
+                                                                 final boolean staticProblem,
+                                                                 final boolean accessible, final boolean varargs) {
         return JavaMethodResolveHelper.this
           .createCandidateInfo(method, substitutor, staticProblem, myCurrentFileContext, !accessible, argumentList, argumentTypes,
                                languageLevel, varargs);
@@ -69,6 +69,7 @@ public class JavaMethodResolveHelper {
     };
   }
 
+  @NotNull
   protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method,
                                                     PsiSubstitutor substitutor,
                                                     boolean staticProblem,

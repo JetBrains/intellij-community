@@ -1,0 +1,10 @@
+<idea-plugin implementation-detail="true">
+  <id>org.jetbrains.idea.maven.model</id>
+  <name>JetBrains maven model api classes</name>
+  <vendor>JetBrains</vendor>
+  <description>
+    <![CDATA[
+    Technical plugin, provides maven model API
+    ]]>
+  </description>
+</idea-plugin>

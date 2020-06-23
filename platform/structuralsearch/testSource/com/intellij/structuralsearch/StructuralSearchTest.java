@@ -1407,7 +1407,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                         "class C extends B implements IC {}" +
                         "class D extends C {}";
     assertEquals("extends navigation match", 2, findMatchesCount(s107, "class '_ extends 'Type:+A {}"));
-    assertEquals("implements navigation match", 5, findMatchesCount(s107, "class '_ implements 'Type:+IA {}"));
+    assertEquals("extends navigation match 2", 3, findMatchesCount(s107, "interface '_ extends 'Type:*IA {}"));
+    assertEquals("extends navigation match 3", 2, findMatchesCount(s107, "interface '_ extends 'Type:+IA {}"));
+    assertEquals("implements navigation match", 3, findMatchesCount(s107, "class '_ implements 'Type:+IA {}"));
+    assertEquals("without hierarchy finds only direct implements", 1, findMatchesCount(s107, "class '_ implements '_T:IA {}"));
 
     final String s109 = "interface I {}" +
                         "interface I2 extends I {}" +
@@ -2010,8 +2013,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "class B3 extends A { }\n" +
                 "class C extends B2 { static void foo(); }\n";
     assertEquals("Find class within type hierarchy with not", 1,
-                 findMatchesCount(s1, "class '_ extends '_Extends:[!regex( *A )] implements '_Implements:[regex( I )] {}"));
-    assertEquals("Find class within type hierarchy with not, 2", 1,
+                 findMatchesCount(s1, "class '_ extends '_Extends:[!regex( *A )] implements '_Implements:[regex( *I )] {}"));
+    assertEquals("Find class within type hierarchy with not 2", 2,
+                 findMatchesCount(s1, "class '_C:[!regex( *A )] implements '_Implements:[regex( *I )] {}"));
+    assertEquals("Find class within type hierarchy with not 3", 1,
                  findMatchesCount(s1, "class '_ extends '_Extends:[!regex( *A )]{}"));
     assertEquals("Search in hierarchy on class identifier", 2, findMatchesCount(s1, "class '_X:*B2 {}"));
 

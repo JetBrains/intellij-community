@@ -108,8 +108,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   @NotNull
   @Override
   public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
-    return new GitCheckinOptions(
-      commitPanel, commitContext, collectActiveMovementProviders(myProject), isAmendCommitOptionSupported(commitPanel, this));
+    return new GitCheckinOptions(commitPanel, commitContext, isAmendCommitOptionSupported(commitPanel, this));
   }
 
   @Override
@@ -980,8 +979,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return file;
   }
 
-  private static void runWithMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String message,
-                                         @NotNull ThrowableConsumer<? super File, ? extends VcsException> task) throws VcsException {
+  public static void runWithMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String message,
+                                        @NotNull ThrowableConsumer<? super File, ? extends VcsException> task) throws VcsException {
     File messageFile;
     try {
       messageFile = createCommitMessageFile(project, root, message);
@@ -1131,11 +1130,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent, Disposable {
     @NotNull private final GitCommitOptionsUi myOptionsUi;
 
-    GitCheckinOptions(@NotNull CheckinProjectPanel commitPanel,
-                      @NotNull CommitContext commitContext,
-                      @NotNull List<GitCheckinExplicitMovementProvider> explicitMovementProviders,
-                      boolean showAmendOption) {
-      myOptionsUi = new GitCommitOptionsUi(commitPanel, commitContext, explicitMovementProviders, showAmendOption);
+    GitCheckinOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext, boolean showAmendOption) {
+      myOptionsUi = new GitCommitOptionsUi(commitPanel, commitContext, showAmendOption);
       Disposer.register(this, myOptionsUi);
     }
 
@@ -1182,11 +1178,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   @NotNull
-  private static List<GitCheckinExplicitMovementProvider> collectActiveMovementProviders(@NotNull Project project) {
+  static List<GitCheckinExplicitMovementProvider> collectActiveMovementProviders(@NotNull Project project) {
     GitCheckinExplicitMovementProvider[] allProviders = GitCheckinExplicitMovementProvider.EP_NAME.getExtensions();
     List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
     if (enabledProviders.isEmpty()) return Collections.emptyList();
-    if (Registry.is("git.explicit.commit.renames.prohibit.multiple.calls")) return enabledProviders;
 
     List<CommitChange> changes = map(ChangeListManager.getInstance(project).getAllChanges(), CommitChange::new);
     List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);

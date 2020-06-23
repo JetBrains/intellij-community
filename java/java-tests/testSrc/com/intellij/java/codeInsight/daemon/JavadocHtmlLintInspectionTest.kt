@@ -4,7 +4,7 @@ package com.intellij.java.codeInsight.daemon
 import com.intellij.codeInspection.javaDoc.JavadocHtmlLintInspection
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -15,7 +15,7 @@ private val DESCRIPTOR = object : DefaultLightProjectDescriptor() {
   override fun getSdk(): Sdk? {
     val jreHome = File(System.getProperty("java.home"))
     val jdkHome = if (jreHome.name == "jre") jreHome.parentFile else jreHome
-    return (JavaSdk.getInstance() as JavaSdkImpl).createMockJdk("java version \"{${JavaVersion.current()}}\"", jdkHome.path, false)
+    return IdeaTestUtil.createMockJdk("java version \"{${JavaVersion.current()}}\"", jdkHome.path)
   }
 }
 

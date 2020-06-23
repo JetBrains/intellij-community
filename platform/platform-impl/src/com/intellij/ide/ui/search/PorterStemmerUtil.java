@@ -1,30 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class PorterStemmerUtil {
+public final class PorterStemmerUtil {
   private PorterStemmerUtil() {
   }
 
-  @Nullable
-  public static String stem(String str) {
+  public static @Nullable String stem(String str) {
     // check for zero length
     final int strLen = str.length();
     if (strLen > 0) {
@@ -357,29 +341,17 @@ public class PorterStemmerUtil {
       if (isVowel(strchar)) return true;
     }
     // no aeiou but there is y
-    if (str.indexOf('y') > -1) {
-      return true;
-    }
-    else {
-      return false;
-    }
+    return str.indexOf('y') > -1;
   }
 
   private static boolean isVowel(char c) {
-    if ((c == 'a') || (c == 'e') || (c == 'i') || (c == 'o') || (c == 'u')) {
-      return true;
-    }
-    else {
-      return false;
-    }
+    return (c == 'a') || (c == 'e') || (c == 'i') || (c == 'o') || (c == 'u');
   }
 
   private static boolean endsWithDoubleConsonent(String str) {
     char c = str.charAt(str.length() - 1);
     if (str.length() > 1 && c == str.charAt(str.length() - 2)) {
-      if (!containsVowel(str.substring(str.length() - 2))) {
-        return true;
-      }
+      return !containsVowel(str.substring(str.length() - 2));
     }
     return false;
   }
@@ -424,11 +396,8 @@ public class PorterStemmerUtil {
     else if (!isVowel(v)) {
       return false;
     }
-    else if (isVowel(c2)) {
-      return false;
-    }
     else {
-      return true;
+      return !isVowel(c2);
     }
   }
 }

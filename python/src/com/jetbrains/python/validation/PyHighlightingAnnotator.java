@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.highlighting.PyHighlighter;
@@ -55,7 +56,7 @@ public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRan
     String suffix = node.getIntegerLiteralSuffix();
     if (suffix == null || "l".equalsIgnoreCase(suffix)) return;
     if (node.getContainingFile().getLanguage() != PythonLanguage.getInstance()) return;
-    getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("INSP.python.trailing.suffix.not.support", suffix))
+    getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("INSP.python.trailing.suffix.not.support", suffix))
       .range(node).create();
   }
 

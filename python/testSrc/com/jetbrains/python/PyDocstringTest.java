@@ -106,7 +106,7 @@ public class PyDocstringTest extends PyTestCase {
           remainingTokens.append(" \"").append(lexer.getTokenType().toString()).append("\"");
           lexer.advance();
         }
-        fail("Too many tokens. Following tokens: " + remainingTokens.toString());
+        fail("Too many tokens. Following tokens: " + remainingTokens);
       }
       String tokenName = lexer.getTokenType().toString();
       assertEquals("Token mismatch at position " + idx, expectedTokens[idx], tokenName);

@@ -17,6 +17,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myExpressionType.isValid() && PsiTypesUtil.allTypeParametersResolved(myVar, myExpressionType) && myVar.isValid();
+    return myExpressionType.isValid() && myVar.isValid() && PsiTypesUtil.allTypeParametersResolved(myVar, myExpressionType);
   }
 
   @Override
@@ -103,6 +104,10 @@ public class VariableTypeFromCallFix implements IntentionAction {
                                                                                    parameters,
                                                                                    expressions, PsiSubstitutor.EMPTY, resolved,
                                                                                    DefaultParameterTypeInferencePolicy.INSTANCE);
+            if (ContainerUtil.exists(psiSubstitutor.getSubstitutionMap().values(), 
+                                     t -> t != null && t.equalsToText(CommonClassNames.JAVA_LANG_VOID))) {
+              continue;
+            }
             final PsiType appropriateVarType = GenericsUtil.getVariableTypeByExpressionType(JavaPsiFacade.getElementFactory(
               project).createType(varClass, psiSubstitutor));
             if (!varType.equals(appropriateVarType)) {

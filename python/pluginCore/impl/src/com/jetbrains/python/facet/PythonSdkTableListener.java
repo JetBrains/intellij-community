@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.facet;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -24,40 +23,35 @@ import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class PythonSdkTableListener implements Disposable {
-  public PythonSdkTableListener(MessageBus messageBus) {
-    ProjectJdkTable.Listener jdkTableListener = new ProjectJdkTable.Listener() {
-      @Override
-      public void jdkAdded(@NotNull final Sdk sdk) {
-        if (sdk.getSdkType() instanceof PythonSdkType) {
-          ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-            addLibrary(sdk);
-          }));
-        }
-      }
+public class PythonSdkTableListener implements ProjectJdkTable.Listener {
 
-      @Override
-      public void jdkRemoved(@NotNull final Sdk sdk) {
-        if (sdk.getSdkType() instanceof PythonSdkType) {
-          removeLibrary(sdk);
-        }
-      }
+  @Override
+  public void jdkAdded(@NotNull final Sdk sdk) {
+    if (sdk.getSdkType() instanceof PythonSdkType) {
+      ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+        addLibrary(sdk);
+      }));
+    }
+  }
 
-      @Override
-      public void jdkNameChanged(@NotNull final Sdk sdk, @NotNull final String previousName) {
-        if (sdk.getSdkType() instanceof PythonSdkType) {
-          renameLibrary(sdk, previousName);
-        }
-      }
-    };
-    messageBus.connect(this).subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkTableListener);
+  @Override
+  public void jdkRemoved(@NotNull final Sdk sdk) {
+    if (sdk.getSdkType() instanceof PythonSdkType) {
+      removeLibrary(sdk);
+    }
+  }
+
+  @Override
+  public void jdkNameChanged(@NotNull final Sdk sdk, @NotNull final String previousName) {
+    if (sdk.getSdkType() instanceof PythonSdkType) {
+      renameLibrary(sdk, previousName);
+    }
   }
 
   static Library addLibrary(Sdk sdk) {
@@ -97,9 +91,5 @@ public class PythonSdkTableListener implements Disposable {
       }
       libraryTableModel.commit();
     }), ModalityState.NON_MODAL);
-  }
-
-  @Override
-  public void dispose() {
   }
 }

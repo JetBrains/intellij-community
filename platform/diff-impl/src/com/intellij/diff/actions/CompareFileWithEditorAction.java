@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.actions;
 
 import com.intellij.diff.actions.impl.MutableDiffRequestChain;
@@ -42,8 +40,7 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
     return true;
   }
 
-  @Nullable
-  private static VirtualFile getSelectedFile(@NotNull AnActionEvent e) {
+  private static @Nullable VirtualFile getSelectedFile(@NotNull AnActionEvent e) {
     VirtualFile[] array = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (array == null || array.length != 1 || array[0].isDirectory()) {
       return null;
@@ -52,8 +49,7 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
     return array[0];
   }
 
-  @Nullable
-  private static VirtualFile getEditingFile(@NotNull AnActionEvent e) {
+  private static @Nullable VirtualFile getEditingFile(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return null;
 
@@ -67,9 +63,8 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
     return !file1.equals(file2) && hasContent(file1) && hasContent(file2);
   }
 
-  @Nullable
   @Override
-  protected DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
+  protected @NotNull DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
     Project project = e.getProject();
 
     VirtualFile selectedFile = getSelectedFile(e);
@@ -80,9 +75,9 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
 
     DiffContent editorContent = chain.getContent2();
     if (editorContent instanceof DocumentContent) {
-      Editor[] editors = EditorFactory.getInstance().getEditors(((DocumentContent)editorContent).getDocument());
-      if (editors.length != 0) {
-        int currentLine = editors[0].getCaretModel().getLogicalPosition().line;
+      Editor editor = EditorFactory.getInstance().editors(((DocumentContent)editorContent).getDocument()).findFirst().orElse(null);
+      if (editor != null) {
+        int currentLine = editor.getCaretModel().getLogicalPosition().line;
         chain.putRequestUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, currentLine));
       }
     }

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.google.common.io.Files
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.util.io.FileUtil
@@ -19,64 +18,70 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.cache.BuildTargetState
 import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
+import org.jetbrains.jps.incremental.storage.ProjectStamps
 
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @CompileStatic
 class CompilationOutputsUploader {
-  private final String commitHistoryFile = "commit_history.json"
-  private final String agentPersistentStorage
+  private static final String COMMIT_HISTORY_FILE = "commit_history.json"
+  private static final int COMMITS_LIMIT = 200
+
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
+  private final String tmpDir
   private final Map<String, String> remotePerCommitHash
-  private final SourcesStateProcessor sourcesStateProcessor
+  private final boolean updateCommitHistory
 
-  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash,
-                             String agentPersistentStorage) {
-    this.agentPersistentStorage = agentPersistentStorage
+  private final AtomicInteger uploadedOutputsCount = new AtomicInteger()
+
+  private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
+  private final JpsCompilationPartsUploader uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
+
+  @Lazy
+  private String commitHash = {
+    if (remotePerCommitHash.size() == 1) return remotePerCommitHash.values().first()
+    StringBuilder commitHashBuilder = new StringBuilder()
+    int hashLength = (remotePerCommitHash.values().first().length() / remotePerCommitHash.size()) as int
+    remotePerCommitHash.each { key, value ->
+      commitHashBuilder.append(value.substring(0, hashLength))
+    }
+    return commitHashBuilder.toString()
+  }()
+
+  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash, String tmpDir,
+                             boolean updateCommitHistory) {
+    this.tmpDir = tmpDir
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
     this.remotePerCommitHash = remotePerCommitHash
     this.context = context
-
-    sourcesStateProcessor = new SourcesStateProcessor(context)
+    this.updateCommitHistory = updateCommitHistory
   }
 
-  def upload() {
-    JpsCompilationPartsUploader uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
+  def upload(Boolean publishTeamCityArtifacts) {
+    if (!sourcesStateProcessor.sourceStateFile.exists()) {
+      context.messages.warning("Compilation outputs doesn't contain source state file, please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag")
+      return
+    }
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     context.messages.info("$executorThreadsCount threads will be used for upload")
     NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
     executor.prestartAllCoreThreads()
-
     try {
       def start = System.nanoTime()
-      def dataStorageRoot = context.compilationData.dataStorageRoot
-      def sourceStateFile = sourcesStateProcessor.sourceStateFile
-      if (!sourceStateFile.exists()) {
-        context.messages.
-          warning("Compilation outputs doesn't contain source state file, please enable 'org.jetbrains.jps.portable.caches' flag")
-        return
-      }
       Map<String, Map<String, BuildTargetState>> currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
-      def commitHash = getCommitHash()
-
-      executor.submit {
-        // Upload jps caches started first because of the significant size of the output
-        def sourcePath = "caches/$commitHash"
-        if (uploader.isExist(sourcePath)) return
-        File zipFile = new File(dataStorageRoot.parent, commitHash)
-        zipBinaryData(zipFile, dataStorageRoot)
-        uploader.upload(sourcePath, zipFile)
-        FileUtil.delete(zipFile)
-
-        // Upload compilation metadata
-        sourcePath = "metadata/$commitHash"
-        if (uploader.isExist(sourcePath)) return
-        uploader.upload(sourcePath, sourceStateFile)
-        return
+      // In case if commits history is not updated it makes no sense to upload
+      // JPS caches archive as we're going to use hot compile outputs only and
+      // not to perform any further compilations.
+      if (updateCommitHistory) {
+        executor.submit {
+          // Upload jps caches started first because of the significant size of the output
+          uploadCompilationCache(publishTeamCityArtifacts)
+        }
       }
 
       uploadCompilationOutputs(currentSourcesState, uploader, executor)
@@ -84,19 +89,43 @@ class CompilationOutputsUploader {
       executor.waitForAllComplete(messages)
       executor.reportErrors(messages)
       messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)))
+      messages.reportStatisticValue("Total outputs", String.valueOf(sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size()))
+      messages.reportStatisticValue("Uploaded outputs", String.valueOf(uploadedOutputsCount.get()))
 
-      // Publish metadata file
-      def metadataFile = new File("$agentPersistentStorage/metadata.json")
-      Files.copy(sourceStateFile, metadataFile)
-      messages.artifactBuilt(metadataFile.absolutePath)
-      FileUtil.delete(sourceStateFile)
-
-      updateCommitHistory(uploader)
+      uploadMetadata()
+      if (updateCommitHistory) {
+        updateCommitHistory(uploader)
+      }
     }
     finally {
       executor.close()
       StreamUtil.closeStream(uploader)
     }
+  }
+
+  private void uploadCompilationCache(Boolean publishTeamCityArtifacts) {
+    String cachePath = "caches/$commitHash"
+    def exists = uploader.isExist(cachePath)
+
+    File dataStorageRoot = context.compilationData.dataStorageRoot
+    File zipFile = new File(dataStorageRoot.parent, commitHash)
+    zipBinaryData(zipFile, dataStorageRoot)
+    if (!exists) {
+      uploader.upload(cachePath, zipFile)
+    }
+
+    File zipCopy = new File(tmpDir, cachePath)
+    move(zipFile, zipCopy)
+    // Publish artifact for dependent configuration
+    if (publishTeamCityArtifacts) context.messages.artifactBuilt(zipCopy.absolutePath)
+  }
+
+  private void uploadMetadata() {
+    String metadataPath = "metadata/$commitHash"
+    File sourceStateFile = sourcesStateProcessor.sourceStateFile
+    uploader.upload(metadataPath, sourceStateFile)
+    File sourceStateFileCopy = new File(tmpDir, metadataPath)
+    move(sourceStateFile, sourceStateFileCopy)
   }
 
   void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
@@ -106,15 +135,20 @@ class CompilationOutputsUploader {
     }
   }
 
-  private void uploadCompilationOutput(CompilationOutput compilationOutput, JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
+  private void uploadCompilationOutput(CompilationOutput compilationOutput,
+                                       JpsCompilationPartsUploader uploader,
+                                       NamedThreadPoolExecutor executor) {
     executor.submit {
       def sourcePath = "${compilationOutput.type}/${compilationOutput.name}/${compilationOutput.hash}"
-      if (uploader.isExist(sourcePath)) return
       def outputFolder = new File(compilationOutput.path)
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
-      uploader.upload(sourcePath, zipFile)
-      FileUtil.delete(zipFile)
+      if (!uploader.isExist(sourcePath, false)) {
+        uploader.upload(sourcePath, zipFile)
+        uploadedOutputsCount.incrementAndGet()
+      }
+      File zipCopy = new File(tmpDir, sourcePath)
+      move(zipFile, zipCopy)
     }
   }
 
@@ -130,12 +164,11 @@ class CompilationOutputsUploader {
   }
 
   private void updateCommitHistory(JpsCompilationPartsUploader uploader) {
-    if (remotePerCommitHash.size() == 1) return
     Map<String, List<String>> commitHistory = new HashMap<>()
-    if (uploader.isExist(commitHistoryFile)) {
-      def content = uploader.getAsString(commitHistoryFile)
+    if (uploader.isExist(COMMIT_HISTORY_FILE, false)) {
+      def content = uploader.getAsString(COMMIT_HISTORY_FILE)
       if (!content.isEmpty()) {
-        Type type = new TypeToken<Map<String, List<String>>>(){}.getType();
+        Type type = new TypeToken<Map<String, List<String>>>() {}.getType()
         commitHistory = new Gson().fromJson(content, type) as Map<String, List<String>>
       }
     }
@@ -149,26 +182,21 @@ class CompilationOutputsUploader {
       }
       else {
         listOfCommits.add(value)
+        if (listOfCommits.size() > COMMITS_LIMIT) commitHistory.put(key, listOfCommits.takeRight(COMMITS_LIMIT))
       }
     }
 
     // Upload and publish file with commits history
     def jsonAsString = new Gson().toJson(commitHistory)
-    def file = new File("$agentPersistentStorage/$commitHistoryFile")
-    file.write(jsonAsString)
-    messages.artifactBuilt(file.absolutePath)
-    uploader.upload(commitHistoryFile, file)
-    FileUtil.delete(file)
+    File commitHistoryFile = new File(tmpDir, COMMIT_HISTORY_FILE)
+    commitHistoryFile.write(jsonAsString)
+    uploader.upload(COMMIT_HISTORY_FILE, commitHistoryFile)
   }
 
-  private String getCommitHash() {
-    if (remotePerCommitHash.size() == 1) return remotePerCommitHash.values().first()
-    StringBuilder commitHashBuilder = new StringBuilder()
-    int hashLength = (remotePerCommitHash.values().first().length() / remotePerCommitHash.size()) as int
-    remotePerCommitHash.each { key, value ->
-      commitHashBuilder.append(value.substring(0, hashLength))
-    }
-    return commitHashBuilder.toString()
+  private static move(File src, File dst) {
+    if (!src.exists()) throw new IllegalStateException("File $src doesn't exist.")
+    FileUtil.rename(src, dst)
+    if (!dst.exists()) throw new IllegalStateException("File $dst doesn't exist.")
   }
 
   @CompileStatic
@@ -177,10 +205,12 @@ class CompilationOutputsUploader {
       super(serverUrl, messages)
     }
 
-    boolean isExist(@NotNull final String path) {
+    boolean isExist(@NotNull final String path, boolean logIfExists = true) {
       int code = doHead(path)
       if (code == 200) {
-        log("File '$path' already exist on server, nothing to upload")
+        if (logIfExists) {
+          log("File '$path' already exist on server, nothing to upload")
+        }
         return true
       }
       if (code != 404) {
@@ -196,7 +226,7 @@ class CompilationOutputsUploader {
         debug("GET " + url)
 
         def request = new HttpGet(url)
-        response = myHttpClient.execute(request)
+        response = executeWithRetry(request)
 
         return EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_OCTET_STREAM.charset)
       }
@@ -209,6 +239,7 @@ class CompilationOutputsUploader {
     }
 
     boolean upload(@NotNull final String path, @NotNull final File file) {
+      log("Uploading '$path'.")
       return super.upload(path, file, false)
     }
   }

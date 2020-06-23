@@ -77,6 +77,18 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
           !substitutedBoundType.isAssignableFrom(originalBound)) {
         continue;
       }
+      if (substitutedBoundType instanceof PsiCapturedWildcardType) {
+        PsiType capturedWildcard = captureSubstitutor.substitute(typeParameter);
+        if (capturedWildcard instanceof PsiCapturedWildcardType) {
+          PsiType captureUpperBound = substitutedBoundType;
+          while (captureUpperBound instanceof PsiCapturedWildcardType) {
+            if (captureUpperBound == capturedWildcard) {
+              return null;
+            }
+            captureUpperBound = ((PsiCapturedWildcardType)captureUpperBound).getUpperBound();
+          }
+        }
+      }
 
       if (glb == null) {
         glb = substitutedBoundType;
@@ -109,7 +121,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
       return false;
     }
 
-    if ((myContext instanceof PsiReferenceExpression || myContext instanceof PsiMethodCallExpression) && 
+    if (!(myContext instanceof PsiTypeParameter) && 
         !manager.areElementsEquivalent(myParameter, captured.myParameter)) {
       return false;
     }

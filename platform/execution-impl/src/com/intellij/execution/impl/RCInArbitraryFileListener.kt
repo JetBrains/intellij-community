@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.*
 
 class RCInArbitraryFileListener : AsyncFileListener {
-  override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier? {
+  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
     val deletedRCFilePaths = mutableSetOf<String>()
     val updatedRCFilePaths = mutableSetOf<String>()
 
@@ -17,39 +17,39 @@ class RCInArbitraryFileListener : AsyncFileListener {
       }
 
       if (event is VFileContentChangeEvent || event is VFileCreateEvent) {
-        if (RCInArbitraryFileScanner.isFileWithRunConfigs(event.path)) {
+        if (RunConfigurationInArbitraryFileScanner.isFileWithRunConfigs(event.path)) {
           updatedRCFilePaths.add(event.path)
           deletedRCFilePaths.remove(event.path)
         }
       }
       else if (event is VFileCopyEvent) {
-        if (RCInArbitraryFileScanner.isFileWithRunConfigs(event.newParent.path + "/" + event.newChildName)) {
+        if (RunConfigurationInArbitraryFileScanner.isFileWithRunConfigs(event.newParent.path + "/" + event.newChildName)) {
           updatedRCFilePaths.add(event.path)
           deletedRCFilePaths.remove(event.path)
         }
       }
       else if (event is VFileDeleteEvent) {
-        if (RCInArbitraryFileScanner.isFileWithRunConfigs(event.path)) {
+        if (RunConfigurationInArbitraryFileScanner.isFileWithRunConfigs(event.path)) {
           updatedRCFilePaths.remove(event.path)
           deletedRCFilePaths.add(event.path)
         }
       }
       else if (event is VFileMoveEvent) {
-        if (RCInArbitraryFileScanner.isFileWithRunConfigs(event.oldPath)) {
+        if (RunConfigurationInArbitraryFileScanner.isFileWithRunConfigs(event.oldPath)) {
           updatedRCFilePaths.remove(event.oldPath)
           deletedRCFilePaths.add(event.oldPath)
         }
-        if (RCInArbitraryFileScanner.isFileWithRunConfigs(event.newPath)) {
+        if (RunConfigurationInArbitraryFileScanner.isFileWithRunConfigs(event.newPath)) {
           updatedRCFilePaths.add(event.newPath)
           deletedRCFilePaths.remove(event.newPath)
         }
       }
       else if (event is VFilePropertyChangeEvent && event.isRename) {
-        if (RCInArbitraryFileScanner.isFileWithRunConfigs(event.oldPath)) {
+        if (RunConfigurationInArbitraryFileScanner.isFileWithRunConfigs(event.oldPath)) {
           updatedRCFilePaths.remove(event.oldPath)
           deletedRCFilePaths.add(event.oldPath)
         }
-        if (RCInArbitraryFileScanner.isFileWithRunConfigs(event.newPath)) {
+        if (RunConfigurationInArbitraryFileScanner.isFileWithRunConfigs(event.newPath)) {
           updatedRCFilePaths.add(event.newPath)
           deletedRCFilePaths.remove(event.newPath)
         }

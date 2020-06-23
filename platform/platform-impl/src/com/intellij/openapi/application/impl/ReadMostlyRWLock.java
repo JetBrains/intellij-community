@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,8 +43,8 @@ import java.util.concurrent.locks.LockSupport;
  * Write lock: sets global {@link #writeRequested} bit and waits for all readers (in global {@link #readers} list) to release their locks by checking {@link Reader#readRequested} for all readers.
  */
 class ReadMostlyRWLock {
-  volatile Thread writeThread = null;
-  private volatile Thread writeIntendedThread = null;
+  volatile Thread writeThread;
+  private volatile Thread writeIntendedThread;
   volatile boolean writeRequested;  // this writer is requesting or obtained the write access
   private final AtomicBoolean writeIntent = new AtomicBoolean(false);
   private volatile boolean writeAcquired;   // this writer obtained the write lock
@@ -83,7 +84,8 @@ class ReadMostlyRWLock {
     return status;
   });
 
-  void setWriteThread(Thread thread) {
+  @TestOnly
+  void setWriteThread(@NotNull Thread thread) {
     assert !writeAcquired;
     assert !writeRequested;
     assert writeThread == null;

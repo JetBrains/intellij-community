@@ -8,7 +8,7 @@ import org.apache.http.entity.ContentType
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.util.EntityUtils
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.impl.retry.RetriableCall
+import org.jetbrains.intellij.build.impl.retry.Retry
 
 /**
  * Download a default version of feature usage statistics white list to be bundled with IDE.
@@ -26,7 +26,7 @@ class StatisticsRecorderBundledWhiteListProvider {
       if (!list.parentFile.mkdirs() || !list.createNewFile()) {
         context.messages.error("Unable to create $list")
       }
-      list.write new RetriableCall(context.messages).retry {
+      list.write new Retry(context.messages).call {
         download(context, whiteListServiceUri(context).with {
           def name = context.applicationInfo.productCode + '.json'
           it.endsWith('/') ? "$it$name" : "$it/$name"

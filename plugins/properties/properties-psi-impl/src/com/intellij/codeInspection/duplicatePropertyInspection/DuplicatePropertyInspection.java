@@ -1,8 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicatePropertyInspection;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.GlobalSimpleInspectionTool;
+import com.intellij.codeInspection.HTMLComposer;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.concurrency.JobLauncher;
@@ -19,7 +28,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -27,16 +35,27 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processors;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import org.jetbrains.annotations.NotNull;
 
 public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   public boolean CURRENT_FILE = true;
@@ -185,6 +204,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       StringSearcher searcher = new StringSearcher(value, true, true);
       StringBuilder message = new StringBuilder();
       final int[] duplicatesCount = {0};
+      Property[] propertyInCurrentFile = new Property[1];
       Set<PsiFile> psiFilesWithDuplicates = valueToFiles.get(value);
       for (final PsiFile file : psiFilesWithDuplicates) {
         CharSequence text = file.getViewProvider().getContents();
@@ -192,19 +212,23 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
           PsiElement element = file.findElementAt(offset);
           if (element != null && element.getParent() instanceof Property) {
             final Property property = (Property)element.getParent();
-            if (Comparing.equal(property.getValue(), value) && element.getStartOffsetInParent() != 0) {
+            if (Objects.equals(property.getValue(), value) && element.getStartOffsetInParent() != 0) {
               if (duplicatesCount[0] == 0){
                 message.append(PropertiesBundle.message("duplicate.property.value.problem.descriptor", property.getValue()));
               }
               surroundWithHref(message, element, true);
               duplicatesCount[0]++;
+              if (propertyInCurrentFile[0] == null && psiFile == file) {
+                propertyInCurrentFile[0] = property;
+              }
             }
           }
           return true;
         });
       }
       if (duplicatesCount[0] > 1) {
-        problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(), false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        PsiElement elementToHighlight = ObjectUtils.notNull(propertyInCurrentFile[0], psiFile);
+        problemDescriptors.add(manager.createProblemDescriptor(elementToHighlight, message.toString(), false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
 
@@ -224,6 +248,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       }
       StringBuilder message = new StringBuilder();
       int duplicatesCount = 0;
+      PsiElement propertyInCurrentFile = null;
       Set<PsiFile> psiFilesWithDuplicates = keyToFiles.get(key);
       for (PsiFile file : psiFilesWithDuplicates) {
         if (!(file instanceof PropertiesFile)) continue;
@@ -242,10 +267,13 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
             keyToValues.put(key, values);
           }
           values.add(property.getValue());
+          if (propertyInCurrentFile == null && file == psiFile) {
+            propertyInCurrentFile = property.getPsiElement();
+          }
         }
       }
       if (duplicatesCount > 1 && CHECK_DUPLICATE_KEYS) {
-        problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(), false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        problemDescriptors.add(manager.createProblemDescriptor(ObjectUtils.notNull(propertyInCurrentFile, psiFile), message.toString(), false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
 
@@ -293,7 +321,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
                                         final Set<? super PsiFile> resultFiles) {
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.isEmpty()) return;
-    Collections.sort(words, (o1, o2) -> o2.length() - o1.length());
+    words.sort((o1, o2) -> o2.length() - o1.length());
     for (String word : words) {
       final Set<PsiFile> files = new THashSet<>();
       searchHelper.processAllFilesWithWord(word, scope, Processors.cancelableCollectProcessor(files), true);

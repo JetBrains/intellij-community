@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -17,6 +17,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
@@ -75,7 +76,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
   @Override
   public void run(@NotNull final ProgressIndicator indicator) {
-    ProjectLevelVcsManager.getInstanceChecked(myProject).startBackgroundVcsOperation();
+    ProjectLevelVcsManager.getInstance(myProject).startBackgroundVcsOperation();
     indicator.setIndeterminate(true);
     final boolean supportsChangelists = myNewFormat.supportsChangelists();
     if (supportsChangelists) {
@@ -105,7 +106,10 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
       // to map to native
       if (supportsChangelists) {
-        SvnVcs.getInstance(myProject).processChangeLists(myBeforeChangeLists);
+        ExclusiveBackgroundVcsAction.run(
+          myProject,
+          () -> SvnVcs.getInstance(myProject).synchronizeToNativeChangeLists(myBeforeChangeLists)
+        );
       }
 
       BackgroundTaskUtil.syncPublisher(SvnVcs.WC_CONVERTED).run();

@@ -11,7 +11,6 @@ interface GHPRSecurityService {
   fun isCurrentUser(user: GithubUser): Boolean
 
   fun currentUserHasPermissionLevel(level: GHRepositoryPermissionLevel): Boolean
-  fun currentUserCanEditPullRequestsMetadata(): Boolean
 
   fun isMergeAllowed(): Boolean
   fun isRebaseMergeAllowed(): Boolean

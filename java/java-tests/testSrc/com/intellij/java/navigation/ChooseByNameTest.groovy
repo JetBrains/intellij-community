@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ObjectUtils
@@ -554,18 +555,21 @@ class Intf {
   static SearchEverywhereContributor<Object> createClassContributor(Project project, PsiElement context = null, boolean everywhere = false) {
     def res = new TestClassContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
+    Disposer.register(project, res)
     return res
   }
 
   static SearchEverywhereContributor<Object> createFileContributor(Project project, PsiElement context = null, boolean everywhere = false) {
     def res = new TestFileContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
+    Disposer.register(project, res)
     return res
   }
 
   static SearchEverywhereContributor<Object> createSymbolContributor(Project project, PsiElement context = null, boolean everywhere = false) {
     def res = new TestSymbolContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
+    Disposer.register(project, res)
     return res
   }
 

@@ -1,0 +1,17 @@
+{
+  "groups": [
+    {
+      "id": "object.group",
+      "builds": [
+        {
+          "from": "191.4811"
+        }
+      ],
+      "rules": {
+        "event_data": {
+          "elements": ["enum:AAA|BBB|CCC"]
+        }
+      }
+    }
+  ]
+}

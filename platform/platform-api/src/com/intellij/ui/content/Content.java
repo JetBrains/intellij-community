@@ -5,11 +5,8 @@ import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.openapi.util.BusyObject;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +29,9 @@ public interface Content extends UserDataHolder, ComponentContainer {
   String PROP_ALERT = "alerting";
 
   Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
-  Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
+  @Deprecated Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
+  Key<TabGroupId> TAB_GROUP_ID_KEY = Key.create("tabbedGroupId");
+  Key<TabDescriptor> TAB_DESCRIPTOR_KEY = Key.create("tabDescriptor");
   Key<ComponentOrientation> TAB_LABEL_ORIENTATION_KEY = Key.create("tabLabelComponentOrientation");
   Key<DnDTarget> TAB_DND_TARGET_KEY = Key.create("tabDndTarget");
 
@@ -45,19 +44,20 @@ public interface Content extends UserDataHolder, ComponentContainer {
   void setIcon(Icon icon);
   Icon getIcon();
 
-  void setDisplayName(@Nls(capitalization = Nls.Capitalization.Title) String displayName);
+  void setDisplayName(@TabTitle String displayName);
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @TabTitle
   String getDisplayName();
 
-  void setTabName(@Nls(capitalization = Nls.Capitalization.Title)String tabName);
+  void setTabName(@TabTitle String tabName);
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @TabTitle
   String getTabName();
 
+  @TabTitle
   String getToolwindowTitle();
 
-  void setToolwindowTitle(String toolwindowTitle);
+  void setToolwindowTitle(@TabTitle String toolwindowTitle);
 
   @Nullable Disposable getDisposer();
 
@@ -65,9 +65,10 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   void setShouldDisposeContent(boolean value);
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NlsContexts.Tooltip
   String getDescription();
-  void setDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description);
+
+  void setDescription(@NlsContexts.Tooltip String description);
 
   void addPropertyChangeListener(PropertyChangeListener l);
 

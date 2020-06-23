@@ -286,7 +286,7 @@ public abstract class VcsLogUserFilterTest {
   }
 
   private static void assertFilteredCorrectly(@NotNull StringBuilder builder) {
-    TestCase.assertTrue("Incorrectly filtered log for\n" + builder.toString(), builder.toString().isEmpty());
+    TestCase.assertTrue("Incorrectly filtered log for\n" + builder, builder.toString().isEmpty());
   }
 
   private void recordCommit(@NotNull MultiMap<VcsUser, String> commits, @NotNull VcsUser user) throws IOException {

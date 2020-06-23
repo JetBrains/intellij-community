@@ -52,7 +52,7 @@ class ClassPatternsPanel extends JPanel {
     super(new BorderLayout());
     myModifiedPatterns = patterns;
     myTable = createTableForPatterns();
-    final String addClassMessage = "Add Class";
+    final String addClassMessage = JavaBundle.message("class.patterns.panel.add.class");
     final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(button -> {
         Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myTable));

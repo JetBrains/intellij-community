@@ -45,12 +45,6 @@ public class JUnit5TestRunnerUtil {
     "org.junit.jupiter.api.condition.DisabledOnOs"
   };
 
-  private static final String[] SCRIPT_COND_ANNO =
-    {
-      "org.junit.jupiter.api.condition.DisabledIf",
-      "org.junit.jupiter.api.condition.EnabledIf"
-    };
-
   private static final String[] ENABLED_COND_ANNO = {
     "org.junit.jupiter.api.condition.EnabledOnJre",
     "org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable",
@@ -172,10 +166,6 @@ public class JUnit5TestRunnerUtil {
 
     if (isDisabledCondition(ENABLED_COND_ANNO, loader, annotatedElement)) {
       return "org.junit.*Enabled*Condition";
-    }
-
-    if (isDisabledCondition(SCRIPT_COND_ANNO, loader, annotatedElement)) {
-      return "org.junit.*Script*Condition";
     }
 
     if (isDisabledCondition(DISABLED_ANNO, loader, annotatedElement)) {

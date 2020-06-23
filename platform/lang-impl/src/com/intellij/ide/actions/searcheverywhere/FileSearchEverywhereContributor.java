@@ -2,14 +2,12 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.GotoFileAction;
+import com.intellij.ide.util.gotoByName.FileTypeRef;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -21,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
@@ -30,7 +26,7 @@ import java.util.stream.Stream;
  */
 public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   private final GotoFileModel myModelForRenderer;
-  private final PersistentSearchEverywhereContributorFilter<FileType> myFilter;
+  private final PersistentSearchEverywhereContributorFilter<FileTypeRef> myFilter;
 
   public FileSearchEverywhereContributor(@NotNull AnActionEvent event) {
     super(event);
@@ -61,7 +57,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
 
   @NotNull
   @Override
-  protected FilteringGotoByModel<FileType> createModel(@NotNull Project project) {
+  protected FilteringGotoByModel<FileTypeRef> createModel(@NotNull Project project) {
     GotoFileModel model = new GotoFileModel(project);
     if (myFilter != null) {
       model.setFilterItems(myFilter.getSelectedElements());
@@ -78,7 +74,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @NotNull
   @Override
   public ListCellRenderer<Object> getElementsRenderer() {
-    //noinspection unchecked
     return new SERenderer() {
       @NotNull
       @Override
@@ -141,11 +136,9 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   }
 
   @NotNull
-  public static PersistentSearchEverywhereContributorFilter<FileType> createFileTypeFilter(@NotNull Project project) {
-    List<FileType> items = Stream.of(FileTypeManager.getInstance().getRegisteredFileTypes())
-                                 .sorted(GotoFileAction.FileTypeComparator.INSTANCE)
-                                 .collect(Collectors.toList());
-    return new PersistentSearchEverywhereContributorFilter<>(items, GotoFileConfiguration.getInstance(project), FileType::getName,
-                                                             FileType::getIcon);
+  public static PersistentSearchEverywhereContributorFilter<FileTypeRef> createFileTypeFilter(@NotNull Project project) {
+    List<FileTypeRef> items = FileTypeRef.forAllFileTypes();
+    return new PersistentSearchEverywhereContributorFilter<>(items, GotoFileConfiguration.getInstance(project), FileTypeRef::getName,
+                                                             FileTypeRef::getIcon);
   }
 }

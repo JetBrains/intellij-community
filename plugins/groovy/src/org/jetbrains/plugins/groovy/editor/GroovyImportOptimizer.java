@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.lang.ImportOptimizer;
@@ -237,8 +237,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       }
 
       final Comparator<GrImportStatement> comparator = getComparator(settings);
-      Collections.sort(result, comparator);
-      Collections.sort(explicated, comparator);
+      result.sort(comparator);
+      explicated.sort(comparator);
 
       explicated.addAll(result);
 

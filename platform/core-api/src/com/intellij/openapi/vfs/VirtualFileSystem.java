@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.Application;
@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Represents a Virtual File System (VFS).
@@ -159,5 +160,16 @@ public abstract class VirtualFileSystem {
 
   public boolean isValidName(@NotNull String name) {
     return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
+  }
+
+  /**
+   * @return a related {@link Path} for a given virtual file where possible or
+   * {@code null} otherwise.
+   * <br />
+   * The returned {@link Path} may not have a default filesystem behind.
+   */
+  @Nullable
+  public Path getNioPath(@NotNull VirtualFile file) {
+    return null;
   }
 }

@@ -14,7 +14,7 @@ public class DefaultFileTypeSpecificInputFilter implements FileBasedIndex.FileTy
   }
 
   @Override
-  public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+  public void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink) {
     for (FileType ft : myFileTypes) {
       fileTypeSink.consume(ft);
     }

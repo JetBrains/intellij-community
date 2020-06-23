@@ -2,19 +2,14 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-/**
- * @author stathik
- */
 public final class PluginNode implements IdeaPluginDescriptor {
   public enum Status {
     UNKNOWN, INSTALLED, DOWNLOADED, DELETED
@@ -50,6 +45,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String myRating;
   private boolean myIncomplete;
   private List<String> myTags;
+  private String externalUpdateId;
+  private String externalPluginId;
 
   public PluginNode() { }
 
@@ -119,6 +116,32 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setLicenseOptional(boolean optional) {
     this.licenseOptional = optional;
+  }
+
+  /**
+   * Plugin update unique ID from Marketplace database.
+   * Needed for getting Plugin meta information.
+   */
+  @Nullable
+  public String getExternalUpdateId() {
+    return externalUpdateId;
+  }
+
+  public void setExternalUpdateId(String externalUpdateId) {
+    this.externalUpdateId = externalUpdateId;
+  }
+
+  /**
+   * Plugin unique ID from Marketplace storage.
+   * Needed for getting Plugin meta information.
+   */
+  @Nullable
+  public String getExternalPluginId() {
+    return externalPluginId;
+  }
+
+  public void setExternalPluginId(String externalPluginId) {
+    this.externalPluginId = externalPluginId;
   }
 
   @Override
@@ -238,7 +261,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   public void setDate(String date) {
-    this.date = Long.valueOf(date).longValue();
+    this.date = Long.valueOf(date);
   }
 
   public long getDate() {
@@ -266,7 +289,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myTags = new ArrayList<>(tags);
   }
 
-  void addTags(@NotNull String tag) {
+  public void addTags(@NotNull String tag) {
     (myTags != null ? myTags : (myTags = new ArrayList<>())).add(tag);
   }
 
@@ -285,19 +308,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  @Nullable
-  public File getPath() {
-    return null;
-  }
-
-  @Override
   public Path getPluginPath() {
     return null;
-  }
-
-  @Override
-  public PluginId @NotNull [] getDependentPluginIds() {
-    return PluginId.EMPTY_ARRAY;
   }
 
   @Override
@@ -308,12 +320,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   @Override
   @Nullable
   public String getResourceBundleBaseName() {
-    return null;
-  }
-
-  @Override
-  @Nullable
-  public List<Element> getActionDescriptionElements() {
     return null;
   }
 

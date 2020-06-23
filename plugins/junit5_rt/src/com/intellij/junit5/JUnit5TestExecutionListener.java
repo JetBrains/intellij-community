@@ -16,7 +16,6 @@
 package com.intellij.junit5;
 
 import com.intellij.junit4.ExpectedPatterns;
-import com.intellij.junit4.JUnit4TestListener;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
@@ -118,10 +117,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         comment = myRootName.substring(0, lastPointIdx);
       }
 
-      myPrintStream.println("##teamcity[rootName name = \'" + escapeName(name) +
-                            (comment != null ? ("\' comment = \'" + escapeName(comment)) : "") + "\'" +
-                            " location = \'java:suite://" + escapeName(myRootName) +
-                            "\']");
+      myPrintStream.println("##teamcity[rootName name = '" + escapeName(name) +
+                            (comment != null ? ("' comment = '" + escapeName(comment)) : "") + "'" +
+                            " location = 'java:suite://" + escapeName(myRootName) +
+                            "']");
     }
   }
 
@@ -135,7 +134,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           sendTreeUnderRoot(childIdentifier, visited);
         }
         else {
-          System.err.println("Identifier \'" + getId(childIdentifier) + "\' is reused");
+          System.err.println("Identifier '" + getId(childIdentifier) + "' is reused");
         }
       }
       myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "]");
@@ -202,9 +201,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       if (messageName != null) {
         if (status == TestExecutionResult.Status.FAILED) {
           String parentId = getParentId(testIdentifier);
-          String nameAndId = " name=\'" + CLASS_CONFIGURATION +
-                             "\' nodeId=\'" + escapeName(getId(testIdentifier)) +
-                             "\' parentNodeId=\'" + escapeName(parentId) + "\' ";
+          String nameAndId = " name='" + CLASS_CONFIGURATION +
+                             "' nodeId='" + escapeName(getId(testIdentifier)) +
+                             "' parentNodeId='" + escapeName(parentId) + "' ";
           testFailure(CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason, true);
           myPrintStream.println("\n##teamcity[testFinished" + nameAndId + "]");
         }
@@ -236,7 +235,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
   
   private void testFinished(TestIdentifier testIdentifier, long duration) {
-    myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration=\'" + duration + "\'" : "") + "]");
+    myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration='" + duration + "'" : "") + "]");
   }
 
   private void testFailure(TestIdentifier testIdentifier,
@@ -325,10 +324,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   private String idAndName(TestIdentifier testIdentifier, String displayName) {
-    return " id=\'" + escapeName(getId(testIdentifier)) +
-           "\' name=\'" + escapeName(displayName) +
-           "\' nodeId=\'" + escapeName(getId(testIdentifier)) +
-           "\' parentNodeId=\'" + escapeName(getParentId(testIdentifier)) + "\'";
+    return " id='" + escapeName(getId(testIdentifier)) +
+           "' name='" + escapeName(displayName) +
+           "' nodeId='" + escapeName(getId(testIdentifier)) +
+           "' parentNodeId='" + escapeName(getParentId(testIdentifier)) + "'";
   }
 
   private String getParentId(TestIdentifier testIdentifier) {
@@ -351,14 +350,14 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return root.getSource()
       .map(testSource -> getLocationHintValue(testSource, rootParent != null ? rootParent.getSource().orElse(null) : null))
       .filter(maybeLocationHintValue -> !NO_LOCATION_HINT_VALUE.equals(maybeLocationHintValue))
-      .map(locationHintValue -> "locationHint=\'" + locationHintValue + "\'" + getMetainfo(root))
+      .map(locationHintValue -> "locationHint='" + locationHintValue + "'" + getMetainfo(root))
       .orElse(NO_LOCATION_HINT);
   }
 
   private static String getMetainfo(TestIdentifier root) {
     return root.getSource()
       .filter(testSource -> testSource instanceof MethodSource)
-      .map(testSource -> " metainfo=\'" + ((MethodSource)testSource).getMethodParameterTypes() + "\'")
+      .map(testSource -> " metainfo='" + ((MethodSource)testSource).getMethodParameterTypes() + "'")
       .orElse(NO_LOCATION_HINT);
   }
   

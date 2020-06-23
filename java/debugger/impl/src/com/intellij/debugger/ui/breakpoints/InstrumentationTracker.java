@@ -129,7 +129,7 @@ public class InstrumentationTracker {
 
     @Override
     protected void createRequestForPreparedClass(DebugProcessImpl debugProcess, ReferenceType classType) {
-      for (Method method : classType.methodsByName(myMethodName)) {
+      for (Method method : DebuggerUtilsEx.declaredMethodsByName(classType, myMethodName)) {
         createRequestInMethod(debugProcess, method);
       }
     }

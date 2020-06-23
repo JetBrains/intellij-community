@@ -5,10 +5,10 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.rd.RdIdeaKt;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
@@ -24,14 +24,14 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayout;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutCallback;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayout;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutCallback;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -806,7 +806,7 @@ public class JBTabsImpl extends JComponent
 
 
   /**
-   * TODO use {@link RdIdeaKt#childAtMouse(IdeGlassPane, Container)}
+   * TODO use {@link RdGraphicsExKt#childAtMouse(IdeGlassPane, Container)}
    */
   @Deprecated
   final class TabActionsAutoHideListener extends MouseMotionAdapter implements Weighted {
@@ -1171,7 +1171,9 @@ public class JBTabsImpl extends JComponent
       return result;
     }
     else {
-      requestFocus();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        requestFocus();
+      }, ModalityState.NON_MODAL);
       return removeDeferred();
     }
   }
@@ -1222,7 +1224,10 @@ public class JBTabsImpl extends JComponent
     if (toFocus == null) return ActionCallback.DONE;
 
     if (isShowing()) {
-      return myFocusManager.requestFocusInProject(toFocus, myProject);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myFocusManager.requestFocusInProject(toFocus, myProject);
+      }, ModalityState.NON_MODAL);
+      return ActionCallback.DONE;
     }
     return ActionCallback.REJECTED;
   }
@@ -1542,7 +1547,7 @@ public class JBTabsImpl extends JComponent
       result.add(getIndexInVisibleArray(each), each);
     }
     if (isAlphabeticalMode()) {
-      Collections.sort(result, ABC_COMPARATOR);
+      result.sort(ABC_COMPARATOR);
     }
 
     myAllTabs = result;
@@ -1862,7 +1867,7 @@ public class JBTabsImpl extends JComponent
       return myVisibleInfos;
     } else {
       List<TabInfo> sortedCopy = new ArrayList<>(myVisibleInfos);
-      Collections.sort(sortedCopy, ABC_COMPARATOR);
+      sortedCopy.sort(ABC_COMPARATOR);
       return sortedCopy;
     }
   }
@@ -2591,10 +2596,6 @@ public class JBTabsImpl extends JComponent
     return false;
   }
 
-  public boolean useBoldLabels() {
-    return false;
-  }
-
   @Override
   public boolean isSingleRow() {
     if (!NEW_TABS) {
@@ -2660,7 +2661,7 @@ public class JBTabsImpl extends JComponent
     relayout(true, false);
   }
 
-  private static void adjust(final TabInfo each) {
+  protected void adjust(final TabInfo each) {
     if (myAdjustBorders) {
       UIUtil.removeScrollBorder(each.getComponent());
     }
@@ -2668,7 +2669,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void sortTabs(Comparator<? super TabInfo> comparator) {
-    Collections.sort(myVisibleInfos, comparator);
+    myVisibleInfos.sort(comparator);
 
     relayout(true, false);
   }
@@ -2924,7 +2925,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  public void updateTabsLayout(TabsLayoutInfo newTabsLayoutInfo) {
+  public void updateTabsLayout(@NotNull TabsLayoutInfo newTabsLayoutInfo) {
     TabsLayout newTabsLayout = newTabsLayoutInfo.createTabsLayout(myTabsLayoutCallback);
 
     if (myTabsLayout != null) {

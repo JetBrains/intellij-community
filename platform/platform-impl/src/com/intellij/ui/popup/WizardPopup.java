@@ -82,7 +82,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     scrollPane.setBorder(JBUI.Borders.empty());
 
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
-         isResizable(), aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
+         isResizable(), aStep.getTitle(), null, true, Collections.emptySet(), false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.emptyList(),
          null, null, false, true, true, null, true, null);
 
@@ -282,7 +282,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   @Override
   @NotNull
-  protected MyContentPanel createContentPanel(final boolean resizable, final PopupBorder border, final boolean isToDrawMacCorner) {
+  protected MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
     return new MyContainer(border);
   }
 
@@ -291,7 +291,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   private static class MyContainer extends MyContentPanel {
-    private MyContainer(PopupBorder border) {
+    private MyContainer(@NotNull PopupBorder border) {
       super(border);
       setOpaque(true);
       setFocusCycleRoot(true);
@@ -311,14 +311,14 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       return computeNotBiggerDimension(super.getPreferredSize().getSize(), p);
     }
 
-    private Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
+    private static Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
       int resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
       if (locationOnScreen != null) {
         final Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
-        resultHeight = ofContent.height > r.height - (r.height / 4) ? r.height - (r.height / 4) : ofContent.height;
+        resultHeight = Math.min(ofContent.height, r.height - (r.height / 4));
       }
 
-      int resultWidth = ofContent.width > MAX_SIZE.width ? MAX_SIZE.width : ofContent.width;
+      int resultWidth = Math.min(ofContent.width, MAX_SIZE.width);
 
       if (ofContent.height > MAX_SIZE.height) {
         resultWidth += ScrollPaneFactory.createScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();

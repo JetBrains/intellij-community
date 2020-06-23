@@ -10,6 +10,11 @@ internal interface ChildEntity : TypedEntity {
   val dataClass: DataClass?
 }
 
+internal interface NoDataChildEntity : TypedEntity {
+  val parent: ParentEntity
+  val childProperty: String
+}
+
 internal interface ChildChildEntity : TypedEntity {
   val parent1: ParentEntity
   val parent2: ChildEntity
@@ -21,6 +26,10 @@ internal interface ParentEntity : ReferableTypedEntity {
   @JvmDefault
   val children
     get() = referrers(ChildEntity::parent)
+
+  @JvmDefault
+  val noDataChildren
+    get() = referrers(NoDataChildEntity::parent)
 
   @JvmDefault
   val optionalChildren
@@ -38,6 +47,11 @@ private interface ModifiableChildEntity : ChildEntity, ModifiableTypedEntity<Chi
   override var parent: ParentEntity
   override var childProperty: String
   override var dataClass: DataClass?
+}
+
+private interface ModifiableNoDataChildEntity : NoDataChildEntity, ModifiableTypedEntity<NoDataChildEntity> {
+  override var parent: ParentEntity
+  override var childProperty: String
 }
 
 private interface ModifiableChildChildEntity : ChildChildEntity, ModifiableTypedEntity<ChildChildEntity> {
@@ -71,6 +85,14 @@ internal fun TypedEntityStorageBuilder.addChildEntity(parentEntity: ParentEntity
     this.dataClass = dataClass
   }
 
+internal fun TypedEntityStorageBuilder.addNoDataChildEntity(parentEntity: ParentEntity = addParentEntity(),
+                                                      childProperty: String = "child",
+                                                      source: SampleEntitySource = SampleEntitySource("test")) =
+  addEntity(ModifiableNoDataChildEntity::class.java, source) {
+    this.parent = parentEntity
+    this.childProperty = childProperty
+  }
+
 private fun TypedEntityStorageBuilder.addChildChildEntity(parent1: ParentEntity, parent2: ChildEntity) =
   addEntity(ModifiableChildChildEntity::class.java, SampleEntitySource("test")) {
     this.parent1 = parent1
@@ -92,7 +114,7 @@ private fun TypedEntityStorage.singleChild() = entities(ChildEntity::class.java)
 class ReferencesInProxyBasedStorageTest {
   @Test
   fun `add entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val child = builder.addChildEntity(builder.addParentEntity("foo"))
     builder.checkConsistency()
     assertEquals("foo", child.parent.parentProperty)
@@ -103,10 +125,10 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `add entity via diff`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val parentEntity = builder.addParentEntity("foo")
 
-    val diff = TypedEntityStorageBuilder.from(builder.toStorage())
+    val diff = TypedEntityStorageBuilder.fromProxy(builder.toStorage())
     diff.addChildEntity(parentEntity = parentEntity)
     builder.addDiff(diff)
     builder.checkConsistency()
@@ -120,7 +142,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `add remove reference inside data class`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val parent1 = builder.addParentEntity("parent1")
     val parent2 = builder.addParentEntity("parent2")
     builder.checkConsistency()
@@ -141,7 +163,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `remove child entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val parent = builder.addParentEntity()
     builder.checkConsistency()
     val child = builder.addChildEntity(parent)
@@ -155,7 +177,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `remove parent entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val child = builder.addChildEntity()
     builder.removeEntity(child.parent)
     builder.checkConsistency()
@@ -165,7 +187,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `remove parent entity with two children`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val child1 = builder.addChildEntity()
     builder.addChildEntity(parentEntity = child1.parent)
     builder.removeEntity(child1.parent)
@@ -176,7 +198,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `remove parent entity in DAG`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val parent = builder.addParentEntity()
     val child = builder.addChildEntity(parentEntity = parent)
     builder.addChildChildEntity(parent, child)
@@ -188,7 +210,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `remove parent entity referenced via data class`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val parent1 = builder.addParentEntity("parent1")
     val parent2 = builder.addParentEntity("parent2")
     builder.addChildEntity(parent1, "child", DataClass("data", builder.createReference(parent2)))
@@ -201,7 +223,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `remove parent entity referenced via two paths`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val parent = builder.addParentEntity()
     builder.addChildEntity(parent, "child", DataClass("data", builder.createReference(parent)))
     builder.checkConsistency()
@@ -213,7 +235,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `modify parent property`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val child = builder.addChildEntity()
     val oldParent = child.parent
     val newParent = builder.modifyEntity(ModifiableParentEntity::class.java, child.parent) {
@@ -229,7 +251,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `modify optional parent property`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val child = builder.addChildWithOptionalParentEntity(null)
     assertNull(child.optionalParent)
     val newParent = builder.addParentEntity()
@@ -250,11 +272,11 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `modify parent property via diff`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val child = builder.addChildEntity()
     val oldParent = child.parent
 
-    val diff = TypedEntityStorageBuilder.from(builder)
+    val diff = TypedEntityStorageBuilder.fromProxy(builder)
     diff.modifyEntity(ModifiableParentEntity::class.java, child.parent) {
       parentProperty = "changed"
     }
@@ -270,7 +292,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `modify child property`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val child = builder.addChildEntity()
     val oldParent = child.parent
     val newChild = builder.modifyEntity(ModifiableChildEntity::class.java, child) {
@@ -288,7 +310,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `modify reference to parent`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val child = builder.addChildEntity()
     val oldParent = child.parent
     val newParent = builder.addParentEntity("new")
@@ -307,7 +329,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `modify reference to parent via data class`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val parent1 = builder.addParentEntity("parent1")
     val oldParent = builder.addParentEntity("parent2")
     val child = builder.addChildEntity(parent1, "child", DataClass("data", builder.createReference(oldParent)))
@@ -327,14 +349,14 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `builder from storage`() {
-    val storage = TypedEntityStorageBuilder.create().apply {
+    val storage = TypedEntityStorageBuilder.createProxy().apply {
       addChildEntity()
     }.toStorage()
     storage.checkConsistency()
 
     assertEquals("parent", storage.singleParent().parentProperty)
 
-    val builder = TypedEntityStorageBuilder.from(storage)
+    val builder = TypedEntityStorageBuilder.fromProxy(storage)
     builder.checkConsistency()
 
     val oldParent = builder.singleParent()
@@ -363,7 +385,7 @@ class ReferencesInProxyBasedStorageTest {
 
   @Test
   fun `storage from builder`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val child = builder.addChildEntity()
 
     val snapshot = builder.toStorage()

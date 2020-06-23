@@ -105,6 +105,21 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.map.AbstractHashedMap java.util.Collection values()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractHashedMap java.util.Set entrySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractHashedMap java.util.Set keySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap org.apache.commons.collections.MapIterator mapIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -128,6 +143,11 @@
     <item name='org.apache.commons.collections.map.AbstractHashedMap org.apache.commons.collections.map.AbstractHashedMap.HashEntry getEntry(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.map.AbstractHashedMap void destroyEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap void destroyEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -150,6 +170,11 @@
     </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap void removeEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 2'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractHashedMap void reuseEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, int, java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap void reuseEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, int, java.lang.Object, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -186,6 +211,11 @@
     <item name='org.apache.commons.collections.map.AbstractHashedMap.EntrySetIterator EntrySetIterator(org.apache.commons.collections.map.AbstractHashedMap) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.map.AbstractHashedMap.EntrySetIterator java.lang.Object next()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap.HashEntry HashEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -203,6 +233,11 @@
     <item name='org.apache.commons.collections.map.AbstractHashedMap.HashEntry java.lang.Object getValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractHashedMap.HashEntry java.lang.Object setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap.HashEntry java.lang.String toString()'>
@@ -233,6 +268,11 @@
     <item name='org.apache.commons.collections.map.AbstractHashedMap.HashIterator org.apache.commons.collections.map.AbstractHashedMap.HashEntry currentEntry()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractHashedMap.HashIterator org.apache.commons.collections.map.AbstractHashedMap.HashEntry nextEntry()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap.HashMapIterator HashMapIterator(org.apache.commons.collections.map.AbstractHashedMap)'>
@@ -399,6 +439,16 @@
     <item name='org.apache.commons.collections.map.AbstractLinkedMap.EntrySetIterator EntrySetIterator(org.apache.commons.collections.map.AbstractLinkedMap) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.map.AbstractLinkedMap.EntrySetIterator java.lang.Object next()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractLinkedMap.EntrySetIterator java.lang.Object previous()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.map.AbstractLinkedMap.KeySetIterator KeySetIterator(org.apache.commons.collections.map.AbstractLinkedMap)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -439,6 +489,21 @@
     <item name='org.apache.commons.collections.map.AbstractLinkedMap.LinkIterator org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry currentEntry()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractLinkedMap.LinkIterator org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry nextEntry()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractLinkedMap.LinkIterator org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry previousEntry()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractLinkedMap.LinkIterator void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.map.AbstractLinkedMap.LinkMapIterator LinkMapIterator(org.apache.commons.collections.map.AbstractLinkedMap)'>
@@ -543,6 +608,11 @@
     <item name='org.apache.commons.collections.map.AbstractReferenceMap java.lang.Object remove(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.map.AbstractReferenceMap java.util.Collection values()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.map.AbstractReferenceMap java.util.Iterator createEntrySetIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;-&gt;new&quot;"/>
@@ -560,6 +630,16 @@
             <val val="&quot;-&gt;new&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractReferenceMap java.util.Set entrySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractReferenceMap java.util.Set keySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.map.AbstractReferenceMap org.apache.commons.collections.MapIterator mapIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -738,6 +818,11 @@
     <item name='org.apache.commons.collections.map.CompositeMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.CompositeMap void setMutator(org.apache.commons.collections.map.CompositeMap.MapMutator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.map.DefaultedMap DefaultedMap(java.util.Map, java.lang.Object)'>
@@ -1017,6 +1102,11 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.map.Flat3Map.FlatMapIterator void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.map.Flat3Map.KeySet KeySet(org.apache.commons.collections.map.Flat3Map)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1721,6 +1811,11 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.map.MultiValueMap java.util.Collection values()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.map.MultiValueMap org.apache.commons.collections.map.MultiValueMap decorate(java.util.Map)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_-&gt;new&quot;"/>
@@ -1964,6 +2059,11 @@
     <item name='org.apache.commons.collections.map.SingletonMap java.lang.Object remove(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.map.SingletonMap java.lang.Object setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.map.SingletonMap java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -2036,6 +2136,11 @@
     <item name='org.apache.commons.collections.map.SingletonMap.SingletonMapIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.SingletonMap.SingletonMapIterator void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.map.SingletonMap.SingletonValues SingletonValues(org.apache.commons.collections.map.SingletonMap)'>
@@ -2192,6 +2297,11 @@
     <item name='org.apache.commons.collections.map.StaticBucketMap.Node java.lang.Object getValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.StaticBucketMap.Node java.lang.Object setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.map.StaticBucketMap.ValueIterator ValueIterator()'>

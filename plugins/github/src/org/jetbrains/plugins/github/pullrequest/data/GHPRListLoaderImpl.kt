@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.concurrency.JobScheduler
@@ -88,15 +88,9 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
     loadMore()
   }
 
-  override fun reloadData(request: CompletableFuture<out GHPullRequestShort>) {
-    request.handleOnEdt(resetDisposable) { result, error ->
-      if (error == null && result != null) updateData(result)
-    }
-  }
+  override fun findData(id: GHPRIdentifier) = listModel.items.find { it == id }
 
-  override fun findData(number: Long) = listModel.items.find { it.number == number }
-
-  private fun updateData(pullRequest: GHPullRequestShort) {
+  override fun updateData(pullRequest: GHPullRequestShort) {
     val index = listModel.items.indexOfFirst { it.id == pullRequest.id }
     listModel.setElementAt(pullRequest, index)
   }

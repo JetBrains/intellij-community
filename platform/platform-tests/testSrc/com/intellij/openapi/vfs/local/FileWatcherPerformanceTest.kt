@@ -58,17 +58,17 @@ class FileWatcherPerformanceTest : BareTestFixtureTestCase() {
     var watchedTime = 0L
 
     for (i in 1..WARM_UPS) {
-      createDeleteFiles(tempDir.newFolder())
+      createDeleteFiles(tempDir.newDirectory())
     }
 
     for (i in 1..REPEATS) {
       TimeoutUtil.sleep(250)
 
-      val unwatchedDir = tempDir.newFolder()
+      val unwatchedDir = tempDir.newDirectory()
       unwatchedTime += time { createDeleteFiles(unwatchedDir) }
       TimeoutUtil.sleep(250)
 
-      val watchedDir = tempDir.newFolder()
+      val watchedDir = tempDir.newDirectory()
       val request = startWatcher(watchedDir)
       watchedTime += time { createDeleteFiles(watchedDir) }
       waitForEvents()

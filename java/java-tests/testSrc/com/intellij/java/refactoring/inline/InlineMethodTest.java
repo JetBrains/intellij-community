@@ -554,6 +554,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testSingleReturnComplexQualifier() {
     doTestAssertBadReturn();
   }
+  
+  public void testAnonymousCall() { doTest(); }
 
   @Override
   protected Sdk getProjectJDK() {

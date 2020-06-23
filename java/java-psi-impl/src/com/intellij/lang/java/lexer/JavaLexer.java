@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.lexer;
 
 import com.intellij.lexer.LexerBase;
@@ -10,10 +10,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceHashingStrategy;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Set;
 
 import static com.intellij.psi.PsiKeyword.*;
@@ -25,9 +27,9 @@ public class JavaLexer extends LexerBase {
     RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,
     TRUE, FALSE, NULL);
 
-  private static final Set<CharSequence> JAVA9_KEYWORDS = ContainerUtil.newTroveSet(
-    CharSequenceHashingStrategy.CASE_SENSITIVE,
-    OPEN, MODULE, REQUIRES, EXPORTS, OPENS, USES, PROVIDES, TRANSITIVE, TO, WITH);
+  private static final Set<CharSequence> JAVA9_KEYWORDS =
+    new THashSet<>(Arrays.asList(OPEN, MODULE, REQUIRES, EXPORTS, OPENS, USES, PROVIDES, TRANSITIVE, TO, WITH),
+                   CharSequenceHashingStrategy.CASE_SENSITIVE);
 
   public static boolean isKeyword(String id, @NotNull LanguageLevel level) {
     return KEYWORDS.contains(id) ||

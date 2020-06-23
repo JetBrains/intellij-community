@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ContainerBasedSuppressQuickFix;
 import com.intellij.codeInspection.InjectionAwareSuppressQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.WriteAction;
@@ -20,7 +21,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,13 +75,13 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
 
   private String myText = "";
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionName
   @NotNull
   public String getText() {
     return myText;
   }
 
-  protected void setText(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String text) {
+  protected void setText(@IntentionName @NotNull String text) {
     myText = text;
   }
 

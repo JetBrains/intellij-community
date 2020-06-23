@@ -86,7 +86,8 @@ public class AnnotateLocalFileAction {
         }
 
         if (editor == null) {
-          Messages.showErrorDialog(project, "Can't create text editor for " + selectedFile.getPresentableUrl(),
+          Messages.showErrorDialog(project,
+                                   VcsBundle.message("dialog.message.can.t.create.text.editor.for", selectedFile.getPresentableUrl()),
                                    VcsBundle.message("message.title.annotate"));
           LOG.warn(String.format("Can't create text editor for file: valid - %s; file type - %s; editors - %s",
                                  selectedFile.isValid(), selectedFile.getFileType().getName(), Arrays.toString(fileEditors)));

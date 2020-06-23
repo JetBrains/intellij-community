@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -48,8 +49,9 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
   }
 
   protected static class AddBlankLineQuickFix extends BaseCommitMessageQuickFix {
-    protected AddBlankLineQuickFix() {
-      super(VcsBundle.getString("settings.commit.message.body.add.blank.line.fix"));
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return VcsBundle.getString("settings.commit.message.body.add.blank.line.fix");
     }
 
     @Override

@@ -1,4 +1,4 @@
 class Field {
 
-  String field = true ? "one" : "freak mulching accident"
+  String field = true ? <caret>"one" : "freak mulching accident";
 }

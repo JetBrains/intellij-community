@@ -12,7 +12,7 @@ import org.jetbrains.io.jsonRpc.Client;
 
 import java.nio.channels.ClosedChannelException;
 
-class WebSocketClient extends Client {
+public class WebSocketClient extends Client {
   private final WebSocketServerHandshaker handshaker;
 
   WebSocketClient(@NotNull Channel channel, @NotNull WebSocketServerHandshaker handshaker) {

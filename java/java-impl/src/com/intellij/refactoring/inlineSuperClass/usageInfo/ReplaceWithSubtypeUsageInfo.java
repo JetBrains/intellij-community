@@ -59,11 +59,11 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
     if (!TypeConversionUtil.isAssignable(myOriginalType, myTargetClassType)) {
       final String conflict = "No consistent substitution found for " +
                               getElement().getText() +
-                              ". Expected \'" +
+                              ". Expected '" +
                               myOriginalType.getPresentableText() +
-                              "\' but found \'" +
+                              "' but found '" +
                               myTargetClassType.getPresentableText() +
-                              "\'.";
+                              "'.";
       if (myConflict == null) {
         myConflict = conflict;
       } else {

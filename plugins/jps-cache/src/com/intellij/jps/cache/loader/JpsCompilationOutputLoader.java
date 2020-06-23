@@ -339,7 +339,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
         SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = extractIndicatorManager.createSubTaskIndicator();
         extractIndicatorManager.getProgressIndicator().checkCanceled();
         subTaskIndicator.setText2("Extracting compilation outputs for " + affectedModule.getName() + " module");
-        LOG.info("Downloaded JPS compiled module from: " + loadResult.getDownloadUrl());
+        LOG.debug("Downloaded JPS compiled module from: " + loadResult.getDownloadUrl());
         File tmpFolder = new File(outPath.getParent(), outPath.getName() + "_tmp");
         File zipFile = loadResult.getZipFile();
         ZipUtil.extract(zipFile, tmpFolder, null);

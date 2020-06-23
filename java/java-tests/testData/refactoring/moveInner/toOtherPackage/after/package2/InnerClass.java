@@ -1,3 +1,9 @@
 package package2;
 
-public class InnerClass { }
+import package1.AnotherPublic;
+
+public class InnerClass extends AnotherPublic {
+  {
+    foo();
+  }
+}

@@ -42,6 +42,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testOptionalOfNullable() { doTest(); }
   public void testPrimitiveOptional() { doTest(); }
   public void testOptionalOrElse() { doTest(); }
+  public void testOptionalIntSwitch() { doTest(); }
   public void testOptionalIsPresent() {
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
@@ -197,7 +198,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testStreamCustomSumMethod() { doTest(); }
   public void testStreamReduceLogicalAnd() { doTest(); }
   
-  public void testMapGetWithNotNullKeys() { doTestWithCustomAnnotations(); }
+  public void testMapGetWithValueNullability() { doTestWithCustomAnnotations(); }
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }
 
   public void testMethodVsExpressionTypeAnnotationConflict() {
@@ -279,4 +280,9 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testAllowRequireNonNullInCtor() { doTest(); }
   public void testNullableNotNullAssignmentInReturn() { doTest(); }
   public void testTransformMethod() { doTest(); }
+  public void testTernaryExpressionNumericType() { doTest(); }
+  public void testEclipseDefaultTypeUse() {
+    myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
+    doTest();
+  }
 }

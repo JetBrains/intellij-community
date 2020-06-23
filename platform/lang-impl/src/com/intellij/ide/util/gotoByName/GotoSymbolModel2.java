@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
+public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
   private String[] mySeparators;
   private final boolean myAllContributors;
 
@@ -36,7 +36,7 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   }
 
   private void addEpListener(@NotNull Project project) {
-    ChooseByNameContributor.CLASS_EP_NAME.addExtensionPointListener(
+    ChooseByNameContributor.CLASS_EP_NAME.addChangeListener(
       () -> mySeparators = null, project);
   }
 
@@ -49,19 +49,19 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   }
 
   @Override
-  protected Language filterValueFor(NavigationItem item) {
-    return item instanceof PsiElement ? ((PsiElement) item).getLanguage() : null;
+  protected LanguageRef filterValueFor(NavigationItem item) {
+    return LanguageRef.forNavigationitem(item);
   }
 
   @Nullable
   @Override
-  protected synchronized Collection<Language> getFilterItems() {
-    final Collection<Language> result = super.getFilterItems();
+  protected synchronized Collection<LanguageRef> getFilterItems() {
+    final Collection<LanguageRef> result = super.getFilterItems();
     if (result == null) {
       return null;
     }
-    final Collection<Language> items = new HashSet<>(result);
-    items.add(Language.ANY);
+    final Collection<LanguageRef> items = new HashSet<>(result);
+    items.add(LanguageRef.forLanguage(Language.ANY));
     return items;
   }
 

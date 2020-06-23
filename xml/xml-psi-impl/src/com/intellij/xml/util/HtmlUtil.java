@@ -273,7 +273,7 @@ public class HtmlUtil {
     return false;
   }
 
-  public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(XmlElement context) {
+  public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(PsiElement context) {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.ATTRIBUTE_SHORT_NAME);
     if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;
 
@@ -627,7 +627,7 @@ public class HtmlUtil {
 
   public static boolean isHtmlFile(@NotNull PsiElement element) {
     Language language = element.getLanguage();
-    return language.isKindOf(HTMLLanguage.INSTANCE) || language == XHTMLLanguage.INSTANCE;
+    return language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE);
   }
 
   public static boolean isHtmlFile(@NotNull VirtualFile file) {

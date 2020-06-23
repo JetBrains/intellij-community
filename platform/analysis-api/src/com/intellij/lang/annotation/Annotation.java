@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.ApiStatus;
@@ -319,7 +320,7 @@ public final class Annotation implements Segment {
    *
    * @param tooltip the tooltip text.
    */
-  public void setTooltip(final String tooltip) {
+  public void setTooltip(@NlsContexts.Tooltip String tooltip) {
     myTooltip = tooltip;
   }
 

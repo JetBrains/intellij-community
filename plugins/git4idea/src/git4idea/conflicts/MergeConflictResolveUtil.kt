@@ -8,6 +8,7 @@ import com.intellij.diff.chains.DiffRequestProducerException
 import com.intellij.diff.merge.*
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
+import com.intellij.openapi.vcs.merge.MergeUtils
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
@@ -40,7 +42,7 @@ object MergeConflictResolveUtil {
     if (lock.isLocked) return
     lock.lock()
 
-    val title = if (file != null) MergeDialogCustomizer().getMergeWindowTitle(file) else "Merge"
+    val title = if (file != null) MergeDialogCustomizer().getMergeWindowTitle(file) else DiffBundle.message("merge.files.dialog.title")
 
     val windowHandler = Consumer<WindowWrapper> { wrapper ->
       UIUtil.runWhenWindowClosed(wrapper.window) { lock.unlock() }
@@ -71,7 +73,7 @@ object MergeConflictResolveUtil {
           request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER,
                               listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
         }
-        MergeUtil.putRevisionInfos(request, mergeData)
+        MergeUtils.putRevisionInfos(request, mergeData)
         MergeCallback.register(request, MyMergeCallback(resolver))
         return request
       }

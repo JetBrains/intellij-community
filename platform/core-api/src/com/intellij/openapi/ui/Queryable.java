@@ -82,7 +82,7 @@ public interface Queryable {
         }
       }
 
-      return id + (info.length() > 0 ? " " + info.toString() : "");
+      return id + (info.length() > 0 ? " " + info : "");
     }
 
     @Nullable

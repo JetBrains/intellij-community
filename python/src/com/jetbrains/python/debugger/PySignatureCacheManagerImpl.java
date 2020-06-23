@@ -274,10 +274,10 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
 
     String message;
     if (deleted.get()) {
-      message = "Collected signatures were deleted";
+      message = PyBundle.message("python.debugger.collection.signatures.deleted");
     }
     else {
-      message = "Nothing to delete";
+      message = PyBundle.message("python.debugger.nothing.to.delete");
     }
     Messages.showInfoMessage(myProject, message, PyBundle.message("debugger.delete.signature.cache"));
   }

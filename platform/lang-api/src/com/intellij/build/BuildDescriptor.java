@@ -15,6 +15,9 @@
  */
 package com.intellij.build;
 
+import com.intellij.build.events.BuildEventsNls;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,9 +28,11 @@ public interface BuildDescriptor {
   Object getId();
 
   @NotNull
+  @BuildEventsNls.Title
   String getTitle();
 
   @NotNull
+  @NonNls
   String getWorkingDir();
 
   long getStartTime();

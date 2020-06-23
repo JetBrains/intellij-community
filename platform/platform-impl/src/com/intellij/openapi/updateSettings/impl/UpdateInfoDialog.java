@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.analytics.AndroidStudioAnalytics;
@@ -108,6 +108,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
       };
     }
     init();
+    //noinspection HardCodedStringLiteral
     setTitle("[TEST] " + getTitle());
   }
 
@@ -238,7 +239,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
       return;  // update cancelled
     }
 
-    new Task.Backgroundable(null, IdeBundle.message("update.notifications.title"), true, PerformInBackgroundOption.DEAF) {
+    new Task.Backgroundable(null, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
@@ -293,7 +294,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private static void restartLaterAndRunCommand(String[] command) {
-    IdeUpdateUsageTriggerCollector.trigger( "dialog.update.started");
+    IdeUpdateUsageTriggerCollector.trigger("dialog.update.started");
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     application.invokeLater(() -> application.restart(ApplicationEx.EXIT_CONFIRMED | ApplicationEx.SAVE, command));

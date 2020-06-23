@@ -59,7 +59,7 @@ public abstract class AbstractExternalSystemSettings<
 
   private @Nullable ExternalSystemManager<?, ?, ?, ?, ?> deduceManager() {
     return ExternalSystemApiUtil.getAllManagers().stream()
-      .filter(it -> equals(it.getSettingsProvider().fun(getProject())))
+      .filter(it -> equals(it.getSettingsProvider().fun(myProject)))
       .findFirst()
       .orElse(null);
   }
@@ -102,8 +102,7 @@ public abstract class AbstractExternalSystemSettings<
    * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
    */
   protected void doSubscribe(@NotNull L listener, @NotNull Disposable parentDisposable) {
-    Project project = getProject();
-    MessageBus messageBus = project.getMessageBus();
+    MessageBus messageBus = myProject.getMessageBus();
     MessageBusConnection connection = messageBus.connect(parentDisposable);
     connection.subscribe(getChangesTopic(), listener);
   }
@@ -228,7 +227,7 @@ public abstract class AbstractExternalSystemSettings<
 
   @NotNull
   public L getPublisher() {
-    return getProject().getMessageBus().syncPublisher(myChangesTopic);
+    return myProject.getMessageBus().syncPublisher(myChangesTopic);
   }
 
   protected void fillState(@NotNull State<PS> state) {
@@ -244,14 +243,14 @@ public abstract class AbstractExternalSystemSettings<
           ApplicationManager.getApplication().invokeLater(() -> {
             AbstractExternalSystemSettings.this.onProjectsLinked(settings);
             AbstractExternalSystemSettings.this.onProjectsLoaded(settings);
-          });
+          }, myProject.getDisposed());
         }
 
         @Override
         public void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
           ApplicationManager.getApplication().invokeLater(() -> {
             AbstractExternalSystemSettings.this.onProjectsUnlinked(linkedProjectPaths);
-          });
+          }, myProject.getDisposed());
         }
       });
     }
@@ -260,19 +259,19 @@ public abstract class AbstractExternalSystemSettings<
   private void onProjectsLoaded(@NotNull Collection<PS> settings) {
     getPublisher().onProjectsLoaded(settings);
     ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
-    if (manager != null) ExternalSystemSettingsListenerEx.Companion.onProjectsLoaded(getProject(), manager, settings);
+    if (manager != null) ExternalSystemSettingsListenerEx.Companion.onProjectsLoaded(myProject, manager, settings);
   }
 
   private void onProjectsLinked(@NotNull Collection<PS> settings) {
     getPublisher().onProjectsLinked(settings);
     ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
-    if (manager != null) ExternalSystemSettingsListenerEx.Companion.onProjectsLinked(getProject(), manager, settings);
+    if (manager != null) ExternalSystemSettingsListenerEx.Companion.onProjectsLinked(myProject, manager, settings);
   }
 
   private void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
     getPublisher().onProjectsUnlinked(linkedProjectPaths);
     ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
-    if (manager != null) ExternalSystemSettingsListenerEx.Companion.onProjectsUnlinked(getProject(), manager, linkedProjectPaths);
+    if (manager != null) ExternalSystemSettingsListenerEx.Companion.onProjectsUnlinked(myProject, manager, linkedProjectPaths);
   }
 
   public interface State<S> {

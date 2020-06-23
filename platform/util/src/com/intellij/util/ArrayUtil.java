@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
@@ -10,10 +10,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.BiPredicate;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public final class ArrayUtil extends ArrayUtilRt {
+public final class ArrayUtil {
   public static final char[] EMPTY_CHAR_ARRAY = ArrayUtilRt.EMPTY_CHAR_ARRAY;
   public static final byte[] EMPTY_BYTE_ARRAY = ArrayUtilRt.EMPTY_BYTE_ARRAY;
   public static final int[] EMPTY_INT_ARRAY = ArrayUtilRt.EMPTY_INT_ARRAY;
@@ -173,7 +177,7 @@ public final class ArrayUtil extends ArrayUtilRt {
     int[] ret = newIntArray(list.size());
     int i = 0;
     for (Integer e : list) {
-      ret[i++] = e.intValue();
+      ret[i++] = e;
     }
     return ret;
   }
@@ -273,7 +277,7 @@ public final class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <T> T @NotNull [] mergeArrayAndCollection(T @NotNull [] array,
                                                           @NotNull Collection<? extends T> collection,
-                                                          @NotNull final ArrayFactory<? extends T> factory) {
+                                                          final @NotNull ArrayFactory<? extends T> factory) {
     if (collection.isEmpty()) {
       return array;
     }
@@ -306,7 +310,7 @@ public final class ArrayUtil extends ArrayUtilRt {
    * @return new array
    */
   @Contract(pure=true)
-  public static <T> T @NotNull [] append(final T @NotNull [] src, @Nullable final T element) {
+  public static <T> T @NotNull [] append(final T @NotNull [] src, final @Nullable T element) {
     return append(src, element, getComponentType(src));
   }
 
@@ -352,7 +356,7 @@ public final class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] append(T @NotNull [] src, @Nullable final T element, @NotNull Class<T> componentType) {
+  public static <T> T @NotNull [] append(T @NotNull [] src, final @Nullable T element, @NotNull Class<T> componentType) {
     int length = src.length;
     T[] result = newArray(componentType, length + 1);
     System.arraycopy(src, 0, result, 0, length);
@@ -399,10 +403,8 @@ public final class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static <T> T @NotNull [] remove(final T @NotNull [] src, T element) {
-    final int idx = find(src, element);
-    if (idx == -1) return src;
-
-    return remove(src, idx);
+    int index = ArrayUtilRt.find(src, element);
+    return index == -1 ? src : remove(src, index);
   }
 
   @Contract(pure=true)
@@ -502,6 +504,10 @@ public final class ArrayUtil extends ArrayUtilRt {
     return true;
   }
 
+  /**
+   * @deprecated Use {@link #equals(Object[], Object[], Comparator)}
+   */
+  @Deprecated
   @Contract(pure=true)
   public static <T> boolean equals(T @NotNull [] a1, T @NotNull [] a2, @NotNull Equality<? super T> comparator) {
     //noinspection ArrayEquality
@@ -638,25 +644,21 @@ public final class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOf(@NotNull List<? extends T> objects, T object, @NotNull Equality<? super T> comparator) {
+  public static <T> int indexOf(@NotNull List<? extends T> objects, T object, @NotNull BiPredicate<? super T, ? super T> predicate) {
     for (int i = 0; i < objects.size(); i++) {
-      if (comparator.equals(objects.get(i), object)) return i;
+      if (predicate.test(objects.get(i), object)) {
+        return i;
+      }
     }
     return -1;
   }
 
   @Contract(pure=true)
-  public static <T> int indexOf(@NotNull List<? extends T> objects, T object, @NotNull Comparator<? super T> comparator) {
-    for (int i = 0; i < objects.size(); i++) {
-      if (comparator.compare(objects.get(i), object) == 0) return i;
-    }
-    return -1;
-  }
-
-  @Contract(pure=true)
-  public static <T> int indexOf(T @NotNull [] objects, T object, @NotNull Equality<? super T> comparator) {
+  public static <T> int indexOf(T @NotNull [] objects, T object, @NotNull BiPredicate<T, T> comparator) {
     for (int i = 0; i < objects.length; i++) {
-      if (comparator.equals(objects[i], object)) return i;
+      if (comparator.test(objects[i], object)) {
+        return i;
+      }
     }
     return -1;
   }
@@ -688,7 +690,7 @@ public final class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(final T @NotNull [] src, @Nullable final T obj) {
+  public static <T> int lastIndexOf(final T @NotNull [] src, final @Nullable T obj) {
     for (int i = src.length - 1; i >= 0; i--) {
       final T o = src[i];
       if (o == null) {
@@ -710,7 +712,7 @@ public final class ArrayUtil extends ArrayUtilRt {
     for (int i = src.length - 1; i >= 0; i--) {
       final int o = src[i];
       if (o == obj) {
-          return i;
+        return i;
       }
     }
     return -1;
@@ -721,17 +723,6 @@ public final class ArrayUtil extends ArrayUtilRt {
     for (int i = src.length - 1; i >= 0; i--) {
       final int o = src[i];
       if (o != obj) {
-          return i;
-      }
-    }
-    return -1;
-  }
-
-  @Contract(pure=true)
-  public static <T> int lastIndexOf(final T @NotNull [] src, final T obj, @NotNull Equality<? super T> comparator) {
-    for (int i = src.length - 1; i >= 0; i--) {
-      final T o = src[i];
-      if (comparator.equals(obj, o)) {
         return i;
       }
     }
@@ -739,10 +730,21 @@ public final class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull List<? extends T> src, final T obj, @NotNull Equality<? super T> comparator) {
+  public static <T> int lastIndexOf(final T @NotNull [] src, final T obj, @NotNull BiPredicate<? super T, ? super T> predicate) {
+    for (int i = src.length - 1; i >= 0; i--) {
+      final T o = src[i];
+      if (predicate.test(obj, o)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  @Contract(pure=true)
+  public static <T> int lastIndexOf(@NotNull List<? extends T> src, final T obj, @NotNull BiPredicate<? super T, ? super T> comparator) {
     for (int i = src.size() - 1; i >= 0; i--) {
       final T o = src.get(i);
-      if (comparator.equals(obj, o)) {
+      if (comparator.test(obj, o)) {
         return i;
       }
     }
@@ -751,7 +753,7 @@ public final class ArrayUtil extends ArrayUtilRt {
 
   @SafeVarargs
   @Contract(pure=true)
-  public static <T> boolean contains(@Nullable final T o, T @NotNull ... objects) {
+  public static <T> boolean contains(final @Nullable T o, T @NotNull ... objects) {
     return indexOf(objects, o) >= 0;
   }
 
@@ -786,9 +788,8 @@ public final class ArrayUtil extends ArrayUtilRt {
     return newArray(getComponentType(sample), count);
   }
 
-  @Nullable
-  @Contract(value = "null -> null", pure=true)
-  public static <T> T getFirstElement(T @Nullable [] array) {
+  @Contract(value = "null -> null", pure = true)
+  public static @Nullable <T> T getFirstElement(T @Nullable [] array) {
     return array != null && array.length > 0 ? array[0] : null;
   }
 
@@ -812,7 +813,7 @@ public final class ArrayUtil extends ArrayUtilRt {
     return ArrayUtilRt.toStringArray(collection);
   }
 
-  public static <T> void copy(@NotNull final Collection<? extends T> src, final T @NotNull [] dst, final int dstOffset) {
+  public static <T> void copy(final @NotNull Collection<? extends T> src, final T @NotNull [] dst, final int dstOffset) {
     int i = dstOffset;
     for (T t : src) {
       dst[i++] = t;
@@ -943,8 +944,7 @@ public final class ArrayUtil extends ArrayUtilRt {
     return o == newSize ? r : Arrays.copyOf(r, o);
   }
 
-  @NotNull
-  public static <T> Class<T> getComponentType(T @NotNull [] collection) {
+  public static @NotNull <T> Class<T> getComponentType(T @NotNull [] collection) {
     //noinspection unchecked
     return (Class<T>)collection.getClass().getComponentType();
   }

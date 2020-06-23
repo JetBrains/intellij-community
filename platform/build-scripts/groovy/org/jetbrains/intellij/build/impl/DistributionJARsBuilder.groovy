@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.MultiValuesMap
+
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.containers.MultiMap
 import groovy.io.FileType
+import groovy.transform.CompileStatic
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.Nullable
@@ -21,6 +23,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -85,7 +88,7 @@ class DistributionJARsBuilder {
     buildContext.messages.debug("Collecting project libraries used by plugins: ")
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
       final Collection<String> libsToUnpack = plugin.projectLibrariesToUnpack.values()
-      plugin.getActualModules(enabledPluginModules).values().collectMany {
+      plugin.moduleJars.values().collectMany {
         def module = buildContext.findRequiredModule(it)
         def libraries =
           JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
@@ -128,13 +131,14 @@ class DistributionJARsBuilder {
       }
 
       productLayout.moduleExcludes.entrySet().each {
-        layout.moduleExcludes.putAll(it.key, it.value)
+        layout.moduleExcludes.putValues(it.key, it.value)
       }
       withModule("intellij.platform.util")
       withModule("intellij.platform.util.rt", "util.jar")
       withModule("intellij.platform.util.classLoader", "util.jar")
       withModule("intellij.platform.util.ui")
       withModule("intellij.platform.util.ex")
+      withModule("intellij.platform.rd.community")
 
       withModule("intellij.platform.diagnostic")
       withModule("intellij.platform.ide.util.io")
@@ -237,6 +241,7 @@ class DistributionJARsBuilder {
   }
 
   void buildJARs() {
+    validateModuleStructure()
     prebuildSVG()
     buildOrderFiles()
     buildSearchableOptions()
@@ -284,6 +289,18 @@ class DistributionJARsBuilder {
   }
 
   /**
+   * Validates module structure to be ensure all module dependencies are included
+   */
+  @CompileStatic
+  void validateModuleStructure() {
+    if (!buildContext.options.validateModuleStructure)
+      return
+
+    def validator = new ModuleStructureValidator(buildContext, platform.moduleJars)
+    validator.validate()
+  }
+
+  /**
    * Build index which is used to search options in the Settings dialog.
    */
   void buildSearchableOptions() {
@@ -323,8 +340,7 @@ class DistributionJARsBuilder {
   }
 
   List<String> getModulesForPluginsToPublish() {
-    def enabledModulesSet = enabledPluginModules
-    platformModules + (pluginsToPublish.collect { it.getActualModules(enabledModulesSet).values() }.flatten() as List<String>)
+    platformModules + pluginsToPublish.collectMany(new LinkedHashSet()) { it.moduleJars.values() }
   }
 
   void reorderJARs(String loadingOrderFilePath) {
@@ -677,8 +693,9 @@ class DistributionJARsBuilder {
       def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.applicationInfo.productCode}-plugins-to-publish"
       buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish), pluginsToPublishDir, null)
 
-      def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT") ? buildContext.buildNumber + ".${new Date().format('yyyyMMdd')}"
-              : buildContext.buildNumber
+      def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT")
+        ? buildContext.buildNumber + ".${new SimpleDateFormat('yyyyMMdd').format(new Date())}"
+        : buildContext.buildNumber
       def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
       def pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
@@ -765,9 +782,8 @@ Android Studio: This attempts to read a non-existent file. */
 
   static List<PluginLayout> getPluginsByModules(BuildContext buildContext, Collection<String> modules) {
     def allNonTrivialPlugins = buildContext.productProperties.productLayout.allNonTrivialPlugins
-    def allOptionalModules = allNonTrivialPlugins.collectMany {it.optionalModules}
     def nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
-    (modules - allOptionalModules).collect { (nonTrivialPlugins[it] ?: nonTrivialPlugins[buildContext.findModule(it)?.name])?.first() ?: PluginLayout.plugin(it) }
+    modules.collect { (nonTrivialPlugins[it] ?: nonTrivialPlugins[buildContext.findModule(it)?.name])?.first() ?: PluginLayout.plugin(it) }
   }
 
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory,
@@ -776,7 +792,7 @@ Android Studio: This attempts to read a non-existent file. */
     pluginsToInclude.each { plugin ->
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
       if (!isHelpPlugin) {
-        checkOutputOfPluginModules(plugin.mainModule, plugin.getActualModules(enabledPluginModules).values(), plugin.moduleExcludes)
+        checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes)
         patchPluginXml(layoutBuilder, plugin)
       }
       List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {
@@ -818,17 +834,18 @@ Android Studio: This attempts to read a non-existent file. */
                     buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
                             : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
 
-    def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT") ? buildContext.buildNumber + ".${new Date().format('yyyyMMdd')}"
-            : buildContext.buildNumber
+    def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT")
+      ? buildContext.buildNumber + ".${new SimpleDateFormat('yyyyMMdd').format(new Date())}"
+      : buildContext.buildNumber
 
-    setPluginVersionAndSince(patchedPluginXmlPath, pluginVersion, compatibleBuildRange)
+    setPluginVersionAndSince(patchedPluginXmlPath, pluginVersion, compatibleBuildRange, pluginsToPublish.contains(plugin))
     layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
   }
 
   private void processPluginLayout(PluginLayout plugin, LayoutBuilder layoutBuilder, String targetDir,
                                    List<Pair<File, String>> generatedResources, ProjectStructureMapping parentMapping, boolean copyFiles) {
     def mapping = new ProjectStructureMapping()
-    processLayout(layoutBuilder, plugin, targetDir, mapping, copyFiles, plugin.getActualModules(enabledPluginModules), generatedResources)
+    processLayout(layoutBuilder, plugin, targetDir, mapping, copyFiles, plugin.moduleJars, generatedResources)
     if (parentMapping != null) {
       parentMapping.mergeFrom(mapping, "plugins/${getActualPluginDirectoryName(plugin, buildContext)}")
     }
@@ -851,8 +868,14 @@ Android Studio: This attempts to read a non-existent file. */
     new File(buildContext.paths.temp, "searchableOptions/result")
   }
 
-  private void checkOutputOfPluginModules(String mainPluginModule, Collection<String> moduleNames, MultiValuesMap<String, String> moduleExcludes) {
-    def modulesWithPluginXml = moduleNames.findAll { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
+  private void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {
+    // Don't check modules which are not direct children of lib/ directory
+    List<String> moduleNamesInLib = moduleJars.entrySet()
+      .findAll { !it.key.contains("/") }
+      .collect { it.value }
+      .flatten() as List<String>
+    def modulesWithPluginXml = moduleNamesInLib
+      .findAll { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
     if (modulesWithPluginXml.size() > 1) {
       buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
     }
@@ -860,7 +883,7 @@ Android Studio: This attempts to read a non-existent file. */
       buildContext.messages.error("No module from '$mainPluginModule' plugin contains plugin.xml")
     }
 
-    moduleNames.each {
+    moduleJars.values().each {
       if (it != "intellij.java.guiForms.rt" && containsFileInOutput(it, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(it))) {
         buildContext.messages.error("Runtime classes of GUI designer must not be packaged to '$it' module in '$mainPluginModule' plugin, because they are included into a platform JAR. " +
                                     "Make sure that 'Automatically copy form runtime classes to the output directory' is disabled in Settings | Editor | GUI Designer.")
@@ -900,7 +923,7 @@ Android Studio: This attempts to read a non-existent file. */
    */
   private void processLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory,
                              ProjectStructureMapping mapping, boolean copyFiles,
-                             MultiValuesMap<String, String> moduleJars,
+                             MultiMap<String, String> moduleJars,
                              List<Pair<File, String>> additionalResources) {
     def ant = buildContext.ant
     def resourceExcluded = RESOURCES_EXCLUDED
@@ -909,11 +932,11 @@ Android Studio: This attempts to read a non-existent file. */
     if (copyFiles) {
       checkModuleExcludes(layout.moduleExcludes)
     }
-    MultiValuesMap<String, String> actualModuleJars = new MultiValuesMap<>(true)
+    MultiMap<String, String> actualModuleJars = MultiMap.createLinked()
     moduleJars.entrySet().each {
       def modules = it.value
       def jarPath = getActualModuleJarPath(it.key, modules, layout.explicitlySetJarPaths)
-      actualModuleJars.putAll(jarPath, modules)
+      actualModuleJars.putValues(jarPath, modules)
     }
     layoutBuilder.process(targetDirectory, mapping, copyFiles) {
       dir("lib") {
@@ -935,13 +958,13 @@ Android Studio: This attempts to read a non-existent file. */
                   ant.exclude(name: "**/icon-robots.txt")
                 }
 
-                layout.moduleExcludes.get(moduleName)?.each {
+                layout.moduleExcludes.get(moduleName).each {
                   //noinspection GrUnresolvedAccess
                   ant.exclude(name: it)
                 }
               }
             }
-            layout.projectLibrariesToUnpack.get(jarPath)?.each {
+            layout.projectLibrariesToUnpack.get(jarPath).each {
               buildContext.project.libraryCollection.findLibrary(it)?.getFiles(JpsOrderRootType.COMPILED)?.each {
                 if (copyFiles) {
                   ant.zipfileset(src: it.absolutePath)
@@ -950,11 +973,11 @@ Android Studio: This attempts to read a non-existent file. */
             }
           }
         }
-        def outputResourceJars = new MultiValuesMap<String, String>(true)
+        MultiMap<String, String> outputResourceJars = MultiMap.createLinked()
         actualModuleJars.values().forEach {
           def resourcesJarName = layout.localizableResourcesJarName(it)
           if (resourcesJarName != null) {
-            outputResourceJars.put(resourcesJarName, it)
+            outputResourceJars.putValue(resourcesJarName, it)
           }
         }
         if (!outputResourceJars.empty) {
@@ -965,7 +988,7 @@ Android Studio: This attempts to read a non-existent file. */
                   ant.patternset(refid: resourcesIncluded)
                 }
                 module(moduleName) {
-                  layout.moduleExcludes.get(moduleName)?.each {
+                  layout.moduleExcludes.get(moduleName).each {
                     //noinspection GrUnresolvedAccess
                     ant.exclude(name: "$it/**")
                   }
@@ -991,7 +1014,7 @@ Android Studio: This attempts to read a non-existent file. */
         //include all module libraries from the plugin modules added to IDE classpath to layout
         actualModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
                              .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
-          def excluded = layout.excludedModuleLibraries.get(moduleName) ?: Collections.emptyList()
+          def excluded = layout.excludedModuleLibraries.get(moduleName)
           findModule(moduleName).dependenciesList.dependencies.
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
             findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }.
@@ -1047,7 +1070,7 @@ Android Studio: This attempts to read a non-existent file. */
     }
   }
 
-  private void checkModuleExcludes(MultiValuesMap<String, String> moduleExcludes) {
+  private void checkModuleExcludes(MultiMap<String, String> moduleExcludes) {
     moduleExcludes.entrySet().each { entry ->
       String module = entry.key
       entry.value.each { pattern ->
@@ -1079,7 +1102,7 @@ Android Studio: This attempts to read a non-existent file. */
     new LayoutBuilder(buildContext, COMPRESS_JARS)
   }
 
-  private void setPluginVersionAndSince(String pluginXmlPath, String pluginVersion, CompatibleBuildRange compatibleBuildRange) {
+  private void setPluginVersionAndSince(String pluginXmlPath, String pluginVersion, CompatibleBuildRange compatibleBuildRange, boolean toPublish) {
     Pair<String, String> sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, buildContext.buildNumber)
     def file = new File(pluginXmlPath)
     def text = file.text
@@ -1102,7 +1125,9 @@ Android Studio: This attempts to read a non-existent file. */
       def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersion}00"
       text = text.replaceFirst(
               "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"/>",
+              !toPublish ? "" :
               "<product-descriptor code=\"\$1\" release-date=\"$releaseDate\" release-version=\"$releaseVersion\"/>")
+      buildContext.messages.info("        ${toPublish ? "Patching" : "Skipping"} ${file.parentFile.parentFile.name} <product-descriptor/>")
     }
 
     def anchor = text.contains("</id>") ? "</id>" : "</name>"

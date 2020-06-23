@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -8,10 +8,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -140,7 +137,7 @@ public class ThreadState {
   }
 
   public boolean isWaiting() {
-    return "on object monitor".equals(myThreadStateDetail) || 
+    return "on object monitor".equals(myThreadStateDetail) ||
            myState.startsWith("waiting") ||
            ("parking".equals(myThreadStateDetail) && !isSleeping());
   }
@@ -173,15 +170,15 @@ public class ThreadState {
 
     public boolean add(ThreadState state) {
       if (myOriginalState.isEDT()) return false;
-      if (!Comparing.equal(state.myState, myOriginalState.myState)) return false;
+      if (!Objects.equals(state.myState, myOriginalState.myState)) return false;
       if (state.myEmptyStackTrace != myOriginalState.myEmptyStackTrace) return false;
       if (state.isDaemon != myOriginalState.isDaemon) return false;
-      if (!Comparing.equal(state.myJavaThreadState, myOriginalState.myJavaThreadState)) return false;
-      if (!Comparing.equal(state.myThreadStateDetail, myOriginalState.myThreadStateDetail)) return false;
-      if (!Comparing.equal(state.myExtraState, myOriginalState.myExtraState)) return false;
+      if (!Objects.equals(state.myJavaThreadState, myOriginalState.myJavaThreadState)) return false;
+      if (!Objects.equals(state.myThreadStateDetail, myOriginalState.myThreadStateDetail)) return false;
+      if (!Objects.equals(state.myExtraState, myOriginalState.myExtraState)) return false;
       if (!Comparing.haveEqualElements(state.myThreadsWaitingForMyLock, myOriginalState.myThreadsWaitingForMyLock)) return false;
       if (!Comparing.haveEqualElements(state.myDeadlockedThreads, myOriginalState.myDeadlockedThreads)) return false;
-      if (!Comparing.equal(getMergeableStackTrace(state.myStackTrace, true), getMergeableStackTrace(myOriginalState.myStackTrace, true))) return false;
+      if (!Objects.equals(getMergeableStackTrace(state.myStackTrace, true), getMergeableStackTrace(myOriginalState.myStackTrace, true))) return false;
       myCounter++;
       return true;
     }

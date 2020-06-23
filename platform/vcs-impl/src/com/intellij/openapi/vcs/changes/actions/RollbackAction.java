@@ -54,7 +54,7 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
     String operationName = RollbackUtil.getRollbackOperationName(project);
     e.getPresentation().setText(operationName + "...");
     if (isEnabled) {
-      e.getPresentation().setDescription(removeMnemonic(operationName) + " selected changes");
+      e.getPresentation().setDescription(VcsBundle.message("action.message.use.selected.changes.description", removeMnemonic(operationName)));
     }
   }
 
@@ -174,8 +174,8 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
           final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
           if (rollbackEnvironment != null) {
             if (indicator != null) {
-              indicator.setText(vcs.getDisplayName() +
-                                ": performing " + StringUtil.toLowerCase(removeMnemonic(rollbackEnvironment.getRollbackOperationName())) + "...");
+              indicator.setText(VcsBundle.message("progress.text.performing", vcs.getDisplayName(),
+                                                  StringUtil.toLowerCase(removeMnemonic(rollbackEnvironment.getRollbackOperationName()))));
               indicator.setIndeterminate(false);
             }
             rollbackEnvironment

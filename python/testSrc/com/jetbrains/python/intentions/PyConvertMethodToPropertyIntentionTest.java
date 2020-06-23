@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.intentions;
 
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 
 /**
  * User : ktisha
@@ -23,27 +23,27 @@ import com.jetbrains.python.PyBundle;
 public class PyConvertMethodToPropertyIntentionTest extends PyIntentionTestCase {
 
   public void testParamList() {
-    doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.method.to.property"));
   }
 
   public void testSimple() {
-    doIntentionTest(PyBundle.message("INTN.convert.method.to.property"));
+    doIntentionTest(PyPsiBundle.message("INTN.convert.method.to.property"));
   }
 
   public void testProperty() {
-    doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.method.to.property"));
   }
 
   public void testEmptyReturn() {
-    doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.method.to.property"));
   }
 
   public void testYield() {
-    doIntentionTest(PyBundle.message("INTN.convert.method.to.property"));
+    doIntentionTest(PyPsiBundle.message("INTN.convert.method.to.property"));
   }
 
   public void testNoReturn() {
-    doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.method.to.property"));
   }
 
 }

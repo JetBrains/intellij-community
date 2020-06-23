@@ -371,7 +371,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     public String getColumnName(int column) {
       switch(column) {
         case OLD_NAME_COLUMN:
-          return RefactoringBundle.message("automatic.renamer.enity.name.column", myRenamer.getEntityName());
+          return RefactoringBundle.message("automatic.renamer.entity.name.column", myRenamer.getEntityName());
         case NEW_NAME_COLUMN:
           return RefactoringBundle.message("automatic.renamer.rename.to.column");
         default:

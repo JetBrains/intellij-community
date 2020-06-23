@@ -6,6 +6,7 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -137,8 +138,13 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
       public Result construct() {
         LOG.debug("Start calculation in " + AbstractStepWithProgress.this + " using worker " + toString());
         final Ref<Result> result = Ref.create(null);
-        ProgressManager.getInstance().runProcess(() -> result.set(calculate()), progress);
-        LOG.debug("Finish calculation in " + AbstractStepWithProgress.this + " using worker " + toString());
+        try {
+          ProgressManager.getInstance().runProcess(() -> result.set(calculate()), progress);
+          LOG.debug("Finish calculation in " + AbstractStepWithProgress.this + " using worker " + toString());
+        }
+        catch (ProcessCanceledException e) {
+          LOG.debug("Calculation in " + AbstractStepWithProgress.this + " was cancelled");
+        }
         return result.get();
       }
 

@@ -75,14 +75,12 @@ public class ZenCodingUtil {
               i++;
             }
             int baseInt = StringUtil.parseInt(base.toString(), 0) - 1;
-            baseInt = baseInt >= 0 ? baseInt : 0;
-            if(baseInt >= 0) {
-              int byInt = decrement
-                          ? totalIterations - numberInIteration
-                          : numberInIteration + 1;
-              byInt += baseInt;
-              by = Integer.toString(byInt);
-            }
+            baseInt = Math.max(baseInt, 0);
+            int byInt = decrement
+                        ? totalIterations - numberInIteration
+                        : numberInIteration + 1;
+            byInt += baseInt;
+            by = Integer.toString(byInt);
           }
           for (int k = 0, m = markersCount - by.length(); k < m; k++) {
             builder.append('0');

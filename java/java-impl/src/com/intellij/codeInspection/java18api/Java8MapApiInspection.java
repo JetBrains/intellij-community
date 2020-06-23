@@ -4,6 +4,7 @@ package com.intellij.codeInspection.java18api;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -283,6 +284,17 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
       myCallPointer = manager.createSmartPsiElementPointer(call);
       myValuePointer = manager.createSmartPsiElementPointer(value);
       myResultPointer = manager.createSmartPsiElementPointer(result);
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      PsiMethodCallExpression call = myCallPointer.getElement();
+      PsiExpression value = myValuePointer.getElement();
+      PsiElement result = myResultPointer.getElement();
+      if (call == null || value == null || result == null) return null;
+      return new ReplaceWithSingleMapOperation(myMethodName, PsiTreeUtil.findSameElementInCopy(call, target),
+                                               PsiTreeUtil.findSameElementInCopy(value, target), 
+                                               PsiTreeUtil.findSameElementInCopy(result, target));
     }
 
     @Override

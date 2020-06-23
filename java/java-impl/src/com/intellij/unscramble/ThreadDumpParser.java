@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -105,7 +104,7 @@ public final class ThreadDumpParser {
   }
 
   public static void sortThreads(List<? extends ThreadState> result) {
-    Collections.sort(result, (o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
+    result.sort((o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
   }
 
   @Nullable

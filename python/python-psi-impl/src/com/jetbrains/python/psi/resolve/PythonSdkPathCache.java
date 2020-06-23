@@ -67,7 +67,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     }
     Disposer.register(project, this);
     final MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Adapter() {
+    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
       @Override
       public void jdkRemoved(@NotNull Sdk jdk) {
         if (jdk == sdk) {

@@ -10,7 +10,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,7 @@ public final class LogModel  {
   public static final Topic<EventLogListener> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", EventLogListener.class, Topic.BroadcastDirection.NONE);
 
   private final List<Notification> myNotifications = new ArrayList<>();
-  @SuppressWarnings("unchecked") private final Map<Notification, String> myStatuses = ContainerUtil.createConcurrentWeakMap(TObjectHashingStrategy.IDENTITY);
+  private final Map<Notification, String> myStatuses = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
   private Trinity<Notification, String, Long> myStatusMessage;
   private final Project myProject;
   final Map<Notification, Runnable> removeHandlers = new THashMap<>();

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.extractor;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,6 +28,7 @@ import com.intellij.psi.codeStyle.extractor.values.Generation;
 import com.intellij.psi.codeStyle.extractor.values.Gens;
 import com.intellij.psi.codeStyle.extractor.values.Value;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +132,7 @@ public class Utils {
     for (Value value : values) {
       if (indicator != null) {
         indicator.checkCanceled();
-        indicator.setText2("Value:" + value.name);
+        indicator.setText2(LangBundle.message("progress.details.value", value.name));
         indicator.setFraction(0.5 + 0.5 * i / length);
       }
 
@@ -168,7 +170,7 @@ public class Utils {
       }
       final int age = generation.getAge();
       if (indicator != null) {
-        indicator.setText2("Age:" + age + " Defects:" + generation.getParentKind());
+        indicator.setText2(LangBundle.message("progress.details.age.defects", age, generation.getParentKind()));
         indicator.setFraction(0.5 * age / Generation.GEN_COUNT);
       }
       generation = Generation.createNextGeneration(differ, generation);
@@ -192,8 +194,6 @@ public class Utils {
 
   public static int getRandomLess(int count) {
     final int ret = (int)(getRandom() * count / RAND_MAX);
-    if (ret >= count) return count - 1;
-    if (ret < 0) return 0;
-    return ret;
+    return MathUtil.clamp(ret, 0, count - 1);
   }
 }

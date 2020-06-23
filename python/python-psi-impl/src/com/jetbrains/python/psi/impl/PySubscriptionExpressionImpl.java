@@ -45,7 +45,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   @Override
   @NotNull
   public PyExpression getOperand() {
-    return childToPsiNotNull(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
+    return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
   @NotNull
@@ -61,7 +61,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   @Override
   @Nullable
   public PyExpression getIndexExpression() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 1);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
   }
 
   @Override

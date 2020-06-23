@@ -2,10 +2,13 @@
   <id>com.jetbrains.sh</id>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.lang</depends>
-  <depends optional="true" config-file="sh-terminal.xml">org.jetbrains.plugins.terminal</depends>
   <name>Shell Script</name>
   <category>Languages</category>
   <resource-bundle>messages.ShBundle</resource-bundle>
+
+  <depends optional="true" config-file="sh-terminal.xml">org.jetbrains.plugins.terminal</depends>
+  <depends optional="true" config-file="sh-copyright.xml">com.intellij.copyright</depends>
+
   <description><![CDATA[
 Adds support for working with shell script files
 
@@ -15,7 +18,7 @@ Adds support for working with shell script files
 </li></ul>]]></description>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.sh.ShSupport" serviceImplementation="com.intellij.sh.ShSupport$Impl"/>
-    <fileType language="Shell Script" extensions="sh;bash;zsh" fieldName="INSTANCE" name="Shell Script" implementationClass="com.intellij.sh.ShFileType"/>
+    <fileType language="Shell Script" extensions="sh;bash;zsh" hashBangs="sh" fieldName="INSTANCE" name="Shell Script" implementationClass="com.intellij.sh.ShFileType"/>
     <lang.syntaxHighlighter language="Shell Script" implementationClass="com.intellij.sh.highlighter.ShSyntaxHighlighter"/>
     <lang.parserDefinition language="Shell Script" implementationClass="com.intellij.sh.parser.ShParserDefinition"/>
     <lang.commenter id="shCommenter" language="Shell Script" implementationClass="com.intellij.sh.ShCommenter"/>
@@ -46,6 +49,9 @@ Adds support for working with shell script files
     <runConfigurationProducer implementation="com.intellij.sh.run.ShRunConfigurationProducer"/>
     <programRunner implementation="com.intellij.sh.run.ShRunProgramRunner"/>
     <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
+    <experimentalFeature id="com.intellij.sh.run.with.wsl" percentOfUsers="0">
+      <description>Run shell scripts with WSL when needed</description>
+    </experimentalFeature>
     <runLineMarkerContributor id="shRunLineMarkerContributor" language="Shell Script" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
 
     <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
@@ -67,11 +73,10 @@ Adds support for working with shell script files
 
     <spellchecker.support id="shSpellcheckingStrategy" language="Shell Script" implementationClass="com.intellij.sh.spellchecker.ShSpellcheckingStrategy"/>
 
-    <fileTypeDetector id="shFileTypeDetector" implementation="com.intellij.sh.ShFileTypeDetector" order="first"/>
     <highlightErrorFilter id="shErrorFilter" implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter id="shDaemonInfoFilter" implementation="com.intellij.sh.ShErrorFilter"/>
 
-    <statistics.counterUsagesCollector groupId="shell.script" version="1"/>
+    <statistics.counterUsagesCollector groupId="sh.shell.script" version="1"/>
 
     <highlightUsagesHandlerFactory id="shOccurrencesHighlightingFactory" implementation="com.intellij.sh.highlighting.ShOccurrencesHighlightingFactory"/>
     <renameHandler id="shRenameHandler" implementation="com.intellij.sh.rename.ShRenameHandler"/>
@@ -87,8 +92,7 @@ Adds support for working with shell script files
     <notificationWhitelist groupIds="Shell Script"/>
   </extensions>
   <actions>
-    <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction"
-            use-shortcut-of="RunClass"/>
+    <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction" use-shortcut-of="RunClass"/>
 
     <group id="ShGenerateGroup">
       <action id="ShGenerateForLoop" class="com.intellij.sh.actions.ShGenerateForLoop"/>

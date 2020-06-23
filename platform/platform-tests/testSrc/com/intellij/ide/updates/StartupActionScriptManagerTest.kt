@@ -63,7 +63,7 @@ class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
 
   @Test fun `executing "unzip" command`() {
     val source = IoTestUtil.createTestJar(tempDir.newFile("source.zip"), "zip/file.txt", "")
-    val destination = tempDir.newFolder("dir")
+    val destination = tempDir.newDirectory("dir")
     val unpacked = File(destination, "zip/file.txt")
     assertTrue(source.exists())
     assertFalse(unpacked.exists())
@@ -84,8 +84,8 @@ class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `executing commands with path mapping`() {
-    val oldTarget = tempDir.newFolder("old/plugins")
-    val newTarget = tempDir.newFolder("new/plugins")
+    val oldTarget = tempDir.newDirectory("old/plugins")
+    val newTarget = tempDir.newDirectory("new/plugins")
     val copySource = tempDir.newFile("source.txt")
     val copyDestinationInOld = File(oldTarget, "destination.txt")
     val copyDestinationInNew = File(newTarget, "destination.txt")

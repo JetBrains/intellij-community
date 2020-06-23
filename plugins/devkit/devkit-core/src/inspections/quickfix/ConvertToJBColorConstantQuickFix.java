@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFixBase;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
@@ -15,12 +17,21 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class ConvertToJBColorConstantQuickFix extends LocalQuickFixBase {
+public class ConvertToJBColorConstantQuickFix implements LocalQuickFix {
   private final String myConstantName;
 
   public ConvertToJBColorConstantQuickFix(String constantName) {
-    super("Convert to JBColor." + constantName, "Use JBColor constant");
     myConstantName = constantName;
+  }
+
+  @Override
+  public @IntentionName @NotNull String getName() {
+    return "Convert to JBColor." + myConstantName;
+  }
+
+  @Override
+  public @IntentionFamilyName @NotNull String getFamilyName() {
+    return "Use JBColor constant";
   }
 
   @Override

@@ -369,6 +369,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
       if ("1".equals(name) || "2".equals(name)) {
         assertNull(psiClass.getModifierList());
         assertTrue(psiClass.hasModifierProperty(PsiModifier.FINAL));
+        assertInstanceOf(psiClass, PsiAnonymousClass.class);
       }
       else if (!"MyInterfaceImplementation".equals(name)) {
         assertNotNull(psiClass.getModifierList());

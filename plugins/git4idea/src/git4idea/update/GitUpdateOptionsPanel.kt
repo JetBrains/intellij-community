@@ -16,39 +16,25 @@
 package git4idea.update
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.layout.*
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import git4idea.config.GitVcsSettings
-import git4idea.config.UpdateMethod
-import git4idea.config.UpdateMethod.BRANCH_DEFAULT
 
 internal class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
   val panel = createPanel()
 
   private fun createPanel(): DialogPanel = panel {
     row {
-      buttonGroup {
-        getUpdateMethods().forEach { method ->
-          row {
-            radioButton(method.presentation).withSelectedBinding(PropertyBinding(
-              get = { settings.updateMethod == method },
-              set = { selected -> if (selected) settings.updateMethod = method }
-            ))
-          }
-        }
-      }
+      updateMethodButtonGroup(
+        get = { settings.updateMethod == it },
+        set = { selected, method -> if (selected) settings.updateMethod = method }
+      )
     }
-  }.withBorder(JBUI.Borders.empty(JBUIScale.scale(16), JBUIScale.scale(5), 0, JBUIScale.scale(5)))
+  }.withBorder(JBUI.Borders.empty(16, 5, 0, 5))
 
   fun isModified(): Boolean = panel.isModified()
 
   fun applyTo() = panel.apply()
 
   fun updateFrom() = panel.reset()
-
 }
-
-internal fun getUpdateMethods(): List<UpdateMethod> =
-  UpdateMethod.values().filter { it != BRANCH_DEFAULT || Registry.`is`("git.update.project.dialog.branch.default") }

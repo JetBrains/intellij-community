@@ -34,9 +34,4 @@ public final class DesignerBackgroundEditorHighlighter implements BackgroundEdit
   public HighlightingPass @NotNull [] createPassesForEditor() {
     return myHighlightingPasses;
   }
-
-  @Override
-  public HighlightingPass @NotNull [] createPassesForVisibleArea() {
-    return HighlightingPass.EMPTY_ARRAY;
-  }
 }

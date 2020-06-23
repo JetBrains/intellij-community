@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -14,10 +14,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -28,8 +30,7 @@ public class PluginLogoApi {
   /**
    * Direct load image from local dir or jar based plugin without background task and caches.
    */
-  @NotNull
-  public static Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, int width, int height, @Nullable Logger logger) {
+  public static @NotNull Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, int width, int height, @Nullable Logger logger) {
     return new PluginLogoApi(width, height, logger).getIcon(descriptor);
   }
 
@@ -44,17 +45,15 @@ public class PluginLogoApi {
     myLogger = logger;
   }
 
-  @NotNull
-  private Icon getIcon(@NotNull IdeaPluginDescriptor descriptor) {
-    File path = descriptor.getPath();
-
+  private @NotNull Icon getIcon(@NotNull IdeaPluginDescriptor descriptor) {
+    Path path = descriptor.getPluginPath();
     if (path == null) {
       return getDefaultIcon();
     }
 
-    if (path.isDirectory()) {
+    if (Files.isDirectory(path)) {
       if (System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) != null) {
-        Icon icon = tryLoadDirIcon(new File(path, "classes"));
+        Icon icon = tryLoadDirIcon(path.resolve("classes"));
         if (icon != null) {
           return icon;
         }
@@ -65,18 +64,18 @@ public class PluginLogoApi {
         return icon;
       }
 
-      File libFile = new File(path, "lib");
-      if (!libFile.exists() || !libFile.isDirectory()) {
+      Path libFile = path.resolve("lib");
+      if (!Files.isDirectory(libFile)) {
         return getDefaultIcon();
       }
 
-      File[] files = libFile.listFiles();
+      File[] files = libFile.toFile().listFiles();
       if (ArrayUtil.isEmpty(files)) {
         return getDefaultIcon();
       }
 
       for (File file : files) {
-        Icon dirIcon = tryLoadDirIcon(file);
+        Icon dirIcon = tryLoadDirIcon(file.toPath());
         if (dirIcon != null) {
           return dirIcon;
         }
@@ -88,7 +87,7 @@ public class PluginLogoApi {
       }
     }
     else {
-      Icon icon = tryLoadJarIcon(path);
+      Icon icon = tryLoadJarIcon(path.toFile());
       if (icon != null) {
         return icon;
       }
@@ -97,15 +96,13 @@ public class PluginLogoApi {
     return getDefaultIcon();
   }
 
-  @Nullable
-  private Icon tryLoadDirIcon(@NotNull File path) {
+  private @Nullable Icon tryLoadDirIcon(@NotNull Path path) {
     boolean light = JBColor.isBright();
     Icon icon = tryLoadIcon(path, light);
     return icon == null ? tryLoadIcon(path, !light) : icon;
   }
 
-  @Nullable
-  private Icon tryLoadJarIcon(@NotNull File path) {
+  private @Nullable Icon tryLoadJarIcon(@NotNull File path) {
     if (!FileUtilRt.isJarOrZip(path) || !path.exists()) {
       return null;
     }
@@ -122,11 +119,13 @@ public class PluginLogoApi {
     return null;
   }
 
-  @Nullable
-  private Icon tryLoadIcon(@NotNull File dirFile, boolean light) {
+  private @Nullable Icon tryLoadIcon(@NotNull Path dirFile, boolean light) {
     try {
-      File iconFile = new File(dirFile, PluginLogo.getIconFileName(light));
-      return iconFile.exists() && iconFile.length() > 0 ? loadFileIcon(new FileInputStream(iconFile)) : null;
+      Path iconFile = dirFile.resolve(PluginLogo.getIconFileName(light));
+      return Files.size(iconFile) > 0 ? loadFileIcon(Files.newInputStream(iconFile)) : null;
+    }
+    catch (NoSuchFileException ignore) {
+      return null;
     }
     catch (IOException e) {
       if (myLogger != null) {
@@ -136,8 +135,7 @@ public class PluginLogoApi {
     }
   }
 
-  @Nullable
-  private Icon tryLoadIcon(@NotNull ZipFile zipFile, boolean light) {
+  private @Nullable Icon tryLoadIcon(@NotNull ZipFile zipFile, boolean light) {
     try {
       ZipEntry iconEntry = zipFile.getEntry(PluginLogo.getIconFileName(light));
       return iconEntry == null ? null : loadFileIcon(zipFile.getInputStream(iconEntry));
@@ -150,8 +148,7 @@ public class PluginLogoApi {
     }
   }
 
-  @NotNull
-  private Icon loadFileIcon(@NotNull InputStream stream) throws IOException {
+  private @NotNull Icon loadFileIcon(@NotNull InputStream stream) throws IOException {
     return HiDPIPluginLogoIcon.loadSVG(stream, myWidth, myHeight);
   }
 

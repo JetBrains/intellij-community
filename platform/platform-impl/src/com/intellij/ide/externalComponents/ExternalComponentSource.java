@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.externalComponents;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Pair;
@@ -28,6 +29,8 @@ import java.util.List;
  * Interface for classes that can provide information on and updates for installed components.
  */
 public interface ExternalComponentSource {
+  ExtensionPointName<ExternalComponentSource> EP_NAME = ExtensionPointName.create("com.intellij.externalComponentSource");
+
   /**
    * Retrieve information on the updates that this source can provide.
    *
@@ -71,4 +74,8 @@ public interface ExternalComponentSource {
    */
   @Nullable
   List<String> getAllChannels();
+
+  default boolean isEnabled(){
+    return true;
+  }
 }

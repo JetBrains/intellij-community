@@ -6,6 +6,8 @@ package com.intellij.openapi.components;
  * {@link #initComponent()} and {@link #projectOpened()} methods will be called for each project even if user doesn't use any feature of your
  * plugin. Also plugins which declare project components don't support dynamic loading. Please see
  * http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html for guidelines on migrating to other APIs.
+ *
+ * See {@link com.intellij.openapi.project.ProjectManager#TOPIC}.
  */
 @Deprecated
 public interface ProjectComponent extends BaseComponent {

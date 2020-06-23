@@ -160,6 +160,8 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public void setScope(SearchScope scope) {
+    scopeType = null;
+    scopeDescriptor = null;
     this.scope = scope;
   }
 
@@ -246,7 +248,7 @@ public class MatchOptions implements JDOMExternalizable {
     if (!pattern.equals(matchOptions.pattern)) return false;
     if (!variableConstraints.equals(matchOptions.variableConstraints)) return false;
     if (myFileType != matchOptions.myFileType) return false;
-    if (!Objects.equals(myDialect, matchOptions.myDialect)) return false;
+    if (!Objects.equals(getDialect(), matchOptions.getDialect())) return false;
     if (!Objects.equals(myPatternContextId, matchOptions.myPatternContextId)) return false;
 
     return true;

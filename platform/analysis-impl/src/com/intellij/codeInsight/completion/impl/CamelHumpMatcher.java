@@ -77,7 +77,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   @Override
   public boolean prefixMatches(@NotNull final String name) {
     if (name.startsWith("_") &&
-        CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE == CodeInsightSettings.FIRST_LETTER &&
+        CodeInsightSettings.getInstance().getCompletionCaseSensitive() == CodeInsightSettings.FIRST_LETTER &&
         firstLetterCaseDiffers(name)) {
       return false;
     }
@@ -107,7 +107,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
       if (itemCaseInsensitive && StringUtil.startsWithIgnoreCase(name, myPrefix) || prefixMatches(name)) {
         return true;
       }
-      if (itemCaseInsensitive && CodeInsightSettings.ALL != CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE) {
+      if (itemCaseInsensitive && CodeInsightSettings.ALL != CodeInsightSettings.getInstance().getCompletionCaseSensitive()) {
         if (myCaseInsensitiveMatcher.matches(name)) {
           return true;
         }
@@ -131,7 +131,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
     NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(prefix);
     if (caseSensitive) {
-      int setting = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
+      int setting = CodeInsightSettings.getInstance().getCompletionCaseSensitive();
       if (setting == CodeInsightSettings.FIRST_LETTER) {
         builder = builder.withCaseSensitivity(NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
       }

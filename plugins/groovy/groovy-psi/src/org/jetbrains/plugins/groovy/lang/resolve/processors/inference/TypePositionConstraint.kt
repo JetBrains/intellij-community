@@ -12,7 +12,7 @@ class TypePositionConstraint(
   private val context: PsiElement
 ) : GrConstraintFormula() {
 
-  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean {
     if (rightType != null) {
       for (extension in GrTypeConverter.EP_NAME.extensionList) {
         if (!extension.isApplicableTo(expectedType.position)) {

@@ -70,26 +70,26 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
               libraryEntry.getRootUrls(OrderRootType.CLASSES).length != 1 ||
               library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
             throw new ConfigurationException(
-              "Library \'" +
+              "Library '" +
               entry.getPresentableName() +
-              "\' from module \'" +
+              "' from module '" +
               moduleName +
-              "\' dependencies is incompatible with eclipse format which supports only one library content root");
+              "' dependencies is incompatible with eclipse format which supports only one library content root");
           }
         }
       }
     }
     if (model.getContentRoots().length == 0) {
-      throw new ConfigurationException("Module \'" + moduleName + "\' has no content roots thus is not compatible with eclipse format");
+      throw new ConfigurationException("Module '" + moduleName + "' has no content roots thus is not compatible with eclipse format");
     }
     final String output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
     final String contentRoot = getContentRoot(model);
     if (output == null ||
         !StringUtil.startsWith(VfsUtilCore.urlToPath(output), contentRoot) &&
         PathMacroManager.getInstance(model.getModule()).collapsePath(output).equals(output)) {
-      throw new ConfigurationException("Module \'" +
+      throw new ConfigurationException("Module '" +
                                        moduleName +
-                                       "\' output path is incompatible with eclipse format which supports output under content root only.\nPlease make sure that \"Inherit project compile output path\" is not selected");
+                                       "' output path is incompatible with eclipse format which supports output under content root only.\nPlease make sure that \"Inherit project compile output path\" is not selected");
     }
   }
 

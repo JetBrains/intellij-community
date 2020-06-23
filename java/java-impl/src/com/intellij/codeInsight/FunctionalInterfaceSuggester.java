@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
@@ -64,7 +50,7 @@ public class FunctionalInterfaceSuggester {
     };
 
   public static Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull PsiFunctionalExpression expression) {
-    final PsiType qualifierType = expression instanceof PsiMethodReferenceExpression 
+    final PsiType qualifierType = expression instanceof PsiMethodReferenceExpression
                                   ? PsiMethodReferenceUtil.getQualifierType((PsiMethodReferenceExpression)expression) : null;
     return suggestFunctionalInterfaces(expression, aClass -> composeAcceptableType(aClass, expression, qualifierType));
   }
@@ -120,7 +106,7 @@ public class FunctionalInterfaceSuggester {
         if (returnType != null && !TypeConversionUtil.isAssignable(returnType, interfaceMethodReturnType)) {
           return Collections.emptyList();
         }
-        
+
         if (interfaceMethodReturnType instanceof PsiPrimitiveType && !interfaceMethodReturnType.equals(returnType)) {
           return Collections.emptyList();
         }
@@ -178,7 +164,7 @@ public class FunctionalInterfaceSuggester {
     }
 
     final ArrayList<PsiType> typesToSuggest = new ArrayList<>(types);
-    Collections.sort(typesToSuggest, Comparator.comparing(PsiType::getCanonicalText));
+    typesToSuggest.sort(Comparator.comparing(PsiType::getCanonicalText));
     return typesToSuggest;
   }
 
@@ -335,7 +321,7 @@ public class FunctionalInterfaceSuggester {
    * that is generated from {@code expression}
    */
   @NotNull
-  private static PsiSubstitutor getPartialSubstitutor(@NotNull final PsiMethodReferenceExpression expression, 
+  private static PsiSubstitutor getPartialSubstitutor(@NotNull final PsiMethodReferenceExpression expression,
                                                       @NotNull final PsiMethod method) {
     final PsiType[] typeArguments = expression.getTypeParameters();
 

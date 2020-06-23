@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +32,7 @@ public abstract class PyCustomSdkUiProvider {
 
   @Nullable
   public static PyCustomSdkUiProvider getInstance() {
-    if (EP_NAME.getExtensions().length > 0) {
-      return EP_NAME.getExtensions()[0];
-    }
-    else {
-      return null;
-    }
+    return ContainerUtil.getFirstItem(EP_NAME.getExtensionList());
   }
 
   public abstract void customizeActiveSdkPanel(@NotNull Project project, @NotNull ComboBox mySdkCombo, @NotNull JPanel myMainPanel,

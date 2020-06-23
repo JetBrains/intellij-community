@@ -419,8 +419,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkUnrelatedDefaultMethods(@NotNull PsiClass aClass,
-                                                    @NotNull PsiIdentifier classIdentifier) {
+  static HighlightInfo checkUnrelatedDefaultMethods(@NotNull PsiClass aClass, @NotNull PsiIdentifier classIdentifier) {
     final Map<? extends MethodSignature, Set<PsiMethod>> overrideEquivalent = PsiSuperMethodUtil.collectOverrideEquivalents(aClass);
 
     final boolean isInterface = aClass.isInterface();
@@ -929,13 +928,13 @@ public class GenericsHighlightUtil {
     final PsiTypeElement checkTypeElement = expression.getCheckType();
     if (checkTypeElement == null) return null;
     PsiType checkType = checkTypeElement.getType();
-    if (HighlightUtil.Feature.PATTERNS.isSufficient(languageLevel)) {
+    if (HighlightingFeature.PATTERNS.isSufficient(languageLevel)) {
       return isUnsafeCastInInstanceOf(checkTypeElement, checkType, expression.getOperand().getType());
     }
     return isIllegalForInstanceOf(checkType, checkTypeElement);
   }
 
-  private static HighlightInfo isUnsafeCastInInstanceOf(PsiTypeElement checkTypeElement, PsiType checkType, PsiType expressionType) {
+  private static HighlightInfo isUnsafeCastInInstanceOf(@NotNull PsiTypeElement checkTypeElement, @NotNull PsiType checkType, @Nullable PsiType expressionType) {
     if (expressionType != null && JavaGenericsUtil.isUncheckedCast(checkType, expressionType)) {
       String description = JavaErrorBundle.message("unsafe.cast.in.instanceof",
                                                    expressionType.getPresentableText(), checkType.getPresentableText());

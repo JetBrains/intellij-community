@@ -7,6 +7,7 @@ import com.intellij.codeInspection.UnstableApiUsageInspection.Companion.DEFAULT_
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiField
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.uast.UastVisitorAdapter
@@ -29,8 +30,12 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
   @JvmField
   val unstableApiAnnotations: MutableList<String> = ExternalizableStringSet(*DEFAULT_UNSTABLE_API_ANNOTATIONS.toTypedArray())
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-    UastVisitorAdapter(UnstableTypeUsedInSignatureVisitor(holder, unstableApiAnnotations.toList()), true)
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    if (unstableApiAnnotations.none { AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(it, holder.file) }) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    return UastVisitorAdapter(UnstableTypeUsedInSignatureVisitor(holder, unstableApiAnnotations.toList()), true)
+  }
 
   override fun createOptionsPanel(): JPanel {
     val annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(

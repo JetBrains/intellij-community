@@ -2,6 +2,8 @@
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.TestDataPath;
@@ -67,9 +69,16 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   // PY-24607
-  public void testAddDefaultParamBeforeAnotherDefault() {
-    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false), new PyParameterInfo(NEW_PARAMETER, "d", "1", true),
+  public void testNewParameterWithSignatureDefaultMakesSubsequentExistingParametersUseKeywordArguments() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                              new PyParameterInfo(NEW_PARAMETER, "d", "1", true),
                                               new PyParameterInfo(1, "b", "None", true)));
+  }
+
+  // PY-26715
+  public void testMovedExistingParameterUsingSignatureDefaultMakesSubsequentExistingParametersUseKeywordArguments() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(1, "b", "None", true),
+                                              new PyParameterInfo(0, "a", "None", true)));
   }
 
   public void testRemoveDefaultFromParam() {
@@ -114,9 +123,23 @@ public class PyChangeSignatureTest extends PyTestCase {
                                                                                              new PyParameterInfo(3, "d", null, false))));
   }
 
-  public void testClassMethod() {
+  public void testOrdinaryMethod() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "self", null, false), new PyParameterInfo(1, "a", null, true),
                                               new PyParameterInfo(NEW_PARAMETER, "b", "2", false)));
+  }
+
+  // PY-33487
+  public void testClassMethod() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "cls", null, false),
+                                               new PyParameterInfo(2, "arg2", null, false),
+                                               new PyParameterInfo(1, "arg1", null, false)));
+  }
+
+  // PY-30874
+  public void testNonStandardSelfParameterName() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "s", null, false),
+                                              new PyParameterInfo(2, "y", null, false),
+                                              new PyParameterInfo(1, "x", null, false)));
   }
 
   public void testKeywordParam() {
@@ -211,12 +234,34 @@ public class PyChangeSignatureTest extends PyTestCase {
     doChangeSignatureTest("decorator", Arrays.asList(new PyParameterInfo(0, "arg1", null, false)));
   }
 
-  public void testNonDefaultAfterDefault() {
-    doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "2", false), new PyParameterInfo(0, "b", "2", false)), null);
+  // PY-8098
+  public void testNewParameterWithCallDefaultBeforeExistingWithoutDefault() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "2", false),
+                                              new PyParameterInfo(0, "b", null, false)));
   }
 
-  public void testNonDefaultAfterDefault1() {
-    doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "b", "1", true), new PyParameterInfo(NEW_PARAMETER, "a", "2", false)),
+  // PY-8096
+  public void testNewParameterWithoutSignatureDefaultAfterExistingWithSignatureDefault() {
+    doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "b", "1", true),
+                                         new PyParameterInfo(NEW_PARAMETER, "a", "2", false)),
+                     PyPsiBundle.message("ANN.non.default.param.after.default"));
+  }
+
+  public void testNewParameterWithSignatureDefaultBeforeExistingWithoutSignatureDefault() {
+    doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "2", true),
+                                         new PyParameterInfo(0, "b", null, false)),
+                     PyPsiBundle.message("ANN.non.default.param.after.default"));
+  }
+
+  public void testNewParameterWithSignatureDefaultBeforeNewWithoutSignatureDefault() {
+    doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "2", true),
+                                         new PyParameterInfo(NEW_PARAMETER, "b", null, false)),
+                     PyPsiBundle.message("ANN.non.default.param.after.default"));
+  }
+
+  public void testMovingExistingParameterWithSignatureDefaultBeforeExistingWithoutSignatureDefault() {
+    doValidationTest(null, Arrays.asList(new PyParameterInfo(1, "b", "1", true),
+                                         new PyParameterInfo(0, "a", null, false)),
                      PyPsiBundle.message("ANN.non.default.param.after.default"));
   }
 
@@ -383,7 +428,7 @@ public class PyChangeSignatureTest extends PyTestCase {
                                              new PyParameterInfo(2, "x", null, false),
                                              new PyParameterInfo(1, "*args", null, false)));
   }
-  
+
   // PY-38076
   public void testUsedDictionaryUnpackingPreserved() {
     doChangeSignatureTest("func", Arrays.asList(new PyParameterInfo(0, "foo", null, false),
@@ -397,7 +442,105 @@ public class PyChangeSignatureTest extends PyTestCase {
     doChangeSignatureTest("func", Arrays.asList(new PyParameterInfo(0, "foo", null, false),
                                                 new PyParameterInfo(1, "bar", null, false)));
   }
-  
+
+  // PY-22023
+  public void testOtherDunderInitInHierarchyNotModified() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () ->
+      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "self", null, false),
+                                                new PyParameterInfo(1, "foo", null, false),
+                                                new PyParameterInfo(NEW_PARAMETER, "bar", "42", false))));
+  }
+
+  // PY-22023
+  public void testOtherDunderNewInHierarchyNotModified() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "cls", null, false),
+                                                new PyParameterInfo(1, "foo", null, false),
+                                                new PyParameterInfo(NEW_PARAMETER, "bar", "42", false)));
+    });
+  }
+
+  // PY-41230
+  public void testPositionalOnlyMarkerTurnsKeywordArgumentIntoPositional() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                                new PyParameterInfo(NEW_PARAMETER, "/", null, false),
+                                                new PyParameterInfo(1, "b", null, false)));
+    });
+  }
+
+  // PY-41230
+  public void testPositionalOnlyMarkerPropagatesExistingParameterSignatureDefaultToCall() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", "None", true),
+                                                new PyParameterInfo(1, "b", "None", true),
+                                                new PyParameterInfo(NEW_PARAMETER, "/", null, false)));
+    });
+  }
+
+  // PY-41230
+  public void testPositionalOnlyMarkerPropagatesNewParameterSignatureDefaultToCall() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "None", true),
+                                                new PyParameterInfo(0, "b", "None", true),
+                                                new PyParameterInfo(1, "/", null, false)));
+    });
+  }
+
+  public void testPositionalOnlyMarkerAsFirstParameter() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "/", null, false),
+                                           new PyParameterInfo(0, "a", null, false)),
+                       PyPsiBundle.message("ANN.named.parameters.before.slash"));
+    });
+  }
+
+  public void testDuplicatedPositionalOnlyMarker() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                           new PyParameterInfo(1, "/", null, false),
+                                           new PyParameterInfo(2, "b", null, false),
+                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                       PyPsiBundle.message("ANN.multiple.slash"));
+    });
+  }
+
+  public void testPositionalOnlyMarkerAfterPositionalVararg() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "*args", null, false),
+                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                       PyPsiBundle.message("ANN.slash.param.after.vararg"));
+    });
+  }
+
+  public void testPositionalOnlyMarkerAfterKeywordOnlyMarker() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                           new PyParameterInfo(1, "*", null, false),
+                                           new PyParameterInfo(2, "b", null, false),
+                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                       PyPsiBundle.message("ANN.slash.param.after.vararg"));
+    });
+  }
+
+  public void testPositionalOnlyMarkerAfterKeywordVararg() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "**kwargs", null, false),
+                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                       PyPsiBundle.message("ANN.slash.param.after.keyword"));
+    });
+  }
+
+  public void testDuplicatedKeywordOnlyMarker() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                           new PyParameterInfo(1, "*", null, false),
+                                           new PyParameterInfo(2, "b", null, false),
+                                           new PyParameterInfo(NEW_PARAMETER, "*", null, false)),
+                       PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star"));
+    });
+  }
+
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");
     changeSignature(newName, parameters);
@@ -441,7 +584,15 @@ public class PyChangeSignatureTest extends PyTestCase {
     final PyChangeSignatureHandler changeSignatureHandler = new PyChangeSignatureHandler();
     final PyFunction function = (PyFunction)changeSignatureHandler.findTargetMember(myFixture.getFile(), myFixture.getEditor());
     assertNotNull(function);
-    final PyFunction newFunction = PyChangeSignatureHandler.getSuperMethod(function);
+    final PyFunction newFunction;
+    // Accept modifying the base method
+    final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
+    try {
+      newFunction = PyChangeSignatureHandler.getSuperMethod(function);
+    }
+    finally {
+      Messages.setTestDialog(oldTestDialog);
+    }
     assertNotNull(newFunction);
     final PyMethodDescriptor method = new PyMethodDescriptor(newFunction);
     final TestPyChangeSignatureDialog dialog = new TestPyChangeSignatureDialog(newFunction.getProject(), method);                                                                                                                                                                                                     

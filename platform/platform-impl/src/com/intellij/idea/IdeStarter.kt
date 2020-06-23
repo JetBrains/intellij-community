@@ -11,6 +11,7 @@ import com.intellij.ide.customize.CustomizeIDEWizardDialog
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.PluginManagerConfigurableProxy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
@@ -24,6 +25,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -104,8 +106,13 @@ open class IdeStarter : ApplicationStarter {
       }
 
       // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
-      val willOpenProject = args.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
-      needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
+      if (app.isHeadlessEnvironment) {
+        needToOpenProject = false
+      }
+      else {
+        val willOpenProject = args.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
+        needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
+      }
 
       frameInitActivity.end()
 
@@ -151,7 +158,7 @@ open class IdeStarter : ApplicationStarter {
 
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
 
-    if (PluginManagerCore.isRunningFromSources()) {
+    if (PluginManagerCore.isRunningFromSources() && !app.isHeadlessEnvironment) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
     }
   }
@@ -255,7 +262,7 @@ private fun reportPluginError() {
   ApplicationManager.getApplication().invokeLater({
     val title = IdeBundle.message("title.plugin.error")
     Notification(NotificationGroup.createIdWithTitle("Plugin Error", title),
-                 title, pluginError, NotificationType.ERROR) { notification, event ->
+                 title, StringUtil.escapeXmlEntities(pluginError), NotificationType.ERROR) { notification, event ->
       notification.expire()
 
       val description = event.description
@@ -265,19 +272,12 @@ private fun reportPluginError() {
         return@Notification
       }
 
-      val disabledPlugins = LinkedHashSet(PluginManagerCore.disabledPlugins())
       if (PluginManagerCore.ourPluginsToDisable != null && PluginManagerCore.DISABLE == description) {
-        disabledPlugins.addAll(PluginManagerCore.ourPluginsToDisable)
+        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToDisable, false);
       }
       else if (PluginManagerCore.ourPluginsToEnable != null && PluginManagerCore.ENABLE == description) {
-        disabledPlugins.removeAll(PluginManagerCore.ourPluginsToEnable)
+        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToEnable, true);
         PluginManagerMain.notifyPluginsUpdated(null)
-      }
-
-      try {
-        PluginManagerCore.saveDisabledPlugins(disabledPlugins, false)
-      }
-      catch (ignore: IOException) {
       }
 
       PluginManagerCore.ourPluginsToEnable = null

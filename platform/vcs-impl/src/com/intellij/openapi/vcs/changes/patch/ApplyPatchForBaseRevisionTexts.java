@@ -117,16 +117,13 @@ public class ApplyPatchForBaseRevisionTexts {
                                                                               @NotNull String beforeVersionId,
                                                                               @NotNull VirtualFile file,
                                                                               @NotNull FilePath pathBeforeRename) {
-    DefaultPatchBaseVersionProvider baseVersionProvider = new DefaultPatchBaseVersionProvider(project, file, beforeVersionId);
-    if (!baseVersionProvider.canProvideContent()) return null;
-
     try {
       List<PatchHunk> hunks = patch.getHunks();
 
       Ref<String> baseRef = new Ref<>();
       Ref<String> patchedRef = new Ref<>();
 
-      baseVersionProvider.getBaseVersionContent(pathBeforeRename, base -> {
+      DefaultPatchBaseVersionProvider.getBaseVersionContent(project, beforeVersionId, file, pathBeforeRename, base -> {
         GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(base, hunks);
         if (appliedPatch == null) return true;
 

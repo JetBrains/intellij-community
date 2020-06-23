@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.reference.*;
@@ -15,7 +16,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -76,22 +76,12 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     myProject = project;
     myTemporaryEntryPoints = new HashSet<>();
     myPersistentEntryPoints = new LinkedHashMap<>(); // To keep the order between readExternal to writeExternal
-    DEAD_CODE_EP_NAME.addExtensionPointListener(() -> {
+    DEAD_CODE_EP_NAME.addChangeListener(() -> {
       if (ADDITIONAL_ANNOS != null) {
         ADDITIONAL_ANNOS = null;
       }
-
-      updateLoadedProfiles(InspectionProfileManager.getInstance());
-      updateLoadedProfiles(InspectionProfileManager.getInstance(project));
-
+      DaemonCodeAnalyzer.getInstance(project).restart();
     }, this);
-  }
-
-  //need to create unused declaration from scratch as entry points are cached there
-  private static void updateLoadedProfiles(InspectionProfileManager instance) {
-    for (InspectionProfileImpl profile : instance.getProfiles()) {
-      profile.modifyProfile(m -> {});
-    }
   }
 
   public static EntryPointsManagerBase getInstance(Project project) {
@@ -339,7 +329,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         final String qualifiedName = aClass.getQualifiedName();
         for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
           ClassPattern classPattern = iterator.next();
-          if (Comparing.equal(classPattern.pattern, qualifiedName)) {
+          if (Objects.equals(classPattern.pattern, qualifiedName)) {
             if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
               if (classPattern.method.isEmpty()) {
                 //todo if inheritance or pattern?

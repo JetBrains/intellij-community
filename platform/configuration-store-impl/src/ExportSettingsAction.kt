@@ -8,6 +8,7 @@ import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ImportSettingsFilenameFilter
 import com.intellij.ide.actions.RevealFileAction
+import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnAction
@@ -28,8 +29,8 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
 import com.intellij.util.io.*
-import gnu.trove.THashMap
-import gnu.trove.THashSet
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.io.IOException
 import java.io.OutputStream
 import java.io.StringWriter
@@ -48,7 +49,7 @@ open class ExportSettingsAction : AnAction(), DumbAware {
   protected open fun getExportableComponents(): Map<Path, List<ExportableItem>> = getExportableComponentsMap(true, true)
 
   protected open fun exportSettings(saveFile: Path, markedComponents: Set<ExportableItem>) {
-    val exportFiles = markedComponents.mapTo(THashSet()) { it.file }
+    val exportFiles = markedComponents.mapTo(ObjectOpenHashSet()) { it.file }
     saveFile.outputStream().use {
       exportSettings(exportFiles, it, FileUtil.toSystemIndependentName(PathManager.getConfigPath()))
     }
@@ -94,7 +95,7 @@ open class ExportSettingsAction : AnAction(), DumbAware {
 }
 
 fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String) {
-  val filter = THashSet<String>()
+  val filter = ObjectOpenHashSet<String>()
   Compressor.Zip(out).filter { entryName, _ -> filter.add(entryName) }.use { zip ->
     for (file in exportFiles) {
       val fileInfo = file.basicAttributesIfExists() ?: continue
@@ -165,7 +166,7 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
     result.keys.removeAll(::isSkipFile)
   }
 
-  val fileToContent = THashMap<Path, String>()
+  val fileToContent = Object2ObjectOpenHashMap<Path, String>()
 
   processAllImplementationClasses(app.picoContainer) { aClass, pluginDescriptor ->
     val stateAnnotation = getStateSpec(aClass)

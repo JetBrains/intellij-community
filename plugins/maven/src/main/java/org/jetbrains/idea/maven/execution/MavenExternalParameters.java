@@ -26,9 +26,11 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -132,10 +134,11 @@ public class MavenExternalParameters {
     if(mavenVersion == null) {
       throw new ExecutionException("Cannot run maven: Maven home " + mavenHome + " looks incorrect");
     }
-    String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Runner | JRE";
-    verifyMavenSdkRequirements(jdk, mavenVersion, sdkConfigLocation);
+    if(!verifyMavenSdkRequirements(jdk, mavenVersion)){
+      throw new ExecutionException(RunnerBundle.message("maven.3.3.1.bad.jdk"));
+    }
 
-    params.getProgramParametersList().addProperty("idea.version" + MavenUtil.getIdeaVersionToPassToMavenProcess());
+    params.getProgramParametersList().addProperty("idea.version", MavenUtil.getIdeaVersionToPassToMavenProcess());
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {
       params.getVMParametersList().addProperty("maven.multiModuleProjectDirectory",
                                                MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath());
@@ -357,7 +360,7 @@ public class MavenExternalParameters {
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
+      final String javaHome = ExternalSystemJdkUtil.getJavaHome();
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new ExecutionException(RunnerBundle.message("maven.java.home.undefined"));
       }

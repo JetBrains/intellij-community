@@ -40,7 +40,8 @@ class NewPropertyAction extends AnAction {
   }
 
   NewPropertyAction(final boolean enabledForce) {
-    super(ResourceBundleEditorBundle.message("new.property.action.text"), null, AllIcons.General.Add);
+    super(ResourceBundleEditorBundle.message("action.NewPropertyAction.text"), 
+          ResourceBundleEditorBundle.message("description.NewPropertyAction.description"), AllIcons.General.Add);
     myEnabledForce = enabledForce;
   }
 

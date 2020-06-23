@@ -3,6 +3,9 @@ package com.intellij.util.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
@@ -18,19 +21,19 @@ public class ConfirmationDialog extends OptionsMessageDialog {
 
   public static boolean requestForConfirmation(@NotNull VcsShowConfirmationOption option,
                                                @NotNull Project project,
-                                               @NotNull String message,
-                                               @NotNull String title,
+                                               @NotNull @DialogMessage String message,
+                                               @NotNull @DialogTitle String title,
                                                @Nullable Icon icon) {
     return requestForConfirmation(option, project, message, title, icon, null, null);
   }
 
   public static boolean requestForConfirmation(@NotNull VcsShowConfirmationOption option,
                                                @NotNull Project project,
-                                               @NotNull String message,
-                                               @NotNull String title,
+                                               @NotNull @DialogMessage String message,
+                                               @NotNull @DialogTitle String title,
                                                @Nullable Icon icon,
-                                               @Nullable String okActionName,
-                                               @Nullable String cancelActionName) {
+                                               @Nullable @ActionText String okActionName,
+                                               @Nullable @ActionText String cancelActionName) {
     if (option.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return false;
     final ConfirmationDialog dialog = new ConfirmationDialog(project, message, title, icon, option, okActionName, cancelActionName);
     if (!option.isPersistent()) {
@@ -46,7 +49,7 @@ public class ConfirmationDialog extends OptionsMessageDialog {
     this(project, message, title, icon, option, null, null);
   }
 
-  public ConfirmationDialog(Project project, final String message, String title, final Icon icon, final VcsShowConfirmationOption option,
+  public ConfirmationDialog(Project project, @DialogMessage String message, @DialogTitle String title, final Icon icon, final VcsShowConfirmationOption option,
                             @Nullable String okActionName, @Nullable String cancelActionName) {
     super(project, message, title, icon);
     myOption = option;

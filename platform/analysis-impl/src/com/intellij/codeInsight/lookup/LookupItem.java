@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup;
 
@@ -17,15 +17,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class represents an item of a lookup list.
  */
-public class LookupItem<T> extends MutableLookupElement<T> implements Comparable {
+public class LookupItem<T> extends MutableLookupElement implements Comparable {
   public static final ClassConditionKey<LookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(LookupItem.class);
 
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
@@ -80,7 +77,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     if (o instanceof LookupItem){
       LookupItem item = (LookupItem)o;
       return Comparing.equal(myObject, item.myObject)
-             && Comparing.equal(myLookupString, item.myLookupString)
+             && Objects.equals(myLookupString, item.myLookupString)
              && Comparing.equal(myAllLookupStrings, item.myAllLookupStrings)
              && Comparing.equal(myAttributes, item.myAttributes);
     }
@@ -165,14 +162,8 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     myAttributes.put(key, value);
   }
 
-  @Override
   public InsertHandler<? extends LookupItem> getInsertHandler(){
     return myInsertHandler;
-  }
-
-  @Override
-  public boolean isBold() {
-    return getAttribute(HIGHLIGHTED_ATTR) != null;
   }
 
   @Override
@@ -226,7 +217,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return tailType != null ? tailType : TailType.UNKNOWN;
   }
 
-  @Override
   @NotNull
   public LookupItem<T> setTailType(@NotNull TailType type) {
     setAttribute(TAIL_TYPE_ATTR, type);
@@ -244,7 +234,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return getLookupString().compareTo(((LookupItem)o).getLookupString());
   }
 
-  @Override
   public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupElement> handler) {
     myInsertHandler = handler;
     return this;
@@ -262,7 +251,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     DefaultLookupItemRenderer.INSTANCE.renderElement(this, presentation);
   }
 
-  @Override
   public LookupItem<T> setBold() {
     setAttribute(HIGHLIGHTED_ATTR, "");
     return this;
@@ -273,7 +261,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return this;
   }
 
-  @Override
   public LookupItem<T> setAutoCompletionPolicy(final AutoCompletionPolicy policy) {
     myAutoCompletionPolicy = policy;
     return this;
@@ -284,14 +271,12 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return myAutoCompletionPolicy;
   }
 
-  @Override
   @NotNull
   public LookupItem<T> setIcon(Icon icon) {
     setAttribute(ICON_ATTR, icon);
     return this;
   }
 
-  @Override
   @NotNull
   public LookupItem<T> setPriority(double priority) {
     myPriority = priority;
@@ -302,7 +287,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return myPriority;
   }
 
-  @Override
   @NotNull
   public LookupItem<T> setPresentableText(@NotNull final String displayText) {
     myPresentable = displayText;
@@ -315,13 +299,12 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   }
 
   @NotNull
-  public MutableLookupElement<T> setTailText(final String text, final boolean grayed) {
+  public LookupItem<T> setTailText(final String text, final boolean grayed) {
     setAttribute(TAIL_TEXT_ATTR, text);
     setAttribute(TAIL_TEXT_SMALL_ATTR, Boolean.TRUE);
     return this;
   }
 
-  @Override
   public LookupItem<T> addLookupStrings(@NonNls final String... additionalLookupStrings) {
     ContainerUtil.addAll(myAllLookupStrings, additionalLookupStrings);
     return this;

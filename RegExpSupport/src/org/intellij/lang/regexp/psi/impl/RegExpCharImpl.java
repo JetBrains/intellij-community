@@ -37,9 +37,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
     @Override
     @NotNull
     public Type getType() {
-        final ASTNode child = getNode().getFirstChildNode();
-        assert child != null;
-        final IElementType t = child.getElementType();
+        final IElementType t = getNode().getFirstChildNode().getElementType();
         if (OCT_CHARS.contains(t)) {
             return Type.OCT;
         } else if (HEX_CHARS.contains(t)) {
@@ -48,6 +46,8 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             return Type.UNICODE;
         } else if (t == RegExpTT.NAMED_CHARACTER) {
             return Type.NAMED;
+        } else if (t == RegExpTT.CTRL) {
+            return Type.CONTROL;
         } else {
             return Type.CHAR;
         }
@@ -55,20 +55,30 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
 
     @Override
     public int getValue() {
-      final String s = getUnescapedText();
-      if (s.equals("\\") && getType() == Type.CHAR) return '\\';
-      return unescapeChar(s);
+        final ASTNode node = getNode();
+        final IElementType type = node.getFirstChildNode().getElementType();
+        if (type == RegExpTT.BAD_OCT_VALUE ||
+            type == RegExpTT.BAD_HEX_VALUE ||
+            type == RegExpTT.BAD_CHARACTER ||
+            type == StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN) {
+            return -1;
+        }
+        final String text = getUnescapedText();
+        if (text.length() == 1 && (type == RegExpTT.CHARACTER ||  type == RegExpTT.CTRL_CHARACTER)) {
+            return text.codePointAt(0);
+        }
+        else if (type == RegExpTT.UNICODE_CHAR) {
+            final int i = text.indexOf('\\', 1);
+            if (i >= 0) return Character.toCodePoint((char)unescapeChar(text.substring(0, i)), (char)unescapeChar(text.substring(i)));
+        }
+        return unescapeChar(text);
     }
 
-    private static int unescapeChar(String s) {
+    public static int unescapeChar(String s) {
+        final int c = s.codePointAt(0);
         final int length = s.length();
-        assert length > 0;
-
-        int codePoint = s.codePointAt(0);
-        if (codePoint != '\\') {
-            return codePoint;
-        }
-        codePoint = s.codePointAt(1);
+        if (length == 1 || c != '\\') return -1;
+        final int codePoint = s.codePointAt(1);
         switch (codePoint) {
             case 'n':
                 return '\n';
@@ -77,29 +87,25 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             case 't':
                 return '\t';
             case 'a':
-                return '\u0007';
+                return '\u0007'; // The alert (bell) character
             case 'e':
-                return '\u001b';
+                return '\u001b'; // The escape character
             case 'f':
-                return '\f';
+                return '\f'; // The form-feed character
             case 'b':
                 return '\b';
             case 'c':
-                return (char)(codePoint ^ 64);
+                if (length != 3) return -1;
+                return s.codePointAt(2) ^ 64; // control character
             case 'N':
                 if (length < 4 || s.charAt(2) != '{' || s.charAt(length - 1) != '}') {
                     return -1;
                 }
-                final int value = UnicodeCharacterNames.getCodePoint(s.substring(3, length - 1));
-                if (value == -1) {
-                    return -1;
-                }
-                return value;
+                return UnicodeCharacterNames.getCodePoint(s.substring(3, length - 1));
             case 'x':
                 if (length <= 2) return -1;
                 if (s.charAt(2) == '{') {
-                    final char c = s.charAt(length - 1);
-                    return (c != '}') ? -1 : parseNumber(s, 3, 16);
+                    return (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
                 }
                 if (length == 3) {
                     return parseNumber(s, 2, 16);
@@ -108,13 +114,9 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             case 'u':
                 if (length <= 2) return 'u';
                 if (s.charAt(2) == '{') {
-                    final char c = s.charAt(length - 1);
-                    return (c != '}') ? -1 : parseNumber(s, 3, 16);
+                    return (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
                 }
-                if (length != 6) {
-                    return -1;
-                }
-                return parseNumber(s, 2, 16);
+                return length != 6 ? -1 : parseNumber(s, 2, 16);
             case '0':
             case '1':
             case '2':

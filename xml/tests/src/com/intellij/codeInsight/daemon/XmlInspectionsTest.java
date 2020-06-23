@@ -42,7 +42,7 @@ public class XmlInspectionsTest extends BasePlatformTestCase {
                           "</schema>");
   }
 
-  public void _testHtmlFromRncSchema() {
+  public void testHtmlFromRncSchema() {
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
     myFixture.configureByText(HtmlFileType.INSTANCE, "<!DOCTYPE html>\n" +
                                                      "<html lang=\"en\">\n" +
@@ -55,7 +55,7 @@ public class XmlInspectionsTest extends BasePlatformTestCase {
                                                      "    <input type=\"hidden\" name=\"name_1\" value=\"val_1\">\n" +
                                                      "    <input type=\"hidden\" name=\"name_2\" value=\"val_2\">\n" +
                                                      "    <button type=\"button\">Proper js button</button>\n" +
-                                                     "    <button type=<warning descr=\"Redundant default attribute value assignment\">\"submit\"</warning>>Proper submit button</button>\n" +
+                                                     "    <button type=\"submit\">Proper submit button</button>\n" +
                                                      "    <button>Behave as submit when missing type=\"button\"</button>\n" +
                                                      "</form>\n" +
                                                      "</body>\n" +

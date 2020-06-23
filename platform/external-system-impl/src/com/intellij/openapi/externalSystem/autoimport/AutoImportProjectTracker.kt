@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
@@ -21,7 +21,6 @@ import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrac
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.BooleanProperty
-import com.intellij.openapi.observable.properties.PropertyView
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -35,15 +34,13 @@ import kotlin.streams.asStream
 
 @State(name = "ExternalSystemProjectTracker", storages = [Storage(CACHE_FILE)])
 class AutoImportProjectTracker(private val project: Project) : ExternalSystemProjectTracker, PersistentStateComponent<AutoImportProjectTracker.State> {
-
   @Suppress("unused")
   private val debugThrowable = Throwable("Initialized with project=(${project.isDisposed}, ${Disposer.isDisposed(project)}, $project)")
 
-  private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
   private val AUTO_REPARSE_DELAY = DaemonCodeAnalyzerSettings.getInstance().autoReparseDelay
   private val AUTO_RELOAD_DELAY = 2000
 
-  private val settings get() = ProjectTrackerSettings.getInstance(project)
+  private val settings get() = AutoImportProjectTrackerSettings.getInstance(project)
   private val projectStates = ConcurrentHashMap<State.Id, State.Project>()
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()
   private val isDisabled = AtomicBooleanProperty(ApplicationManager.getApplication().isUnitTestMode)
@@ -53,12 +50,6 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", AUTO_REPARSE_DELAY, false, null, project)
   private val delayDispatcher = MergingUpdateQueue("AutoImportProjectTracker.delayDispatcher", AUTO_RELOAD_DELAY, false, null, project)
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
-
-  override var isAutoReloadExternalChanges by PropertyView(
-    settings.autoReloadTypeProperty,
-    { it == AutoReloadType.SELECTIVE },
-    { if (it) AutoReloadType.SELECTIVE else AutoReloadType.NONE }
-  )
 
   var isAsyncChangesProcessing by asyncChangesProcessingProperty
 
@@ -217,7 +208,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   ): ProjectData? {
     val projectData = projectDataMap.action(id)
     if (projectData == null) {
-      LOG.warn(String.format("Project isn't registered by id=%s", id))
+      LOG.warn(String.format("Project isn't registered by id=%s", id), Throwable())
     }
     return projectData
   }
@@ -248,8 +239,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   override fun initializeComponent() {
     LOG.debug("Project tracker initialization")
-    val connections = ApplicationManager.getApplication().messageBus.connect(project)
-    connections.subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
+    ApplicationManager.getApplication().messageBus.connect(project).subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
     dispatcher.setRestartTimerOnAdd(true)
     dispatcher.isPassThrough = !isAsyncChangesProcessing
     dispatcher.activate()
@@ -328,6 +318,8 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   private data class ProjectReloadContext(override val isExplicitReload: Boolean) : ExternalSystemProjectReloadContext
 
   companion object {
+    private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
+
     @TestOnly
     @JvmStatic
     fun getInstance(project: Project): AutoImportProjectTracker {

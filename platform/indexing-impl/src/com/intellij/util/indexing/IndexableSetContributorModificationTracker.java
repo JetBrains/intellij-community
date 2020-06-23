@@ -13,6 +13,6 @@ public class IndexableSetContributorModificationTracker extends SimpleModificati
   }
 
   public IndexableSetContributorModificationTracker() {
-    IndexableSetContributor.EP_NAME.addExtensionPointListener(() -> incModificationCount(), ApplicationManager.getApplication());
+    IndexableSetContributor.EP_NAME.addChangeListener(() -> incModificationCount(), ApplicationManager.getApplication());
   }
 }

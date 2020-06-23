@@ -12,7 +12,6 @@ import java.lang.reflect.Field;
 
 import static com.intellij.util.ReflectionUtil.findAssignableField;
 import static com.intellij.util.ReflectionUtil.getFieldValue;
-import static com.intellij.util.ui.EDT.assertIsEdt;
 
 @ApiStatus.Internal
 public final class InvocationUtil {
@@ -33,8 +32,6 @@ public final class InvocationUtil {
   }
 
   private static @NotNull Class<? extends Runnable> findProcessingClass() {
-    assertIsEdt();
-
     try {
       return Class.forName(
         "javax.swing.RepaintManager$ProcessingRunnable",
@@ -49,7 +46,6 @@ public final class InvocationUtil {
 
   private static @NotNull Field findRunnableField() {
     try {
-      assertIsEdt();
       return findAssignableField(
         InvocationEvent.class,
         Runnable.class,

@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.Icon
 
+@Deprecated("Unused, to be removed")
 class GraphViewFileType private constructor() : FileType {
   override fun getName(): String = "GraphView"
   override fun getDescription(): String = DiffBundle.message("filetype.description.graphview")

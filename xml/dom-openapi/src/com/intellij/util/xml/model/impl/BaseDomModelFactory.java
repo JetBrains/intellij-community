@@ -16,16 +16,13 @@
 package com.intellij.util.xml.model.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.ModelMerger;
 import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.model.DomModel;
 import com.intellij.util.xml.model.MultipleDomModelFactory;
@@ -34,33 +31,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends DomElement, M extends DomModel<T>, C extends PsiElement>
     extends DomModelFactoryHelper<T> implements SimpleModelFactory<T, M>, MultipleDomModelFactory<S, T, M> {
 
   private final Project myProject;
-  private final SimpleModelFactory<T,M> mySimpleDomModelFactory;
-  private final MultipleDomModelFactory<S, T, M> myMultipleDomModelFactory;
-
   protected BaseDomModelFactory(@NotNull Class<T> aClass, final Project project, @NonNls String name) {
     super(aClass, DomService.getInstance().createModelMerger());
 
     myProject = project;
-
-    mySimpleDomModelFactory = createSimpleModelFactory(aClass, getModelMerger(), project, name);
-
-    myMultipleDomModelFactory = createMultipleDomModelFactory(aClass, getModelMerger(), project, name);
   }
-
-  protected abstract S getModelScope(final XmlFile file);
-
-  @Nullable
-  protected abstract List<M> computeAllModels(@NotNull S scope);
-
-  protected abstract M createCombinedModel(@NotNull Set<XmlFile> configFiles, @NotNull DomFileElement<T> mergedModel, M firstModel, final S scope);
 
   @Nullable
   public M getModel(@NotNull C context){
@@ -69,28 +50,6 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
       return getModelByConfigFile((XmlFile)psiFile);
     }
     return null;
-  }
-
-  @Override
-  @NotNull
-  public List<M> getAllModels(@NotNull S scope) {
-    return myMultipleDomModelFactory.getAllModels(scope);
-  }
-
-  @Override
-  @Nullable
-  public M getModelByConfigFile(@Nullable XmlFile psiFile) {
-    return mySimpleDomModelFactory.getModelByConfigFile(psiFile);
-  }
-
-  public Object @NotNull [] computeDependencies(@Nullable M model, @Nullable S scope) {
-
-    final ArrayList<Object> dependencies = new ArrayList<>();
-    dependencies.add(PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-    if (scope != null) {
-      dependencies.add(ProjectRootManager.getInstance(getProject()));
-    }
-    return ArrayUtil.toObjectArray(dependencies);
   }
 
   @Nullable
@@ -108,83 +67,73 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return null;
   }
 
-  @Override
-  @Nullable
-  public M getCombinedModel(@Nullable S scope) {
-    return myMultipleDomModelFactory.getCombinedModel(scope);
-  }
-
-  @Override
-  @NotNull
-  public Set<XmlFile> getAllConfigFiles(@NotNull S scope) {
-    return myMultipleDomModelFactory.getAllConfigFiles(scope);
-  }
-
-  @Override
-  @Nullable
-  public DomFileElement<T> createMergedModelRoot(final Set<? extends XmlFile> configFiles) {
-    return mySimpleDomModelFactory.createMergedModelRoot(configFiles);
-  }
-
-  private CachedMultipleDomModelFactory<S, T, M, C> createMultipleDomModelFactory(final Class<T> aClass,
-                                                                                  final ModelMerger modelMerger,
-                                                                                  final Project project,
-                                                                                  final String name) {
-    return new CachedMultipleDomModelFactory<S, T, M, C>(aClass, modelMerger, project, name) {
-      @Override
-      public M getModel(@NotNull final C context) {
-        return BaseDomModelFactory.this.getModel(context);
-      }
-
-      @Override
-      protected List<M> computeAllModels(@NotNull final S scope) {
-        return BaseDomModelFactory.this.computeAllModels(scope);
-      }
-
-      @Override
-      protected M createCombinedModel(final Set<XmlFile> configFiles,
-                                      final DomFileElement<T> mergedModel,
-                                      final M firstModel,
-                                      final S scope) {
-        return BaseDomModelFactory.this.createCombinedModel(configFiles, mergedModel, firstModel, scope);
-      }
-
-      @Override
-      public Object @NotNull [] computeDependencies(@Nullable final M model, @Nullable final S scope) {
-        return BaseDomModelFactory.this.computeDependencies(model, scope);
-      }
-
-      @Override
-      public S getModelScope(@NotNull final XmlFile xmlFile) {
-        return BaseDomModelFactory.this.getModelScope(xmlFile);
-      }
-    };
-  }
-
-  private CachedSimpleDomModelFactory<T, M, S> createSimpleModelFactory(final Class<T> aClass,
-                                                                        final ModelMerger modelMerger,
-                                                                        final Project project,
-                                                                        final String name) {
-    return new CachedSimpleDomModelFactory<T, M, S>(aClass, modelMerger, project, name) {
-
-      @Override
-      protected M computeModel(@NotNull final XmlFile psiFile, @Nullable final S scope) {
-        return BaseDomModelFactory.this.computeModel(psiFile, scope);
-      }
-
-      @Override
-      public Object @NotNull [] computeDependencies(@Nullable final M model, @Nullable final S scope) {
-        return BaseDomModelFactory.this.computeDependencies(model, scope);
-      }
-
-      @Override
-      public S getModelScope(@NotNull XmlFile file) {
-        return BaseDomModelFactory.this.getModelScope(file);
-      }
-    };
-  }
 
   public Project getProject() {
     return myProject;
+  }
+
+  @Nullable
+  @Override
+  public M getModelByConfigFile(@Nullable XmlFile file) {
+    if (file == null) return null;
+    final XmlFile originalFile = (XmlFile)file.getOriginalFile();
+    final S scope = getModelScope(originalFile);
+    return computeModel(originalFile, scope);
+  }
+
+  @Override
+  public @Nullable DomFileElement<T> createMergedModelRoot(Set<? extends XmlFile> configFiles) {
+    List<DomFileElement<T>> configs = new ArrayList<>(configFiles.size());
+    for (XmlFile configFile : configFiles) {
+      ContainerUtil.addIfNotNull(configs, getDomRoot(configFile));
+    }
+    return configs.isEmpty() ? null : getModelMerger().mergeModels(DomFileElement.class, configs);
+  }
+
+  protected abstract S getModelScope(final XmlFile file);
+
+  @Nullable
+  protected abstract List<M> computeAllModels(@NotNull S scope);
+
+  protected abstract M createCombinedModel(Set<XmlFile> configFiles, DomFileElement<T> mergedModel, M firstModel, final S scope);
+
+  //
+  @Override
+  public @NotNull List<M> getAllModels(@NotNull S s) {
+    final List<M> models = computeAllModels(s);
+    return models == null ? Collections.emptyList() : models;
+  }
+
+  @Override
+  public Set<XmlFile> getAllConfigFiles(@NotNull S scope) {
+    final HashSet<XmlFile> xmlFiles = new HashSet<>();
+    for (M model: getAllModels(scope)) {
+      xmlFiles.addAll(model.getConfigFiles());
+    }
+    return xmlFiles;
+  }
+
+  @Nullable
+  @Override
+  public M getCombinedModel(@Nullable S s) {
+    final List<M> models = getAllModels(s);
+    switch (models.size()) {
+      case 0:
+        return null;
+      case 1:
+        return models.get(0);
+    }
+    final Set<XmlFile> configFiles = new LinkedHashSet<>();
+    final LinkedHashSet<DomFileElement<T>> list = new LinkedHashSet<>(models.size());
+    for (M model: models) {
+      final Set<XmlFile> files = model.getConfigFiles();
+      for (XmlFile file: files) {
+        ContainerUtil.addIfNotNull(list, getDomRoot(file));
+      }
+      configFiles.addAll(files);
+    }
+    final DomFileElement<T> mergedModel = getModelMerger().mergeModels(DomFileElement.class, list);
+    final M firstModel = models.get(0);
+    return createCombinedModel(configFiles, mergedModel, firstModel, s);
   }
 }

@@ -37,7 +37,7 @@ import static com.jetbrains.python.PyTokenTypes.*;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, CustomFormattingModelBuilder {
   private static final boolean DUMP_FORMATTING_AST = false;
-  static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens();
+  static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.getInstance().getStatementTokens();
 
   @NotNull
   @Override

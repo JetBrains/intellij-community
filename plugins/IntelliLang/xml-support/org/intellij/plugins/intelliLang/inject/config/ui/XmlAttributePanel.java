@@ -17,14 +17,14 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
+import java.util.Objects;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
-
-import javax.swing.*;
 
 public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInjection> {
 
@@ -61,7 +61,7 @@ public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInject
     myLocalName.setText(myOrigInjection.getAttributeName());
     myNamespace.getEditor().setItem(myOrigInjection.getAttributeNamespace());
 
-    myUseGeneratedName = Comparing.equal(myOrigInjection.getDisplayName(), myOrigInjection.getGeneratedName());
+    myUseGeneratedName = Objects.equals(myOrigInjection.getDisplayName(), myOrigInjection.getGeneratedName());
   }
 
   @Override
@@ -70,7 +70,7 @@ public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInject
     other.setAttributeNamespace(getNamespace());
 
     String name = myNameTextField.getText();
-    boolean useGenerated = myUseGeneratedName && Comparing.equal(myOrigInjection.getDisplayName(), name);
+    boolean useGenerated = myUseGeneratedName && Objects.equals(myOrigInjection.getDisplayName(), name);
     String newName = useGenerated || StringUtil.isEmptyOrSpaces(name) ? other.getGeneratedName() : name;
     other.setDisplayName(newName);
   }

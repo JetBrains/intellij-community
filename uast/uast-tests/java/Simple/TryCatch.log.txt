@@ -31,10 +31,22 @@ UFile (package = )
                                     USimpleNameReferenceExpression (identifier = b)
                                     ULiteralExpression (value = 1)
                             UCatchClause (ex)
+                                UParameter (name = ex)
                                 UBlockExpression
                                     UBinaryExpression (operator = =)
                                         USimpleNameReferenceExpression (identifier = b)
                                         ULiteralExpression (value = 1)
+                            UCatchClause (e)
+                                UParameter (name = e)
+                                    UAnnotation (fqName = java.lang.Deprecated)
+                                UBlockExpression
+                                    UBinaryExpression (operator = =)
+                                        USimpleNameReferenceExpression (identifier = b)
+                                        ULiteralExpression (value = 2)
+                            UBlockExpression
+                                UBinaryExpression (operator = =)
+                                    USimpleNameReferenceExpression (identifier = b)
+                                    ULiteralExpression (value = 3)
                         UDeclarationsExpression
                             ULocalVariable (name = c)
                                 USimpleNameReferenceExpression (identifier = b)

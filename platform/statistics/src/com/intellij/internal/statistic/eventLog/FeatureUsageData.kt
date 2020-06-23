@@ -201,13 +201,12 @@ class FeatureUsageData {
     return this
   }
 
-  @FeatureUsageDataBuilder(additionalDataFields = ["value::0"])
   fun addAnonymizedValue(@NonNls key: String, @NonNls value: String?): FeatureUsageData {
     data[key] = value?.let { EventLogConfiguration.anonymize(value) } ?: "undefined"
     return this
   }
 
-  @FeatureUsageDataBuilder(additionalDataFields = ["value"])
+  @FeatureUsageDataBuilder(additionalDataFields = ["value::0"])
   fun addValue(value: Any): FeatureUsageData {
     if (value is String || value is Boolean || value is Int || value is Long || value is Float || value is Double) {
       return addDataInternal("value", value)
@@ -274,6 +273,14 @@ class FeatureUsageData {
    * @param key key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
   fun addData(@NonNls key: String, value: List<String>): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  internal fun addObjectData(@NonNls key: String, value: Map<String, Any>): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  internal fun addListObjectData(@NonNls key: String, value: List<Map<String, Any>>): FeatureUsageData {
     return addDataInternal(key, value)
   }
 

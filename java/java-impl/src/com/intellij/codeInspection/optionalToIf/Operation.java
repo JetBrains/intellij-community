@@ -15,7 +15,7 @@ interface Operation {
   @Nullable
   String generate(@NotNull ChainVariable inVar, @NotNull ChainVariable outVar, @NotNull String code, @NotNull OptionalToIfContext context);
 
-  default void rename(@NotNull String oldName, @NotNull String newName, @NotNull OptionalToIfContext context) {}
+  default void rename(@NotNull String oldName, @NotNull ChainVariable newVar, @NotNull OptionalToIfContext context) {}
 
   default void preprocessVariables(@NotNull ChainVariable inVar, @NotNull ChainVariable outVar, @NotNull OptionalToIfContext context) {}
 

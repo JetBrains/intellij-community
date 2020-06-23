@@ -28,6 +28,7 @@ import java.awt.*;
 public class ClipDetector {
   private final EditorImpl myEditor;
   private final Rectangle myClipRectangle;
+  private final boolean myDisabled;
   
   private int myVisualLineStartOffset = -1;
   private int myVisualLineEndOffset = -1;
@@ -37,13 +38,16 @@ public class ClipDetector {
   public ClipDetector(@NotNull EditorImpl editor, Rectangle clipRectangle) {
     myEditor = editor;
     myClipRectangle = clipRectangle;
+    // heuristics: if the content is not too wide, there's no need to spend time on clip checking:
+    // painting all invisible elements cannot take too much time in that case
+    myDisabled = editor.getContentComponent().getWidth() < 10 * editor.getScrollingModel().getVisibleArea().width;
   }
 
   public boolean rangeCanBeVisible(int startOffset, int endOffset) {
     assert startOffset >= 0;
     assert startOffset <= endOffset;
     assert endOffset <= myEditor.getDocument().getTextLength();
-    if (myEditor.getSettings().isUseSoftWraps()) return true; 
+    if (myDisabled) return true;
     if (startOffset < myVisualLineStartOffset || startOffset > myVisualLineEndOffset) {
       myVisualLineStartOffset = EditorUtil.getNotFoldedLineStartOffset(myEditor, startOffset);
       myVisualLineEndOffset = EditorUtil.getNotFoldedLineEndOffset(myEditor, startOffset);

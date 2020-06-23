@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider;
@@ -50,7 +49,7 @@ import java.util.*;
  */
 final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiNameIdentifierOwner) {
       if (parent instanceof GrField && element == ((GrField)parent).getNameIdentifierGroovy()) {
@@ -62,8 +61,7 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
                                 superMethod.getBody() != null && GrTraitUtil.isTrait(superMethod.getContainingClass());
             final Icon icon = overrides ? AllIcons.Gutter.OverridingMethod : AllIcons.Gutter.ImplementingMethod;
             final MarkerType type = GroovyMarkerTypes.OVERRIDING_PROPERTY_TYPE;
-            return new LineMarkerInfo<>(element, element.getTextRange(), icon, Pass.LINE_MARKERS, type.getTooltip(),
-                                        type.getNavigationHandler(),
+            return new LineMarkerInfo<>(element, element.getTextRange(), icon, type.getTooltip(), type.getNavigationHandler(),
                                         GutterIconRenderer.Alignment.LEFT);
           }
         }
@@ -73,8 +71,8 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
                hasSuperMethods((GrMethod)element.getParent())) {
         final Icon icon = AllIcons.Gutter.OverridingMethod;
         final MarkerType type = GroovyMarkerTypes.GR_OVERRIDING_METHOD;
-        return new LineMarkerInfo<>(element, element.getTextRange(), icon, Pass.LINE_MARKERS, type.getTooltip(),
-                                    type.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
+        return new LineMarkerInfo<>(element, element.getTextRange(), icon, type.getTooltip(), type.getNavigationHandler(),
+                                    GutterIconRenderer.Alignment.LEFT);
       }
     }
     //need to draw method separator above docComment
@@ -111,8 +109,7 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
           }
           LineMarkerInfo info =
             new LineMarkerInfo<>(element, comment != null ? comment.getTextRange() : element.getTextRange(), null,
-                                 Pass.LINE_MARKERS, FunctionUtil.<Object, String>nullConstant(), null,
-                                 GutterIconRenderer.Alignment.RIGHT);
+                                 FunctionUtil.<Object, String>nullConstant(), null, GutterIconRenderer.Alignment.RIGHT);
           EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;
@@ -163,7 +160,7 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   }
 
   @Override
-  public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(final @NotNull List<? extends PsiElement> elements, final @NotNull Collection<? super LineMarkerInfo<?>> result) {
     Set<PsiMethod> methods = new HashSet<>();
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
@@ -186,7 +183,7 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     collectOverridingMethods(methods, result);
   }
 
-  private static void collectOverridingMethods(@NotNull final Set<PsiMethod> methods, @NotNull Collection<LineMarkerInfo> result) {
+  private static void collectOverridingMethods(final @NotNull Set<? extends PsiMethod> methods, @NotNull Collection<? super LineMarkerInfo<?>> result) {
     final Set<PsiElement> overridden = new HashSet<>();
 
     Set<PsiClass> classes = new THashSet<>();
@@ -221,8 +218,8 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
 
       final MarkerType type = element instanceof GrField ? GroovyMarkerTypes.OVERRIDEN_PROPERTY_TYPE
                                                          : GroovyMarkerTypes.GR_OVERRIDDEN_METHOD;
-      LineMarkerInfo info = new LineMarkerInfo<>(range, range.getTextRange(), icon, Pass.LINE_MARKERS, type.getTooltip(),
-                                                 type.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
+      LineMarkerInfo<?> info = new LineMarkerInfo<>(range, range.getTextRange(), icon, type.getTooltip(), type.getNavigationHandler(),
+                                                    GutterIconRenderer.Alignment.RIGHT);
       result.add(info);
     }
   }

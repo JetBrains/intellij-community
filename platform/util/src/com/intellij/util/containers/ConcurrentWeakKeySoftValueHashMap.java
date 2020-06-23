@@ -17,6 +17,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Getter;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -143,6 +144,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     if (valueReference instanceof SoftValue) {
       ((SoftValue<K, V>)valueReference).myKeyReference = keyReference;
     }
+    ObjectUtils.reachabilityFence(k);
     return keyReference;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
@@ -21,9 +21,14 @@ public class VcsCacheManager {
     myContentRevisionCache = new ContentRevisionCache();
 
     MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsHistoryCache::clearHistory);
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, myVcsHistoryCache::clearHistory);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsHistoryCache::clearAll);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, myVcsHistoryCache::clearAll);
     connection.subscribe(UpdatedFilesListener.UPDATED_FILES, myContentRevisionCache::clearCurrent);
+
+    VcsEP.EP_NAME.addChangeListener(() -> {
+      myVcsHistoryCache.clearAll();
+      myContentRevisionCache.clearAll();
+    }, project);
   }
 
   public VcsHistoryCache getVcsHistoryCache() {

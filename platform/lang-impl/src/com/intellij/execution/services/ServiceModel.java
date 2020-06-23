@@ -18,13 +18,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Function;
+import com.intellij.util.NotNullizer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.containers.TreeTraversal;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -38,6 +36,15 @@ class ServiceModel implements Disposable, InvokerSupplier {
   static final ExtensionPointName<ServiceViewContributor<?>> CONTRIBUTOR_EP_NAME =
     ExtensionPointName.create("com.intellij.serviceViewContributor");
   private static final Logger LOG = Logger.getInstance(ServiceModel.class);
+
+  static final TreeTraversal NOT_LOADED_LAST_BFS = new TreeTraversal("NOT_LOADED_LAST_BFS") {
+    @NotNull
+    @Override
+    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
+      return new NotLoadedLastBfsIt<>(roots, tree);
+    }
+  };
+  private static final NotNullizer ourNotNullizer = new NotNullizer("ServiceViewTreeTraversal.NotNull");
 
   private final Project myProject;
   private final Invoker myInvoker = Invoker.forBackgroundThreadWithReadAction(this);
@@ -107,7 +114,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     return JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
       contributorClass.isInstance(node.getRootContributor()) ? new ArrayList<>(node.getChildren()) : null)
       .withRoots(myRoots)
-      .traverse(TreeTraversal.PLAIN_BFS)
+      .traverse(NOT_LOADED_LAST_BFS)
       .filter(node -> node.getValue().equals(value));
   }
 
@@ -116,7 +123,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     return JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
       visitChildrenCondition.value(node) ? new ArrayList<>(node.getChildren()) : null)
       .withRoots(myRoots)
-      .traverse(TreeTraversal.PLAIN_BFS)
+      .traverse(NOT_LOADED_LAST_BFS)
       .filter(condition)
       .first();
   }
@@ -663,6 +670,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     private final Project myProject;
     private final ServiceViewContributor<?> myProvidingContributor;
     private volatile boolean myChildrenInitialized;
+    private volatile boolean myLoaded;
 
     ServiceNode(@NotNull Object service, @Nullable ServiceViewItem parent, @NotNull ServiceViewContributor<?> contributor,
                 @NotNull ServiceViewDescriptor viewDescriptor,
@@ -670,6 +678,8 @@ class ServiceModel implements Disposable, InvokerSupplier {
       super(service, parent, contributor, viewDescriptor);
       myProject = project;
       myProvidingContributor = providingContributor;
+      myChildrenInitialized = providingContributor == null;
+      myLoaded = !(providingContributor instanceof ServiceViewLazyContributor);
     }
 
     @NotNull
@@ -681,6 +691,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
           children.addAll(getContributorChildren(myProject, this, myProvidingContributor));
         }
         myChildrenInitialized = true;
+        myLoaded = true;
       }
       return children;
     }
@@ -689,9 +700,16 @@ class ServiceModel implements Disposable, InvokerSupplier {
       return myChildrenInitialized;
     }
 
+    boolean isLoaded() {
+      return myLoaded;
+    }
+
     private void reloadChildren() {
       super.getChildren().clear();
-      myChildrenInitialized = false;
+      if (myProvidingContributor != null) {
+        myChildrenInitialized = false;
+        myLoaded = true;
+      }
     }
 
     private void moveChildren(ServiceNode node) {
@@ -704,6 +722,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
         child.setParent(this);
       }
       myChildrenInitialized = node.myChildrenInitialized;
+      myLoaded = node.myLoaded;
     }
 
     @Nullable
@@ -743,5 +762,45 @@ class ServiceModel implements Disposable, InvokerSupplier {
 
   interface ServiceModelEventListener {
     void eventProcessed(ServiceEvent e);
+  }
+
+  private static final class NotLoadedLastBfsIt<T> extends TreeTraversal.It<T> {
+    Deque<T> myQueue = new ArrayDeque<>();
+    Deque<T> myNotLoadedQueue = new ArrayDeque<>();
+    T myTop;
+
+    NotLoadedLastBfsIt(@NotNull Iterable<? extends T> roots, Function<? super T, ? extends Iterable<? extends T>> tree) {
+      super(tree);
+      JBIterable.from(roots).map(ourNotNullizer::notNullize).addAllTo(myQueue);
+    }
+
+    @Override
+    public T nextImpl() {
+      if (myTop != null) {
+        if (myTop instanceof ServiceNode &&
+            !((ServiceNode)myTop).isChildrenInitialized() && !((ServiceNode)myTop).isLoaded()) {
+          myNotLoadedQueue.add(myTop);
+        }
+        else {
+          Iterable<? extends T> iterable = tree.fun(myTop);
+          if (iterable != null) {
+            JBIterable.from(iterable).map(ourNotNullizer::notNullize).addAllTo(myQueue);
+          }
+        }
+        myTop = null;
+      }
+      while (!myNotLoadedQueue.isEmpty() && myQueue.isEmpty()) {
+        T notLoaded = myNotLoadedQueue.remove();
+        Iterable<? extends T> iterable = tree.fun(notLoaded);
+        if (iterable != null) {
+          JBIterable.from(iterable).map(ourNotNullizer::notNullize).addAllTo(myQueue);
+        }
+      }
+      if (myQueue.isEmpty()) {
+        return stop();
+      }
+      myTop = ourNotNullizer.nullize(myQueue.remove());
+      return myTop;
+    }
   }
 }

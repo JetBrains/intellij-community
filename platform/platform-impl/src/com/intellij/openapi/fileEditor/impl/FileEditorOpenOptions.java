@@ -15,37 +15,37 @@ public class FileEditorOpenOptions {
   private boolean myExactState = false;
   private boolean myReopeningEditorsOnStartup = false;
 
-  public FileEditorOpenOptions withCurrentTab(boolean current) {
+  FileEditorOpenOptions withCurrentTab(boolean current) {
     myCurrentTab = current;
     return this;
   }
 
-  public FileEditorOpenOptions withFocusEditor(boolean focusEditor) {
+  FileEditorOpenOptions withFocusEditor(boolean focusEditor) {
     myFocusEditor = focusEditor;
     return this;
   }
 
-  public FileEditorOpenOptions withPin(Boolean pin) {
+  FileEditorOpenOptions withPin(Boolean pin) {
     myPin = pin;
     return this;
   }
 
-  public FileEditorOpenOptions withIndex(int index) {
+  FileEditorOpenOptions withIndex(int index) {
     myIndex = index;
     return this;
   }
 
-  public FileEditorOpenOptions withExactState() {
+  FileEditorOpenOptions withExactState() {
     myExactState = true;
     return this;
   }
 
-  public FileEditorOpenOptions withReopeningEditorsOnStartup() {
+  FileEditorOpenOptions withReopeningEditorsOnStartup() {
     myReopeningEditorsOnStartup = true;
     return this;
   }
 
-  public boolean isCurrentTab() {
+  boolean isCurrentTab() {
     return myCurrentTab;
   }
 
@@ -53,19 +53,19 @@ public class FileEditorOpenOptions {
     return myFocusEditor;
   }
 
-  public Boolean getPin() {
+  Boolean getPin() {
     return myPin;
   }
 
-  public int getIndex() {
+  int getIndex() {
     return myIndex;
   }
 
-  public boolean isExactState() {
+  boolean isExactState() {
     return myExactState;
   }
 
-  public boolean isReopeningEditorsOnStartup() {
+  boolean isReopeningEditorsOnStartup() {
     return myReopeningEditorsOnStartup;
   }
 }

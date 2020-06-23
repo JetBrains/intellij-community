@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.util.TimeoutUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
@@ -37,7 +38,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     val data = createDataWithActivityId().addProject(projectOrNullForApplication)
     consumer.accept(data)
 
-    startedTimestamp = System.currentTimeMillis()
+    startedTimestamp = System.nanoTime()
     FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("started"), data)
     return this
   }
@@ -61,7 +62,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
     state = State.FINISHED
 
-    val duration = System.currentTimeMillis() - startedTimestamp
+    val duration = TimeoutUtil.getDurationMillis(startedTimestamp)
     FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("finished"),
                                                 createDataWithActivityId().addData("duration_ms", duration))
     return this

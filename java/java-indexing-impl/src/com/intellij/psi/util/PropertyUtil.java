@@ -4,7 +4,7 @@ package com.intellij.psi.util;
 import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaSimplePropertyIndexKt;
+import com.intellij.psi.impl.JavaSimplePropertyGistKt;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +23,7 @@ public class PropertyUtil extends PropertyUtilBase {
   @Nullable
   private static PsiField getFieldOfGetter(PsiMethod method, boolean useIndex) {
     PsiField field = useIndex && method instanceof PsiMethodImpl && method.isPhysical()
-            ? JavaSimplePropertyIndexKt.getFieldOfGetter((PsiMethodImpl)method)
+            ? JavaSimplePropertyGistKt.getFieldOfGetter((PsiMethodImpl)method)
             : getSimplyReturnedField(getGetterReturnExpression(method));
     if (field == null || !checkFieldLocation(method, field)) return null;
     final PsiType returnType = method.getReturnType();
@@ -90,7 +90,7 @@ public class PropertyUtil extends PropertyUtilBase {
 
     PsiField field;
     if (useIndex && method instanceof PsiMethodImpl && method.isPhysical()) {
-      field = JavaSimplePropertyIndexKt.getFieldOfSetter((PsiMethodImpl)method);
+      field = JavaSimplePropertyGistKt.getFieldOfSetter((PsiMethodImpl)method);
     }
     else {
       @NonNls final String name = method.getName();

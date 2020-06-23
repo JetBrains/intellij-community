@@ -26,6 +26,7 @@ import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.associateWithModule
 import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.createSdkByGenerateTask
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
@@ -81,6 +82,10 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
 
     languageLevelsField = ComboBox(supportedLanguageLevels.toTypedArray()).apply {
       selectedItem = if (itemCount > 0) getItemAt(0) else null
+    }
+
+    if (PyCondaSdkCustomizer.instance.sharedEnvironmentsByDefault) {
+      makeSharedField.isSelected = true
     }
 
     updatePathField()

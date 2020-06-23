@@ -57,7 +57,7 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
           result.add(new UnresolvableCollisionUsageInfo(property.getPsiElement(), key) {
             @Override
             public String getDescription() {
-              return "New property name \'" + value + "\' hides existing property";
+              return "New property name '" + value + "' hides existing property";
             }
           });
         }

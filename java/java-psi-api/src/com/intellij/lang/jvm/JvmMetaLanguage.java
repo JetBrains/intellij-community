@@ -1,47 +1,55 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.MetaLanguage;
 import com.intellij.lang.jvm.source.JvmDeclarationSearcher;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-public class JvmMetaLanguage extends MetaLanguage {
-
-  private static final Logger LOG = Logger.getInstance(JvmMetaLanguage.class);
-
-  private final Set<String> supportedLanguages;
-
+public final class JvmMetaLanguage extends MetaLanguage {
   protected JvmMetaLanguage() {
     super("JVM");
-    ExtensionsArea rootArea = Extensions.getRootArea();
-    if (rootArea.hasExtensionPoint(JvmDeclarationSearcher.EP.getName())) {
-      ExtensionPoint<LanguageExtensionPoint<JvmDeclarationSearcher>> jvmDeclarationSearcherEP =
-        rootArea.getExtensionPoint(JvmDeclarationSearcher.EP.getName());
+  }
 
-      LanguageExtensionPoint<JvmDeclarationSearcher>[] jvmDeclarationSearcherImplementations = jvmDeclarationSearcherEP.getExtensions();
-      supportedLanguages = Collections.unmodifiableSet(
-        Arrays.stream(jvmDeclarationSearcherImplementations).map(ep -> ep.getKey()).collect(Collectors.toSet())
-      );
+  @Override
+  public @NotNull Collection<Language> getMatchingLanguages() {
+    ExtensionPointImpl<LanguageExtensionPoint<JvmDeclarationSearcher>> point = getPoint();
+    List<Language> result = new ArrayList<>();
+    for (Language language : Language.getRegisteredLanguages()) {
+      if (language instanceof JvmLanguage || (point != null && matchesRegisteredLanguage(language, point))) {
+        result.add(language);
+      }
     }
-    else {
-      supportedLanguages = Collections.emptySet();
-      LOG.warn("'JvmMetaLanguage' requested but no implementations of 'JvmDeclarationSearcher' EP were found in the 'rootArea'");
-    }
+    return result;
   }
 
   @Override
   public boolean matchesLanguage(@NotNull Language language) {
-    return language instanceof JvmLanguage || supportedLanguages.contains(language.getID());
+    if (language instanceof JvmLanguage) {
+      return true;
+    }
+
+    ExtensionPointImpl<LanguageExtensionPoint<JvmDeclarationSearcher>> point = getPoint();
+    return point != null && matchesRegisteredLanguage(language, point);
+  }
+
+  private static boolean matchesRegisteredLanguage(@NotNull Language language, @NotNull ExtensionPointImpl<LanguageExtensionPoint<JvmDeclarationSearcher>> point) {
+    return ExtensionProcessingHelper.getByKey(point, language.getID(), LanguageExtensionPoint::getKey) != null;
+  }
+
+  private @Nullable static ExtensionPointImpl<LanguageExtensionPoint<JvmDeclarationSearcher>> getPoint() {
+    ExtensionsAreaImpl area = (ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea();
+
+    return area.getExtensionPointIfRegistered(JvmDeclarationSearcher.EP.getName());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -47,17 +47,17 @@ public class AnnotationChecker {
     }
   }
 
-  public static Pair<PsiElement, String> checkAnnotationArgumentList(@NotNull GrAnnotation annotation,
-                                                                     AnnotationHolder holder, PsiElement toHighlight) {
+  public static @Nullable Pair<@Nullable PsiElement, @Nullable String> checkAnnotationArgumentList(@NotNull GrAnnotation annotation,
+                                                                                                   @NotNull AnnotationHolder holder) {
     final PsiClass anno = ResolveUtil.resolveAnnotation(annotation);
     if (anno == null) return null;
 
     for (CustomAnnotationChecker checker : CustomAnnotationChecker.EP_NAME.getExtensions()) {
-      if (checker.checkArgumentList(holder, annotation)) return Pair.create(null,null);
+      if (checker.checkArgumentList(holder, annotation)) return Pair.create(null, null);
     }
 
     return CustomAnnotationChecker.checkAnnotationArguments(
-      anno, toHighlight, annotation.getParameterList().getAttributes(), true
+      anno, annotation.getParameterList().getAttributes(), true
     );
   }
 }

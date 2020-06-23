@@ -5,7 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -129,19 +129,14 @@ class VariableExtractor {
       return;
     }
     if (myAnchor instanceof PsiExpression) {
-      PsiExpression place = RefactoringUtil.ensureCodeBlock(((PsiExpression)myAnchor));
-      if (place == null) {
+      CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression((PsiExpression)myAnchor);
+      if (surrounder == null) {
         throw new RuntimeExceptionWithAttachments(
           "Cannot ensure code block: myAnchor type is " + myAnchor.getClass() + "; parent type is " + myAnchor.getParent().getClass(),
           new Attachment("context.txt", myContainer.getText()));
       }
-      PsiElement statement = RefactoringUtil.getParentStatement(place, false);
-      if (statement == null) {
-        throw new RuntimeExceptionWithAttachments(
-          "Cannot find parent statement for " + place.getClass() + "; parent type is " + place.getParent().getClass(),
-          new Attachment("context.txt", myContainer.getText()));
-      }
-      myAnchor = statement;
+      CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+      myAnchor = result.getAnchor();
     }
   }
 
@@ -300,7 +295,7 @@ class VariableExtractor {
     }
     Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).filter(PsiElement::isPhysical).append(expr).toSet();
     PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
-    if (HighlightUtil.Feature.PATTERNS.isAvailable(anchor)) {
+    if (HighlightingFeature.PATTERNS.isAvailable(anchor)) {
       PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(firstOccurrence), PsiTypeCastExpression.class);
       if (cast != null && !(cast.getType() instanceof PsiPrimitiveType) &&
           !(PsiUtil.skipParenthesizedExprUp(firstOccurrence.getParent()) instanceof PsiExpressionStatement)) {
@@ -328,13 +323,14 @@ class VariableExtractor {
         }
       }
     }
-    if (firstOccurrence != null && ControlFlowUtils.canExtractStatement(firstOccurrence) && 
+    if (firstOccurrence != null && CodeBlockSurrounder.canSurround(firstOccurrence) && 
         !PsiUtil.isAccessedForWriting(firstOccurrence)) {
       PsiExpression ancestorCandidate = ExpressionUtils.getTopLevelExpression(firstOccurrence);
       if (PsiTreeUtil.isAncestor(anchor, ancestorCandidate, false)) {
         PsiElement statement = RefactoringUtil.getParentStatement(ancestorCandidate, false);
+        PsiElement extractable = statement == null ? PsiTreeUtil.getParentOfType(ancestorCandidate, PsiField.class) : statement;
         if (allOccurrences.stream().allMatch(occurrence ->
-                                               PsiTreeUtil.isAncestor(statement, occurrence, false) &&
+                                               PsiTreeUtil.isAncestor(extractable, occurrence, false) &&
                                                (!PsiTreeUtil.isAncestor(ancestorCandidate, occurrence, false) ||
                                                 ReorderingUtils.canExtract(ancestorCandidate, occurrence) == ThreeState.NO))) {
           return firstOccurrence;

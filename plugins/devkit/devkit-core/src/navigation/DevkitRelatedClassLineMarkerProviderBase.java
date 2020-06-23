@@ -14,7 +14,7 @@ import java.util.Collection;
 
 abstract class DevkitRelatedClassLineMarkerProviderBase extends DevkitRelatedLineMarkerProviderBase {
   @Override
-  protected final void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
+  protected final void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     // UAST is used for getting the class identifier to work for all UAST languages (not possible in plain PSI)
     UElement uElement = UastUtils.getUParentForIdentifier(element);
     if (!(uElement instanceof UClass)) {
@@ -29,5 +29,5 @@ abstract class DevkitRelatedClassLineMarkerProviderBase extends DevkitRelatedLin
 
   protected abstract void process(@NotNull PsiElement identifier,
                                   @NotNull PsiClass psiClass,
-                                  @NotNull Collection<? super RelatedItemLineMarkerInfo> result);
+                                  @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result);
 }

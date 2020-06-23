@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -9,10 +9,9 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,17 +24,13 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.RetentionPolicy;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -46,7 +41,7 @@ public class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationsHighlightUtil.class);
 
   static HighlightInfo checkNameValuePair(@NotNull PsiNameValuePair pair,
-                                          RefCountHolder refCountHolder) {
+                                          @Nullable RefCountHolder refCountHolder) {
     PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
     if (annotation == null) return null;
     PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
@@ -99,7 +94,7 @@ public class AnnotationsHighlightUtil {
     for (PsiNameValuePair attribute : attributes) {
       if (attribute == pair) break;
       String name = pair.getName();
-      if (Comparing.equal(attribute.getName(), name)) {
+      if (Objects.equals(attribute.getName(), name)) {
         String description = JavaErrorBundle.message("annotation.duplicate.attribute",
                                                        name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name);
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pair).descriptionAndTooltip(description).create();
@@ -253,7 +248,7 @@ public class AnnotationsHighlightUtil {
       PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
       if (nameRef == null) continue;
       PsiElement resolved = nameRef.resolve();
-      if (!(resolved instanceof PsiClass) || !Comparing.equal(qualifiedName, ((PsiClass)resolved).getQualifiedName())) continue;
+      if (!(resolved instanceof PsiClass) || !Objects.equals(qualifiedName, ((PsiClass)resolved).getQualifiedName())) continue;
       if (++count == 2) return true;
     }
     return false;
@@ -353,7 +348,7 @@ public class AnnotationsHighlightUtil {
     }
 
     if (!(owner instanceof PsiModifierList)) {
-      HighlightInfo info = HighlightUtil.checkFeature(annotation, HighlightUtil.Feature.TYPE_ANNOTATIONS, level, file);
+      HighlightInfo info = HighlightUtil.checkFeature(annotation, HighlightingFeature.TYPE_ANNOTATIONS, level, file);
       if (info != null) return info;
     }
 
@@ -402,7 +397,9 @@ public class AnnotationsHighlightUtil {
 
   private static HighlightInfo annotationError(@NotNull PsiAnnotation annotation, @NotNull String message) {
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(message).create();
-    QuickFixAction.registerQuickFixAction(info, new DeleteAnnotationAction(annotation));
+    LocalQuickFixAndIntentionActionOnPsiElement fix =
+      QuickFixFactory.getInstance().createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
+    QuickFixAction.registerQuickFixAction(info, fix);
     return info;
   }
 
@@ -454,7 +451,7 @@ public class AnnotationsHighlightUtil {
   static HighlightInfo checkCyclicMemberType(@NotNull PsiTypeElement typeElement, @NotNull PsiClass aClass) {
     PsiType type = typeElement.getType();
     Set<PsiClass> checked = new HashSet<>();
-    if (cyclicDependencies(aClass, type, checked, aClass.getManager())) {
+    if (cyclicDependencies(aClass, type, checked)) {
       String description = JavaErrorBundle.message("annotation.cyclic.element.type");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
     }
@@ -463,8 +460,7 @@ public class AnnotationsHighlightUtil {
 
   private static boolean cyclicDependencies(@NotNull PsiClass aClass,
                                             @Nullable PsiType type,
-                                            @NotNull Set<? super PsiClass> checked,
-                                            @NotNull PsiManager manager) {
+                                            @NotNull Set<? super PsiClass> checked) {
     final PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
     if (resolvedClass != null && resolvedClass.isAnnotationType()) {
       if (aClass == resolvedClass) {
@@ -473,7 +469,7 @@ public class AnnotationsHighlightUtil {
       if (!checked.add(resolvedClass) || !BaseIntentionAction.canModify(resolvedClass)) return false;
       final PsiMethod[] methods = resolvedClass.getMethods();
       for (PsiMethod method : methods) {
-        if (cyclicDependencies(aClass, method.getReturnType(), checked,manager)) return true;
+        if (cyclicDependencies(aClass, method.getReturnType(), checked)) return true;
       }
     }
     return false;
@@ -489,7 +485,8 @@ public class AnnotationsHighlightUtil {
           final String qualifiedName = containingClass.getQualifiedName();
           if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName) || CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(qualifiedName)) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier).descriptionAndTooltip(
-              "@interface member clashes with '" + JavaHighlightUtil.formatMethod(method) + "' in " + HighlightUtil.formatClass(containingClass)).create();
+              JavaErrorBundle.message("error.interface.member.clashes", JavaHighlightUtil.formatMethod(method),
+                                      HighlightUtil.formatClass(containingClass))).create();
           }
         }
       }
@@ -756,47 +753,6 @@ public class AnnotationsHighlightUtil {
       }
 
       return classType.equalsToText(CommonClassNames.JAVA_LANG_CLASS) || classType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
-    }
-  }
-
-  private static class DeleteAnnotationAction implements IntentionAction {
-    private final PsiAnnotation myAnnotation;
-
-    private DeleteAnnotationAction(@NotNull PsiAnnotation annotation) {
-      myAnnotation = annotation;
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return JavaAnalysisBundle.message("intention.text.remove.annotation");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getText();
-    }
-
-    @Nullable
-    @Override
-    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-      return myAnnotation;
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return myAnnotation.isValid();
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myAnnotation.delete();
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
     }
   }
 }

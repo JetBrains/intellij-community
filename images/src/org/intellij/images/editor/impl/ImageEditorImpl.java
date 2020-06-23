@@ -30,6 +30,7 @@ import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * Image viewer implementation.
@@ -135,6 +136,16 @@ public final class ImageEditorImpl implements ImageEditor {
   public void setGridVisible(boolean visible) {
     editorUI.getImageComponent().setGridVisible(visible);
     editorUI.repaint();
+  }
+
+  @Override
+  public void setEditorBackground(Color color) {
+    editorUI.getImageComponent().getParent().setBackground(color);
+  }
+
+  @Override
+  public void setBorderVisible(boolean visible) {
+    editorUI.getImageComponent().setBorderVisible(visible);
   }
 
   @Override

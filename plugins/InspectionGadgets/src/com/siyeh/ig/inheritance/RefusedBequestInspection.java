@@ -32,7 +32,8 @@ import java.awt.*;
 public class RefusedBequestInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public final ExternalizableStringSet annotations =
-    new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper");
+    new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper",
+                                "org.jetbrains.annotations.MustBeInvokedByOverriders");
   @SuppressWarnings("PublicField") public boolean ignoreEmptySuperMethods;
   @SuppressWarnings("PublicField") public boolean ignoreDefaultSuperMethods;
   @SuppressWarnings("PublicField") public boolean onlyReportWhenAnnotated = true;
@@ -146,7 +147,7 @@ public class RefusedBequestInspection extends BaseInspection {
       final PsiElement element = body.addAfter(newStatement, brace);
       final PsiElement element1 = styleManager.reformat(element);
       final PsiElement element2 = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element1);
-      if (isOnTheFly()) {
+      if (isOnTheFly() && element2.isPhysical()) {
         HighlightUtils.highlightElement(element2);
         if (element2 instanceof PsiDeclarationStatement) {
           final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)element2;

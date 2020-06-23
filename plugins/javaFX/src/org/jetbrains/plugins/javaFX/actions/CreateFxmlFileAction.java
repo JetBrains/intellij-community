@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PathUtil;
@@ -123,8 +124,13 @@ public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
     if (project == null || view == null) {
       return false;
     }
+    
     final PsiDirectory[] directories = view.getDirectories();
     if (directories.length == 0) {
+      return false;
+    }
+    
+    if (JavaPsiFacade.getInstance(project).findPackage("javafx") == null) {
       return false;
     }
 

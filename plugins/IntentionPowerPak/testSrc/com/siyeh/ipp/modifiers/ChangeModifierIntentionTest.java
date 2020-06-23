@@ -16,8 +16,6 @@
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -40,7 +38,16 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
   public void testMyClass() { assertIntentionNotAvailable(); }
   public void testMyInterface() { assertIntentionNotAvailable(); }
   public void testMyInterfaceJava9() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> assertIntentionNotAvailable("Make 'm' private"));
+  }
+  public void testMyInterfaceDefaultJava9() {
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> doTest("Make 'm' private"));
+  }
+  public void testMyInterfacePrivateJava9() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> doTest("Make 'm' public"));
+  }
+  public void testMyInterfacePrivateStaticJava9() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> doTest("Make 'm' public"));
   }
   public void testEnumConstructor() { assertIntentionNotAvailable(); }
   public void testLocalClass() { assertIntentionNotAvailable(); }

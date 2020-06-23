@@ -58,9 +58,8 @@ public class ReferenceFilter extends FilterAction {
   @Override
   protected void setLabel(SimpleColoredComponent component) {
     final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
-    component.append("reference=");
-    if (constraint.isInvertReference()) component.append("!");
-    component.append(constraint.getReferenceConstraint());
+    final String value = constraint.isInvertReference() ? "!" + constraint.getReferenceConstraint() : constraint.getReferenceConstraint();
+    component.append(SSRBundle.message("reference.0.label", value));
   }
 
   @Override

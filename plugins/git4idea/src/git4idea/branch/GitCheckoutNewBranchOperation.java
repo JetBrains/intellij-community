@@ -140,7 +140,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
         message.append(deleteResult.getErrorOutputWithReposIndication());
       }
       VcsNotifier.getInstance(myProject)
-        .notifyError(GitBundle.message("checkout.new.branch.operation.error.during.rollback"), message.toString());
+        .notifyError(GitBundle.message("checkout.new.branch.operation.error.during.rollback"), message.toString(), true);
     }
   }
 

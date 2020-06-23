@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -50,6 +51,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
@@ -72,12 +74,10 @@ import java.util.function.Supplier;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance(LookupImpl.class);
-  private static final Key<Font> CUSTOM_FONT_KEY = Key.create("CustomLookupElementFont");
 
   private final LookupOffsets myOffsets;
   private final Project myProject;
   private final Editor myEditor;
-  private final Object myArrangerLock = new Object();
   private final Object myUiLock = new Object();
   private final JBList myList = new JBList<LookupElement>(new CollectionListModel<>()) {
     // 'myList' is focused when "Screen Reader" mode is enabled
@@ -108,7 +108,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private LookupFocusDegree myLookupFocusDegree = LookupFocusDegree.FOCUSED;
   private volatile boolean myCalculating;
   private final Advertiser myAdComponent;
-  volatile int myLookupTextWidth = 50;
   private int myGuardedChanges;
   private volatile LookupArranger myArranger;
   private LookupArranger myPresentableArranger;
@@ -166,6 +165,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return (CollectionListModel<LookupElement>)myList.getModel();
   }
 
+  @SuppressWarnings("unused") // used plugins
   public LookupArranger getArranger() {
     return myArranger;
   }
@@ -248,11 +248,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   public void resort(boolean addAgain) {
     final List<LookupElement> items = getItems();
 
-    withLock(() -> {
-      myPresentableArranger.prefixChanged(this);
+    myPresentableArranger.prefixChanged(this);
+    synchronized (myUiLock) {
       getListModel().removeAll();
-      return null;
-    });
+    }
 
     if (addAgain) {
       for (final LookupElement item : items) {
@@ -263,27 +262,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public boolean addItem(LookupElement item, PrefixMatcher matcher) {
-    LookupElementPresentation presentation = renderItemApproximately(item);
+    LookupElementPresentation presentation = LookupElementPresentation.renderElement(item);
     if (containsDummyIdentifier(presentation.getItemText()) ||
         containsDummyIdentifier(presentation.getTailText()) ||
         containsDummyIdentifier(presentation.getTypeText())) {
       return false;
     }
 
-    updateLookupWidth(item, presentation);
-    withLock(() -> {
-      myArranger.registerMatcher(item, matcher);
-      myArranger.addElement(item, presentation);
-      return null;
-    });
+    myCellRenderer.itemAdded(item, presentation);
+    LookupArranger arranger = myArranger;
+    arranger.registerMatcher(item, matcher);
+    arranger.addElement(item, presentation);
     return true;
-  }
-
-  public void clear() {
-    withLock(() -> {
-      myArranger.clear();
-      return null;
-    });
   }
 
   private void addDummyItems(int count) {
@@ -298,22 +288,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void updateLookupWidth(LookupElement item) {
-    updateLookupWidth(item, renderItemApproximately(item));
-  }
-
-  private void updateLookupWidth(LookupElement item, LookupElementPresentation presentation) {
-    final Font customFont = myCellRenderer.getFontAbleToDisplay(presentation);
-    if (customFont != null) {
-      item.putUserData(CUSTOM_FONT_KEY, customFont);
-    }
-    int maxWidth = myCellRenderer.updateMaximumWidth(presentation, item);
-    myLookupTextWidth = Math.max(maxWidth, myLookupTextWidth);
-  }
-
-  @Nullable
-  Font getCustomFont(LookupElement item, boolean bold) {
-    Font font = item.getUserData(CUSTOM_FONT_KEY);
-    return font == null ? null : bold ? font.deriveFont(Font.BOLD) : font;
+    myCellRenderer.updateLookupWidth(item, LookupElementPresentation.renderElement(item));
   }
 
   public void requestResize() {
@@ -338,7 +313,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public List<LookupElement> getItems() {
-    return withLock(() -> ContainerUtil.findAll(getListModel().toList(), element -> !(element instanceof EmptyLookupItem)));
+    synchronized (myUiLock) {
+      return ContainerUtil.findAll(getListModel().toList(), element -> !(element instanceof EmptyLookupItem));
+    }
   }
 
   @Override
@@ -354,10 +331,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   void appendPrefix(char c) {
     checkValid();
     myOffsets.appendPrefix(c);
-    withLock(() -> {
-      myPresentableArranger.prefixChanged(this);
-      return null;
-    });
+    myPresentableArranger.prefixChanged(this);
     requestResize();
     refreshUi(false, true);
     ensureSelectionVisible(true);
@@ -407,12 +381,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       markSelectionTouched();
     }
 
-    boolean shouldUpdate = withLock(() -> {
-      myPresentableArranger.prefixChanged(this);
-      return myPresentableArranger == myArranger;
-    });
+    myPresentableArranger.prefixChanged(this);
     requestResize();
-    if (shouldUpdate) {
+    if (myPresentableArranger == myArranger) {
       refreshUi(false, true);
       ensureSelectionVisible(true);
     }
@@ -433,7 +404,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     CollectionListModel<LookupElement> listModel = getListModel();
 
-    Pair<List<LookupElement>, Integer> pair = withLock(() -> myPresentableArranger.arrangeItems(this, onExplicitAction || reused));
+    Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this, onExplicitAction || reused);
     List<LookupElement> items = pair.first;
     Integer toSelect = pair.second;
     if (toSelect == null || toSelect < 0 || items.size() > 0 && toSelect >= items.size()) {
@@ -466,18 +437,16 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private boolean checkReused() {
-    return withLock(() -> {
-      if (myPresentableArranger != myArranger) {
-        myPresentableArranger = myArranger;
+    EDT.assertIsEdt();
+    if (myPresentableArranger != myArranger) {
+      myPresentableArranger = myArranger;
 
-        clearIfLookupAndArrangerPrefixesMatch();
+      clearIfLookupAndArrangerPrefixesMatch();
 
-        myPresentableArranger.prefixChanged(this);
-        return true;
-      }
-
-      return false;
-    });
+      myPresentableArranger.prefixChanged(this);
+      return true;
+    }
+    return false;
   }
 
   //some items may have passed to myArranger from CompletionProgressIndicator for an older prefix
@@ -507,14 +476,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     LookupElement item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"), false);
     model.add(item);
 
-    updateLookupWidth(item);
+    myCellRenderer.itemAdded(item, LookupElementPresentation.renderElement(item));
     requestResize();
-  }
-
-  private static LookupElementPresentation renderItemApproximately(LookupElement item) {
-    final LookupElementPresentation p = new LookupElementPresentation();
-    item.renderElement(p);
-    return p;
   }
 
   @NotNull
@@ -696,7 +659,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return true;
 
-    if (!myEditor.getContentComponent().isShowing()) {
+    if (!EditorActivityManager.getInstance().isVisible(myEditor)) {
       hideLookup(false);
       return false;
     }
@@ -980,10 +943,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     })) {
       return;
     }
-    withLock(() -> {
-      myPresentableArranger.prefixReplaced(this, newPrefix);
-      return null;
-    });
+    myPresentableArranger.prefixReplaced(this, newPrefix);
     refreshUi(true, true);
   }
 
@@ -1067,10 +1027,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return myLastVisibleIndex;
     }
     return myList.getLastVisibleIndex();
-  }
-
-  public void setLastVisibleIndex(int lastVisibleIndex) {
-    myLastVisibleIndex = lastVisibleIndex;
   }
 
   @Override
@@ -1172,11 +1128,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void markReused() {
-    withLock(() -> myArranger = myArranger.createEmptyCopy());
+    EDT.assertIsEdt();
+    myArranger = myArranger.createEmptyCopy();
     requestResize();
   }
 
-  public void addAdvertisement(@NotNull String text, @Nullable Icon icon) {
+  public void addAdvertisement(@NotNull @NlsContexts.PopupAdvertisement String text, @Nullable Icon icon) {
     if (!containsDummyIdentifier(text)) {
       myAdComponent.addAdvertisement(text, icon);
       requestResize();
@@ -1221,13 +1178,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @NotNull
   public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> items, boolean hideSingleValued) {
-    return withLock(() -> myPresentableArranger.getRelevanceObjects(items, hideSingleValued));
-  }
-
-  private <T> T withLock(Computable<T> computable) {
-    synchronized (myArrangerLock) {
-      return computable.compute();
-    }
+    return myPresentableArranger.getRelevanceObjects(items, hideSingleValued);
   }
 
   public void setPrefixChangeListener(PrefixChangeListener listener) {

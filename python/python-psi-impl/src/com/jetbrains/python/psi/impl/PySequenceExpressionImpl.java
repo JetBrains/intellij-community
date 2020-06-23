@@ -26,11 +26,11 @@ public abstract class PySequenceExpressionImpl extends PyElementImpl implements 
 
   @Override
   public PyExpression @NotNull [] getElements() {
-    return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);
+    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 
   @Override
   public boolean isEmpty() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens()) == null;
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens()) == null;
   }
 }

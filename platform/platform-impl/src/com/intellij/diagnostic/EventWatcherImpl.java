@@ -34,7 +34,7 @@ import static com.intellij.diagnostic.RunnablesListener.*;
 import static com.intellij.util.ReflectionUtil.*;
 
 @ApiStatus.Experimental
-public final class EventWatcherImpl implements LoggableEventWatcher, Disposable {
+public final class EventWatcherImpl implements EventWatcher, Disposable {
   private static final int PUBLISHER_INITIAL_DELAY = 100;
   private static final int PUBLISHER_PERIOD = 1000;
 
@@ -55,6 +55,7 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
   private final ConcurrentMap<Class<? extends AWTEvent>, ConcurrentLinkedQueue<InvocationDescription>> myEventsByClass =
     new ConcurrentHashMap<>();
   private final @NotNull ConcurrentMap<Long, Class<?>> myRunnablesOrCallablesInProgress = new ConcurrentHashMap<>();
+  private final @NotNull ConcurrentMap<String, LockAcquirementDescription> myAcquirements = new ConcurrentHashMap<>();
 
   @NotNull
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService(
@@ -150,6 +151,14 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
   }
 
   @Override
+  public void lockAcquired(@NotNull String invokedClassFqn, @NotNull LockKind lockKind) {
+    myAcquirements.compute(
+      invokedClassFqn,
+      (fqn, description) -> LockAcquirementDescription.computeNext(fqn, description, lockKind)
+    );
+  }
+
+  @Override
   public void dispose() {
     Disposer.dispose(myWriter);
 
@@ -168,6 +177,7 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
       myDurationsByFqn.values(),
       myWrappers.values()
     );
+    publisher.locksAcquired(myAcquirements.values());
   }
 
   private static @Nullable Field findCallableOrRunnableField(@NotNull Class<?> rootClass) {

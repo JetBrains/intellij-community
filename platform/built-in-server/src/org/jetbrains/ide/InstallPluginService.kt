@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
-import com.intellij.ide.plugins.PluginRepositoryRequests
-import com.intellij.ide.plugins.PluginsMetaLoader
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
+import com.intellij.util.io.hostName
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
 import com.intellij.util.text.nullize
@@ -27,6 +28,8 @@ import java.net.URI
 import java.net.URISyntaxException
 
 internal class InstallPluginService : RestService() {
+  private val LOG = logger<InstallPluginService>()
+
   override fun getServiceName() = "installPlugin"
 
   override fun isAccessible(request: HttpRequest) = true
@@ -48,14 +51,13 @@ internal class InstallPluginService : RestService() {
     }
   }
 
-  private fun checkCompatibility(request: FullHttpRequest,
-                                 context: ChannelHandlerContext,
-                                 pluginId: String): Nothing? {
+  private fun checkCompatibility(
+    request: FullHttpRequest,
+    context: ChannelHandlerContext,
+    pluginId: String
+  ): Nothing? {
     //check if there is an update for this IDE with this ID.
-    val buildNumber = PluginRepositoryRequests.getBuildForPluginRepositoryRequests()
-    PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber))
-    val compatibleUpdateExists = PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber)).isNotEmpty()
-
+    val compatibleUpdateExists = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(pluginId) != null
     val out = BufferExposingByteArrayOutputStream()
 
     val writer = createJsonWriter(out)
@@ -71,10 +73,10 @@ internal class InstallPluginService : RestService() {
   private fun installPlugin(request: FullHttpRequest,
                             context: ChannelHandlerContext,
                             pluginId: String): Nothing? {
-    if (isAvailable) {
-      isAvailable = false
-      val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
-      PluginId.findId(pluginId)?.let {
+    PluginId.findId(pluginId)?.let {
+      if (isAvailable) {
+        isAvailable = false
+        val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
         ApplicationManager.getApplication().invokeLater(Runnable {
           AppIcon.getInstance().requestAttention(effectiveProject, true)
           PluginsAdvertiser.installAndEnable(setOf(it)) { }
@@ -123,6 +125,11 @@ internal class InstallPluginService : RestService() {
     }
     catch (ignored: URISyntaxException) {
       return false
+    }
+
+    val hostName = request.hostName
+    if (hostName != null && !NetUtils.isLocalhost(hostName)) {
+      LOG.error("Expected 'request.hostName' to be localhost. hostName='$hostName', origin='$origin'")
     }
 
     return (originHost != null && (

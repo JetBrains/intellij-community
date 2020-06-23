@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.indexedProperty
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -73,9 +73,9 @@ class A {
     @IndexedProperty List<String> stringList
     @IndexedProperty Double[] doubleArray
     @IndexedProperty long[] primitiveArray
-    @IndexedProperty <error descr="Property is not indexable. Type must be array or list but found Collection<Number>">Collection<Number></error> numberCollection
-    @IndexedProperty <error descr="Property is not indexable. Type must be array or list but found Object">untyped</error>
-    @IndexedProperty <error descr="Property is not indexable. Type must be array or list but found Integer">Integer</error> nonIndexable    
+    <error descr="Property is not indexable. Type must be array or list but found Collection<Number>">@IndexedProperty</error> Collection<Number> numberCollection
+    <error descr="Property is not indexable. Type must be array or list but found Object">@IndexedProperty</error> untyped
+    <error descr="Property is not indexable. Type must be array or list but found Integer">@IndexedProperty</error> Integer nonIndexable    
     private <error descr="@IndexedProperty is applicable to properties only">@IndexedProperty</error> explicitVisibility 
 }
 '''

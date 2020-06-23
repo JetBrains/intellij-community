@@ -1,18 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiElement> {
+public final class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiElement> {
   private final PsiElement myTarget;
 
   public HighlightBreakOutsHandler(Editor editor, PsiFile file, PsiElement target) {
@@ -21,18 +21,17 @@ public class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiEle
   }
 
   @Override
-  public List<PsiElement> getTargets() {
+  public @NotNull List<PsiElement> getTargets() {
     return Collections.singletonList(myTarget);
   }
 
   @Override
-  @SuppressWarnings("BoundedWildcard")
-  protected void selectTargets(List<PsiElement> targets, Consumer<List<PsiElement>> selectionConsumer) {
+  protected void selectTargets(@NotNull List<? extends PsiElement> targets, @NotNull Consumer<? super List<? extends PsiElement>> selectionConsumer) {
     selectionConsumer.consume(targets);
   }
 
   @Override
-  public void computeUsages(List<PsiElement> targets) {
+  public void computeUsages(@NotNull List<? extends PsiElement> targets) {
     PsiElement parent = myTarget.getParent();
     if (parent instanceof PsiContinueStatement) {
       PsiElement statement = ((PsiContinueStatement)parent).findContinuedStatement();

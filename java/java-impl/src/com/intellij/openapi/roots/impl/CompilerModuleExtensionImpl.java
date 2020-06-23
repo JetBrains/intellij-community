@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.impl;
 
@@ -6,7 +6,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -20,6 +19,7 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   @NonNls private static final String OUTPUT_TAG = JpsJavaModelSerializerExtension.OUTPUT_TAG;
@@ -290,7 +290,9 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   private static boolean vptrEqual(VirtualFilePointer p1, VirtualFilePointer p2) {
-    return Comparing.equal(p1 == null ? null : p1.getUrl(), p2 == null ? null : p2.getUrl());
+    String arg1 = p1 == null ? null : p1.getUrl();
+    String arg2 = p2 == null ? null : p2.getUrl();
+    return Objects.equals(arg1, arg2);
   }
 
   @Override

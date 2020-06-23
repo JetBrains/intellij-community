@@ -65,6 +65,21 @@ public class DelegateMethodsTest extends LightJavaCodeInsightTestCase {
   public void testSingleField() { doTest(); }
   public void testInsideLambdaWithNonInferredTypeParameters() { doTest(); }
   public void testTypeUseAnnotationsInReturnType() { doTest(); }
+  public void testTypeUseAnnotationsInReturnType2() { doTest(); }
+  public void testTypeUseAnnotationsInReturnType3() {
+    createAndSaveFile("pkg/Foo.java",
+                      "package pkg;\n" +
+                      "import java.lang.annotation.*;\n" +
+                      "@Target({ElementType.TYPE_USE})\n" +
+                      "@interface Foo {}");
+    createAndSaveFile("Abstract.java",
+                      "import java.io.Writer;\n" +
+                      "import pkg.Foo;\n" +
+                      "abstract class Abstract {\n" +
+                      "    @Foo public abstract Writer getWriter();\n" +
+                      "}\n");
+    doTest(); 
+  }
   public void testTypeUseAnnotationsInArrayParameter() { doTest(); }
   public void testPreserveEllipsisType() { doTest(); }
 

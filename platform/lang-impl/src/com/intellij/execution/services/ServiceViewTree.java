@@ -52,7 +52,7 @@ class ServiceViewTree extends Tree {
     mouseListener.installOn(this);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         TreePath path = getPathForLocation(e.getX(), e.getY());
         if (path == null) return false;
 
@@ -79,6 +79,7 @@ class ServiceViewTree extends Tree {
       myDescriptor = value instanceof ServiceViewItem ? ((ServiceViewItem)value).getViewDescriptor() : null;
       myComponent = tree;
       super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+      myDescriptor = null;
     }
 
     @Nullable

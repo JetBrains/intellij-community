@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -27,9 +29,12 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -78,20 +83,22 @@ public class CompletionInitializationUtil {
         }
       };
     Project project = psiFile.getProject();
-    for (final CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project)) {
-      current.set(contributor);
-      contributor.beforeCompletion(context);
-      CompletionAssertions.checkEditorValid(editor);
-      assert !PsiDocumentManager.getInstance(project).isUncommited(editor.getDocument()) : "Contributor " +
-                                                                                           contributor +
-                                                                                           " left the document uncommitted";
-    }
+    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+      for (final CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project)) {
+        current.set(contributor);
+        contributor.beforeCompletion(context);
+        CompletionAssertions.checkEditorValid(editor);
+        assert !PsiDocumentManager.getInstance(project).isUncommited(editor.getDocument()) : "Contributor " +
+                                                                                             contributor +
+                                                                                             " left the document uncommitted";
+      }
+    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
     return context;
   }
 
   @NotNull
   public static CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
-                                                                CompletionProcessEx indicator, OffsetsInFile finalOffsets) {
+                                                                CompletionProcess indicator, OffsetsInFile finalOffsets) {
     int offset = finalOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
     PsiFile fileCopy = finalOffsets.getFile();
     PsiFile originalFile = fileCopy.getOriginalFile();
@@ -104,6 +111,22 @@ public class CompletionInitializationUtil {
 
   public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProcessEx indicator) {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
+    final Consumer<Supplier<Disposable>> registerDisposable = supplier -> indicator.registerChildDisposable(supplier);
+
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
+  }
+
+  //need for code with me
+  public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, OffsetsInFile topLevelOffsets, Disposable parentDisposable) {
+    final Consumer<Supplier<Disposable>> registerDisposable = supplier -> Disposer.register(parentDisposable, supplier.get());
+
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
+  }
+
+  private static Supplier<OffsetsInFile> doInsertDummyIdentifier(CompletionInitializationContext initContext,
+                                                                 OffsetsInFile topLevelOffsets,
+                                                                 Consumer<Supplier<Disposable>> registerDisposable) {
+
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
       return () -> topLevelOffsets;
@@ -125,10 +148,11 @@ public class CompletionInitializationUtil {
     // despite being non-physical, the copy file should only be modified in a write action,
     // because it's reused in multiple completions and it can also escapes uncontrollably into other threads (e.g. quick doc)
     return () -> WriteAction.compute(() -> {
-      indicator.registerChildDisposable(
-        () -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
+      registerDisposable.accept(() -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
       OffsetsInFile copyOffsets = apply.get();
-      indicator.registerChildDisposable(() -> copyOffsets.getOffsets());
+
+      registerDisposable.accept(() -> copyOffsets.getOffsets());
+
       return copyOffsets;
     });
   }
@@ -166,7 +190,9 @@ public class CompletionInitializationUtil {
       copy.setOriginalFile(origin);
     } else {
       PsiUtilCore.ensureValid(currentOrigin);
-      LOG.assertTrue(currentOrigin == origin);
+      if (currentOrigin != origin) {
+        LOG.error(currentOrigin + " != " + origin + "\n" + currentOrigin.getViewProvider() + " != " + origin.getViewProvider());
+      }
     }
   }
 

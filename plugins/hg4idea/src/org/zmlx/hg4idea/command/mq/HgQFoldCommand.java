@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.command.mq;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -38,7 +39,7 @@ public class HgQFoldCommand {
       .executeInCurrentThread(myRepository.getRoot(), "qfold", patchNames);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, "QFold command failed", "Could not fold patches into the current patch");
+        .notifyError(result, HgBundle.message("action.hg4idea.QFold.error"), HgBundle.message("action.hg4idea.QFold.error.msg"));
     }
     myRepository.update();
   }

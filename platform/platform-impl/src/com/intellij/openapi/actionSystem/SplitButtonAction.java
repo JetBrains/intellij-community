@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -12,10 +11,10 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -26,8 +25,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
-
-import static com.intellij.openapi.actionSystem.ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
 
 public final class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
@@ -79,10 +76,10 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     private AnAction selectedAction;
     private boolean actionEnabled = true;
     private MousePressType mousePressType = MousePressType.None;
-    private Disposable myDisposable;
+    private SimpleMessageBusConnection myConnection;
 
     private SplitButton(@NotNull AnAction action, @NotNull Presentation presentation, String place, ActionGroup actionGroup) {
-      super(action, presentation, place, DEFAULT_MINIMUM_BUTTON_SIZE);
+      super(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
       myActionGroup = actionGroup;
 
       AnAction[] actions = myActionGroup.getChildren(null);
@@ -217,7 +214,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       JPopupMenu menu = popupMenu.getComponent();
       menu.addPopupMenuListener(myPopupState);
       if (event.isFromActionToolbar()) {
-        menu.show(this, DEFAULT_MINIMUM_BUTTON_SIZE.width + getInsets().left, getHeight());
+        menu.show(this, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + getInsets().left, getHeight());
       }
       else {
         menu.show(this, getWidth(), 0);
@@ -229,9 +226,8 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     @Override
     public void addNotify() {
       super.addNotify();
-      myDisposable = Disposer.newDisposable();
-      Disposer.register(ApplicationManager.getApplication(), myDisposable);
-      ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+      myConnection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
+      myConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
         @Override
         public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
           if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == SplitButton.this) {
@@ -246,9 +242,9 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     @Override
     public void removeNotify() {
       super.removeNotify();
-      if (myDisposable != null) {
-        Disposer.dispose(myDisposable);
-        myDisposable = null;
+      if (myConnection != null) {
+        myConnection.disconnect();
+        myConnection = null;
       }
     }
 

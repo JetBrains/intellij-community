@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -12,6 +13,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -340,21 +342,21 @@ class TestingTasksImpl extends TestingTasks {
 
     String tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
     Map<String, String> defaultSystemProperties = [
-      "idea.platform.prefix"                   : options.platformPrefix,
-      "idea.home.path"                         : context.paths.projectHome,
-      "idea.config.path"                       : "$tempDir/config".toString(),
-      "idea.system.path"                       : "$tempDir/system".toString(),
+      "idea.platform.prefix"                              : options.platformPrefix,
+      "idea.home.path"                                    : context.paths.projectHome,
+      "idea.config.path"                                  : "$tempDir/config".toString(),
+      "idea.system.path"                                  : "$tempDir/system".toString(),
       "intellij.build.compiled.classes.archives.metadata" : System.getProperty("intellij.build.compiled.classes.archives.metadata"),
       "intellij.build.compiled.classes.archive"           : System.getProperty("intellij.build.compiled.classes.archive"),
-      "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
-      "teamcity.buildConfName"                 : System.getProperty("teamcity.buildConfName"),
-      "java.io.tmpdir"                         : tempDir,
-      "teamcity.build.tempDir"                 : tempDir,
-      "teamcity.tests.recentlyFailedTests.file": System.getProperty("teamcity.tests.recentlyFailedTests.file"),
-      "teamcity.build.branch.is_default"       : System.getProperty("teamcity.build.branch.is_default"),
-      "jna.nosys"                              : "true",
-      "file.encoding"                          : "UTF-8",
-      "io.netty.leakDetectionLevel"            : "PARANOID",
+      "idea.coverage.enabled.build"                       : System.getProperty("idea.coverage.enabled.build"),
+      "teamcity.buildConfName"                            : System.getProperty("teamcity.buildConfName"),
+      "java.io.tmpdir"                                    : tempDir,
+      "teamcity.build.tempDir"                            : tempDir,
+      "teamcity.tests.recentlyFailedTests.file"           : System.getProperty("teamcity.tests.recentlyFailedTests.file"),
+      "teamcity.build.branch.is_default"                  : System.getProperty("teamcity.build.branch.is_default"),
+      "jna.nosys"                                         : "true",
+      "file.encoding"                                     : "UTF-8",
+      "io.netty.leakDetectionLevel"                       : "PARANOID",
     ] as Map<String, String>
     defaultSystemProperties.each { k, v -> systemProperties.putIfAbsent(k, v) }
 
@@ -363,6 +365,8 @@ class TestingTasksImpl extends TestingTasks {
         systemProperties[key.substring("pass.".length())] = value
       }
     }
+
+    PortableCompilationCache.PROPERTIES.each { systemProperties.putIfAbsent(it, System.getProperty(it)) }
 
     boolean suspendDebugProcess = options.suspendDebugProcess
     if (isPerformanceRun()) {
@@ -402,7 +406,7 @@ class TestingTasksImpl extends TestingTasks {
     List<String> teamCityFormatterClasspath = createTeamCityFormatterClasspath()
 
     String jvmExecutablePath = options.customJrePath != null ? "$options.customJrePath/bin/java" : ""
-    context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp, jvm: jvmExecutablePath, printsummary: (underTeamCity ? "off" : "on")) {
+    context.ant.junit(fork: true, showoutput: isShowAntJunitOutput(), logfailedtests: false, tempdir: junitTemp, jvm: jvmExecutablePath, printsummary: (underTeamCity ? "off" : "on")) {
       jvmArgs.each { jvmarg(value: it) }
       systemProperties.each { key, value ->
         if (value != null) {
@@ -483,6 +487,15 @@ class TestingTasksImpl extends TestingTasks {
     pathJUnit.createPathElement().setLocation(new File("$communityLib/../build/lib/jps/antuitest.jar"))
     ant.project.addReference(junitUiTaskLoaderRef, new AntClassLoader(ant.project.getClass().getClassLoader(), ant.project, pathJUnit))
     ant.taskdef(name: "uitest", classname: "com.android.antuitest.tasks.UiTestTask", loaderRef: junitUiTaskLoaderRef)
+  }
+
+  /**
+   * Allows to disable duplicated lines in TeamCity build log (IDEA-240814).
+   *
+   * Note! Build statistics (and other TeamCity Service Message) can be reported only with this option enabled (IDEA-241221).
+   */
+  private static boolean isShowAntJunitOutput() {
+    return SystemProperties.getBooleanProperty("intellij.test.show.ant.junit.output", true)
   }
 
   /**

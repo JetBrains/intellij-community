@@ -95,7 +95,7 @@ public enum AccessModifier {
   }
 
   public boolean isWeaker(@NotNull AccessModifier other) {
-    return ordinal() < other.ordinal();
+    return compareTo(other) < 0;
   }
 
   @Override
@@ -122,7 +122,7 @@ public enum AccessModifier {
         return Collections.singletonList(PUBLIC);
       }
       if (containingClass.isInterface()) {
-        if (PsiUtil.isLanguageLevel9OrHigher(member)) {
+        if (method.getBody() != null && PsiUtil.isLanguageLevel9OrHigher(member)) {
           return PUBLIC_PRIVATE;
         }
         return Collections.singletonList(PUBLIC);

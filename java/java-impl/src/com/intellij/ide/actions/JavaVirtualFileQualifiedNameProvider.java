@@ -9,8 +9,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.LogicalRoot;
-import com.intellij.util.LogicalRootsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,15 +23,14 @@ public class JavaVirtualFileQualifiedNameProvider implements CopyReferenceAction
       return null;
     }
 
-    final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
-    VirtualFile logicalRootFile = logicalRoot != null ? logicalRoot.getVirtualFile() : null;
-    if (logicalRootFile != null && !virtualFile.equals(logicalRootFile)) {
-      return Objects.requireNonNull(VfsUtilCore.getRelativePath(virtualFile, logicalRootFile, '/'));
+    ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
+    if (sourceRoot != null && !sourceRoot.equals(virtualFile)) {
+      return Objects.requireNonNull(VfsUtilCore.getRelativePath(virtualFile, sourceRoot, '/'));
     }
 
     VirtualFile outerMostRoot = null;
     VirtualFile each = virtualFile;
-    ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     while (each != null && (each = index.getContentRootForFile(each, false)) != null) {
       outerMostRoot = each;
       each = each.getParent();

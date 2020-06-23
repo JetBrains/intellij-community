@@ -40,6 +40,10 @@ public abstract class JBCachingScalableIcon<T extends JBCachingScalableIcon> ext
     return myScaledIconCache;
   }
 
+  protected void clearCachedScaledValue() {
+    myScaledIconCache = null;
+  }
+
   @NotNull
   @Override
   public abstract T copy();

@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -143,7 +144,7 @@ public class HgCommonDialogWithChoices extends DialogWrapper {
 
   @Override
   protected ValidationInfo doValidate() {
-    String message = "You have to specify appropriate name or revision.";
+    String message = HgBundle.message("specify.name.or.revision");
     return isRevisionSelected() && StringUtil.isEmptyOrSpaces(getRevision()) ? new ValidationInfo(message, myBranchesBorderPanel) : null;
   }
 }

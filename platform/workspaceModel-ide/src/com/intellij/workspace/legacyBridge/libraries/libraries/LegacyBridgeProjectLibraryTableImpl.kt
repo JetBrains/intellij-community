@@ -64,7 +64,7 @@ internal class LegacyBridgeProjectLibraryTableImpl(
 
     val existingLibrary = librariesMap.put(entityId, library)
     if (existingLibrary != null) {
-      error("Library with $entityId was already exist")
+      return
     }
 
     libraryNameMap.putValue(entityId.name, library)

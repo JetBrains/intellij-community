@@ -10,4 +10,4 @@ def foo(name) {
 }
 
 def bar = 3+4
-def x = [(bar):2]
+def x = [(bar): 2]

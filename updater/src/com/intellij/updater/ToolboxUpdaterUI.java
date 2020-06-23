@@ -11,7 +11,7 @@ public class ToolboxUpdaterUI extends ConsoleUpdaterUI {
   public Map<String, ValidationResult.Option> askUser(List<? extends ValidationResult> validationResults) throws OperationCancelledException {
     System.out.println("Validation info:");
     for (ValidationResult item : validationResults) {
-      System.out.println(String.format("  %s  %s: %s", item.kind, item.path, item.message));
+      System.out.printf("  %s  %s: %s%n", item.kind, item.path, item.message);
     }
 
     Map<String, ValidationResult.Option> result = new HashMap<>();

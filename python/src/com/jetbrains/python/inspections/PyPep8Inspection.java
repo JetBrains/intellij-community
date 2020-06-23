@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
 import com.intellij.codeInspection.ui.ListEditForm;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,7 +36,7 @@ public class PyPep8Inspection extends PyInspection implements ExternalAnnotatorB
 
   @Override
   public JComponent createOptionsPanel() {
-    ListEditForm form = new ListEditForm("Ignore errors", ignoredErrors);
+    ListEditForm form = new ListEditForm(PyBundle.message("INSP.settings.pep8.ignore.errors"), ignoredErrors);
     return form.getContentPanel();
   }
 

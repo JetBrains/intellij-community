@@ -30,6 +30,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.task.ProjectTaskManager
+import com.intellij.util.Restarter
 import com.intellij.util.SystemProperties
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
@@ -235,16 +236,16 @@ internal open class UpdateIdeFromSourcesAction
          removal of the script file is performed in separate process to avoid errors while executing the script */
       FileUtil.writeToFile(updateScript, """
         @echo off
-        SET count=30
-        SET time_to_wait=500
+        SET count=20
+        SET time_to_wait=1
         :DELETE_DIR
         RMDIR /Q /S "$workHomePath"
         IF EXIST "$workHomePath" (
           IF %count% GEQ 0 (
-            ECHO "$workHomePath" still exists, wait %time_to_wait%ms and try delete again
-            PING 127.0.0.1 -n 2 -w %time_to_wait% >NUL
+            ECHO "$workHomePath" still exists, wait %time_to_wait%s and try delete again
+            SET /A time_to_wait=%time_to_wait%+1
+            PING 127.0.0.1 -n %time_to_wait% >NUL
             SET /A count=%count%-1
-            SET /A time_to_wait=%time_to_wait%+1000
             ECHO %count% attempts remain
             GOTO DELETE_DIR
           )
@@ -256,8 +257,7 @@ internal open class UpdateIdeFromSourcesAction
         :CLEANUP_AND_EXIT
         START /b "" cmd /c DEL /Q /F "${updateScript.absolutePath}" & EXIT /b
       """.trimIndent())
-      // 'Runner' class specified as a parameter which is actually not used by the script; this is needed to use a copy of restarter (see com.intellij.util.Restarter.runRestarter)
-      return arrayOf("cmd", "/c", updateScript.absolutePath, "com.intellij.updater.Runner", ">${restartLogFile.absolutePath}", "2>&1")
+      return arrayOf("cmd", "/c", updateScript.absolutePath, ">${restartLogFile.absolutePath}", "2>&1")
     }
 
     val command = arrayOf(
@@ -269,6 +269,7 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun restartWithCommand(command: Array<String>) {
+    Restarter.doNotLockInstallFolderOnRestart()
     (ApplicationManager.getApplication() as ApplicationImpl).restart(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE, command)
   }
 

@@ -51,7 +51,7 @@ public class JavaReferenceImporter implements ReferenceImporter {
       if (element instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
         if (ref.multiResolve(true).length == 0) {
-          new ImportClassFix(ref).doFix(editor, false, allowCaretNearRef);
+          new ImportClassFix(ref).doFix(editor, false, allowCaretNearRef, true);
           return true;
         }
       }

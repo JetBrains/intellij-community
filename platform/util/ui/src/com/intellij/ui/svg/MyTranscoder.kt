@@ -6,6 +6,7 @@ import org.apache.batik.anim.dom.SAXSVGDocumentFactory
 import org.apache.batik.anim.dom.SVGOMDocument
 import org.apache.batik.bridge.BridgeContext
 import org.apache.batik.bridge.UserAgent
+import org.apache.batik.gvt.renderer.ImageRenderer
 import org.apache.batik.transcoder.SVGAbstractTranscoder
 import org.apache.batik.transcoder.TranscoderException
 import org.apache.batik.transcoder.TranscoderInput
@@ -15,6 +16,7 @@ import org.apache.batik.util.XMLResourceDescriptor
 import org.w3c.dom.Element
 import org.w3c.dom.svg.SVGDocument
 import java.awt.GraphicsEnvironment
+import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.StringReader
@@ -75,6 +77,14 @@ internal class MyTranscoder(private val scale: Double) : ImageTranscoder() {
 
   override fun writeImage(image: BufferedImage, output: TranscoderOutput?) {
     this.image = image
+  }
+
+  override fun createRenderer(): ImageRenderer {
+    val r = super.createRenderer()
+    val rh = r.renderingHints
+    rh.add(RenderingHints(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE))
+    r.renderingHints = rh
+    return r
   }
 
   override fun createUserAgent(): UserAgent {

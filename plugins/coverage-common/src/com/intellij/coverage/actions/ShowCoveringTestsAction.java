@@ -67,12 +67,12 @@ public class ShowCoveringTestsAction extends AnAction {
       final String[] testNames = ArrayUtilRt.toStringArray(tests);
       Arrays.sort(testNames);
       if (testNames.length == 0) {
-        HintManager.getInstance().showErrorHint(editor, "Failed to load covered tests");
+        HintManager.getInstance().showErrorHint(editor, CoverageBundle.message("hint.text.failed.to.load.covered.tests"));
         return;
       }
       final List<PsiElement> elements = coverageEngine.findTestsByNames(testNames, project);
       final ImplementationViewComponent component;
-      final String title = "Tests covering line " + myClassFQName + ":" + myLineData.getLineNumber();
+      final String title = CoverageBundle.message("popup.title.tests.covering.line", myClassFQName, myLineData.getLineNumber());
       final ComponentPopupBuilder popupBuilder;
       if (!elements.isEmpty()) {
         component = new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0);

@@ -92,10 +92,13 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      super.tearDown();
+      FileUtil.delete(workDir);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
-      FileUtil.delete(workDir);
+      super.tearDown();
     }
   }
 

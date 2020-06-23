@@ -91,10 +91,11 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
                                          @NotNull List<PsiModifierListOwner> externalOwners) {
     if (annotation == null) return;
 
-    if (annotation.isPhysical()) {
-      physical.add(annotation);
-    } else {
+    if (AnnotationUtil.isExternalAnnotation(annotation)) {
       ContainerUtil.addIfNotNull(externalOwners, listOwner);
+    }
+    else {
+      physical.add(annotation);
     }
   }
 }

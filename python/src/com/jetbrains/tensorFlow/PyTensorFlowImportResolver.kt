@@ -8,7 +8,6 @@ import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-@ApiStatus.NonExtendable
 class PyTensorFlowImportResolver : PyImportResolver {
 
   override fun resolveImportReference(name: QualifiedName, context: PyQualifiedNameResolveContext, withRoots: Boolean): PsiElement? {

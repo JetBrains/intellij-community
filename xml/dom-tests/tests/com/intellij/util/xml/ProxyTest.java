@@ -99,6 +99,7 @@ public class ProxyTest extends TestCase {
     public abstract String foo();
   }
 
+  @SuppressWarnings("CastToIncompatibleInterface")
   public void testAddInterfaces() {
     final BaseImpl proxy = AdvancedProxy.createProxy(BaseImpl.class, BaseIEx.class);
     assertEquals("a", proxy.sayA());

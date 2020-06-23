@@ -4,8 +4,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -35,7 +33,7 @@ public class MethodReturnFixFactory extends ArgumentFixerActionFactory {
   public boolean areTypesConvertible(@NotNull final PsiType exprType,
                                      @NotNull final PsiType parameterType,
                                      @NotNull final PsiElement context) {
-    return !PsiType.VOID.equals(exprType) && exprType.equalsToText(exprType.getCanonicalText());
+    return true;
   }
 
   @Override

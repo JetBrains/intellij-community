@@ -40,7 +40,10 @@ import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Properties;
 
 class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElement> implements Debugger.StyleFrame {
 
@@ -79,7 +82,7 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
     this.addVariables(myElement, variables, variableNames[0], true);
     this.addVariables(myElement, variables, variableNames[1], false);
 
-    Collections.sort(variables, VariableComparator.INSTANCE);
+    variables.sort(VariableComparator.INSTANCE);
 
     return variables;
   }

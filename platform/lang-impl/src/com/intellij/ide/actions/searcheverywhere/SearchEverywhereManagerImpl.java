@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 
@@ -78,9 +80,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
       contributors.add(contributor);
     }
-    Collections.sort(contributors, Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
+    contributors.sort(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
 
     mySearchEverywhereUI = createView(myProject, contributors);
+    contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
     mySearchEverywhereUI.switchToContributor(contributorID);
 
     myHistoryIterator = myHistoryList.getIterator(contributorID);
@@ -93,11 +96,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
     if (searchText == null && !suppressHistory) {
       searchText = myHistoryIterator.prev();
-    }
-
-    if (searchText != null && !searchText.isEmpty()) {
-      mySearchEverywhereUI.getSearchField().setText(searchText);
-      mySearchEverywhereUI.getSearchField().selectAll();
     }
 
     myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
@@ -126,10 +124,21 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     JBInsets.addTo(size, myBalloon.getContent().getInsets());
     myBalloon.setMinimumSize(size);
 
-    myProject.putUserData(SEARCH_EVERYWHERE_POPUP, myBalloon);
+    ConcurrentHashMap<ClientId, JBPopup> map = myProject.getUserData(SEARCH_EVERYWHERE_POPUP);
+    if (map == null) {
+      map = new ConcurrentHashMap<>();
+      myProject.putUserData(SEARCH_EVERYWHERE_POPUP, map);
+    }
+    map.put(ClientId.getCurrent(), myBalloon);
+
+    if (searchText != null && !searchText.isEmpty()) {
+      mySearchEverywhereUI.getSearchField().setText(searchText);
+      mySearchEverywhereUI.getSearchField().selectAll();
+    }
+
     Disposer.register(myBalloon, () -> {
       saveSize();
-      myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null);
+      Objects.requireNonNull(myProject.getUserData(SEARCH_EVERYWHERE_POPUP)).remove(ClientId.getCurrent());
       mySearchEverywhereUI = null;
       myBalloon = null;
       myBalloonFullSize = null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
@@ -24,10 +24,10 @@ public class CloseActiveTabAction extends AnAction implements DumbAware {
     }
 
     if (!processed && contentManager != null) {
-      final DataContext context = DataManager.getInstance().getDataContext(contentManager.getComponent());
-      final ToolWindow tw = PlatformDataKeys.TOOL_WINDOW.getData(context);
-      if (tw != null) {
-        tw.hide(null);
+      DataContext context = DataManager.getInstance().getDataContext(contentManager.getComponent());
+      ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(context);
+      if (toolWindow != null) {
+        toolWindow.hide(null);
       }
     }
   }

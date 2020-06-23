@@ -866,12 +866,45 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
   public void testEmptyIndicatorMustConformToAtLeastSomeSimpleLifecycleConstrains() {
     ProgressIndicator indicator = new EmptyProgressIndicator();
-    for (int i=0; i<2; i++) {
+    for (int i = 0; i < 2; i++) {
       assertThrows(IllegalStateException.class, indicator::stop);
       indicator.start();
       assertThrows(IllegalStateException.class, indicator::start);
       indicator.stop();
       assertThrows(IllegalStateException.class, indicator::stop);
     }
+  }
+
+  public void testProgressIndicatorsAttachToStartedProgress() {
+    ProgressIndicatorEx progressIndicator = new ProgressIndicatorBase();
+    progressIndicator.start();
+    progressIndicator.setText("Progress 0/2");
+
+    // attach
+    ProgressIndicatorEx progressIndicatorWatcher1 = new ProgressIndicatorBase();
+    ProgressIndicatorEx progressIndicatorGroup = new ProgressIndicatorBase();
+    progressIndicatorGroup.addStateDelegate(progressIndicatorWatcher1);
+
+    progressIndicator.addStateDelegate(progressIndicatorGroup);
+
+    assertEquals(progressIndicator.getText(), progressIndicatorGroup.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher1.getText());
+
+    progressIndicator.setText("Progress 1/2");
+
+    // attach
+    ProgressIndicatorEx progressIndicatorWatcher2 = new ProgressIndicatorBase();
+    progressIndicatorGroup.addStateDelegate(progressIndicatorWatcher2);
+
+    assertEquals(progressIndicator.getText(), progressIndicatorGroup.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher1.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher2.getText());
+
+    progressIndicator.setText("Progress 2/2");
+    progressIndicator.stop();
+
+    assertEquals(progressIndicator.getText(), progressIndicatorGroup.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher1.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher2.getText());
   }
 }

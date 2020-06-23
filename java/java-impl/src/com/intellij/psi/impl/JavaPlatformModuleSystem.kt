@@ -195,7 +195,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
 
   private abstract class CompilerOptionFix(private val module: Module) : IntentionAction {
-    @NonNls override fun getFamilyName() = "dfd4a2c1-da18-4651-9aa8-d7d31cae10be" // random string; not visible
+    @NonNls override fun getFamilyName() = "Fix compiler option" // not visible
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = !module.isDisposed
 
@@ -211,6 +211,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
     protected abstract fun update(options: MutableList<String>)
 
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = null
+
     override fun startInWriteAction() = true
   }
 
@@ -221,10 +223,11 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
     override fun update(options: MutableList<String>) {
       var idx = -1; var candidate = -1; var offset = 0
+      val prefix = "--add-exports"
       for ((i, option) in options.withIndex()) {
-        if (option.startsWith("--add-exports")) {
-          if (option.length == 13) { candidate = i + 1 ; offset = 0 }
-          else if (option[13] == '=') { candidate = i; offset = 14 }
+        if (option.startsWith(prefix)) {
+          if (option.length == prefix.length) { candidate = i + 1 ; offset = 0 }
+          else if (option[prefix.length] == '=') { candidate = i; offset = prefix.length + 1 }
         }
         if (i == candidate && option.startsWith(qualifier, offset)) {
           val qualifierEnd = qualifier.length + offset
@@ -234,7 +237,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
       }
       when (idx) {
-        -1 -> options += listOf("--add-exports", "${qualifier}=${useName}")
+        -1 -> options += listOf(prefix, "${qualifier}=${useName}")
         else -> options[idx] = "${options[idx].trimEnd(',')},${useName}"
       }
     }
@@ -245,14 +248,15 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
     override fun update(options: MutableList<String>) {
       var idx = -1
+      val prefix = "--add-modules"
       for ((i, option) in options.withIndex()) {
-        if (option.startsWith("--add-modules")) {
-          if (option.length == 13) idx = i + 1
-          else if (option[13] == '=') idx = i
+        if (option.startsWith(prefix)) {
+          if (option.length == prefix.length) idx = i + 1
+          else if (option[prefix.length] == '=') idx = i
         }
       }
       when (idx) {
-        -1 -> options += listOf("--add-modules", moduleName)
+        -1 -> options += listOf(prefix, moduleName)
         options.size -> options += moduleName
         else -> {
           val value = options[idx]

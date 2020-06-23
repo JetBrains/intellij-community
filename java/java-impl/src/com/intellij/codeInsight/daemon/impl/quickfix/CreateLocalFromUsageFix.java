@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -22,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +73,9 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     String varName = myReferenceExpression.getReferenceName();
     if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false) || varName == null) return;
 
-    IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    if (file.isPhysical()) {
+      IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    }
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
@@ -106,15 +110,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     TypeExpression expression = new TypeExpression(project, expectedTypes);
 
     if (isInline) {
-      final PsiExpression expr = ((PsiExpressionStatement)anchor).getExpression();
-      final PsiElement semicolon = expr.getNextSibling();
-      if (semicolon != null) {
-        final PsiElement nextSibling = semicolon.getNextSibling();
-        if (nextSibling != null) {
-          decl.addRange(nextSibling, anchor.getLastChild());
-        }
-      }
-      decl = (PsiDeclarationStatement)anchor.replace(decl);
+      decl = (PsiDeclarationStatement)new CommentTracker().replaceAndRestoreComments(anchor, decl);
     }
     else {
       decl = (PsiDeclarationStatement)anchor.getParent().addBefore(decl, anchor);
@@ -127,7 +123,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
 
     var = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(var);
-    if (var == null) return;
+    if (var == null || !file.isPhysical()) return;
     TemplateBuilderImpl builder = new TemplateBuilderImpl(var);
     final PsiTypeElement typeElement = var.getTypeElement();
     LOG.assertTrue(typeElement != null);
@@ -198,4 +194,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     return QuickFixBundle.message("create.local.from.usage.family");
   }
 
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new CreateLocalFromUsageFix(PsiTreeUtil.findSameElementInCopy(myReferenceExpression, target));
+  }
 }

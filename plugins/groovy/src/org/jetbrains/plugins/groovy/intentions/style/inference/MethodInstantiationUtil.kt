@@ -40,7 +40,7 @@ fun instantiateTypeParameters(driver: InferenceDriver,
 }
 
 fun createVirtualMethodWithoutVararg(method: GrMethod, typeParameterList: PsiTypeParameterList) : GrMethod {
-  val virtualMethod = createVirtualMethod(method, typeParameterList) ?: return method
+  val virtualMethod = createVirtualMethod(method, typeParameterList, true) ?: return method
   virtualMethod.parameters.lastOrNull()?.ellipsisDots?.delete()
   return virtualMethod
 }

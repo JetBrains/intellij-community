@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.ByLine.Line;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
-import com.intellij.diff.util.IntPair;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.IntPair;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,10 +57,10 @@ abstract class ChangeCorrector {
         IntPair range1 = getOriginalRange1(ch.start1 + i);
         IntPair range2 = getOriginalRange2(ch.start2 + i);
 
-        int start1 = range1.val1;
-        int start2 = range2.val1;
-        int end1 = range1.val2;
-        int end2 = range2.val2;
+        int start1 = range1.first;
+        int start2 = range2.first;
+        int end1 = range1.second;
+        int end2 = range2.second;
 
         matchGap(last1, start1, last2, start2);
         myBuilder.markEqual(start1, start2, end1, end2);

@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -96,9 +97,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     final CoverageViewTreeStructure structure = new CoverageViewTreeStructure(project, suitesBundle, stateBean);
     myBuilder = new CoverageViewBuilder(project, new JBList(), myModel, structure, myTable);
     myBuilder.setParentTitle(titleLabel);
+    Disposer.register(this, myBuilder);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         drillDown(structure);
         return true;
       }
@@ -111,7 +113,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myTable.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        if (myBuilder == null) return;
         myBuilder.buildRoot();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);

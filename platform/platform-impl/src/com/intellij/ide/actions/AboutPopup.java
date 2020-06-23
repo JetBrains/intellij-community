@@ -38,6 +38,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
+import com.intellij.util.MathUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -69,7 +70,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 /**
  * @author Konstantin Bulenkov
  */
-public class AboutPopup {
+public final class AboutPopup {
   private static JBPopup ourPopup;
   private static final Logger LOG = Logger.getInstance(AboutPopup.class);
   /**
@@ -132,7 +133,7 @@ public class AboutPopup {
     catch (Exception ignore) { }
   }
 
-  private static class InfoSurface extends JPanel {
+  private static final class InfoSurface extends JPanel {
     private static final ExtensionPointName<AboutPopupDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
 
     private final Color myColor;
@@ -155,7 +156,9 @@ public class AboutPopup {
       myImage = image;
       //noinspection UseJBColor
       myColor = Color.white;
-      myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : JBUI.CurrentTheme.Link.linkColor();
+      long aboutLinkColor = appInfo.getAboutLinkColor();
+      //noinspection UseJBColor
+      myLinkColor = aboutLinkColor == -1 ? JBUI.CurrentTheme.Link.linkColor() : new Color((int)aboutLinkColor, aboutLinkColor > 0xffffff);
       myShowDebugInfo = showDebugInfo;
 
       setOpaque(false);
@@ -253,9 +256,9 @@ public class AboutPopup {
           }
         }
 
-        final static double maxAlpha = 1.0;
-        final static double fadeStep = 0.05;
-        final static int animationDelay = 15;
+        static final double maxAlpha = 1.0;
+        static final double fadeStep = 0.05;
+        static final int animationDelay = 15;
 
         @Override
         public void mouseEntered(MouseEvent e) {
@@ -323,8 +326,7 @@ public class AboutPopup {
       });
     }
 
-    @Nullable
-    private static String loadThirdPartyLibraries() {
+    private static @Nullable String loadThirdPartyLibraries() {
       final File thirdPartyLibrariesFile = new File(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE_PATH);
       if (thirdPartyLibrariesFile.isFile()) {
         try {
@@ -377,29 +379,39 @@ public class AboutPopup {
       }
 
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
-      Rectangle aboutLogoRect = appInfo.getAboutLogoRect();
+      int[] aboutLogoRect = appInfo.getAboutLogoRect();
       if (aboutLogoRect != null) {
-        myLinks.add(new Link(new JBRectangle(aboutLogoRect), appInfo.getCompanyURL()));
+        myLinks.add(new Link(new JBRectangle(aboutLogoRect[0], aboutLogoRect[1], aboutLogoRect[2], aboutLogoRect[3]), appInfo.getCompanyURL()));
       }
 
-      if (appInfo instanceof ApplicationInfoImpl) {
-        g2.setColor(((ApplicationInfoImpl)appInfo).getCopyrightForeground());
+      if (appInfo instanceof ApplicationInfoEx) {
+        long copyrightForeground = ((ApplicationInfoEx)appInfo).getCopyrightForeground();
+        Color color;
+        if (copyrightForeground < 0) {
+          color = JBColor.BLACK;
+        }
+        else {
+          //noinspection UseJBColor
+          color = new Color((int)copyrightForeground, copyrightForeground > 0xffffff);
+        }
+        g2.setColor(color);
         if (SystemInfo.isMac) {
           g2.setFont(JBUI.Fonts.miniFont());
         }
         else {
           g2.setFont(JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 12));
         }
-      } else {
+
+        g2.setColor(createColor(((ApplicationInfoEx)appInfo).getAboutForeground()));
+      }
+      else {
         g2.setColor(JBColor.BLACK);
       }
-
-      g2.setColor(((ApplicationInfoEx)appInfo).getAboutForeground());
 
       JBPoint copyrightCoord = getCopyrightCoord();
       g2.drawString(getCopyrightText(), copyrightCoord.x, copyrightCoord.y);
       if (myShowDebugInfo) {
-        g2.setColor(((ApplicationInfoEx)appInfo).getAboutForeground());
+        g2.setColor(createColor(((ApplicationInfoEx)appInfo).getAboutForeground()));
         for (Link link : myLinks) {
           g2.drawRect(link.myRectangle.x, link.myRectangle.y, link.myRectangle.width, link.myRectangle.height);
         }
@@ -409,14 +421,13 @@ public class AboutPopup {
       if (myShowCopy) {
         JBPoint coord = getCopyIconCoord();
         float alpha = myShowCopyAlpha;
-        config = new GraphicsConfig(g).paintWithAlpha(Math.min(1f, Math.max(0f, alpha)));
+        config = new GraphicsConfig(g).paintWithAlpha(MathUtil.clamp(alpha, 0f, 1f));
         AllIcons.General.CopyHovered.paintIcon(this, g, coord.x, coord.y);
         config.restore();
       }
     }
 
-    @NotNull
-    protected String getCopyrightText() {
+    protected @NotNull String getCopyrightText() {
       /* Android Studio: https://b.corp.google.com/issues/37079872 - Remove misleading copyright notice
       ApplicationInfo applicationInfo = ApplicationInfo.getInstance();
       return "Copyright \u00A9 " +
@@ -429,8 +440,7 @@ public class AboutPopup {
       return " ";
     }
 
-    @NotNull
-    private TextRenderer createTextRenderer(Graphics2D g) {
+    private @NotNull TextRenderer createTextRenderer(Graphics2D g) {
       Rectangle r = getTextRendererRect();
       return new TextRenderer(r.x, r.y, r.width, r.height, g);
     }
@@ -448,7 +458,7 @@ public class AboutPopup {
     }
 
     public String getText() {
-      return myInfo.toString() + getExtraInfo();
+      return myInfo + getExtraInfo();
     }
 
     private class TextRenderer {
@@ -493,7 +503,7 @@ public class AboutPopup {
             myLinks.add(new Link(myRectangle, line));
           }
           else {
-            g2.setColor(appInfo.getAboutForeground());
+            g2.setColor(createColor(appInfo.getAboutForeground()));
           }
           renderString(s, indentX);
           if (!line.isKeepWithNext() && !line.equals(lines.get(lines.size()-1))) {
@@ -650,8 +660,12 @@ public class AboutPopup {
     }
   }
 
-  @NotNull
-  private static String getExtraInfo() {
+  @SuppressWarnings("UseJBColor")
+  private static Color createColor(long rgba) {
+    return rgba == -1 ? Color.BLACK : new Color((int)rgba, rgba > 0xffffff);
+  }
+
+  private static @NotNull String getExtraInfo() {
     String extraInfo = SystemInfo.getOsNameAndVersion() + "\n";
 
     extraInfo += "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
@@ -788,8 +802,7 @@ public class AboutPopup {
         return new Action[]{getOKAction()};
       }
 
-      @NotNull
-      private String getScaledHtmlText() {
+      private @NotNull String getScaledHtmlText() {
         final Pattern pattern = Pattern.compile("(\\d+)px");
         final Matcher matcher = pattern.matcher(htmlText);
 

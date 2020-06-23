@@ -23,6 +23,11 @@ class Test {
       return "foo";
   }
 
+  String twoFiltersInARowPrecedencePreserved(boolean a, boolean b, String in) {
+      if (in != null && (a || b)) return in;
+      return "foo";
+  }
+
   private String getIfTrue(String str, boolean b) {
     return b ? str : null;
   }

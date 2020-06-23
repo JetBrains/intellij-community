@@ -310,7 +310,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
         sb.append(ownName);
       }
 
-      String contexts = "Applicable in " + sb.toString();
+      String contexts = "Applicable in " + sb;
       change.setText(CodeInsightBundle.message("link.change.context"));
 
       final boolean noContexts = sb.length() == 0;
@@ -331,7 +331,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
 
     change.setListener(new LinkListener<Object>() {
       @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+      public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
         if (disposeContextPopup()) return;
         Pair<JPanel, CheckboxTree> pair = createPopupContextPanel(updateLabel, myContext);
         final JPanel content = pair.first;

@@ -312,7 +312,12 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
           host = port.substring(0, pos);
           port = port.substring(pos + 1);
         }
-        return new PidRemoteConnection(myPid, myUseSocket, host, port, false);
+        if (!StringUtil.isEmpty(myPid)) {
+          return new PidRemoteConnection(myPid, myUseSocket, host, port, false);
+        }
+        else {
+          return new RemoteConnection(myUseSocket, host, port, false);
+        }
       }
     }
 
@@ -518,6 +523,10 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     public String getHelpTopic() {
       return "reference.dialogs.rundebug.ProcessAttachRunConfigurationType";
     }
+  }
+
+  static void attach(String transport, String address, Project project) {
+    attach(new DebuggerLocalAttachInfo(!"dt_shmem".equals(transport), address, null, null, false), project);
   }
 
   static void attach(JavaAttachDebuggerProvider.LocalAttachInfo info, Project project) {

@@ -127,7 +127,7 @@ public class GitResetOperation {
                                         + "<br/>but failed for " + joinRepos(errors.keySet()) + ": <br/>" + formErrorReport(errors));
     }
     else {
-      myNotifier.notifyError("Reset Failed", formErrorReport(errors));
+      myNotifier.notifyError("Reset Failed", formErrorReport(errors), true);
     }
   }
 

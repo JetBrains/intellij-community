@@ -9,6 +9,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
+import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
@@ -79,6 +80,8 @@ class CompilationContextImpl implements CompilationContext {
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
+    def jpsCache = new PortableCompilationCache(context)
+    if (jpsCache.canBeUsed) jpsCache.warmUp()
     return context
   }
 
@@ -99,7 +102,9 @@ class CompilationContextImpl implements CompilationContext {
       .collect { it.getSdkReference(JpsJavaSdkType.INSTANCE)?.sdkName }
       .findAll { it != null && !sdks.contains(it) }
       .toSet().each { sdkName ->
-      def sdkHome = JdkUtils.computeJdkHome(messages, sdkName, "$jbrDir/$sdkName", null)?.with {
+      def vendorPrefixEnd = sdkName.indexOf("-")
+      def sdkNameWithoutVendor = vendorPrefixEnd != -1 ? sdkName.substring(vendorPrefixEnd + 1) : sdkName
+      def sdkHome = JdkUtils.computeJdkHome(messages, sdkNameWithoutVendor, "$jbrDir/$sdkNameWithoutVendor", null)?.with {
         toCanonicalPath(it)
       }
       if (sdkHome != null) {
@@ -266,6 +271,9 @@ class CompilationContextImpl implements CompilationContext {
     cleanOutput(outputDirectoriesToKeep)
   }
 
+  /**
+   * @return url attribute value of output tag from .idea/misc.xml
+   */
   File getProjectOutputDirectory() {
     JpsPathUtil.urlToFile(JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl)
   }

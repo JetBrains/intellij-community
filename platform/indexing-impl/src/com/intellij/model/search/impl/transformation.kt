@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search.impl
 
-import com.intellij.util.Processor
 import com.intellij.util.Query
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.SmartList
 import java.util.function.Function
 import java.util.function.Predicate
 
@@ -13,49 +12,40 @@ import java.util.function.Predicate
  */
 internal typealias Transformation<B, R> = (B) -> Collection<R>
 
-internal typealias SubQueries<B, R> = Transformation<B, Query<out R>>
+internal typealias XTransformation<B, R> = Transformation<B, XResult<R>>
 
-private object IdTransformation : Transformation<Any, Any> {
-  override fun invoke(e: Any): Collection<Any> = listOf(e)
+private object IdTransformation : XTransformation<Any, Any> {
+  override fun invoke(e: Any): Collection<XResult<Any>> = listOf(ValueResult(e))
   override fun toString(): String = "ID"
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <R> idTransform(): Transformation<R, R> = IdTransformation as Transformation<R, R>
+internal fun <R> idTransform(): XTransformation<R, R> = IdTransformation as XTransformation<R, R>
 
-@Suppress("UNCHECKED_CAST")
-fun <B, I, R> Transformation<B, I>.andThen(other: Transformation<I, R>): Transformation<B, R> = when {
-  this === IdTransformation -> other as Transformation<B, R>
-  other === IdTransformation -> this as Transformation<B, R>
-  else -> { base: B ->
-    invoke(base).flatMap(other)
+internal fun <B, R> xValueTransform(transformation: Transformation<B, R>): XTransformation<B, R> {
+  return { baseValue ->
+    transformation(baseValue).mapTo(SmartList(), ::ValueResult)
+  }
+}
+
+internal fun <B, R> xQueryTransform(subQueries: Transformation<B, Query<out R>>): XTransformation<B, R> {
+  return { baseValue ->
+    subQueries(baseValue).mapTo(SmartList(), ::QueryResult)
   }
 }
 
 /**
- * `(b -> q i) -> (i -> r) -> (b -> q r)`
+ * (>=>) :: (b -> x i) -> (i -> x r) -> (b -> x r)
  */
-fun <B, I, R> SubQueries<B, I>.mapInner(transformation: Transformation<I, R>): SubQueries<B, R> {
-  if (transformation == IdTransformation) {
-    @Suppress("UNCHECKED_CAST")
-    return this as SubQueries<B, R>
-  }
-  return { baseElement: B ->
-    val intermediateQueries: Collection<Query<out I>> = this@mapInner(baseElement)
-    intermediateQueries.map { intermediateQuery: Query<out I> ->
-      TransformingQuery(intermediateQuery, transformation)
-    }
-  }
-}
-
-/**
- * `(b -> q i) -> (i -> q r) -> (b -> q r)`
- */
-fun <B, I, R> SubQueries<B, I>.flatMapInner(next: SubQueries<I, R>): SubQueries<B, R> {
-  return { baseElement: B ->
-    val intermediateQueries: Collection<Query<out I>> = this@flatMapInner(baseElement)
-    intermediateQueries.map { intermediateQuery: Query<out I> ->
-      LayeredQuery(intermediateQuery, next)
+internal fun <B, I, R> XTransformation<B, I>.karasique(next: XTransformation<I, R>): XTransformation<B, R> {
+  @Suppress("UNCHECKED_CAST")
+  return when {
+    this === IdTransformation -> next as XTransformation<B, R>
+    next === IdTransformation -> this as XTransformation<B, R>
+    else -> { baseValue: B ->
+      this@karasique(baseValue).flatMapTo(SmartList()) { intermediateResult: XResult<I> ->
+        intermediateResult.transform(next)
+      }
     }
   }
 }
@@ -71,19 +61,4 @@ fun <R> filtering(predicate: Predicate<in R>): Transformation<R, R> = { element:
 
 fun <B, R> mapping(f: Function<in B, out R>): Transformation<B, R> = { base: B ->
   listOf(f.apply(base))
-}
-
-fun <B, R> Transformation<B, R>.adaptProcessor(resultProcessor: Processor<in R>): Processor<in B> = Processor { baseElement: B ->
-  val resultElements: Collection<R> = this@adaptProcessor(baseElement)
-  ContainerUtil.process(resultElements, resultProcessor)
-}
-
-internal fun <B, R> transformingQuery(baseQuery: Query<out B>, transformation: Transformation<B, R>): Query<out R> {
-  if (transformation === IdTransformation) {
-    @Suppress("UNCHECKED_CAST")
-    return baseQuery as Query<out R>
-  }
-  else {
-    return TransformingQuery(baseQuery, transformation)
-  }
 }

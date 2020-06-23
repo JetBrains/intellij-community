@@ -58,7 +58,7 @@ public class DtdSelectioner extends ExtendWordSelectionHandlerBase {
     if (first != null && last != null) {
       final int offset = last.getTextRange().getEndOffset() + 1;
         result.addAll(ExtendWordSelectionHandlerBase.expandToWholeLine(editorText,
-                                        new TextRange(first.getTextRange().getStartOffset(), offset < editorText.length() ? offset:editorText.length()),
+                                        new TextRange(first.getTextRange().getStartOffset(), Math.min(offset, editorText.length())),
                                         false));
     }
 

@@ -16,7 +16,10 @@ import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.Preferences;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class TextMateEditorUtils {
   @Nullable
@@ -109,7 +112,8 @@ public final class TextMateEditorUtils {
           if (highlightingPairs.isEmpty()) {
             // smart typing pairs can be defined in preferences but can be empty (in order to disable smart typing at all)
             return Collections.emptySet();
-          } else {
+          }
+          else {
             result.addAll(highlightingPairs);
           }
         }
@@ -147,23 +151,6 @@ public final class TextMateEditorUtils {
   }
 
   private TextMateEditorUtils() {
-  }
-
-  @NotNull
-  public static <K, V> Map<K, V> compactMap(@NotNull Map<K, V> map) {
-    if (map.isEmpty()) {
-      return Collections.emptyMap();
-    }
-    if (map.size() == 1) {
-      Map.Entry<K, V> singleEntry = map.entrySet().iterator().next();
-      return Collections.singletonMap(singleEntry.getKey(), singleEntry.getValue());
-    }
-    if (!(map instanceof HashMap)) {
-      return map;
-    }
-    HashMap<K, V> result = new HashMap<>(map.size(), 1.0f);
-    result.putAll(map);
-    return result;
   }
 
   public static void processExtensions(@NotNull CharSequence fileName, @NotNull Processor<? super CharSequence> processor) {

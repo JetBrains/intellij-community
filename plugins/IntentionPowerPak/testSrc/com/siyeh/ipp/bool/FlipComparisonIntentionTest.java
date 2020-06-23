@@ -20,6 +20,22 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
            "    boolean b = 2 < 1;}");
   }
 
+  public void testAssignment() {
+    doTest("class X {\n" +
+           "  void foo(int x) {\n" +
+           "    boolean b;\n" +
+           "    b = 1/*_Flip '>' to '<'*/ > x;\n" +
+           "  }\n" +
+           "}",
+
+           "class X {\n" +
+           "  void foo(int x) {\n" +
+           "    boolean b;\n" +
+           "    b = x < 1;\n" +
+           "  }\n" +
+           "}");
+  }
+
   public void testGreater() {
     doTest("class X {{" +
            "  if(a+b>/*_Flip '>' to '<'*/c);" +

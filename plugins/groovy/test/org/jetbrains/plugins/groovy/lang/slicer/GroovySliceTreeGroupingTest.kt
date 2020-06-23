@@ -37,7 +37,7 @@ class GroovySliceTreeGroupingTest : DaemonAnalyzerTestCase() {
     configureByFiles(null, *getTestFiles(getTestName(false)).toTypedArray())
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-    val element = SliceHandler(true).getExpressionAtCaret(editor, file)!!
+    val element = SliceHandler.create(true).getExpressionAtCaret(editor, file)!!
 
     val errors = highlightErrors()
     UsefulTestCase.assertEmpty(errors)

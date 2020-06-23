@@ -417,8 +417,8 @@ public class RecentProjectPanel extends JPanel {
         }
         ListUtil.removeIndices(MyList.this, childIndices);
         ApplicationManager.getApplication().invokeLater(() -> {
-          String title = "Tutorials have been removed from the recent list";
-          String content = "You can still find them in the Help menu";
+          String title = IdeBundle.message("notification.title.tutorials.have.been.removed.from.recent.list");
+          String content = IdeBundle.message("notification.content.you.can.still.find.them.in.help.menu");
           Notifications.Bus.notify(
             new Notification(NotificationGroup.createIdWithTitle("Tutorials", IdeBundle.message("notification.group.tutorials")), title,
                              content, NotificationType.INFORMATION));

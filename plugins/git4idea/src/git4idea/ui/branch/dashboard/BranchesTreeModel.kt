@@ -60,8 +60,7 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
 }
 
 internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchNodeDescriptor,
-                                    private val remoteRootNodeDescriptor: BranchNodeDescriptor,
-                                    private val isNodeDescriptorAccepted: (BranchNodeDescriptor) -> Boolean) {
+                                    private val remoteRootNodeDescriptor: BranchNodeDescriptor) {
   /**
    * Parent node descriptor to direct children map
    */
@@ -99,8 +98,6 @@ internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchN
   }
 
   private fun addChild(parent: BranchNodeDescriptor, child: BranchNodeDescriptor) {
-    if (!isNodeDescriptorAccepted(child)) return
-
     val directChildren = branchNodeDescriptors.computeIfAbsent(parent) { sortedSetOf(BRANCH_TREE_NODE_COMPARATOR) }
     directChildren.add(child)
     branchNodeDescriptors[parent] = directChildren

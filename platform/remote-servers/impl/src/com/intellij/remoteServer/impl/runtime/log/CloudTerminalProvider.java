@@ -11,9 +11,10 @@ import java.io.OutputStream;
 
 @ApiStatus.Internal
 public abstract class CloudTerminalProvider {
-
+  @NotNull
   public static CloudTerminalProvider getInstance() {
-    return ServiceManager.getService(CloudTerminalProvider.class);
+    CloudTerminalProvider contributed = ServiceManager.getService(CloudTerminalProvider.class);
+    return contributed == null ? DummyInstanceHolder.INSTANCE : contributed;
   }
 
   public TerminalHandlerBase createTerminal(@NotNull String presentableName,
@@ -31,4 +32,8 @@ public abstract class CloudTerminalProvider {
                                                      boolean deferTerminalSessionUntilFirstShown);
 
   public abstract boolean isTtySupported();
+
+  private static class DummyInstanceHolder {
+    static final CloudTerminalProvider INSTANCE = new ConsoleTerminalProvider();
+  }
 }

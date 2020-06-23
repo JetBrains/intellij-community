@@ -70,15 +70,15 @@ public class ImportHelper{
   }
 
   @Nullable("null means no need to replace the import list because they are the same")
-  public PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file) {
-    return prepareOptimizeImportsResult(file, pair -> true);
+  PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file) {
+    return prepareOptimizeImportsResult(file, __ -> true);
   }
 
   /**
    * @param filter pretend some references do not exist so the corresponding imports may be deleted
    */
   @Nullable("null means no need to replace the import list because they are the same")
-  public PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file, Predicate<? super Pair<String, Boolean>> filter) {
+  public PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file, @NotNull Predicate<? super Pair<String, Boolean>> filter) {
     PsiImportList oldList = file.getImportList();
     if (oldList == null) return null;
 
@@ -134,21 +134,8 @@ public class ImportHelper{
 
       PsiImportList newImportList = dummyFile.getImportList();
       assert newImportList != null : dummyFile.getText();
-      PsiImportList result = (PsiImportList)newImportList.copy();
-      if (oldList.isReplaceEquivalent(result)) return null;
-      if (!nonImports.isEmpty()) {
-        PsiElement firstPrevious = newImportList.getPrevSibling();
-        while (firstPrevious != null && firstPrevious.getPrevSibling() != null) {
-          firstPrevious = firstPrevious.getPrevSibling();
-        }
-        for (PsiElement element = firstPrevious; element != null && element != newImportList; element = element.getNextSibling()) {
-          result.add(element.copy());
-        }
-        for (PsiElement element = newImportList.getNextSibling(); element != null; element = element.getNextSibling()) {
-          result.add(element.copy());
-        }
-      }
-      return result;
+      if (oldList.isReplaceEquivalent(newImportList)) return null;
+      return newImportList;
     }
     catch(IncorrectOperationException e) {
       LOG.error(e);

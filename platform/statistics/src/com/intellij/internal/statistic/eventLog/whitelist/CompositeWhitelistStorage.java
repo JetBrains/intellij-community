@@ -38,6 +38,12 @@ public class CompositeWhitelistStorage implements WhitelistGroupRulesStorage, Wh
     myWhitelistTestGroupStorage.update();
   }
 
+  @Override
+  public void reload() {
+    myWhitelistStorage.reload();
+    myWhitelistTestGroupStorage.reload();
+  }
+
   @NotNull
   @Override
   public WhitelistTestGroupStorage getTestGroupStorage() {

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-public final class ProjectPathMacroManager extends PathMacroManager {
+public class ProjectPathMacroManager extends PathMacroManager {
   private final Project myProject;
 
   public ProjectPathMacroManager(@NotNull Project project) {

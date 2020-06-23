@@ -29,6 +29,7 @@ public final class PlatformUtils {
   public static final String CLION_PREFIX = "CLion";
   public static final String PYCHARM_PREFIX = "Python";
   public static final String PYCHARM_CE_PREFIX = "PyCharmCore";
+  public static final String PYCHARM_DS_PREFIX = "PyCharmDS";
   public static final String PYCHARM_EDU_PREFIX = "PyCharmEdu";
   public static final String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
@@ -36,6 +37,7 @@ public final class PlatformUtils {
   public static final String DBE_PREFIX = "DataGrip";
   public static final String RIDER_PREFIX = "Rider";
   public static final String GOIDE_PREFIX = "GoLand";
+  public static final String INTELLIJ_CLIENT_PREFIX = "IntelliJClient";
   public static final String STUDIO_PREFIX = "AndroidStudio";
 
   private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX,
@@ -102,7 +104,7 @@ public final class PlatformUtils {
   }
 
   public static boolean isPyCharm() {
-    return isPyCharmPro() || isPyCharmCommunity() || isPyCharmEducational();
+    return isPyCharmPro() || isPyCharmCommunity() || isPyCharmEducational() || isPyCharmDs();
   }
 
   public static boolean isPyCharmPro() {
@@ -111,6 +113,10 @@ public final class PlatformUtils {
 
   public static boolean isPyCharmCommunity() {
     return is(PYCHARM_CE_PREFIX);
+  }
+
+  public static boolean isPyCharmDs() {
+    return is(PYCHARM_DS_PREFIX);
   }
 
   public static boolean isPyCharmEducational() {
@@ -135,6 +141,10 @@ public final class PlatformUtils {
 
   public static boolean isGoIde() {
     return is(GOIDE_PREFIX);
+  }
+
+  public static boolean isIntelliJClient() {
+    return is(INTELLIJ_CLIENT_PREFIX);
   }
 
   public static boolean isCommunityEdition() {

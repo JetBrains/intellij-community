@@ -31,4 +31,7 @@ public class ReflectionAssignabilityCache {
     return ancestor == descendant || myCache.get(ancestor).get(descendant).booleanValue();
   }
 
+  public void clear() {
+    myCache.clear();
+  }
 }

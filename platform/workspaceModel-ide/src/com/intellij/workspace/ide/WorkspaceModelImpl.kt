@@ -1,17 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.ide
 
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspace.api.*
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener
 
 class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
 
   private val projectEntities: TypedEntityStorageBuilder
 
-  private val cacheEnabled = !ApplicationManager.getApplication().isUnitTestMode
+  private val cacheEnabled = !ApplicationManager.getApplication().isUnitTestMode && LegacyBridgeProjectLifecycleListener.cacheEnabled
   private val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
 
   override val entityStore: EntityStoreImpl
@@ -24,8 +26,10 @@ class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
     if (initialContent != null) {
       projectEntities = TypedEntityStorageBuilder.from(initialContent)
     } else if (cache != null) {
+      val activity = StartUpMeasurer.startActivity("(wm) Loading cache")
       val previousStorage = cache.loadCache()
       projectEntities = if (previousStorage != null) TypedEntityStorageBuilder.from(previousStorage) else TypedEntityStorageBuilder.create()
+      activity.end()
     } else {
       projectEntities = TypedEntityStorageBuilder.create()
     }

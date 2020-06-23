@@ -4,9 +4,9 @@ package com.intellij.grazie.remote
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.detector.model.LanguageISO
-import java.io.File
+import java.nio.file.Path
 
-enum class RemoteLangDescriptor(val langsClasses: List<String>, val size: String, val iso: LanguageISO) {
+internal enum class RemoteLangDescriptor(val langsClasses: List<String>, val size: String, val iso: LanguageISO) {
   ENGLISH(listOf("BritishEnglish", "AmericanEnglish", "CanadianEnglish"), "14 MB", LanguageISO.EN),
   RUSSIAN(listOf("Russian"), "3 MB", LanguageISO.RU),
   PERSIAN(listOf("Persian"), "1 MB", LanguageISO.FA),
@@ -25,6 +25,6 @@ enum class RemoteLangDescriptor(val langsClasses: List<String>, val size: String
   UKRAINIAN(listOf("Ukrainian"), "6 MB", LanguageISO.UK);
 
   val fileName: String by lazy { "$iso-${GraziePlugin.LanguageTool.version}.jar" }
-  val file: File by lazy { GrazieDynamic.dynamicFolder.resolve(fileName) }
+  val file: Path by lazy { GrazieDynamic.dynamicFolder.resolve(fileName) }
   val url: String by lazy { "${GraziePlugin.LanguageTool.url}/${GraziePlugin.LanguageTool.version}/$fileName" }
 }

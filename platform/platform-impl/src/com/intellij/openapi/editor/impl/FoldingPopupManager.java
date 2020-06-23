@@ -51,7 +51,7 @@ public class FoldingPopupManager implements EditorMouseListener, EditorMouseMoti
     if (e.getArea() == EditorMouseEventArea.EDITING_AREA) {
       MouseEvent mouseEvent = e.getMouseEvent();
       Point point = mouseEvent.getPoint();
-      FoldRegion fold = ((EditorEx)editor).getFoldingModel().getFoldingPlaceholderAt(point);
+      FoldRegion fold = e.getCollapsedFoldRegion();
       TooltipController controller = TooltipController.getInstance();
       if (fold != null && !fold.shouldNeverExpand()) {
         myAlarm.addRequest(() -> {

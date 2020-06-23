@@ -90,7 +90,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         directory = file;
       }
       else {
-        throw new IOException("Cannot find Android Studio project files at " + projectPath);
+        throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
       }
       new JpsProjectLoader(project, pathVariables, directory.getParent(), loadUnloadedModules).loadFromDirectory(directory);
     }

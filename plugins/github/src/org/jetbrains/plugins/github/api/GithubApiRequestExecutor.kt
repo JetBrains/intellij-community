@@ -65,6 +65,8 @@ sealed class GithubApiRequestExecutor {
 
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
+      if (service<GHRequestExecutorBreaker>().isRequestsShouldFail) error(
+        "Request failure was triggered by user action. This a pretty long description of this failure that should resemble some long error which can go out of bounds.")
       indicator.checkCanceled()
       return createRequestBuilder(request)
         .tuner { connection ->

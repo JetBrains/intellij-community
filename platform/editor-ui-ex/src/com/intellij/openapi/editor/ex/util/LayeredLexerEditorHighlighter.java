@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -23,9 +22,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.MergingCharSequence;
 import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +49,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     getSegments().removeAll();
   }
 
-  public synchronized void unregisterLayer(@NotNull IElementType tokenType) {
+  protected synchronized void unregisterLayer(@NotNull IElementType tokenType) {
     final LayerDescriptor layer = myTokensToLayer.remove(tokenType);
     if (layer != null) {
       getSegments().myLayerBuffers.remove(layer);
@@ -93,7 +92,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       int start = insertOffset;
       for (int i = 0; i < tokenTypes.size(); i++) {
         IElementType type = tokenTypes.get(i);
-        final int len = lengths.get(i);
+        final int len = lengths.getInt(i);
         start += mySeparator.length();
         final int globalIndex = index2Global.get(i);
         MappedRange[] ranges = getSegments().myRanges;
@@ -186,7 +185,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     return super.createIterator(startOffset);
   }
 
-  private class MappingSegments extends SegmentArrayWithData {
+  private final class MappingSegments extends SegmentArrayWithData {
     private MappedRange[] myRanges = new MappedRange[INITIAL_SIZE];
     private final Map<LayerDescriptor, Mapper> myLayerBuffers = new HashMap<>();
 
@@ -334,7 +333,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
-  private class Mapper implements HighlighterClient {
+  private final class Mapper implements HighlighterClient {
     private final DocumentImpl doc;
     private final EditorHighlighter highlighter;
     private final String mySeparator;
@@ -489,7 +488,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     return getSegments().myRanges[segmentIndex] != null;
   }
 
-  private class LayeredHighlighterIteratorImpl implements LayeredHighlighterIterator {
+  private final class LayeredHighlighterIteratorImpl implements LayeredHighlighterIterator {
     private final HighlighterIterator myBaseIterator;
     private HighlighterIterator myLayerIterator;
     private int myLayerStartOffset;

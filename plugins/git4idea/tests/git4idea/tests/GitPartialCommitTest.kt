@@ -214,10 +214,13 @@ class GitPartialCommitTest : GitSingleRepoTest() {
 
       lstm.requestTrackerFor(document, this)
       try {
-        val tracker = lstm.getLineStatusTracker(file)
+        val tracker = lstm.getLineStatusTracker(file) as PartialLocalLineStatusTracker
         lstm.waitUntilBaseContentsLoaded()
 
-        task(document, tracker as PartialLocalLineStatusTracker)
+        // Assume that initial changes are included into commit
+        tracker.setExcludedFromCommit(false)
+
+        task(document, tracker)
 
         FileDocumentManager.getInstance().saveAllDocuments()
       }

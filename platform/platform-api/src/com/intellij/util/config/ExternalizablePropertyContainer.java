@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.config;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -94,7 +93,7 @@ public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPr
     }
 
     List<AbstractProperty> properties = new ArrayList<>(myExternalizers.keySet());
-    Collections.sort(properties, AbstractProperty.NAME_COMPARATOR);
+    properties.sort(AbstractProperty.NAME_COMPARATOR);
     for (AbstractProperty property : properties) {
       Externalizer externalizer = myExternalizers.get(property);
       if (externalizer == null) {

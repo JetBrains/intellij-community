@@ -45,10 +45,12 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   override fun processChildren(`object`: Any,
                                rootElement: Any?,
                                processor: Processor<Any>): Boolean {
-    (`object` as? PsiElement)?.let { psiElement ->
-      if (psiElement.language == language) {
-        buildStructureViewModel(psiElement.containingFile)?.let { model ->
-          return processStructureViewChildren(model.root, `object`, processor)
+    if (UISettings.instance.showMembersInNavigationBar) {
+      (`object` as? PsiElement)?.let { psiElement ->
+        if (psiElement.language == language) {
+          buildStructureViewModel(psiElement.containingFile)?.let { model ->
+            return processStructureViewChildren(model.root, `object`, processor)
+          }
         }
       }
     }
@@ -113,8 +115,8 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   }
 
   private fun childrenFromNodeAndProviders(parent: StructureViewTreeElement): List<TreeElement> {
-    val children = if (parent is PsiTreeElementBase<*>) parent.childrenWithoutCustomRegions else parent.children
-    return children.toList() + applicableNodeProviders.flatMap { it.provideNodes(parent) }
+    val children = if (parent is PsiTreeElementBase<*>) parent.childrenWithoutCustomRegions else parent.children.toList()
+    return children + applicableNodeProviders.flatMap { it.provideNodes(parent) }
   }
 
   override fun normalizeChildren() = false

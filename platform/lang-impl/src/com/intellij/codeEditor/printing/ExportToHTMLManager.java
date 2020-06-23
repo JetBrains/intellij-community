@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeEditor.printing;
 
@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ class ExportToHTMLManager {
   /**
    * Should be invoked in event dispatch thread
    */
-  public void executeExport(@NotNull final DataContext dataContext) throws FileNotFoundException {
+  void executeExport(@NotNull final DataContext dataContext) throws FileNotFoundException {
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     PsiDirectory psiDirectory = null;
     if (psiFile != null) {
@@ -134,7 +135,7 @@ class ExportToHTMLManager {
   @NotNull
   protected static String doPaint(@NotNull String dirName,
                                   @NotNull HTMLTextPainter textPainter,
-                                  @Nullable TreeMap<Integer, PsiReference> refMap) throws IOException {
+                                  @Nullable Int2ObjectRBTreeMap<PsiReference> refMap) throws IOException {
     String htmlFile = dirName + File.separator + getHTMLFileName(textPainter.getPsiFile());
     try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(htmlFile), StandardCharsets.UTF_8)) {
       textPainter.paint(refMap, writer, true);
@@ -156,11 +157,11 @@ class ExportToHTMLManager {
       if (!psiFile.isValid()) {
         return;
       }
-      TreeMap<Integer, PsiReference> refMap = null;
+      Int2ObjectRBTreeMap<PsiReference> refMap = null;
       for (PrintOption printOption : PrintOption.EP_NAME.getExtensionList()) {
         final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
         if (map != null) {
-          refMap = new TreeMap<>(map);
+          refMap = new Int2ObjectRBTreeMap<>(map);
         }
       }
 
@@ -185,7 +186,7 @@ class ExportToHTMLManager {
   private static String constructOutputDirectory(@NotNull final PsiDirectory directory, final String outputDirectoryName) {
     String qualifiedName = PsiDirectoryFactory.getInstance(directory.getProject()).getQualifiedName(directory, false);
     String dirName = outputDirectoryName;
-    if(qualifiedName.length() > 0) {
+    if(!qualifiedName.isEmpty()) {
       dirName += File.separator + qualifiedName.replace('.', File.separatorChar);
     }
     File dir = new File(dirName);
@@ -283,7 +284,7 @@ class ExportToHTMLManager {
           return;
         }
         progressIndicator.setText(EditorBundle.message("export.to.html.generating.file.progress", getHTMLFileName(psiFile)));
-        progressIndicator.setFraction(((double)i)/filesList.size());
+        progressIndicator.setFraction((double)i / filesList.size());
         if (!exportPsiFile(psiFile, myOutputDirectoryName, myProject, filesMap)) {
           return;
         }

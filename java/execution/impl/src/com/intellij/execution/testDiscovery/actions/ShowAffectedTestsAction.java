@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
-import com.intellij.codeInsight.actions.FormatChangedTextUtil;
+import com.intellij.codeInsight.actions.VcsFacadeImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport;
@@ -212,7 +212,7 @@ public class ShowAffectedTestsAction extends AnAction {
     UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
     return PsiDocumentManager.getInstance(project).commitAndRunReadAction(
-      () -> FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
+      () -> VcsFacadeImpl.getVcsInstance().getChangedElements(project, changes, file -> {
         if (DumbService.isDumb(project) || project.isDisposed() || !file.isValid()) return null;
         ProjectFileIndex index = ProjectFileIndex.getInstance(project);
         if (!index.isInSource(file)) return null;

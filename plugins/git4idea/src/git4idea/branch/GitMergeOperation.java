@@ -279,7 +279,7 @@ class GitMergeOperation extends GitBranchOperation {
 
     if (!result.totalSuccess()) {
       VcsNotifier.getInstance(myProject)
-        .notifyError(GitBundle.message("merge.operation.error.during.rollback"), result.getErrorOutputWithReposIndication());
+        .notifyError(GitBundle.message("merge.operation.error.during.rollback"), result.getErrorOutputWithReposIndication(), true);
     }
     LOG.info("rollback finished.");
   }

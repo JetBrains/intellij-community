@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -141,7 +141,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
 
     @Override
     protected void setComponentValue(@NotNull Boolean value) {
-      getComponent().setSelected(value.booleanValue());
+      getComponent().setSelected(value);
     }
   }
 

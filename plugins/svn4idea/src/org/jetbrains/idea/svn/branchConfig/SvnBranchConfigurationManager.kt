@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn.branchConfig
 
 import com.intellij.openapi.application.ApplicationManager.getApplication
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
@@ -9,9 +10,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
-import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,18 +34,6 @@ internal class SvnBranchConfigurationManager(private val project: Project) : Per
     get() = configurationBean.myVersion
 
   private var configurationBean = ConfigurationBean()
-
-  init {
-    // TODO: Seems that ProgressManagerQueue is not suitable here at least for some branches loading tasks. For instance,
-    // TODO: for DefaultConfigLoader it would be better to run modal cancellable task - so branches structure could be detected and
-    // TODO: shown in dialog. Currently when "Configure Branches" is invoked for the first time - no branches are shown.
-    // TODO: If "Cancel" is pressed and "Configure Branches" invoked once again - already detected (in background) branches are shown.
-    ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.BRANCHES) {
-      getApplication().runReadAction {
-        if (!project.isDisposed) branchesLoader.start()
-      }
-    }
-  }
 
   class ConfigurationBean {
     @JvmField
@@ -139,8 +127,12 @@ internal class SvnBranchConfigurationManager(private val project: Project) : Per
   }
 
   private fun preloadBranches(branchPoints: Collection<Pair<VirtualFile, SvnBranchConfigurationNew>>) {
-    ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.BRANCHES) {
+    ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
       getApplication().executeOnPooledThread {
+        runReadAction {
+          if (!project.isDisposed) branchesLoader.start()
+        }
+
         for ((root, configuration) in branchPoints) {
           svnBranchConfigManager.reloadBranches(root, null, configuration)
         }

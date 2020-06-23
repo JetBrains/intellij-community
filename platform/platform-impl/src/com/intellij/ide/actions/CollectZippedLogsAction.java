@@ -43,10 +43,10 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     final boolean doNotShowDialog = PropertiesComponent.getInstance().getBoolean(CONFIRMATION_DIALOG);
 
     if (!doNotShowDialog) {
-      Messages.showIdeaMessageDialog(
+      int result = Messages.showOkCancelDialog(
         project, IdeBundle.message("message.included.logs.and.settings.may.contain.sensitive.data"),
         IdeBundle.message("dialog.title.sensitive.data"),
-        new String[]{"Show in " + RevealFileAction.getFileManagerName()}, 1, Messages.getWarningIcon(),
+        "Show in " + RevealFileAction.getFileManagerName(), "Cancel", Messages.getWarningIcon(),
         new DialogWrapper.DoNotAskOption.Adapter() {
           @Override
           public void rememberChoice(final boolean selected, final int exitCode) {
@@ -54,6 +54,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
           }
         }
       );
+      if (result == Messages.CANCEL) return;
     }
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {

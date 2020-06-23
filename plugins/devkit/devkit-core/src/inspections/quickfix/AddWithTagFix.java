@@ -32,7 +32,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.With;
-import org.jetbrains.idea.devkit.dom.impl.PluginFieldNameConverter;
+import org.jetbrains.idea.devkit.dom.impl.ExtensionPointPropertyNameConverter;
 
 import java.util.List;
 
@@ -57,12 +57,12 @@ public class AddWithTagFix implements LocalQuickFix {
     PsiElement navTarget = null;
     for (PsiField field : fields) {
       With with = extensionPoint.addWith();
-      String tagName = PluginFieldNameConverter.getAnnotationValue(field, Tag.class);
+      String tagName = ExtensionPointPropertyNameConverter.getAnnotationValue(field, Tag.class);
       if (tagName != null) {
         with.getTag().setStringValue(tagName);
       }
       else {
-        String attributeName = PluginFieldNameConverter.getAnnotationValue(field, Attribute.class);
+        String attributeName = ExtensionPointPropertyNameConverter.getAnnotationValue(field, Attribute.class);
         if (attributeName == null) {
           attributeName = field.getName();
         }

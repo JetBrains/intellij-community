@@ -98,4 +98,11 @@ class CompilationTasksImpl extends CompilationTasks {
   void compileAllModulesAndTests() {
     compileModules(null, null)
   }
+
+  @Override
+  void resolveProjectDependenciesAndCompileAll() {
+    resolveProjectDependencies()
+    context.compilationData.statisticsReported = false
+    compileAllModulesAndTests()
+  }
 }

@@ -33,7 +33,7 @@ public abstract class IconPathPatcher {
    * @deprecated use {@link #getContextClassLoader(String, ClassLoader)}
    */
   @Deprecated
-  public Class getContextClass(@NotNull String path) {
+  public Class<?> getContextClass(@NotNull String path) {
     return null;
   }
 

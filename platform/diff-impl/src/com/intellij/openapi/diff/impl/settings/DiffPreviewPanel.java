@@ -18,7 +18,6 @@ import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -162,7 +161,7 @@ class DiffPreviewPanel implements PreviewPanel {
 
     @Override
     public void mouseMoved(@NotNull EditorMouseEvent e) {
-      int line = getLineNumber(mySide, e);
+      int line = e.getLogicalPosition().line;
       Cursor cursor = getChange(mySide, line) != null || getFoldRegion(mySide, line) != null
                       ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
                       : null;
@@ -179,7 +178,7 @@ class DiffPreviewPanel implements PreviewPanel {
 
     @Override
     public void mouseClicked(@NotNull EditorMouseEvent e) {
-      selectColorForLine(mySide, getLineNumber(mySide, e));
+      selectColorForLine(mySide, e.getLogicalPosition().line);
     }
 
     @Override
@@ -202,13 +201,6 @@ class DiffPreviewPanel implements PreviewPanel {
     if (region != null) {
       myDispatcher.getMulticaster().selectionInPreviewChanged(DiffLineSeparatorRenderer.BACKGROUND.getExternalName());
     }
-  }
-
-  private int getLineNumber(@NotNull ThreeSide side, EditorMouseEvent e) {
-    EditorEx editor = myViewer.getEditor(side);
-    LogicalPosition logicalPosition = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
-    int offset = editor.logicalPositionToOffset(logicalPosition);
-    return editor.getDocument().getLineNumber(offset);
   }
 
   @Nullable

@@ -34,7 +34,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
+import org.jsoup.nodes.Element;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -996,15 +996,18 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
 
       final String elementId = (isBuiltins(moduleName) ? "" : moduleName + ".") + namedElement.getName();
       document.select("a.headerlink").remove();
-      final Elements parents = document.getElementsByAttributeValue("id", elementId).parents();
-      if (parents.isEmpty()) {
-        final Elements moduleElement = document.getElementsByAttributeValue("id", "module-" + moduleName);
-        if (moduleElement != null) {
-          return moduleElement.toString();
+      final Element definitionElement = document.getElementById(elementId);
+      if (definitionElement != null) {
+        final Element parent = definitionElement.parent();
+        if (parent != null) {
+          return parent.toString();
         }
-        return document.toString();
       }
-      return parents.get(0).toString();
+      final Element moduleElement = document.getElementById("module-" + moduleName);
+      if (moduleElement != null) {
+        return moduleElement.toString();
+      }
+      return document.toString();
     };
   }
 

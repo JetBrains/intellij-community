@@ -2,7 +2,9 @@
 package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.codeInsight.completion.CompletionLocation
+import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.ml.ContextFeatures
+import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.module.ModuleUtilCore
@@ -24,10 +26,34 @@ object PyCompletionFeatures {
     return ("dict key" == presentation.typeText)
   }
 
-  fun isTheSameFile(element: LookupElement, location: CompletionLocation): Boolean {
-    val psiFile = location.completionParameters.originalFile
-    val elementPsiFile = element.psiElement?.containingFile ?: return false
-    return psiFile == elementPsiFile
+  fun getElementPsiLocationFeatures(element: LookupElement, location: CompletionLocation): Map<String, MLFeatureValue> {
+    val caretPsiPosition = location.completionParameters.position
+    val elementPsiPosition = element.psiElement ?: return emptyMap()
+
+    val caretFile = caretPsiPosition.containingFile?.originalFile ?: return emptyMap()
+    val elementFile = elementPsiPosition.containingFile?.originalFile ?: return emptyMap()
+    if (caretFile != elementFile) return emptyMap()
+
+    val result = mutableMapOf(
+      "is_the_same_file" to MLFeatureValue.binary(true),
+      "text_offset_distance" to MLFeatureValue.numerical(caretPsiPosition.textOffset - elementPsiPosition.textOffset)
+    )
+
+    if (isTheSameScope(caretPsiPosition, elementPsiPosition, PyClass::class.java)) {
+      result["is_the_same_class"] = MLFeatureValue.binary(true)
+    }
+
+    if (isTheSameScope(caretPsiPosition, elementPsiPosition, PyFunction::class.java)) {
+      result["is_the_same_method"] = MLFeatureValue.binary(true)
+    }
+
+    return result
+  }
+
+  private fun <T: PsiElement> isTheSameScope(caretPsiPosition: PsiElement, elementPsiPosition: PsiElement, scopeClass: Class<T>): Boolean {
+    val caretEnclosingScope = PsiTreeUtil.getParentOfType(caretPsiPosition, scopeClass) ?: return false
+    val elementEnclosingScope = PsiTreeUtil.getParentOfType(elementPsiPosition, scopeClass) ?: return false
+    return isOriginalElementsTheSame(caretEnclosingScope, elementEnclosingScope)
   }
 
   fun isTakesParameterSelf(element: LookupElement): Boolean {
@@ -186,13 +212,11 @@ object PyCompletionFeatures {
 
   fun getPyLookupElementInfo(element: LookupElement): PyCompletionMlElementInfo? = element.getUserData(PyCompletionMlElementInfo.key)
 
-  fun getNumberOfQualifiersInExpresionFeature(element: PsiElement): Int {
-    if (element !is PyQualifiedExpression) return 1
-    return element.asQualifiedName()?.components?.size ?: 1
-  }
-
   private fun isAfterColon(locationPsi: PsiElement): Boolean {
     val prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(locationPsi)
     return (prevVisibleLeaf != null && prevVisibleLeaf.elementType == PyTokenTypes.COLON)
   }
+
+  private fun isOriginalElementsTheSame(a: PsiElement, b: PsiElement) =
+    CompletionUtil.getOriginalElement(a) == CompletionUtil.getOriginalElement(b)
 }

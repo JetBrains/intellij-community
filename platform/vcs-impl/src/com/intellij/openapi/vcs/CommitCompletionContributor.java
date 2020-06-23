@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -57,7 +58,10 @@ public class CommitCompletionContributor extends CompletionContributor {
     if (lists.isEmpty()) return;
 
     String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
-    if (count == 0 && prefix.length() < 5) return;
+    if (count == 0 && prefix.length() < 5) {
+      result.restartCompletionOnPrefixChange(StandardPatterns.string().withLength(5));
+      return;
+    }
     CompletionResultSet resultSet = result.caseInsensitive().withPrefixMatcher(
       count == 0 ? new PlainPrefixMatcher(prefix, true) : new CamelHumpMatcher(prefix));
     CompletionResultSet prefixed = result.withPrefixMatcher(new PlainPrefixMatcher(prefix, count == 0));

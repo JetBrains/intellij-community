@@ -47,7 +47,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor;
+import com.intellij.refactoring.extractMethod.newImpl.*;
 import com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
@@ -59,7 +59,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -153,7 +152,27 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return expressions.toArray(PsiElement.EMPTY_ARRAY);
   }
 
+  public static boolean canUseNewImpl(@NotNull Project project, PsiFile file, PsiElement @NotNull [] elements){
+    final ExtractMethodProcessor processor = getProcessor(project, elements, file, false);
+    if (processor == null) return true;
+    try {
+      processor.prepare(null);
+      processor.prepareVariablesAndName();
+      processor.myMethodName = "extracted";
+    }
+    catch (PrepareFailedException e) {
+      return true;
+    }
+
+    return processor.estimateDuplicatesCount() == 0 && !processor.myInputVariables.isFoldable();
+  }
+
   public static void invokeOnElements(@NotNull Project project, final Editor editor, PsiFile file, PsiElement @NotNull [] elements) {
+    if (Registry.is("java.refactoring.extractMethod.newImplementation") && canUseNewImpl(project, file, elements)) {
+      new MethodExtractor().doExtract(editor, getRefactoringName(), HelpID.EXTRACT_METHOD);
+      return;
+    }
+
     getProcessor(elements, project, file, editor, true, new Pass<ExtractMethodProcessor>(){
       @Override
       public void pass(ExtractMethodProcessor processor) {
@@ -190,14 +209,6 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   }
 
   private static void doRefactoring(@NotNull Project project, @NotNull ExtractMethodProcessor processor) {
-    if (Registry.is("java.refactoring.extractMethod.newImplementation")) {
-      final MethodExtractor extractor = MethodExtractor.getInstance(Arrays.asList(processor.myElements));
-      extractor
-        .methodName(processor.myMethodName)
-        .tryToRemapParameters(processor.myVariableDatum)
-        .extract();
-      return;
-    }
     try {
       final RefactoringEventData beforeData = new RefactoringEventData();
       beforeData.addElements(processor.myElements);

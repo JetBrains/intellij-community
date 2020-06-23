@@ -38,8 +38,8 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
   protected abstract InputOutputConstraintFormula createSelfConstraint(PsiType type, PsiExpression expression);
   protected abstract void collectReturnTypeVariables(InferenceSession session,
                                                      PsiExpression psiExpression,
-                                                     PsiType returnType, 
-                                                     Set<InferenceVariable> result);
+                                                     PsiType returnType,
+                                                     Set<? super InferenceVariable> result);
 
   public Set<InferenceVariable> getInputVariables(InferenceSession session) {
     final PsiExpression psiExpression = getExpression();

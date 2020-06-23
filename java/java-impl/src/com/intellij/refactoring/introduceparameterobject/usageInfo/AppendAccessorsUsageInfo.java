@@ -69,7 +69,7 @@ public class AppendAccessorsUsageInfo extends FixableUsageInfo{
       if (myField != null) {
         fieldName = myField.getName();
       }
-      return (myGetter ? "Getter" : "Setter") + " for field \'" + fieldName + "\' is required";
+      return (myGetter ? "Getter" : "Setter") + " for field '" + fieldName + "' is required";
     }
     return null;
   }

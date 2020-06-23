@@ -108,6 +108,9 @@ public abstract class JavaStatisticsManager {
       return "field#" + member.getName();
     }
 
+    if (member instanceof PsiRecordComponent) {
+      return "record#" + member.getName();
+    }
     return CLASS_PREFIX + ((PsiClass)member).getQualifiedName();
   }
 

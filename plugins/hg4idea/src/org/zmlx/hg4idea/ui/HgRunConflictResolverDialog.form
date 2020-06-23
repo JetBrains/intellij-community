@@ -22,7 +22,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title="Files with conflicts"/>
+        <border type="none" title-resource-bundle="messages/HgBundle" title-key="action.hg4idea.run.conflict.resolver.conflicts"/>
         <children>
           <component id="38043" class="com.intellij.ui.components.JBList" binding="conflictsList">
             <constraints>

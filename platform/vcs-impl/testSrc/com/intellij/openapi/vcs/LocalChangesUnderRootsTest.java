@@ -21,6 +21,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import java.util.*;
 
 public class LocalChangesUnderRootsTest extends HeavyPlatformTestCase {
+  private static final String MOCK = "Mock";
 
   private LocalChangesUnderRoots myLocalChangesUnderRoots;
   private MockChangeListManager myChangeListManager;
@@ -37,11 +38,11 @@ public class LocalChangesUnderRootsTest extends HeavyPlatformTestCase {
 
   public void testChangesInTwoGitRoots() {
     AllVcsesI myVcses = AllVcses.getInstance(myProject);
-    myVcses.registerManually(new MockAbstractVcs(myProject, "Mock"));
+    myVcses.registerManually(new MockAbstractVcs(myProject, MOCK));
 
     List<VirtualFile> roots = createRootStructure(
-      Pair.create(myBaseDir.getPath(), "Mock"),
-      Pair.create("community", "Mock")
+      Pair.create(myBaseDir.getPath(), MOCK),
+      Pair.create("community", MOCK)
     );
 
     Change changeBeforeCommunity = createChangeForPath("a.txt");

@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.engine
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.formatting.FormatterEx
 import com.intellij.formatting.engine.testModel.TestFormattingModel
 import com.intellij.openapi.editor.EditorFactory
@@ -39,7 +40,7 @@ class GeneralAdjustLineIndentTest : LightPlatformTestCase() {
     val document = EditorFactory.getInstance().createDocument(data.textToFormat)
     val model = TestFormattingModel(data.rootBlock.subBlocks[0], document)
 
-    val settings = CodeStyleSettings()
+    val settings = CodeStyle.createTestSettings()
     val textRange = TextRange(0, document.textLength)
 
     FormatterEx.getInstanceEx().adjustLineIndent(model, settings, settings.indentOptions, document.textLength - 1, textRange)

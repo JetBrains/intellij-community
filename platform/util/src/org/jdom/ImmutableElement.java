@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jdom;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class ImmutableElement extends Element {
+final class ImmutableElement extends Element {
   private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(ArrayUtilRt.EMPTY_STRING_ARRAY, null,
                                                                                        Namespace.NO_NAMESPACE);
   private final Content[] myContent;
@@ -110,7 +109,7 @@ class ImmutableElement extends Element {
   }
 
   @Override
-  public <T extends Content> List<T> getContent(final Filter<T> filter) {
+  public <T extends Content> List<T> getContent(@NotNull Filter<T> filter) {
     return (List<T>)ContainerUtil.filter(myContent, filter::matches);
   }
 
@@ -216,8 +215,7 @@ class ImmutableElement extends Element {
       return ((ImmutableSameTypeAttributeList)myAttributes).get(name, ns);
     }
     String uri = namespace.getURI();
-    for (int i = 0; i < myAttributes.size(); i++) {
-      Attribute a = myAttributes.get(i);
+    for (Attribute a : myAttributes) {
       String oldURI = a.getNamespaceURI();
       String oldName = a.getName();
       if (oldURI.equals(uri) && oldName.equals(name)) {
@@ -306,7 +304,7 @@ class ImmutableElement extends Element {
 
   public static boolean attributesEqual(Attribute a1, Attribute a2) {
     return a1.getName().equals(a2.getName()) &&
-           Comparing.equal(a1.getValue(), a2.getValue()) &&
+           Objects.equals(a1.getValue(), a2.getValue()) &&
            a1.getAttributeType() == a2.getAttributeType() &&
            a1.getNamespace().equals(a2.getNamespace());
   }

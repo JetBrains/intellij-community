@@ -152,10 +152,7 @@ public class InferenceSessionContainer {
     //find the nearest parent which appears in the map and start inference with a provided target type for a nested lambda
     while (true) {
       if (gParent instanceof PsiReturnStatement) { //process code block lambda
-        final PsiElement returnContainer = gParent.getParent();
-        if (returnContainer instanceof PsiCodeBlock) {
-          gParent = returnContainer.getParent();
-        }
+        gParent = PsiTreeUtil.getParentOfType(gParent, PsiLambdaExpression.class);
       }
       if (gParent instanceof PsiConditionalExpression) {
         gParent = PsiUtil.skipParenthesizedExprUp(gParent.getParent());

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.util.messages.Topic;
@@ -7,7 +7,8 @@ import com.intellij.util.messages.Topic;
  * Listener for receiving notifications when the IDE window is activated or deactivated.
  */
 public interface FrameStateListener {
-  Topic<FrameStateListener> TOPIC = new Topic<>("FrameStateListener", FrameStateListener.class);
+  @Topic.AppLevel
+  Topic<FrameStateListener> TOPIC = new Topic<>("FrameStateListener", FrameStateListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /**
    * Called when the IDE window is deactivated.

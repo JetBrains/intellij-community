@@ -21,7 +21,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.jetbrains.python.testing.PythonUnitTestUtil;
+import com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -47,10 +47,10 @@ public class PythonNoseTestUrlProvider implements SMTestLocator, DumbAware {
 
     // parse path as [ns.]*fileName[.className][.methodName]
     if (listSize == 2) {
-    final List<Location> classes = PythonUnitTestUtil.findLocations(project, list.get(0), list.get(1), null);
+    final List<Location> classes = PythonUnitTestTestIdUrlProvider.findLocations(project, list.get(0), list.get(1), null);
     if (classes.size() > 0)
       return classes;
-    final List<Location> functions = PythonUnitTestUtil.findLocations(project, list.get(0), null, list.get(1));
+    final List<Location> functions = PythonUnitTestTestIdUrlProvider.findLocations(project, list.get(0), null, list.get(1));
     if (functions.size() > 0)
       return functions;
     }
@@ -60,18 +60,20 @@ public class PythonNoseTestUrlProvider implements SMTestLocator, DumbAware {
       final String methodName = list.get(listSize - 1);
 
       String fileName = list.get(listSize - 3);
-      List<Location> locations = PythonUnitTestUtil.findLocations(project, fileName, className, methodName);
+      List<Location> locations = PythonUnitTestTestIdUrlProvider.findLocations(project, fileName, className, methodName);
       if (locations.size() > 0) {
         return locations;
       }
-      locations = PythonUnitTestUtil.findLocations(project, list.get(listSize - 2), list.get(listSize - 1), null);
+      locations = PythonUnitTestTestIdUrlProvider.findLocations(project, list.get(listSize - 2), list.get(listSize - 1), null);
       if (locations.size() > 0) {
         return locations;
       }
-      final List<Location> functions = PythonUnitTestUtil.findLocations(project, list.get(listSize - 2), null, list.get(listSize - 1));
+      final List<Location> functions = PythonUnitTestTestIdUrlProvider
+        .findLocations(project, list.get(listSize - 2), null, list.get(listSize - 1));
       if (functions.size() > 0)
         return functions;
     }
-    return PythonUnitTestUtil.findLocations(project, project.getBasePath() + "/" + StringUtil.join(list, "/") + ".py", null, null);
+    return PythonUnitTestTestIdUrlProvider
+      .findLocations(project, project.getBasePath() + "/" + StringUtil.join(list, "/") + ".py", null, null);
   }
 }

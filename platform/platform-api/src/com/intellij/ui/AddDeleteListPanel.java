@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
@@ -6,6 +6,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
   protected DefaultListModel<T> myListModel = new DefaultListModel<>();
   protected JBList<T> myList = new JBList<>(myListModel);
 
-  public AddDeleteListPanel(final String title, final List<T> initialList) {
+  public AddDeleteListPanel(@Nls final String title, final List<T> initialList) {
     myTitle = title;
     for (T o : initialList) {
       if (o != null) {

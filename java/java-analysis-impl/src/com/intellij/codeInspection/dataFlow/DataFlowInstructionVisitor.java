@@ -46,7 +46,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
-  private final Map<PsiReferenceExpression, Boolean> mySameArguments = new HashMap<>();
+  private final Map<PsiReferenceExpression, ArgResultEquality> mySameArguments = new HashMap<>();
   private final Map<PsiExpression, ThreeState> mySwitchLabelsReachability = new HashMap<>();
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
@@ -138,8 +138,8 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return StreamEx.ofKeys(mySameValueAssigned, Boolean::booleanValue);
   }
 
-  StreamEx<PsiReferenceExpression> pointlessSameArguments() {
-    return StreamEx.ofKeys(mySameArguments, Boolean::booleanValue);
+  EntryStream<PsiReferenceExpression, ArgResultEquality> pointlessSameArguments() {
+    return EntryStream.of(mySameArguments).filterValues(ArgResultEquality::hasEquality);
   }
 
   @Override
@@ -231,12 +231,17 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  protected void beforeMethodCall(@NotNull PsiExpression expression,
-                                  @NotNull DfaCallArguments arguments,
-                                  @NotNull DfaMemoryState memState) {
+  protected void onMethodCall(@NotNull DfaValue result,
+                              @NotNull PsiExpression expression,
+                              @NotNull DfaCallArguments arguments,
+                              @NotNull DfaMemoryState memState) {
     PsiReferenceExpression reference = USELESS_SAME_ARGUMENTS.getReferenceIfMatched(expression);
     if (reference != null) {
-      mySameArguments.merge(reference, memState.areEqual(arguments.myArguments[0], arguments.myArguments[1]), Boolean::logicalAnd);
+      ArgResultEquality equality = new ArgResultEquality(
+        memState.areEqual(arguments.myArguments[0], arguments.myArguments[1]),
+        memState.areEqual(result, arguments.myArguments[0]),
+        memState.areEqual(result, arguments.myArguments[1]));
+      mySameArguments.merge(reference, equality, ArgResultEquality::merge);
     }
   }
 
@@ -413,6 +418,27 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     public String toString() {
       String text = myExpression.getText();
       return myRange == null ? text : text.substring(myRange.getStartOffset(), myRange.getEndOffset());
+    }
+  }
+  
+  static class ArgResultEquality {
+    boolean argsEqual;
+    boolean firstArgEqualToResult;
+    boolean secondArgEqualToResult;
+
+    ArgResultEquality(boolean argsEqual, boolean firstArgEqualToResult, boolean secondArgEqualToResult) {
+      this.argsEqual = argsEqual;
+      this.firstArgEqualToResult = firstArgEqualToResult;
+      this.secondArgEqualToResult = secondArgEqualToResult;
+    }
+
+    ArgResultEquality merge(ArgResultEquality other) {
+      return new ArgResultEquality(argsEqual && other.argsEqual, firstArgEqualToResult && other.firstArgEqualToResult,
+                                   secondArgEqualToResult && other.secondArgEqualToResult);
+    }
+    
+    boolean hasEquality() {
+      return argsEqual || firstArgEqualToResult || secondArgEqualToResult;
     }
   }
 }

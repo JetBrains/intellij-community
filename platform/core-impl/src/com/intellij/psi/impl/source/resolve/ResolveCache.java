@@ -32,13 +32,16 @@ public class ResolveCache implements Disposable {
   }
 
   public ResolveCache(@NotNull Project project) {
-    this(project.getMessageBus());
+    clearCacheOnPsiChange(project.getMessageBus());
     LowMemoryWatcher.register(() -> onLowMemory(), this);
   }
 
-  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated
   public ResolveCache(@NotNull MessageBus bus) {
+    clearCacheOnPsiChange(bus);
+  }
+
+  private void clearCacheOnPsiChange(@NotNull MessageBus bus) {
     bus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {
@@ -131,7 +134,7 @@ public class ResolveCache implements Disposable {
     clearArray(myNonPhysicalMaps);
   }
 
-  private static void clearArray(AtomicReferenceArray<?> array) {
+  private static void clearArray(@NotNull AtomicReferenceArray<?> array) {
     for (int i = 0; i < array.length(); i++) {
       array.set(i, null);
     }
@@ -183,11 +186,10 @@ public class ResolveCache implements Disposable {
     return results == null ? ResolveResult.EMPTY_ARRAY : results;
   }
 
-  private static <TRef, TResult>
-  @Nullable TResult resolve(@NotNull TRef ref,
-                            @NotNull Map<TRef, TResult> cache,
-                            boolean preventRecursion,
-                            @NotNull Computable<? extends TResult> resolver) {
+  private static <TRef extends PsiReference, TResult> TResult resolve(@NotNull TRef ref,
+                                                                      @NotNull Map<TRef, TResult> cache,
+                                                                      boolean preventRecursion,
+                                                                      @NotNull Computable<? extends TResult> resolver) {
     TResult cachedResult = cache.get(ref);
     if (cachedResult != null) {
       if (IdempotenceChecker.areRandomChecksEnabled()) {
@@ -226,13 +228,13 @@ public class ResolveCache implements Disposable {
     };
   }
 
-  private static void ensureValidResults(ResolveResult[] result) {
+  private static void ensureValidResults(ResolveResult @NotNull [] result) {
     for (ResolveResult resolveResult : result) {
       ensureValidPsi(resolveResult);
     }
   }
 
-  private static void ensureValidPsi(ResolveResult resolveResult) {
+  private static void ensureValidPsi(@NotNull ResolveResult resolveResult) {
     PsiElement element = resolveResult.getElement();
     if (element != null) {
       PsiUtilCore.ensureValid(element);
@@ -247,24 +249,24 @@ public class ResolveCache implements Disposable {
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   @Nullable
-  public <TRef extends PsiReference, TResult>
-         TResult resolveWithCaching(@NotNull TRef ref,
-                                    @NotNull AbstractResolver<TRef, TResult> resolver,
-                                    boolean needToPreventRecursion,
-                                    boolean incompleteCode) {
+  public <TRef extends PsiReference, TResult> TResult resolveWithCaching(@NotNull TRef ref,
+                                                                         @NotNull AbstractResolver<TRef, TResult> resolver,
+                                                                         boolean needToPreventRecursion,
+                                                                         boolean incompleteCode) {
     return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false, ref.getElement().isPhysical());
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   private <TRef extends PsiReference, TResult> Map<TRef, TResult> getMap(boolean physical, int index) {
     AtomicReferenceArray<Map<?, ?>> array = physical ? myPhysicalMaps : myNonPhysicalMaps;
-    Map<?, ?> map = array.get(index);
+    //noinspection unchecked
+    Map<TRef, TResult> map = (Map<TRef, TResult>)array.get(index);
     while (map == null) {
-      Map<?, ?> newMap = createWeakMap();
-      map = array.compareAndSet(index, null, newMap) ? newMap : array.get(index);
+      Map<TRef, TResult> newMap = createWeakMap();
+      //noinspection unchecked
+      map = array.compareAndSet(index, null, newMap) ? newMap : (Map<TRef, TResult>)array.get(index);
     }
-    return (Map<TRef, TResult>)map;
+    return map;
   }
 
   private static int getIndex(boolean incompleteCode, boolean isPoly) {
@@ -273,10 +275,10 @@ public class ResolveCache implements Disposable {
 
   private static final Object NULL_RESULT = ObjectUtils.sentinel("ResolveCache.NULL_RESULT");
 
-  private static <TRef, TResult> void cache(@NotNull TRef ref,
-                                            @NotNull Map<? super TRef, TResult> map,
-                                            TResult result,
-                                            @NotNull Computable<TResult> doResolve) {
+  private static <TRef extends PsiReference, TResult> void cache(@NotNull TRef ref,
+                                                                 @NotNull Map<? super TRef, TResult> map,
+                                                                 TResult result,
+                                                                 @NotNull Computable<TResult> doResolve) {
     // optimization: less contention
     TResult cached = map.get(ref);
     if (cached != null) {
@@ -296,9 +298,9 @@ public class ResolveCache implements Disposable {
     map.put(ref, cached);
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   private static <K, V> StrongValueReference<K, V> createStrongReference(@NotNull V value) {
+    //noinspection unchecked
     return value == NULL_RESULT ? (StrongValueReference<K, V>)NULL_VALUE_REFERENCE
                                 : value == ResolveResult.EMPTY_ARRAY ? (StrongValueReference<K, V>)EMPTY_RESOLVE_RESULT
                                                                      : new StrongValueReference<>(value);

@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
@@ -16,7 +15,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.*;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
@@ -26,9 +25,11 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.LongAdder;
 
 public class InspectStubIndexAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(InspectStubIndexAction.class);
@@ -102,7 +103,7 @@ public class InspectStubIndexAction extends AnAction {
 
       try {
         SerializedStubTree tree = data.values().iterator().next();
-        for (Map.Entry<StubIndexKey, Map<Object, StubIdList>> entry : tree.readStubIndicesValueMap().entrySet()) {
+        for (Map.Entry<StubIndexKey<?, ?>, Map<Object, StubIdList>> entry : tree.getStubIndicesValueMap().entrySet()) {
           StubIndexKey stubIndexKey = entry.getKey();
           Set<Object> keys = entry.getValue().keySet();
 

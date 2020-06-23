@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

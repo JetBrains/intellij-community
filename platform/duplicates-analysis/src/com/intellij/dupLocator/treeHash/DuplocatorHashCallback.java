@@ -255,7 +255,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
         }
         final int fileCount = files.size();
         final PsiFile psiFile = occurencies[0].getFile();
-        DuplicatesProfile profile = DuplicatesProfileCache.getProfile(this, pattern);
+        DuplicatesProfile profile = DuplicatesProfile.findProfileForDuplicate(this, pattern);
         String comment = profile != null ? profile.getComment(this, pattern) : "";
         final GroupNodeDescription description = new GroupNodeDescription(fileCount, psiFile != null ? psiFile.getName() : "unknown", comment);
         myPattern2Description.put(pattern, description);

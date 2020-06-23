@@ -39,7 +39,6 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
-import org.jetbrains.idea.maven.importing.worktree.LegacyBridgeMavenRootModelAdapter;
 import org.jetbrains.idea.maven.importing.worktree.LegacyBrigdeIdeModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.worktree.MavenExternalSource;
 import org.jetbrains.idea.maven.importing.worktree.WorkspaceModuleImporter;
@@ -158,9 +157,11 @@ public class MavenProjectImporter {
 
     List<Module> modulesToMavenize = new ArrayList<>();
     List<MavenModuleImporter> importers = new ArrayList<>();
+    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     for (MavenProject mavenProject : myAllProjects) {
-      Module module = ModuleManager.getInstance(myProject).findModuleByName(mavenProject.getDisplayName());
+      Module module = moduleManager.findModuleByName(mavenProject.getDisplayName());
       if (module == null) continue;
+      myCreatedModules.add(module);
       MavenModuleImporter importer = new MavenModuleImporter(module,
                                                              myProjectsTree,
                                                              mavenProject,
@@ -171,11 +172,12 @@ public class MavenProjectImporter {
       importers.add(importer);
 
       //need for facets importing
-      importer.setRootModelAdapter(new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(mavenProject, module, providerForFacets)));
+      //importer.setRootModelAdapter(new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(mavenProject, module, providerForFacets)));
     }
 
     configFacets(postTasks, importers);
     setMavenizedModules(modulesToMavenize, true);
+    saveFacets(providerForFacets, moduleManager);
     saveArtifacts(providerForFacets);
 
     WriteAction.runAndWait(() -> {
@@ -188,6 +190,13 @@ public class MavenProjectImporter {
     // legacy importerss
 
     return postTasks;
+  }
+
+  private void saveFacets(LegacyBrigdeIdeModifiableModelsProvider providerForFacets, ModuleManager moduleManager) {
+    WriteAction.runAndWait(() -> {
+      myAllProjects.stream().map(mavenProject -> moduleManager.findModuleByName(mavenProject.getDisplayName()))
+        .filter(Objects::nonNull).forEach(module -> providerForFacets.getModifiableFacetModel(module).commit());
+    });
   }
 
   private void saveArtifacts(LegacyBrigdeIdeModifiableModelsProvider provider) {
@@ -346,7 +355,7 @@ public class MavenProjectImporter {
     for (Pair<MavenProject, Module> each : incompatibleMavenized) {
       myFileToModuleMapping.remove(each.first.getFile());
       myModuleModel.disposeModule(each.second);
-      changed |= true;
+      changed = true;
     }
 
     if (incompatibleNotMavenized.isEmpty()) return changed;
@@ -371,11 +380,10 @@ public class MavenProjectImporter {
         myFileToModuleMapping.remove(each.first.getFile());
         myModuleModel.disposeModule(each.second);
       }
-      changed |= true;
+      changed = true;
     }
     else {
       myProjectsTree.setIgnoredState(MavenUtil.collectFirsts(incompatibleNotMavenized), true, true);
-      changed |= false;
     }
 
     return changed;

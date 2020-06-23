@@ -152,7 +152,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
               public void processTerminated(@NotNull ProcessEvent event) {
                 myTerminateSemaphore.release();
                 if (event.getExitCode() != 0 && !myProcessCanTerminate) {
-                  Assert.fail("Process terminated unexpectedly\n" + output.toString());
+                  Assert.fail("Process terminated unexpectedly\n" + output);
                 }
               }
             });

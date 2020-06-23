@@ -4,7 +4,9 @@ package com.intellij.configurationStore.statistic.eventLog
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
+import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.StatisticsUtil
+import com.intellij.internal.statistic.utils.addPluginInfoTo
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.diagnostic.Logger
@@ -17,7 +19,7 @@ import org.jdom.Element
 import java.util.*
 
 private val LOG = Logger.getInstance("com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter")
-private val GROUP = EventLogGroup("settings", 4)
+private val GROUP = EventLogGroup("settings", 5)
 
 private val recordedComponents: MutableSet<String> = ContainerUtil.newConcurrentSet()
 private val recordedOptionNames: MutableSet<String> = ContainerUtil.newConcurrentSet()
@@ -92,15 +94,24 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
     for (accessor in accessors) {
       val type = accessor.genericType
       if (type === Boolean::class.javaPrimitiveType) {
-        logConfigValue(accessor, state, "bool", eventId, isDefaultProject, true, hash, componentName)
+        logConfigValue(accessor, state, "bool", eventId, isDefaultProject, true, hash, componentName, pluginInfo)
       }
       else if (type === Int::class.javaPrimitiveType || type === Long::class.javaPrimitiveType) {
-        val reportValue = accessor.getAnnotation(ReportValue::class.java) != null
-        logConfigValue(accessor, state, "int", eventId, isDefaultProject, reportValue, hash, componentName)
+        logConfigValue(accessor, state, "int", eventId, isDefaultProject, shouldReportValue(accessor), hash, componentName, pluginInfo)
       }
       else if (type === Float::class.javaPrimitiveType || type === Double::class.javaPrimitiveType) {
-        val reportValue = accessor.getAnnotation(ReportValue::class.java) != null
-        logConfigValue(accessor, state, "float", eventId, isDefaultProject, reportValue, hash, componentName)
+        logConfigValue(accessor, state, "float", eventId, isDefaultProject, shouldReportValue(accessor), hash, componentName, pluginInfo)
+      }
+      else if (type is Class<*> && type.isEnum) {
+        logConfigValue(accessor, state, "enum", eventId, isDefaultProject, shouldReportValue(accessor), hash, componentName, pluginInfo) {
+          (it as? Enum<*>)?.name
+        }
+      }
+      else if (type == String::class.java) {
+        val annotation = accessor.getAnnotation(ReportValue::class.java)
+        logConfigValue(accessor, state, "string", eventId, isDefaultProject, shouldReportValue(accessor), hash, componentName, pluginInfo) {
+          if (it in annotation.possibleValues) it else null
+        }
       }
     }
 
@@ -109,6 +120,8 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
     }
   }
 
+  private fun shouldReportValue(accessor: MutableAccessor): Boolean = accessor.getAnnotation(ReportValue::class.java) != null
+
   private fun logConfigValue(accessor: MutableAccessor,
                              state: Any,
                              type: String,
@@ -116,8 +129,9 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
                              isDefaultProject: Boolean,
                              reportValue: Boolean,
                              hash: String?,
-                             componentName: String) {
-    val value = accessor.readUnsafe(state)
+                             componentName: String,
+                             pluginInfo: PluginInfo,
+                             transformValue: ((Any?) -> Any?)? = null) {
     val isDefault = !jdomSerializer.getDefaultSerializationFilter().accepts(accessor, state)
     if (!isDefault || recordDefault) {
       recordedOptionNames.add(accessor.name)
@@ -126,12 +140,17 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
       content["component"] = componentName
       content["name"] = accessor.name
       if (reportValue) {
-        content["value"] = value
+        val value = accessor.readUnsafe(state)
+        val transformedValue = if (transformValue != null) transformValue(value) else value
+        if (transformedValue != null) {
+          content["value"] = transformedValue
+        }
       }
       if (recordDefault) {
         content["default"] = isDefault
       }
       addProjectOptions(content, isDefaultProject, hash)
+      addPluginInfoTo(pluginInfo, content)
       logConfig(GROUP, eventId, content)
     }
   }

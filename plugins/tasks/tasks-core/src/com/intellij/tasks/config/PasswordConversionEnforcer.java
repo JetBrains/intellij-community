@@ -1,22 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.config;
 
-import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
 
-final class PasswordConversionEnforcer implements ApplicationInitializedListener {
+final class PasswordConversionEnforcer implements SettingsSavingComponentJavaAdapter {
   private static final String ENFORCED = "tasks.pass.word.conversion.enforced";
+  private boolean isDone;
 
   @Override
-  public void componentsInitialized() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+  public void doSave() {
+    if (isDone) {
       return;
     }
 
-    if (!PropertiesComponent.getInstance().isValueSet(ENFORCED)) {
-      RecentTaskRepositories.getInstance().getState();
-      PropertiesComponent.getInstance().setValue(ENFORCED, true);
+    isDone = true;
+
+    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+    if (!propertyComponent.isValueSet(ENFORCED)) {
+      RecentTaskRepositories.getInstance();
+      propertyComponent.setValue(ENFORCED, true);
     }
   }
 }

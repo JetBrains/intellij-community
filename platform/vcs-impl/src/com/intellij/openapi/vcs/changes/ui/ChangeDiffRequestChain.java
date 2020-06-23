@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.*;
-import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -13,6 +12,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.util.Consumer;
+import com.intellij.util.ListSelection;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -185,7 +185,7 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
   public static abstract class Async extends AsyncDiffRequestChain implements GoToChangePopupBuilder.Chain {
     @NotNull
     @Override
-    protected abstract ListSelection<? extends ChangeDiffRequestChain.Producer> loadRequestProducers() throws DiffRequestProducerException;
+    protected abstract ListSelection<? extends Producer> loadRequestProducers() throws DiffRequestProducerException;
 
     @Nullable
     @Override

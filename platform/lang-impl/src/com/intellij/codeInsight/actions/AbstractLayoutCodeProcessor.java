@@ -108,7 +108,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   protected AbstractLayoutCodeProcessor(@NotNull Project project,
-                                        PsiDirectory directory,
+                                        @NotNull PsiDirectory directory,
                                         boolean includeSubdirs,
                                         String progressText,
                                         String commandName,
@@ -124,7 +124,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   protected AbstractLayoutCodeProcessor(@NotNull Project project,
-                                        PsiFile file,
+                                        @NotNull PsiFile file,
                                         String progressText,
                                         String commandName,
                                         boolean processChangedTextOnly) {
@@ -138,7 +138,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   protected AbstractLayoutCodeProcessor(@NotNull Project project,
-                                        PsiFile[] files,
+                                        PsiFile @NotNull [] files,
                                         String progressText,
                                         String commandName,
                                         @Nullable Runnable postRunnable,
@@ -252,7 +252,7 @@ public abstract class AbstractLayoutCodeProcessor {
   @NotNull
   private List<PsiFile> getChangedFilesFromContext() {
     List<PsiDirectory> dirs = getAllSearchableDirsFromContext();
-    return FormatChangedTextUtil.getChangedFilesFromDirs(myProject, dirs);
+    return VcsFacade.getInstance().getChangedFilesFromDirs(myProject, dirs);
   }
 
   private List<PsiDirectory> getAllSearchableDirsFromContext() {
@@ -320,7 +320,7 @@ public abstract class AbstractLayoutCodeProcessor {
     }
   }
 
-  private static boolean canBeFormatted(PsiFile file) {
+  private static boolean canBeFormatted(@NotNull PsiFile file) {
     if (!file.isValid()) return false;
     if (LanguageFormatting.INSTANCE.forContext(file) == null) {
       return false;
@@ -337,7 +337,7 @@ public abstract class AbstractLayoutCodeProcessor {
     new ReformatFilesTask(new EmptyProgressIndicator()).performFileProcessing(myFile);
   }
 
-  private List<AbstractLayoutCodeProcessor> getAllProcessors() {
+  private @NotNull List<AbstractLayoutCodeProcessor> getAllProcessors() {
     AbstractLayoutCodeProcessor current = this;
     List<AbstractLayoutCodeProcessor> all = new ArrayList<>();
     while (current != null) {
@@ -451,7 +451,7 @@ public abstract class AbstractLayoutCodeProcessor {
       myStopFormatting = true;
     }
 
-    public boolean process() {
+    private boolean process() {
       myCountingIterator.processAll(file -> {
         updateIndicatorText(ApplicationBundle.message("bulk.reformat.prepare.progress.text"), "");
         countingIteration();

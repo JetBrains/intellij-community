@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,6 +151,11 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract void removeChangeListListener(@NotNull ChangeListListener listener);
 
 
+  /**
+   * @deprecated use {@link LocalCommitExecutor#LOCAL_COMMIT_EXECUTOR} extension point
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);
 
   @NotNull

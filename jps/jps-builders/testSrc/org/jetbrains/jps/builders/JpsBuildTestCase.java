@@ -93,12 +93,6 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     myBuildParams = new HashMap<>();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myProjectDir = null;
-    super.tearDown();
-  }
-
   protected static void assertOutput(final String outputPath, TestFileSystemBuilder expected) {
     expected.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(outputPath)));
   }
@@ -253,19 +247,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
                                                        @Nullable String testOutputPath,
                                                        JpsSdk<T> sdk) {
     JpsModule module = myProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
-    final JpsSdkType<T> sdkType = sdk.getSdkType();
-    final JpsSdkReferencesTable sdkTable = module.getSdkReferencesTable();
-    sdkTable.setSdkReference(sdkType, sdk.createReference());
-
-    if (sdkType instanceof JpsJavaSdkTypeWrapper) {
-      final JpsSdkReference<T> wrapperRef = sdk.createReference();
-      sdkTable.setSdkReference(JpsJavaSdkType.INSTANCE, JpsJavaExtensionService.
-        getInstance().createWrappedJavaSdkReference((JpsJavaSdkTypeWrapper)sdkType, wrapperRef));
-    }
-    // ensure jdk entry is the first one in dependency list
-    module.getDependenciesList().clear();
-    module.getDependenciesList().addSdkDependency(sdkType);
-    module.getDependenciesList().addModuleSourceDependency();
+    setupModuleSdk(module, sdk);
     if (srcPaths.length > 0 || outputPath != null) {
       for (String srcPath : srcPaths) {
         module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(srcPath));
@@ -286,6 +268,22 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       }
     }
     return module;
+  }
+
+  protected  <T extends JpsElement> void setupModuleSdk(JpsModule module, JpsSdk<T> sdk) {
+    final JpsSdkType<T> sdkType = sdk.getSdkType();
+    final JpsSdkReferencesTable sdkTable = module.getSdkReferencesTable();
+    sdkTable.setSdkReference(sdkType, sdk.createReference());
+
+    if (sdkType instanceof JpsJavaSdkTypeWrapper) {
+      final JpsSdkReference<T> wrapperRef = sdk.createReference();
+      sdkTable.setSdkReference(JpsJavaSdkType.INSTANCE, JpsJavaExtensionService.
+        getInstance().createWrappedJavaSdkReference((JpsJavaSdkTypeWrapper)sdkType, wrapperRef));
+    }
+    // ensure jdk entry is the first one in dependency list
+    module.getDependenciesList().clear();
+    module.getDependenciesList().addSdkDependency(sdkType);
+    module.getDependenciesList().addModuleSourceDependency();
   }
 
   protected void rebuildAllModules() {
@@ -341,7 +339,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected BuildResult doBuild(final ProjectDescriptor descriptor, CompileScopeTestBuilder scopeBuilder) {
-    IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance(), myBuildParams, CanceledStatus.NULL, null, true);
+    IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance(), myBuildParams, CanceledStatus.NULL, true);
     BuildResult result = new BuildResult();
     builder.addMessageHandler(result);
     try {

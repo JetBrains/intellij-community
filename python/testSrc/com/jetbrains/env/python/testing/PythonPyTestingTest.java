@@ -1,12 +1,11 @@
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -711,9 +710,11 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
-        final String resultTree = runner.getFormattedTestTree().trim();
-        final String expectedTree = myFixture.configureByFile("test_escape_me.tree.txt").getText().trim();
-        Assert.assertEquals("Test result wrong tree", expectedTree, resultTree);
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          final String resultTree = runner.getFormattedTestTree().trim();
+          final String expectedTree = myFixture.configureByFile("test_escape_me.tree.txt").getText().trim();
+          assertEquals("Test result wrong tree", expectedTree, resultTree);
+        });
       }
     });
   }

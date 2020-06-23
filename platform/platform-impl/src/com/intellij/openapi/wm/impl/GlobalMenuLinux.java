@@ -23,16 +23,13 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.ImageUtil;
-/* Android Studio: b/67589184
-import com.sun.javafx.application.PlatformImpl;
-Android Studio: b/67589184 */
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -219,21 +216,19 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       };
 
-/* Android Studio: b/67589184
-      // JCEF/JBR11 is not compliant with JFX
-      if (!JBCefApp.isEnabled()) {
-        // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
-        try {
-          PlatformImpl.startup(() -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
-        }
-        catch (Throwable e) {
-          LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
-          final Thread glibMain = new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
-                                             "GlobalMenuLinux loop");
-          glibMain.start();
-        }
+      // NOTE: Linux implementation of JavaFX starts native main loop with GtkApplication._runLoop()
+      try {
+        Class<?> platformImpl = Class.forName("com.sun.javafx.application.PlatformImpl");
+        Method startup = platformImpl.getMethod("startup", Runnable.class);
+        Runnable r = () -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
+        startup.invoke(null, r);
       }
-Android Studio: b/67589184 */
+      catch (Throwable e) {
+        LOG.info("can't start main loop via JavaFX (will run it manually): " + e.getMessage());
+        final Thread glibMain = new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
+                                           "GlobalMenuLinux loop");
+        glibMain.start();
+      }
     }
   }
 
@@ -799,7 +794,6 @@ Android Studio: b/67589184 */
   }
 
   private static GlobalMenuLib _loadLibrary() {
-    if (true) return null;  // TODO(b/118514141): fix UI tests in Bazel and delete this line
     if (!SystemInfo.isLinux ||
         ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode() ||
         Registry.is("linux.native.menu.force.disable") ||
@@ -1341,7 +1335,7 @@ Android Studio: b/67589184 */
     }
   }
 
-  private static void _trace(String fmt, Object... args) {
+  private static void _trace(@NonNls String fmt, Object... args) {
     if (!TRACE_ENABLED) {
       return;
     }
@@ -1349,7 +1343,7 @@ Android Studio: b/67589184 */
     _trace(msg);
   }
 
-  private static void _trace(String msg) {
+  private static void _trace(@NonNls String msg) {
     if (!TRACE_ENABLED) {
       return;
     }

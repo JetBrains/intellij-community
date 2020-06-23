@@ -18,6 +18,7 @@ package com.intellij.history.core.revisions;
 
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
+import com.intellij.openapi.util.Clock;
 
 public class CurrentRevision extends Revision {
   private final RootEntry myRoot;
@@ -30,11 +31,12 @@ public class CurrentRevision extends Revision {
 
   @Override
   public long getTimestamp() {
-    return findEntry().getTimestamp();
+    Entry entry = findEntry();
+    return entry != null ? entry.getTimestamp() : Clock.getTime();
   }
 
   @Override
   public Entry findEntry() {
-    return myRoot.getEntry(myPath);
+    return myRoot.findEntry(myPath);
   }
 }

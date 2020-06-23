@@ -66,6 +66,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -78,7 +79,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final ExtensionPointName<ProjectCloseHandler> CLOSE_HANDLER_EP = new ExtensionPointName<>("com.intellij.projectCloseHandler");
 
   private Project @NotNull [] myOpenProjects = {}; // guarded by lock
-  private final Map<String, Project> myOpenProjectByHash = ContainerUtil.newConcurrentMap();
+  private final Map<String, Project> myOpenProjectByHash = new ConcurrentHashMap<>();
   private final Object lock = new Object();
 
   // we cannot use the same approach to migrate to message bus as CompilerManagerImpl because of method canCloseProject
@@ -87,8 +88,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private final DefaultProject myDefaultProject = new DefaultProject();
   private final ExcludeRootsCache myExcludeRootsCache;
 
-  @NotNull
-  private static List<ProjectManagerListener> getListeners(@NotNull Project project) {
+  private static @NotNull List<ProjectManagerListener> getListeners(@NotNull Project project) {
     List<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (array == null) return Collections.emptyList();
     return array;
@@ -148,8 +148,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     myExcludeRootsCache = new ExcludeRootsCache(connection);
   }
 
-  @NotNull
-  private static ProjectManagerListener getPublisher() {
+  private static @NotNull ProjectManagerListener getPublisher() {
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC);
   }
 
@@ -181,14 +180,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private final Map<Project, String> myProjects = new WeakHashMap<>();
 
   @Override
-  @Nullable
-  public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
+  public @Nullable Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     return newProject(Paths.get(toCanonicalName(filePath)), projectName, OpenProjectTask.newProject(useDefaultProjectSettings));
   }
 
   @Override
-  @Nullable
-  public Project newProject(@NotNull Path projectFile, @Nullable String projectName, @NotNull OpenProjectTask options) {
+  public @Nullable Project newProject(@NotNull Path projectFile, @Nullable String projectName, @NotNull OpenProjectTask options) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       TEST_PROJECTS_CREATED++;
@@ -225,7 +222,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     catch (Throwable t) {
       LOG.warn(t);
       try {
-        Messages.showErrorDialog(message(t), ProjectBundle.message("project.load.default.error"));
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          Messages.showErrorDialog(message(t), ProjectBundle.message("project.load.default.error"));
+        });
       }
       catch (NoClassDefFoundError e) {
         // error icon not loaded
@@ -236,8 +235,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @NonNls
-  @NotNull
-  private static String message(@NotNull Throwable e) {
+  private static @NotNull String message(@NotNull Throwable e) {
     String message = e.getMessage();
     if (message != null) {
       return message;
@@ -315,6 +313,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
+    //noinspection deprecation
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
     activity.end();
 
@@ -334,9 +333,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public static ProjectImpl doCreateProject(@Nullable String projectName, @NotNull Path filePath) {
+  public static @NotNull ProjectImpl doCreateProject(@Nullable String projectName, @NotNull Path filePath) {
     Activity activity = StartUpMeasurer.startMainActivity("project instantiation");
     ProjectImpl project = new ProjectImpl(filePath, projectName);
     activity.end();
@@ -344,8 +342,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  @NotNull
-  public Project loadProject(@NotNull Path file, @Nullable String projectName) {
+  public @NotNull Project loadProject(@NotNull Path file, @Nullable String projectName) {
     //noinspection TestOnlyProblems
     return loadProject(file, projectName, null);
   }
@@ -360,8 +357,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return project;
   }
 
-  @NotNull
-  private static String toCanonicalName(@NotNull String filePath) {
+  private static @NotNull String toCanonicalName(@NotNull String filePath) {
     try {
       return FileUtil.resolveShortWindowsName(filePath);
     }
@@ -378,8 +374,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  @NotNull
-  public Project getDefaultProject() {
+  public @NotNull Project getDefaultProject() {
     LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
     // call instance method to reset timeout
     LOG.assertTrue(!myDefaultProject.getMessageBus().isDisposed());
@@ -497,8 +492,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  @Nullable
-  public Project findOpenProjectByHash(@Nullable String locationHash) {
+  public @Nullable Project findOpenProjectByHash(@Nullable String locationHash) {
     return myOpenProjectByHash.get(locationHash);
   }
 
@@ -508,8 +502,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  @Nullable
-  public Project loadAndOpenProject(@NotNull Path file) {
+  public @Nullable Project loadAndOpenProject(@NotNull Path file) {
     ConversionResult conversionResult;
     try {
       conversionResult = ConversionService.getInstance().convert(file);
@@ -582,7 +575,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   @TestOnly
-  public void openTestProject(@NotNull final Project project) {
+  public void openTestProject(final @NotNull Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     openProject(project);
     UIUtil.dispatchAllInvocationEvents(); // post init activities are invokeLatered
@@ -741,7 +734,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public void addProjectManagerListener(@NotNull final ProjectManagerListener listener, @NotNull Disposable parentDisposable) {
+  public void addProjectManagerListener(final @NotNull ProjectManagerListener listener, @NotNull Disposable parentDisposable) {
     addProjectManagerListener(listener);
     Disposer.register(parentDisposable, () -> removeProjectManagerListener(listener));
   }
@@ -865,8 +858,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return true;
   }
 
-  @NotNull
-  private List<ProjectManagerListener> getAllListeners(@NotNull Project project) {
+  private @NotNull List<ProjectManagerListener> getAllListeners(@NotNull Project project) {
     List<ProjectManagerListener> projectLevelListeners = getListeners(project);
     if (projectLevelListeners.isEmpty()) {
       return myListeners;

@@ -694,8 +694,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       TableColumnModel columnModel = table.getColumnModel();
       TableColumn propertyColumn = columnModel.getColumn(0);
-      propertyColumn.setMinWidth(JBUIScale.scale(200));
-      propertyColumn.setMaxWidth(JBUIScale.scale(200));
+      propertyColumn.setMinWidth(JBUIScale.scale(220));
+      propertyColumn.setMaxWidth(JBUIScale.scale(220));
       propertyColumn.setResizable(false);
       propertyColumn.setCellRenderer(new PropertyNameRenderer());
 
@@ -717,7 +717,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       });
       new DoubleClickListener(){
         @Override
-        protected boolean onDoubleClick(MouseEvent event) {
+        protected boolean onDoubleClick(@NotNull MouseEvent event) {
           int row = table.rowAtPoint(event.getPoint());
           int column = table.columnAtPoint(event.getPoint());
           if (row >=0 && row < table.getRowCount() && column >=0 && column < table.getColumnCount()) {
@@ -1153,6 +1153,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     @Override
     public void setValue(@NotNull final Object value) {
       setText(getToStringValue(value));
+      setIcon(getText().contains("$$$setupUI$$$") ? AllIcons.FileTypes.UiForm : null);
       if (!getText().equals(getText().trim())) {
         setForeground(JBColor.RED);
       }
@@ -1215,11 +1216,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static ColorIcon createColorIcon(Color color) {
-    return JBUI.scale(new ColorIcon(13, 11, color, true));
+    return JBUIScale.scaleIcon(new ColorIcon(13, 11, color, true));
   }
 
   private static Icon createColorIcon(Color color1, Color color2) {
-    return JBUI.scale(new ColorsIcon(11, color1, color2));
+    return JBUIScale.scaleIcon(new ColorsIcon(11, color1, color2));
   }
 
 
@@ -1231,6 +1232,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "getForeground", "getBackground", "getFont",
       "getCellRenderer", "getCellEditor",
       "getMinimumSize", "getMaximumSize", "getPreferredSize",
+      "getPreferredScrollableViewportSize",
       "getText", "isEditable", "getIcon",
       "getVisibleRect", "getLayout",
       "getAlignmentX", "getAlignmentY",
@@ -1335,7 +1337,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       StringBuilder classHierarchy = new StringBuilder();
       for (Class<?> cl = clazz.getSuperclass(); cl != null; cl = cl.getSuperclass()) {
-        if (classHierarchy.length() > 0) classHierarchy.append(" -> ");
+        if (classHierarchy.length() > 0) classHierarchy.append(" ").append(UIUtil.rightArrow()).append(" ");
         classHierarchy.append(cl.getName());
         if (JComponent.class.getName().equals(cl.getName())) break;
       }
@@ -1668,10 +1670,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (constraint.isNoGrid() != newConstraint.isNoGrid()) {
         stringBuilder.append(" noGrid=").append(constraint.isNoGrid());
       }
-      if (!Comparing.equal(constraint.getSizeGroup(), newConstraint.getSizeGroup())) {
+      if (!Objects.equals(constraint.getSizeGroup(), newConstraint.getSizeGroup())) {
         stringBuilder.append(" sizeGroup=").append(constraint.getSizeGroup());
       }
-      if (!Comparing.equal(constraint.getEndGroup(), newConstraint.getEndGroup())) {
+      if (!Objects.equals(constraint.getEndGroup(), newConstraint.getEndGroup())) {
         stringBuilder.append(" endGroup=").append(constraint.getEndGroup());
       }
       return stringBuilder.toString();

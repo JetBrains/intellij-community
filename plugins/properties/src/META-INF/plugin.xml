@@ -17,6 +17,8 @@
                     dynamic="true"/>
   </extensionPoints>
 
+  <depends optional="true" config-file="properties-copyright.xml">com.intellij.copyright</depends>
+
   <extensions defaultExtensionNs="com.intellij">
     <typeIcon className="com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile" icon="AllIcons.Nodes.ResourceBundle"/>
     <applicationService serviceImplementation="com.intellij.lang.properties.LastSelectedPropertiesFileStore"/>

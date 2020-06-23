@@ -351,19 +351,24 @@ public class SyncScrollSupport {
       if (master.getDocument().getTextLength() == 0) return;
 
       Rectangle viewRect = master.getScrollingModel().getVisibleArea();
-      int middleY = viewRect.height / 3;
       int lineHeight = master.getLineHeight();
 
       boolean onlyMajorForward = false;
       boolean onlyMajorBackward = false;
       int offset;
       if (myAnchor == null) {
-        int masterVisualLine = master.yToVisualLine(viewRect.y + middleY);
+        int middleY = viewRect.height / 3;
+        int masterOffset = viewRect.y + middleY;
+
+        int masterVisualLine = master.yToVisualLine(masterOffset);
         int convertedVisualLine = transferVisualLine(masterVisualLine);
 
-        int pointY = slave.visualLineToY(convertedVisualLine);
-        int correction = (viewRect.y + middleY) % lineHeight;
-        offset = pointY - middleY + correction;
+        int slaveOffset = slave.visualLineToY(convertedVisualLine);
+        int masterOffsetRaw = master.visualLineToY(masterVisualLine);
+        // ensure that anchor lines are in the same phase
+        int correction = (masterOffset - masterOffsetRaw) % lineHeight;
+
+        offset = slaveOffset - middleY + correction;
 
         onlyMajorBackward = correction < lineHeight / 2 && masterVisualLine > 0 &&
                             convertedVisualLine == transferVisualLine(masterVisualLine - 1);

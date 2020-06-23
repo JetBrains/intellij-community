@@ -17,8 +17,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
-import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,17 +24,16 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  */
 public interface InvertedIndex<Key, Value, Input> {
-  @ApiStatus.Internal
-  boolean ARE_COMPOSITE_INDEXERS_ENABLED = SystemProperties.getBooleanProperty("com.intellij.composite.indexers", true);
-
   @NotNull
   ValueContainer<Value> getData(@NotNull Key key) throws StorageException;
 
   /**
-   * @param inputId *positive* id of content.
+   * Maps input as the first stage and returns a computation that does actual index data structure update.
+   * It may be used to separate long-running input mapping from writing data to disk.
+   * Computable returns `true` if data has been saved without errors, otherwise - `false`.
    */
   @NotNull
-  Computable<Boolean> update(int inputId, @Nullable Input content);
+  Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content);
 
   void flush() throws StorageException;
 

@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.NlsCapitalizationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.i18n.NlsInfo;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.lang.properties.references.PropertyReference;
@@ -26,10 +28,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.Action;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.OverrideText;
+import org.jetbrains.idea.devkit.dom.*;
 
 import java.util.List;
 import java.util.Set;
@@ -46,6 +45,9 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     }
     else if (element instanceof Extension) {
       checkExtension((Extension)element, holder);
+    }
+    else if (element instanceof IdeaPlugin) {
+      checkCapitalization(holder, ((IdeaPlugin)element).getName(), Nls.Capitalization.Title);
     }
   }
 
@@ -161,8 +163,8 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     if (attributeType != String.class) return;
 
     final PsiElement declaration = childrenDescription.getDeclaration(extension.getManager().getProject());
-    if (declaration instanceof PsiField) {
-      final Nls.Capitalization capitalization = NlsCapitalizationUtil.getCapitalizationFromAnno((PsiModifierListOwner)declaration);
+    if (declaration instanceof PsiModifierListOwner) {
+      final Nls.Capitalization capitalization = NlsInfo.getCapitalization((PsiModifierListOwner)declaration);
       if (capitalization == Nls.Capitalization.NotSpecified) return;
 
       checkCapitalizationWithKey(holder, genericDomValue, capitalization);
@@ -218,11 +220,20 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
       return;
     }
 
-    final LocalQuickFix quickFix = new LocalQuickFixBase("Properly capitalize '" + escapedValue + '\'', "Properly capitalize") {
-
+    final LocalQuickFix quickFix = new LocalQuickFix() {
       @Override
       public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
         return property != null ? property : currentFile;
+      }
+
+      @Override
+      public @IntentionName @NotNull String getName() {
+        return "Properly capitalize '" + escapedValue + '\'';
+      }
+
+      @Override
+      public @IntentionFamilyName @NotNull String getFamilyName() {
+        return "Properly capitalize";
       }
 
       @Override

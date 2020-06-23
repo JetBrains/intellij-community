@@ -13,6 +13,7 @@ interface InlayHintsCollector {
   /**
    * Explores [element] and adds some hints to [sink] if necessary.
    * Implementors must handle dumb mode themselves.
+   * Runs inside read action
    * @return false if it is not necessary to traverse child elements (but implementors should not rely on it)
    */
   fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink) : Boolean

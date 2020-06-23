@@ -16,7 +16,7 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyOldStyleClassesInspection;
 
@@ -24,11 +24,11 @@ import com.jetbrains.python.inspections.PyOldStyleClassesInspection;
 public class PyConvertToNewStyleQuickFixTest extends PyQuickFixTestCase {
 
   public void testEmptySuperClassList() {
-    doQuickFixTest(PyOldStyleClassesInspection.class, PyBundle.message("QFIX.convert.to.new.style"));
+    doQuickFixTest(PyOldStyleClassesInspection.class, PyPsiBundle.message("QFIX.convert.to.new.style"));
   }
 
   public void testSlots() {
-    doQuickFixTest(PyOldStyleClassesInspection.class, PyBundle.message("QFIX.convert.to.new.style"));
+    doQuickFixTest(PyOldStyleClassesInspection.class, PyPsiBundle.message("QFIX.convert.to.new.style"));
   }
 
 }

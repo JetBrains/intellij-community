@@ -38,7 +38,7 @@ public interface JsonElementTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-       if (type == ARRAY) {
+      if (type == ARRAY) {
         return new JsonArrayImpl(node);
       }
       else if (type == BOOLEAN_LITERAL) {

@@ -175,14 +175,13 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       if (owner instanceof PsiMethod && ((PsiMethod)owner).isConstructor()) {
         //usages inside delegating constructor call
         PsiExpression run = ref;
-        while (true) {
-          if (!(run.getParent() instanceof PsiExpression)) break;
+        while (run.getParent() instanceof PsiExpression) {
           run = (PsiExpression)run.getParent();
         }
         if (run.getParent() instanceof PsiExpressionList &&
           run.getParent().getParent() instanceof PsiMethodCallExpression) {
           @NonNls String calleeText = ((PsiMethodCallExpression)run.getParent().getParent()).getMethodExpression().getText();
-          if (calleeText.equals("this") || calleeText.equals("super")) return true;
+          if (calleeText.equals(PsiKeyword.THIS) || calleeText.equals(PsiKeyword.SUPER)) return true;
         }
       }
 

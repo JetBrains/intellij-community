@@ -57,7 +57,7 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
 
   @Override
   public boolean isBuiltin() {
-    ASTNode node = getNode().findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getReferenceExpressionTokens());
+    ASTNode node = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getReferenceExpressionTokens());
     if (node != null) {
       PyReferenceExpression ref = (PyReferenceExpression)node.getPsi();
       PsiElement target = ref.getReference().resolve();
@@ -149,6 +149,6 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   @Override
   @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return PyCallExpressionHelper.getCallType(this, context);
+    return PyCallExpressionHelper.getCallType(this, context, key);
   }
 }

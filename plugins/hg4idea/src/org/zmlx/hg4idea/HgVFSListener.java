@@ -65,6 +65,7 @@ public class HgVFSListener extends VcsVFSListener {
     return HgBundle.message("hg4idea.add.single.title");
   }
 
+  @SuppressWarnings("UnresolvedPropertyKey")
   @NotNull
   @Override
   protected String getSingleFileAddPromptTemplate() {
@@ -208,6 +209,7 @@ public class HgVFSListener extends VcsVFSListener {
     return HgBundle.message("hg4idea.remove.single.title");
   }
 
+  @SuppressWarnings("UnresolvedPropertyKey")
   @Override
   protected String getSingleFileDeletePromptTemplate() {
     return HgBundle.message("hg4idea.remove.single.body");
@@ -329,15 +331,15 @@ public class HgVFSListener extends VcsVFSListener {
 
       private void handleRenameError() {
         NotificationAction viewFilesAction =
-          NotificationAction.createSimple(HgBundle.messagePointer("action.NotificationAction.HgVFSListener.text.view.files"), () -> {
+          NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files"), () -> {
           DialogWrapper dialog =
             new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
-          dialog.setTitle("Failed to Rename");
+          dialog.setTitle(HgBundle.message("hg4idea.rename.error.title"));
           dialog.show();
         });
-        NotificationAction retryAction = NotificationAction.createSimpleExpiring("Retry", () -> performMoveRename(failedToMove));
+        NotificationAction retryAction = NotificationAction.createSimpleExpiring(HgBundle.message("retry"), () -> performMoveRename(failedToMove));
         VcsNotifier.getInstance(myProject)
-          .notifyError("Rename Failed", "Couldn't mark some files as renamed", viewFilesAction, retryAction);
+          .notifyError(HgBundle.message("hg4idea.rename.error"), HgBundle.message("hg4idea.rename.error.msg"), viewFilesAction, retryAction);
       }
 
       @Override

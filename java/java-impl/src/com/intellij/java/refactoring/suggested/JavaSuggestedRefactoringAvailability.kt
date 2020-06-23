@@ -20,8 +20,8 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
   // disable refactoring suggestion for method which overrides another method
   override fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean {
     if (state.declaration !is PsiMethod) return false
-    val declaration = state.restoredDeclarationCopy() as PsiMethod
-    return declaration.findSuperMethods().isNotEmpty()
+    val restoredDeclarationCopy = state.restoredDeclarationCopy()
+    return restoredDeclarationCopy is PsiMethod && restoredDeclarationCopy.findSuperMethods().isNotEmpty()
   }
 
   override fun amendStateInBackground(state: SuggestedRefactoringState): Iterator<SuggestedRefactoringState> {

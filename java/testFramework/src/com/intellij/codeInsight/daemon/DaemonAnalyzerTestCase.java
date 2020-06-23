@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
@@ -82,7 +82,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
 
     if (isStressTest()) {
-      IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
+      IntentionManager.getInstance().getAvailableIntentions();  // hack to avoid slowdowns in PyExtensionFactory
       PathManagerEx.getTestDataPath(); // to cache stuff
       ReferenceProvidersRegistry.getInstance(); // pre-load tons of classes
       InjectedLanguageManager.getInstance(getProject()); // zillion of Dom Sem classes

@@ -44,9 +44,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
-
-import java.awt.event.KeyEvent
-
 /**
  * @author peter
  */
@@ -639,7 +636,7 @@ public interface Test {
   }
 
   static def registerCompletionContributor(Class contributor, Disposable parentDisposable, LoadingOrder order) {
-    def extension = new CompletionContributorEP(language: 'JAVA', implementationClass: contributor.name)
+    def extension = new CompletionContributorEP(language: 'any', implementationClass: contributor.name)
     extension.setPluginDescriptor(new DefaultPluginDescriptor("registerCompletionContributor"))
     CompletionContributor.EP.getPoint(null).registerExtension(extension, order, parentDisposable)
   }
@@ -1736,9 +1733,7 @@ class Foo {
 
     LookupElementPresentation p = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
     assert p.itemText == 'tpl'
-    assert !p.tailText
-    def tabKeyPresentation = KeyEvent.getKeyText(TemplateSettings.TAB_CHAR as int)
-    assert p.typeText == "  [$tabKeyPresentation] "
+    assert !p.tailText && !p.typeText
   }
 
   void "test autopopup after package completion"() {

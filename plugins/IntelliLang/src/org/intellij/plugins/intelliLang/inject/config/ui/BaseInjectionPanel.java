@@ -122,10 +122,10 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
       ElementPattern<? extends PsiElement> pattern = place.getElementPattern();
       if (pattern instanceof PatternCompilerImpl.LazyPresentablePattern) {
         try {
-          ((PatternCompilerImpl.LazyPresentablePattern)pattern).compile();
+          ((PatternCompilerImpl.LazyPresentablePattern<?>)pattern).compile();
         }
         catch (Throwable ex) {
-          throw (RuntimeException)new IllegalArgumentException("Pattern failed to compile:").initCause(ex);
+          throw new IllegalArgumentException("Pattern failed to compile:", ex);
         }
       }
     }

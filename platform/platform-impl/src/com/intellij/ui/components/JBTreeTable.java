@@ -4,7 +4,6 @@ package com.intellij.ui.components;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.JBDefaultTreeCellRenderer;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
@@ -30,6 +29,7 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
@@ -162,7 +162,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
       myTable.setRowHeight(treeRowHeight);
     });
 
-    myTree.setCellRenderer(new JBDefaultTreeCellRenderer(true) {
+    myTree.setCellRenderer(new TreeCellRenderer() {
       @Override
       public Component getTreeCellRendererComponent(JTree tree,
                                                     Object value,

@@ -51,7 +51,7 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
     def extensions = myLanguageExtension.allForLanguage(MyTestLanguage.INSTANCE)
     assert extensions.size() == classes.length
     def extensionClasses = extensions.collect { it.class }
-    assert extensionClasses == classes
+    assert extensionClasses == Arrays.asList(classes)
   }
 
   void 'test language before base-language'() {

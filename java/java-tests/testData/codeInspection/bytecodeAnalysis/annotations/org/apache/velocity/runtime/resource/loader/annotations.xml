@@ -171,6 +171,16 @@
     <item name='org.apache.velocity.runtime.resource.loader.ResourceLoader void commonInit(org.apache.velocity.runtime.RuntimeServices, org.apache.commons.collections.ExtendedProperties) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.runtime.resource.loader.ResourceLoader void setCachingOn(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.resource.loader.ResourceLoader void setModificationCheckInterval(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.resource.loader.ResourceLoaderFactory ResourceLoaderFactory()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

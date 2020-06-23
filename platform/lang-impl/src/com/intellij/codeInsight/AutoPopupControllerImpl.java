@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -15,6 +14,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -33,6 +33,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
+
+import static com.intellij.codeInsight.completion.CompletionPhase.*;
 
 public class AutoPopupControllerImpl extends AutoPopupController {
   private final Project myProject;
@@ -85,7 +87,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
       return;
     }
 
-    if (!CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class, CompletionPhase.NoCompletion.getClass())) {
+    if (!CompletionServiceImpl.isPhase(CommittingDocuments.class, NoCompletion.getClass(), EmptyAutoPopup.class)) {
       return;
     }
 
@@ -94,7 +96,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
       currentCompletion.closeAndFinish(true);
     }
 
-    CompletionPhase.CommittingDocuments.scheduleAsyncCompletion(editor, completionType, condition, myProject, null);
+    CommittingDocuments.scheduleAsyncCompletion(editor, completionType, condition, myProject, null);
   }
 
   @Override
@@ -132,7 +134,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
 
       Runnable request = () -> {
         if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() &&
-            (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getComponent().isShowing())) {
+            (EditorActivityManager.getInstance().isVisible(editor))) {
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
             PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());

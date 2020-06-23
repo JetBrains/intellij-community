@@ -91,6 +91,9 @@ public abstract class DfConstantType<T> implements DfType {
       PsiClass containingClass = field.getContainingClass();
       return containingClass == null ? field.getName() : containingClass.getName() + "." + field.getName();
     }
+    if (value instanceof PsiType) {
+      return ((PsiType)value).getPresentableText();
+    }
     return value.toString();
   }
 }

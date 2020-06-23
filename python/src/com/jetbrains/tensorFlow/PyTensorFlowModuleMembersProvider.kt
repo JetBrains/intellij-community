@@ -12,7 +12,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-@ApiStatus.NonExtendable
 class PyTensorFlowModuleMembersProvider : PyModuleMembersProvider() {
 
   override fun getMembers(module: PyFile, point: PointInImport, context: TypeEvalContext): Collection<PyCustomMember> {

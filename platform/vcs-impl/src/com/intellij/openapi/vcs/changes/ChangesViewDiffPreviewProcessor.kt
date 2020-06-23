@@ -1,10 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.*
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.util.ui.tree.TreeUtil
 import java.util.stream.Stream
@@ -31,5 +32,16 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
 
   override fun selectChange(change: Wrapper) {
     changesView.findNodePathInTree(change.userObject)?.let { TreeUtil.selectPath(changesView, it, false) }
+  }
+
+  fun setAllowExcludeFromCommit(value: Boolean) {
+    if (DiffUtil.isUserDataFlagSet(ALLOW_EXCLUDE_FROM_COMMIT, context) == value) return
+    context.putUserData(ALLOW_EXCLUDE_FROM_COMMIT, value)
+    fireDiffSettingsChanged()
+  }
+
+  fun fireDiffSettingsChanged() {
+    dropCaches()
+    updateRequest(true)
   }
 }

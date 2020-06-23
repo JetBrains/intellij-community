@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.BuiltinWebServerAccess
 import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -32,11 +31,13 @@ import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.URLConnection
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import java.util.function.Consumer
 
 private const val PORTS_COUNT = 20
 private const val PROPERTY_RPC_PORT = "rpc.port"
+private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
 
 private val LOG = logger<BuiltInServerManager>()
 
@@ -124,6 +125,12 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 
   private fun startServerInPooledThread(): Future<*> {
+    if (SystemProperties.getBooleanProperty(PROPERTY_DISABLED, false)) {
+      return CompletableFuture<Any>().apply {
+        completeExceptionally(Throwable("Built-in server is disabled by `$PROPERTY_DISABLED` VM option"))
+      }
+    }
+
     return StartupUtil.getServerFuture()
       .thenAcceptAsync(Consumer { mainServer ->
         try {
@@ -153,23 +160,11 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 
   override fun addAuthToken(url: Url): Url {
-/* Android Studio: BuiltinWebServerAccess
     return when {
       // built-in server url contains query only if token specified
       url.parameters != null -> url
       else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, acquireToken()))
     }
-Android Studio: BuiltinWebServerAccess */
-    try {
-      val prefix = "/" + BuiltinWebServerAccess.getUserAuthenticationToken()
-      if (!url.path.startsWith(prefix)) {
-        return Urls.newUrl(url.scheme!!, url.authority!!, prefix + url.path, url.parameters)
-      }
-    }
-    catch (e: IOException) {
-      LOG.warn(String.format("Unable to get User authentication token for launching url '%s'", url), e)
-    }
-    return url
   }
 
   override fun configureRequestToWebServer(connection: URLConnection) {

@@ -30,5 +30,10 @@ class AsyncStacksToggleAction : ToggleAction() {
     fun isAsyncStacksEnabled(session: XDebugSessionImpl): Boolean {
       return ASYNC_STACKS_ENABLED.get(session.sessionData, true)
     }
+
+    @JvmStatic
+    fun setAsyncStacksEnabled(session: XDebugSessionImpl, state: Boolean) {
+      ASYNC_STACKS_ENABLED.set(session.sessionData, state)
+    }
   }
 }

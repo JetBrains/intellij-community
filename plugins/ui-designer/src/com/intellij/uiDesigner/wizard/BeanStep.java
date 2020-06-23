@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.wizard;
 
 import com.intellij.ide.util.ClassFilter;
@@ -10,7 +10,6 @@ import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -21,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Objects;
 
 /**
  * @author Anton Katilin
@@ -169,8 +169,8 @@ final class BeanStep extends StepAdapter{
       }
 
       if(
-        !Comparing.equal(oldShortClassName, shortClassName) ||
-        !Comparing.equal(oldPackageName, packageName)
+        !Objects.equals(oldShortClassName, shortClassName) ||
+        !Objects.equals(oldPackageName, packageName)
       ){
         // After bean class changed we need to reset all previously set bindings
         resetBindings();
@@ -189,7 +189,7 @@ final class BeanStep extends StepAdapter{
       }
       myData.myBeanClass = aClass;
 
-      if(!Comparing.equal(oldFqClassName, newFqClassName)){
+      if(!Objects.equals(oldFqClassName, newFqClassName)){
         // After bean class changed we need to reset all previously set bindings
         resetBindings();
       }

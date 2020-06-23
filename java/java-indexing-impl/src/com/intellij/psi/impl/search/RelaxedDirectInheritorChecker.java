@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.project.Project;
@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * To avoid expensive super type resolve, if there's only one suitable class with the required name in the project anyway
@@ -43,10 +44,9 @@ public class RelaxedDirectInheritorChecker {
     myFileIndex = ProjectFileIndex.getInstance(myBaseClass.getProject());
   }
 
-  @NotNull
-  private static Pair<PsiClass[], Boolean> getClassesAndTheirAmbiguities(@NotNull Project project, @NotNull String classShortName) {
+  private static @NotNull Pair<PsiClass[], Boolean> getClassesAndTheirAmbiguities(@NotNull Project project, @NotNull String classShortName) {
     Map<String, Reference<Pair<PsiClass[],Boolean>>> cache = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      Map<String, Reference<Pair<PsiClass[], Boolean>>> map = ContainerUtil.newConcurrentMap();
+      Map<String, Reference<Pair<PsiClass[], Boolean>>> map = new ConcurrentHashMap<>();
       return CachedValueProvider.Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
     Pair<PsiClass[], Boolean> result = SoftReference.dereference(cache.get(classShortName));
@@ -123,7 +123,7 @@ public class RelaxedDirectInheritorChecker {
     if (modifierList != null && PsiUtil.getAccessLevel(modifierList) == PsiUtil.ACCESS_LEVEL_PROTECTED) {
       return true; // requires hierarchy checks => resolve
     }
-    
+
     return JavaResolveUtil.isAccessible(base, base.getContainingClass(), modifierList, inheritorCandidate, null, null);
   }
 }

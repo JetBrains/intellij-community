@@ -109,8 +109,8 @@ public class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResu
   }
 
   @Override
-  public boolean possiblyDrop(DnDEvent aEvent) {
-    return myHandler == null || myHandler.possiblyDrop(aEvent);
+  public boolean tryDrop(DnDEvent aEvent) {
+    return myHandler == null || myHandler.tryDrop(aEvent);
   }
 
   @Override
@@ -148,8 +148,8 @@ public class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResu
     }
 
     @Override
-    public boolean possiblyDrop(DnDEvent event) {
-      return myTarget.possiblyDrop(event);
+    public boolean tryDrop(DnDEvent event) {
+      return myTarget.tryDrop(event);
     }
 
     @Override
@@ -206,11 +206,10 @@ public class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResu
 
       @Override
       public DnDSupportBuilder setDropHandler(DnDDropHandler handler) {
-        dropHandler.set(e -> {
+        return setDropHandlerWithResult(e -> {
           handler.drop(e);
           return true;
         });
-        return this;
       }
 
       @Override

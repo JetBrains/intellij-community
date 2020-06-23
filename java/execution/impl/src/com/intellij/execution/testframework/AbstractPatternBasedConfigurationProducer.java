@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.JavaTestConfigurationBase;
@@ -6,7 +6,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -14,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public abstract class AbstractPatternBasedConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> implements Cloneable {
@@ -44,7 +44,7 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends JavaTe
       final Iterator<String> patternsIterator = patterns.iterator();
       final Iterator<String> classesIterator = classes.iterator();
       while (patternsIterator.hasNext() && classesIterator.hasNext()) {
-        if (!Comparing.equal(patternsIterator.next(), classesIterator.next())) {
+        if (!Objects.equals(patternsIterator.next(), classesIterator.next())) {
           return false;
         }
       }

@@ -21,9 +21,17 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.NonExtendable
 public interface ExportableOrderEntry extends OrderEntry {
   boolean isExported();
+
+  /**
+   * Updates 'exported' flag for the entry. This method may be called only on a modifiable instance obtained from {@link ModifiableRootModel}.
+   */
   void setExported(boolean value);
 
   @NotNull
   DependencyScope getScope();
+
+  /**
+   * Updates scope for the entry. This method may be called only on a modifiable instance obtained from {@link ModifiableRootModel}.
+   */
   void setScope(@NotNull DependencyScope scope);
 }

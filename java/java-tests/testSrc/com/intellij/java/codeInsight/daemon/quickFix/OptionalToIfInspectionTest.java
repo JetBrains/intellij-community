@@ -27,11 +27,6 @@ public class OptionalToIfInspectionTest extends LightQuickFixParameterizedTestCa
   }
 
   @Override
-  public void runSingle() throws Throwable {
-    super.runSingle();
-  }
-
-  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/optionalToIf";
   }

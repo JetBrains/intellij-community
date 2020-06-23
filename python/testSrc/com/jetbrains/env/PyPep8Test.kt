@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env
 
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.inspections.PyPep8Inspection
@@ -55,8 +56,8 @@ class PyPep8Test : PyEnvTestCase() {
 
     override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
       myFixture.configureByText(PythonFileType.INSTANCE, text)
-      myFixture.enableInspections(PyPep8Inspection::class.java)
-      myFixture.checkHighlighting()
+      runInEdt { myFixture.enableInspections(PyPep8Inspection::class.java) }
+      runInEdt { myFixture.checkHighlighting() }
     }
   }
 }

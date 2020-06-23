@@ -4,6 +4,7 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.CommonBundle;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -26,7 +27,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.List;
 
 final class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   private static final Logger LOG = Logger.getInstance(ImageObjectRenderer.class);
@@ -81,10 +81,9 @@ final class ImageObjectRenderer extends CompoundReferenceRenderer implements Ful
     ClassType helperClass = ClassLoadingUtils.getHelperClass(ImageSerializer.class, copyContext);
 
     if (helperClass != null) {
-      List<Method> methods = helperClass.methodsByName(methodName);
-      if (!methods.isEmpty()) {
-        StringReference bytes =
-          (StringReference)process.invokeMethod(copyContext, helperClass, methods.get(0), Collections.singletonList(obj));
+      Method method = DebuggerUtils.findMethod(helperClass, methodName, null);
+      if (method != null) {
+        StringReference bytes = (StringReference)process.invokeMethod(copyContext, helperClass, method, Collections.singletonList(obj));
         if (bytes != null) {
           return bytes.value().getBytes(StandardCharsets.ISO_8859_1);
         }

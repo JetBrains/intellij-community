@@ -72,7 +72,7 @@ public class PsiJavaPatterns extends StandardPatterns{
     return psiLiteral(null);
   }
 
-  public static PsiJavaElementPattern.Capture<PsiLiteral> psiLiteral(@Nullable final ElementPattern value) {
+  public static PsiJavaElementPattern.Capture<PsiLiteral> psiLiteral(@Nullable final ElementPattern<?> value) {
     return new PsiJavaElementPattern.Capture<>(new InitialPatternConditionPlus<PsiLiteral>(PsiLiteral.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
@@ -103,7 +103,7 @@ public class PsiJavaPatterns extends StandardPatterns{
     });
   }
 
-  public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression(@Nullable final ElementPattern value) {
+  public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression(@Nullable final ElementPattern<?> value) {
     return new PsiJavaElementPattern.Capture<>(new InitialPatternConditionPlus<PsiLiteralExpression>(PsiLiteralExpression.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {

@@ -217,6 +217,7 @@ public final class ThreadTracker {
     return isIdleApplicationPoolThread(stackTrace)
            || isIdleCommonPoolThread(thread, stackTrace)
            || isFutureTaskAboutToFinish(stackTrace)
+           || isIdleDefaultCoroutineExecutorThread(thread, stackTrace)
            || isCoroutineSchedulerPoolThread(thread, stackTrace);
   }
 
@@ -238,11 +239,21 @@ public final class ThreadTracker {
     if (!ForkJoinWorkerThread.class.isAssignableFrom(thread.getClass())) {
       return false;
     }
-    //noinspection UnnecessaryLocalVariable
     boolean insideAwaitWork = ContainerUtil.exists(stackTrace,
           element -> element.getMethodName().equals("awaitWork")
                      && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
-    return insideAwaitWork;
+    if (insideAwaitWork) return true;
+    //java.lang.AssertionError: Thread leaked: Thread[ForkJoinPool.commonPool-worker-13,4,main] (alive) WAITING
+    //--- its stacktrace:
+    // at java.base@11.0.6/jdk.internal.misc.Unsafe.park(Native Method)
+    // at java.base@11.0.6/java.util.concurrent.locks.LockSupport.park(LockSupport.java:194)
+    // at java.base@11.0.6/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1628)
+    // at java.base@11.0.6/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:177)
+    boolean isWaitingWorkInJdk11 = stackTrace.length > 2
+          && stackTrace[0].getClassName().equals("sun.misc.Unsafe") && stackTrace[0].getMethodName().equals("park")
+          && stackTrace[1].getClassName().equals("java.util.concurrent.locks.LockSupport") && stackTrace[1].getMethodName().equals("park")
+          && stackTrace[2].getClassName().equals("java.util.concurrent.ForkJoinPool") && stackTrace[2].getMethodName().equals("runWorker");
+    return isWaitingWorkInJdk11;
   }
 
   // in newer JDKs strange long hangups observed in Unsafe.unpark:
@@ -270,6 +281,23 @@ public final class ThreadTracker {
       && stackTrace[0].getMethodName().equals("unpark")
       && stackTrace[2].getClassName().equals("java.util.concurrent.FutureTask")
       && stackTrace[2].getMethodName().equals("finishCompletion");
+  }
+
+  /**
+   * at sun.misc.Unsafe.park(Native Method)
+   * at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+   * at kotlinx.coroutines.DefaultExecutor.run(DefaultExecutor.kt:83)
+   * at java.lang.Thread.run(Thread.java:748)
+   */
+  private static boolean isIdleDefaultCoroutineExecutorThread(@NotNull Thread thread, @NotNull StackTraceElement @NotNull [] stackTrace) {
+    if (stackTrace.length != 4) {
+      return false;
+    }
+    return "kotlinx.coroutines.DefaultExecutor".equals(thread.getName())
+           && (stackTrace[0].getClassName().equals("sun.misc.Unsafe") || stackTrace[0].getClassName().equals("jdk.internal.misc.Unsafe"))
+           && stackTrace[0].getMethodName().equals("park")
+           && stackTrace[2].getClassName().equals("kotlinx.coroutines.DefaultExecutor")
+           && stackTrace[2].getMethodName().equals("run");
   }
 
   private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {

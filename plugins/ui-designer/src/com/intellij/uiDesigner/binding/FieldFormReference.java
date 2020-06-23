@@ -7,9 +7,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class FieldFormReference extends ReferenceInForm {
   private final PsiReference myClassReference;
   private final String myComponentClassName;
@@ -59,7 +56,8 @@ public final class FieldFormReference extends ReferenceInForm {
     }
 
     final PsiField field = (PsiField)element;
-    if (!myClassReference.equals(field.getContainingClass())) {
+    PsiClass fieldClass = field.getContainingClass();
+    if (fieldClass == null || !myClassReference.isReferenceTo(fieldClass)) {
       throw new IncorrectOperationException();
     }
     final String text = field.getName();

@@ -23,7 +23,7 @@ final class ObjectNode {
   private final Disposable myObject;
 
   private List<ObjectNode> myChildren; // guarded by myTree.treeLock
-  private final Throwable myTrace;
+  private Throwable myTrace;
 
   ObjectNode(@NotNull ObjectTree tree,
              @Nullable ObjectNode parentNode,
@@ -140,6 +140,10 @@ final class ObjectNode {
 
   Throwable getTrace() {
     return myTrace;
+  }
+
+  void clearTrace() {
+    myTrace = null;
   }
 
   @TestOnly

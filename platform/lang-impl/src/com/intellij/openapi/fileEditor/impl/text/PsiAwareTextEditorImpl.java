@@ -9,6 +9,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.daemon.impl.focusMode.FocusModePassFactory;
+import com.intellij.codeInsight.documentation.render.DocRenderManager;
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -18,14 +19,11 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -38,7 +36,7 @@ import java.util.List;
 public class PsiAwareTextEditorImpl extends TextEditorImpl {
   private TextEditorBackgroundHighlighter myBackgroundHighlighter;
 
-  public PsiAwareTextEditorImpl(@NotNull final Project project, @NotNull final VirtualFile file, final TextEditorProvider provider) {
+  public PsiAwareTextEditorImpl(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
     super(project, file, provider);
   }
 
@@ -56,15 +54,13 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
     List<? extends Segment> focusZones = FocusModePassFactory.calcFocusZones(psiFile);
 
-    migrateDocRenderSettingIfNeeded();
-    DocRenderPassFactory.Items items =
-      document != null && psiFile != null && EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled()
-      ? DocRenderPassFactory.calculateItemsToRender(document, psiFile)
-      : null;
+    Editor editor = getEditor();
+    DocRenderPassFactory.Items items = document != null && psiFile != null && DocRenderManager.isDocRenderingEnabled(getEditor())
+                                       ? DocRenderPassFactory.calculateItemsToRender(editor, psiFile)
+                                       : null;
 
     return () -> {
       baseResult.run();
-      Editor editor = getEditor();
 
       if (foldingState != null) {
         foldingState.setToEditor(editor);
@@ -87,17 +83,9 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     };
   }
 
-  private static void migrateDocRenderSettingIfNeeded() {
-    RegistryValue value = Registry.get("editor.render.doc.comments");
-    if (value.asBoolean()) {
-      value.setValue(false);
-      EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
-    }
-  }
-
   @NotNull
   @Override
-  protected TextEditorComponent createEditorComponent(final Project project, final VirtualFile file) {
+  protected TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file) {
     return new PsiAwareTextEditorComponent(project, file, this);
   }
 
@@ -117,9 +105,9 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     private final Project myProject;
     private final VirtualFile myFile;
 
-    private PsiAwareTextEditorComponent(@NotNull final Project project,
-                                        @NotNull final VirtualFile file,
-                                        @NotNull final TextEditorImpl textEditor) {
+    private PsiAwareTextEditorComponent(@NotNull Project project,
+                                        @NotNull VirtualFile file,
+                                        @NotNull TextEditorImpl textEditor) {
       super(project, file, textEditor);
       myProject = project;
       myFile = file;

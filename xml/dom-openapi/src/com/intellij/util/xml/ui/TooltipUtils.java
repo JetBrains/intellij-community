@@ -47,7 +47,7 @@ public class TooltipUtils {
     if (messages.length == 0) return null;
 
     StringBuilder text = new StringBuilder("<html><body><table><tr><td>&nbsp;</td><td>");
-    int len = messages.length > 10 ? 10 : messages.length;
+    int len = Math.min(messages.length, 10);
     for (int i = 0; i < len; i++) {
       if (i != 0) {
         text.append(MESSAGE_DELIMITER);

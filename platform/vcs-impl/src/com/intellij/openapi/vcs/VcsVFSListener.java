@@ -505,7 +505,7 @@ public abstract class VcsVFSListener implements Disposable {
     for (Document document : fileDocumentManager.getUnsavedDocuments()) {
       VirtualFile file = fileDocumentManager.getFile(document);
       if (file != null && ignoreFileNames.contains(file.getName())) {
-        fileDocumentManager.saveDocument(document);
+        ApplicationManager.getApplication().invokeAndWait(() -> fileDocumentManager.saveDocument(document));
       }
     }
   }
@@ -688,7 +688,7 @@ public abstract class VcsVFSListener implements Disposable {
 
         ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(() -> myProcessor.process(events),
-                                               "Version Control: Processing Changed Files", true, myProject);
+                                               VcsBundle.message("progress.title.version.control.processing.changed.files"), true, myProject);
       }
     }
 }

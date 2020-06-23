@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.toolwindow
 
+import com.google.gson.Gson
 import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.util.text.DateFormatUtil
 
@@ -27,16 +28,15 @@ class StatisticsEventLogMessageBuilder {
   }
 
   private fun valueToString(value: Any, key: String): String =
-    if (value is Collection<*>) {
-      val values = value.joinToString { "\"${it.toString()}\"" }
-      "[$values]"
-    }
-    else {
-      var valueAsString = value.toString()
-      if (key == "project") {
-        valueAsString = shortenProjectId(valueAsString)
+    when (value) {
+      is Map<*, *>, is Collection<*> -> gson.toJson(value)
+      else -> {
+        var valueAsString = value.toString()
+        if (key == "project") {
+          valueAsString = shortenProjectId(valueAsString)
+        }
+        "\"$valueAsString\""
       }
-      "\"$valueAsString\""
     }
 
   private fun shortenProjectId(projectId: String): String {
@@ -51,7 +51,8 @@ class StatisticsEventLogMessageBuilder {
   }
 
   companion object {
-    private val systemFields = setOf("last", "created")
+    private val gson = Gson()
+    private val systemFields = setOf("last", "created", "system_event_id")
     private const val projectIdPrefixSize = 8
     private const val projectIdSuffixSize = 2
     private const val maxProjectIdSize = projectIdPrefixSize + projectIdSuffixSize

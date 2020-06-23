@@ -31,7 +31,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author yole
  */
 public class PyBlock implements ASTBlock {
-  private static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens();
+  private static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.getInstance().getStatementTokens();
 
 
   private static final TokenSet ourListElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
@@ -1171,7 +1171,7 @@ public class PyBlock implements ASTBlock {
   }
 
   private static final TokenSet stopAtTokens = TokenSet.orSet(TokenSet.create(PyElementTypes.FSTRING_NODE),
-                                                              PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens());
+                                                              PythonDialectsTokenSetProvider.getInstance().getStatementTokens());
 
   private static boolean isInsideFStringFragmentWithEqualsSign(@NotNull ASTNode node) {
     final ASTNode fStringFragmentParent = node.getElementType() == PyElementTypes.FSTRING_FRAGMENT

@@ -187,11 +187,6 @@ public class JUnit4Framework extends JavaTestFramework {
   }
 
   @Override
-  public char getMnemonic() {
-    return '4';
-  }
-
-  @Override
   public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit4 Test Class.java");
   }

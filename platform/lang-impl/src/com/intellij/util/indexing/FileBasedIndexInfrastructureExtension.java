@@ -10,6 +10,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+
 @ApiStatus.Internal
 public interface FileBasedIndexInfrastructureExtension {
   ExtensionPointName<FileBasedIndexInfrastructureExtension> EP_NAME =  ExtensionPointName.create("com.intellij.fileBasedIndexInfrastructureExtension");
@@ -28,6 +30,12 @@ public interface FileBasedIndexInfrastructureExtension {
      * Processes up to date file while "scanning files to index" in progress.
      */
     void processUpToDateFile(@NotNull VirtualFile file, int inputId, @NotNull ID<?, ?> indexId);
+
+    /**
+     * Whether the given file has index provided by this extension.
+     */
+    @ApiStatus.Experimental
+    boolean hasIndexForFile(@NotNull VirtualFile file, int inputId, @NotNull ID<?, ?> indexId);
   }
 
   @Nullable
@@ -42,7 +50,7 @@ public interface FileBasedIndexInfrastructureExtension {
    */
   @Nullable
   <K, V> UpdatableIndex<K, V, FileContent> combineIndex(@NotNull FileBasedIndexExtension<K, V> indexExtension,
-                                                        @NotNull UpdatableIndex<K, V, FileContent> baseIndex);
+                                                        @NotNull UpdatableIndex<K, V, FileContent> baseIndex) throws IOException;
 
 
   /**

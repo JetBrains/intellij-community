@@ -217,7 +217,7 @@ public final class TodoPackageNode extends PackageElementNode {
         }
       }
     }
-    Collections.sort(children, TodoFileDirAndModuleComparator.INSTANCE);
+    children.sort(TodoFileDirAndModuleComparator.INSTANCE);
     return children;
   }
 

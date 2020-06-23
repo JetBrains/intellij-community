@@ -253,7 +253,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
 
   public void testEntityDecl4() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
-        "<!ENTITY % boolean \'(true|false|on|off|yes|no)\'> <!ENTITY % bool \"%boolean;\">  <!ELEMENT toc ANY> <!ATTLIST toc remote %bool; \"false\"");
+      "<!ENTITY % boolean '(true|false|on|off|yes|no)'> <!ENTITY % bool \"%boolean;\">  <!ELEMENT toc ANY> <!ATTLIST toc remote %bool; \"false\"");
 
     final XmlTag tag = tag("toc");
     XmlElementDescriptor elementDescriptor = NSDescriptor.getElementDescriptor(tag);

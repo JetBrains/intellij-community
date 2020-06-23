@@ -22,5 +22,7 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="NanoXML" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="library" name="Trove4j" level="project" />
   </component>
 </module>

@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.MathUtil;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -352,8 +353,8 @@ public class EditorModificationUtil {
   @NotNull
   public static List<CaretState> calcBlockSelectionState(@NotNull Editor editor, 
                                                          @NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
-    int startLine = Math.max(Math.min(blockStart.line, editor.getDocument().getLineCount() - 1), 0);
-    int endLine = Math.max(Math.min(blockEnd.line, editor.getDocument().getLineCount() - 1), 0);
+    int startLine = MathUtil.clamp(blockStart.line, 0, editor.getDocument().getLineCount() - 1);
+    int endLine = MathUtil.clamp(blockEnd.line, 0, editor.getDocument().getLineCount() - 1);
     int step = endLine < startLine ? -1 : 1;
     int count = 1 + Math.abs(endLine - startLine);
     List<CaretState> caretStates = new LinkedList<>();

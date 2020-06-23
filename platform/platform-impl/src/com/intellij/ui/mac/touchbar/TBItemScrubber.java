@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -141,12 +141,9 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
     Icon getIcon() { return myIcon; }
 
     byte[] getTextBytes() {
-      if (myTextBytes == null && myText != null)
-        try {
-          myTextBytes = myText.getBytes("UTF8");
-        } catch (UnsupportedEncodingException e) {
-          e.printStackTrace();
-        }
+      if (myTextBytes == null && myText != null) {
+        myTextBytes = myText.getBytes(StandardCharsets.UTF_8);
+      }
 
       return myTextBytes;
     }

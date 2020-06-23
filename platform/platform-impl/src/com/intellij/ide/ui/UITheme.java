@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Element;
@@ -186,22 +187,27 @@ public class UITheme {
 
               @Override
               public void patchColors(@NotNull Element svg) {
-                String fill = svg.getAttribute("fill");
-                if (fill != null) {
-                  String newFill = newPalette.get(StringUtil.toLowerCase(fill));
-                  if (newFill != null) {
-                    svg.setAttribute("fill", newFill);
-                    if (alphas.get(newFill) != null) {
-                      svg.setAttribute("fill-opacity", String.valueOf((Float.valueOf(alphas.get(newFill)) / 255f)));
-                    }
-                  }
-                }
+                patchColorAttribute(svg, "fill");
+                patchColorAttribute(svg, "stroke");
                 NodeList nodes = svg.getChildNodes();
                 int length = nodes.getLength();
                 for (int i = 0; i < length; i++) {
                   Node item = nodes.item(i);
                   if (item instanceof Element) {
                     patchColors((Element)item);
+                  }
+                }
+              }
+
+              private void patchColorAttribute(@NotNull Element svg, String attrName) {
+                String color = svg.getAttribute(attrName);
+                if (color != null) {
+                  String newColor = newPalette.get(StringUtil.toLowerCase(color));
+                  if (newColor != null) {
+                    svg.setAttribute(attrName, newColor);
+                    if (alphas.get(newColor) != null) {
+                      svg.setAttribute(attrName + "-opacity", String.valueOf((Float.valueOf(alphas.get(newColor)) / 255f)));
+                    }
                   }
                 }
               }
@@ -222,7 +228,7 @@ public class UITheme {
     return color != null ? StringUtil.toLowerCase(color) : StringUtil.toLowerCase(fillValue);
   }
 
-  private static final Map<String, String> colorPalette = new HashMap<>();
+  private static final @NonNls Map<String, String> colorPalette = new HashMap<>();
   static {
     colorPalette.put("Actions.Red", "#DB5860");
     colorPalette.put("Actions.Red.Dark", "#C75450");

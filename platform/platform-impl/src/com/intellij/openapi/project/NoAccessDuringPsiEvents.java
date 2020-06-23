@@ -22,7 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -34,9 +36,13 @@ public class NoAccessDuringPsiEvents {
   private static final Logger LOG = Logger.getInstance(NoAccessDuringPsiEvents.class);
   private static final Set<String> ourReportedTraces = new HashSet<>();
 
-  public static void checkCallContext() {
+  public static void checkCallContext(@NotNull ID<?, ?> indexId) {
+    checkCallContext("access index #" + indexId.getName());
+  }
+
+  public static void checkCallContext(@NotNull String contextDescription) {
     if (isInsideEventProcessing() && ourReportedTraces.add(DebugUtil.currentStackTrace())) {
-      LOG.error("It's prohibited to access index during event dispatching");
+      LOG.error("It's prohibited to " + contextDescription + " during event dispatching");
     }
   }
 

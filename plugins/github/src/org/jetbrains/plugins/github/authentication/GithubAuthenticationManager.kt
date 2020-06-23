@@ -13,6 +13,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
 
 /**
@@ -34,7 +35,8 @@ class GithubAuthenticationManager internal constructor() {
   @CalledInAwt
   @JvmOverloads
   internal fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? {
-    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent, message = "Missing access token for $account")
+    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent,
+                                   message = GithubBundle.message("account.token.missing.for", account))
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
       .withToken()

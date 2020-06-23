@@ -7,11 +7,8 @@ import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration;
-import com.intellij.lang.DependentLanguage;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
+import com.intellij.ide.util.gotoByName.LanguageRef;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,7 +31,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   private static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Pattern ourPatternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
-  private final PersistentSearchEverywhereContributorFilter<Language> myFilter;
+  private final PersistentSearchEverywhereContributorFilter<LanguageRef> myFilter;
 
   public ClassSearchEverywhereContributor(@NotNull AnActionEvent event) {
     super(event);
@@ -66,7 +62,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
 
   @NotNull
   @Override
-  protected FilteringGotoByModel<Language> createModel(@NotNull Project project) {
+  protected FilteringGotoByModel<LanguageRef> createModel(@NotNull Project project) {
     GotoClassModel2 model = new GotoClassModel2(project);
     if (myFilter != null) {
       model.setFilterItems(myFilter.getSelectedElements());
@@ -185,16 +181,9 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   }
 
   @NotNull
-  static PersistentSearchEverywhereContributorFilter<Language> createLanguageFilter(@NotNull Project project) {
-    List<Language> items = Language.getRegisteredLanguages()
-      .stream()
-      .filter(lang -> lang != Language.ANY && !(lang instanceof DependentLanguage))
-      .sorted(LanguageUtil.LANGUAGE_COMPARATOR)
-      .collect(Collectors.toList());
+  static PersistentSearchEverywhereContributorFilter<LanguageRef> createLanguageFilter(@NotNull Project project) {
+    List<LanguageRef> items = LanguageRef.forAllLanguages();
     GotoClassSymbolConfiguration persistentConfig = GotoClassSymbolConfiguration.getInstance(project);
-    return new PersistentSearchEverywhereContributorFilter<>(items, persistentConfig, Language::getDisplayName, language -> {
-      final LanguageFileType fileType = language.getAssociatedFileType();
-      return fileType != null ? fileType.getIcon() : null;
-    });
+    return new PersistentSearchEverywhereContributorFilter<>(items, persistentConfig, LanguageRef::getDisplayName, LanguageRef::getIcon);
   }
 }

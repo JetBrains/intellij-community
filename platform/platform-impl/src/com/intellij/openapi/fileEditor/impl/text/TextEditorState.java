@@ -132,7 +132,6 @@ public final class TextEditorState implements FileEditorState {
 
       if (COLUMN != caretState.COLUMN) return false;
       if (LINE != caretState.LINE) return false;
-      if (LEAN_FORWARD != caretState.LEAN_FORWARD) return false;
       if (VISUAL_COLUMN_ADJUSTMENT != caretState.VISUAL_COLUMN_ADJUSTMENT) return false;
       if (SELECTION_START_LINE != caretState.SELECTION_START_LINE) return false;
       if (SELECTION_START_COLUMN != caretState.SELECTION_START_COLUMN) return false;

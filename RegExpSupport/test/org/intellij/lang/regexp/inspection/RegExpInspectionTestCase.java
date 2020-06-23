@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.project.Project;
@@ -48,5 +50,11 @@ public abstract class RegExpInspectionTestCase extends BasePlatformTestCase {
     highlightTest(before, fileType);
     myFixture.launchAction(myFixture.findSingleIntention(hint));
     myFixture.checkResult(after);
+  }
+
+  protected final void quickfixAllTest(@Language("RegExp") String before, @Language("RegExp") String after) {
+    InspectionProfileEntry inspection = getInspection();
+    assert inspection != null : "getInspection() needs to return a non-null value for quickFixAllTest() to work";
+    quickfixTest(before, after, InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.getDisplayName()));
   }
 }

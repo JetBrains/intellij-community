@@ -194,7 +194,8 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       int counter = 0;
       for (PyExpression tuple_elt : lhs_tuple.getElements()) {
         try {
-          final PyExpression expression = elementGenerator.createExpressionFromText(languageLevel, rhs_one.getText() + "[" + counter + "]");
+          final PyExpression expression =
+            elementGenerator.createExpressionFromText(languageLevel, "(" + rhs_one.getText() + ")[" + counter + "]");
           map.add(Pair.create(tuple_elt, expression));
         }
         catch (IncorrectOperationException e) {

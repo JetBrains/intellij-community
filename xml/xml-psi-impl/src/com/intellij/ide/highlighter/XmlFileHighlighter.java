@@ -119,7 +119,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
       for (IElementType key : attributes.keySet()) {
         myMap.remove(key);
       }
-      registerAdditionalHighlighters(myMap, extension);
+      registerAdditionalHighlighters(myMap);
     }
   }
 

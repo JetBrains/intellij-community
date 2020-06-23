@@ -2,7 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -13,12 +14,13 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightUtil.Feature.PATTERNS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!HighlightingFeature.PATTERNS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitLocalVariable(PsiLocalVariable variable) {
@@ -85,6 +87,13 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
       CommentTracker ct = new CommentTracker();
       ct.replace(instanceOf, ct.text(instanceOf.getOperand()) + " instanceof " + typeElement.getText() + " " + variable.getName());
       ct.deleteAndRestoreComments(variable);
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      PsiInstanceOfExpression instanceOf = myInstanceOfPointer.getElement();
+      return instanceOf == null ? null : new PatternVariableCanBeUsedFix(myName, PsiTreeUtil
+        .findSameElementInCopy(instanceOf, target));
     }
   }
 }

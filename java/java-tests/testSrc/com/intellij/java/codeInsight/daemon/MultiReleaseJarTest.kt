@@ -3,12 +3,15 @@ package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaReference
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.search.PsiShortNamesCache
+import com.intellij.psi.stubs.StubUpdatingIndex
+import com.intellij.util.indexing.FileBasedIndex
 import org.assertj.core.api.Assertions.assertThat
 
 class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
@@ -46,8 +49,19 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testFindFile() {
-    assertThat(FilenameIndex.getFilesByName(project, "MultiReleaseClass.class", scope)).hasSize(3)
+    assertThat(getAllAvailableVersionClasses()).hasSize(3)
   }
+
+  fun testStubIndexInternals() {
+    for (file in getAllAvailableVersionClasses()) {
+      val data = FileBasedIndex.getInstance().getFileData(StubUpdatingIndex.INDEX_ID, file, project)
+      val stub = assertOneElement(data.values)
+      assertNotNull(stub)
+    }
+  }
+
+  private fun getAllAvailableVersionClasses(): Collection<VirtualFile> =
+    FilenameIndex.getVirtualFilesByName(project, "MultiReleaseClass.class", scope)
 
   private fun assertUnversioned(elements: List<PsiElement?>) {
     assertThat(elements).hasSize(1)

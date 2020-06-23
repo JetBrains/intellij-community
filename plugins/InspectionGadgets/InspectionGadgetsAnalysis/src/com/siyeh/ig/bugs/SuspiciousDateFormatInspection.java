@@ -106,27 +106,27 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
         if (token == null) return null;
         switch (token.character) {
           case 'Y':
-            if (!hasNeighbor("w", "", prev, next)) {
+            if (!hasNeighbor("w", prev, next)) {
               return new Problem(token, "week year", "year");
             }
             break;
           case 'M':
-            if (hasNeighbor("HhKk", "yd", prev, next)) {
+            if (hasNeighbor("HhKk", prev, next) && !hasNeighbor("yd", prev, next)) {
               return new Problem(token, "month", "minute");
             }
             break;
           case 'm':
-            if (hasNeighbor("yd", "HhKk", prev, next)) {
+            if (hasNeighbor("yd", prev, next) && !hasNeighbor("HhKk", prev, next)) {
               return new Problem(token, "minute", "month");
             }
             break;
           case 'D':
-            if (hasNeighbor("ML", "", prev, next)) {
+            if (hasNeighbor("ML", prev, next)) {
               return new Problem(token, "day of year", "day of month");
             }
             break;
           case 'S':
-            if (hasNeighbor("m", "", prev, next)) {
+            if (hasNeighbor("m", prev, next)) {
               return new Problem(token, "milliseconds", "seconds");
             }
             break;
@@ -134,13 +134,9 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
         return null;
       }
 
-      private boolean hasNeighbor(@NotNull String toMatch, @NotNull String toStop, @Nullable Token prev, @Nullable Token next) {
-        boolean hasStopMatch =
-          prev != null && toStop.indexOf(prev.character) >= 0 ||
-          next != null && toStop.indexOf(next.character) >= 0;
-        if (hasStopMatch) return false;
-        return prev != null && toMatch.indexOf(prev.character) >= 0 ||
-               next != null && toMatch.indexOf(next.character) >= 0;
+      private boolean hasNeighbor(@NotNull String neighbors, @Nullable Token prev, @Nullable Token next) {
+        return prev != null && neighbors.indexOf(prev.character) >= 0 ||
+               next != null && neighbors.indexOf(next.character) >= 0;
       }
     };
   }

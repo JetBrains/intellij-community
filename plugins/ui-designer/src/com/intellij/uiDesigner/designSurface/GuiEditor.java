@@ -87,7 +87,7 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade, DataProvider, ModuleProvider {
+public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(GuiEditor.class);
 
   private final Project myProject;
@@ -337,7 +337,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
     // PSI listener to restart error highlighter
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
-    PsiManager.getInstance(getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
+    PsiManager.getInstance(getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener, this);
 
     myQuickFixManager = new QuickFixManagerImpl(this, myGlassLayer, myScrollPane.getViewport());
 
@@ -378,6 +378,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     return mySelectionState;
   }
 
+  @Override
   public void dispose() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -390,7 +391,6 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     }
 
     myDocument.removeDocumentListener(myDocumentListener);
-    PsiManager.getInstance(getProject()).removePsiTreeChangeListener(myPsiTreeChangeListener);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       DesignerToolWindowManager.getInstance(myProject).dispose(this);

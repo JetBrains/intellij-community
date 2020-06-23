@@ -5,12 +5,13 @@ import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.util.SystemInfo
 import org.junit.Assert
 import org.junit.Assume
+import org.junit.AssumptionViolatedException
 import org.junit.Test
 
 class LocalTargetEnvironmentTest {
   @Test
   fun `create general command line on Windows`() {
-    Assume.assumeTrue(SystemInfo.isWindows)
+    assumeWindows()
 
     val exePath = "C:\\Path\\To\\Some Executable.exe"
 
@@ -22,14 +23,14 @@ class LocalTargetEnvironmentTest {
       "Option with \"Quotes\" and Spaces"
     )
 
-    val targetedCommandLineBuilder = TargetedCommandLineBuilder().apply {
+    val request = LocalTargetEnvironmentRequest()
+    val targetedCommandLineBuilder = TargetedCommandLineBuilder(request).apply {
       setExePath(exePath)
       parameters.forEach { parameter ->
         addParameter(parameter)
       }
     }
 
-    val request = LocalTargetEnvironmentRequest()
     val localTargetEnvironment = LocalTargetEnvironment(request)
     val generalCommandLine = localTargetEnvironment.createGeneralCommandLine(targetedCommandLineBuilder.build())
     println(generalCommandLine.commandLineString)
@@ -47,7 +48,7 @@ class LocalTargetEnvironmentTest {
 
   @Test
   fun `create general command line on UNIX`() {
-    Assume.assumeTrue(SystemInfo.isUnix)
+    assumeUnix()
 
     val exePath = "/path/to/some executable"
 
@@ -59,14 +60,14 @@ class LocalTargetEnvironmentTest {
       "Option With \"Quotes\" and Spaces"
     )
 
-    val targetedCommandLineBuilder = TargetedCommandLineBuilder().apply {
+    val request = LocalTargetEnvironmentRequest()
+    val targetedCommandLineBuilder = TargetedCommandLineBuilder(request).apply {
       setExePath(exePath)
       parameters.forEach { parameter ->
         addParameter(parameter)
       }
     }
 
-    val request = LocalTargetEnvironmentRequest()
     val localTargetEnvironment = LocalTargetEnvironment(request)
     val generalCommandLine = localTargetEnvironment.createGeneralCommandLine(targetedCommandLineBuilder.build())
     println(generalCommandLine.commandLineString)
@@ -82,4 +83,17 @@ class LocalTargetEnvironmentTest {
       generalCommandLine.getCommandLineList(null)
     )
   }
+
+  @Throws(AssumptionViolatedException::class)
+  fun assumeWindows() {
+    Assume.assumeTrue("Need Windows, can't run on " + SystemInfo.OS_NAME,
+                      SystemInfo.isWindows)
+  }
+
+  @Throws(AssumptionViolatedException::class)
+  fun assumeUnix() {
+    Assume.assumeTrue("Need Unix, can't run on " + SystemInfo.OS_NAME,
+                      SystemInfo.isUnix)
+  }
+
 }

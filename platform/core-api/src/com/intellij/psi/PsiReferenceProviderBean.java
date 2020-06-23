@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
@@ -9,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ElementPatternBean;
 import com.intellij.patterns.StandardPatterns;
@@ -25,7 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Registers a {@link PsiReferenceProvider} in plugin.xml
+ * Registers a {@link PsiReferenceProvider} for given pattern(s)
+ * via extension point {@code com.intellij.psi.referenceProvider}.
  */
 public class PsiReferenceProviderBean extends AbstractExtensionPointBean implements KeyedLazyInstance<PsiReferenceProviderBean> {
 
@@ -36,6 +35,7 @@ public class PsiReferenceProviderBean extends AbstractExtensionPointBean impleme
   public String language = Language.ANY.getID();
 
   @Attribute("providerClass")
+  @RequiredElement
   public String className;
 
   @Tag("description")
@@ -43,6 +43,7 @@ public class PsiReferenceProviderBean extends AbstractExtensionPointBean impleme
 
   @Property(surroundWithTag = false)
   @XCollection
+  @RequiredElement
   public ElementPatternBean[] patterns;
 
   public String getDescription() {
@@ -61,7 +62,7 @@ public class PsiReferenceProviderBean extends AbstractExtensionPointBean impleme
     return null;
   }
 
-  private static final NullableFunction<ElementPatternBean,ElementPattern<? extends PsiElement>> PATTERN_NULLABLE_FUNCTION =
+  private static final NullableFunction<ElementPatternBean, ElementPattern<? extends PsiElement>> PATTERN_NULLABLE_FUNCTION =
     elementPatternBean -> elementPatternBean.compilePattern();
 
   @Nullable

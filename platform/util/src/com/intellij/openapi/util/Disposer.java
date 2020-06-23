@@ -1,21 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Map;
 
 /**
- * Manages a parent-child relation of chained objects requiring cleanup.
- * <p/>
- * A root node can be created via {@link #newDisposable()} to which children are attached via subsequent calls to {@link #register(Disposable, Disposable)}.
- * Invoking {@link #dispose(Disposable)} will process all its registered children's {@link Disposable#dispose()} method.
+ * <p>Manages a parent-child relation of chained objects requiring cleanup.</p>
+ *
+ * <p>A root node can be created via {@link #newDisposable()}, to which children are attached via subsequent calls to {@link #register(Disposable, Disposable)}.
+ * Invoking {@link #dispose(Disposable)} will process all its registered children's {@link Disposable#dispose()} method.</p>
  *
  * @see Disposable
  */
@@ -28,28 +25,35 @@ public final class Disposer {
 
   private static boolean ourDebugMode;
 
-  private Disposer() {
-  }
+  private Disposer() { }
 
   @NotNull
+  @Contract(pure = true, value = "->new")
   public static Disposable newDisposable() {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
-    return newDisposable(null);
+    return newDisposable("");
   }
 
   @NotNull
-  public static Disposable newDisposable(@Nullable String debugName) {
+  @Contract(pure = true, value = "_->new")
+  public static Disposable newDisposable(@NotNull String debugName) {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
     return new Disposable() {
       @Override
-      public void dispose() {
-      }
+      public void dispose() { }
 
       @Override
       public String toString() {
-        return debugName == null ? super.toString() : debugName;
+        return debugName;
       }
     };
+  }
+
+  @Contract(pure = true, value = "_,_->new")
+  public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable, @NotNull String debugName) {
+    Disposable result = newDisposable(debugName);
+    register(parentDisposable, result);
+    return result;
   }
 
   private static final Map<String, Disposable> ourKeyDisposables = ContainerUtil.createConcurrentWeakMap();

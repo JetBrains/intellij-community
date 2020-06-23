@@ -32,6 +32,7 @@ public interface JavaChangeInfo extends ChangeInfo {
   boolean isExceptionSetOrOrderChanged();
 
   @Override
+  @NotNull
   PsiMethod getMethod();
 
   CanonicalTypes.Type getNewReturnType();
@@ -65,8 +66,9 @@ public interface JavaChangeInfo extends ChangeInfo {
 
   PsiExpression getValue(int i, PsiCallExpression callExpression);
 
-  void updateMethod(PsiMethod psiMethod);
+  void updateMethod(@NotNull PsiMethod psiMethod);
 
+  @NotNull
   Collection<PsiMethod> getMethodsToPropagateParameters();
 
   default boolean checkUnusedParameter() {

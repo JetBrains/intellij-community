@@ -67,6 +67,17 @@ abstract class ProgressWindowTestCase<Fixture : Any, Process : Any> : FileEditor
     }
   }
 
+  fun `test will initialize on-demand on EDT`(): Unit = runBlocking {
+    withTimeout(TIMEOUT_MS) {
+      val process = createProcessOffEdt()
+      assertUninitialized(process)
+      runProcessOnEdt(process) {
+        showDialog(process)
+        assertInitialized(process)
+      }
+    }
+  }
+
   private suspend fun createProcessOffEdt(): Process =
     withContext(Dispatchers.Default) {
       assertIsNotDispatchThread()

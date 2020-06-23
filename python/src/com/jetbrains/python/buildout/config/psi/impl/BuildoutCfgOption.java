@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.buildout.config.psi.impl;
 
-import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class BuildoutCfgOption extends BuildoutCfgPsiElement {
   }
 
   public List<String> getValues() {
-    List<String> result = Lists.newArrayList();
+    List<String> result = new ArrayList<>();
     Collection<BuildoutCfgValueLine> lines = PsiTreeUtil.collectElementsOfType(this, BuildoutCfgValueLine.class);
     for (BuildoutCfgValueLine line : lines) {
       String text = line.getText();

@@ -19,6 +19,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.util.DiffUtil;
@@ -37,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,6 +106,10 @@ public class ErrorDiffTool implements FrameDiffTool {
             final VirtualFile file = ((FileContent)content).getFile();
             return UnknownFileTypeDiffRequest.createComponent(file.getName(), myContext);
           }
+        }
+
+        if (ContainerUtil.all(contents, it -> it instanceof EmptyContent)) {
+          return DiffUtil.createMessagePanel(NoDiffRequest.INSTANCE.getMessage());
         }
       }
 

@@ -34,6 +34,7 @@ import com.jetbrains.PySymbolFieldWithBrowseButton;
 import com.jetbrains.extensions.ContextAnchor;
 import com.jetbrains.extensions.ModuleBasedContextAnchor;
 import com.jetbrains.extensions.ProjectSdkContextAnchor;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyBrowseActionListener;
@@ -41,6 +42,7 @@ import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.reflection.ReflectionUtilsKt;
 import com.jetbrains.reflection.SimplePropertiesProvider;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,7 +171,10 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     setBorderToPanel(form.myPanel, configuration.getTestFrameworkName());
 
     form.addCustomOptions(
-      ObjectArrays.concat(customOptions, new CustomOption(PyTestsSharedKt.getAdditionalArgumentsPropertyName(), PyRunTargetVariant.values()))
+      ObjectArrays.concat(customOptions, new CustomOption(
+        PyTestsSharedKt.getAdditionalArgumentsPropertyName(),
+        PyBundle.message("python.testing.nose.custom.options.additional.arguments"),
+        PyRunTargetVariant.values()))
     );
     configuration.copyTo(ReflectionUtilsKt.getProperties(form, null, true));
     return form;
@@ -192,7 +197,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
 
     for (final CustomOption option : customOptions) {
       final JBTextField textField = optionValueFields.get(option.myName);
-      final JLabel label = new JLabel(StringUtil.capitalize(CAPITAL_LETTER.matcher(option.myName).replaceAll(" ") + ':'));
+      final JLabel label = new JLabel(option.myLocalizedName);
       label.setHorizontalAlignment(SwingConstants.LEFT);
 
       constraints.fill = GridBagConstraints.NONE;
@@ -279,14 +284,19 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
      */
     @NotNull
     private final String myName;
+
+    private final @NotNull @Nls String myLocalizedName;
+
     /**
      * Types to display this option for
      */
     private final EnumSet<PyRunTargetVariant> mySupportedTypes;
 
     CustomOption(@NotNull final String name,
+                 @NotNull @Nls String localizedName,
                  final PyRunTargetVariant @NotNull ... supportedTypes) {
       myName = name;
+      myLocalizedName = localizedName;
       mySupportedTypes = EnumSet.copyOf(Arrays.asList(supportedTypes));
     }
   }

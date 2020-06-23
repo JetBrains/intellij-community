@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,8 +48,8 @@ public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance(ConfigurationContext.class);
   private final Location<PsiElement> myLocation;
   private RunnerAndConfigurationSettings myConfiguration;
-  private boolean myInitialized = false;
-  private boolean myMultipleSelection = false;
+  private boolean myInitialized;
+  private boolean myMultipleSelection;
   private Ref<RunnerAndConfigurationSettings> myExistingConfiguration;
   private final Module myModule;
   private final RunConfiguration myRuntimeConfiguration;
@@ -60,14 +61,19 @@ public class ConfigurationContext {
 
   @NotNull
   public static ConfigurationContext getFromContext(DataContext dataContext) {
-    final ConfigurationContext context = new ConfigurationContext(dataContext);
-    final DataManager dataManager = DataManager.getInstance();
+    DataManager dataManager = DataManager.getInstance();
     ConfigurationContext sharedContext = dataManager.loadFromDataContext(dataContext, SHARED_CONTEXT);
+    Pair<Location<PsiElement>, Boolean> calculatedLocation = null;
+    Module module = null;
     if (sharedContext == null ||
         sharedContext.getLocation() == null ||
-        context.getLocation() == null ||
-        !Comparing.equal(sharedContext.getLocation().getPsiElement(), context.getLocation().getPsiElement())) {
-      sharedContext = context;
+        (calculatedLocation = calcLocation(dataContext, module = LangDataKeys.MODULE.getData(dataContext))).getFirst() == null ||
+        !Comparing.equal(sharedContext.getLocation().getPsiElement(), calculatedLocation.getFirst().getPsiElement())) {
+      if (calculatedLocation==null) {
+        module = LangDataKeys.MODULE.getData(dataContext);
+        calculatedLocation = calcLocation(dataContext, module);
+      }
+      sharedContext = new ConfigurationContext(dataContext, calculatedLocation.getFirst(), module, calculatedLocation.getSecond());
       dataManager.saveInDataContext(dataContext, SHARED_CONTEXT, sharedContext);
     }
     return sharedContext;
@@ -78,30 +84,33 @@ public class ConfigurationContext {
     return new ConfigurationContext(location);
   }
 
-  private ConfigurationContext(final DataContext dataContext) {
+  private ConfigurationContext(final DataContext dataContext, Location<PsiElement> location, Module module, boolean multipleSelection) {
     myRuntimeConfiguration = RunConfiguration.DATA_KEY.getData(dataContext);
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-    myModule = LangDataKeys.MODULE.getData(dataContext);
-    @SuppressWarnings({"unchecked"})
-    final Location<PsiElement> location = (Location<PsiElement>)Location.DATA_KEY.getData(dataContext);
+    myModule = module;
+    myLocation = location;
+    myMultipleSelection = multipleSelection;
+  }
+
+  @NotNull
+  private static Pair<Location<PsiElement>,Boolean> calcLocation(@NotNull DataContext dataContext, Module module) {
+    @SuppressWarnings({"unchecked"}) Location<PsiElement> location = (Location<PsiElement>)Location.DATA_KEY.getData(dataContext);
     if (location != null) {
-      myLocation = location;
       Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
-      myMultipleSelection = locations != null && locations.length > 1;
-      return;
+      boolean myMultipleSelection = locations != null && locations.length > 1;
+      return Pair.create(location, myMultipleSelection);
     }
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
-      myLocation = null;
-      return;
+      return Pair.create(null, false);
     }
     final PsiElement element = getSelectedPsiElement(dataContext, project);
     if (element == null) {
-      myLocation = null;
-      return;
+      return Pair.create(null, false);
     }
-    myLocation = new PsiLocation<>(project, myModule, element);
+    location = new PsiLocation<>(project, module, element);
     final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    boolean myMultipleSelection;
     if (elements != null) {
       myMultipleSelection = elements.length > 1;
     }
@@ -109,6 +118,7 @@ public class ConfigurationContext {
       final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
       myMultipleSelection = files != null && files.length > 1;
     }
+    return Pair.create(location, myMultipleSelection);
   }
 
   public ConfigurationContext(PsiElement element) {

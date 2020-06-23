@@ -38,6 +38,7 @@ private val excludeAction = object : MarkExcludeRootAction() {
 class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposable)
   : VcsIgnoredHolderUpdateListener, FilesProcessorWithNotificationImpl(project, parentDisposable) {
 
+  override val notificationDisplayId: String = "ignored.to.exclude.synchronization.notification"
   override val askedBeforeProperty = ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
   override val doForCurrentProjectProperty: String? = null
   override val showActionText: String = message("ignore.to.exclude.notification.action.view")

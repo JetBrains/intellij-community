@@ -19,8 +19,6 @@ import java.util.function.Supplier;
  */
 abstract class RuleAction extends ToggleAction implements DumbAware {
   protected final UsageViewImpl myView;
-  private boolean myState;
-
   RuleAction(@NotNull UsageView view, @NotNull String text, @NotNull Icon icon) {
     this(view, () -> text, icon);
   }
@@ -28,7 +26,6 @@ abstract class RuleAction extends ToggleAction implements DumbAware {
   RuleAction(@NotNull UsageView view, Supplier<String> text, @NotNull Icon icon) {
     super(text, icon);
     myView = (UsageViewImpl)view;
-    myState = getOptionValue();
   }
 
   protected abstract boolean getOptionValue();
@@ -37,13 +34,12 @@ abstract class RuleAction extends ToggleAction implements DumbAware {
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    return myState;
+    return getOptionValue();
   }
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     setOptionValue(state);
-    myState = state;
 
     Project project = e.getProject();
     if (project != null) {

@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -145,7 +146,7 @@ public class XDebuggerInlayUtil {
         int width = g.getFontMetrics().stringWidth(value.value);
         curX = Math.max(curX, (xStart + xEnd - width) / 2);
         g.drawString(value.value, curX, targetRegion.y + editor.getAscent());
-        g.drawLine(Math.min(xEnd, Math.max(xStart, curX + width / 2)), targetRegion.y, curX + width / 2, targetRegion.y + 2);
+        g.drawLine(MathUtil.clamp(curX + width / 2, xStart, xEnd), targetRegion.y, curX + width / 2, targetRegion.y + 2);
         g.drawLine(curX, targetRegion.y + 2, curX + width, targetRegion.y + 2);
         curX += width;
       }

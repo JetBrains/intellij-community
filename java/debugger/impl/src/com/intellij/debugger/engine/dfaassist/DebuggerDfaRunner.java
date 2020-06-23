@@ -7,8 +7,11 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.expression.CaptureTraverser;
+import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.StackFrameProxyEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
@@ -50,13 +53,13 @@ class DebuggerDfaRunner extends DataFlowRunner {
   private final @Nullable DfaInstructionState myStartingState;
   private final long myModificationStamp;
 
-  DebuggerDfaRunner(@NotNull PsiElement body, @NotNull PsiElement anchor, @NotNull StackFrame frame) {
+  DebuggerDfaRunner(@NotNull PsiElement body, @NotNull PsiElement anchor, @NotNull StackFrameProxyEx proxy) throws EvaluateException {
     super(body.getProject(), body.getParent() instanceof PsiClassInitializer ? ((PsiClassInitializer)body.getParent()).getContainingClass() : body);
     myBody = body;
     myAnchor = anchor;
     myProject = body.getProject();
     myFlow = buildFlow(myBody);
-    myStartingState = getStartingState(frame);
+    myStartingState = getStartingState(proxy);
     myModificationStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
   }
   
@@ -73,19 +76,16 @@ class DebuggerDfaRunner extends DataFlowRunner {
   }
 
   @Nullable
-  private DfaInstructionState getStartingState(StackFrame frame) {
+  private DfaInstructionState getStartingState(@NotNull StackFrameProxyEx proxy) throws EvaluateException {
     if (myFlow == null) return null;
     int offset = myFlow.getStartOffset(myAnchor).getInstructionOffset();
     if (offset < 0) return null;
     DfaMemoryState state = super.createMemoryState();
-    StateBuilder builder = new StateBuilder(frame, state);
+    StateBuilder builder = new StateBuilder(proxy, state);
     for (DfaValue dfaValue : getFactory().getValues().toArray(new DfaValue[0])) {
       if (dfaValue instanceof DfaVariableValue) {
         DfaVariableValue var = (DfaVariableValue)dfaValue;
-        Value jdiValue = findJdiValue(frame, var);
-        if (jdiValue != null) {
-          builder.add(var, jdiValue);
-        }
+        builder.resolveJdi(var);
       }
     }
     builder.finish();
@@ -100,93 +100,6 @@ class DebuggerDfaRunner extends DataFlowRunner {
   protected DataFlowRunner.TimeStats createStatistics() {
     // Do not track time for DFA assist
     return new TimeStats(false);
-  }
-
-  @Nullable
-  private Value findJdiValue(StackFrame frame, @NotNull DfaVariableValue var) {
-    if (var.getQualifier() != null) {
-      VariableDescriptor descriptor = var.getDescriptor();
-      if (descriptor instanceof SpecialField) {
-        // Special fields facts are applied from qualifiers
-        return null;
-      }
-      Value qualifierValue = findJdiValue(frame, var.getQualifier());
-      if (qualifierValue == null) return null;
-      PsiModifierListOwner element = descriptor.getPsiElement();
-      if (element instanceof PsiField && qualifierValue instanceof ObjectReference) {
-        ReferenceType type = ((ObjectReference)qualifierValue).referenceType();
-        PsiClass psiClass = ((PsiField)element).getContainingClass();
-        if (psiClass != null && type.name().equals(JVMNameUtil.getClassVMName(psiClass))) {
-          Field field = type.fieldByName(((PsiField)element).getName());
-          if (field != null) {
-            return wrap(((ObjectReference)qualifierValue).getValue(field));
-          }
-        }
-      }
-      if (descriptor instanceof DfaExpressionFactory.ArrayElementDescriptor && qualifierValue instanceof ArrayReference) {
-        int index = ((DfaExpressionFactory.ArrayElementDescriptor)descriptor).getIndex();
-        int length = ((ArrayReference)qualifierValue).length();
-        if (index >= 0 && index < length) {
-          return wrap(((ArrayReference)qualifierValue).getValue(index));
-        }
-      }
-      return null;
-    }
-    if (var.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor) {
-      ThreeState status = DebuggerUtilsEx.getEffectiveAssertionStatus(frame.location());
-      // Assume that assertions are enabled if we cannot fetch the status
-      return frame.virtualMachine().mirrorOf(status == ThreeState.NO);
-    }
-    PsiModifierListOwner psi = var.getPsiVariable();
-    if (psi instanceof PsiClass) {
-      // this; probably qualified
-      PsiClass currentClass = PsiTreeUtil.getParentOfType(myBody, PsiClass.class);
-      return CaptureTraverser.create((PsiClass)psi, currentClass, true).traverse(frame.thisObject());
-    }
-    if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
-      String varName = ((PsiVariable)psi).getName();
-      if (varName == null || PsiResolveHelper.SERVICE.getInstance(myProject).resolveReferencedVariable(varName, myAnchor) != psi) {
-        // Another variable with the same name could be tracked by DFA in different code branch but not visible at current code location 
-        return null;
-      }
-      try {
-        LocalVariable variable = frame.visibleVariableByName(varName);
-        if (variable != null) {
-          return wrap(frame.getValue(variable));
-        }
-      }
-      catch (AbsentInformationException ignore) {
-      }
-      PsiClass currentClass = PsiTreeUtil.getParentOfType(myBody, PsiClass.class);
-      PsiClass varClass = PsiTreeUtil.getParentOfType(psi, PsiClass.class);
-      ObjectReference thisRef = CaptureTraverser.create(varClass, currentClass, false)
-        .oneLevelLess().traverse(frame.thisObject());
-      if (thisRef != null) {
-        ReferenceType type = thisRef.referenceType();
-        if (type instanceof ClassType && type.isPrepared()) {
-          Field field = type.fieldByName("val$" + varName);
-          if (field != null) {
-            return wrap(thisRef.getValue(field));
-          }
-        }
-      }
-    }
-    if (psi instanceof PsiField && psi.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiClass psiClass = ((PsiField)psi).getContainingClass();
-      if (psiClass != null) {
-        String name = psiClass.getQualifiedName();
-        if (name != null) {
-          ReferenceType type = ContainerUtil.getOnlyItem(frame.virtualMachine().classesByName(name));
-          if (type != null && type.isPrepared()) {
-            Field field = type.fieldByName(((PsiField)psi).getName());
-            if (field != null && field.isStatic()) {
-              return wrap(type.getValue(field));
-            }
-          }
-        }
-      }
-    }
-    return null;
   }
 
   private static Value wrap(Value value) {
@@ -214,12 +127,106 @@ class DebuggerDfaRunner extends DataFlowRunner {
     private final @Nullable ClassLoaderReference myContextLoader;
     private final @NotNull DfaMemoryState myMemState;
     private final @NotNull Map<Value, DfaVariableValue> myCanonicalMap = new HashMap<>();
+    private final @NotNull StackFrameProxyEx myProxy;
+    private final @NotNull Location myLocation;
     private @Nullable List<ClassLoaderReference> myParentLoaders = null;
     private boolean myChanged;
 
-    StateBuilder(@NotNull StackFrame frame, @NotNull DfaMemoryState memState) {
-      myContextLoader = frame.location().declaringType().classLoader();
+    StateBuilder(@NotNull StackFrameProxyEx proxy, @NotNull DfaMemoryState memState) throws EvaluateException {
+      myProxy = proxy;
+      myLocation = proxy.location();
+      myContextLoader = proxy.getClassLoader();
       myMemState = memState;
+    }
+
+    void resolveJdi(@NotNull DfaVariableValue var) throws EvaluateException {
+      Value jdiValue = findJdiValue(var);
+      if (jdiValue != null) {
+        add(var, jdiValue);
+      }
+    }
+
+    @Nullable
+    private Value findJdiValue(@NotNull DfaVariableValue var) throws EvaluateException {
+      if (var.getQualifier() != null) {
+        VariableDescriptor descriptor = var.getDescriptor();
+        if (descriptor instanceof SpecialField) {
+          // Special fields facts are applied from qualifiers
+          return null;
+        }
+        Value qualifierValue = findJdiValue(var.getQualifier());
+        if (qualifierValue == null) return null;
+        PsiModifierListOwner element = descriptor.getPsiElement();
+        if (element instanceof PsiField && qualifierValue instanceof ObjectReference) {
+          ReferenceType type = ((ObjectReference)qualifierValue).referenceType();
+          PsiClass psiClass = ((PsiField)element).getContainingClass();
+          if (psiClass != null && type.name().equals(JVMNameUtil.getClassVMName(psiClass))) {
+            Field field = type.fieldByName(((PsiField)element).getName());
+            if (field != null) {
+              return wrap(((ObjectReference)qualifierValue).getValue(field));
+            }
+          }
+        }
+        if (descriptor instanceof DfaExpressionFactory.ArrayElementDescriptor && qualifierValue instanceof ArrayReference) {
+          int index = ((DfaExpressionFactory.ArrayElementDescriptor)descriptor).getIndex();
+          int length = ((ArrayReference)qualifierValue).length();
+          if (index >= 0 && index < length) {
+            return wrap(((ArrayReference)qualifierValue).getValue(index));
+          }
+        }
+        return null;
+      }
+      if (var.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor) {
+        ThreeState status = DebuggerUtilsEx.getEffectiveAssertionStatus(myLocation);
+        // Assume that assertions are enabled if we cannot fetch the status
+        return myLocation.virtualMachine().mirrorOf(status == ThreeState.NO);
+      }
+      PsiModifierListOwner psi = var.getPsiVariable();
+      if (psi instanceof PsiClass) {
+        // this; probably qualified
+        PsiClass currentClass = PsiTreeUtil.getParentOfType(myBody, PsiClass.class);
+        return CaptureTraverser.create((PsiClass)psi, currentClass, true).traverse(myProxy.thisObject());
+      }
+      if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
+        String varName = ((PsiVariable)psi).getName();
+        if (varName == null || PsiResolveHelper.SERVICE.getInstance(myProject).resolveReferencedVariable(varName, myAnchor) != psi) {
+          // Another variable with the same name could be tracked by DFA in different code branch but not visible at current code location 
+          return null;
+        }
+        LocalVariableProxy variable = myProxy.visibleVariableByName(varName);
+        if (variable != null) {
+          return wrap(myProxy.getVariableValue(variable));
+        }
+        PsiClass currentClass = PsiTreeUtil.getParentOfType(myBody, PsiClass.class);
+        PsiClass varClass = PsiTreeUtil.getParentOfType(psi, PsiClass.class);
+        ObjectReference thisRef = CaptureTraverser.create(varClass, currentClass, false)
+          .oneLevelLess().traverse(myProxy.thisObject());
+        if (thisRef != null) {
+          ReferenceType type = thisRef.referenceType();
+          if (type instanceof ClassType && type.isPrepared()) {
+            Field field = type.fieldByName("val$" + varName);
+            if (field != null) {
+              return wrap(thisRef.getValue(field));
+            }
+          }
+        }
+      }
+      if (psi instanceof PsiField && psi.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass psiClass = ((PsiField)psi).getContainingClass();
+        if (psiClass != null) {
+          String name = psiClass.getQualifiedName();
+          if (name != null) {
+            ReferenceType type = ContainerUtil.getOnlyItem(myProxy.getVirtualMachine().classesByName(name));
+            if (type != null && type.isPrepared()) {
+              Field field = type.fieldByName(((PsiField)psi).getName());
+              if (field != null && field.isStatic()) {
+                return wrap(type.getValue(field));
+              }
+            }
+          }
+        }
+      }
+      return null;
     }
 
     void add(@NotNull DfaVariableValue var, @NotNull Value jdiValue) {

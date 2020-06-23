@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.Collection;
@@ -33,7 +34,7 @@ public class HgBranchReferenceValidator extends HgReferenceValidator {
     Collection<String> branches = myRepository.getBranches().keySet();
     String currentBranch = myRepository.getCurrentBranch(); //  branches set doesn't contain uncommitted branch -> need an addition check
     myErrorText = currentBranch.equals(name) || branches.contains(name)
-                  ? String.format("A branch with the \'%s\' name already exists", name) : null;
+                  ? HgBundle.message("hg4idea.branch.duplicated.name.error", name) : null;
     return myErrorText != null;
   }
 }

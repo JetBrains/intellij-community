@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.ReportValue;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -39,6 +38,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   public static final String PROP_INACTIVE_TIMEOUT = "inactiveTimeout";
   public static final String PROP_SUPPORT_SCREEN_READERS = "supportScreenReaders";
 
+  public static final String SCREEN_READERS_DETECTED_PROPERTY = "ide.support.screenreaders.detected";
   public static final String SUPPORT_SCREEN_READERS = "ide.support.screenreaders.enabled";
   private static final Boolean SUPPORT_SCREEN_READERS_OVERRIDDEN = getSupportScreenReadersOverridden();
 
@@ -47,7 +47,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = true;
   private boolean myReopenLastProject = true;
-  private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, false);
+  private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, Boolean.getBoolean(SCREEN_READERS_DETECTED_PROPERTY));
   private boolean mySyncOnFrameActivation = true;
   private boolean mySaveOnFrameDeactivation = true;
   private boolean myAutoSaveIfInactive = false;  // If true the IDE automatically saves files if it is inactive for some seconds
@@ -65,7 +65,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private static final String CONFIGURED_PROPERTY = "GeneralSettings.initiallyConfigured";
 
   public static GeneralSettings getInstance() {
-    return ServiceManager.getService(GeneralSettings.class);
+    return ApplicationManager.getApplication().getService(GeneralSettings.class);
   }
 
   public GeneralSettings() {
@@ -112,13 +112,9 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
     myReopenLastProject = reopenLastProject;
   }
 
-  @Nullable
-  private static Boolean getSupportScreenReadersOverridden() {
+  private static @Nullable Boolean getSupportScreenReadersOverridden() {
     String prop = System.getProperty(SUPPORT_SCREEN_READERS);
-    if (prop != null) {
-      return Boolean.parseBoolean(prop);
-    }
-    return null;
+    return prop != null ? Boolean.parseBoolean(prop) : null;
   }
 
   public static boolean isSupportScreenReadersOverridden() {

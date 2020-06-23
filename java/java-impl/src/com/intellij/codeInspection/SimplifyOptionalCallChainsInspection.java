@@ -366,6 +366,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   }
 
   static class OptionalSimplificationFix implements LocalQuickFix {
+    @SafeFieldForPreview
     private final ChainSimplificationCase<?> myInspection;
     private final String myName;
     private final String myDescription;

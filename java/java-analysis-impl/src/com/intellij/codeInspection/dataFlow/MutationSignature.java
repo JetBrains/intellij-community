@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -11,8 +12,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
+/**
+ * Represents method mutation signature
+ */
 public class MutationSignature {
   public static final String ATTR_MUTATES = "mutates";
   static final MutationSignature UNKNOWN = new MutationSignature(false, new boolean[0]);
@@ -26,20 +32,79 @@ public class MutationSignature {
     myParameters = params;
   }
 
+  /**
+   * @return true if the instance method may mutate this object
+   */
   public boolean mutatesThis() {
     return myThis;
   }
 
+  /**
+   * @param n argument number (zero-based)
+   * @return true if the method may mutate given argument
+   */
   public boolean mutatesArg(int n) {
     return n < myParameters.length && myParameters[n];
   }
 
+  /**
+   * @return true if the method is static or never mutates this object
+   */
   public boolean preservesThis() {
     return this != UNKNOWN && !myThis;
   }
 
+  /**
+   * @param n argument number (zero-based)
+   * @return true if the method never mutates given argument
+   */
   public boolean preservesArg(int n) {
     return this != UNKNOWN && !mutatesArg(n);
+  }
+
+  /**
+   * @return a signature that is equivalent to this signature but may also mutate this object
+   */
+  public MutationSignature alsoMutatesThis() {
+    return myThis ? this : new MutationSignature(true, myParameters);
+  }
+
+  /**
+   * @param n argument number (zero-based)
+   * @return a signature that is equivalent to this signature but may also mutate n-th argument
+   */
+  public MutationSignature alsoMutatesArg(int n) {
+    if (myParameters.length > n && myParameters[n]) return this;
+    boolean[] params = Arrays.copyOf(myParameters, Math.max(n + 1, myParameters.length));
+    params[n] = true;
+    return new MutationSignature(myThis, params);
+  }
+
+  /**
+   * @return true if this signature represents a pure method
+   */
+  public boolean isPure() {
+    return this == PURE;
+  }
+
+  @Override
+  public int hashCode() {
+    return (myThis ? 137 : 731) + Arrays.hashCode(myParameters);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    return obj instanceof MutationSignature && ((MutationSignature)obj).myThis == myThis &&
+           Arrays.equals(((MutationSignature)obj).myParameters, myParameters);
+  }
+
+  @Override
+  public String toString() {
+    if (isPure()) return "(pure)";
+    if (this == UNKNOWN) return "(unknown)";
+    return IntStreamEx.range(myParameters.length).mapToEntry(idx -> "param" + (idx + 1), idx -> myParameters[idx])
+      .prepend("this", myThis).filterValues(b -> b).keys().joining(",");
   }
 
   /**
@@ -121,8 +186,7 @@ public class MutationSignature {
    * @param method a method to apply the signature
    * @return error message or null if signature is valid
    */
-  @Nullable
-  public static String checkSignature(@NotNull String signature, @NotNull PsiMethod method) {
+  public static @Nullable String checkSignature(@NotNull String signature, @NotNull PsiMethod method) {
     try {
       MutationSignature ms = parse(signature);
       if (ms.myThis && method.hasModifierProperty(PsiModifier.STATIC)) {
@@ -147,9 +211,63 @@ public class MutationSignature {
     return null;
   }
 
-  @NotNull
-  public static MutationSignature fromMethod(@Nullable PsiMethod method) {
+  public static @NotNull MutationSignature fromMethod(@Nullable PsiMethod method) {
     if (method == null) return UNKNOWN;
     return JavaMethodContractUtil.getContractInfo(method).getMutationSignature();
+  }
+
+  public static @NotNull MutationSignature fromCall(@Nullable PsiCall call) {
+    if (call == null) return UNKNOWN;
+    PsiMethod method = call.resolveMethod();
+    if (method != null) {
+      if (SpecialField.findSpecialField(method) != null) {
+        return PURE;
+      }
+      return fromMethod(method);
+    }
+    if (call instanceof PsiNewExpression) {
+      PsiNewExpression newExpression = (PsiNewExpression)call;
+      if (newExpression.isArrayCreation()) return PURE;
+      if (newExpression.getArgumentList() == null || !newExpression.getArgumentList().isEmpty()) return UNKNOWN;
+      PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+      if (classReference == null) return UNKNOWN;
+      PsiClass clazz = ObjectUtils.tryCast(classReference.resolve(), PsiClass.class);
+      if (clazz == null) return UNKNOWN;
+      Set<PsiClass> visited = new HashSet<>();
+      while (true) {
+        for (PsiField field : clazz.getFields()) {
+          if (!field.hasModifierProperty(PsiModifier.STATIC) && field.hasInitializer()) {
+            return UNKNOWN;
+          }
+        }
+        for (PsiClassInitializer initializer : clazz.getInitializers()) {
+          if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
+            return UNKNOWN;
+          }
+        }
+        for (PsiMethod ctor : clazz.getConstructors()) {
+          if(ctor.getParameterList().isEmpty()) {
+            return fromMethod(ctor);
+          }
+        }
+        clazz = clazz.getSuperClass();
+        if (clazz == null || !visited.add(clazz)) return unknown();
+      }
+    }
+    return UNKNOWN;
+  }
+
+  /**
+   * @return a signature of the pure method, which doesn't mutate anything
+   */
+  public static @NotNull MutationSignature pure() {
+    return PURE;
+  }
+
+  /**
+   * @return a signature of the unknown method, which may mutate anything
+   */
+  public static @NotNull MutationSignature unknown() {
+    return UNKNOWN;
   }
 }

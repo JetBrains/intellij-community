@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
@@ -9,10 +9,7 @@ import com.intellij.util.NotNullizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import static com.intellij.openapi.util.Conditions.not;
 
@@ -674,7 +671,7 @@ public abstract class TreeTraversal {
   private final static class TracingBfsIt<T> extends TracingIt<T> {
 
     final ArrayDeque<T> queue = new ArrayDeque<>();
-    final Map<T, T> paths = ContainerUtil.newIdentityHashMap();
+    final Map<T, T> paths = new IdentityHashMap<>();
     P1<T> top;
     P1<T> cur;
 

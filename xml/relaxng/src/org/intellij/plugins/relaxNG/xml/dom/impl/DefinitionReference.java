@@ -139,6 +139,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
   @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
+    //noinspection UnresolvedPropertyKey
     return RelaxngBundle.message("unresolved.pattern.reference.0");
   }
 }

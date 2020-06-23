@@ -6,3 +6,17 @@ class Foo {
         System.out.println(s);
     }
 }
+
+
+class NonPrimitiveType {
+    @SuppressWarnings("unchecked")
+    public <T> void apply(Fun<Class<?>,  ?> defaultGetter, 
+                          Class<T> configType, 
+                          Fun<Class<T>, T> getter) {
+        (getter == null ? (Fun)defaultGetter : getter).apply(configType);
+    }
+    
+    interface Fun<T, R> {
+        R apply(T t);
+    }
+}

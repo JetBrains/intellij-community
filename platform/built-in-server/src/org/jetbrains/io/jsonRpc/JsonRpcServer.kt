@@ -11,16 +11,15 @@ import com.google.gson.stream.JsonWriter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.Consumer
 import com.intellij.util.SmartList
 import com.intellij.util.io.releaseIfError
 import com.intellij.util.io.writeUtf8
-import gnu.trove.THashMap
 import gnu.trove.TIntArrayList
 import io.netty.buffer.*
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
@@ -54,23 +53,24 @@ private val gson by lazy {
 }
 
 class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
+
   private val messageIdCounter = AtomicInteger()
-  private val domains = THashMap<String, NotNullLazyValue<*>>()
 
-  fun registerDomain(name: String, commands: NotNullLazyValue<*>, overridable: Boolean = false, disposable: Disposable? = null) {
-    if (domains.containsKey(name)) {
-      if (overridable) {
-        return
-      }
-      else {
-        throw IllegalArgumentException("$name is already registered")
+  @TestOnly private var testDomain: Pair<String, Any>? = null
+
+  init {
+    val beans = mutableMapOf<String, JsonRpcDomainBean>()
+    for (bean in JsonRpcDomainBean.EP_NAME.extensionList) {
+      val prev = beans.put(bean.name, bean)
+      if (prev != null && !prev.overridable) {
+        throw IllegalArgumentException("${bean.name} is already registered")
       }
     }
+  }
 
-    domains.put(name, commands)
-    if (disposable != null) {
-      Disposer.register(disposable, Disposable { domains.remove(name) })
-    }
+  @TestOnly fun registerTestDomain(name: String, domain: Any, disposable: Disposable) {
+    testDomain = Pair(name, domain)
+    Disposer.register(disposable, Disposable { testDomain = null })
   }
 
   override fun messageReceived(client: Client, message: CharSequence) {
@@ -98,13 +98,11 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
       return
     }
 
-    val domainHolder = domains[domainName]
-    if (domainHolder == null) {
+    val domain = findDomain(domainName)
+    if (domain == null) {
       processClientError(client, "Cannot find domain $domainName", messageId)
       return
     }
-
-    val domain = domainHolder.value
     val command = reader.nextString()
     if (domain is JsonServiceInvocator) {
       domain.invoke(command, client, reader, messageId, message)
@@ -148,6 +146,12 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
     }
 
     processClientError(client, "Cannot find method $domain.$command", messageId)
+  }
+
+  private fun findDomain(domainName: String): Any? {
+    val testDomain = this.testDomain
+    if (testDomain != null && testDomain.first == domainName) return testDomain.second
+    return JsonRpcDomainBean.EP_NAME.getByKey(domainName, JsonRpcDomainBean::name)?.instance
   }
 
   private fun processClientError(client: Client, error: String, messageId: Int) {
@@ -346,10 +350,4 @@ private fun ByteBuf.addBuffer(buffer: ByteBuf): ByteBuf {
     writerIndex(capacity())
   }
   return this
-}
-
-fun JsonRpcServer.registerFromEp() {
-  for (domainBean in JsonRpcDomainBean.EP_NAME.extensions) {
-    registerDomain(domainBean.name, domainBean.value, domainBean.overridable)
-  }
 }

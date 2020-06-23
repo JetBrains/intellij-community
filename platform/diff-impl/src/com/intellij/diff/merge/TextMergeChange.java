@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nls;
@@ -206,7 +205,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @Nullable
   private DiffGutterOperation createResolveOperation() {
     return createOperation(ThreeSide.BASE, (ctrlPressed, shiftPressed, altPressed) -> {
-      if (!Registry.is("diff.merge.resolve.conflict.action.visible")) return null;
       return createResolveRenderer();
     });
   }

@@ -367,7 +367,7 @@ final class WatchRootsManager {
     final @Nullable @SystemIndependent String target;
     private WatchSymlinkRequest myWatchRequest;
 
-    SymlinkData(int id, String path, @Nullable String target) {
+    SymlinkData(int id, @NotNull String path, @Nullable String target) {
       this.id = id;
       this.path = FileUtil.toSystemIndependentName(path);
       this.target = target != null ? FileUtil.toSystemIndependentName(target) : null;
@@ -385,7 +385,7 @@ final class WatchRootsManager {
       return target != null;
     }
 
-    void removeRequest(WatchRootsManager manager) {
+    void removeRequest(@NotNull WatchRootsManager manager) {
       if (myWatchRequest != null) {
         manager.removeWatchSymlinkRequest(myWatchRequest);
         myWatchRequest = null;

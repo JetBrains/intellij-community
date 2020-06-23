@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -36,10 +37,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
@@ -300,7 +298,7 @@ class PostHighlightingVisitor {
 
       final boolean readReferenced = myRefCountHolder.isReferencedForRead(field);
       if (!readReferenced && !UnusedSymbolUtil.isImplicitRead(project, field)) {
-        String message = JavaErrorBundle.message("private.field.is.not.used.for.reading", identifier.getText());
+        String message = getNotUsedForReadingMessage(field, identifier);
         return suggestionsToMakeFieldUsed(field, identifier, message);
       }
 
@@ -329,7 +327,7 @@ class PostHighlightingVisitor {
     }
     else if (UnusedSymbolUtil.isFieldUnused(myProject, myFile, field, progress, helper)) {
       if (UnusedSymbolUtil.isImplicitWrite(myProject, field)) {
-        String message = JavaErrorBundle.message("private.field.is.not.used.for.reading", identifier.getText());
+        String message = getNotUsedForReadingMessage(field, identifier);
         HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
         QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(field), myDeadCodeKey);
         return highlightInfo;
@@ -337,6 +335,15 @@ class PostHighlightingVisitor {
       return formatUnusedSymbolHighlightInfo(project, "field.is.not.used", field, "fields", myDeadCodeKey, myDeadCodeInfoType, identifier);
     }
     return null;
+  }
+
+  @NotNull
+  private static String getNotUsedForReadingMessage(@NotNull final PsiField field, @NotNull final PsiIdentifier identifier) {
+    final String visibility = VisibilityUtil.getVisibilityStringToDisplay(field);
+
+    final String message = JavaErrorBundle.message("field.is.not.used.for.reading", visibility, identifier.getText());
+
+    return StringUtil.capitalize(message);
   }
 
   private HighlightInfo suggestionsToMakeFieldUsed(@NotNull PsiField field, @NotNull PsiIdentifier identifier, @NotNull String message) {
@@ -431,7 +438,8 @@ class PostHighlightingVisitor {
     else {
       key = method.isConstructor() ? "constructor.is.not.used" : "method.is.not.used";
     }
-    String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY);
+    int options = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES;
+    String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY, options);
     String message = JavaErrorBundle.message(key, symbolName);
     final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), myDeadCodeKey);

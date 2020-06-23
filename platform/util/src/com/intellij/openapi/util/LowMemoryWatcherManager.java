@@ -28,7 +28,7 @@ public final class LowMemoryWatcherManager implements Disposable {
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
   @NotNull private final ExecutorService myExecutorService;
 
-  private Future<?> mySubmitted; // guarded by ourJanitor
+  private Future<?> mySubmitted; // guarded by myJanitor
   private final Future<?> myMemoryPoolMXBeansFuture;
   private final Consumer<Boolean> myJanitor = new Consumer<Boolean>() {
     @Override

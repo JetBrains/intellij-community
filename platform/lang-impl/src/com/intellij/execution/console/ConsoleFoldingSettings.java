@@ -8,6 +8,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -51,12 +52,32 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
   }
 
   private static boolean containsAny(String line, List<String> patterns) {
-    for (String pattern : patterns) {
-      if (line.contains(pattern)) {
-        return true;
+    Set<String> lines = null;
+    for (ConsoleLineModifier modifier : ConsoleLineModifier.EP_NAME.getExtensionList()) {
+      String modifiedLine = modifier.modify(line);
+      if (modifiedLine != null) {
+        if (lines == null) {
+          lines = new HashSet<>();
+          lines.add(line);
+        }
+        lines.add(modifiedLine);
       }
     }
-    return false;
+
+    Condition<String> containsPredicate = l -> {
+      for (String pattern : patterns) {
+        if (l.contains(pattern)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (lines == null) {
+      return containsPredicate.value(line);
+    }
+
+    return ContainerUtil.exists(lines, containsPredicate);
   }
 
   public List<String> getPositivePatterns() {

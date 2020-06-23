@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
-import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -42,7 +41,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     ensureUpToDateAndRebaseOnMaster()
 
-    assertSuccessfulRebaseNotification("feature is up-to-date with master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     repo.`assert feature rebased on master`()
     assertNoRebaseInProgress(repo)
   }
@@ -52,7 +51,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     ensureUpToDateAndRebaseOnMaster()
 
-    assertSuccessfulRebaseNotification("Fast-forwarded feature to master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     repo.`assert feature rebased on master`()
     assertNoRebaseInProgress(repo)
   }
@@ -92,6 +91,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
         repo.assertConflict("c.txt")
       repo.resolveConflicts()
     }
+    keepCommitMessageAfterConflict()
 
     ensureUpToDateAndRebaseOnMaster()
 
@@ -106,6 +106,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     vcsHelper.onMerge {
         repo.resolveConflicts()
     }
+    keepCommitMessageAfterConflict()
 
     ensureUpToDateAndRebaseOnMaster()
 
@@ -346,6 +347,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test unresolved conflict should lead to conflict resolver with continue rebase`() {
     repo.`prepare simple conflict`()
     `do nothing on merge`()
+    keepCommitMessageAfterConflict()
 
     ensureUpToDateAndRebaseOnMaster()
     repo.assertConflict("c.txt")
@@ -372,8 +374,6 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
       }
     }
 
-    val hash2skip = DvcsUtil.getShortHash(git("log -2 --pretty=%H").lines()[1])
-
     vcsHelper.onMerge {
       file("c.txt").write("base\nmaster")
       repo.resolveConflicts()
@@ -384,12 +384,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertRebased(repo, "feature", "master")
     assertNoRebaseInProgress(repo)
 
-    assertSuccessfulRebaseNotification(
-        """
-        Rebased feature on master<br/>
-        The following commit was skipped during rebase:<br/>
-        <a>$hash2skip</a> commit to be skipped
-        """)
+    assertSuccessfulRebaseNotification("Rebased feature on master")
   }
 
   fun `test interactive rebase stopped for editing`() {
@@ -533,13 +528,6 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.`diverge feature and master`()
     checkCheckoutAndRebase {
       "Checked out feature and rebased it on master"
-    }
-  }
-
-  fun `test checkout with fast-forward`() {
-    repo.`place feature below master`()
-    checkCheckoutAndRebase {
-      "Checked out feature and fast-forwarded it to master"
     }
   }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +36,7 @@ public class ProjectScopeImpl extends GlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
+    if (file.getFileSystem() instanceof NonPhysicalFileSystem) return true;
     return myFileIndex.isInProjectScope(file);
   }
 

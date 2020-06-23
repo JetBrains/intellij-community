@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
+public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance(VirtualFileManagerImpl.class);
 
   // do not use extension point name to avoid map lookup on each event publishing
@@ -71,8 +71,7 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
     bus.connect().subscribe(VFS_CHANGES, new BulkVirtualFileListenerAdapter(myVirtualFileListenerMulticaster.getMulticaster()));
   }
 
-  @NotNull
-  public List<VirtualFileSystem> getPhysicalFileSystems() {
+  public @NotNull List<VirtualFileSystem> getPhysicalFileSystems() {
     List<VirtualFileSystem> physicalFileSystems = new ArrayList<>(myPreCreatedFileSystems);
 
     ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> point = myCollector.getPoint();
@@ -97,22 +96,25 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
   }
 
   @Override
-  @Nullable
-  public VirtualFileSystem getFileSystem(@Nullable String protocol) {
+  public @Nullable VirtualFileSystem getFileSystem(@Nullable String protocol) {
     if (protocol == null) {
       return null;
     }
 
     List<VirtualFileSystem> systems = myCollector.forKey(protocol);
-    int size = systems.size();
+    return selectFileSystem(protocol, systems);
+  }
+
+  protected @Nullable VirtualFileSystem selectFileSystem(@NotNull String protocol, @NotNull List<VirtualFileSystem> candidates) {
+    int size = candidates.size();
     if (size == 0) {
       return null;
     }
 
     if (size > 1) {
-      LOG.error(protocol + ": " + systems);
+      LOG.error(protocol + ": " + candidates);
     }
-    return systems.get(0);
+    return candidates.get(0);
   }
 
   @Override
@@ -153,26 +155,6 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
         fileSystem.refresh(asynchronous);
       }
     }
-  }
-
-  @Override
-  public VirtualFile findFileByUrl(@NotNull String url) {
-    VirtualFileSystem fileSystem = getFileSystemForUrl(url);
-    if (fileSystem == null) return null;
-    return fileSystem.findFileByPath(extractPath(url));
-  }
-
-  @Override
-  public VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
-    VirtualFileSystem fileSystem = getFileSystemForUrl(url);
-    if (fileSystem == null) return null;
-    return fileSystem.refreshAndFindFileByPath(extractPath(url));
-  }
-
-  @Nullable
-  private VirtualFileSystem getFileSystemForUrl(@NotNull String url) {
-    String protocol = extractProtocol(url);
-    return protocol == null ? null : getFileSystem(protocol);
   }
 
   @Override
@@ -247,7 +229,7 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
       }
     }
 
-    ExtensionProcessingHelper.forEachExtensionSafe(listener -> listener.beforeRefreshStart(asynchronous), MANAGER_LISTENER_EP);
+    ExtensionProcessingHelper.forEachExtensionSafe(MANAGER_LISTENER_EP, listener -> listener.beforeRefreshStart(asynchronous));
   }
 
   @Override
@@ -265,7 +247,7 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
       }
     }
 
-    ExtensionProcessingHelper.forEachExtensionSafe(listener -> listener.afterRefreshFinish(asynchronous), MANAGER_LISTENER_EP);
+    ExtensionProcessingHelper.forEachExtensionSafe(MANAGER_LISTENER_EP, listener -> listener.afterRefreshFinish(asynchronous));
   }
 
   @Override
@@ -336,9 +318,8 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
     throw new AbstractMethodError();
   }
 
-  @NotNull
   @Override
-  public CharSequence getVFileName(int nameId) {
+  public @NotNull CharSequence getVFileName(int nameId) {
     throw new AbstractMethodError();
   }
 }

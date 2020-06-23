@@ -36,7 +36,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
     return true;
   }
 
-  protected abstract boolean isAvailable(PsiParameter parameter);
+  protected abstract boolean isAvailable(@NotNull PsiParameter parameter);
 
   @Override
   @NotNull
@@ -121,7 +121,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
     });
   }
 
-  protected abstract PsiType getSubstitutedType(PsiParameter parameter);
+  protected abstract PsiType getSubstitutedType(@NotNull PsiParameter parameter);
 
   protected abstract void performRefactoring(Project project,
                                     PsiClass targetClass,

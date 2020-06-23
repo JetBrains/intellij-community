@@ -30,11 +30,9 @@ class FacetManagerViaWorkspaceModel(module: Module) : FacetManagerBase() {
       val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
       if (facetConfigurationXml != facetEntity.configurationXmlTag) {
         runWriteAction {
-          WorkspaceModel.getInstance(module.project).updateProjectModel {
-            it.modifyEntity(ModifiableFacetEntity::class.java, facetEntity) {
-              this.configurationXmlTag = facetConfigurationXml
-            }
-          }
+          val change: ModifiableFacetEntity.() -> Unit = { this.configurationXmlTag = facetConfigurationXml }
+          module.diff?.modifyEntity(ModifiableFacetEntity::class.java, facetEntity, change) ?: WorkspaceModel.getInstance(module.project)
+            .updateProjectModel { it.modifyEntity(ModifiableFacetEntity::class.java, facetEntity, change) }
         }
       }
     }
@@ -55,7 +53,7 @@ class FacetManagerViaWorkspaceModel(module: Module) : FacetManagerBase() {
 }
 
 internal open class FacetModelViaWorkspaceModel(protected val legacyBridgeModule: LegacyBridgeModule) : FacetModelBase() {
-  protected val entityToFacet: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create<FacetEntity, Facet<*>>()
+  protected val entityToFacet: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
 
   override fun getAllFacets(): Array<Facet<*>> {
     return entityToFacet.values.toTypedArray()
@@ -91,14 +89,18 @@ internal open class FacetModelViaWorkspaceModel(protected val legacyBridgeModule
 
   fun populateFrom(mapping: HashBiMap<FacetEntity, Facet<*>>) {
     entityToFacet.putAll(mapping)
+    facetsChanged()
   }
 
   internal fun populateFrom(mapping: FacetModelViaWorkspaceModel) {
     entityToFacet.putAll(mapping.entityToFacet)
+    facetsChanged()
   }
 
   fun removeEntity(entity: FacetEntity): Facet<*>? {
-    return entityToFacet.remove(entity)
+    val removed = entityToFacet.remove(entity)
+    facetsChanged()
+    return removed
   }
 
   fun updateEntity(oldEntity: FacetEntity, newEntity: FacetEntity): Facet<*>? {
@@ -106,11 +108,8 @@ internal open class FacetModelViaWorkspaceModel(protected val legacyBridgeModule
     if (oldFacet != null) {
       entityToFacet[newEntity] = oldFacet
     }
+    facetsChanged()
     return entityToFacet[newEntity]
-  }
-
-  public override fun facetsChanged() {
-    super.facetsChanged()
   }
 
   fun checkConsistency(facetEntities: List<FacetEntity>) {

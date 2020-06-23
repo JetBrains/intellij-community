@@ -72,7 +72,16 @@ private fun executeInitAppInEdt(args: List<String>,
     .thenRun {
       val starter = findStarter(args.first()) ?: IdeStarter()
       if (Main.isHeadless() && !starter.isHeadless) {
-        Main.showMessage("Startup Error", "Application cannot start in a headless mode", true)
+        val commandName = starter.commandName
+        val message = "Application cannot start in a headless mode" + when {
+          starter is IdeStarter -> ""
+          commandName != null -> ", for command: $commandName"
+          else -> ", for starter: " + starter.javaClass.name
+        } + when {
+          args.isNotEmpty() -> " (commandline: ${args.joinToString(" ")})"
+          else -> ""
+        }
+        Main.showMessage("Startup Error", message, true)
         exitProcess(Main.NO_GRAPHICS)
       }
 
@@ -90,7 +99,7 @@ fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescrip
                           app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
   return pluginFuture.thenApply {
     runActivity("app component registration", ActivityCategory.MAIN) {
-      app.registerComponents(it, false)
+      app.registerComponents(it)
     }
     it
   }
@@ -181,7 +190,7 @@ private fun startApp(app: ApplicationImpl,
 
       val loadComponentInEdtFuture = CompletableFuture.runAsync(Runnable {
         placeOnEventQueueActivity.end()
-        app.loadComponents(SplashManager.getProgressIndicator())
+        app.loadComponents(SplashManager.createProgressIndicator())
       }, edtExecutor)
 
       CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
@@ -223,11 +232,11 @@ private fun startApp(app: ApplicationImpl,
       }
       else {
         // backward compatibility
-        ApplicationManager.getApplication().invokeLater(Runnable {
+        ApplicationManager.getApplication().invokeLater {
           (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
             starter.main(args)
           }
-        })
+        }
       }
     }
     .exceptionally {
@@ -238,7 +247,7 @@ private fun startApp(app: ApplicationImpl,
 
 @ApiStatus.Internal
 fun createExecutorToPreloadServices(): Executor {
-  return AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
+  return AppExecutorUtil.createBoundedApplicationPoolExecutor("Preload Services", Runtime.getRuntime().availableProcessors(), false)
 }
 
 @ApiStatus.Internal
@@ -301,13 +310,15 @@ private fun addActivateAndWindowsCliListeners() {
         return@invokeAndWait
       }
 
+      val windowManager = WindowManager.getInstance()
       if (result.project == null) {
-        val frame = WindowManager.getInstance().findVisibleFrame()
-        frame.toFront()
-        DialogEarthquakeShaker.shake(frame)
+        windowManager.findVisibleFrame()?.let { frame ->
+          frame.toFront()
+          DialogEarthquakeShaker.shake(frame)
+        }
       }
       else {
-        WindowManager.getInstance().getFrame(result.project)?.let {
+        windowManager.getFrame(result.project)?.let {
           AppIcon.getInstance().requestFocus()
         }
       }
@@ -469,7 +480,8 @@ fun callAppInitialized(app: Application, executor: Executor): CompletableFuture<
   }
 
   val result = mutableListOf<CompletableFuture<Void>>()
-  val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
+  val extensionArea = app.extensionArea as ExtensionsAreaImpl
+  val extensionPoint = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
   extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, _ ->
     CompletableFuture.runAsync(Runnable {
       LOG.runAndLogException {

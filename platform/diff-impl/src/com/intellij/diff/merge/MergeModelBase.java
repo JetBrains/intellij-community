@@ -358,7 +358,7 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
         continue;
       }
 
-      int newStartLine = beforeChange ? Math.min(startLine, newOutputStartLine) : Math.max(startLine, newOutputEndLine);
+      int newStartLine = beforeChange ? Math.min(startLine, newOutputStartLine) : newOutputEndLine;
       int newEndLine = beforeChange ? Math.min(endLine, newOutputStartLine) : Math.max(endLine, newOutputEndLine);
       if (startLine != newStartLine || endLine != newEndLine) {
         setLineStart(otherIndex, newStartLine);

@@ -26,7 +26,7 @@ internal abstract class GroovyHighlightingPass(val myFile: PsiFile, document: Do
   private val myInfos = mutableListOf<HighlightInfo>()
 
   override fun doApplyInformationToEditor() {
-    if (myDocument == null || myInfos.isEmpty()) return
+    if (myInfos.isEmpty()) return
     UpdateHighlightersUtil.setHighlightersToEditor(
       myProject, myDocument, 0, myFile.textLength, myInfos, colorsScheme, id
     )

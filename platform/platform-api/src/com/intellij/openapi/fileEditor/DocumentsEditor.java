@@ -16,7 +16,9 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.NotNull;
 
 public interface DocumentsEditor extends FileEditor {
+  @NotNull
   Document[] getDocuments();
 }

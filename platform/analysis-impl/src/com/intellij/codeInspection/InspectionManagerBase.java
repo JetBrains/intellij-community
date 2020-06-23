@@ -169,4 +169,8 @@ public abstract class InspectionManagerBase extends InspectionManager {
     }
     return myCurrentProfileName;
   }
+
+  public void setProfile(@NotNull String name) {
+    myCurrentProfileName = name;
+  }
 }

@@ -142,7 +142,7 @@ class InlineMethodHelper {
   }
 
   void inlineParameters(PsiLocalVariable[] parmVars) {
-    final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
+    final PsiParameter[] parameters = myMethodCopy.getParameterList().getParameters();
     for (int i = 0; i < parmVars.length; i++) {
       final PsiParameter parameter = parameters[i];
       final boolean strictlyFinal = parameter.hasModifierProperty(PsiModifier.FINAL) && isStrictlyFinal(parameter);

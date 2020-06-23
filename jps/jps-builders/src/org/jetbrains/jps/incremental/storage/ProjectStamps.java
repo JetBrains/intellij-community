@@ -27,7 +27,8 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  */
 public class ProjectStamps {
-  public static final boolean PORTABLE_CACHES = Boolean.getBoolean("org.jetbrains.jps.portable.caches");
+  public static final String PORTABLE_CACHES_PROPERTY = "org.jetbrains.jps.portable.caches";
+  public static final boolean PORTABLE_CACHES = Boolean.getBoolean(PORTABLE_CACHES_PROPERTY);
 
   private static final Logger LOG = Logger.getInstance(ProjectStamps.class);
 

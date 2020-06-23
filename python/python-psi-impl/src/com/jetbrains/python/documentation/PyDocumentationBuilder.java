@@ -85,7 +85,7 @@ public class PyDocumentationBuilder {
     }
 
     final ASTNode node = elementDefinition.getNode();
-    if (node != null && PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(node.getElementType())) {
+    if (node != null && PythonDialectsTokenSetProvider.getInstance().getKeywordTokens().contains(node.getElementType())) {
       String documentationName = elementDefinition.getText();
       if (node.getElementType() == PyTokenTypes.AS_KEYWORD || node.getElementType() == PyTokenTypes.ELSE_KEYWORD) {
         final PyTryExceptStatement statement = PsiTreeUtil.getParentOfType(elementDefinition, PyTryExceptStatement.class);

@@ -7,10 +7,7 @@ import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.BaseReference
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.PyElementGenerator
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyNamedParameter
-import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.*
 
 class PyTestFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFixture) : BaseReference(namedParameter) {
@@ -54,6 +51,8 @@ object PyTextFixtureTypeProvider : PyTypeProviderBase() {
 }
 
 private object PyTestReferenceProvider : PsiReferenceProvider() {
+  override fun acceptsTarget(target: PsiElement): Boolean = target is PyElement
+
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val namedParam = element as? PyNamedParameter ?: return emptyArray()
     val fixture = getFixture(namedParam, TypeEvalContext.codeAnalysis(element.project, element.containingFile)) ?: return emptyArray()

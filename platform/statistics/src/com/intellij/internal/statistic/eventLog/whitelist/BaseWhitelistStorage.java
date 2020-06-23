@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.whitelist;
 
-import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
+import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
@@ -27,7 +27,7 @@ public abstract class BaseWhitelistStorage implements WhitelistGroupRulesStorage
 
   @NotNull
   protected Map<String, WhiteListGroupRules> createValidators(@NotNull FUStatisticsWhiteListGroupsService.WLGroups groups) {
-    final EventLogBuildNumber buildNumber = EventLogBuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
+    final EventLogBuild buildNumber = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
     return groups.groups.stream().
       filter(group -> group.accepts(buildNumber)).
       collect(Collectors.toMap(group -> group.id, group -> createRules(group, groups.rules)));

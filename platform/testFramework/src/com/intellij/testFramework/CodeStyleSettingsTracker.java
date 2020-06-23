@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ public class CodeStyleSettingsTracker {
     CodeStyleSettings settings = currentSettingsSupplier.get();
     if (settings != null) {
       settings.getIndentOptions(StdFileTypes.JAVA);
-      myOldSettings = settings.clone();
+      myOldSettings = CodeStyle.createTestSettings(settings);
     }
   }
 

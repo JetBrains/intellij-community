@@ -49,7 +49,20 @@ public class VisualLinesIteratorTest extends AbstractEditorTest {
     it.advance();
     assertTrue(it.atEnd());
   }
-  
+
+  public void testEmptyDocument() {
+    initText("");
+    VisualLinesIterator it = createIterator(0);
+    assertFalse(it.atEnd());
+    assertEquals(0, it.getVisualLine());
+    assertEquals(0, it.getVisualLineStartOffset());
+    assertEquals(0, it.getVisualLineEndOffset());
+    assertEquals(0, it.getStartLogicalLine());
+    assertEquals(0, it.getEndLogicalLine());
+    it.advance();
+    assertTrue(it.atEnd());
+  }
+
   private VisualLinesIterator createIterator(int startVisualLine) {
     return new VisualLinesIterator((EditorImpl)getEditor(), startVisualLine);
   }

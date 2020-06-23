@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,7 +10,7 @@ public class ValidationResult implements Comparable<ValidationResult> {
   }
 
   public enum Action {
-    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), NO_ACTION(""), VALIDATE("Validate");
+    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), VALIDATE("Validate");
 
     private final String myDisplayString;
 
@@ -36,15 +35,13 @@ public class ValidationResult implements Comparable<ValidationResult> {
 
   public final Kind kind;
   public final String path;
-  public final File toFile;
   public final Action action;
   public final String message;
   public final List<Option> options;
 
-  public ValidationResult(Kind kind, String path, File toFile, Action action, String message, Option... options) {
+  public ValidationResult(Kind kind, String path, Action action, String message, Option... options) {
     this.kind = kind;
     this.path = path;
-    this.toFile = toFile;
     this.action = action;
     this.message = message;
     this.options = Arrays.asList(options);

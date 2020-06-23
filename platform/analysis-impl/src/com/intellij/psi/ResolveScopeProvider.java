@@ -28,6 +28,9 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ResolveScopeProvider {
   public static final ExtensionPointName<ResolveScopeProvider> EP_NAME = ExtensionPointName.create("com.intellij.resolveScopeProvider");
 
+  /**
+   * @return {@link GlobalSearchScope} which defines destination scope where to resolve is allowed from given {@code invocationPoint}.
+   */
   @Nullable
   public abstract GlobalSearchScope getResolveScope(@NotNull VirtualFile file, Project project);
 }

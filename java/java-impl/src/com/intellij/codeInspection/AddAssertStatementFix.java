@@ -16,11 +16,10 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class AddAssertStatementFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance(AddAssertStatementFix.class);
   private final String myText;
 
   public AddAssertStatementFix(@NotNull String text) {
@@ -46,10 +44,11 @@ public class AddAssertStatementFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiExpression element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiExpression.class);
     if (element == null) return;
-    element = RefactoringUtil.ensureCodeBlock(element);
-    if (element == null) return;
-    PsiElement anchorElement = RefactoringUtil.getParentStatement(element, false);
-    LOG.assertTrue(anchorElement != null);
+    CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(element);
+    if (surrounder == null) return;
+    CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+    element = result.getExpression();
+    PsiElement anchorElement = result.getAnchor();
     PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorElement);
     if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
       anchorElement = prev;

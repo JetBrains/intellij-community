@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,7 +17,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,6 +46,11 @@ import static org.junit.Assert.*;
 
 public class JarFileSystemTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
+
+  @After
+  public void testDown() {
+    JarFileSystemImpl.cleanupForNextTest();
+  }
 
   @Test
   public void testFindFile() throws IOException {
@@ -189,15 +192,12 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
         for (Future<?> future : futuresToWait) future.get(2, TimeUnit.SECONDS);
       }
+
+      for (BasicJarHandler handler : handlers) handler.dispose();
     }
     catch (TimeoutException e) {
       fail("Deadlock detected");
     }
-  }
-
-  @After
-  public void testDown() {
-    JarFileSystemImpl.cleanupForNextTest();
   }
 
   @Test
@@ -229,6 +229,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       writeEntry(zip, "a/b");
       writeEntry(zip, "a/b/c.txt");
       writeEntry(zip, "x\\y\\z.txt");
+      writeEntry(zip, "/x/f.txt");
       writeEntry(zip, "d1/aB");
       writeEntry(zip, "d1/ab");
       writeEntry(zip, "D2/f1");
@@ -250,7 +251,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       }
     });
     assertThat(entries).containsExactlyInAnyOrder(
-      "a/", "a/b/", "a/b/c.txt", "x/", "x/y/", "x/y/z.txt", "d1/", "d1/aB", "d1/ab", "D2/", "D2/f1", "d2/", "d2/f2");
+      "a/", "a/b/", "a/b/c.txt", "x/", "x/y/", "x/f.txt", "x/y/z.txt", "d1/", "d1/aB", "d1/ab", "D2/", "D2/f1", "d2/", "d2/f2");
   }
 
   private static void writeEntry(ZipOutputStream zip, String name) throws IOException {
@@ -280,7 +281,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testEnormousFileInputStream() throws IOException {
-    File root = tempDir.newFolder("out");
+    File root = tempDir.newDirectory("out");
     FileUtil.writeToFile(new File(root, "small1"), "some text");
     FileUtil.writeToFile(new File(root, "small2"), "another text");
     try (InputStream is = new ZeroInputStream(); OutputStream os = new FileOutputStream(new File(root, "large"))) {
@@ -302,19 +303,6 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       assertSame(is1.getClass(), is2.getClass());
       assertNotSame(is1.getClass(), il.getClass());
     }
-  }
-
-  @Test
-  public void testCrazyJarWithDuplicateEntriesMustNotCrashAnything() {
-    String jarPath = PathManagerEx.getTestDataPath() + "/vfs/sample.jar";
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
-    assertNotNull(vFile);
-
-    VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(vFile);
-    assertNotNull(jarRoot);
-    String[] children = JarFileSystem.getInstance().list(jarRoot);
-    assertEquals("com", UsefulTestCase.assertOneElement(children));
-    assertEquals("Hello.class", UsefulTestCase.assertOneElement(JarFileSystem.getInstance().list(jarRoot.findFileByRelativePath("com"))));
   }
 
   @NotNull

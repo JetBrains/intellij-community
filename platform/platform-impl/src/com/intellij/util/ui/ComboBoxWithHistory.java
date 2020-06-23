@@ -4,6 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -59,7 +60,7 @@ public class ComboBoxWithHistory extends JComboBox {
   }
 
   public void save() {
-    final StringBuilder buf = new StringBuilder("<map>");
+    @NonNls StringBuilder buf = new StringBuilder("<map>");
     for (Object key : myWeights.keySet()) {
       if (key != null) {
         final Long value = myWeights.get(key);

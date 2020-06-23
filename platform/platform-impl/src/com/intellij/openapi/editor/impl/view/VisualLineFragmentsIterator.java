@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Document;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -24,8 +25,7 @@ import java.util.function.Consumer;
  * Iterator over visual line's fragments. Fragment's text has the same font and directionality. Collapsed fold regions are also represented
  * as fragments.
  */
-class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterator.Fragment> {
-
+final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterator.Fragment> {
   @NotNull
   static Iterable<Fragment> create(@NotNull EditorView view, int offset, boolean beforeSoftWrap) {
     return create(view, offset, beforeSoftWrap, false);
@@ -59,7 +59,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   private int mySegmentEndOffset;
   private int myCurrentFoldRegionIndex;
   private Iterator<LineLayout.VisualFragment> myFragmentIterator;
-  private List<Inlay> myInlays;
+  private List<Inlay<?>> myInlays;
   private int myCurrentInlayIndex;
   private float myCurrentX;
   private int myCurrentVisualColumn;
@@ -171,10 +171,11 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     int startOffset = myCurrentInlayIndex > 0 ? myInlays.get(myCurrentInlayIndex - 1).getOffset() : mySegmentStartOffset;
     int endOffset = myCurrentInlayIndex < myInlays.size() ? myInlays.get(myCurrentInlayIndex).getOffset() : mySegmentEndOffset;
     int lineStartOffset = myDocument.getLineStartOffset(myCurrentEndLogicalLine);
-    myFragmentIterator = myView.getTextLayoutCache().getLineLayout(myCurrentEndLogicalLine).
-      getFragmentsInVisualOrder(myView, myCurrentEndLogicalLine, myCurrentX, myCurrentVisualColumn,
-                                startOffset - lineStartOffset, endOffset - lineStartOffset,
-                                myQuickEvaluationListener);
+    myFragmentIterator = myCurrentEndLogicalLine < myDocument.getLineCount() // handle empty document case
+                         ? myView.getTextLayoutCache().getLineLayout(myCurrentEndLogicalLine)
+                           .getFragmentsInVisualOrder(myView, myCurrentEndLogicalLine, myCurrentX, myCurrentVisualColumn,
+                                                      startOffset - lineStartOffset, endOffset - lineStartOffset, myQuickEvaluationListener)
+                         : Collections.emptyIterator();
   }
 
   private int getCurrentFoldRegionStartOffset() {
@@ -346,7 +347,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       return myDelegate != null
              ? myDelegate.visualToLogicalColumn(column)
              : myFoldRegion != null
-               ? column == myCurrentVisualColumn && myFoldRegionColumns > 0 ? getEndLogicalColumn() : getStartLogicalColumn()
+               ? column == myCurrentVisualColumn ? getEndLogicalColumn(): getStartLogicalColumn()
                : getEndLogicalColumn();
     }
 

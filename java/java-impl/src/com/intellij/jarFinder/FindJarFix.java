@@ -147,7 +147,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
         }
         else {
           JBList<String> libNames = new JBList<>(ContainerUtil.sorted(libs.keySet()));
-          libNames.installCellRenderer(o -> new JLabel(o.toString(), PlatformIcons.JAR_ICON, SwingConstants.LEFT));
+          libNames.installCellRenderer(o -> new JLabel(o, PlatformIcons.JAR_ICON, SwingConstants.LEFT));
           if (libs.size() == 1) {
             final String jarName = libs.keySet().iterator().next();
             final String url = libs.get(jarName);

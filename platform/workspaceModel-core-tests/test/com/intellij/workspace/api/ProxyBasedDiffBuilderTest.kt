@@ -12,9 +12,9 @@ private fun TypedEntityStorageBuilder.applyDiff(anotherBuilder: TypedEntityStora
 class ProxyBasedDiffBuilderTest {
   @Test
   fun `add entity`() {
-    val source = TypedEntityStorageBuilder.create()
+    val source = TypedEntityStorageBuilder.createProxy()
     source.addSampleEntity("first")
-    val target = TypedEntityStorageBuilder.create()
+    val target = TypedEntityStorageBuilder.createProxy()
     target.addSampleEntity("second")
     val storage = target.applyDiff(source)
     assertEquals(setOf("first", "second"), storage.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
@@ -22,10 +22,10 @@ class ProxyBasedDiffBuilderTest {
 
   @Test
   fun `remove entity`() {
-    val target = TypedEntityStorageBuilder.create()
+    val target = TypedEntityStorageBuilder.createProxy()
     val entity = target.addSampleEntity("hello")
     val entity2 = target.addSampleEntity("hello")
-    val source = TypedEntityStorageBuilder.from(target.toStorage())
+    val source = TypedEntityStorageBuilder.fromProxy(target.toStorage())
     source.removeEntity(entity)
     val storage = target.applyDiff(source)
     assertEquals(entity2, storage.singleSampleEntity())
@@ -33,9 +33,9 @@ class ProxyBasedDiffBuilderTest {
 
   @Test
   fun `modify entity`() {
-    val target = TypedEntityStorageBuilder.create()
+    val target = TypedEntityStorageBuilder.createProxy()
     val entity = target.addSampleEntity("hello")
-    val source = TypedEntityStorageBuilder.from(target.toStorage())
+    val source = TypedEntityStorageBuilder.fromProxy(target.toStorage())
     source.modifyEntity(ModifiableSampleEntity::class.java, entity) {
       stringProperty = "changed"
     }
@@ -45,10 +45,10 @@ class ProxyBasedDiffBuilderTest {
 
   @Test
   fun `remove removed entity`() {
-    val target = TypedEntityStorageBuilder.create()
+    val target = TypedEntityStorageBuilder.createProxy()
     val entity = target.addSampleEntity("hello")
     val entity2 = target.addSampleEntity("hello")
-    val source = TypedEntityStorageBuilder.from(target.toStorage())
+    val source = TypedEntityStorageBuilder.fromProxy(target.toStorage())
     target.removeEntity(entity)
     target.checkConsistency()
     source.checkConsistency()
@@ -59,9 +59,9 @@ class ProxyBasedDiffBuilderTest {
 
   @Test
   fun `modify removed entity`() {
-    val target = TypedEntityStorageBuilder.create()
+    val target = TypedEntityStorageBuilder.createProxy()
     val entity = target.addSampleEntity("hello")
-    val source = TypedEntityStorageBuilder.from(target.toStorage())
+    val source = TypedEntityStorageBuilder.fromProxy(target.toStorage())
     target.removeEntity(entity)
     source.checkConsistency()
     source.modifyEntity(ModifiableSampleEntity::class.java, entity) {
@@ -73,9 +73,9 @@ class ProxyBasedDiffBuilderTest {
 
   @Test
   fun `remove modified entity`() {
-    val target = TypedEntityStorageBuilder.create()
+    val target = TypedEntityStorageBuilder.createProxy()
     val entity = target.addSampleEntity("hello")
-    val source = TypedEntityStorageBuilder.from(target.toStorage())
+    val source = TypedEntityStorageBuilder.fromProxy(target.toStorage())
     target.modifyEntity(ModifiableSampleEntity::class.java, entity) {
       stringProperty = "changed"
     }

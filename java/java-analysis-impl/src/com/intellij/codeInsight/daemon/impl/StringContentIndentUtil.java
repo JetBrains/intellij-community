@@ -21,7 +21,6 @@ public class StringContentIndentUtil {
   private static final Key<List<RangeHighlighter>> TEXT_BLOCK_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("TextBlockHighlightersInEditor");
   private static final Key<Long> LAST_TIME_CONTENT_INDENT_CHANGED = Key.create("LastTimeContentIndentChanged");
 
-  @Contract("null -> false")
   static boolean isDocumentUpdated(@NotNull Editor editor) {
     Document document = editor.getDocument();
     long stamp = getTimestamp(editor, document);

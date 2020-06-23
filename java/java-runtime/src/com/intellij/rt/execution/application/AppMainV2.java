@@ -101,10 +101,10 @@ public class AppMainV2 {
     String[] params = new String[args.length - 1];
     System.arraycopy(args, 1, params, 0, args.length - 1);
 
-    Class appClass = Class.forName(mainClass);
+    Class<?> appClass = Class.forName(mainClass);
     Method m;
     try {
-      m = appClass.getMethod("main", new Class[]{params.getClass()});
+      m = appClass.getMethod("main", String[].class);
     }
     catch (NoSuchMethodException e) {
       if (!startJavaFXApplication(params, appClass)) {
@@ -132,12 +132,12 @@ public class AppMainV2 {
     }
   }
 
-  private static boolean startJavaFXApplication(String[] params, Class appClass) {
+  private static boolean startJavaFXApplication(String[] params, Class<?> appClass) {
     try {
       //check in launch method for application class in the stack trace leads to this hack here
-      Class[] types = {appClass.getClass(), params.getClass()};
-      Method launchApplication = Class.forName("com.sun.javafx.application.LauncherImpl").getMethod("launchApplication", types);
-      launchApplication.invoke(null, new Object[] {appClass, params});
+      Method launchApplication = Class.forName("com.sun.javafx.application.LauncherImpl")
+        .getMethod("launchApplication", Class.class, String[].class);
+      launchApplication.invoke(null, appClass, params);
       return true;
     }
     catch (Throwable e) {

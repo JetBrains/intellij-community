@@ -747,7 +747,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
         @Override
         public void layout(@NotNull Rectangle lpBounds) {
-          if (!myCloseButton.isVisible()) {
+          if (myCloseButton == null || !myCloseButton.isVisible()) {
             return;
           }
 

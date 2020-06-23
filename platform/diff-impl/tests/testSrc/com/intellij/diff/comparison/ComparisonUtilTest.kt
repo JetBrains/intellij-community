@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.util.IntPair
+import com.intellij.util.IntPair
 
 class ComparisonUtilTest : DiffTestCase() {
   fun testTrimEquals() {
@@ -133,14 +119,14 @@ class ComparisonUtilTest : DiffTestCase() {
     assertTrue(fragments.size == 1, "Side: ${fragments.size})")
     val fragment = fragments[0]
 
-    assertEquals(offsets1.val1, fragment.startOffset1, fragment.toString())
-    assertEquals(offsets1.val2, fragment.endOffset1, fragment.toString())
-    assertEquals(offsets2.val1, fragment.startOffset2, fragment.toString())
-    assertEquals(offsets2.val2, fragment.endOffset2, fragment.toString())
-    assertEquals(lines1.val1, fragment.startLine1, fragment.toString())
-    assertEquals(lines1.val2, fragment.endLine1, fragment.toString())
-    assertEquals(lines2.val1, fragment.startLine2, fragment.toString())
-    assertEquals(lines2.val2, fragment.endLine2, fragment.toString())
+    assertEquals(offsets1.first, fragment.startOffset1, fragment.toString())
+    assertEquals(offsets1.second, fragment.endOffset1, fragment.toString())
+    assertEquals(offsets2.first, fragment.startOffset2, fragment.toString())
+    assertEquals(offsets2.second, fragment.endOffset2, fragment.toString())
+    assertEquals(lines1.first, fragment.startLine1, fragment.toString())
+    assertEquals(lines1.second, fragment.endLine1, fragment.toString())
+    assertEquals(lines2.first, fragment.startLine2, fragment.toString())
+    assertEquals(lines2.second, fragment.endLine2, fragment.toString())
   }
 
   private fun doTestTrim(expected: Boolean, string1: String, string2: String) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.mock.MockApplication;
@@ -42,12 +42,7 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     myProject = null;
-    try {
-      super.tearDown();
-    }
-    finally {
-      clearFields(this);
-    }
+    super.tearDown();
   }
 
   protected <T> void registerExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull T extension) {
@@ -71,11 +66,6 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
       ExtensionPoint.Kind kind = aClass.isInterface() || (aClass.getModifiers() & Modifier.ABSTRACT) != 0 ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
       ((ExtensionsAreaImpl)area).registerExtensionPoint(extensionPointName, aClass.getName(), kind, getTestRootDisposable());
     }
-  }
-
-  protected void registerComponentImplementation(@NotNull MutablePicoContainer container, @NotNull Class<?> key, @NotNull Class<?> implementation) {
-    container.unregisterComponent(key);
-    container.registerComponentImplementation(key, implementation);
   }
 
   public static <T> T registerComponentInstance(@NotNull MutablePicoContainer container, @NotNull Class<T> key, @NotNull T implementation) {

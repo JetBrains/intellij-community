@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl.livePreview;
 
 
@@ -7,7 +7,10 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -49,7 +52,7 @@ public class SearchResults implements DocumentListener, CaretListener {
   @Override
   public void caretPositionChanged(@NotNull CaretEvent event) {
     Caret caret = event.getCaret();
-    if (caret != null && myEditor.getCaretModel().getCaretCount() == 1) {
+    if (caret != null && myEditor.getCaretModel().getAllCarets().size() == 1 && caret.isUpToDate()) {
       int offset = caret.getOffset();
       FindResult occurrenceAtCaret = getOccurrenceAtCaret();
       if (occurrenceAtCaret != null && occurrenceAtCaret != myCursor) {
@@ -325,7 +328,6 @@ public class SearchResults implements DocumentListener, CaretListener {
 
   public void dispose() {
     myDisposed = true;
-    myEditor.getCaretModel().removeCaretListener(this);
     myEditor.getDocument().removeDocumentListener(this);
   }
 
@@ -341,7 +343,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     setUpdating(false);
     myOccurrences = occurrences;
     final TextRange oldCursorRange = myCursor;
-    Collections.sort(myOccurrences, Comparator.comparingInt(TextRange::getStartOffset));
+    myOccurrences.sort(Comparator.comparingInt(TextRange::getStartOffset));
 
     myFindModel = findModel;
     myDocumentTimestamp = myEditor.getDocument().getModificationStamp();

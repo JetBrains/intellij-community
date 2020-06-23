@@ -40,11 +40,13 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
   private static class MyThreadFactory extends CountingThreadFactory {
     private Consumer<? super Thread> newThreadListener;
+    private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
 
     @NotNull
     @Override
     public Thread newThread(@NotNull final Runnable r) {
-      Thread thread = new Thread(r, POOLED_THREAD_PREFIX + counter.incrementAndGet());
+      Thread thread = myThreadFactory.newThread(r);
+      thread.setName(POOLED_THREAD_PREFIX + counter.incrementAndGet());
 
       thread.setPriority(Thread.NORM_PRIORITY - 1);
 

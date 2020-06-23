@@ -2,11 +2,11 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
@@ -27,6 +27,7 @@ import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -134,7 +135,10 @@ public class IoTestUtil {
   }
 
   private static char getFirstFreeDriveLetter() {
-    Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> StringUtil.toUpperCase(root.getPath()).charAt(0));
+    Set<Character> roots = StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false)
+      .map(root -> StringUtil.toUpperCase(root.toString()).charAt(0))
+      .collect(Collectors.toSet());
+    Logger.getInstance(IoTestUtil.class).debug("logical drives: " + roots);
     for (char c = 'E'; c <= 'Z'; c++) {
       if (!roots.contains(c)) {
         return c;
@@ -200,17 +204,6 @@ public class IoTestUtil {
   }
 
   @NotNull
-  public static File createTestJar() {
-    try {
-      File jarFile = expandWindowsPath(FileUtil.createTempFile("test.", ".jar"));
-      return createTestJar(jarFile);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @NotNull
   public static File createTestJar(File jarFile) {
     return createTestJar(jarFile, JarFile.MANIFEST_NAME, "");
   }
@@ -231,7 +224,7 @@ public class IoTestUtil {
   }
 
   @NotNull
-  public static File createTestJar(@NotNull File jarFile, @NotNull Collection<? extends Pair<String, byte[]>> namesAndContents) {
+  public static File createTestJar(@NotNull File jarFile, @NotNull Collection<Pair<String, byte[]>> namesAndContents) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (Pair<String, byte[]> p : namesAndContents) {
         String name = p.first;

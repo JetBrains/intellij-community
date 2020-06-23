@@ -56,6 +56,14 @@ public class Xslt2HighlightingTest extends TestBase {
     doXsltHighlighting("move-def.xsd");
   }
 
+  public void testXslt3() {
+    doXsltHighlighting();
+  }
+
+  public void testNamespaces() {
+    doXsltHighlighting();
+  }
+
   private void doXsltHighlighting(String... moreFiles) {
     final String name = getTestFileName();
     myFixture.testHighlighting(true, false, false, ArrayUtil.mergeArrays(new String[]{ name + ".xsl" }, moreFiles));

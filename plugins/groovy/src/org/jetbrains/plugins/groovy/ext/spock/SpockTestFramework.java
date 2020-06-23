@@ -107,9 +107,4 @@ public class SpockTestFramework extends GroovyTestFramework {
   protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
     return findSpecificMethod(clazz, SpockConstants.CLEANUP_METHOD_NAME);
   }
-
-  @Override
-  public char getMnemonic() {
-    return 'S';
-  }
 }

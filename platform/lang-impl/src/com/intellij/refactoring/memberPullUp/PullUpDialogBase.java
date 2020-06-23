@@ -12,6 +12,7 @@ import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.MemberSelectionPanelBase;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,7 +37,11 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
   protected List<MemberInfo> myMemberInfos;
   private JComboBox myClassCombo;
 
-  public PullUpDialogBase(Project project, Class aClass, List<Class> superClasses, Storage memberInfoStorage, String title) {
+  public PullUpDialogBase(Project project,
+                          Class aClass,
+                          List<Class> superClasses,
+                          Storage memberInfoStorage,
+                          @NlsContexts.DialogTitle String title) {
     super(project, true);
     myClass = aClass;
     mySuperClasses = superClasses;

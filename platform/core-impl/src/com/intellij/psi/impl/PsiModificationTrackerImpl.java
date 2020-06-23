@@ -24,8 +24,7 @@ import java.util.Map;
 
 import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.*;
 
-public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
-
+public final class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
   private final SimpleModificationTracker myModificationCount = new SimpleModificationTracker();
 
   private final SimpleModificationTracker myAllLanguagesTracker = new SimpleModificationTracker();
@@ -33,7 +32,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     ConcurrentFactoryMap.createWeakMap(language -> new SimpleModificationTracker());
   private final Listener myPublisher;
 
-  public PsiModificationTrackerImpl(Project project) {
+  public PsiModificationTrackerImpl(@NotNull Project project) {
     MessageBus bus = project.getMessageBus();
     myPublisher = bus.syncPublisher(TOPIC);
     bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
@@ -81,6 +80,8 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     incCountersInner();
   }
 
+  // used by Kotlin
+  @SuppressWarnings("WeakerAccess")
   public static boolean canAffectPsi(@NotNull PsiTreeChangeEventImpl event) {
     PsiTreeChangeEventImpl.PsiEventType code = event.getCode();
     return !(code == BEFORE_PROPERTY_CHANGE ||
@@ -139,18 +140,18 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     return myModificationCount.getModificationCount();
   }
 
-  @NotNull
   @Override
-  public ModificationTracker getOutOfCodeBlockModificationTracker() {
+  public @NotNull ModificationTracker getOutOfCodeBlockModificationTracker() {
     return myModificationCount;
   }
 
-  @NotNull
   @Override
-  public ModificationTracker getJavaStructureModificationTracker() {
+  public @NotNull ModificationTracker getJavaStructureModificationTracker() {
     return myModificationCount;
   }
 
+  // used by Kotlin
+  @SuppressWarnings("WeakerAccess")
   @ApiStatus.Experimental
   public void incLanguageModificationCount(@Nullable Language language) {
     if (language == null) return;
@@ -158,16 +159,14 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public ModificationTracker forLanguage(@NotNull Language language) {
+  public @NotNull ModificationTracker forLanguage(@NotNull Language language) {
     SimpleModificationTracker languageTracker = myLanguageTrackers.get(language);
     return () -> languageTracker.getModificationCount() +
                  myAllLanguagesTracker.getModificationCount();
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public ModificationTracker forLanguages(@NotNull Condition<? super Language> condition) {
+  public @NotNull ModificationTracker forLanguages(@NotNull Condition<? super Language> condition) {
     return () -> {
       long result = myAllLanguagesTracker.getModificationCount();
       for (Language l : myLanguageTrackers.keySet()) {

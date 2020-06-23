@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -246,8 +248,8 @@ public abstract class HgUtil {
    */
   @Nullable
   public static String getNewBranchNameFromUser(@NotNull HgRepository repository,
-                                                @NotNull String dialogTitle) {
-    return Messages.showInputDialog(repository.getProject(), "Enter the name of new branch:", dialogTitle, Messages.getQuestionIcon(), "",
+                                                @DialogTitle @NotNull String dialogTitle) {
+    return Messages.showInputDialog(repository.getProject(), HgBundle.message("hg4idea.branch.enter.name"), dialogTitle, Messages.getQuestionIcon(), "",
                                     new HgBranchReferenceValidator(repository));
   }
 

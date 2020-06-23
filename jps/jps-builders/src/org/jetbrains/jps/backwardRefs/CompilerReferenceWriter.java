@@ -17,7 +17,7 @@ public class CompilerReferenceWriter<Input> {
 
   public void writeData(int id, Input d) {
     for (InvertedIndex<?, ?, Input> index : myIndex.getIndices()) {
-      index.update(id, d).compute();
+      index.mapInputAndPrepareUpdate(id, d).compute();
     }
   }
 

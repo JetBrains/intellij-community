@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAu
 class GroovyParameterTypeHintsInlayProviderTest : InlayHintsProviderTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
-    return GroovyProjectDescriptors.GROOVY_LATEST
+    return GroovyProjectDescriptors.GROOVY_3_0
   }
 
   private fun testTypeHints(text: String, settings:
@@ -70,7 +70,7 @@ def<# [< [T extends  A] >] #> foo(<# [T  ] #>a, <# [[Closure < [?  ] >]  ] #>c) 
 
 interface A{def foo()}
 
-foo(null as A) {
+foo(null as A) {<# [A  it -> ] #>
   it.foo()
 }
     """.trimIndent()
@@ -85,6 +85,17 @@ def foo(<# [Integer  ] #>arg, <# [[Closure < [?  ] >]  ] #>closure) {
 }
 
 foo(1) { <# [Integer  ] #>a -> a.byteValue() }
+    """.trimIndent()
+    testTypeHints(text)
+  }
+
+  fun testInsideLambda() {
+    val text = """
+def foo(<# [Integer  ] #>arg, <# [[Closure < [?  ] >]  ] #>closure) {
+  closure(arg)
+}
+
+foo(1, <# [Integer  ] #>a -> a.byteValue())
     """.trimIndent()
     testTypeHints(text)
   }

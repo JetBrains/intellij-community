@@ -52,12 +52,12 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
   private Map<DfaVariableValue, Set<Relation>> getRelations() {
     Map<DfaVariableValue, Set<Relation>> result = new HashMap<>();
-    forVariableStates((var, state) -> {
-      if (state.myDfType instanceof DfConstantType) {
-        result.computeIfAbsent(var, k -> new HashSet<>()).add(new Relation(RelationType.EQ, getFactory().fromDfType(state.myDfType)));
+    forRecordedVariableTypes((var, type) -> {
+      if (type instanceof DfConstantType) {
+        result.computeIfAbsent(var, k -> new HashSet<>()).add(new Relation(RelationType.EQ, getFactory().fromDfType(type)));
       }
-      if (state.myDfType instanceof DfAntiConstantType) {
-        Set<?> notValues = ((DfAntiConstantType<?>)state.myDfType).getNotValues();
+      if (type instanceof DfAntiConstantType) {
+        Set<?> notValues = ((DfAntiConstantType<?>)type).getNotValues();
         PsiType varType = var.getType();
         if (!notValues.isEmpty() && varType != null) {
           for (Object notValue : notValues) {
@@ -107,11 +107,11 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
   private Map<DfaVariableValue, Change> getChangeMap(TrackingDfaMemoryState previous) {
     Map<DfaVariableValue, Change> changeMap = new HashMap<>();
     Set<DfaVariableValue> varsToCheck = new HashSet<>();
-    previous.forVariableStates((value, state) -> varsToCheck.add(value));
-    forVariableStates((value, state) -> varsToCheck.add(value));
+    previous.forRecordedVariableTypes((value, state) -> varsToCheck.add(value));
+    forRecordedVariableTypes((value, state) -> varsToCheck.add(value));
     for (DfaVariableValue value : varsToCheck) {
-      DfType newType = getVariableState(value).myDfType;
-      DfType oldType = previous.getVariableState(value).myDfType;
+      DfType newType = getDfType(value);
+      DfType oldType = previous.getDfType(value);
       if (!newType.equals(oldType)) {
         changeMap.put(value, new Change(Collections.emptySet(), Collections.emptySet(), oldType, newType));
       }

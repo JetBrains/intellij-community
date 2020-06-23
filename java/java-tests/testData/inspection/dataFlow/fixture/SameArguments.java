@@ -1,4 +1,6 @@
 class X {
+  static final char MY_CHAR = 'x';
+  
   void test(int x, int y) {
     System.out.println(Math.<warning descr="Arguments of 'max' are the same. Calling this method with the same arguments is meaningless.">max</warning>(x, x));
     int z = x;
@@ -7,10 +9,38 @@ class X {
     String t = "foo";
     System.out.println("foobar".<warning descr="Arguments of 'replace' are the same. Calling this method with the same arguments is meaningless.">replace</warning>(s, t));
     System.out.println("foobar".<warning descr="Arguments of 'replace' are the same. Calling this method with the same arguments is meaningless.">replace</warning>('x', 'x'));
+    System.out.println("foobar".replace(MY_CHAR, 'x'));
   }
 
   int testCondition(int a) {
     if(a == 100) return Math.<warning descr="Arguments of 'max' are the same. Calling this method with the same arguments is meaningless.">max</warning>(a, 100);
     return 0;
+  }
+
+  public static int foo(int x) {
+    return Math.<warning descr="Result of min is the same as the first argument making the call meaningless.">min</warning>(x, Integer.MAX_VALUE) +
+                                                                                                                                                    Math.<warning descr="Result of max is the same as the second argument making the call meaningless.">max</warning>(x, Integer.MAX_VALUE);
+  }
+
+  int clamp(int x) {
+    return Math.<warning descr="Result of min is the same as the first argument making the call meaningless.">min</warning>(1, Math.max(x, 100));
+  }
+
+  void maxGreater(int x, int y) {
+    if (x < y) return;
+    System.out.println(Math.<warning descr="Result of max is the same as the first argument making the call meaningless.">max</warning>(x, y));
+    System.out.println(Math.<warning descr="Result of min is the same as the second argument making the call meaningless.">min</warning>(x, y));
+  }
+
+  int constants() {
+    final int SIZE1 = 10;
+    final int SIZE2 = 5;
+    return Math.max(1, SIZE1/SIZE2);
+  }
+  
+  void notEquals(int x, int y) {
+    if (x == y) return;
+    System.out.println(Math.max(x, y));
+    System.out.println(Math.min(x, y));
   }
 }

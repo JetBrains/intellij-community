@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.local;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ public class EditComment implements ChangeListCommand {
   public void apply(final ChangeListWorker worker) {
     myOldComment = worker.editComment(myName, myNewComment);
 
-    if (myOldComment != null && !Comparing.equal(myOldComment, myNewComment)) {
+    if (myOldComment != null && !Objects.equals(myOldComment, myNewComment)) {
       myListCopy = worker.getChangeListByName(myName);
     }
     else {

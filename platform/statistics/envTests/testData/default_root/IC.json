@@ -1,0 +1,153 @@
+{
+  "groups" : [ {
+    "id" : "actions",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "9"
+    } ],
+    "rules" : {
+      "event_id" : [ "{util#action}", "{enum:action.invoked|custom.action.invoked}" ],
+      "event_data" : {
+        "action_id" : [ "{util#action}" ],
+        "class" : [ "{util#class_name}" ],
+        "context_menu" : [ "{enum#boolean}" ],
+        "current_file" : [ "{util#current_file}" ],
+        "input_event" : [ "{util#shortcut}" ],
+        "parent" : [ "{enum#parent}", "{util#class_name}", "{enum:LineMarkerActionWrapper|TreeActionWrapper|MyTreeActionWrapper}" ],
+        "place" : [ "{util#place}" ],
+        "plugin" : [ "{util#plugin}" ],
+        "plugin_type" : [ "{util#plugin_type}" ],
+        "plugin_version" : [ "{util#plugin_version}" ],
+        "toolwindow" : [ "{util#toolwindow}" ]
+      },
+      "enums" : {
+        "parent" : [ "LineMarkerActionWrapper", "TreeActionWrapper", "MyTreeActionWrapper" ]
+      }
+    }
+  }, {
+    "id" : "lifecycle",
+    "builds" : [ {
+      "from" : "191.4738"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum#__event_id}" ],
+      "event_data" : {
+        "command_line" : [ "{enum#boolean}" ],
+        "debug_agent" : [ "{enum#boolean}" ],
+        "duration_grouped" : [ "{regexp#integer}s", "-{regexp#integer}s", "{regexp#integer}s+" ],
+        "duration_ms" : [ "{regexp#integer}" ],
+        "duration_s" : [ "{regexp#integer}" ],
+        "eap" : [ "{enum#boolean}" ],
+        "error" : [ "{util#class_name}" ],
+        "error_frames" : [ "{util#method_name}" ],
+        "error_hash" : [ "{regexp#integer}" ],
+        "error_size" : [ "{regexp#integer}" ],
+        "headless" : [ "{enum#boolean}" ],
+        "internal" : [ "{enum#boolean}" ],
+        "mapping_failed" : [ "{enum#boolean}" ],
+        "memory_error_kind" : [ "{enum:heap|perm_gen|metaspace|code_cache}" ],
+        "oom" : [ "{enum#boolean}" ],
+        "plugin" : [ "{util#plugin}" ],
+        "plugin_type" : [ "{util#plugin_type}" ],
+        "plugin_version" : [ "{util#plugin_version}" ],
+        "restart" : [ "{enum#boolean}" ],
+        "test" : [ "{enum#boolean}" ],
+        "time_ms" : [ "{regexp#integer}" ],
+        "too_many_errors" : [ "{enum#boolean}" ]
+      },
+      "enums" : {
+        "__event_id" : [ "ide.error", "ide.freeze", "ide.start", "ide.close", "project.opening.finished", "project.opened", "project.closed", "frame.activated", "frame.deactivated", "project.module.attached" ]
+      }
+    }
+  }, {
+    "id" : "productivity",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "11"
+    } ],
+    "rules" : {
+      "event_id" : [ "{util#productivity}", "{enum:feature.used}" ],
+      "event_data" : {
+        "group" : [ "{util#productivity_group}" ],
+        "id" : [ "{util#productivity}" ],
+        "plugin" : [ "{util#plugin}" ],
+        "plugin_type" : [ "{util#plugin_type}" ],
+        "plugin_version" : [ "{util#plugin_version}" ]
+      }
+    }
+  },{
+    "id" : "refactoring",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "1"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum:handler.invoked}" ],
+      "event_data" : {
+        "element" : [ "{util#class_name}" ],
+        "handler" : [ "{util#class_name}" ],
+        "lang" : [ "{util#lang}" ]
+      }
+    }
+  }, {
+    "id" : "toolwindow",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "6"
+    } ],
+    "rules" : {
+      "event_id" : [ "{util#toolwindow}", "{enum:activated}", "{enum:activated|shown|hidden}" ],
+      "event_data" : {
+        "Location" : [ "{enum#__Location}" ],
+        "ViewMode" : [ "{enum#__ViewMode}" ],
+        "id" : [ "{util#toolwindow}" ],
+        "plugin" : [ "{util#plugin}" ],
+        "plugin_type" : [ "{util#plugin_type}" ],
+        "plugin_version" : [ "{util#plugin_version}" ]
+      },
+      "enums" : {
+        "__Location" : [ "Left_Top", "Left_Bottom", "Bottom_Left", "Bottom_Right", "Right_Bottom", "Right_Top", "Top_Right", "Top_Left" ],
+        "__ViewMode" : [ "Dock_Pinned", "DockPinned", "Dock_Unpinned", "DockUnpinned", "Undock", "Float", "Window" ]
+      }
+    }
+  }, {
+    "id" : "ui.dialogs",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "6"
+    } ],
+    "rules" : {
+      "event_id" : [ "{util#dialog_class}", "{enum:show|close}", "{enum:show|close|help.clicked}" ],
+      "event_data" : {
+        "code" : [ "{enum:0|1|2}" ],
+        "dialog_class" : [ "{util#dialog_class}" ],
+        "plugin" : [ "{util#plugin}" ],
+        "plugin_type" : [ "{util#plugin_type}" ],
+        "plugin_version" : [ "{util#plugin_version}" ],
+        "type" : [ "{enum:show|close}" ]
+      }
+    }
+  }],
+  "rules" : {
+    "enums" : {
+      "boolean" : [ "true", "false" ],
+      "build_tools" : [ "Maven", "Gradle", "gradle", "sbt", "Clojure_Deps", "clojure_deps", "Pants", "pants", "bsp", "Kobalt", "kobalt", "undefined.system", "third.party", "SPM", "CompDB", "Compilation_Database", "Makefile" ],
+      "os" : [ "Windows", "Mac", "Linux", "FreeBSD", "Other" ],
+      "plugin_type" : [ "PLATFORM", "JB_BUNDLED", "JB_NOT_BUNDLED", "LISTED", "NOT_LISTED", "UNKNOWN" ],
+      "state" : [ "enabled", "disabled" ],
+      "vcs" : [ "Git", "git", "SVN", "svn", "hg4idea", "Perforce", "perforce", "TFS", "tfs", "SourceSafe", "sourcesafe", "ClearCase", "clearcase", "CVS", "cvs", "TFVS", "tfvs", "VSS", "vss" ]
+    },
+    "regexps" : {
+      "count" : "\\d+K?M?\\+?",
+      "float" : "-?\\d+\\.\\d+",
+      "hash" : "[0-9A-Fa-f]{40,64}",
+      "integer" : "-?\\d+(\\+)?",
+      "kotlin_version" : "\\d\\.\\d\\.\\d{1,3}-(dev|eap|release)-(\\d+-)?(AppCode|CLion|IJ|Studio)[0-9\\-\\.]+",
+      "license_metadata" : "[0-9]{10}[A-Z]{4}[-0-9X]{6}",
+      "mcu_name" : "UNKNOWN|UPDATE_FAILED|(STM32[A-Z]{1,2}\\w+)",
+      "series" : "^(?:AreaRange|Area|Bubble|Heatmap|Pie|Stock|Scatter|Line|Bar)+(?:_(?:AreaRange|Area|Bubble|Heatmap|Pie|Stock|Scatter|Line|Bar)+)*$",
+      "version" : "(\\d+\\.?)*\\d+"
+    }
+  },
+  "version" : "1237"
+}

@@ -18,7 +18,7 @@ class TypeConstraint(
   private val context: PsiElement
 ) : GrConstraintFormula() {
 
-  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean {
     var argType = rightType ?: PsiType.NULL
     if (argType is GrTupleType) {
       argType = TypesUtil.rawWildcard(argType, context) ?: argType

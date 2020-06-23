@@ -19,12 +19,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.StringPattern;
 import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
+import com.intellij.psi.impl.cache.impl.id.PlainTextIdIndexer;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,6 +44,10 @@ public class PlainTextTodoIndexer extends VersionedTodoIndexer {
     String chars = inputData.getContentAsText().toString(); // matching strings is faster than HeapCharBuffer
     OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
     for (IndexPattern indexPattern : indexPatterns) {
+      if (!idIndexContainAllWords(indexPattern.getWordsToFindFirst(), indexPattern.isCaseSensitive(), inputData)) {
+        continue;
+      }
+
       Pattern pattern = indexPattern.getOptimizedIndexingPattern();
       try {
         if (pattern != null) {
@@ -66,4 +73,8 @@ public class PlainTextTodoIndexer extends VersionedTodoIndexer {
     return map;
   }
 
+  private static boolean idIndexContainAllWords(@NotNull List<String> words, boolean caseSensitive, @NotNull FileContent content) {
+    Map<IdIndexEntry, Integer> idIndexData = PlainTextIdIndexer.getIdIndexData(content);
+    return words.stream().allMatch(word -> idIndexData.containsKey(new IdIndexEntry(word, caseSensitive)));
+  }
 }

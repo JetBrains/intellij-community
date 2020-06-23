@@ -17,12 +17,11 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.text.nullize
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -38,11 +37,11 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   override fun linkAndRefreshProject(projectDirectory: String, project: Project) {
-    val projectSdk = ProjectRootManager.getInstance(project).projectSdk
     val gradleProjectSettings = GradleProjectSettings()
-    setupGradleSettings(gradleProjectSettings, projectDirectory, project, projectSdk)
+    val gradleVersion = gradleProjectSettings.resolveGradleVersion()
+    setupGradleSettings(project, gradleProjectSettings, projectDirectory, gradleVersion)
     attachGradleProjectAndRefresh(gradleProjectSettings, project)
-    validateJavaHome(project, projectDirectory, gradleProjectSettings.resolveGradleVersion())
+    validateJavaHome(project, projectDirectory, gradleVersion)
   }
 
   override fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
@@ -68,9 +67,10 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
                                         .callback(createFinalImportCallback(project, externalProjectPath)))
   }
 
-  fun setupGradleSettings(settings: GradleProjectSettings, projectDirectory: String, project: Project, projectSdk: Sdk? = null) {
+  fun setupGradleSettings(project: Project, settings: GradleProjectSettings, projectDirectory: String, gradleVersion: GradleVersion) {
     GradleSettings.getInstance(project).setupGradleSettings()
-    settings.setupGradleProjectSettings(projectDirectory, project, projectSdk)
+    settings.setupGradleProjectSettings(projectDirectory)
+    setupGradleJvm(project, settings, projectDirectory, gradleVersion)
   }
 
   private fun GradleSettings.setupGradleSettings() {
@@ -80,13 +80,12 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     storeProjectFilesExternally = true
   }
 
-  private fun GradleProjectSettings.setupGradleProjectSettings(projectDirectory: String, project: Project, projectSdk: Sdk? = null) {
+  private fun GradleProjectSettings.setupGradleProjectSettings(projectDirectory: String) {
     externalProjectPath = projectDirectory
     isUseQualifiedModuleNames = true
     distributionType = GradleEnvironment.Headless.GRADLE_DISTRIBUTION_TYPE?.let(DistributionType::valueOf)
                        ?: DistributionType.DEFAULT_WRAPPED
     gradleHome = GradleEnvironment.Headless.GRADLE_HOME ?: suggestGradleHome()
-    gradleJvm = suggestGradleJvm(project, projectSdk, projectDirectory, resolveGradleVersion())
   }
 
   private fun suggestGradleHome(): String? {

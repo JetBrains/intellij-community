@@ -59,7 +59,7 @@ REGEXP_FILE
                   PsiElement(CHAR_CLASS)('\s')
                 RegExpQuantifierImpl: <*>
                   PsiElement(STAR)('*')
-              RegExpPyCondRefImpl: <(?([^\s\}]+)>
+              RegExpConditionalImpl: <(?([^\s\}]+)>
                 PsiElement(PYTHON_COND_REF)('(?(')
                 PsiErrorElement:Group name or number expected
                   <empty list>

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -84,7 +85,7 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
     private final VirtualFile myFile;
 
     private ShowAffectedFilesAction(@NotNull FileAnnotation fileAnnotation, int line) {
-      super("Show Affected Files", null, AllIcons.Actions.ListChanges);
+      super(VcsBundle.messagePointer("action.ShowAffectedFilesAction.show.affected.files.text"), AllIcons.Actions.ListChanges);
       myFileAnnotation = fileAnnotation;
       myLine = line;
 

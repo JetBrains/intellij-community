@@ -22,7 +22,7 @@ public interface KeyFMap {
   /**
    * An empty {@code KeyFMap}. No additional instances of empty {@code KeyFMap} should be created as they are indistinguishable.
    */
-  KeyFMap EMPTY_MAP = new EmptyFMap();
+  KeyFMap EMPTY_MAP = EmptyFMap.create();
 
   /**
    * Returns a {@code KeyFMap} which consists of the same elements as this {@code KeyFMap}, but

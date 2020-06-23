@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.openapi.project.Project;
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog;
+import org.jetbrains.plugins.github.i18n.GithubBundle;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -64,15 +65,15 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
-    myHostLabel = new JBLabel("Host:", SwingConstants.RIGHT);
+    myHostLabel = new JBLabel(GithubBundle.message("task.repo.host.field"), SwingConstants.RIGHT);
 
     JPanel myHostPanel = new JPanel(new BorderLayout(5, 0));
     myHostPanel.add(myURLText, BorderLayout.CENTER);
     myHostPanel.add(myShareUrlCheckBox, BorderLayout.EAST);
 
-    myRepositoryLabel = new JBLabel("Repository:", SwingConstants.RIGHT);
-    myRepoAuthor = new MyTextField("Repository Owner");
-    myRepoName = new MyTextField("Repository Name");
+    myRepositoryLabel = new JBLabel(GithubBundle.message("task.repo.repository.field"), SwingConstants.RIGHT);
+    myRepoAuthor = new MyTextField(GithubBundle.message("task.repo.owner.field.empty.hint"));
+    myRepoName = new MyTextField(GithubBundle.message("task.repo.name.field.empty.hint"));
     myRepoAuthor.setPreferredSize("SomelongNickname");
     myRepoName.setPreferredSize("SomelongReponame-with-suffixes");
 
@@ -82,9 +83,9 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myRepoPanel.add(new JLabel("/"), bag.next().fillCellNone().insets(0, 5, 0, 5).weightx(0));
     myRepoPanel.add(myRepoName, bag.next());
 
-    myTokenLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
-    myToken = new MyTextField("OAuth2 token");
-    myTokenButton = new JButton("Create API token");
+    myTokenLabel = new JBLabel(GithubBundle.message("task.repo.token.field"), SwingConstants.RIGHT);
+    myToken = new MyTextField(GithubBundle.message("task.repo.token.field.empty.hint"));
+    myTokenButton = new JButton(GithubBundle.message("task.repo.token.create.button"));
     myTokenButton.addActionListener(e -> {
       generateToken();
       doApply();

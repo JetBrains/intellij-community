@@ -501,7 +501,7 @@ public class CustomizableActionsPanel {
       });
       new DoubleClickListener(){
         @Override
-        protected boolean onDoubleClick(MouseEvent event) {
+        protected boolean onDoubleClick(@NotNull MouseEvent event) {
           doOKAction();
           return true;
         }

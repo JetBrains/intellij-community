@@ -166,7 +166,7 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
       final PsiCodeBlock body = method.getBody();
       assert body != null;
       body.add(statement);
-      if (isOnTheFly()) {
+      if (isOnTheFly() && method.isPhysical()) {
         final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
         if (editor != null) {
           GenerateMembersUtil.positionCaret(editor, method, true);

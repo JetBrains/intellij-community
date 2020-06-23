@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.ExecutionException;
@@ -6,6 +6,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -32,6 +33,7 @@ import com.intellij.task.impl.ProjectTaskManagerListener;
 import com.intellij.task.impl.ProjectTaskScope;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +49,7 @@ public class ExternalSystemTaskActivator {
 
   public static final String RUN_CONFIGURATION_TASK_PREFIX = "run: ";
   @NotNull private final Project myProject;
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList();
 
   public ExternalSystemTaskActivator(@NotNull Project project) {
     myProject = project;
@@ -199,7 +201,8 @@ public class ExternalSystemTaskActivator {
         continue;
       }
 
-      if (ExternalProjectsManager.getInstance(myProject).isIgnored(activation.systemId, activation.projectPath)) {
+      if (ExternalProjectsManager.getInstance(myProject).isIgnored(activation.systemId, activation.projectPath)
+          && !"true".equals(System.getProperty("force.execute.activated.tasks", "false"))) {
           continue;
       }
 
@@ -232,6 +235,8 @@ public class ExternalSystemTaskActivator {
     if (pair == null) {
       return true;
     }
+    String tasks = String.join(", ", pair.second.getTaskNames());
+    LOG.info(String.format("Started execution of %s", tasks));
 
     final ProjectSystemId systemId = pair.first;
     final ExternalSystemTaskExecutionSettings executionSettings = pair.getSecond();
@@ -254,11 +259,12 @@ public class ExternalSystemTaskActivator {
                                },
                                ProgressExecutionMode.IN_BACKGROUND_ASYNC, false);
     targetDone.waitFor();
+    LOG.info(String.format("Finished execution of %s", tasks));
     return result.get();
   }
 
-  public void addListener(@NotNull Listener l) {
-    myListeners.add(l);
+  public void addListener(@NotNull Listener l, @NotNull Disposable parent) {
+    myListeners.add(l, parent);
   }
 
   public boolean isTaskOfPhase(@NotNull TaskData taskData, @NotNull Phase phase) {

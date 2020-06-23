@@ -1,8 +1,8 @@
-import attr
+import abcd
 
 class A(object):
-    a = attr.ib()
+    a = abcd.ib()
 
-A = attr.s(A)
+A = abcd.s(A)
 
 A(a="test")

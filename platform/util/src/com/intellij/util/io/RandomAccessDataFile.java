@@ -12,14 +12,15 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RandomAccessDataFile implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance(RandomAccessDataFile.class);
 
   private static final OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
-  private static int ourFilesCount;
+  private static final AtomicInteger ourFilesCount = new AtomicInteger();
 
-  private final int myCount = ourFilesCount++;
+  private final int myCount = ourFilesCount.incrementAndGet();
   private final File myFile;
   private final PagePool myPool;
   private long lastSeek = -1L;
@@ -33,10 +34,6 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   private volatile boolean myIsDisposed;
 
   private static final boolean DEBUG = false;
-
-  public RandomAccessDataFile(@NotNull File file) throws IOException {
-    this(file, PagePool.SHARED);
-  }
 
   public RandomAccessDataFile(@NotNull File file, @NotNull PagePool pool) throws IOException {
     myPool = pool;

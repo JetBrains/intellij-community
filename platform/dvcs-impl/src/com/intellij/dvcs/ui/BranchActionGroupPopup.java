@@ -77,7 +77,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
       createTitlePanelToolbar(myKey);
     }
-    setSpeedSearchAlwaysShown(true);
+    setSpeedSearchAlwaysShown();
     myMeanRowHeight = getList().getCellBounds(0, 0).height + UIUtil.getListCellVPadding() * 2;
   }
 
@@ -102,7 +102,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         e.getPresentation().setEnabled(myUserSizeChanged);
       }
     };
-    ActionGroup settingsGroup = new ActionGroup("Settings", true) {
+    ActionGroup settingsGroup = new ActionGroup(DvcsBundle.message("action.BranchActionGroupPopup.settings.text"), true) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return mySettingsActions.toArray(AnAction.EMPTY_ARRAY);
@@ -150,7 +150,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     };
     popupWindow.addComponentListener(windowListener);
-    addPopupListener(new JBPopupListener() {
+    addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
         popupWindow.removeComponentListener(windowListener);

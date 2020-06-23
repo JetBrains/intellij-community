@@ -43,7 +43,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new ForCanBeForeachFix();
+    return new ForCanBeForeachFix(ignoreUntypedCollections);
   }
 
   @Override
@@ -888,7 +888,12 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
   }
 
-  private class ForCanBeForeachFix extends InspectionGadgetsFix {
+  private static class ForCanBeForeachFix extends InspectionGadgetsFix {
+    private boolean myIgnoreUntypedCollections;
+
+    public ForCanBeForeachFix(boolean ignoreUntypedCollections) {
+      this.myIgnoreUntypedCollections = ignoreUntypedCollections;
+    }
 
     @Override
     @NotNull
@@ -907,10 +912,10 @@ public class ForCanBeForeachInspection extends BaseInspection {
       if (isArrayLoopStatement(forStatement)) {
         replaceArrayLoopWithForeach(forStatement);
       }
-      else if (isCollectionLoopStatement(forStatement, ignoreUntypedCollections)) {
+      else if (isCollectionLoopStatement(forStatement, myIgnoreUntypedCollections)) {
         replaceCollectionLoopWithForeach(forStatement);
       }
-      else if (isIndexedListLoopStatement(forStatement, ignoreUntypedCollections)) {
+      else if (isIndexedListLoopStatement(forStatement, myIgnoreUntypedCollections)) {
         replaceIndexedListLoopWithForeach(forStatement);
       }
     }

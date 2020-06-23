@@ -48,7 +48,7 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
         }
       }
       CodeStyleScheme projectScheme = myModel.getProjectScheme();
-      ((CodeStyleSchemeImpl)projectScheme).setCodeStyleSettings(new CodeStyleSettings());
+      ((CodeStyleSchemeImpl)projectScheme).setCodeStyleSettings(CodeStyle.createTestSettings());
       myModel.selectScheme(myDefaultScheme, null);
       myModel.apply();
     }
@@ -63,7 +63,7 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
   public void testDefaults() {
     CodeStyleScheme defaultScheme = myModel.getSelectedScheme();
     assertEquals(CodeStyleScheme.DEFAULT_SCHEME_NAME, defaultScheme.getName());
-    assertEquals(new CodeStyleSettings(), defaultScheme.getCodeStyleSettings());
+    assertEquals(CodeStyle.createTestSettings(), defaultScheme.getCodeStyleSettings());
     assertFalse(myModel.isSchemeListModified());
     assertFalse(myModel.isUsePerProjectSettings());
   }
@@ -84,7 +84,7 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
     assertTrue(myModel.isUsePerProjectSettings());
     myModel.apply();
 
-    CodeStyleSettings defaultSettings = new CodeStyleSettings();
+    CodeStyleSettings defaultSettings = CodeStyle.createTestSettings();
     CodeStyleScheme projectScheme = myModel.getProjectScheme();
     assertEquals(defaultSettings.getDefaultRightMargin(), projectScheme.getCodeStyleSettings().getDefaultRightMargin());
     CodeStyleScheme scheme = myModel.createNewScheme("New Scheme", myModel.getSelectedScheme());

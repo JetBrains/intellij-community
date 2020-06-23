@@ -38,7 +38,7 @@ public class Base64 {
   private static char[] encodeBlock(byte[] bytes, int offset) {
     int j = 0;
     int s = bytes.length - offset - 1;
-    int l = s < 2 ? s : 2;
+    int l = Math.min(s, 2);
     for (int i = 0; i <= l; i++) {
       byte b = bytes[offset + i];
       int n = b >= 0 ? ((int)(b)) : b + 256;

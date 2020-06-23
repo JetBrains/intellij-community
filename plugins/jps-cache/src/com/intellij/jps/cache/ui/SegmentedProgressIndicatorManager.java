@@ -11,11 +11,14 @@ public class SegmentedProgressIndicatorManager {
   private static final LinkedHashMap<Object, String> myTextStack = new LinkedHashMap<>();
   private static final Object myLock = new Object();
   private final ProgressIndicator myProgressIndicator;
+  private final boolean myProgressWasIndeterminate;
   private final double mySegmentSize;
   private final int myTasksCount;
 
   public SegmentedProgressIndicatorManager(ProgressIndicator progressIndicator, int tasksCount, double segmentSize) {
     myProgressIndicator = progressIndicator;
+    myProgressWasIndeterminate = progressIndicator.isIndeterminate();
+    myProgressIndicator.setIndeterminate(false);
     mySegmentSize = segmentSize;
     myTasksCount = tasksCount;
     myText2Stack.clear();
@@ -74,6 +77,7 @@ public class SegmentedProgressIndicatorManager {
 
   public void finished(Object obj) {
     setText(obj, null);
+    myProgressIndicator.setIndeterminate(myProgressWasIndeterminate);
   }
 
   public ProgressIndicator getProgressIndicator() {

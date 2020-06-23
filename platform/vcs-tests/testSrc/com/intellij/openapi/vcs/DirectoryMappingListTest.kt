@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+import com.intellij.openapi.vcs.impl.VcsInitialization
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -18,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.junit.Assume
@@ -26,6 +28,9 @@ import java.nio.file.Paths
 
 class DirectoryMappingListTest : HeavyPlatformTestCase() {
   private val BASE_PATH = "/vcs/directoryMappings/"
+  private val CVS = "CVSv2"
+  private val MOCK = "mock"
+  private val MOCK2 = "mock2"
 
   private lateinit var mappings: NewMappings
   private lateinit var projectRoot: VirtualFile
@@ -38,6 +43,10 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   private lateinit var vcsCVS: MockAbstractVcs
 
   override fun setUpProject() {
+    TestLoggerFactory.enableDebugLogging(testRootDisposable,
+                                         "#" + NewMappings::class.java.name,
+                                         "#" + VcsInitialization::class.java.name)
+
     val root = FileUtil.toSystemIndependentName(VcsTestUtil.getTestDataPath() + BASE_PATH)
 
     projectRoot = PsiTestUtil.createTestProjectStructure(getTestName(true), null, root, myFilesToDelete, false)
@@ -45,14 +54,10 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
 
     myProject = ProjectManagerEx.getInstanceEx().loadProject(Paths.get("$rootPath/directoryMappings.ipr"))
     ProjectManagerEx.getInstanceEx().openTestProject(myProject)
-    UIUtil.dispatchAllInvocationEvents() // startup activities
 
-    val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
-    startupManager.runStartupActivities()
-
-    vcsMock = MockAbstractVcs(myProject, "mock")
-    vcsMock2 = MockAbstractVcs(myProject, "mock2")
-    vcsCVS = MockAbstractVcs(myProject, "CVS")
+    vcsMock = MockAbstractVcs(myProject, MOCK)
+    vcsMock2 = MockAbstractVcs(myProject, MOCK2)
+    vcsCVS = MockAbstractVcs(myProject, CVS)
 
     val vcses = AllVcses.getInstance(myProject)
     vcses.registerManually(vcsMock)
@@ -61,7 +66,12 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
 
     vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
     mappings = NewMappings(myProject, vcsManager)
+    mappings.activateActiveVcses()
     Disposer.register(testRootDisposable, mappings)
+
+    UIUtil.dispatchAllInvocationEvents()
+    val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
+    startupManager.runStartupActivities()
     startupManager.runPostStartupActivitiesRegisteredDynamically()
     vcsManager.waitForInitialized()
   }
@@ -78,12 +88,12 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     createDirectories(pathsStr)
 
     vcsManager.directoryMappings = listOf(
-      VcsDirectoryMapping(pathsStr[0], "mock"),
-      VcsDirectoryMapping(pathsStr[1], "mock"),
-      VcsDirectoryMapping(pathsStr[2], "mock"),
-      VcsDirectoryMapping(pathsStr[3], "mock2"),
-      VcsDirectoryMapping(pathsStr[4], "mock2"),
-      VcsDirectoryMapping(pathsStr[5], "mock2"))
+      VcsDirectoryMapping(pathsStr[0], MOCK),
+      VcsDirectoryMapping(pathsStr[1], MOCK),
+      VcsDirectoryMapping(pathsStr[2], MOCK),
+      VcsDirectoryMapping(pathsStr[3], MOCK2),
+      VcsDirectoryMapping(pathsStr[4], MOCK2),
+      VcsDirectoryMapping(pathsStr[5], MOCK2))
 
     assertEquals(6, vcsManager.directoryMappings.size)
     assertEquals(3, vcsManager.getRootsUnderVcs(vcsMock).size)
@@ -98,26 +108,26 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     val childA = projectRoot.findChild("a")!!
     val childAB = projectRoot.findChild("a-b")!!
 
-    mappings.setMapping("$rootPath/a", "CVS")
-    mappings.setMapping("$rootPath/a-b", "mock2")
+    mappings.setMapping("$rootPath/a", CVS)
+    mappings.setMapping("$rootPath/a-b", MOCK2)
     assertEquals(2, mappings.directoryMappings.size)
 
     mappings.cleanupMappings()
     assertEquals(2, mappings.directoryMappings.size)
-    assertEquals("mock2", getVcsFor(childAB))
-    assertEquals("CVS", getVcsFor(childA))
+    assertEquals(MOCK2, getVcsFor(childAB))
+    assertEquals(CVS, getVcsFor(childA))
   }
 
   fun testSamePrefixEmpty() {
     val childAB = projectRoot.findChild("a-b")!!
 
-    mappings.setMapping("$rootPath/a", "CVS")
+    mappings.setMapping("$rootPath/a", CVS)
     assertNull(getVcsFor(childAB))
   }
 
   fun testSame() {
-    mappings.setMapping("$rootPath/parent/path1", "CVS")
-    mappings.setMapping("$rootPath\\parent\\path2", "CVS")
+    mappings.setMapping("$rootPath/parent/path1", CVS)
+    mappings.setMapping("$rootPath\\parent\\path2", CVS)
 
     val children = listOf(
       "$rootPath\\parent\\path1",
@@ -130,19 +140,19 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     createDirectories(children)
 
     for (child in children) {
-      mappings.setMapping(child, "CVS")
+      mappings.setMapping(child, CVS)
       mappings.cleanupMappings()
       assertEquals("cleanup failed: $child", 2, mappings.directoryMappings.size)
     }
 
     for (child in children) {
-      mappings.setMapping(child, "CVS")
+      mappings.setMapping(child, CVS)
       assertEquals("cleanup failed: $child", 2, mappings.directoryMappings.size)
     }
   }
 
   fun testHierarchy() {
-    mappings.setMapping("$rootPath/parent", "CVS")
+    mappings.setMapping("$rootPath/parent", CVS)
 
     val children = listOf(
       "$rootPath/parent/child1",
@@ -152,14 +162,14 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     createDirectories(children)
 
     for (child in children) {
-      mappings.setMapping(child, "CVS")
+      mappings.setMapping(child, CVS)
       mappings.cleanupMappings()
       assertEquals("cleanup failed: $child", 1, mappings.directoryMappings.size)
     }
   }
 
   fun testNoneVcsMappings() {
-    mappings.setMapping("$rootPath/parent", "CVS")
+    mappings.setMapping("$rootPath/parent", CVS)
 
     val children = listOf(
       "$rootPath/parent/child1",
@@ -180,8 +190,8 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     mappings.cleanupMappings()
     assertEquals("cleanup failed", 4, mappings.directoryMappings.size)
 
-    assertEquals("CVS", getVcsFor("$rootPath/parent/some/file".filePath))
-    assertEquals("CVS", getVcsFor("$rootPath/parent/middle/file".filePath))
+    assertEquals(CVS, getVcsFor("$rootPath/parent/some/file".filePath))
+    assertEquals(CVS, getVcsFor("$rootPath/parent/middle/file".filePath))
     assertEquals(null, getVcsFor("$rootPath/parent/child1/file".filePath))
     assertEquals(null, getVcsFor("$rootPath/parent/middle/child2".filePath))
     assertEquals(null, getVcsFor("$rootPath/parent/middle/child3".filePath))
@@ -193,8 +203,8 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   }
 
   fun testNestedInnerCopy() {
-    mappings.setMapping("$rootPath/parent", "CVS")
-    mappings.setMapping("$rootPath/parent/child", "mock")
+    mappings.setMapping("$rootPath/parent", CVS)
+    mappings.setMapping("$rootPath/parent/child", MOCK)
 
     val children = listOf(
       "$rootPath/parent/child1",
@@ -206,7 +216,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
 
     mappings.waitMappedRootsUpdate()
 
-    val awaitedVcsNames = listOf("CVS", "CVS", "CVS", "mock")
+    val awaitedVcsNames = listOf(CVS, CVS, CVS, MOCK)
     for (i in children.indices) {
       val mapping = getMappingFor(files[i])
       assertEquals(awaitedVcsNames[i], mapping?.vcs)
@@ -215,11 +225,11 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
 
   fun testMappingInFSRoot() {
     val root = VfsUtil.getRootFile(projectRoot)
-    mappings.setMapping(root.path, "CVS")
-    mappings.setMapping(projectRoot.path, "mock")
-    assertEquals("mock", getVcsFor(projectRoot))
-    assertEquals("CVS", getVcsFor(VcsUtil.getFilePath(root)))
-    assertEquals("CVS", getVcsFor(VcsUtil.getFilePath(root, "/some/folder")))
+    mappings.setMapping(root.path, CVS)
+    mappings.setMapping(projectRoot.path, MOCK)
+    assertEquals(MOCK, getVcsFor(projectRoot))
+    assertEquals(CVS, getVcsFor(VcsUtil.getFilePath(root)))
+    assertEquals(CVS, getVcsFor(VcsUtil.getFilePath(root, "/some/folder")))
   }
 
   fun testRootMapping() {
@@ -233,7 +243,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     )
     createDirectories(roots)
 
-    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, "mock") }
+    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, MOCK) }
     assertEquals(6, mappings.getMappingsAsFilesUnderVcs(vcsMock).size)
 
     assertMappedRoot("$rootPath/parent/file1", null)
@@ -268,7 +278,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     )
     createDirectories(roots)
 
-    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, "mock") }
+    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, MOCK) }
     assertEquals(5, mappings.getMappingsAsFilesUnderVcs(vcsMock).size)
 
     assertMappedRoot("$rootPath/parent/file1", null)
@@ -302,7 +312,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     )
     createDirectories(roots)
 
-    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, "mock") }
+    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, MOCK) }
     assertEquals(4, mappings.getMappingsAsFilesUnderVcs(vcsMock).size)
 
     assertMappedRoot("$rootPath/parent/file1", null)
@@ -329,7 +339,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent"
     )
     createDirectories(roots)
-    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, "mock") }
+    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, MOCK) }
 
     val toCheck = listOf(
       "$rootPath/parent",
@@ -351,7 +361,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     val roots = (0..1000).map { "$rootPath/parent/module$it" } +
                 "$rootPath/parent"
     createDirectories(roots)
-    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, "mock") }
+    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, MOCK) }
 
     val toCheck = listOf(
       "$rootPath/parent",
@@ -378,7 +388,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       path += "/dir"
     }
     createDirectories(roots)
-    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, "mock") }
+    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, MOCK) }
 
     val toCheck = listOf(
       "$rootPath/parent",
@@ -403,7 +413,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent"
     )
     createDirectories(roots)
-    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, "mock") }
+    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, MOCK) }
 
     val toCheck = createDirectories(listOf(
       "$rootPath/parent",
@@ -425,7 +435,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     val roots = (0..1000).map { "$rootPath/parent/module$it" } +
                 "$rootPath/parent"
     createDirectories(roots)
-    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, "mock") }
+    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, MOCK) }
 
     val toCheck = createDirectories(listOf(
       "$rootPath/parent",
@@ -452,7 +462,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       path += "/dir"
     }
     createDirectories(roots)
-    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, "mock") }
+    mappings.directoryMappings = roots.map { VcsDirectoryMapping(it, MOCK) }
 
     val toCheck = createDirectories(listOf(
       "$rootPath/parent",

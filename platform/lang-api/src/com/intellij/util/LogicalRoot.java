@@ -21,8 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author spleaner
+ * @deprecated see {@link LogicalRootsManager} for details
  */
+@Deprecated
 public abstract class LogicalRoot {
 
   @Nullable

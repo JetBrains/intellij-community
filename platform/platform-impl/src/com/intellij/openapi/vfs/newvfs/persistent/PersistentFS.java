@@ -9,8 +9,10 @@ import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +45,10 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract String @NotNull [] listPersisted(@NotNull VirtualFile parent);
 
-  public abstract FSRecords.NameId @NotNull [] listAll(@NotNull VirtualFile parent);
+  public abstract @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile parent);
 
-  public abstract int getId(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem delegate);
+  @ApiStatus.Internal
+  public abstract ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem delegate);
 
   public abstract String getName(int id);
 

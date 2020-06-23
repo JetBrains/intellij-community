@@ -18,10 +18,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -186,7 +183,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testDoNotBlockExecutorThreadDuringWriteAction() throws Exception {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("a", 1);
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("TestDoNotBlockExecutorThreadDuringWriteAction", 1);
     Semaphore mayFinish = new Semaphore();
     Promise<Void> promise = ReadAction.nonBlocking(() -> {
       while (!mayFinish.waitFor(1)) {
@@ -215,7 +212,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testDoNotLeakSecondCancelledCoalescedAction() throws Exception {
-    Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+    Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("TestDoNotLeakSecondCancelledCoalescedAction", 10);
 
     Object leak = new Object(){};
     CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(executor);
@@ -354,7 +351,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testExceptionInsideAsyncComputationIsLogged() throws Exception {
-    BoundedTaskExecutor executor = (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+    BoundedTaskExecutor executor = (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor("TestExceptionInsideAsyncComputationIsLogged", 10);
 
     AtomicReference<Throwable> loggedError = watchLoggedExceptions();
 
@@ -449,5 +446,16 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       () -> ReadAction.nonBlocking(computation).executeSynchronously());
     assertEquals("x", PlatformTestUtil.waitForFuture(future2, 1000));
     assertEquals(10, count.get());
+  }
+
+  public void testReportTooManyUnboundedCalls() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    assertThrows(Throwable.class, SubmissionTracker.ARE_CURRENTLY_ACTIVE, () -> {
+      WriteAction.run(() -> {
+        for (int i = 0; i < 1000; i++) {
+          ReadAction.nonBlocking(() -> {}).submit(AppExecutorUtil.getAppExecutorService());
+        }
+      });
+    });
   }
 }

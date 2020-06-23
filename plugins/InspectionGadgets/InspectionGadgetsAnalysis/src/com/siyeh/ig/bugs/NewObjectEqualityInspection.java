@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -45,8 +46,10 @@ public class NewObjectEqualityInspection extends BaseInspection {
         return;
       }
       final PsiExpression rhs = expression.getROperand();
+      if (rhs == null) return;
       final PsiExpression lhs = expression.getLOperand();
-      if (isNewObject(rhs) || isNewObject(lhs)) {
+      if (isNewObject(rhs) && !TypeConversionUtil.isPrimitiveAndNotNull(lhs.getType()) || 
+          isNewObject(lhs) && !TypeConversionUtil.isPrimitiveAndNotNull(rhs.getType())) {
         registerError(expression.getOperationSign(), expression);
       }
     }

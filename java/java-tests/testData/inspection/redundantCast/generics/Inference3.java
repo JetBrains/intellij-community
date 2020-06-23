@@ -27,5 +27,5 @@ class Test {
     final Set<String> strings = null;
     final Pair<Set<String>, Set<String>> x = Boolean.TRUE.booleanValue()
             ? Pair.create(strings, strings)
-            : Pair.create(((<warning descr="Casting 'null' to 'Set<String>' is redundant">Set<String></warning>)  null), (<warning descr="Casting 'null' to 'Set<String>' is redundant">Set<String></warning>) null); //both casts are marked, but one is required for correct inference
+            : Pair.create(((<warning descr="Casting 'null' to 'Set<String>' is redundant">Set<String></warning>)  null), (Set<String>) null); //both casts are marked, but one is required for correct inference
 }

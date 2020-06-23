@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -57,11 +58,10 @@ public class SubstitutedExpressionEvaluationHelper {
                                   @NotNull Configuration.DfaOption dfaOption,
                                   boolean includeUncomputablesAsLiterals,
                                   @NotNull List<? super PsiExpression> uncomputables) {
-    ConcurrentMap<PsiElement, Object> map = ContainerUtil.newConcurrentMap();
+    ConcurrentMap<PsiElement, Object> map = new ConcurrentHashMap<>();
     return myHelper.computeExpression(e, false, new PsiConstantEvaluationHelper.AuxEvaluator() {
       @Override
-      @Nullable
-      public Object computeExpression(@NotNull PsiExpression o, @NotNull PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+      public @Nullable Object computeExpression(@NotNull PsiExpression o, @NotNull PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
         PsiType resolvedType = null;
         if (o instanceof PsiMethodCallExpression) {
           PsiMethodCallExpression c = (PsiMethodCallExpression)o;
@@ -130,16 +130,14 @@ public class SubstitutedExpressionEvaluationHelper {
         return null;
       }
 
-      @NotNull
       @Override
-      public ConcurrentMap<PsiElement, Object> getCacheMap(boolean overflow) {
+      public @NotNull ConcurrentMap<PsiElement, Object> getCacheMap(boolean overflow) {
         return map;
       }
     });
   }
 
-  @Nullable
-  private Object calcSubstituted(PsiModifierListOwner owner) {
+  private @Nullable Object calcSubstituted(PsiModifierListOwner owner) {
     Set<String> substAnnos = myConfiguration.getAdvancedConfiguration().getSubstAnnotationPair().second;
     PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, substAnnos);
     return annotation != null ? AnnotationUtilEx.calcAnnotationValue(annotation, "value") : null;

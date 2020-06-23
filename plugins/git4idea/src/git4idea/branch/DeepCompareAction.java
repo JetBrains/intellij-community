@@ -77,9 +77,8 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       if (singleBranchName == null) {
         selectBranchAndPerformAction(ui, e, selectedBranch -> {
           VcsLogFilterCollection collection = ui.getFilterUi().getFilters();
+          collection = VcsLogFiltersKt.without(collection, VcsLogBranchLikeFilter.class);
           collection = VcsLogFiltersKt.with(collection, VcsLogFilterObject.fromBranch(selectedBranch));
-          collection = VcsLogFiltersKt.without(collection, VcsLogFilterCollection.RANGE_FILTER);
-          collection = VcsLogFiltersKt.without(collection, VcsLogFilterCollection.REVISION_FILTER);
           ui.getFilterUi().setFilters(collection);
           dc.startTask(dataPack, selectedBranch);
         }, getGitRoots(project, ui));

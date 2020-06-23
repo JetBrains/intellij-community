@@ -39,10 +39,10 @@ import com.intellij.testFramework.ProjectRule;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +56,7 @@ public class UsageViewTest extends BasePlatformTestCase {
     // sick and tired of hunting tests leaking documents
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
 
-    Set<Object> alreadyLeaking = new THashSet<>(TObjectHashingStrategy.IDENTITY);
+    Set<Object> alreadyLeaking = new THashSet<>(ContainerUtil.identityStrategy());
     Condition<Object> isReallyLeak = file -> {
       if (file instanceof PsiFile) {
         if (!((PsiFile)file).isPhysical()) {

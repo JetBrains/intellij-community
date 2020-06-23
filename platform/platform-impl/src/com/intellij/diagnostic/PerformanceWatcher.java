@@ -9,12 +9,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,8 +69,7 @@ public final class PerformanceWatcher implements Disposable {
 
   private static final boolean SHOULD_WATCH = shouldWatch();
 
-  @NotNull
-  public static PerformanceWatcher getInstance() {
+  public static @NotNull PerformanceWatcher getInstance() {
     LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
     return ServiceManager.getService(PerformanceWatcher.class);
   }
@@ -93,14 +97,46 @@ public final class PerformanceWatcher implements Disposable {
         break;
       }
     }
+
+    reportCrashesIfAny();
     cleanOldFiles(myLogDir, 0);
 
     myThread =
       myExecutor.scheduleWithFixedDelay(this::samplePerformance, getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
   }
 
-  @NotNull
-  private static IdePerformanceListener getPublisher() {
+  private static void reportCrashesIfAny() {
+    try {
+      File systemDir = new File(PathManager.getSystemPath());
+      File appInfoFile = new File(systemDir, IdeaFreezeReporter.APPINFO_FILE_NAME);
+      if (appInfoFile.isFile()) {
+        File[] crashFiles = new File(SystemProperties.getUserHome())
+          .listFiles(file -> file.getName().startsWith("java_error_in") && !file.getName().endsWith("hprof") && file.isFile());
+        for (File file : crashFiles) {
+          if (file.lastModified() > appInfoFile.lastModified()) {
+            if (file.length() > 5 * FileUtilRt.MEGABYTE) {
+              LOG.info("Crash file " + file + " is too big to report");
+              break;
+            }
+            String content = FileUtil.loadFile(file);
+            Attachment attachment = new Attachment("crash.txt", content);
+            attachment.setIncluded(true);
+            String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
+            IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachment);
+            IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
+            IdeaFreezeReporter.report(event);
+            break;
+          }
+        }
+      }
+      IdeaFreezeReporter.saveAppInfo(systemDir, true);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+  }
+
+  private static @NotNull IdePerformanceListener getPublisher() {
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
   }
 
@@ -131,7 +167,7 @@ public final class PerformanceWatcher implements Disposable {
     }, null, null);
   }
 
-  public void processUnfinishedFreeze(BiConsumer<File, Integer> consumer) {
+  public void processUnfinishedFreeze(@NotNull BiConsumer<File, Integer> consumer) {
     File[] files = myLogDir.listFiles();
     if (files != null) {
       Arrays.stream(files)
@@ -205,8 +241,7 @@ public final class PerformanceWatcher implements Disposable {
     });
   }
 
-  @NotNull
-  public static String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
+  public static @NotNull String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
     @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
     StringBuilder trace = new StringBuilder(
       headerMsg + thread + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n--- its stacktrace:\n");
@@ -263,7 +298,10 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private void startTracking(long start) {
-    myCurrentEDTEventChecker = new FreezeCheckerTask(start);
+    int delay = getUnresponsiveInterval();
+    if (delay > 0) {
+      myCurrentEDTEventChecker = new FreezeCheckerTask(start, delay);
+    }
   }
 
   private void finishTracking() {
@@ -274,13 +312,11 @@ public final class PerformanceWatcher implements Disposable {
     }
   }
 
-  @Nullable
-  public File dumpThreads(@NotNull String pathPrefix, boolean millis) {
+  public @Nullable File dumpThreads(@NotNull String pathPrefix, boolean millis) {
     return dumpThreads(pathPrefix, millis, ThreadDumper.getThreadInfos(), null);
   }
 
-  @Nullable
-  private File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos, @Nullable FreezeCheckerTask task) {
+  private @Nullable File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos, @Nullable FreezeCheckerTask task) {
     if (!shouldWatch()) return null;
 
     if (!pathPrefix.contains("/")) {
@@ -365,15 +401,14 @@ public final class PerformanceWatcher implements Disposable {
     private Snapshot() {
     }
 
-    public void logResponsivenessSinceCreation(@NotNull String activityName) {
+    public void logResponsivenessSinceCreation(@NonNls @NotNull String activityName) {
       LOG.info(activityName + " took " + (System.currentTimeMillis() - myStartMillis) + "ms" +
                "; general responsiveness: " + myGeneralApdex.summarizePerformanceSince(myStartGeneralSnapshot) +
                "; EDT responsiveness: " + mySwingApdex.summarizePerformanceSince(myStartSwingSnapshot));
     }
   }
 
-  @NotNull
-  public static Snapshot takeSnapshot() {
+  public static @NotNull Snapshot takeSnapshot() {
     return getInstance().new Snapshot();
   }
 
@@ -393,8 +428,8 @@ public final class PerformanceWatcher implements Disposable {
     private boolean myFreezeDuringStartup;
     private volatile SamplingTask myDumpTask;
 
-    FreezeCheckerTask(long start) {
-      myFuture = !myExecutor.isShutdown() ? myExecutor.schedule(this::edtFrozen, getUnresponsiveInterval(), TimeUnit.MILLISECONDS) : null;
+    FreezeCheckerTask(long start, int delay) {
+      myFuture = !myExecutor.isShutdown() ? myExecutor.schedule(this::edtFrozen, delay, TimeUnit.MILLISECONDS) : null;
       myFreezeStart = start;
     }
 

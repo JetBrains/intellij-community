@@ -143,7 +143,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     };
     final ClickListener mouseEmptySpaceListener = new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         if (!isAboveSelectedItem(event, watchTree, true)) {
           myRootNode.addNewWatch();
           return true;

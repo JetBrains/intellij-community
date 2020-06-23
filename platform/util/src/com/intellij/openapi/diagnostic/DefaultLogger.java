@@ -50,9 +50,7 @@ public class DefaultLogger extends Logger {
     message += attachmentsToString(t);
     dumpExceptionsToStderr(message, t, details);
 
-    AssertionError error = new AssertionError(message);
-    error.initCause(t);
-    throw error;
+    throw new AssertionError(message, t);
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

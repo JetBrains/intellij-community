@@ -7,6 +7,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.ArrayUtilRt;
@@ -24,6 +25,22 @@ public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImpleme
     annotations.addAll(settings.getCustomSettings(JavaCodeStyleSettings.class).getRepeatAnnotations());
 
     return ArrayUtilRt.toStringArray(annotations);
+  }
+
+  @Override
+  public void transferToTarget(String annotation, PsiModifierListOwner source, PsiModifierListOwner target) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(source.getProject());
+    String correctedAnnotation;
+    if (manager.getNullables().contains(annotation) && !annotation.equals(manager.getDefaultNullable())) {
+      correctedAnnotation = manager.getDefaultNullable();
+    }
+    else if (manager.getNotNulls().contains(annotation) && !annotation.equals(manager.getDefaultNotNull())) {
+      correctedAnnotation = manager.getDefaultNotNull();
+    }
+    else {
+      correctedAnnotation = annotation;
+    }
+    OverrideImplementsAnnotationsHandler.super.transferToTarget(correctedAnnotation, source, target);
   }
 
   @Override

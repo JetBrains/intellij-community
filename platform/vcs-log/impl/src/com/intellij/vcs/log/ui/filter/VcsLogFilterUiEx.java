@@ -6,6 +6,8 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +19,13 @@ public interface VcsLogFilterUiEx extends VcsLogFilterUi {
    * Sets filters to the given value and updates the log view.
    */
   void setFilters(@NotNull VcsLogFilterCollection collection);
+
+  /**
+   * Clears log filters.
+   */
+  default void clearFilters() {
+    setFilters(VcsLogFilterObject.EMPTY_COLLECTION);
+  }
 
   /**
    * Returns filter components which will be added to the Log toolbar.

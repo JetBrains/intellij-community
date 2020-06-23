@@ -21,30 +21,31 @@
   <resource-bundle>messages.MavenProjectBundle</resource-bundle>
 
   <extensionPoints>
-    <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>
-    <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension"/>
-    <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter"/>
-    <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"/>
-    <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
+    <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter" dynamic="true"/>
+    <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension" dynamic="true"/>
+    <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter" dynamic="true"/>
+    <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"
+                    dynamic="true"/>
+    <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider" dynamic="true"/>
 
-    <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor"/>
+    <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" dynamic="true"/>
 
     <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"
                     dynamic="true"/>
     <extensionPoint name="executionEnvironmentProvider"
-                    interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider"/>
-    <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder"/>
+                    interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider" dynamic="true"/>
+    <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder" dynamic="true"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>org.jetbrains.idea.reposearch</depends>
+  <depends>org.jetbrains.idea.maven.model</depends>
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <pathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
-    <applicationInitializedListener implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileType name="MavenConfig" implementationClass="org.jetbrains.idea.maven.config.MavenConfigFileType"
               fileNames="maven.config"/>
@@ -60,7 +61,14 @@
     <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperMapping"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
+
+    <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManager" preload="true"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenProjectIndicesManager" preload="true"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenTasksManager" preload="true"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager" preload="true"/>
 
     <projectConfigurable groupId="build.tools" groupWeight="120" instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings"
                          bundle="messages.MavenProjectBundle"
@@ -187,7 +195,7 @@
     <renameHandler implementation="org.jetbrains.idea.maven.dom.refactorings.MavenPropertyRenameHandler" order="first"/>
     <vetoRenameCondition implementation="org.jetbrains.idea.maven.dom.refactorings.MavenVetoModelRenameCondition"/>
 
-    <createDirectoryCompletionContributor implementationClass="org.jetbrains.idea.maven.project.MavenDirectoryCompletionContributor"/>
+    <createDirectoryCompletionContributor implementation="org.jetbrains.idea.maven.project.MavenDirectoryCompletionContributor"/>
 
     <standardResourceProvider implementation="org.jetbrains.idea.maven.dom.MavenSchemaProvider"/>
 
@@ -237,31 +245,20 @@
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
 
+    <registryKey key="maven.print.import.stacktraces" defaultValue="false"
+                 description="Print maven server stacktraces in log"/>
+
+
     <registryKey key="maven.build.tool.window.enabled" defaultValue="true"
                  description="Enable Maven tasks to use Build Tool Window"/>
 
     <registryKey key="maven.always.remove.bad.entries" defaultValue="false" description="Delete invalid maven Entries"/>
 
+    <registryKey key="maven.new.project.model" defaultValue="false" description="Maven new project model"
+                 restartRequired="true"/>
+
     <registryKey key="maven.spy.events.debug" defaultValue="false"
                  description="Enable Maven spy events to be printed in Build Tool Window console"/>
-
-    <registryKey key="maven.packagesearch.enabled" defaultValue="true"
-                 description="Enable package search dependency via https://package-search.services.jetbrains.com" restartRequired="true"/>
-
-    <registryKey key="packagesearch.config.url" defaultValue="https://resources.jetbrains.com/package-search/config/config.json"
-                 description="package search service config url" restartRequired="true"/>
-
-    <registryKey key="packagesearch.timeout.multiplier" defaultValue="1.2"
-                 description="Exponential backoff multiplyer when package search service request failed" restartRequired="true"/>
-
-    <registryKey key="packagesearch.timeout.initial" defaultValue="10000"
-                 description="initial backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
-
-    <registryKey key="packagesearch.timeout.initial" defaultValue="10000"
-                 description="initial backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
-
-    <registryKey key="packagesearch.timeout.max" defaultValue="86400000"
-                 description="maximum backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
 
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
@@ -418,24 +415,6 @@
     <provider implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>
   </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.project.MavenProjectsManager</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.indices.MavenProjectIndicesManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectsNavigator</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.tasks.MavenTasksManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.tasks.MavenShortcutsManager</implementation-class>
-    </component>
-  </project-components>
 
   <actions>
     <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.actions.ReimportAction"

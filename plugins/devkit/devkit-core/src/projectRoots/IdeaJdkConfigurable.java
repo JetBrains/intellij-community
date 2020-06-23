@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,6 +26,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.util.Objects;
 
 /**
  * @author anna
@@ -231,7 +232,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
       if (currentSdk.getSdkType() instanceof IdeaJdk){
         final Sandbox sandbox = (Sandbox)currentSdk.getSdkAdditionalData();
         final Sdk internalJava = sandbox.getJavaSdk();
-        if (internalJava != null && Comparing.equal(internalJava.getName(), previousName)){
+        if (internalJava != null && Objects.equals(internalJava.getName(), previousName)){
           sandbox.setJavaSdk(sdk);
         }
       }

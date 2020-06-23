@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.project.IntelliJProjectConfiguration;
@@ -142,11 +143,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("ASM");
   }
 
-  protected boolean underWorkspaceModel() {
-    return ModuleManager.getInstance(myProject).getClass().getName() == "com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent";
-  }
-
-  protected void ignoreTestUnderWorkspaceModel() {
-    Assume.assumeFalse("Not applicable to workspace model", underWorkspaceModel());
+  protected static void ignoreTestUnderWorkspaceModel() {
+    Assume.assumeFalse("Not applicable to workspace model", Registry.is("ide.new.project.model"));
   }
 }

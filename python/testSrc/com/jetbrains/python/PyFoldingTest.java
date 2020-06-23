@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
@@ -83,6 +84,7 @@ public class PyFoldingTest extends PyTestCase {
 
   public void testCollapseExpandDocCommentsTokenType() {
     myFixture.configureByFile(collapseExpandDocCommentsTokenTypeFile());
+    CodeFoldingManager.getInstance(myFixture.getProject()).buildInitialFoldings(myFixture.getEditor());
     checkCollapseExpand(true);
     checkCollapseExpand(false);
   }

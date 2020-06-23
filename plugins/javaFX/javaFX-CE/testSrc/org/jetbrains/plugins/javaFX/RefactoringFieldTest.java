@@ -19,7 +19,8 @@ package org.jetbrains.plugins.javaFX;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.RefactoringFactory;
+import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
@@ -43,7 +44,9 @@ public class RefactoringFieldTest extends AbstractJavaFXTestCase {
                                                                                       .ELEMENT_NAME_ACCEPTED |
                                                                                     TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
 
-    new RenameProcessor(getProject(), element, newName, false, false).run();
+    RenameRefactoring refactoring = RefactoringFactory.getInstance(getProject()).createRename(element, newName, false, false);
+    refactoring.respectAllAutomaticRenames();
+    refactoring.run();
   }
 
    private void performDelete() {

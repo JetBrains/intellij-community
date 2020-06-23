@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -11,11 +11,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.IdeLanguageCustomization;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -46,9 +48,9 @@ import java.util.List;
 import java.util.*;
 
 public final class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll,
-                                                     Configurable.VariableProjectAppLevel {
+                                                           Configurable.VariableProjectAppLevel, Configurable.WithEpDependencies {
   private static final Logger LOG = Logger.getInstance(AllFileTemplatesConfigurable.class);
-
+  
   final static class Provider extends ConfigurableProvider {
     private final Project myProject;
 
@@ -348,7 +350,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     FileTemplate selected = myCurrentTab.getSelectedTemplate();
     if (selected instanceof BundledFileTemplate) {
       if (Messages.showOkCancelDialog(IdeBundle.message("prompt.reset.to.original.template"),
-                                      IdeBundle.message("title.reset.template"), "Reset", CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()) !=
+                                      IdeBundle.message("title.reset.template"), LangBundle.message("button.reset"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()) !=
           Messages.OK) {
         return;
       }
@@ -507,7 +509,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
       }
       if (allNames.contains(currName)) {
         itemWithError = template;
-        errorString = "Template with name \'" + currName + "\' already exists. Please specify a different template name";
+        errorString = LangBundle.message("dialog.message.template.with.name.already.exists", currName);
         break;
       }
       allNames.add(currName);
@@ -626,7 +628,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     util.editConfigurable(project, configurable, () -> {
       configurable.myTabbedPane.setSelectedIndex(ArrayUtil.indexOf(configurable.myTabs, configurable.myCodeTemplatesList));
       for (FileTemplate template : configurable.myCodeTemplatesList.getTemplates()) {
-        if (Comparing.equal(templateId, template.getName())) {
+        if (Objects.equals(templateId, template.getName())) {
           configurable.myCodeTemplatesList.selectTemplate(template);
           break;
         }
@@ -798,5 +800,10 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
 
   private static String getOtherTitle() {
     return IdeBundle.message("tab.filetemplates.j2ee");
+  }
+
+  @Override
+  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
+    return Collections.singleton(InternalTemplateBean.EP_NAME);
   }
 }

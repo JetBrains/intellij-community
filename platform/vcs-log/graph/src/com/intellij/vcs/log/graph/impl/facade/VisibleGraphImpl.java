@@ -147,14 +147,15 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       if (targetId == null) return null;
 
       if (action.getType() == GraphAction.Type.MOUSE_OVER) {
-        myPrintElementManager.setSelectedElement(affectedElement);
+        boolean selectionChanged = myPrintElementManager.setSelectedElement(affectedElement);
         return new GraphAnswerImpl<>(getCursor(true), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
-                                     false);
+                                     false, selectionChanged);
       }
 
       if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
+        boolean selectionChanged = myPrintElementManager.setSelectedElements(Collections.emptySet());
         return new GraphAnswerImpl<>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
-                                     true);
+                                     true, selectionChanged);
       }
 
       return null;
@@ -163,17 +164,21 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @NotNull
     @Override
     public GraphAnswer<CommitId> performAction(@NotNull GraphAction graphAction) {
-      myPrintElementManager.setSelectedElements(Collections.emptySet());
-
       LinearGraphAction action = convert(graphAction);
+
       GraphAnswer<CommitId> graphAnswer = performArrowAction(action);
       if (graphAnswer != null) return graphAnswer;
 
       LinearGraphController.LinearGraphAnswer answer = myGraphController.performLinearGraphAction(action);
-      if (answer.getSelectedNodeIds() != null) myPrintElementManager.setSelectedElements(answer.getSelectedNodeIds());
+      boolean selectionChanged;
+      if (answer.getSelectedNodeIds() != null) {
+        selectionChanged = myPrintElementManager.setSelectedElements(answer.getSelectedNodeIds());
+      } else {
+        selectionChanged = myPrintElementManager.setSelectedElements(Collections.emptySet());
+      }
 
       if (answer.getGraphChanges() != null) updatePrintElementGenerator();
-      return convert(answer);
+      return convert(answer, selectionChanged);
     }
 
     @Override
@@ -204,12 +209,12 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       return new LinearGraphActionImpl(printElement, graphAction.getType());
     }
 
-    private GraphAnswer<CommitId> convert(@NotNull final LinearGraphController.LinearGraphAnswer answer) {
+    private GraphAnswer<CommitId> convert(@NotNull LinearGraphController.LinearGraphAnswer answer, boolean selectionChanged) {
       final Runnable graphUpdater = answer.getGraphUpdater();
       return new GraphAnswerImpl<>(answer.getCursorToSet(), null, graphUpdater == null ? null : (Runnable)() -> {
         graphUpdater.run();
         updatePrintElementGenerator();
-      }, false);
+      }, false, selectionChanged);
     }
   }
 
@@ -218,12 +223,15 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Nullable private final CommitId myCommitToJump;
     @Nullable private final Runnable myUpdater;
     private final boolean myDoJump;
+    private final boolean myIsRepaintRequired;
 
-    private GraphAnswerImpl(@Nullable Cursor cursor, @Nullable CommitId commitToJump, @Nullable Runnable updater, boolean doJump) {
+    private GraphAnswerImpl(@Nullable Cursor cursor, @Nullable CommitId commitToJump, @Nullable Runnable updater, boolean doJump,
+                            boolean isRepaintRequired) {
       myCursor = cursor;
       myCommitToJump = commitToJump;
       myUpdater = updater;
       myDoJump = doJump;
+      myIsRepaintRequired = isRepaintRequired;
     }
 
     @Nullable
@@ -247,6 +255,11 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Override
     public boolean doJump() {
       return myDoJump;
+    }
+
+    @Override
+    public boolean isRepaintRequired() {
+      return myIsRepaintRequired;
     }
   }
 

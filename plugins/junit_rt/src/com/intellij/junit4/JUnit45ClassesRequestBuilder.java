@@ -33,9 +33,9 @@ import org.junit.runners.model.FrameworkMethod;
 import java.lang.reflect.Method;
 
 public class JUnit45ClassesRequestBuilder {
-  public static Request getClassesRequest(String suiteName, Class[] classes) {
+  public static Request getClassesRequest(String suiteName, Class<?>[] classes) {
     try {
-      return Request.runner(new IdeaSuite(new org.junit.internal.builders.AllDefaultPossibilitiesBuilder(true), classes, suiteName));
+      return Request.runner(new IdeaSuite(new AllDefaultPossibilitiesBuilder(true), classes, suiteName));
     }
     catch (Exception initializationError) {
       initializationError.printStackTrace();
@@ -44,7 +44,7 @@ public class JUnit45ClassesRequestBuilder {
   }
 
 
-  static Request createIgnoreIgnoredClassRequest(final Class clazz, final boolean recursively) throws ClassNotFoundException {
+  static Request createIgnoreIgnoredClassRequest(final Class<?> clazz, final boolean recursively) throws ClassNotFoundException {
     Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore IgnoreIgnored for junit4.4 and <
     return new ClassRequest(clazz) {
       public Runner getRunner() {
@@ -63,7 +63,7 @@ public class JUnit45ClassesRequestBuilder {
                 public Runner runnerForClass(Class testClass) throws Throwable {
                   if (!recursively) return super.runnerForClass(testClass);
                   try {
-                    Method ignored = BlockJUnit4ClassRunner.class.getDeclaredMethod("isIgnored", new Class[]{FrameworkMethod.class});
+                    Method ignored = BlockJUnit4ClassRunner.class.getDeclaredMethod("isIgnored", FrameworkMethod.class);
                     if (ignored != null) {
                       return new BlockJUnit4ClassRunner(testClass) {
                         protected boolean isIgnored(FrameworkMethod child) {
@@ -105,11 +105,11 @@ public class JUnit45ClassesRequestBuilder {
     };
   }
 
-  static Runner createIgnoreAnnotationAndJUnit4ClassRunner(Class clazz) throws Throwable {
+  static Runner createIgnoreAnnotationAndJUnit4ClassRunner(Class<?> clazz) throws Throwable {
     return new AllDefaultPossibilitiesBuilder(true) {
       protected AnnotatedBuilder annotatedBuilder() {
         return new AnnotatedBuilder(this) {
-          public Runner runnerForClass(Class testClass) throws Exception {
+          public Runner runnerForClass(Class testClass) {
             return null;
           }
         };
@@ -117,7 +117,7 @@ public class JUnit45ClassesRequestBuilder {
 
       protected JUnit4Builder junit4Builder() {
         return new JUnit4Builder() {
-          public Runner runnerForClass(Class testClass) throws Throwable {
+          public Runner runnerForClass(Class testClass) {
             return null;
           }
         };

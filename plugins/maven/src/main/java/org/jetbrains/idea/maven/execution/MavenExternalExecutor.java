@@ -204,7 +204,7 @@ public class MavenExternalExecutor extends MavenExecutor {
 
     public void addText(@NotNull String text, @NotNull Key outputType) {
       if (text.charAt(text.length() - 1) == '\n') {
-        String textToSend = myBuffer.length() == 0 ? text : myBuffer.toString() + text;
+        String textToSend = myBuffer.length() == 0 ? text : myBuffer + text;
         myConsumer.accept(textToSend, outputType);
         myBuffer.setLength(0);
       }
@@ -240,7 +240,7 @@ public class MavenExternalExecutor extends MavenExecutor {
       }
 
 
-      String textToSend = myBuffer.length() == 0 ? text : myBuffer.toString() + text;
+      String textToSend = myBuffer.length() == 0 ? text : myBuffer + text;
       if (textToSend.length() >= MavenSpyOutputParser.PREFIX.length() || lastChunk) {
         myBuffer.setLength(0);
         if (!MavenSpyOutputParser.isSpyLog(textToSend)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -58,6 +58,7 @@ class CommunityRepositoryModules {
     "intellij.platform.editor.ex",
     "intellij.platform.indexing.impl",
     "intellij.platform.execution.impl",
+    "intellij.platform.inspect",
     "intellij.platform.lang.impl",
     "intellij.platform.workspaceModel.core",
     "intellij.platform.workspaceModel.ide",
@@ -103,8 +104,6 @@ class CommunityRepositoryModules {
     plugin("intellij.properties.resource.bundle.editor"),
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
-      withModule("intellij.platform.remoteServers.git")
-      withModule("intellij.java.remoteServers.git", "remote-servers-git.jar")
     },
     plugin("intellij.vcs.cvs") {
       directoryName = "cvsIntegration"
@@ -114,7 +113,7 @@ class CommunityRepositoryModules {
       withModule("intellij.vcs.cvs.core", "cvs_util.jar")
     },
     plugin("intellij.xpath") {
-      withModule("intellij.xslt.debugger.rt", "rt/xslt-rt.jar")
+      withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
     },
     plugin("intellij.platform.langInjection") {
       withModule("intellij.java.langInjection", "IntelliLang.jar")
@@ -131,15 +130,11 @@ class CommunityRepositoryModules {
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.xslt.debugger") {
-      withModule("intellij.xslt.debugger.engine")
-      withModule("intellij.xslt.debugger.engine.impl", "rt/xslt-debugger-engine-impl.jar")
-      withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.engine.impl", "rt")
-      withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.engine.impl", "rt")
-      withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.engine.impl", "rt")
-      //todo[nik] unmark 'lib' directory as source root instead
-      excludeFromModule("intellij.xslt.debugger.engine.impl", "rmi-stubs.jar")
-      excludeFromModule("intellij.xslt.debugger.engine.impl", "saxon.jar")
-      excludeFromModule("intellij.xslt.debugger.engine.impl", "saxon9he.jar")
+      withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")
+      withModule("intellij.xslt.debugger.impl.rt", "rt/xslt-debugger-impl-rt.jar")
+      withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.impl.rt", "rt")
+      withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.impl.rt", "rt")
+      withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.impl.rt", "rt")
     },
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")
@@ -184,8 +179,7 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.gradle.java.maven"),
     plugin("intellij.platform.testGuiFramework") {
-      mainJarName = "testGuiFramework"
-      withModule("intellij.platform.testGuiFramework")
+      mainJarName = "testGuiFramework.jar"
       withProjectLibrary("fest")
       withProjectLibrary("fest-swing")
     },
@@ -239,9 +233,9 @@ class CommunityRepositoryModules {
       withResource("resources/.zshrc", "")
       withResource("resources/jediterm-bash.in", "")
       withResource("resources/fish/config.fish", "fish")
-/* Android Studio: exclude
     },
     plugin("intellij.textmate") {
+      withModule("intellij.textmate.core")
       withResource("lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
@@ -252,7 +246,6 @@ class CommunityRepositoryModules {
     plugin("intellij.statsCollector") {
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
-*/
     },
     plugin("intellij.jps.cache")
   ]
@@ -295,6 +288,7 @@ class CommunityRepositoryModules {
       withModule("intellij.android.deploy", "android.jar")
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
       withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
+      withModule("intellij.android.kotlin.extensions.common", "android-extensions-ide.jar")
       withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
       withModule("intellij.android.transportDatabase", "android-profilers.jar")
       withModule("intellij.android.profilers", "android-profilers.jar")
@@ -359,9 +353,7 @@ class CommunityRepositoryModules {
 
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
 
-      withResourceFromModule("intellij.android.core", "lib/asm-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android.core", "lib/asm-analysis-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android.core", "lib/asm-tree-5.0.3.jar", "lib")
+      withProjectLibrary("asm-tools")
       withResourceFromModule("intellij.android.core", "lib/commons-compress-1.8.1.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/javawriter-2.2.1.jar", "lib")
 
@@ -450,6 +442,7 @@ class CommunityRepositoryModules {
       withResource("groovy-psi/resources/standardDsls", "lib/standardDsls")
       withResource("hotswap/gragent.jar", "lib/agent")
       withResource("groovy-psi/resources/conf", "lib")
+      withProjectLibrary("org.codehaus.groovy:groovy-ant")
       additionalModules.each {
         withModule(it)
       }

@@ -18,10 +18,10 @@
   <resource-bundle>messages.GitBundle</resource-bundle>
 
   <depends>com.intellij.modules.vcs</depends>
-  <xi:include href="/META-INF/remote-servers-git.xml" xpointer="xpointer(/idea-plugin/*)">
+  <depends optional="true" config-file="git-terminal.xml">org.jetbrains.plugins.terminal</depends>
+  <xi:include href="/META-INF/stage-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <depends optional="true" config-file="remote-servers-git-java.xml">com.intellij.java</depends>
 
   <actions>
     <action id="Git.Init" class="git4idea.actions.GitInit">
@@ -40,12 +40,14 @@
 
     <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
+    <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch"/>
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" icon="AllIcons.Actions.Rollback"/>
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
+    <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
     <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch"/>
     <action id="Git.Checkout.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$CheckoutSelectedBranchAction"/>
     <action id="Git.Log.Hide.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$HideBranchesAction"
@@ -156,6 +158,7 @@
       <reference id="Git.Reword.Commit"/>
       <reference id="Git.Fixup.To.Commit" />
       <reference id="Git.Squash.Into.Commit" />
+      <reference id="Git.Squash.Commits" />
       <reference id="Git.Interactive.Rebase"/>
       <separator/>
       <reference id="Git.BranchOperationGroup"/>
@@ -230,12 +233,12 @@
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
     <projectService serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
     <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
-    <projectService serviceImplementation="git4idea.branch.GitCompareBranchesLogProperties"/>
+    <projectService serviceImplementation="git4idea.branch.GitCompareBranchesTopLogProperties"/>
+    <projectService serviceImplementation="git4idea.branch.GitCompareBranchesBottomLogProperties"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
     <projectService serviceImplementation="git4idea.ui.branch.dashboard.BranchesTreeStateHolder"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
     <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl" />
@@ -282,7 +285,6 @@
     <lang.commenter language="GitExclude" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
      <!--END Git exclude lang-->
 
-    <postStartupActivity implementation="git4idea.conflicts.GitConflictsToolWindowManager$Starter"/>
     <backgroundPostStartupActivity implementation="git4idea.ignore.GitIgnoreInStoreDirGeneratorActivity"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig" />
 
@@ -296,7 +298,6 @@
                  description="Use Log to collect Rebase Entries"/>
 
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
-    <terminal.shellCommandHandler implementation="git4idea.log.GitLogTerminalCustomCommandHandler"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
 
@@ -307,15 +308,25 @@
     <statusBarWidgetFactory id="gitWidget"
                             implementation="git4idea.ui.branch.GitBranchWidget$Factory"
                             order="after codeStyleWidget,before readOnlyWidget"/>
+
+    <vcsBulkMovesOnlyChangesFilter implementation="git4idea.GitBulkMovesOnlyChangesFilter"/>
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.remote.GitHttpAuthDataProvider"/>
-    <extensionPoint qualifiedName="Git4Idea.gitRepositoryHostingService" interface="git4idea.remote.GitRepositoryHostingService"/>
-    <extensionPoint qualifiedName="Git4Idea.GitCheckinExplicitMovementProvider" interface="git4idea.checkin.GitCheckinExplicitMovementProvider"/>
+    <extensionPoint interface="git4idea.remote.GitHttpAuthDataProvider" name="GitHttpAuthDataProvider" dynamic="true"/>
+    <extensionPoint interface="git4idea.remote.GitRepositoryHostingService" name="gitRepositoryHostingService" dynamic="true"/>
+    <extensionPoint interface="git4idea.checkin.GitCheckinExplicitMovementProvider"
+                    name="GitCheckinExplicitMovementProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>
+    <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyConflictsListener"
+              topic="git4idea.repo.GitConflictsHolder$ConflictsListener"
+              activeInHeadlessMode="false"/>
+    <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyRepositoryListener"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
+              activeInHeadlessMode="false"/>
     <listener class="git4idea.ui.branch.GitBranchWidget$Listener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>

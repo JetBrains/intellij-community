@@ -288,12 +288,12 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
   constructor(startPath: FilePath) : this(listOf(startPath))
 
   internal fun build(oldRenames: MultiMap<UnorderedPair<Int>, Rename>): FileHistoryData {
-    val newPaths = THashSet<FilePath>(FILE_PATH_HASHING_STRATEGY)
+    val newPaths = THashSet(FILE_PATH_HASHING_STRATEGY)
     newPaths.addAll(startPaths)
 
     while (newPaths.isNotEmpty()) {
       val commits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
-      newPaths.associateTo(commits) { Pair(it, getAffectedCommits(it)) }
+      newPaths.associateWithTo(commits) { getAffectedCommits(it) }
       affectedCommits.putAll(commits)
       newPaths.clear()
 
@@ -419,7 +419,7 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
   fun forEach(action: (FilePath, Int, TIntObjectHashMap<ChangeKind>) -> Unit) = affectedCommits.forEach(action)
 
   fun removeAll(commits: List<Int>) {
-    affectedCommits.forEach { _, commitsMap -> commitsMap.removeAll(commits) }
+    affectedCommits.forEach { (_, commitsMap) -> commitsMap.removeAll(commits) }
   }
 
   abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>?

@@ -5,10 +5,10 @@ import com.google.gson.Gson
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
-import org.apache.http.client.methods.CloseableHttpResponse
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.client.methods.HttpPut
+import org.apache.http.Consts
+import org.apache.http.HttpStatus
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.*
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.FileEntity
 import org.apache.http.entity.StringEntity
@@ -18,6 +18,9 @@ import org.apache.http.impl.client.LaxRedirectStrategy
 import org.apache.http.util.EntityUtils
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.impl.retry.Retry
+
+import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class CompilationPartsUploader implements Closeable {
@@ -29,11 +32,17 @@ class CompilationPartsUploader implements Closeable {
     myServerUrl = fixServerUrl(serverUrl)
     myMessages = messages
     CompilationPartsUtil.initLog4J(messages)
+    def timeout = TimeUnit.MINUTES.toMillis(1).toInteger()
+    def config = RequestConfig.custom()
+      .setConnectTimeout(timeout)
+      .setConnectionRequestTimeout(timeout)
+      .setSocketTimeout(timeout).build()
     myHttpClient = HttpClientBuilder.create()
       .setUserAgent('Parts Uploader')
       .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
       .setMaxConnTotal(20)
       .setMaxConnPerRoute(10)
+      .setDefaultRequestConfig(config)
       .build()
   }
 
@@ -66,11 +75,11 @@ class CompilationPartsUploader implements Closeable {
     }
     if (sendHead) {
       int code = doHead(path)
-      if (code == 200) {
+      if (code == HttpStatus.SC_OK) {
         log("File '$path' already exist on server, nothing to upload")
         return false
       }
-      if (code != 404) {
+      if (code != HttpStatus.SC_NOT_FOUND) {
         error("HEAD $path responded with unexpected $code")
       }
     }
@@ -97,6 +106,7 @@ class CompilationPartsUploader implements Closeable {
     String path = '/check-files'
 
     CloseableHttpResponse response = null
+    String responseString = null
     try {
       String url = myServerUrl + StringUtil.trimStart(path, '/')
       debug("POST " + url)
@@ -104,16 +114,16 @@ class CompilationPartsUploader implements Closeable {
       def request = new HttpPost(url)
       request.setEntity(new StringEntity(metadataJson, ContentType.APPLICATION_JSON))
 
-      response = myHttpClient.execute(request)
+      response = executeWithRetry(request)
 
-      debug("POST code: ${response.getStatusLine().getStatusCode()}")
+      responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
 
-      def responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
       def parsedResponse = new Gson().fromJson(responseString, CheckFilesResponse.class)
       return parsedResponse
     }
     catch (Exception e) {
-      myMessages.warning("Failed to check for found and mising files ('$path'): ${e.message}")
+      def additionalMessage = responseString == null ? "" : "\nResponse: $responseString"
+      myMessages.warning("Failed to check for found and mising files ('$path'): ${e.message}" + additionalMessage)
       return null
     }
     finally {
@@ -129,7 +139,7 @@ class CompilationPartsUploader implements Closeable {
       debug("HEAD " + url)
 
       def request = new HttpGet(url)
-      response = myHttpClient.execute(request)
+      response = executeWithRetry(request)
       return response.getStatusLine().getStatusCode()
     }
     catch (Exception e) {
@@ -150,16 +160,28 @@ class CompilationPartsUploader implements Closeable {
       def request = new HttpPut(url)
       request.setEntity(new FileEntity(file, ContentType.APPLICATION_OCTET_STREAM))
 
-      response = myHttpClient.execute(request)
+      response = executeWithRetry(request)
+
+      def statusCode = response.statusLine.statusCode
+      if (statusCode < 200  || statusCode >= 400) {
+        def responseString = EntityUtils.toString(response.getEntity(), Consts.UTF_8)
+        myMessages.error("PUT $url failed with $statusCode: $responseString")
+      }
 
       EntityUtils.consume(response.getEntity())
-      return response.getStatusLine().getStatusCode()
+      return statusCode
     }
     catch (Exception e) {
       throw new UploadException("Failed to PUT file to $path: " + e.getMessage(), e)
     }
     finally {
       StreamUtil.closeStream(response)
+    }
+  }
+
+  CloseableHttpResponse executeWithRetry(HttpUriRequest request) {
+    return new Retry(myMessages).call {
+      myHttpClient.execute(request)
     }
   }
 

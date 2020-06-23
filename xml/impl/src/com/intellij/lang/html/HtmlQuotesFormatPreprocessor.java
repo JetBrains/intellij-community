@@ -88,7 +88,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
       myDocument = file.getViewProvider().getDocument();
       switch (style) {
         case Single:
-          myNewQuote = "\'";
+          myNewQuote = "'";
           break;
         case Double:
           myNewQuote = "\"";

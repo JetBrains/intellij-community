@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,7 @@ public abstract class InspectionManager {
     ExtensionPointName.create("com.intellij.cantBeStatic");
 
   public static InspectionManager getInstance(Project project) {
-    return ServiceManager.getService(project, InspectionManager.class);
+    return project.getService(InspectionManager.class);
   }
 
   @NotNull
@@ -26,12 +25,12 @@ public abstract class InspectionManager {
 
   @NotNull
   @Contract(pure = true)
-  public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
+  public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull @InspectionMessage String descriptionTemplate,
                                                                   QuickFix @Nullable ... fixes);
 
   @NotNull
   @Contract(pure = true)
-  public abstract ModuleProblemDescriptor createProblemDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
+  public abstract ModuleProblemDescriptor createProblemDescriptor(@NotNull @InspectionMessage String descriptionTemplate,
                                                                   @NotNull Module module,
                                                                   QuickFix @Nullable ... fixes);
 
@@ -46,7 +45,7 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
                                                             @Nullable LocalQuickFix fix,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly);
@@ -54,7 +53,7 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
                                                             boolean onTheFly,
                                                             LocalQuickFix[] fixes,
                                                             @NotNull ProblemHighlightType highlightType);
@@ -62,7 +61,7 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
                                                             LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
@@ -72,7 +71,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
                                                             @NotNull PsiElement endElement,
-                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
                                                             LocalQuickFix... fixes);
@@ -81,7 +80,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             @Nullable("null means the text range of the element") TextRange rangeInElement,
-                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
                                                             LocalQuickFix... fixes);
@@ -89,7 +88,7 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
                                                             final boolean showTooltip,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
@@ -102,7 +101,7 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull String descriptionTemplate,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
                                                             @Nullable LocalQuickFix fix,
                                                             @NotNull ProblemHighlightType highlightType);
 
@@ -113,7 +112,7 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull String descriptionTemplate,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
                                                             LocalQuickFix[] fixes,
                                                             @NotNull ProblemHighlightType highlightType);
 
@@ -124,7 +123,7 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull String descriptionTemplate,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
                                                             LocalQuickFix[] fixes,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean isAfterEndOfLine);
@@ -137,7 +136,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
                                                             @NotNull PsiElement endElement,
-                                                            @NotNull String descriptionTemplate,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             LocalQuickFix... fixes);
 
@@ -150,7 +149,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             final TextRange rangeInElement,
-                                                            @NotNull final String descriptionTemplate,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             final LocalQuickFix... fixes);
 

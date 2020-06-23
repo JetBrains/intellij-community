@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.logger
 
+import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
@@ -113,8 +113,8 @@ class FeatureEventLogSerializationTest {
     events.add(newEvent(groupId = "test.group.id", eventId = "first-id"))
     events.add(newEvent(groupId = "test.group.id.2", eventId = "second-id"))
 
-    val request = requestByEvents("recorder-id","IU", "generated-device-id", false, events)
-    val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
+    val request = requestByEvents("recorder-id", "IU", "generated-device-id", false, events)
+    val json = Gson().fromJson(LogEventSerializer.toString(request), JsonObject::class.java)
     assertLogEventContentIsValid(json, "recorder-id", "IU", "generated-device-id", false, false)
   }
 
@@ -130,8 +130,8 @@ class FeatureEventLogSerializationTest {
     records.add(LogEventRecord(first))
     records.add(LogEventRecord(second))
 
-    val request = LogEventRecordRequest("recorder.id","IU", "generated-device-id", records, false)
-    val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
+    val request = LogEventRecordRequest("recorder.id", "IU", "generated-device-id", records, false)
+    val json = Gson().fromJson(LogEventSerializer.toString(request), JsonObject::class.java)
     assertLogEventContentIsValid(json, "recorder.id", "IU", "generated-device-id", false, false)
   }
 
@@ -141,8 +141,8 @@ class FeatureEventLogSerializationTest {
     events.add(newEvent(groupId = "test.group.id", eventId = "first-id"))
     events.add(newEvent(groupId = "test.group.id.2", eventId = "second-id"))
 
-    val request = requestByEvents("recorder.id","IC", "generated-device-id", false, events)
-    val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
+    val request = requestByEvents("recorder.id", "IC", "generated-device-id", false, events)
+    val json = Gson().fromJson(LogEventSerializer.toString(request), JsonObject::class.java)
     assertLogEventContentIsValid(json, "recorder.id", "IC", "generated-device-id", false, false)
   }
 
@@ -152,8 +152,8 @@ class FeatureEventLogSerializationTest {
     events.add(newEvent(groupId = "test.group.id", eventId = "first-id"))
     events.add(newEvent(groupId = "test.group.id.2", eventId = "second-id"))
 
-    val request = requestByEvents("recorder.id","IU", "my-test-id", false, events)
-    val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
+    val request = requestByEvents("recorder.id", "IU", "my-test-id", false, events)
+    val json = Gson().fromJson(LogEventSerializer.toString(request), JsonObject::class.java)
     assertLogEventContentIsValid(json, "recorder.id", "IU", "my-test-id", false, false)
   }
 
@@ -163,8 +163,8 @@ class FeatureEventLogSerializationTest {
     events.add(newEvent(groupId = "test.group.id", eventId = "first-id"))
     events.add(newEvent(groupId = "test.group.id.2", eventId = "second-id"))
 
-    val request = requestByEvents("recorder.id","IU", "generated-device-id", true, events)
-    val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
+    val request = requestByEvents("recorder.id", "IU", "generated-device-id", true, events)
+    val json = Gson().fromJson(LogEventSerializer.toString(request), JsonObject::class.java)
     assertLogEventContentIsValid(json, "recorder.id", "IU", "generated-device-id", true, false)
   }
 
@@ -174,8 +174,8 @@ class FeatureEventLogSerializationTest {
     events.add(newEvent(groupId = "test.group.id", eventId = "first-id"))
     events.add(newEvent(groupId = "test.group.id.2", eventId = "second-id"))
 
-    val request = requestByEvents("recorder.id","PY", "abcdefg", true, events)
-    val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
+    val request = requestByEvents("recorder.id", "PY", "abcdefg", true, events)
+    val json = Gson().fromJson(LogEventSerializer.toString(request), JsonObject::class.java)
     assertLogEventContentIsValid(json, "recorder.id", "PY", "abcdefg", true, false)
   }
 
@@ -186,7 +186,7 @@ class FeatureEventLogSerializationTest {
     events.add(newStateEvent(groupId = "config.group.id.2", eventId = "second-id"))
 
     val request = requestByEvents("recorder.id", "IU", "generated-device-id", false, events)
-    val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
+    val json = Gson().fromJson(LogEventSerializer.toString(request), JsonObject::class.java)
     assertLogEventContentIsValid(json, "recorder.id", "IU", "generated-device-id", false, true)
   }
 
@@ -197,7 +197,7 @@ class FeatureEventLogSerializationTest {
     events.add(newStateEvent(groupId = "config.group.id.2", eventId = "second-id"))
 
     val request = requestByEvents("recorder.id", "IC", "abcdefg", true, events)
-    val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
+    val json = Gson().fromJson(LogEventSerializer.toString(request), JsonObject::class.java)
     assertLogEventContentIsValid(json, "recorder.id", "IC", "abcdefg", true, true)
   }
 
@@ -327,6 +327,31 @@ class FeatureEventLogSerializationTest {
     assertNull(deserialized)
   }
 
+
+  @Test
+  fun testEventDataWithObject() {
+    val event = newEvent()
+    event.event.addData("obj", mapOf("foo" to "fooValue", "bar" to "barValue"))
+
+    testEventSerialization(event, false, "obj")
+  }
+
+  @Test
+  fun testEventDataWithObjectList() {
+    val event = newEvent()
+    event.event.addData("objects", listOf(mapOf("foo" to "fooValue", "bar" to "barValue")))
+
+    testEventSerialization(event, false, "objects")
+  }
+
+  @Test
+  fun testEventDataWithNestedObject() {
+    val event = newEvent()
+    event.event.addData("obj1", mapOf("obj2" to mapOf("foo" to "fooValue")))
+
+    testEventSerialization(event, false, "obj1")
+  }
+
   private fun testDeserialization(vararg batches: List<LogEvent>) {
     val events = ArrayList<LogEvent>()
     val records = ArrayList<LogEventRecord>()
@@ -334,7 +359,7 @@ class FeatureEventLogSerializationTest {
       events.addAll(batch)
       records.add(LogEventRecord(batch))
     }
-    val expected = LogEventRecordRequest("recorder-id","IU", "user-id", records, false)
+    val expected = LogEventRecordRequest("recorder-id", "IU", "user-id", records, false)
 
     val log = FileUtil.createTempFile("feature-event-log", ".log")
     try {
@@ -356,7 +381,7 @@ class FeatureEventLogSerializationTest {
 
   private fun testEventSerialization(event: LogEvent, isState: Boolean, vararg dataOptions: String) {
     val line = LogEventSerializer.toString(event)
-    assertLogEventIsValid(JsonParser().parse(line).asJsonObject, isState, *dataOptions)
+    assertLogEventIsValid(Gson().fromJson(line, JsonObject::class.java), isState, *dataOptions)
 
     val deserialized = LogEventDeserializer(TestDataCollectorDebugLogger).fromString(line)
     assertEquals(event, deserialized)

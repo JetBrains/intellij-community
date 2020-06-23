@@ -11,11 +11,9 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ArrayUtilRt;
@@ -33,7 +31,7 @@ import java.util.List;
 import java.util.*;
 
 // not final for android
-public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
+public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
   private final Map<String, ToolWindow> myToolWindows = new HashMap<>();
   private final Project myProject;
 
@@ -50,16 +48,14 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public void notifyByBalloon(@NotNull String toolWindowId, @NotNull MessageType type, @NotNull String htmlBody) {
   }
 
-  @NotNull
-  public ToolWindow doRegisterToolWindow(@NotNull String id) {
+  public @NotNull ToolWindow doRegisterToolWindow(@NotNull String id) {
     MockToolWindow toolWindow = new MockToolWindow(myProject);
     myToolWindows.put(id, toolWindow);
     return toolWindow;
   }
 
-  @NotNull
   @Override
-  public ToolWindow registerToolWindow(@NotNull RegisterToolWindowTask task) {
+  public @NotNull ToolWindow registerToolWindow(@NotNull RegisterToolWindowTask task) {
     return doRegisterToolWindow(task.getId());
   }
 
@@ -85,14 +81,18 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
-  @NotNull
   @Override
-  public Set<String> getToolWindowIdSet() {
+  public @NotNull Set<String> getToolWindowIdSet() {
     return Collections.emptySet();
   }
 
   @Override
   public String getActiveToolWindowId() {
+    return null;
+  }
+
+  @Override
+  public @Nullable String getLastActiveToolWindowId() {
     return null;
   }
 
@@ -105,18 +105,17 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public void invokeLater(@NotNull Runnable runnable) {
   }
 
-  @NotNull
   @Override
-  public IdeFocusManager getFocusManager() {
+  public @NotNull IdeFocusManager getFocusManager() {
     return IdeFocusManagerHeadless.INSTANCE;
   }
 
   @Override
-  public void notifyByBalloon(@NotNull final String toolWindowId,
-                              @NotNull final MessageType type,
-                              @NotNull final String text,
-                              @Nullable final Icon icon,
-                              @Nullable final HyperlinkListener listener) {
+  public void notifyByBalloon(final @NotNull String toolWindowId,
+                              final @NotNull MessageType type,
+                              final @NotNull String text,
+                              final @Nullable Icon icon,
+                              final @Nullable HyperlinkListener listener) {
   }
 
   @Override
@@ -133,63 +132,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public void setMaximized(@NotNull ToolWindow window, boolean maximized) {
   }
 
-  @Override
-  public void initToolWindow(@NotNull ToolWindowEP bean) {
-  }
-
-  @Override
-  public void init(ProjectFrameHelper frameHelper) {
-  }
-
-  @Override
-  public String getLastActiveToolWindowId() {
-    return null;
-  }
-
-  @Override
-  public String getLastActiveToolWindowId(Condition<? super JComponent> condition) {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public DesktopLayout getLayout() {
-    return new DesktopLayout();
-  }
-
-  @Override
-  public void setLayoutToRestoreLater(DesktopLayout layout) {
-  }
-
-  @Override
-  public DesktopLayout getLayoutToRestoreLater() {
-    return new DesktopLayout();
-  }
-
-  @Override
-  public void setLayout(@NotNull DesktopLayout layout) {
-  }
-
-  @Override
-  public void clearSideStack() {
-  }
-
-  @Override
-  public void hideToolWindow(@NotNull final String id, final boolean hideSide) {
-  }
-
-  @NotNull
-  @Override
-  public List<String> getIdsOn(@NotNull final ToolWindowAnchor anchor) {
-    return new ArrayList<>();
-  }
-
-  @NotNull
-  @Override
-  public Icon getLocationIcon(@NotNull String id, @NotNull Icon fallbackIcon) {
-    return fallbackIcon;
-  }
-
   public static class MockToolWindow implements ToolWindowEx {
     final ContentManager myContentManager = new MockContentManager();
     private final Project project;
@@ -204,9 +146,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return project;
     }
 
-    @NotNull
     @Override
-    public Disposable getDisposable() {
+    public @NotNull Disposable getDisposable() {
       return myContentManager;
     }
 
@@ -215,8 +156,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    @NotNull
-    public String getId() {
+    public @NotNull String getId() {
       return "";
     }
 
@@ -248,9 +188,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return false;
     }
 
-    @NotNull
     @Override
-    public ActionCallback getReady(@NotNull Object requestor) {
+    public @NotNull ActionCallback getReady(@NotNull Object requestor) {
       return ActionCallback.DONE;
     }
 
@@ -262,9 +201,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void hide(@Nullable Runnable runnable) {
     }
 
-    @NotNull
     @Override
-    public ToolWindowAnchor getAnchor() {
+    public @NotNull ToolWindowAnchor getAnchor() {
       return ToolWindowAnchor.BOTTOM;
     }
 
@@ -278,7 +216,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setSplitMode(final boolean isSideTool, @Nullable final Runnable runnable) {
+    public void setSplitMode(final boolean isSideTool, final @Nullable Runnable runnable) {
 
     }
 
@@ -295,9 +233,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setToHideOnEmptyContent(final boolean hideOnEmpty) {
     }
 
-    @NotNull
     @Override
-    public ToolWindowType getType() {
+    public @NotNull ToolWindowType getType() {
       return ToolWindowType.SLIDING;
     }
 
@@ -305,9 +242,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable) {
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return null;
     }
 
@@ -324,9 +260,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setTitle(String title) {
     }
 
-    @NotNull
     @Override
-    public String getStripeTitle() {
+    public @NotNull String getStripeTitle() {
       return "";
     }
 
@@ -347,9 +282,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setDefaultContentUiType(@NotNull ToolWindowContentUiType type) {
     }
 
-    @NotNull
     @Override
-    public ToolWindowContentUiType getContentUiType() {
+    public @NotNull ToolWindowContentUiType getContentUiType() {
       return ToolWindowContentUiType.TABBED;
     }
 
@@ -365,21 +299,18 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void installWatcher(ContentManager contentManager) {
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
       return new JLabel();
     }
 
-    @NotNull
     @Override
-    public ContentManager getContentManager() {
+    public @NotNull ContentManager getContentManager() {
       return myContentManager;
     }
 
     @Override
-    @Nullable
-    public ContentManager getContentManagerIfCreated() {
+    public @Nullable ContentManager getContentManagerIfCreated() {
       return myContentManager;
     }
 
@@ -388,13 +319,13 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setDefaultState(@Nullable final ToolWindowAnchor anchor,
-                                @Nullable final ToolWindowType type,
-                                @Nullable final Rectangle floatingBounds) {
+    public void setDefaultState(final @Nullable ToolWindowAnchor anchor,
+                                final @Nullable ToolWindowType type,
+                                final @Nullable Rectangle floatingBounds) {
     }
 
     @Override
-    public void activate(@Nullable final Runnable runnable, final boolean autoFocusContents) {
+    public void activate(final @Nullable Runnable runnable, final boolean autoFocusContents) {
     }
 
     @Override
@@ -405,9 +336,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void showContentPopup(@NotNull InputEvent inputEvent) {
     }
 
-    @NotNull
     @Override
-    public ToolWindowType getInternalType() {
+    public @NotNull ToolWindowType getInternalType() {
       return ToolWindowType.DOCKED;
     }
 
@@ -419,9 +349,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void stretchHeight(int value) {
     }
 
-    @NotNull
     @Override
-    public InternalDecorator getDecorator() {
+    public @NotNull InternalDecorator getDecorator() {
       throw new IncorrectOperationException();
     }
 
@@ -430,11 +359,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setTitleActions(@NotNull AnAction... actions) {
+    public void setTitleActions(@NotNull List<AnAction> actions) {
     }
 
     @Override
-    public void setTabActions(@NotNull AnAction... actions) {
+    public void setTabActions(@NotNull AnAction @NotNull... actions) {
     }
 
     @Override
@@ -447,14 +376,13 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     private final List<Content> myContents = new ArrayList<>();
     private Content mySelected;
 
-    @NotNull
     @Override
-    public ActionCallback getReady(@NotNull Object requestor) {
+    public @NotNull ActionCallback getReady(@NotNull Object requestor) {
       return ActionCallback.DONE;
     }
 
     @Override
-    public void addContent(@NotNull final Content content) {
+    public void addContent(final @NotNull Content content) {
       addContent(content, -1);
     }
 
@@ -471,18 +399,18 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void addSelectedContent(@NotNull final Content content) {
+    public void addSelectedContent(final @NotNull Content content) {
       addContent(content);
       setSelectedContent(content);
     }
 
     @Override
-    public void addContentManagerListener(@NotNull final ContentManagerListener l) {
+    public void addContentManagerListener(final @NotNull ContentManagerListener l) {
       myDispatcher.getListeners().add(0, l);
     }
 
     @Override
-    public void addDataProvider(@NotNull final DataProvider provider) {
+    public void addDataProvider(final @NotNull DataProvider provider) {
     }
 
     @Override
@@ -503,44 +431,38 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return null;
     }
 
-    @NotNull
     @Override
-    public List<AnAction> getAdditionalPopupActions(@NotNull final Content content) {
+    public @NotNull List<AnAction> getAdditionalPopupActions(final @NotNull Content content) {
       return Collections.emptyList();
     }
 
-    @NotNull
     @Override
-    public String getCloseActionName() {
+    public @NotNull String getCloseActionName() {
       return "close";
     }
 
-    @NotNull
     @Override
-    public String getCloseAllButThisActionName() {
+    public @NotNull String getCloseAllButThisActionName() {
       return "closeallbutthis";
     }
 
-    @NotNull
     @Override
-    public String getPreviousContentActionName() {
+    public @NotNull String getPreviousContentActionName() {
       return "previous";
     }
 
-    @NotNull
     @Override
-    public String getNextContentActionName() {
+    public @NotNull String getNextContentActionName() {
       return "next";
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
       return new JLabel();
     }
 
     @Override
-    public Content getContent(@NotNull final JComponent component) {
+    public Content getContent(@NotNull JComponent component) {
       Content[] contents = getContents();
       for (Content content : contents) {
         if (Comparing.equal(component, content.getComponent())) {
@@ -551,8 +473,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    @Nullable
-    public Content getContent(final int index) {
+    public @Nullable Content getContent(int index) {
       return myContents.get(index);
     }
 
@@ -567,13 +488,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public int getIndexOfContent(@NotNull final Content content) {
+    public int getIndexOfContent(@NotNull Content content) {
       return myContents.indexOf(content);
     }
 
     @Override
-    @Nullable
-    public Content getSelectedContent() {
+    public @Nullable Content getSelectedContent() {
       return mySelected;
     }
 
@@ -583,7 +503,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public boolean isSelected(@NotNull final Content content) {
+    public boolean isSelected(final @NotNull Content content) {
       return content == mySelected;
     }
 
@@ -595,7 +515,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public boolean removeContent(@NotNull final Content content, final boolean dispose) {
+    public boolean removeContent(final @NotNull Content content, final boolean dispose) {
       boolean wasSelected = mySelected == content;
       int oldIndex = myContents.indexOf(content);
       if (wasSelected) {
@@ -615,20 +535,19 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return result;
     }
 
-    @NotNull
     @Override
-    public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean implicitFocus) {
+    public @NotNull ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean implicitFocus) {
       removeContent(content, dispose);
       return ActionCallback.DONE;
     }
 
     @Override
-    public void removeContentManagerListener(@NotNull final ContentManagerListener l) {
+    public void removeContentManagerListener(final @NotNull ContentManagerListener l) {
       myDispatcher.removeListener(l);
     }
 
     @Override
-    public void removeFromSelection(@NotNull final Content content) {
+    public void removeFromSelection(final @NotNull Content content) {
       ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(mySelected), ContentManagerEvent.ContentOperation.remove);
       myDispatcher.getMulticaster().selectionChanged(e);
     }
@@ -644,7 +563,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setSelectedContent(@NotNull final Content content) {
+    public void setSelectedContent(final @NotNull Content content) {
       if (mySelected != null) {
         removeFromSelection(mySelected);
       }
@@ -653,21 +572,19 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       myDispatcher.getMulticaster().selectionChanged(e);
     }
 
-    @NotNull
     @Override
-    public ActionCallback setSelectedContentCB(@NotNull Content content) {
+    public @NotNull ActionCallback setSelectedContentCB(@NotNull Content content) {
       setSelectedContent(content);
       return ActionCallback.DONE;
     }
 
     @Override
-    public void setSelectedContent(@NotNull final Content content, final boolean requestFocus) {
+    public void setSelectedContent(final @NotNull Content content, final boolean requestFocus) {
       setSelectedContent(content);
     }
 
-    @NotNull
     @Override
-    public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus) {
+    public @NotNull ActionCallback setSelectedContentCB(final @NotNull Content content, final boolean requestFocus) {
       return setSelectedContentCB(content);
     }
 
@@ -676,21 +593,18 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       setSelectedContent(content);
     }
 
-    @NotNull
     @Override
-    public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
+    public @NotNull ActionCallback setSelectedContentCB(final @NotNull Content content, final boolean requestFocus, final boolean forcedFocus) {
       return setSelectedContentCB(content);
     }
 
-    @NotNull
     @Override
-    public ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus, boolean implicit) {
+    public @NotNull ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus, boolean implicit) {
       return setSelectedContentCB(content);
     }
 
-    @NotNull
     @Override
-    public ActionCallback requestFocus(@Nullable final Content content, final boolean forced) {
+    public @NotNull ActionCallback requestFocus(final @Nullable Content content, final boolean forced) {
       return ActionCallback.DONE;
     }
 
@@ -712,8 +626,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    @NotNull
-    public ContentFactory getFactory() {
+    public @NotNull ContentFactory getFactory() {
       return ServiceManager.getService(ContentFactory.class);
     }
   }}

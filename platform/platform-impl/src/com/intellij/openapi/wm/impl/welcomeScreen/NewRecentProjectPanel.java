@@ -137,7 +137,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
   @Override
   protected boolean isUseGroups() {
-    return FlatWelcomeFrame.isUseProjectGroups();
+    return true;
   }
 
   @Override

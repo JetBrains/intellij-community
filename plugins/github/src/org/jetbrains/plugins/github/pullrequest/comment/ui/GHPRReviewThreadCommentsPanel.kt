@@ -5,7 +5,10 @@ import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClickListener
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.MacUIUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.*
@@ -19,7 +22,7 @@ import javax.swing.event.ListDataListener
 
 object GHPRReviewThreadCommentsPanel {
 
-  private const val FOLD_THRESHOLD = 2
+  private const val FOLD_THRESHOLD = 3
 
   fun create(commentsModel: ListModel<GHPRReviewCommentModel>,
              commentComponentFactory: (GHPRReviewCommentModel) -> JComponent): JComponent {

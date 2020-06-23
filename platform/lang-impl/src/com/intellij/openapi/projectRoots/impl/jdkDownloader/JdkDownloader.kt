@@ -16,7 +16,7 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkTypeI
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.Messages
-//import com.intellij.openapi.util.NlsProgress.ProgressTitle
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
@@ -53,10 +53,9 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
     if (project?.isDisposed == true) return
 
     if (items.isNullOrEmpty()) {
-      Messages.showMessageDialog(project,
+      Messages.showErrorDialog(project,
                                  ProjectBundle.message("error.message.no.jdk.for.download"),
-                                 ProjectBundle.message("error.message.title.download.jdk"),
-                                 Messages.getErrorIcon()
+                                 ProjectBundle.message("error.message.title.download.jdk")
       )
       return
     }
@@ -71,10 +70,9 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
     } catch (e: Throwable) {
       if (e is ControlFlowException) throw e
       LOG.warn("Failed to prepare JDK installation to $jdkHome. ${e.message}", e)
-      Messages.showMessageDialog(project,
+      Messages.showErrorDialog(project,
                                  ProjectBundle.message("error.message.text.jdk.install.failed", jdkHome),
-                                 ProjectBundle.message("error.message.title.download.jdk"),
-                                 Messages.getErrorIcon()
+                                 ProjectBundle.message("error.message.title.download.jdk")
       )
       return
     }
@@ -83,7 +81,7 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
   }
 
   private inline fun <T : Any> computeInBackground(project: Project?,
-                                                   @Nls title: /*@ProgressTitle*/ String,
+                                                   @Nls title: @ProgressTitle String,
                                                    crossinline action: (ProgressIndicator) -> T): T =
     ProgressManager.getInstance().run(object : Task.WithResult<T, Exception>(project, title, true) {
       override fun compute(indicator: ProgressIndicator) = action(indicator)

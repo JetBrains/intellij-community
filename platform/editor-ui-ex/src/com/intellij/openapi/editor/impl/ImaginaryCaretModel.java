@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 class ImaginaryCaretModel implements CaretModel {
@@ -56,18 +57,18 @@ class ImaginaryCaretModel implements CaretModel {
   @NotNull
   @Override
   public Caret getPrimaryCaret() {
-    throw notImplemented();
+    return myCaret;
   }
 
   @Override
   public int getCaretCount() {
-    throw notImplemented();
+    return 1;
   }
 
   @NotNull
   @Override
   public List<Caret> getAllCarets() {
-    throw notImplemented();
+    return Collections.singletonList(myCaret);
   }
 
   @Nullable

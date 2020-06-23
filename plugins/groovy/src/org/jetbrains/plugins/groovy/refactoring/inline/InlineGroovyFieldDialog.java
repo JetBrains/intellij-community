@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -31,7 +31,7 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
   protected String getNameLabelText() {
     @SuppressWarnings("StaticFieldReferencedViaSubclass")
     String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
-    return JavaRefactoringBundle.message("inline.field.field.name.label", fieldText);
+    return JavaRefactoringBundle.message("inline.field.field.name.label", fieldText, "");
   }
 
   @Override

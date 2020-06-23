@@ -2,7 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventPair;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;
@@ -13,6 +13,9 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 @SuppressWarnings("ComponentNotRegistered")
 public class ToolWindowViewModeAction extends DumbAwareToggleAction implements FusAwareAction {
@@ -152,11 +155,12 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
   }
 
   @Override
-  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
+  public @NotNull List<EventPair> getAdditionalUsageData(@NotNull AnActionEvent event) {
     ToolWindow toolWindow = getToolWindow(event);
     if (toolWindow != null) {
-      data.addData("toolwindow", toolWindow.getId());
+      return Collections.singletonList(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindow.getId()));
     }
+    return Collections.emptyList();
   }
 
   public static class Group extends DefaultActionGroup {

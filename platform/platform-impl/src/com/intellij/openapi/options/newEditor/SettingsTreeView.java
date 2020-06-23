@@ -54,7 +54,10 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
@@ -648,9 +651,13 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         String id = node.myConfigurable instanceof ConfigurableWrapper ? ((ConfigurableWrapper)node.myConfigurable).getId() :
                     node.myConfigurable instanceof SearchableConfigurable ? ((SearchableConfigurable)node.myConfigurable).getId() :
                     node.myConfigurable.getClass().getSimpleName();
-        PluginDescriptor plugin =
-          node.myConfigurable instanceof ConfigurableWrapper ? ((ConfigurableWrapper)node.myConfigurable).getExtensionPoint()
-            .getPluginDescriptor() : null;
+        PluginDescriptor plugin;
+        if (node.myConfigurable instanceof ConfigurableWrapper) {
+          plugin = ((ConfigurableWrapper)node.myConfigurable).getExtensionPoint().getPluginDescriptor();
+        }
+        else {
+          plugin = null;
+        }
         PluginId pluginId = plugin == null ? null : plugin.getPluginId();
         String pluginName;
         if (pluginId == null || PluginManagerCore.CORE_ID == pluginId) {
@@ -996,11 +1003,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myConfigurableToNodeMap.clear();
     AbstractTreeUi ui = myBuilder.getUi();
     if (ui == null) return;
-    
+
     //remove expansion and selection (to avoid stuck old elements) before cleanup
     myTree.getSelectionModel().clearSelection();
     myTree.collapsePath(new TreePath(myTree.getModel().getRoot()));
-    
+
     myBuilder.cleanUp();
     ui.getUpdater().reset();
     AbstractTreeStructure structure = ui.getTreeStructure();

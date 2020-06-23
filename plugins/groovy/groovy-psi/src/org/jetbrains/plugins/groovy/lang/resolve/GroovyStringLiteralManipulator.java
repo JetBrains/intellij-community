@@ -77,6 +77,7 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
     if (text.length() >= begin.length() * 2 && text.endsWith(begin)) {
       fin -= begin.length();
     }
-    return new TextRange(start, Math.max(1, fin));
+    assert fin >= 1;
+    return new TextRange(start, fin);
   }
 }

@@ -64,15 +64,7 @@ public class PyResolveUtil {
    */
   public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull PsiElement element, @Nullable String name,
                                   @Nullable PsiElement roof) {
-    // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    final PsiElement realContext = PyPsiUtils.getRealContext(element);
-    final ScopeOwner originalOwner;
-    if (realContext != element && realContext instanceof PyFile) {
-      originalOwner = (PyFile)realContext;
-    }
-    else {
-      originalOwner = ScopeUtil.getScopeOwner(realContext);
-    }
+    final ScopeOwner originalOwner = ScopeUtil.getScopeOwner(element);
     final PsiElement parent = element.getParent();
     ScopeOwner owner = originalOwner;
     if (parent instanceof PyNonlocalStatement) {

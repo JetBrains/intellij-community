@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
@@ -56,7 +56,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
           newExpression.append(tracker.text(nextSibling));
           nextSibling = nextSibling.getNextSibling();
         }
-        merge((PsiLiteralExpressionImpl)prev, (PsiLiteralExpressionImpl)operand, newExpression);
+        merge((PsiLiteralExpression)prev, (PsiLiteralExpression)operand, newExpression);
         nextSibling = operand.getNextSibling();
         while (nextSibling != null) {
           newExpression.append(tracker.text(nextSibling));
@@ -68,33 +68,37 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
     PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString(), tracker);
   }
 
-  private static void merge(PsiLiteralExpressionImpl left, PsiLiteralExpressionImpl right, StringBuilder newExpression) {
-    String leftText = Objects.requireNonNull(left.getValue()).toString();
-    String rightText = Objects.requireNonNull(right.getValue()).toString();
-    if (left.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      String indent = StringUtil.repeat(" ", left.getTextBlockIndent());
-      newExpression.append("\"\"\"").append('\n').append(indent);
-      newExpression.append(leftText.replaceAll("\n", "\n" + indent));
-      if (right.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
-        newExpression.append(rightText.replaceAll("\n", "\n" + indent));
-      }
-      else {
-        newExpression.append(StringUtil.escapeStringCharacters(rightText));
-      }
-      newExpression.append("\"\"\"");
+  private static void merge(PsiLiteralExpression left, PsiLiteralExpression right, StringBuilder newExpression) {
+    final String leftText = getLiteralExpressionText(left);
+    final String rightText = getLiteralExpressionText(right);
+    if (left.isTextBlock()) {
+      newExpression.append("\"\"\"\n").append(leftText)
+        .append(right.isTextBlock() ? rightText : PsiLiteralUtil.escapeTextBlockCharacters(rightText)).append("\"\"\"");
     }
-    else if (right.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      String indent = StringUtil.repeat(" ", right.getTextBlockIndent());
-      newExpression.append("\"\"\"").append('\n').append(indent);
-      newExpression.append(StringUtil.escapeStringCharacters(leftText));
-      newExpression.append(rightText.replaceAll("\n", "\n" + indent));
-      newExpression.append("\"\"\"");
+    else if (right.isTextBlock()) {
+      newExpression.append("\"\"\"\n").append(PsiLiteralUtil.escapeTextBlockCharacters(leftText)).append(rightText).append("\"\"\"");
     }
     else {
-      newExpression.append('"');
-      newExpression.append(StringUtil.escapeStringCharacters(leftText));
-      newExpression.append(StringUtil.escapeStringCharacters(rightText));
-      newExpression.append('"');
+      newExpression.append('"').append(leftText).append(rightText).append('"');
+    }
+  }
+
+  private static String getLiteralExpressionText(PsiLiteralExpression expression) {
+    final PsiType type = expression.getType();
+    if (PsiType.CHAR.equals(type)) {
+      final String result = StringUtil.unquoteString(expression.getText());
+      if (result.equals("\"")) return "\\\"";
+      if (result.equals("\\'")) return "'";
+      return result;
+    }
+    else if (type instanceof PsiPrimitiveType) {
+      return Objects.requireNonNull(expression.getValue()).toString();
+    }
+    else if (expression.isTextBlock()) {
+      return PsiLiteralUtil.getTextBlockText(expression);
+    }
+    else {
+      return PsiLiteralUtil.getStringLiteralContent(expression);
     }
   }
 }

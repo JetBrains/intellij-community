@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.converters.values;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -18,18 +17,13 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class GenericDomValueConvertersRegistry {
 
   public interface Provider {
     Converter getConverter();
     Condition<Pair<PsiType, GenericDomValue>> getCondition();
-  }
-
-  public void registerFromExtensions(ExtensionPointName<Provider> extensionPointName) {
-    for (Provider provider : extensionPointName.getExtensionList()) {
-      registerConverter(provider.getConverter(), provider.getCondition());
-    }
   }
 
   private final Map<Condition<Pair<PsiType, GenericDomValue>>, Converter<?>> myConditionConverters =
@@ -101,8 +95,19 @@ public class GenericDomValueConvertersRegistry {
   }
 
   @Nullable
-  public Converter<?> getConverter(@NotNull GenericDomValue domValue, @Nullable PsiType type) {
+  public final Converter<?> getConverter(@NotNull GenericDomValue domValue, @Nullable PsiType type) {
     final Pair<PsiType, GenericDomValue> pair = Pair.create(type, domValue);
+    final Converter<?> converter = getRegisteredConverter(pair);
+    return converter != null?  converter : getCustomConverter(pair);
+  }
+
+  @Nullable
+  protected Converter<?> getCustomConverter(Pair<PsiType, GenericDomValue> pair) {
+    return null;
+  }
+
+    @Nullable
+  protected Converter<?> getRegisteredConverter(Pair<PsiType, GenericDomValue> pair) {
     for (@NotNull Condition<Pair<PsiType, GenericDomValue>> condition : myConditionConverters.keySet()) {
       if (condition.value(pair)) {
         return myConditionConverters.get(condition);
@@ -113,6 +118,6 @@ public class GenericDomValueConvertersRegistry {
 
   public void registerConverter(@NotNull Converter<?> provider, @NotNull Class type) {
     final String name = type.getCanonicalName();
-    registerConverter(provider, pair -> pair.first != null && Comparing.equal(name, pair.first.getCanonicalText()));
+    registerConverter(provider, pair -> pair.first != null && Objects.equals(name, pair.first.getCanonicalText()));
   }
 }

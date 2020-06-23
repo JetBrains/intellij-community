@@ -66,7 +66,7 @@ interface RowBuilder : BaseBuilder {
   }
 
   fun commentRow(@Nls text: String) {
-    createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1))
+    createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1, true))
   }
 
   fun onGlobalApply(callback: () -> Unit): Row

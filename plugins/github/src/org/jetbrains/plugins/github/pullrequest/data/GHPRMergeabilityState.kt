@@ -1,8 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-class GHPRMergeabilityState(val number: Long,
-                            val headRefOid: String,
+class GHPRMergeabilityState(val headRefOid: String,
                             val htmlUrl: String,
 
                             val hasConflicts: Boolean?,

@@ -164,6 +164,12 @@ public class JUnitUtil {
     return isTestClass(psiClass, true, true);
   }
 
+  private static boolean hasTestableMetaAnnotation(@NotNull PsiClass psiClass) {
+    return JavaPsiFacade.getInstance(psiClass.getProject())
+          .findClass(CUSTOM_TESTABLE_ANNOTATION, psiClass.getResolveScope()) != null &&
+           MetaAnnotationUtil.hasMetaAnnotatedMethods(psiClass,Collections.singleton(CUSTOM_TESTABLE_ANNOTATION));
+  }
+
   public static boolean isTestClass(@NotNull PsiClass psiClass, boolean checkAbstract, boolean checkForTestCaseInheritance) {
     if (psiClass.getQualifiedName() == null) return false;
     if (isJUnit5(psiClass)) {
@@ -171,7 +177,8 @@ public class JUnitUtil {
         return true;
       }
     }
-    else if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))) {
+    else if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))
+    || hasTestableMetaAnnotation(psiClass)) {
       //no jupiter engine in the classpath
       return true;
     }

@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.ExternalStateComponent;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -59,9 +58,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinBuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleJvmResolutionUtil;
 import org.jetbrains.plugins.gradle.util.GradleJvmValidationUtil;
 
 import java.io.File;
@@ -209,17 +210,21 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
     VirtualFile buildScriptFile = createAndConfigureBuildScriptFile(module);
 
+    FileDocumentManager.getInstance().saveAllDocuments();
+
     // it will be set later in any case, but save is called immediately after project creation, so, to ensure that it will be properly saved as external system module
     ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
     modulePropertyManager.setExternalId(GradleConstants.SYSTEM_ID);
     // set linked project path to be able to map the module with the module data obtained from the import
-    ExternalStateComponent moduleState = modulePropertyManager.getState();
-    moduleState.setRootProjectPath(rootProjectPath);
-    moduleState.setLinkedProjectPath(rootProjectPath);
+    modulePropertyManager.setRootProjectPath(rootProjectPath);
+    modulePropertyManager.setLinkedProjectPath(rootProjectPath);
 
-    final Project project = module.getProject();
-    FileDocumentManager.getInstance().saveAllDocuments();
-    if (myParentProject == null) setupAndLinkGradleProject(project);
+    Project project = module.getProject();
+
+    GradleVersion gradleVersion = suggestGradleVersion(project);
+    if (myParentProject == null) {
+      setupAndLinkGradleProject(project, gradleVersion);
+    }
     if (myWizardContext.isCreatingNewProject()) {
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
       // Needed to ignore postponed project refresh
@@ -230,26 +235,49 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myWizardContext.isCreatingNewProject()) {
         // update external projects data to be able to add child modules before the initial import finish
-        ImportSpecBuilder previewSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
-        previewSpec.usePreviewMode();
-        previewSpec.use(MODAL_SYNC);
-        previewSpec.callback(new ConfigureGradleModuleCallback(previewSpec));
-        ExternalSystemUtil.refreshProject(rootProjectPath, previewSpec);
+        loadPreviewProject(project);
       }
-      ImportSpecBuilder importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
-      importSpec.createDirectoriesForEmptyContentRoots();
-      importSpec.callback(new ConfigureGradleModuleCallback(importSpec));
-      ExternalSystemUtil.refreshProject(rootProjectPath, importSpec);
       openBuildScriptFile(project, buildScriptFile);
+      if (myParentProject == null) {
+        createWrapper(project, gradleVersion, () -> {
+          reloadProject(project);
+        });
+      }
+      else {
+        reloadProject(project);
+      }
     }, ModalityState.NON_MODAL, project.getDisposed());
   }
 
-  private void setupAndLinkGradleProject(@NotNull Project project) {
-    Sdk projectSdk = ObjectUtils.chooseNotNull(getModuleJdk(), getNewProjectJdk(myWizardContext));
+  private void setupAndLinkGradleProject(@NotNull Project project, @NotNull GradleVersion gradleVersion) {
     GradleProjectSettings projectSettings = getExternalProjectSettings();
-    setupGradleSettings(projectSettings, rootProjectPath, project, projectSdk);
+    setupGradleSettings(project, projectSettings, rootProjectPath, gradleVersion);
     getSystemSettings(project).linkProject(projectSettings);
-    GradleJvmValidationUtil.validateJavaHome(project, rootProjectPath, projectSettings.resolveGradleVersion());
+    GradleJvmValidationUtil.validateJavaHome(project, rootProjectPath, gradleVersion);
+  }
+
+  private void loadPreviewProject(@NotNull Project project) {
+    ImportSpecBuilder previewSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
+    previewSpec.usePreviewMode();
+    previewSpec.use(MODAL_SYNC);
+    previewSpec.callback(new ConfigureGradleModuleCallback(previewSpec));
+    ExternalSystemUtil.refreshProject(rootProjectPath, previewSpec);
+  }
+
+  private void reloadProject(@NotNull Project project) {
+    ImportSpecBuilder importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
+    importSpec.createDirectoriesForEmptyContentRoots();
+    importSpec.callback(new ConfigureGradleModuleCallback(importSpec));
+    ExternalSystemUtil.refreshProject(rootProjectPath, importSpec);
+  }
+
+  private void createWrapper(@NotNull Project project, @NotNull GradleVersion gradleVersion, @NotNull Runnable callback) {
+    GradleExecutionUtil.ensureInstalledWrapper(project, rootProjectPath, gradleVersion, callback);
+  }
+
+  private static @NotNull GradleVersion suggestGradleVersion(@NotNull Project project) {
+    GradleVersion gradleVersion = GradleJvmResolutionUtil.suggestGradleVersion(project);
+    return gradleVersion == null ? GradleVersion.current() : gradleVersion;
   }
 
   private static AbstractExternalSystemSettings<?, GradleProjectSettings, ?> getSystemSettings(@NotNull Project project) {

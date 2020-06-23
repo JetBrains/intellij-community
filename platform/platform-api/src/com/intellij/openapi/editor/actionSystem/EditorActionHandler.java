@@ -212,6 +212,10 @@ public abstract class EditorActionHandler {
     return DocCommandGroupId.noneGroupId(editor.getDocument());
   }
 
+  <T> @Nullable T getHandlerOfType(@NotNull Class<T> type) {
+    return type.isInstance(this) ? type.cast(this) : null;
+  }
+
   @FunctionalInterface
   private interface CaretTask {
     void perform(@NotNull Caret caret, @Nullable DataContext dataContext);

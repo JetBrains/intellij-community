@@ -24,6 +24,7 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.psi.search.GlobalSearchScope
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
@@ -40,8 +41,18 @@ class PyTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
     create(
       configuration,
-      CustomOption(PyTestConfiguration::keywords.name, PyRunTargetVariant.PATH, PyRunTargetVariant.PYTHON),
-      CustomOption(PyTestConfiguration::parameters.name, PyRunTargetVariant.PATH, PyRunTargetVariant.PYTHON)
+      CustomOption(
+        PyTestConfiguration::keywords.name,
+        PyBundle.message("python.testing.nose.custom.options.keywords"),
+        PyRunTargetVariant.PATH,
+        PyRunTargetVariant.PYTHON
+      ),
+      CustomOption(
+        PyTestConfiguration::parameters.name,
+        PyBundle.message("python.testing.nose.custom.options.parameters"),
+        PyRunTargetVariant.PATH,
+        PyRunTargetVariant.PYTHON
+      )
     ))
 
 class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environment: ExecutionEnvironment) :

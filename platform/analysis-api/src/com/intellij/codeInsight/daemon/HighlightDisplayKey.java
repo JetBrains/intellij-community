@@ -1,16 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class HighlightDisplayKey {
   private static final Logger LOG = Logger.getInstance(HighlightDisplayKey.class);
@@ -154,7 +153,7 @@ public class HighlightDisplayKey {
     myName = name;
     myID = ID;
     ourNameToKeyMap.put(myName, this);
-    if (!Comparing.equal(ID, name)) {
+    if (!Objects.equals(ID, name)) {
       ourIdToKeyMap.put(ID, this);
     }
   }

@@ -17,10 +17,24 @@ class ProjectStructureMapping {
 
   void mergeFrom(ProjectStructureMapping mapping, String relativePath) {
     entries += mapping.entries.collect {
-      def copy = it.clone()
-      copy.path = relativePath.isEmpty() ? copy.path : "$relativePath/$copy.path"
-      copy
+      changePath(it, relativePath.isEmpty() ? it.path : "$relativePath/$it.path")
     }
+  }
+
+  private static DistributionFileEntry changePath(DistributionFileEntry entry, String newPath) {
+    def copy = entry.clone()
+    copy.path = newPath
+    copy
+  }
+
+  ProjectStructureMapping extractFromSubFolder(String folderPath) {
+    def mapping = new ProjectStructureMapping()
+    entries.each {
+      if (it.path.startsWith(folderPath)) {
+        mapping.addEntry(changePath(it, it.path.substring(folderPath.length())))
+      }
+    }
+    return mapping
   }
 
   List<String> getIncludedModules() {

@@ -396,7 +396,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     if (!(file2 instanceof PsiClassOwner)) return false;
     String package1 = ((PsiClassOwner) file1).getPackageName();
     String package2 = ((PsiClassOwner) file2).getPackageName();
-    return Comparing.equal(package1, package2);
+    return Objects.equals(package1, package2);
   }
 
   @Override

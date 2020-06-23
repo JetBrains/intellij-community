@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -18,6 +16,7 @@ import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.ui.IconDescriptionBundleEP;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
@@ -39,6 +38,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     private static final String CONFIGURABLE_EP = ConfigurableEP.class.getName();
     private static final String INSPECTION_EP = InspectionEP.class.getName();
 
+    private static final String ICON_DESCRIPTION_BUNDLE_EP = IconDescriptionBundleEP.class.getName();
     private static final String TYPE_NAME_EP = TypeNameEP.class.getName();
   }
 
@@ -83,7 +83,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                         bundleReferenceProvider);
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceBundle"},
-                                                                  Holder.TYPE_NAME_EP),
+                                                                  Holder.TYPE_NAME_EP, Holder.ICON_DESCRIPTION_BUNDLE_EP),
                                         bundleReferenceProvider);
 
     final XmlTagPattern.Capture intentionActionBundleTagPattern =

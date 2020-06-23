@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -33,16 +33,14 @@ import static com.intellij.codeInsight.hint.HintManager.*;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EDIT_PROPERTY_VALUE;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_REGION;
 
-public class EditPropertyValueTooltipManager implements EditorMouseListener, CaretListener {
+public final class EditPropertyValueTooltipManager implements EditorMouseListener, CaretListener {
   private static final Key<Boolean> INITIALIZED = Key.create("PropertyEditTooltipManager");
   private static final long TOOLTIP_DELAY_MS = 500;
 
   private final Alarm myAlarm = new Alarm();
 
   public static void initializeForDocument(@NotNull Document document) {
-    for (Editor editor : EditorFactory.getInstance().getEditors(document)) {
-      initializeForEditor(editor);
-    }
+    EditorFactory.getInstance().editors(document).forEach(EditPropertyValueTooltipManager::initializeForEditor);
   }
 
   private static void initializeForEditor(@NotNull Editor editor) {

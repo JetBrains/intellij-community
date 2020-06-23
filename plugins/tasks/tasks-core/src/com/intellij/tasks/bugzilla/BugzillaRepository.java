@@ -1,25 +1,42 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.bugzilla;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.CustomTaskState;
+import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.xmlrpc.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.Vector;
 import java.util.regex.Matcher;
+import org.apache.xmlrpc.CommonsXmlRpcTransport;
+import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcClientException;
+import org.apache.xmlrpc.XmlRpcException;
+import org.apache.xmlrpc.XmlRpcRequest;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
@@ -129,8 +146,8 @@ public class BugzillaRepository extends BaseRepositoryImpl {
       }
       String version = (String)result.get("version");
       String[] parts = version.split("\\.", 3);
-      myVersion = new Version(Integer.parseInt(parts[0]), 
-                              parts.length > 1 ? Integer.parseInt(parts[1]) : 0, 
+      myVersion = new Version(Integer.parseInt(parts[0]),
+                              parts.length > 1 ? Integer.parseInt(parts[1]) : 0,
                               parts.length > 2 ? Integer.parseInt(parts[2]) : 0);
       if (myVersion.lessThan(3, 4)) {
         throw new RequestFailedException("Bugzilla before 3.4 is not supported");
@@ -421,8 +438,8 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     if (!(o instanceof BugzillaRepository)) return false;
     BugzillaRepository repository = (BugzillaRepository)o;
 
-    if (!Comparing.equal(myProductName, repository.getProductName())) return false;
-    if (!Comparing.equal(myComponentName, repository.getComponentName())) return false;
+    if (!Objects.equals(myProductName, repository.getProductName())) return false;
+    if (!Objects.equals(myComponentName, repository.getComponentName())) return false;
 
     return true;
   }

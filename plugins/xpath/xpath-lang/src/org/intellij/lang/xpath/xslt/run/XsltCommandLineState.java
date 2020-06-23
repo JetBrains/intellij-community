@@ -48,6 +48,8 @@ import org.intellij.plugins.xslt.run.rt.XSLTMain;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.intellij.lang.xpath.xslt.run.XsltRunConfiguration.isEmpty;
@@ -136,11 +138,11 @@ public class XsltCommandLineState extends CommandLineState {
     if (pluginId != null) {
       IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
       assert descriptor != null;
-      File rtPath = new File(descriptor.getPath(), "lib/rt/xslt-rt.jar");
-      if (!rtPath.exists()) {
+      Path rtPath = descriptor.getPluginPath().resolve("lib/rt/xslt-rt.jar");
+      if (!Files.exists(rtPath)) {
         throw new CantRunException("Runtime classes not found at " + rtPath);
       }
-      parameters.getClassPath().addTail(rtPath.getAbsolutePath());
+      parameters.getClassPath().addTail(rtPath.toAbsolutePath().toString());
     }
     else {
       String rtPath = PathManager.getJarPathForClass(XSLTMain.class);

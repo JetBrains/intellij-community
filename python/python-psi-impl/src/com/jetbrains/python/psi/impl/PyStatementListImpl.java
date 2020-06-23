@@ -27,7 +27,7 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
 
   @Override
   public PyStatement[] getStatements() {
-    return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens(), PyStatement.EMPTY_ARRAY);
+    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getStatementTokens(), PyStatement.EMPTY_ARRAY);
   }
 
   @Override

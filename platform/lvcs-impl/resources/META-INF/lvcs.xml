@@ -1,0 +1,23 @@
+<idea-plugin>
+  <actions>
+    <group id="LocalHistory" class="com.intellij.history.integration.ui.actions.LocalHistoryGroup" popup="true">
+      <action id="LocalHistory.ShowHistory" class="com.intellij.history.integration.ui.actions.ShowHistoryAction"/>
+      <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction"/>
+      <action id="LocalHistory.PutLabel" class="com.intellij.history.integration.ui.actions.PutLabelAction"/>
+
+      <add-to-group group-id="VersionControlsGroup" anchor="first"/>
+    </group>
+
+    <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
+      <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
+      <add-to-group group-id="ViewRecentActions" anchor="last"/>
+    </action>
+  </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
+    <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
+
+    <applicationService serviceInterface="com.intellij.history.LocalHistory"
+                        serviceImplementation="com.intellij.history.integration.LocalHistoryImpl" preload="true"/>
+  </extensions>
+</idea-plugin>

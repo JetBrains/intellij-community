@@ -187,7 +187,7 @@ public class GitVFSListener extends VcsVFSListener {
       }
     }
     LOG.debug("performMoveRename. \ntoAdd: " + toAdd + "\ntoRemove: " + toRemove + "\ntoForceMove: " + toForceMove);
-    GitVcs.runInBackground(new Task.Backgroundable(myProject, "Moving Files...") {
+    GitVcs.runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("progress.title.moving.files")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

@@ -43,7 +43,6 @@ public final class PythonIcons {
     }
     /** 16x16 */ public static final @NotNull Icon Dotnet = load("/icons/com/jetbrains/python/dotnet.svg");
     /** 16x16 */ public static final @NotNull Icon Function = load("/icons/com/jetbrains/python/function.svg");
-    /** 16x16 */ public static final @NotNull Icon IpythonNotebook = load("/icons/com/jetbrains/python/IpythonNotebook.svg");
     /** 16x16 */ public static final @NotNull Icon Jython = load("/icons/com/jetbrains/python/jython.svg");
     /** 16x16 */ public static final @NotNull Icon Pypy = load("/icons/com/jetbrains/python/pypy.svg");
     /** 16x16 */ public static final @NotNull Icon Python = load("/icons/com/jetbrains/python/python.svg");

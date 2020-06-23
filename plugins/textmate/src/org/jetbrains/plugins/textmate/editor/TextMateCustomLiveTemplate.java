@@ -21,7 +21,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateService;
-import org.jetbrains.plugins.textmate.language.SnippetsRegistry;
+import org.jetbrains.plugins.textmate.language.preferences.SnippetsRegistry;
+import org.jetbrains.plugins.textmate.language.preferences.TextMateSnippet;
 import org.jetbrains.plugins.textmate.psi.TextMateFile;
 
 import java.util.Collection;

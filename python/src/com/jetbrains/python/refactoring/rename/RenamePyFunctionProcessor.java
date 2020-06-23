@@ -68,10 +68,12 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
 
     final PyFunction deepestSuperMethod = PySuperMethodsSearch.findDeepestSuperMethod(function);
     if (!deepestSuperMethod.equals(function)) {
-      final String message = "Method " + function.getName() + " of class " + containingClass.getQualifiedName() + "\n" +
-                             "overrides method of class " + deepestSuperMethod.getContainingClass().getQualifiedName() + ".\n" +
-                             "Do you want to rename the base method?";
-      final int rc = Messages.showYesNoCancelDialog(element.getProject(), message, PyBundle.message("refactoring.rename"), Messages.getQuestionIcon());
+      final String message = PyBundle.message("python.rename.processor.override.message",
+                                              function.getName(),
+                                              containingClass.getQualifiedName(),
+                                              deepestSuperMethod.getContainingClass().getQualifiedName());
+      final int rc =
+        Messages.showYesNoCancelDialog(element.getProject(), message, PyBundle.message("refactoring.rename"), Messages.getQuestionIcon());
       switch (rc) {
         case Messages.YES:
           return deepestSuperMethod;
@@ -89,9 +91,9 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           return site;
         }
-        final String message = String.format("Do you want to rename the property '%s' instead of its accessor function '%s'?",
-                                             property.getName(), function.getName());
-        final int rc = Messages.showYesNoCancelDialog(element.getProject(), message, PyBundle.message("refactoring.rename"), Messages.getQuestionIcon());
+        final int rc =
+          Messages.showYesNoCancelDialog(element.getProject(),
+                                         PyBundle.message("python.rename.processor.property", property.getName(), function.getName()), PyBundle.message("refactoring.rename"), Messages.getQuestionIcon());
         switch (rc) {
           case Messages.YES:
             return site;

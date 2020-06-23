@@ -11,6 +11,7 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,15 +20,13 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 
-public class SidePanel extends JPanel {
+public final class SidePanel extends JPanel {
   private final JList<SidePanelItem> myList;
   private final DefaultListModel<SidePanelItem> myModel;
   private final Place.Navigator myNavigator;
 
-  private final Map<Integer, String> myIndex2Separator = new HashMap<>();
+  private final Int2ObjectOpenHashMap<String> myIndex2Separator = new Int2ObjectOpenHashMap<>();
 
   public SidePanel(Place.Navigator navigator) {
     myNavigator = navigator;

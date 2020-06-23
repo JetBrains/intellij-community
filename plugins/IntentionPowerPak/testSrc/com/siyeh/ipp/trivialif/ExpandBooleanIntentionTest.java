@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -26,23 +12,26 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class ExpandBooleanIntentionTest extends IPPTestCase {
 
-  public void testBraces() {
+  public void testBraces() { doFormattingTest(IntentionPowerPackBundle.message("expand.boolean.declaration.intention.name"));}
+  public void testFormatting() { doFormattingTest(IntentionPowerPackBundle.message("expand.boolean.return.intention.name")); }
+  public void testFormatting2() { doFormattingTest(IntentionPowerPackBundle.message("expand.boolean.assignment.intention.name")); }
+  public void testIncomplete1() { doTest(IntentionPowerPackBundle.message("expand.boolean.return.intention.name")); }
+  public void testIncomplete2() { doTest(IntentionPowerPackBundle.message("expand.boolean.assignment.intention.name")); }
+  public void testIncomplete3() { assertIntentionNotAvailable(IntentionPowerPackBundle.message("expand.boolean.assignment.intention.name")); }
+  public void testIncomplete4() { assertIntentionNotAvailable(); }
+  public void testIncomplete5() { assertIntentionNotAvailable(IntentionPowerPackBundle.message("expand.boolean.assignment.intention.name")); }
+  public void testIncomplete6() { assertIntentionNotAvailable(IntentionPowerPackBundle.message("expand.boolean.return.intention.name")); }
+
+  private void doFormattingTest(String intentionText) {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     final int oldValue = settings.IF_BRACE_FORCE;
     try {
       settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
-      doTest();
+      doTest(intentionText);
     } finally {
       settings.IF_BRACE_FORCE = oldValue;
     }
   }
-
-  public void testIncomplete1() { doTest("Expand boolean return to 'if else'"); }
-  public void testIncomplete2() { doTest("Expand boolean assignment to 'if else'"); }
-  public void testIncomplete3() { assertIntentionNotAvailable("Expand boolean assignment to 'if else'"); }
-  public void testIncomplete4() { assertIntentionNotAvailable(); }
-  public void testIncomplete5() { assertIntentionNotAvailable("Expand boolean assignment to 'if else'"); }
-  public void testIncomplete6() { assertIntentionNotAvailable("Expand boolean return to 'if else'"); }
 
   @Override
   protected String getRelativePath() {

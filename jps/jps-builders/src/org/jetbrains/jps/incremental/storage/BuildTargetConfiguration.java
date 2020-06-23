@@ -185,7 +185,7 @@ public class BuildTargetConfiguration {
           }
         }
         if (wasDeleted) {
-          nonexistentOutputRoots.add(outputRoot.getAbsolutePath());
+          nonexistentOutputRoots.add(FileUtil.toSystemIndependentName(outputRoot.getAbsolutePath()));
         }
       }
     }

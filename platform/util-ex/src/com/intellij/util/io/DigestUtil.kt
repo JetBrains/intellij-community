@@ -1,13 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
+import com.intellij.openapi.vfs.VirtualFile
 import java.io.IOException
+import java.io.InputStream
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.security.Provider
+import java.security.SecureRandom
 
 object DigestUtil {
   private val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
+
+  @JvmStatic
+  val random by lazy { SecureRandom() }
 
   @JvmStatic
   fun md5() = getMessageDigest("MD5")
@@ -42,17 +48,33 @@ object DigestUtil {
 
   @JvmStatic
   fun updateContentHash(digest: MessageDigest, path: Path) {
+    updateContentHash(path.inputStream(), digest, path.toString())
+  }
+
+  @JvmStatic
+  fun calculateContentHash(digest: MessageDigest, virtualFile: VirtualFile): ByteArray {
+    val cloned = cloneDigest(digest)
+    updateContentHash(virtualFile.inputStream, cloned, virtualFile.url)
+    return cloned.digest()
+  }
+
+  private fun updateContentHash(
+    inputStream: InputStream,
+    digest: MessageDigest,
+    presentablePathForError: String
+  ) {
     val buff = ByteArray(512 * 1024)
     try {
-      path.inputStream().use { iz ->
+      inputStream.use { iz ->
         while (true) {
           val sz = iz.read(buff)
           if (sz <= 0) break
           digest.update(buff, 0, sz)
         }
       }
-    } catch (e: IOException) {
-      throw RuntimeException("Faield to read $path. ${e.message}", e)
+    }
+    catch (e: IOException) {
+      throw RuntimeException("Failed to read $presentablePathForError. ${e.message}", e)
     }
   }
 

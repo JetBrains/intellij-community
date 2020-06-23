@@ -5,9 +5,9 @@
  */
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -52,16 +52,22 @@ public abstract class ProjectLocator {
   @NotNull
   public abstract Collection<Project> getProjectsForFile(@NotNull VirtualFile file);
 
-  @NotNull
-  public static AccessToken runWithPreferredProject(@NotNull VirtualFile file, @NotNull Project preferredProject) {
+  public static <T, E extends Throwable> T computeWithPreferredProject(@NotNull VirtualFile file,
+                                                                       @NotNull Project preferredProject,
+                                                                       @NotNull ThrowableComputable<T, E> runnable) throws E {
     Map<VirtualFile, Project> local = ourPreferredProjects.get();
-    local.put(file, preferredProject);
-    return new AccessToken() {
-      @Override
-      public void finish() {
+    Project prev = local.put(file, preferredProject);
+    try {
+      return runnable.compute();
+    }
+    finally {
+      if (prev == null) {
         local.remove(file);
       }
-    };
+      else {
+        local.put(file, prev);
+      }
+    }
   }
 
   @Nullable

@@ -60,7 +60,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
 
     // Normalization.
     int maxPreferredOffsetToUse = maxPreferredOffset >= endOffset ? endOffset - 1 : maxPreferredOffset;
-    maxPreferredOffsetToUse = maxPreferredOffsetToUse < startOffset ? startOffset : maxPreferredOffsetToUse;
+    maxPreferredOffsetToUse = Math.max(maxPreferredOffsetToUse, startOffset);
 
     // Try to find out wrap position before preferred offset.
     for (int i = Math.min(maxPreferredOffsetToUse, text.length() - 1); i > startOffset; i--) {

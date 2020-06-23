@@ -4,15 +4,15 @@ package com.jetbrains.python.run
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.io.File
+import java.nio.file.Paths
 
 internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvReader() {
-  private val LOG = Logger.getInstance("#com.jetbrains.python.run.PyVirtualEnvReader")
-
   companion object {
+    private val LOG = Logger.getInstance("#com.jetbrains.python.run.PyVirtualEnvReader")
+
     private val virtualEnvVars = listOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT",
                                         "_OLD_VIRTUAL_PYTHONHOME", "_OLD_VIRTUAL_PATH", "CONDA_SHLVL", "CONDA_PROMPT_MODIFIER",
                                         "CONDA_PREFIX", "CONDA_DEFAULT_ENV",
@@ -45,7 +45,7 @@ internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) : Envir
       }
       else {
         if (activate != null) {
-          return readBatEnv(File(activate.first), ContainerUtil.createMaybeSingletonList(activate.second))
+          return readBatEnv(Paths.get(activate.first), listOfNotNull(activate.second))
         }
         else {
           LOG.error("Can't find activate script for $virtualEnvSdkPath")
@@ -101,7 +101,9 @@ private fun findActivateInPath(path: String, shellName: String?): File? {
   else File(File(path).parentFile, "activate")
 }
 
-private fun condaEnvFolder(path: String) = if (SystemInfo.isWindows) File(path).parent else File(path).parentFile.parent
+private fun condaEnvFolder(path: String): String? {
+  return if (SystemInfo.isWindows) File(path).parent else File(path).parentFile.parent
+}
 
 private fun findActivateOnWindows(path: String): File? {
   for (location in arrayListOf("activate.bat", "Scripts/activate.bat")) {

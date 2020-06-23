@@ -320,9 +320,9 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
                                                   ProcessHandler processHandler) throws ExecutionException {
       ConsoleView consoleView = super.createConsole(executor);
       BuildViewManager viewManager = ServiceManager.getService(getEnvironment().getProject(), BuildViewManager.class);
+      descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler), null);
+      descriptor.withExecutionEnvironment(getEnvironment());
       StartBuildEventImpl startBuildEvent = new StartBuildEventImpl(descriptor, "");
-      startBuildEvent.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler), null);
-      startBuildEvent.withExecutionEnvironment(getEnvironment());
       boolean withResumeAction =
         MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), MavenRunConfiguration.this);
       MavenBuildEventProcessor eventProcessor =

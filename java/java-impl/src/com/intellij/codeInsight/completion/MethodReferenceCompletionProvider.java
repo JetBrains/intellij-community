@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.daemon.impl.analysis.PsiMethodReferenceHighlightingUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -50,7 +51,7 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
                 LambdaUtil.performWithTargetType(referenceExpression, functionalType, () -> {
                   final PsiElement resolve = referenceExpression.resolve();
                   if (resolve != null && PsiEquivalenceUtil.areElementsEquivalent(element, resolve) &&
-                      PsiMethodReferenceUtil.checkMethodReferenceContext(referenceExpression, resolve, functionalType) == null) {
+                      PsiMethodReferenceHighlightingUtil.checkMethodReferenceContext(referenceExpression, resolve, functionalType) == null) {
                     result.addElement(new JavaMethodReferenceElement((PsiMethod)element, refPlace));
                   }
                   return null;

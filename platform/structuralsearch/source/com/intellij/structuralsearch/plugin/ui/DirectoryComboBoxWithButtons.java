@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
         //noinspection HardCodedStringLiteral
         source.putClientProperty("JComponent.outline", "error");
         final Balloon balloon = JBPopupFactory.getInstance()
-          .createHtmlTextBalloonBuilder("Not a directory", AllIcons.General.BalloonError, MessageType.ERROR.getPopupBackground(), null)
+          .createHtmlTextBalloonBuilder(SSRBundle.message("popup.content.directory"), AllIcons.General.BalloonError, MessageType.ERROR.getPopupBackground(), null)
           .createBalloon();
         balloon.show(new RelativePoint(source, new Point(source.getWidth() / 2, 0)), Balloon.Position.above);
         source.requestFocus();

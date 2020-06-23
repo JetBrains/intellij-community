@@ -16,8 +16,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
@@ -25,8 +25,10 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.OptionalInt;
+import java.util.function.UnaryOperator;
 
 public abstract class ContractValue {
   // package private to avoid uncontrolled implementations
@@ -68,7 +70,7 @@ public abstract class ContractValue {
       }
       argValues[i] = argValue;
     }
-    return makeCondition(factory, new DfaCallArguments(qualifierValue, argValues, JavaMethodContractUtil.isPure(method)));
+    return makeCondition(factory, new DfaCallArguments(qualifierValue, argValues, MutationSignature.fromCall(call)));
   }
 
   /**
@@ -100,6 +102,10 @@ public abstract class ContractValue {
 
   public OptionalInt getArgumentComparedTo(ContractValue value, boolean equal) {
     return OptionalInt.empty();
+  }
+
+  @NotNull DfaCallArguments fixArgument(@NotNull DfaCallArguments arguments, @NotNull UnaryOperator<DfType> converter) {
+    return arguments;
   }
 
   public String getPresentationText(PsiMethod method) {
@@ -156,6 +162,18 @@ public abstract class ContractValue {
     }
 
     @Override
+    @NotNull DfaCallArguments fixArgument(@NotNull DfaCallArguments arguments, @NotNull UnaryOperator<DfType> converter) {
+      if (arguments.myQualifier instanceof DfaTypeValue) {
+        DfType type = arguments.myQualifier.getDfType();
+        DfType newType = converter.apply(type);
+        if (!type.equals(newType)) {
+          return new DfaCallArguments(arguments.myQualifier.getFactory().fromDfType(newType), arguments.myArguments, arguments.myMutation);
+        }
+      }
+      return arguments;
+    }
+
+    @Override
     public String toString() {
       return "this";
     }
@@ -186,6 +204,23 @@ public abstract class ContractValue {
         return params[myIndex].getName();
       }
       return toString();
+    }
+
+    @Override
+    @NotNull DfaCallArguments fixArgument(@NotNull DfaCallArguments arguments, @NotNull UnaryOperator<DfType> converter) {
+      if (arguments.myArguments != null && arguments.myArguments.length > myIndex) {
+        DfaValue value = arguments.myArguments[myIndex];
+        if (value instanceof DfaTypeValue) {
+          DfType type = value.getDfType();
+          DfType newType = converter.apply(type);
+          if (!type.equals(newType)) {
+            DfaValue[] clone = arguments.myArguments.clone();
+            clone[myIndex] = value.getFactory().fromDfType(newType);
+            return new DfaCallArguments(arguments.myQualifier, clone, arguments.myMutation);
+          }
+        }
+      }
+      return arguments;
     }
 
     @Override
@@ -257,6 +292,16 @@ public abstract class ContractValue {
     }
 
     @Override
+    @NotNull DfaCallArguments fixArgument(@NotNull DfaCallArguments arguments, @NotNull UnaryOperator<DfType> converter) {
+      return myQualifier.fixArgument(arguments, t -> {
+        if (!(t instanceof DfReferenceType)) return t;
+        DfType sfType = myField.getFromQualifier(t);
+        DfType newType = converter.apply(sfType);
+        return newType.equals(sfType) ? t : ((DfReferenceType)t).dropSpecialField().meet(myField.asDfType(newType));
+      });
+    }
+
+    @Override
     public String getPresentationText(PsiMethod method) {
       return myQualifier.getPresentationText(method) + "." + myField + (myField == SpecialField.ARRAY_LENGTH ? "" : "()");
     }
@@ -309,29 +354,18 @@ public abstract class ContractValue {
 
     @Override
     public DfaCallArguments updateArguments(DfaCallArguments arguments, boolean negated) {
-      DfaNullability targetNullability = DfaNullability.NOT_NULL;
-      int index = getNullCheckedArgument(negated).orElse(-1);
-      if (index == -1) {
-        index = getNullCheckedArgument(!negated).orElse(-1);
-        targetNullability = DfaNullability.NULL;
+      ContractValue target = getValueComparedTo(nullValue(), negated);
+      if (target != null) {
+        return target.fixArgument(arguments, dfType -> dfType.meet(DfaNullability.NOT_NULL.asDfType()));
       }
-      if (index >= 0 && index < arguments.myArguments.length) {
-        DfaValue arg = arguments.myArguments[index];
-        if (arg instanceof DfaTypeValue) {
-          DfType dfType = arg.getDfType();
-          DfType target = dfType.meet(targetNullability.asDfType());
-          if (!target.equals(dfType) && target != DfTypes.BOTTOM) {
-            DfaValue[] newArguments = arguments.myArguments.clone();
-            newArguments[index] = arg.getFactory().fromDfType(target);
-            return new DfaCallArguments(arguments.myQualifier, newArguments, arguments.myPure);
-          }
-        }
+      target = getValueComparedTo(nullValue(), !negated);
+      if (target != null) {
+        return target.fixArgument(arguments, dfType -> dfType.meet(DfaNullability.NULL.asDfType()));
       }
       return arguments;
     }
 
-    @Override
-    public OptionalInt getArgumentComparedTo(ContractValue value, boolean equal) {
+    private @Nullable ContractValue getValueComparedTo(ContractValue value, boolean equal) {
       if (myRelationType == RelationType.equivalence(equal)) {
         ContractValue other;
         if (myLeft == value) {
@@ -341,16 +375,20 @@ public abstract class ContractValue {
           other = myLeft;
         }
         else {
-          return OptionalInt.empty();
+          return null;
         }
-        if (other instanceof Argument) {
-          return OptionalInt.of(((Argument)other).myIndex);
-        }
+        return other;
       }
       if (value == IndependentValue.FALSE) {
-        return getArgumentComparedTo(IndependentValue.TRUE, !equal);
+        return getValueComparedTo(IndependentValue.TRUE, !equal);
       }
-      return OptionalInt.empty();
+      return null;
+    }
+
+    @Override
+    public OptionalInt getArgumentComparedTo(ContractValue value, boolean equal) {
+      ContractValue other = getValueComparedTo(value, equal);
+      return other instanceof Argument ? OptionalInt.of(((Argument)other).myIndex) : OptionalInt.empty();
     }
 
     @Override

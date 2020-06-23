@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * Null-safe {@code equal} methods.
  */
-public class Comparing {
+public final class Comparing {
   private Comparing() { }
 
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
@@ -47,6 +47,10 @@ public class Comparing {
     return StringUtilRt.equal(s1, s2, caseSensitive);
   }
 
+  /**
+   * @deprecated Use {@link Objects#equals(Object, Object)}
+   */
+  @Deprecated
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(@Nullable String arg1, @Nullable String arg2) {
     return arg1 == null ? arg2 == null : arg1.equals(arg2);
@@ -57,7 +61,7 @@ public class Comparing {
     return arg1 == null ? arg2 == null : caseSensitive ? arg1.equals(arg2) : arg1.equalsIgnoreCase(arg2);
   }
 
-  /** Unlike {@link #equal(String, String)}, considers {@code null} and {@code ""} equal. */
+  /** Unlike {@link Objects#equals(Object, Object)}, considers {@code null} and {@code ""} equal. */
   public static boolean strEqual(@Nullable String arg1, @Nullable String arg2) {
     return strEqual(arg1, arg2, true);
   }

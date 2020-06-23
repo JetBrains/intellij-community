@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -14,9 +13,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -68,7 +69,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   public boolean equalsToText(@NotNull String text) {
     PsiJavaCodeReferenceElement reference = getReference();
     String name = reference.getReferenceName();
-    return (name == null || text.contains(name)) && Comparing.equal(text, getCanonicalText());
+    return (name == null || text.contains(name)) && Objects.equals(text, getCanonicalText());
   }
 
   @Override
@@ -244,5 +245,10 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   public @NotNull PsiJavaCodeReferenceElement getReference() {
     return myReference.retrieveNonNullReference();
+  }
+
+  @Override
+  public @Nullable PsiElement getPsiContext() {
+    return myReference.retrieveReference();
   }
 }

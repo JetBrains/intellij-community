@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.changeSignature.MethodDescriptor;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -31,7 +32,7 @@ import java.util.List;
 public class GrMethodDescriptor implements MethodDescriptor<GrParameterInfo, String> {
   private final GrMethod myMethod;
 
-  public GrMethodDescriptor(GrMethod method) {
+  public GrMethodDescriptor(@NotNull GrMethod method) {
     myMethod = method;
   }
 
@@ -41,7 +42,7 @@ public class GrMethodDescriptor implements MethodDescriptor<GrParameterInfo, Str
   }
 
   @Override
-  public List<GrParameterInfo> getParameters() {
+  public @NotNull List<GrParameterInfo> getParameters() {
     final ArrayList<GrParameterInfo> result = new ArrayList<>();
     final GrParameter[] parameters = myMethod.getParameters();
     for (int i = 0; i < parameters.length; i++) {
@@ -58,11 +59,12 @@ public class GrMethodDescriptor implements MethodDescriptor<GrParameterInfo, Str
   }
 
   @Override
-  public String getVisibility() {
+  public @NotNull String getVisibility() {
     return VisibilityUtil.getVisibilityModifier(myMethod.getModifierList());
   }
 
   @Override
+  @NotNull
   public GrMethod getMethod() {
     return myMethod;
   }
@@ -84,7 +86,7 @@ public class GrMethodDescriptor implements MethodDescriptor<GrParameterInfo, Str
   }
 
   @Override
-  public ReadWriteOption canChangeReturnType() {
+  public @NotNull ReadWriteOption canChangeReturnType() {
     return myMethod.isConstructor() ? ReadWriteOption.None : ReadWriteOption.ReadWrite;
   }
 

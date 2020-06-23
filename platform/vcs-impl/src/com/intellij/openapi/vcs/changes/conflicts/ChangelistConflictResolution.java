@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -53,7 +54,8 @@ public enum ChangelistConflictResolution {
         }
       }
       if (changeLists.isEmpty()) {
-        Messages.showInfoMessage(project, "The conflict seems to be resolved", "No Conflict Found");
+        Messages.showInfoMessage(project, VcsBundle.message("dialog.message.conflict.seems.to.be.resolved"),
+                                 VcsBundle.message("dialog.title.no.conflict.found"));
         return true;
       }
       MoveChangesDialog dialog = new MoveChangesDialog(project, changes, changeLists, selected);

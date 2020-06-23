@@ -1,39 +1,48 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.externalComponents;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 /**
  * Registry for {@link ExternalComponentSource}s, used for integrating with the {@link UpdateChecker}.
  * Keeps track of the external components and component sources that can be updated.
  */
-public abstract class ExternalComponentManager {
+public class ExternalComponentManager {
   @NotNull
   public static ExternalComponentManager getInstance() {
     return ServiceManager.getService(ExternalComponentManager.class);
   }
 
   @NotNull
-  public abstract Iterable<ExternalComponentSource> getComponentSources();
+  public Iterable<ExternalComponentSource> getEnabledComponentSources(@NotNull UpdateSettings updateSettings) {
+    refreshKnownSources(updateSettings);
+    Set<String> enabledSources = new HashSet<>(updateSettings.getEnabledExternalUpdateSources());
 
-  public abstract void registerComponentSource(@NotNull ExternalComponentSource site);
+    List<ExternalComponentSource> res = new LinkedList<>(ExternalComponentSource.EP_NAME.getExtensionList());
+    res.removeIf(source -> !enabledSources.contains(source.getName()));
+    return res;
+  }
+
+  private void refreshKnownSources(@NotNull UpdateSettings updateSettings) {
+    List<ExternalComponentSource> unknownSources = new LinkedList<>(ExternalComponentSource.EP_NAME.getExtensionList());
+    Set<String> knownSources = new HashSet<>(updateSettings.getKnownExternalUpdateSources());
+    unknownSources.removeIf(source -> knownSources.contains(source.getName()));
+
+    for (ExternalComponentSource source : unknownSources) {
+      updateSettings.getKnownExternalUpdateSources().add(source.getName());
+      updateSettings.getEnabledExternalUpdateSources().add(source.getName());
+      List<String> channels = source.getAllChannels();
+      if (channels != null) {
+        updateSettings.getExternalUpdateChannels().put(source.getName(), channels.get(0));
+      }
+    }
+  }
 
   /**
    * Finds an installed component that could be updated by the given component.
@@ -43,6 +52,14 @@ public abstract class ExternalComponentManager {
    * @return A component from the same source for which the given component is an update, or null if no such component is found.
    */
   @Nullable
-  public abstract UpdatableExternalComponent findExistingComponentMatching(@NotNull UpdatableExternalComponent update,
-                                                                           @NotNull ExternalComponentSource source);
+  public UpdatableExternalComponent findExistingComponentMatching(@NotNull UpdatableExternalComponent update,
+                                                                  @NotNull ExternalComponentSource source) {
+    Collection<UpdatableExternalComponent> existing = source.getCurrentVersions();
+    for (UpdatableExternalComponent c : existing) {
+      if (update.isUpdateFor(c)) {
+        return c;
+      }
+    }
+    return null;
+  }
 }

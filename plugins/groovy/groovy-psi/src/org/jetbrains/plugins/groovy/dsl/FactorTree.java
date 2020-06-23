@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.project.Project;
@@ -26,12 +12,13 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
@@ -45,7 +32,7 @@ public class FactorTree extends UserDataHolderBase {
 
   public FactorTree(final Project project, GroovyDslExecutor executor) {
     myExecutor = executor;
-    myProvider = () -> new CachedValueProvider.Result<>(ContainerUtil.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT);
+    myProvider = () -> new CachedValueProvider.Result<>((ConcurrentMap<Object, Object>)new ConcurrentHashMap<Object, Object>(), PsiModificationTracker.MODIFICATION_COUNT);
     myTopLevelCache = CachedValuesManager.getManager(project).createCachedValue(myProvider, false);
   }
 
@@ -71,7 +58,7 @@ public class FactorTree extends UserDataHolderBase {
       Map next = (Map)current.get(key);
       if (next == null) {
         //noinspection unchecked
-        current.put(key, next = ContainerUtil.newConcurrentMap());
+        current.put(key, next = new ConcurrentHashMap<>());
         if (key instanceof String) { // type
           //noinspection unchecked
           current.put(CONTAINS_TYPE, true);
@@ -85,13 +72,11 @@ public class FactorTree extends UserDataHolderBase {
     current.put(myExecutor, holder);
   }
 
-  @Nullable
-  public CustomMembersHolder retrieve(PsiElement place, PsiFile placeFile, NotNullLazyValue<String> qualifierType) {
+  public @Nullable CustomMembersHolder retrieve(PsiElement place, PsiFile placeFile, NotNullLazyValue<String> qualifierType) {
     return retrieveImpl(place, placeFile, qualifierType, myTopLevelCache.getValue(), true);
   }
 
-  @Nullable
-  private CustomMembersHolder retrieveImpl(@NotNull PsiElement place, @NotNull PsiFile placeFile, @NotNull NotNullLazyValue<String> qualifierType, @Nullable Map current, boolean topLevel) {
+  private @Nullable CustomMembersHolder retrieveImpl(@NotNull PsiElement place, @NotNull PsiFile placeFile, @NotNull NotNullLazyValue<String> qualifierType, @Nullable Map current, boolean topLevel) {
     if (current == null) return null;
 
     CustomMembersHolder result;

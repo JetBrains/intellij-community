@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.SearchSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,4 +20,7 @@ interface WordRequestInfo {
   short getSearchContext();
 
   boolean isCaseSensitive();
+
+  @NotNull
+  SearchSession getSearchSession();
 }

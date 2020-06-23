@@ -5,12 +5,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -38,7 +38,7 @@ final class CanonicalPathMap {
   }
 
   @NotNull Pair<List<String>, List<String>> getCanonicalWatchRoots() {
-    Map<String, String> canonicalPathMappings = ContainerUtil.newConcurrentMap();
+    Map<String, String> canonicalPathMappings = new ConcurrentHashMap<>();
     Stream.concat(myOptimizedRecursiveWatchRoots.stream(), myOptimizedFlatWatchRoots.stream())
       .parallel()
       .forEach(root -> {

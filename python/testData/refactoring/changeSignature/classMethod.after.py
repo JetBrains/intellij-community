@@ -1,18 +1,8 @@
-class A:
-  def fo<caret>o(self, a, b):
-    pass
-
-class B(A):
-  def foo(self, a, b):
-    pass
-
-class С(A):
-  def foo(self, a, b):
-    pass
+class SomeClass:
+    @classmethod
+    def foo(cls, arg2, arg1):
+        pass
 
 
-a = A()
-a.foo(1, 2)
-
-b = B()
-b.foo(2, 2)
+SomeClass.foo(2, 1)
+SomeClass().foo(2, 1)

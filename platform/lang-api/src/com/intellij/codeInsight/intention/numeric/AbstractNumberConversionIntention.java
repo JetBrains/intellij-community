@@ -3,6 +3,8 @@ package com.intellij.codeInsight.intention.numeric;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -15,7 +17,6 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,14 +28,14 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
   private static final String TITLE = "Convert number to...";
   private String myText;
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionName
   @NotNull
   @Override
   public String getText() {
     return myText == null ? TITLE : myText;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionFamilyName
   @NotNull
   @Override
   public String getFamilyName() {

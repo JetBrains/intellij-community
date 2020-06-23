@@ -182,7 +182,7 @@ private class DnDHandler(val viewer: TwosideTextDiffViewer,
 }
 
 private fun createEditableContent(project: Project?, text: String): DocumentContent {
-  return DiffContentFactory.getInstance().createEditable(project, text, null)
+  return DiffContentFactoryEx.getInstanceEx().documentContent(project, false).buildFromText(text, false)
 }
 
 private fun createFileContent(project: Project?, file: File): DocumentContent? {

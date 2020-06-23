@@ -5,6 +5,7 @@ import com.intellij.application.Topics;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.impl.ProjectUtil;
@@ -25,10 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -48,6 +46,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,12 +69,16 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
   private static final Color TEXT_COLOR = JBColor.namedColor("Notification.foreground", DEFAULT_TEXT_COLOR);
   public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
   public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
+
+  private final Queue<Notification> myEarlyNotifications = new LinkedBlockingQueue<>();
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -88,12 +91,31 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         TooltipController.getInstance().resetCurrent();
       }
     });
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appUiReady() {
+        if (!myEarlyNotifications.isEmpty()) {
+          Condition<?> disposed = ApplicationManager.getApplication().getDisposed();
+          Notification notification;
+          while ((notification = myEarlyNotifications.poll()) != null) {
+            Notification _notification = notification;
+            GuiUtils.invokeLaterIfNeeded(() -> showNotification(_notification, null), ModalityState.any(), disposed);
+          }
+        }
+      }
+    });
   }
 
   @Override
   public void expire(@NotNull Notification notification) {
     UIUtil.invokeLaterIfNeeded(() -> EventLog.expireNotification(notification));
   }
+
+  public void expireAll() {
+    for (Notification notification : getNotificationsOfType(Notification.class, null)) {
+      notification.expire();
+    }
+ }
 
   @Override
   public <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable final Project project) {
@@ -109,15 +131,13 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return ArrayUtil.toObjectArray(result, klass);
   }
 
-  private static void doNotify(@NotNull final Notification notification,
-                               @Nullable NotificationDisplayType displayType,
-                               @Nullable final Project project) {
-    final NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
+  private void doNotify(Notification notification, @Nullable Project project) {
+    NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
     if (!configuration.isRegistered(notification.getGroupId())) {
-      configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.BALLOON : displayType);
+      configuration.register(notification.getGroupId(), NotificationDisplayType.BALLOON);
     }
 
-    final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(notification.getGroupId());
+    NotificationSettings settings = NotificationsConfigurationImpl.getSettings(notification.getGroupId());
     boolean shouldLog = settings.isShouldLog();
     boolean displayable = settings.getDisplayType() != NotificationDisplayType.NONE;
 
@@ -137,16 +157,15 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static void showNotification(@NotNull final Notification notification, @Nullable final Project project) {
-    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      ApplicationManager.getApplication().invokeLater(() -> showNotification(notification, project), ModalityState.current());
+  @CalledInAwt
+  private void showNotification(Notification notification, @Nullable Project project) {
+    if (!LoadingState.APP_STARTED.isOccurred()) {
+      myEarlyNotifications.add(notification);
       return;
     }
 
-
-
     String groupId = notification.getGroupId();
-    final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
+    NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
 
     NotificationDisplayType type = settings.getDisplayType();
     String toolWindowId = NotificationsConfigurationImpl.getInstanceImpl().getToolWindowId(groupId);
@@ -158,9 +177,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     switch (type) {
       case NONE:
         return;
-      //case EXTERNAL:
-      //  notifyByExternal(notification);
-      //  break;
       case STICKY_BALLOON:
       case BALLOON:
       default:
@@ -197,10 +213,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         };
         assert toolWindowId != null;
         assert notification.getActions().isEmpty() : "Actions are not shown for toolwindow notifications. " +
-                                                     "Toolwindow id " + toolWindowId +
-                                                     ", group id \'" + notification.getGroupId() + "\"" +
-                                                     ", title \'" + notification.getTitle() + "\"" +
-                                                     ", content \'" + notification.getContent() + "\"";
+                                                     "ToolWindow id " + toolWindowId +
+                                                     ", group id '" + notification.getGroupId() + "'" +
+                                                     ", title '" + notification.getTitle() + "'" +
+                                                     ", content '" + notification.getContent() + "'";
         String msg = notification.getTitle();
         if (StringUtil.isNotEmpty(notification.getContent())) {
           if (StringUtil.isNotEmpty(msg)) {
@@ -348,6 +364,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       layoutData.mergeData = null;
     }
     layoutData.id = notification.id;
+    layoutData.displayId = notification.displayId;
     layoutDataRef.set(layoutData);
 
     if (layoutData.textColor == null) {
@@ -485,7 +502,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
       expandAction = new LinkLabel<>(null, AllIcons.Ide.Notification.Expand, new LinkListener<Void>() {
         @Override
-        public void linkSelected(LinkLabel link, Void ignored) {
+        public void linkSelected(LinkLabel<Void> link, Void ignored) {
           layoutData.showMinSize = !layoutData.showMinSize;
 
           text.setPreferredSize(null);
@@ -629,6 +646,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     final BalloonImpl balloon = (BalloonImpl)builder.createBalloon();
+    balloon.getContent().addMouseListener(new MouseAdapter() {
+    });
     balloon.setAnimationEnabled(false);
     notification.setBalloon(balloon);
 
@@ -636,7 +655,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     if (!layoutData.welcomeScreen && buttons == null) {
       balloon.setActionProvider(
-        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id));
+        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.displayId));
     }
 
     Disposer.register(parentDisposable, balloon);
@@ -748,7 +767,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       actionPanel.addActionLink(
         new LinkLabel<>(presentation.getText(), presentation.getIcon(), new LinkListener<AnAction>() {
           @Override
-          public void linkSelected(LinkLabel aSource, AnAction action) {
+          public void linkSelected(LinkLabel<AnAction> aSource, AnAction action) {
             NotificationCollector.getInstance()
               .logNotificationActionInvoked(notification, action, NotificationCollector.NotificationPlace.BALLOON);
             Notification.fire(notification, action, DataManager.getInstance().getDataContext(aSource));
@@ -782,7 +801,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
                                         NotificationActionPanel actionPanel) {
     DropDownAction action = new DropDownAction(notification.getDropDownText(), new LinkListener<Void>() {
       @Override
-      public void linkSelected(LinkLabel link, Void ignored) {
+      public void linkSelected(LinkLabel<Void> link, Void ignored) {
         NotificationActionPanel parent = (NotificationActionPanel)link.getParent();
         DefaultActionGroup group = new DefaultActionGroup();
         for (LinkLabel<AnAction> actionLink : parent.actionLinks) {
@@ -936,7 +955,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       title.toString(), null,
       new LinkListener<BalloonLayoutData>() {
         @Override
-        public void linkSelected(LinkLabel aSource, BalloonLayoutData layoutData) {
+        public void linkSelected(LinkLabel<BalloonLayoutData> aSource, BalloonLayoutData layoutData) {
           EventLog.showNotification(layoutData.project, layoutData.groupId, layoutData.getMergeIds());
         }
       }, layoutData) {
@@ -1073,7 +1092,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     @Override
     public void notify(@NotNull Notification notification) {
-      doNotify(notification, null, myProject);
+      ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).doNotify(notification, myProject);
     }
   }
 

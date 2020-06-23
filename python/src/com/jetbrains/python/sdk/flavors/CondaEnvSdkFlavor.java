@@ -23,6 +23,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -60,9 +61,13 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
       for (String environment : environments) {
         results.addAll(ReadAction.compute(() -> {
           final VirtualFile root = StandardFileSystems.local().findFileByPath(environment);
-          return StreamEx.of(findInRootDirectory(root))
-            .filter(s -> getCondaEnvRoot(s) != null)
-            .toList();
+          final Collection<String> found = findInRootDirectory(root);
+          if (PyCondaSdkCustomizer.Companion.getInstance().getDetectEnvironmentsOutsideEnvsFolder()) {
+            return found;
+          }
+          else {
+            return StreamEx.of(found).filter(s -> getCondaEnvRoot(s) != null).toList();
+          }
         }));
       }
     }

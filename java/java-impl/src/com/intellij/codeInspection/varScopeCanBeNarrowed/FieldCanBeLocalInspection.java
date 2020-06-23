@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -440,7 +439,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
 
       if (!newDeclarations.isEmpty()) {
         final PsiElement lastDeclaration = newDeclarations.get(newDeclarations.size() - 1);
-        ApplicationManager.getApplication().runWriteAction(() -> deleteSourceVariable(project, variable, lastDeclaration));
+        deleteSourceVariable(project, variable, lastDeclaration);
       }
       return newDeclarations;
     }

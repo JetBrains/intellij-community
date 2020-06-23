@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -23,13 +21,18 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.indexing.FileBasedIndex;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
@@ -89,7 +92,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
       .of(baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY)
       .filter(f -> isPropertiesFile(f) &&
                    Comparing.strEqual(f.getVirtualFile().getExtension(), extension) &&
-                   Comparing.equal(bundleBaseNameManager.getBaseName(f), baseName))
+                   Objects.equals(bundleBaseNameManager.getBaseName(f), baseName))
       .map(PropertiesImplUtil::getPropertiesFile)
       .collect(Collectors.toList());
     if (bundleFiles.isEmpty()) return null;

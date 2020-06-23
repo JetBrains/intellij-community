@@ -65,6 +65,7 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
   public void testImmutableListAssignment() { assertIntentionNotAvailable(); }
   public void testImmutableSetVarArgArray() { doTest(); }
   public void testImmutableSetVarArgTernary() { doTest(); }
+  public void testInsideTernary() { doTest(); }
 
   @Override
   protected String getIntentionName() {

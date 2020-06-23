@@ -8,10 +8,10 @@ import com.intellij.patterns.uast.UElementPattern
 import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
-import gnu.trove.THashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -60,20 +60,15 @@ fun uExpressionInVariable() = injectionHostUExpression().filter {
   uastParent is UVariable || (uastParent is UPolyadicExpression && uastParent.uastParent is UVariable)
 }
 
-private val USAGE_REFERENCE_EXPRESSIONS = Key.create<MutableMap<PsiElement, UReferenceExpression>>("uast.referenceExpressions.byUsage")
+private val USAGE_REFERENCE_EXPRESSION: Key<UReferenceExpression> = Key.create("uast.referenceExpressions.byUsage")
 
 private fun getUsageReferenceExpressionWithCache(usage: PsiElement, context: ProcessingContext): UReferenceExpression? {
-  var cache = context.get(USAGE_REFERENCE_EXPRESSIONS)
-  if (cache == null) {
-    cache = THashMap()
-    context.put(USAGE_REFERENCE_EXPRESSIONS, cache)
-  }
-  val cachedElement = cache[usage]
+  val cachedElement = context.sharedContext.get(USAGE_REFERENCE_EXPRESSION, usage)
   if (cachedElement != null) return cachedElement
 
   val newElement = usage.toUElementOfType<UReferenceExpression>()
   if (newElement != null) {
-    cache[usage] = newElement
+    context.sharedContext.put(USAGE_REFERENCE_EXPRESSION, usage, newElement)
   }
   return newElement
 }
@@ -88,7 +83,7 @@ private fun getOriginalUastParent(element: UElement): UElement? {
 private fun getDirectVariableUsages(uVar: UVariable): Collection<PsiElement> {
   val variablePsi = uVar.sourcePsi ?: return emptyList()
   return CachedValuesManager.getManager(variablePsi.project).getCachedValue(variablePsi, CachedValueProvider {
-    CachedValueProvider.Result.createSingleDependency(findDirectVariableUsages(variablePsi), PsiModificationTracker.MODIFICATION_COUNT)
+    Result.createSingleDependency(findDirectVariableUsages(variablePsi), PsiModificationTracker.MODIFICATION_COUNT)
   })
 }
 

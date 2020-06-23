@@ -44,7 +44,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
-import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
@@ -131,8 +130,6 @@ private val STANDARD_COOKIE by lazy {
 // expire after access because we reuse tokens
 private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
 
-private val secureRandom by lazy { SecureRandom() }
-
 fun acquireToken(): String {
   // TODO: Use alternative token?
   //return BuiltinWebServerAccess.getUserAuthenticationToken()
@@ -147,7 +144,7 @@ fun acquireToken(): String {
 
 // http://stackoverflow.com/a/41156 - shorter than UUID, but secure
 private fun randomToken(): String {
-  return BigInteger(130, secureRandom).toString(32)
+  return BigInteger(130, DigestUtil.random).toString(32)
 }
 
 private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {

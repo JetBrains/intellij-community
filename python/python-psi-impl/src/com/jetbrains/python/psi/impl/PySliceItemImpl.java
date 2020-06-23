@@ -18,18 +18,18 @@ public class PySliceItemImpl extends PyElementImpl implements PySliceItem {
   @Override
   @Nullable
   public PyExpression getLowerBound() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
   @Override
   @Nullable
   public PyExpression getUpperBound() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 1);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
   }
 
   @Override
   @Nullable
   public PyExpression getStride() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 2);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 2);
   }
 }

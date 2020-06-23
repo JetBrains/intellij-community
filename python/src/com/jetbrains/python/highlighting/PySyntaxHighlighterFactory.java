@@ -10,10 +10,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.parsing.console.PyConsoleHighlightingLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
+import com.jetbrains.python.parsing.console.PyConsoleHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +62,7 @@ public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @NotNull
   private static LanguageLevel getLanguageLevel(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
     return project != null && virtualFile != null ?
-           PyUtil.getLanguageLevelForVirtualFile(project, virtualFile) :
+           PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(project, virtualFile) :
            LanguageLevel.getDefault();
   }
 

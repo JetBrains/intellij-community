@@ -1,12 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.project;
 
+import com.intellij.ide.scratch.RootType;
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.tree.BaseTreeModel;
@@ -64,7 +68,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
           });
         }
         else {
-          if (fromRoot) root.valid = false; // need to reload content roots
+          root.valid = false; // need to reload content roots
           pathChanged(null);
         }
       }
@@ -267,6 +271,13 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
             }
           }
         }
+      }
+      for (RootType rootType : RootType.getAllRootTypes()) {
+        if (rootType.isHidden()) continue;
+        String path = ScratchFileService.getInstance().getRootPath(rootType);
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+        if (file == null) continue;
+        consumer.accept(file, ApplicationManager.getApplication());
       }
     }
   }

@@ -60,7 +60,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(TEXT_FILTER_REGEX), "textFilter.regex");
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(TEXT_FILTER_MATCH_CASE), "textFilter.matchCase");
 
-        for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(project)) {
+        for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
           if (factory.showMenuItem()) {
             addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(VcsLogHighlighterProperty.get(factory.getId())),
                              "highlighter", new FeatureUsageData().addData("id", getFactoryIdSafe(factory)));

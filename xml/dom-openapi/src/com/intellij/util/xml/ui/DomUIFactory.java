@@ -108,10 +108,6 @@ public abstract class DomUIFactory {
     return null;
   }
 
-  public static TableCellEditor createCellEditor(GenericDomValue genericDomValue) {
-    return getDomUIFactory().createCellEditor(genericDomValue, DomUtil.extractParameterClassFromGenericType(genericDomValue.getDomElementType()));
-  }
-
   protected abstract TableCellEditor createCellEditor(DomElement element, Class type);
 
   public abstract UserActivityWatcher createEditorAwareUserActivityWatcher();

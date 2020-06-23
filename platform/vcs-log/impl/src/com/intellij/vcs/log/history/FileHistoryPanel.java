@@ -60,8 +60,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
 
-  public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel,
-                          @NotNull VcsLogData logData, @NotNull FilePath filePath, boolean withDiffPreview) {
+  public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel, @NotNull VcsLogData logData,
+                          @NotNull FilePath filePath, boolean withDiffPreview, @NotNull Disposable disposable) {
     myProject = logData.getProject();
 
     myFilePath = filePath;
@@ -71,7 +71,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myProperties = logUi.getProperties();
 
     myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
-                                        logUi::requestMore, logUi) {
+                                        logUi::requestMore, disposable) {
       @Override
       protected boolean isSpeedSearchEnabled() {
         return true;
@@ -136,7 +136,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
     invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
 
-    Disposer.register(logUi, this);
+    Disposer.register(disposable, this);
   }
 
   private void invokeOnDoubleClick(@NotNull AnAction action, @NotNull JComponent component) {

@@ -3,14 +3,12 @@ package com.intellij.util
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.impl.JavaSimplePropertyIndex
 import com.intellij.psi.impl.PropertyIndexValue
+import com.intellij.psi.impl.javaSimplePropertyGist
 import com.intellij.psi.util.PropertyMemberType
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.indexing.FileContentImpl
-import com.intellij.util.indexing.IndexingDataKeys
 import gnu.trove.TIntObjectHashMap
 import kotlin.test.assertNotEquals
 
@@ -181,8 +179,7 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun assertJavaSimplePropertyIndex(text: String, expected: TIntObjectHashMap<PropertyIndexValue>) {
     val file = myFixture.configureByText(JavaFileType.INSTANCE, text)
-    val content = FileContentImpl.createByFile(file.virtualFile, project)
-    val data = JavaSimplePropertyIndex().indexer.map(content).values.firstOrNull() ?: TIntObjectHashMap()
+    val data = javaSimplePropertyGist.getFileData(file)
     assertEquals(expected, data)
   }
 }

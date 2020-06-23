@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.MakeInferredAnnotationExplicit
@@ -63,7 +62,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
               val prevSibling = element.prevSibling
               when {
                 // element is first in line
-                prevSibling is PsiWhiteSpace && prevSibling.textContains('\n') && document != null -> {
+                prevSibling is PsiWhiteSpace && element !is PsiParameter && prevSibling.textContains('\n') && document != null -> {
                   val width = EditorUtil.getPlainSpaceWidth(editor)
                   val line = document.getLineNumber(offset)
                   val startOffset = document.getLineStartOffset(line)

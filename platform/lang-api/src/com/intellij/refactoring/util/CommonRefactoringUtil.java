@@ -20,7 +20,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,13 +28,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
+
 /**
  * @author ven
  */
 public class CommonRefactoringUtil {
   private CommonRefactoringUtil() { }
 
-  public static void showErrorMessage(String title, String message, @NonNls @Nullable String helpId, @NotNull Project project) {
+  public static void showErrorMessage(@DialogTitle String title,
+                                      @DialogMessage String message,
+                                      @NonNls @Nullable String helpId,
+                                      @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();
@@ -63,8 +68,8 @@ public class CommonRefactoringUtil {
 
   public static void showErrorHint(@NotNull Project project,
                                    @Nullable Editor editor,
-                                   @NotNull @Nls String message,
-                                   @NotNull @Nls String title,
+                                   @NotNull @DialogMessage String message,
+                                   @NotNull @DialogTitle String title,
                                    @Nullable String helpId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message);
 

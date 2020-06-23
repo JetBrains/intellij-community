@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.server.BuildManager;
@@ -206,22 +206,9 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
       addArtifactsConfig();
     }
 
-    ProjectStructureConfigurableContributor[] adders = ProjectStructureConfigurableContributor.EP_NAME.getExtensions();
-    for (ProjectStructureConfigurableContributor adder : adders) {
-      for (Configurable configurable : adder.getExtraProjectConfigurables(myProject, myContext)) {
-        addConfigurable(configurable, true);
-      }
-    }
-
     mySidePanel.addSeparator(JavaUiBundle.message("project.structure.platform.title"));
     addJdkListConfig();
     addGlobalLibrariesConfig();
-
-    for (ProjectStructureConfigurableContributor adder : adders) {
-      for (Configurable configurable : adder.getExtraPlatformConfigurables(myProject, myContext)) {
-        addConfigurable(configurable, true);
-      }
-    }
 
     mySidePanel.addSeparator("--");
     addErrorPane();
@@ -571,7 +558,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     myDetails.add(myEmptySelection, BorderLayout.CENTER);
   }
 
-  public static ProjectStructureConfigurable getInstance(final Project project) {
+  public static ProjectStructureConfigurable getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, ProjectStructureConfigurable.class);
   }
 

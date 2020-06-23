@@ -131,12 +131,22 @@ class LogEventAction(val id: String, var state: Boolean = false, var count: Int 
       data = HashMap()
     }
 
-    val escapedValue = when (value) {
+    data[escapeFieldName(key)] = escapeValue(value)
+  }
+
+  private fun escapeValue(value: Any): Any {
+    return when (value) {
       is String -> StatisticsEventEscaper.escape(value)
-      is List<*> -> value.map { if (it is String) StatisticsEventEscaper.escape(it) else it }
+      is List<*> -> value.map { if (it != null) escapeValue(it) else it }
+      is Map<*, *> -> {
+        value.entries.associate { (entryKey, entryValue) ->
+          val newKey = if (entryKey is String) escapeFieldName(entryKey) else entryKey
+          val newValue = if (entryValue != null) escapeValue(entryValue) else entryValue
+          newKey to newValue
+        }
+      }
       else -> value
     }
-    data[escapeFieldName(key)] = escapedValue
   }
 
   override fun equals(other: Any?): Boolean {

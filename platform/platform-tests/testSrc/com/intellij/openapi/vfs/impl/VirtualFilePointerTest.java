@@ -19,10 +19,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.Timings;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
@@ -56,8 +53,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
-import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
@@ -116,6 +111,15 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   private static class LoggingListener implements VirtualFilePointerListener {
+    private final boolean myVerbose;
+
+    private LoggingListener(boolean verbose) {
+      myVerbose = verbose;
+    }
+    private LoggingListener() {
+      this(false);
+    }
+
     final List<String> log = new ArrayList<>();
 
     @Override
@@ -130,19 +134,23 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       log.add(buildMessage("after", pointers));
     }
 
-    private static String buildMessage(String startMsg, VirtualFilePointer[] pointers) {
+    private @NotNull String buildMessage(@NotNull String startMsg, VirtualFilePointer @NotNull [] pointers) {
       StringBuilder buffer = new StringBuilder();
       buffer.append(startMsg).append(':');
       for (int i = 0; i < pointers.length; i++) {
         if (i > 0) buffer.append(':');
-        buffer.append(pointers[i].isValid());
+        VirtualFilePointer pointer = pointers[i];
+        if (myVerbose) {
+          buffer.append(pointer.getFileName()).append(":");
+        }
+        buffer.append(pointer.isValid());
       }
       return buffer.toString();
     }
   }
 
   @Test
-  public void testDelete() throws IOException {
+  public void testDelete() {
     File fileToDelete = tempDir.newFile("toDelete.txt");
     LoggingListener fileToDeleteListener = new LoggingListener();
     VirtualFilePointer fileToDeletePointer = createPointerByFile(fileToDelete, fileToDeleteListener);
@@ -219,7 +227,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testMovePointedFile() throws IOException {
-    File moveTarget = tempDir.newFolder("moveTarget");
+    File moveTarget = tempDir.newDirectory("moveTarget");
     File fileToMove = tempDir.newFile("toMove.txt");
 
     LoggingListener fileToMoveListener = new LoggingListener();
@@ -232,7 +240,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testMoveFileUnderExistingPointer() throws IOException {
-    File moveTarget = tempDir.newFolder("moveTarget");
+    File moveTarget = tempDir.newDirectory("moveTarget");
     File fileToMove = tempDir.newFile("toMove.txt");
 
     LoggingListener listener = new LoggingListener();
@@ -245,7 +253,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testMoveSrcDirUnderNewRootShouldGenerateRootsChanged() throws IOException {
-    File moveTarget = tempDir.newFolder("moveTarget");
+    File moveTarget = tempDir.newDirectory("moveTarget");
     File dirToMove = tempDir.newFile("dirToMove");
 
     LoggingListener listener = new LoggingListener();
@@ -258,7 +266,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testMovePointedFileUnderAnotherPointer() throws IOException {
-    File moveTarget = tempDir.newFolder("moveTarget");
+    File moveTarget = tempDir.newDirectory("moveTarget");
     File fileToMove = tempDir.newFile("toMove.txt");
 
     LoggingListener listener = new LoggingListener();
@@ -459,7 +467,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testDoubleDispose() throws IOException {
+  public void testDoubleDispose() {
     File file = tempDir.newFile("f1");
     VirtualFile vFile = getVirtualFile(file);
     Disposable disposable = Disposer.newDisposable();
@@ -877,14 +885,14 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testUncPathNormalization() {
-    assumeWindows();
+    IoTestUtil.assumeWindows();
     assertEquals("\\\\wsl$\\Ubuntu\\", createPointerByFile(new File("\\\\wsl$\\Ubuntu"), null).getPresentableUrl());
     assertEquals("\\\\wsl$\\Ubuntu\\bin", createPointerByFile(new File("//wsl$//Ubuntu//bin//"), null).getPresentableUrl());
   }
 
   @Test
   public void testSpacesOnlyFileNamesUnderUnixMustBeAllowed() {
-    assumeUnix();
+    IoTestUtil.assumeUnix();
     VirtualFile vDir = getVirtualTempRoot();
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(vDir.getUrl() + "/xxx/ /c.txt", disposable, null);
     assertFalse(pointer.isValid());
@@ -892,7 +900,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testCrazyExclamationMarkInFileNameMustBeAllowed() {
-    assumeWindows();
+    IoTestUtil.assumeWindows();
     VirtualFile vDir = getVirtualTempRoot();
     String rel = "/xxx/!/c.txt";
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(vDir.getUrl() + rel, disposable, null);
@@ -904,8 +912,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testUnc() throws IOException {
-    assumeWindows();
-    Path uncRootPath = Paths.get("\\\\127.0.0.1\\" + tempDir.getRoot().getPath().replaceAll("^([A-Z]):", "$1\\$"));
+    IoTestUtil.assumeWindows();
+    Path uncRootPath = Paths.get(IoTestUtil.toLocalUncPath(tempDir.getRoot().getPath()));
     assumeTrue("Cannot access " + uncRootPath, Files.isDirectory(uncRootPath));
 
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByPath(uncRootPath.toString());
@@ -950,5 +958,45 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   @Test
   public void testProjectUnderNetworkMountDoesntOpenAnymoreAfterUpgradeTo2019_3() {
     assertNotNull(myVirtualFilePointerManager.create("file://Z://.idea/Q.iml", disposable, null));
+  }
+
+  @Test
+  public void testCreateActualFileEventMustChangePointersCreatedEarlierWithWrongCase_InPartiallyChildrenLoadedDirectory() throws IOException {
+    IoTestUtil.assumeWindows();
+    LoggingListener fileToCreateListener = new LoggingListener(true);
+    String name = "toCreate.txt";
+    File fileToCreate = new File(tempDir.getRoot(), name);
+    VirtualFilePointer p = createPointerByFile(new File(fileToCreate.getParentFile(), name.toLowerCase(Locale.US)), fileToCreateListener);
+    assertFalse(p.isValid());
+    assertTrue(fileToCreate.createNewFile());
+    getVirtualTempRoot().refresh(false, true);
+    assertTrue(p.isValid());
+    assertEquals("[before:tocreate.txt:false, after:toCreate.txt:true]", fileToCreateListener.log.toString());
+    String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
+    assertEquals(expectedUrl.toUpperCase(Locale.US), p.getUrl().toUpperCase(Locale.US));
+
+    VirtualFilePointer p3 = createPointerByFile(new File(fileToCreate.getParentFile(), name.toUpperCase(Locale.US)), fileToCreateListener);
+    assertTrue(p3.isValid());
+  }
+
+  @Test
+  public void testCreateActualFileEventMustChangePointersCreatedEarlierWithWrongCase_InChildrenLoadedDirectory() throws IOException {
+    IoTestUtil.assumeWindows();
+    VirtualFile vroot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir.getRoot());
+    UsefulTestCase.assertEmpty(vroot.getChildren());
+    LoggingListener fileToCreateListener = new LoggingListener(true);
+    String name = "toCreate.txt";
+    File fileToCreate = new File(tempDir.getRoot(), name);
+    VirtualFilePointer p = createPointerByFile(new File(fileToCreate.getParentFile(), name.toLowerCase(Locale.US)), fileToCreateListener);
+    assertFalse(p.isValid());
+    assertTrue(fileToCreate.createNewFile());
+    getVirtualTempRoot().refresh(false, true);
+    assertTrue(p.isValid());
+    assertEquals("[before:tocreate.txt:false, after:toCreate.txt:true]", fileToCreateListener.log.toString());
+    String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
+    assertEquals(expectedUrl.toUpperCase(Locale.US), p.getUrl().toUpperCase(Locale.US));
+
+    VirtualFilePointer p3 = createPointerByFile(new File(fileToCreate.getParentFile(), name.toUpperCase(Locale.US)), fileToCreateListener);
+    assertTrue(p3.isValid());
   }
 }

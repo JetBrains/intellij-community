@@ -264,6 +264,16 @@ public class EditorEmbeddedComponentManager {
       }, this);
       myEditor.getInlayModel().addListener(new InlayModel.SimpleAdapter() {
         @Override
+        public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+          if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0) {
+            Rectangle bounds = inlay.getBounds();
+            if (bounds != null) {
+              updateAllInlaysBelow(bounds);
+            }
+          }
+        }
+
+        @Override
         public void onRemoved(@NotNull Inlay inlay) {
           Disposer.dispose(inlay);
         }

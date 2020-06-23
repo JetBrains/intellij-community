@@ -66,23 +66,23 @@ public class XsltChecker implements NanoXmlBuilder {
     private void checkVersion(String value, State yes) {
         if (isVersion1(value)) {
             myState = yes;
-        } else if (isVersion2(value)) {
+        } else if (isVersion2(value) || isVersion3(value)) {
             myState = State.VERSION2;
         } else {
             myState = State.NO;
         }
     }
 
-    public static boolean isSupportedVersion(String value) {
-        return isVersion1(value) || isVersion2(value);
-    }
-
-    public static boolean isVersion1(String value) {
+    private static boolean isVersion1(String value) {
         return "1.0".equals(value) || "1.1".equals(value);
     }
 
-    public static boolean isVersion2(String value) {
+    private static boolean isVersion2(String value) {
         return "2.0".equals(value);
+    }
+
+    private static boolean isVersion3(String value) {
+        return "3.0".equals(value);
     }
 
     @Override
@@ -99,10 +99,6 @@ public class XsltChecker implements NanoXmlBuilder {
         return myState == State.YES || myState == State.SIMPLIFIED;
     }
 
-    public boolean isSimplifiedSyntax() {
-        return myState == State.SIMPLIFIED;
-    }
-
     public static LanguageLevel getLanguageLevel(String value) {
         if (value == null) {
             return LanguageLevel.NONE;
@@ -111,6 +107,9 @@ public class XsltChecker implements NanoXmlBuilder {
             return LanguageLevel.V1;
         }
         if (isVersion2(value)) {
+            return LanguageLevel.V2;
+        }
+        if (isVersion3(value)) {
             return LanguageLevel.V2;
         }
         return LanguageLevel.NONE;

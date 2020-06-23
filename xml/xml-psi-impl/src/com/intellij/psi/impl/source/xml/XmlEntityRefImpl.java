@@ -15,8 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.Html5SchemaProvider;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +45,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
     final PsiElement targetElement = targetFile != null ? targetFile : element;
     CachedValue<XmlEntityDecl> value;
-    synchronized(XmlEntityCache.LOCK) {
+    synchronized (XmlEntityCache.LOCK) {
       Map<String, CachedValue<XmlEntityDecl>> map = XmlEntityCache.getCachingMap(targetElement);
 
       value = map.get(entityName);
@@ -54,7 +53,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
       if (value == null) {
         final PsiManager manager = element.getManager();
-        if(manager == null){
+        if (manager == null) {
           return doResolveEntity(targetElement, entityName, containingFile).getValue();
         }
         value = CachedValuesManager.getManager(manager.getProject()).createCachedValue(
@@ -76,7 +75,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
         final List<PsiElement> deps = new ArrayList<>();
         final XmlEntityDecl[] result = {null};
 
-        PsiElementProcessor processor = new PsiElementProcessor() {
+        PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<PsiElement>() {
           @Override
           public boolean execute(@NotNull PsiElement element) {
             if (element instanceof XmlDoctype) {
@@ -125,34 +124,16 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
             targetElement instanceof XmlFile &&
             deps.size() == 1 &&
             ((XmlFile)targetElement).getFileType() != DTDFileType.INSTANCE
-          ) {
-          XmlDocument document = ((XmlFile)targetElement).getDocument();
-          final XmlTag rootTag = document != null ? document.getRootTag() : null;
-          XmlFile descriptorFile = null;
-
-          if (HtmlUtil.isHtml5Document(document)) {
-            descriptorFile = XmlUtil.findXmlFile((XmlFile)targetElement, Html5SchemaProvider.getCharsDtdLocation());
-          }
-          else if (rootTag != null) {
-            final XmlElementDescriptor descriptor = rootTag.getDescriptor();
-
-            if (descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor)) {
-              PsiElement element = descriptor.getDeclaration();
-              final PsiFile containingFile = element != null ? element.getContainingFile() : null;
-              descriptorFile = containingFile instanceof XmlFile ? (XmlFile)containingFile : null;
+        ) {
+          for (XmlFile descriptorFile : XmlExtension.getExtension((XmlFile)targetElement).getCharEntitiesDTDs((XmlFile)targetElement)) {
+            if (!descriptorFile.getName().equals(((XmlFile)targetElement).getName() + ".dtd")) {
+              deps.add(descriptorFile);
+              if (!XmlUtil.processXmlElements(descriptorFile, processor, true)) {
+                break;
+              }
             }
           }
-          if (descriptorFile != null &&
-              !descriptorFile.getName().equals(((XmlFile)targetElement).getName() + ".dtd")) {
-            deps.add(descriptorFile);
-            XmlUtil.processXmlElements(
-              descriptorFile,
-              processor,
-              true
-            );
-          }
         }
-
         return new CachedValueProvider.Result<>(result[0], ArrayUtil.toObjectArray(deps));
       }
     });
@@ -165,21 +146,21 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   @Override
   public XmlTag getParentTag() {
     final XmlElement parent = (XmlElement)getParent();
-    if(parent instanceof XmlTag) return (XmlTag)parent;
+    if (parent instanceof XmlTag) return (XmlTag)parent;
     return null;
   }
 
   @Override
   public XmlTagChild getNextSiblingInTag() {
     PsiElement nextSibling = getNextSibling();
-    if(nextSibling instanceof XmlTagChild) return (XmlTagChild)nextSibling;
+    if (nextSibling instanceof XmlTagChild) return (XmlTagChild)nextSibling;
     return null;
   }
 
   @Override
   public XmlTagChild getPrevSiblingInTag() {
     final PsiElement prevSibling = getPrevSibling();
-    if(prevSibling instanceof XmlTagChild) return (XmlTagChild)prevSibling;
+    if (prevSibling instanceof XmlTagChild) return (XmlTagChild)prevSibling;
     return null;
   }
 

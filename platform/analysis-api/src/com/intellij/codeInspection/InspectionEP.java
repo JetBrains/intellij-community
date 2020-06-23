@@ -10,7 +10,9 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
@@ -30,7 +32,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   /**
    * @see GlobalInspectionTool
    */
-  public static final ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = ExtensionPointName.create("com.intellij.globalInspection");
+  public static final ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = new ExtensionPointName<>("com.intellij.globalInspection");
 
   /**
    * Usually generated automatically from FQN.
@@ -44,29 +46,23 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public String shortName;
 
   @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     if (implementationClass == null) {
       throw new IllegalArgumentException(toString());
     }
     return shortName != null ? shortName : InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass));
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Nullable
-  public String getDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String getDisplayName() {
     return displayName != null ? displayName : getLocalizedString(bundle, key);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Nullable
-  public String getGroupDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String getGroupDisplayName() {
     return groupDisplayName != null ? groupDisplayName : getLocalizedString(groupBundle, groupKey);
   }
 
   @Override
-  @Nullable
-  public String getGroupKey() {
+  public @Nullable String getGroupKey() {
     return groupKey;
   }
   /**
@@ -74,9 +70,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
    *
    * @see #bundle
    */
-  @Attribute("key")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String key;
+  @Attribute("key") public @Nls(capitalization = Nls.Capitalization.Sentence) String key;
 
   /**
    * Message bundle, e.g. {@code "messages.InspectionsBundle"}.
@@ -90,18 +84,14 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   /**
    * Non-localized display name used in UI (Settings|Editor|Inspections and "Inspection Results" tool window). Use {@link #key} for I18N.
    */
-  @Attribute("displayName")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String displayName;
+  @Attribute("displayName") public @Nls(capitalization = Nls.Capitalization.Sentence) String displayName;
 
   /**
    * Message key for {@link #groupDisplayName}.
    *
    * @see #groupBundle
    */
-  @Attribute("groupKey")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String groupKey;
+  @Attribute("groupKey") public @Nls(capitalization = Nls.Capitalization.Sentence) String groupKey;
 
   /**
    * Message bundle, e.g. {@code "messages.InspectionsBundle"}.
@@ -115,16 +105,21 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   /**
    * Non-localized group display name used in UI (Settings|Editor|Inspections). Use {@link #groupKey} for I18N.
    */
-  @Attribute("groupName")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String groupDisplayName;
+  @Attribute("groupName") public @Nls(capitalization = Nls.Capitalization.Sentence) String groupDisplayName;
 
   /**
    * Comma-delimited list of parent group names (excluding {@code groupName}) used in UI (Settings|Editor|Inspections), e.g. {@code "Java,Java language level migration aids"}.
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Attribute("groupPath")
-  public String groupPath;
+  @Attribute("groupPath") public @Nls(capitalization = Nls.Capitalization.Sentence) String groupPath;
+
+  protected InspectionEP() {
+  }
+
+  @NonInjectable
+  public InspectionEP(@NotNull String implementationClass, @NotNull PluginDescriptor pluginDescriptor) {
+    this.implementationClass = implementationClass;
+    setPluginDescriptor(pluginDescriptor);
+  }
 
   public String @Nullable [] getGroupPath() {
     String name = getGroupDisplayName();
@@ -160,9 +155,10 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("level")
   public String level;
 
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    if (level == null) return HighlightDisplayLevel.WARNING;
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
+    if (level == null) {
+      return HighlightDisplayLevel.WARNING;
+    }
     HighlightDisplayLevel displayLevel = HighlightDisplayLevel.find(level);
     if (displayLevel == null) {
       LOG.error(new PluginException("Can't find highlight display level: " + level + "; registered for: " + implementationClass + "; " +
@@ -178,22 +174,20 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("hasStaticDescription")
   public boolean hasStaticDescription;
 
-  @Nullable
-  private String getLocalizedString(@Nullable String bundleName, String key) {
-    final String baseName = bundleName != null ? bundleName :
-                            bundle == null ? getPluginDescriptor().getResourceBundleBaseName() : bundle;
+  private @Nullable String getLocalizedString(@Nullable String bundleName, String key) {
+    String baseName = bundleName != null ? bundleName :
+                      bundle == null ? getPluginDescriptor().getResourceBundleBaseName() : bundle;
     if (baseName == null || key == null) {
       if (bundleName != null) {
         LOG.warn(implementationClass);
       }
       return null;
     }
-    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getLoaderForClass());
+    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getPluginDescriptor().getPluginClassLoader());
     return AbstractBundle.message(resourceBundle, key);
   }
 
-  @NotNull
-  public InspectionProfileEntry instantiateTool() {
+  public @NotNull InspectionProfileEntry instantiateTool() {
     // must create a new instance for each invocation
     InspectionProfileEntry entry = createInstance(ApplicationManager.getApplication());
     entry.myNameProvider = this;
@@ -245,6 +239,8 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
            ", hasStaticDescription=" + hasStaticDescription +
            ", presentation='" + presentation + '\'' +
            ", isInternal=" + isInternal +
+           ", getImplementationClassName()='"+getImplementationClassName()+"'" +
+           ", language="+language+
            '}';
   }
 }

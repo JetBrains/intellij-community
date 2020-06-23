@@ -1,26 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.loader;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
-public class NativeLibraryLoader {
+public final class NativeLibraryLoader {
   public static void loadPlatformLibrary(@NotNull String libName) {
     String libFileName = mapLibraryName(libName);
 
-    final String libPath;
-    final File libFile = PathManager.findBinFile(libFileName);
+    String libPath;
+    Path libFile = PathManager.findBinFile(libFileName);
 
     if (libFile != null) {
-      libPath = libFile.getAbsolutePath();
+      libPath = libFile.toAbsolutePath().toString();
     }
     else {
-      if (!new File(libPath = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libFileName).exists()) {
+      libPath = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libFileName;
+      if (!Files.exists(Paths.get(libPath))) {
         File libDir = new File(PathManager.getBinPath());
         throw new UnsatisfiedLinkError("'" + libFileName + "' not found in '" + libDir + "' among " + Arrays.toString(libDir.list()));
       }
@@ -29,14 +33,13 @@ public class NativeLibraryLoader {
     System.load(libPath);
   }
 
-  @NotNull
-  private static String mapLibraryName(@NotNull String libName) {
+  private static @NotNull String mapLibraryName(@NotNull String libName) {
     String baseName = libName;
-    if (SystemInfo.is64Bit) {
+    if (SystemInfoRt.is64Bit) {
       baseName = baseName.replace("32", "") + "64";
     }
     String fileName = System.mapLibraryName(baseName);
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       fileName = fileName.replace(".jnilib", ".dylib");
     }
     return fileName;

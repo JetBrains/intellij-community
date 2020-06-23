@@ -15,7 +15,8 @@
  */
 package com.jetbrains.python.intentions;
 
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
@@ -143,26 +144,26 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
   }
 
   private static String getConvertTupleToList() {
-    return PyBundle.message("INTN.convert.collection.literal.text", "tuple", "list");
+    return PyPsiBundle.message("INTN.convert.collection.literal.text", "tuple", "list");
   }
 
   private static String getConvertTupleToSet() {
-    return PyBundle.message("INTN.convert.collection.literal.text", "tuple", "set");
+    return PyPsiBundle.message("INTN.convert.collection.literal.text", "tuple", "set");
   }
 
   private static String getConvertListToTuple() {
-    return PyBundle.message("INTN.convert.collection.literal.text", "list", "tuple");
+    return PyPsiBundle.message("INTN.convert.collection.literal.text", "list", "tuple");
   }
 
   private static String getConvertListToSet() {
-    return PyBundle.message("INTN.convert.collection.literal.text", "list", "set");
+    return PyPsiBundle.message("INTN.convert.collection.literal.text", "list", "set");
   }
 
   private static String getConvertSetToTuple() {
-    return PyBundle.message("INTN.convert.collection.literal.text", "set", "tuple");
+    return PyPsiBundle.message("INTN.convert.collection.literal.text", "set", "tuple");
   }
 
   private static String getConvertSetToList() {
-    return PyBundle.message("INTN.convert.collection.literal.text", "set", "list");
+    return PyPsiBundle.message("INTN.convert.collection.literal.text", "set", "list");
   }
 }

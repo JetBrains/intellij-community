@@ -1,9 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartFMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,13 +26,13 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   private final String myProjectType;
   private final Supplier<Presentation> myTemplatePresentation;
   private final String myId;
-  private final IdeaPluginDescriptor myPlugin;
+  private final PluginDescriptor myPlugin;
   private final String myIconPath;
-  private SmartFMap<String, String> myActionTextOverrides = SmartFMap.emptyMap();
+  private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
-                    @NotNull IdeaPluginDescriptor plugin,
+                    @NotNull PluginDescriptor plugin,
                     @Nullable String iconPath,
                     @Nullable String projectType,
                     @NotNull Supplier<Presentation> templatePresentation) {
@@ -46,7 +45,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     myIconPath = iconPath;
   }
 
-  public void addActionTextOverride(@NotNull String place, @NotNull String text) {
+  public void addActionTextOverride(@NotNull String place, @NotNull Supplier<String> text) {
     myActionTextOverrides = myActionTextOverrides.plus(place, text);
   }
 
@@ -56,7 +55,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
 
   @NotNull
   @Override
-  public IdeaPluginDescriptor getPlugin() {
+  public PluginDescriptor getPlugin() {
     return myPlugin;
   }
 
@@ -79,11 +78,6 @@ public final class ActionStub extends AnAction implements ActionStubBase {
 
   public ClassLoader getLoader() {
     return myPlugin.getPluginClassLoader();
-  }
-
-  @Override
-  public PluginId getPluginId() {
-    return myPlugin.getPluginId();
   }
 
   @Override

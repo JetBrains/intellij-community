@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.IdeBundle;
@@ -17,7 +17,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.*;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 import static com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR;
 
@@ -78,7 +81,7 @@ public class ColorOptionsTree extends Tree {
       if (!description.getGroup().equals(myCategoryName)) continue;
       list.add(description);
     }
-    Collections.sort(list, ATTR_COMPARATOR);
+    list.sort(ATTR_COMPARATOR);
     return list;
   }
 

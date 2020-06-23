@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.github.extensions
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.DumbProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
@@ -13,7 +14,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
-import java.io.IOException
 
 private val LOG = logger<GithubHttpAuthDataProvider>()
 
@@ -27,8 +27,8 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
                                                                  account).login
         GithubAccountAuthData(account, username, token)
       }
-      catch (e: IOException) {
-        LOG.info("Cannot load username for $account", e)
+      catch (e: Exception) {
+        if (e !is ProcessCanceledException) LOG.info("Cannot load username for $account", e)
         null
       }
     }
@@ -62,8 +62,8 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
                                                     DumbProgressIndicator(),
                                                     it).login == login
         }
-        catch (e: IOException) {
-          LOG.info("Cannot load username for $it", e)
+        catch (e: Exception) {
+          if (e !is ProcessCanceledException) LOG.info("Cannot load username for $it", e)
           false
         }
       }

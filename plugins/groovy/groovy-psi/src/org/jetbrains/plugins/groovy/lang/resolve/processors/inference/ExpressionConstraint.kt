@@ -13,7 +13,7 @@ class ExpressionConstraint(
   private val expression: GrExpression
 ) : GrConstraintFormula() {
 
-  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean {
     if (!session.checkPredicates(expression)) return true
     val leftType = expectedType?.type
     when (expression) {

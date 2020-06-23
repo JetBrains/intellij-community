@@ -34,7 +34,7 @@ import org.jetbrains.uast.*;
 import javax.swing.*;
 import java.util.*;
 
-class LanguageResolvingUtil {
+final class LanguageResolvingUtil {
   private static final String ANY_LANGUAGE_DEFAULT_ID = Language.ANY.getID();
 
   static Collection<LanguageDefinition> getAllLanguageDefinitions(ConvertContext context) {
@@ -47,13 +47,18 @@ class LanguageResolvingUtil {
     final Project project = context.getProject();
     final Collection<PsiClass> allLanguages =
       CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-        final PsiClass languageClass = JavaPsiFacade.getInstance(project).findClass(Language.class.getName(),
-                                                                                    GlobalSearchScope.allScope(project));
+        final GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
+        final GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(project);
+
+        // force finding inside IDEA project first
+        PsiClass languageClass = JavaPsiFacade.getInstance(project).findClass(Language.class.getName(), projectProductionScope);
+        if (languageClass == null) {
+          languageClass = JavaPsiFacade.getInstance(project).findClass(Language.class.getName(), librariesScope);
+        }
         if (languageClass == null) {
           return Result.create(Collections.emptyList(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         }
 
-        final GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
         GlobalSearchScope allScope = projectProductionScope.union(ProjectScope.getLibrariesScope(project));
         Collection<PsiClass> allInheritors = new HashSet<>(ClassInheritorsSearch.search(languageClass, allScope, true).findAll());
         return Result.create(allInheritors, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -171,12 +176,7 @@ class LanguageResolvingUtil {
 
   private static boolean isSuperConstructorCall(@Nullable UCallExpression callExpression) {
     if (callExpression == null) return false;
-    UastCallKind kind = callExpression.getKind();
-    String name = callExpression.getMethodName();
-
-    // TODO: Simplify once IDEA-229756 fixed
-    return kind == UastCallKind.CONSTRUCTOR_CALL && "<init>".equals(name) // Kotlin way
-           || kind == UastCallKind.METHOD_CALL && "super".equals(name); // Java way
+    return callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL;
   }
 
   @Nullable
@@ -206,12 +206,9 @@ class LanguageResolvingUtil {
     return new LanguageDefinition(anyLanguageId, languageClass, AllIcons.FileTypes.Any_type, "<any language>");
   }
 
-  private static final Set<String> EP_WITH_ANY_LANGUAGE_ID = ContainerUtil.immutableSet(
-    CompletionContributorEP.class.getName(),
-    CompletionConfidenceEP.class.getName()
-  );
+  private static final Set<String> EP_WITH_ANY_LANGUAGE_ID = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(CompletionContributorEP.class.getName(), CompletionConfidenceEP.class.getName())));
 
-  private static String calculateAnyLanguageId(ConvertContext context) {
+  private static String calculateAnyLanguageId(@NotNull ConvertContext context) {
     final Extension extension = context.getInvocationElement().getParentOfType(Extension.class, true);
     if (extension == null) {
       return ANY_LANGUAGE_DEFAULT_ID;

@@ -4,10 +4,10 @@ package com.intellij.ide.scratch;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
-import com.intellij.lang.PerFileMappings;
-import com.intellij.lang.PerFileMappingsBase;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ProjectViewNodeDecorator;
+import com.intellij.lang.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -16,6 +16,8 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -32,7 +34,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.LanguageSubstitutor;
 import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
@@ -41,8 +45,11 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProvider;
+import com.intellij.util.FileContentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -58,10 +65,11 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 
 @State(name = "ScratchFileService", storages = @Storage(value = "scratches.xml", roamingType = RoamingType.DISABLED))
 public class ScratchFileServiceImpl extends ScratchFileService implements PersistentStateComponent<Element>, Disposable {
-  private static final RootType NO_ROOT_TYPE = new RootType("", "NO_ROOT_TYPE") {};
+  @SuppressWarnings("HardCodedStringLiteral") private static final RootType NO_ROOT_TYPE = new RootType("", "NO_ROOT_TYPE") {};
 
   private final LightDirectoryIndex<RootType> myIndex;
   private final MyLanguages myScratchMapping = new MyLanguages();
@@ -118,13 +126,51 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     };
 
     // handle all previously opened projects (as we are service, lazily created)
+    processOpenFiles((file, manager) -> {
+      RootType rootType = getRootType(file);
+      if (rootType == null) return;
+      rootType.fileOpened(file, manager);
+    });
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener);
+
+    RootType.ROOT_EP.addExtensionPointListener(new ExtensionPointListener<RootType>() {
+      @Override
+      public void extensionAdded(@NotNull RootType rootType, @NotNull PluginDescriptor pluginDescriptor) {
+        myIndex.resetIndex();
+        processOpenFiles((file, manager) -> {
+          if (getRootType(file) != rootType) return;
+          rootType.fileOpened(file, manager);
+        });
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
+        }
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull RootType rootType, @NotNull PluginDescriptor pluginDescriptor) {
+        VirtualFile rootFile = LocalFileSystem.getInstance().findFileByPath(getRootPath(rootType));
+        if (rootFile != null) {
+          processOpenFiles((file, manager) -> {
+            if (VfsUtilCore.isAncestor(rootFile, file, true)) rootType.fileClosed(file, manager);
+          });
+        }
+        myIndex.resetIndex();
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
+        }
+      }
+    }, ApplicationManager.getApplication());
+  }
+
+  private static void processOpenFiles(@NotNull BiConsumer<? super VirtualFile, ? super FileEditorManager> consumer) {
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       FileEditorManager editorManager = FileEditorManager.getInstance(project);
       for (VirtualFile virtualFile : editorManager.getOpenFiles()) {
-        editorListener.fileOpened(editorManager, virtualFile);
+        if (fileDocumentManager.getDocument(virtualFile) == null) continue;
+        consumer.accept(virtualFile, editorManager);
       }
     }
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener);
   }
 
   @NotNull
@@ -157,7 +203,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   private static class MyLanguages extends PerFileMappingsBase<Language> {
 
     @Override
-    public List<Language> getAvailableValues() {
+    public @NotNull List<Language> getAvailableValues() {
       return LanguageUtil.getFileLanguages();
     }
 
@@ -206,7 +252,46 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     }
   }
 
-  public static class FilePresentation implements FileIconProvider, EditorTabTitleProvider, DumbAware {
+  public static class FilePresentation implements FileIconProvider, EditorTabTitleProvider, ProjectViewNodeDecorator, DumbAware {
+    @Override
+    public void decorate(ProjectViewNode<?> node, PresentationData data) {
+      Object value = node.getValue();
+      RootType rootType;
+      VirtualFile virtualFile = null;
+      if (value instanceof RootType) {
+        rootType = (RootType)value;
+      }
+      else {
+        virtualFile = node.getVirtualFile();
+        if (virtualFile == null || !virtualFile.isValid()) return;
+        rootType = ScratchFileService.getInstance().getRootType(virtualFile);
+        if (rootType == null) return;
+      }
+      ScratchFileService scratchFileService = ScratchFileService.getInstance();
+      VirtualFile rootFile = LocalFileSystem.getInstance().findFileByPath(scratchFileService.getRootPath(rootType));
+      String text;
+      Icon icon = null;
+      if (virtualFile == null || virtualFile.isDirectory() && virtualFile.equals(rootFile)) {
+        text = rootType.getDisplayName();
+      }
+      else {
+        Project project = Objects.requireNonNull(node.getProject());
+        text = rootType.substituteName(project, virtualFile);
+        icon = rootType.substituteIcon(project, virtualFile);
+      }
+      if (text != null) {
+        data.clearText();
+        data.addText(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        data.setPresentableText(text);
+      }
+      if (icon != null) {
+        data.setIcon(icon);
+      }
+    }
+
+    @Override
+    public void decorate(PackageDependenciesNode node, ColoredTreeCellRenderer cellRenderer) {
+    }
 
     @Nullable
     @Override
@@ -316,7 +401,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
 
   public static class UsageTypeExtension implements UsageTypeProvider {
     private static final ConcurrentMap<RootType, UsageType> ourUsageTypes =
-      ConcurrentFactoryMap.createMap(key -> new UsageType("Usage in " + key.getDisplayName()));
+      ConcurrentFactoryMap.createMap(key -> new UsageType(LangBundle.messagePointer("usage.type.usage.in.0", key.getDisplayName())));
 
     @Nullable
     @Override

@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
+import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -58,15 +60,16 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
     final ArrayList<GrAnnotation> annotations = new ArrayList<>();
     final Set<String> usedAttributes = GrAnnotationCollector.collectAnnotations(annotations, annotation, annotationCollector);
 
-    GrCodeReferenceElement ref = annotation.getClassReference();
     for (GrAnnotation aliased : annotations) {
-      PsiElement toHighlight = AliasedAnnotationHolder.findCodeElement(ref, annotation, ref);
-      Pair<PsiElement, String> r = AnnotationChecker.checkAnnotationArgumentList(aliased, holder, toHighlight);
-      if (r != null) {
+      Pair<PsiElement, String> r = AnnotationChecker.checkAnnotationArgumentList(aliased, holder);
+      if (r != null && r.getSecond() != null) {
+        AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, r.getSecond());
         PsiElement element = r.getFirst();
-        if (element != null) {
-          holder.createErrorAnnotation(AliasedAnnotationHolder.findCodeElement(element, annotation, ref), r.getSecond());
+        PsiElement highlightElement = element != null && PsiTreeUtil.isAncestor(annotation, element, true) ? element : null;
+        if (highlightElement != null) {
+          builder = builder.range(highlightElement);
         }
+        builder.create();
         return true;
       }
     }

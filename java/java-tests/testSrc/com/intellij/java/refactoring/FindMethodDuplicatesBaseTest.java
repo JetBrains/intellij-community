@@ -58,7 +58,7 @@ public abstract class FindMethodDuplicatesBaseTest extends LightJavaCodeInsightT
       checkResultByFile(filePath + ".after");
     }
     else {
-      fail("duplicates found");
+      fail("duplicates found" + "; file content: " + getFile().getText());
     }
   }
 

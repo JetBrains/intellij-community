@@ -87,7 +87,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
                 if (sb.length() > 0) sb.append(", ");
                 sb.append("mode='").append(mode.toString()).append("'");
             }
-            return "Template (" + sb.toString() + ")";
+            return "Template (" + sb + ")";
         }
 
         @Override

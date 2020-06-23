@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.diagnostic.AttachmentFactory;
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -129,17 +128,17 @@ public class SoftWrapApplianceManager implements Dumpable {
 
     onRecalculationEnd();
   }
-  
+
   public void recalculate(@NotNull List<? extends Segment> ranges) {
     if (myIsDirty) {
       return;
     }
     if (myVisibleAreaWidth <= 0) {
-      myIsDirty = true; 
+      myIsDirty = true;
       return;
     }
 
-    Collections.sort(ranges, (o1, o2) -> {
+    ranges.sort((o1, o2) -> {
       int startDiff = o1.getStartOffset() - o2.getStartOffset();
       return startDiff == 0 ? o2.getEndOffset() - o1.getEndOffset() : startDiff;
     });
@@ -166,7 +165,7 @@ public class SoftWrapApplianceManager implements Dumpable {
 
     onRecalculationEnd();
   }
-  
+
   /**
    * @return    {@code true} if soft wraps were really re-calculated;
    *            {@code false} if it's not possible to do at the moment (e.g. current editor is not shown and we don't
@@ -182,12 +181,12 @@ public class SoftWrapApplianceManager implements Dumpable {
     myIsDirty = false;
 
     recalculateSoftWraps(new IncrementalCacheUpdateEvent(myEditor.getDocument()));
-    
+
     onRecalculationEnd();
-    
+
     return true;
   }
-  
+
   private void onRecalculationEnd() {
     updateLastTopLeftCornerOffset();
     for (SoftWrapAwareDocumentParsingListener listener : myListeners) {
@@ -284,7 +283,7 @@ public class SoftWrapApplianceManager implements Dumpable {
    * There is a possible case that we need to reparse the whole document (e.g. visible area width is changed or user-defined
    * soft wrap indent is changed etc). This method encapsulates that logic, i.e. it checks if necessary conditions are satisfied
    * and updates internal state as necessary.
-   * 
+   *
    * @return {@code true} if re-calculation logic was performed;
    *         {@code false} otherwise (e.g. we need to perform re-calculation but current editor is now shown, i.e. we don't
    *         have information about viewport width
@@ -316,7 +315,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     if (verticalScrollBarWidth <= 0) {
       verticalScrollBarWidth = scrollBar.getPreferredSize().width;
     }
-    
+
     // We experienced the following situation:
     //   1. Editor is configured to show scroll bars only when necessary;
     //   2. Editor with active soft wraps is changed in order for the vertical scroll bar to appear;
@@ -333,7 +332,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       myVisibleAreaWidth = currentVisibleAreaWidth;
       return recalculateSoftWraps();
     }
-    
+
     // We want to adjust viewport's 'y' coordinate on complete recalculation, so, we remember number of soft-wrapped lines
     // before the target offset on recalculation start and compare it with the number of soft-wrapped lines before the same offset
     // after the recalculation.
@@ -381,7 +380,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     final int i = myStorage.getSoftWrapIndex(offset);
     return i >= 0 ? i : -i - 1;
   }
-  
+
   private IndentType getIndentToUse() {
     return myEditor.getSettings().isUseCustomSoftWrapIndent() ? IndentType.CUSTOM : IndentType.NONE;
   }

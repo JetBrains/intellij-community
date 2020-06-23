@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
@@ -36,7 +37,6 @@ import java.util.List;
  * @author peter
  */
 public abstract class DumbService {
-
   /**
    * @see Project#getMessageBus()
    */
@@ -59,8 +59,7 @@ public abstract class DumbService {
     return getInstance(project).isDumb();
   }
 
-  @NotNull
-  public static <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ExtensionPointName<T> extensionPoint) {
+  public static @NotNull <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ExtensionPointName<T> extensionPoint) {
     List<T> list = extensionPoint.getExtensionList();
     if (list.isEmpty()) {
       return list;
@@ -70,8 +69,7 @@ public abstract class DumbService {
     return dumbService.filterByDumbAwareness(list);
   }
 
-  @NotNull
-  public static <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ProjectExtensionPointName<T> extensionPoint) {
+  public static @NotNull <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ProjectExtensionPointName<T> extensionPoint) {
     DumbService dumbService = getInstance(project);
     return dumbService.filterByDumbAwareness(extensionPoint.getExtensions(project));
   }
@@ -100,14 +98,13 @@ public abstract class DumbService {
    *
    * @throws ProcessCanceledException if the project is closed during dumb mode
    */
-  public <T> T runReadActionInSmartMode(@NotNull final Computable<T> r) {
+  public <T> T runReadActionInSmartMode(final @NotNull Computable<T> r) {
     final Ref<T> result = new Ref<>();
     runReadActionInSmartMode(() -> result.set(r.compute()));
     return result.get();
   }
 
-  @Nullable
-  public <T> T tryRunReadActionInSmartMode(@NotNull Computable<T> task, @Nullable String notification) {
+  public @Nullable <T> T tryRunReadActionInSmartMode(@NotNull Computable<T> task, @Nullable String notification) {
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       try {
         return task.compute();
@@ -161,7 +158,7 @@ public abstract class DumbService {
    * @deprecated This method provides no guarantees and should be avoided, please use {@link #runReadActionInSmartMode} instead.
    */
   @Deprecated
-  public void repeatUntilPassesInSmartMode(@NotNull final Runnable r) {
+  public void repeatUntilPassesInSmartMode(final @NotNull Runnable r) {
     while (true) {
       waitForSmartMode();
       try {
@@ -195,8 +192,7 @@ public abstract class DumbService {
    * @return all the elements of the given array if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is true.
    * @see #isDumbAware(Object)
    */
-  @NotNull
-  public <T> List<T> filterByDumbAwareness(T @NotNull [] array) {
+  public @NotNull <T> List<T> filterByDumbAwareness(T @NotNull [] array) {
     return filterByDumbAwareness(Arrays.asList(array));
   }
 
@@ -204,11 +200,10 @@ public abstract class DumbService {
    * @return all the elements of the given collection if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is true.
    * @see #isDumbAware(Object)
    */
-  @NotNull
   @Contract(pure = true)
-  public <T> List<T> filterByDumbAwareness(@NotNull Collection<? extends T> collection) {
+  public @NotNull <T> List<T> filterByDumbAwareness(@NotNull Collection<? extends T> collection) {
     if (isDumb()) {
-      final ArrayList<T> result = new ArrayList<>(collection.size());
+      List<T> result = new ArrayList<>(collection.size());
       for (T element : collection) {
         if (isDumbAware(element)) {
           result.add(element);
@@ -217,11 +212,8 @@ public abstract class DumbService {
       return result;
     }
 
-    if (collection instanceof List) {
-      return (List<T>)collection;
-    }
-
-    return new ArrayList<>(collection);
+    //noinspection unchecked
+    return collection instanceof List ? (List<T>)collection : new ArrayList<>(collection);
   }
 
   /**
@@ -277,7 +269,7 @@ public abstract class DumbService {
   /**
    * Disables given component temporarily during dumb mode.
    */
-  public void makeDumbAware(@NotNull final JComponent componentToDisable, @NotNull Disposable parentDisposable) {
+  public void makeDumbAware(final @NotNull JComponent componentToDisable, @NotNull Disposable parentDisposable) {
     componentToDisable.setEnabled(!isDumb());
     getProject().getMessageBus().connect(parentDisposable).subscribe(DUMB_MODE, new DumbModeListener() {
       @Override
@@ -295,14 +287,14 @@ public abstract class DumbService {
   /**
    * Show a notification when given action is not available during dumb mode.
    */
-  public abstract void showDumbModeNotification(@NotNull @Nls String message);
+  public abstract void showDumbModeNotification(@NotNull @PopupContent String message);
 
   /**
    * Shows balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.
    * @param balloonText
    * @param runWhenSmartAndBalloonStillShowing — will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
    */
-  public abstract void showDumbModeActionBalloon(@NotNull String balloonText,
+  public abstract void showDumbModeActionBalloon(@NotNull @PopupContent String balloonText,
                                                  @NotNull Runnable runWhenSmartAndBalloonStillShowing);
 
   public abstract Project getProject();
@@ -414,7 +406,6 @@ public abstract class DumbService {
    * @see #DUMB_MODE
    */
   public interface DumbModeListener {
-
     /**
      * The event arrives on EDT.
      */

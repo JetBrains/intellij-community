@@ -4,6 +4,9 @@ package com.jetbrains.python.codeInsight.mlcompletion
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
+import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PrevCallsModelsProviderService
+import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PyPrevCallsCompletionFeatures
+import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyContextFeatureProvider : ContextFeatureProvider {
@@ -17,7 +20,11 @@ class PyContextFeatureProvider : ContextFeatureProvider {
     result["is_in_condition"] = MLFeatureValue.binary(PyCompletionFeatures.isInCondition(position))
     result["is_after_if_statement_without_else_branch"] = MLFeatureValue.binary(PyCompletionFeatures.isAfterIfStatementWithoutElseBranch(position))
     result["is_in_for_statement"] = MLFeatureValue.binary(PyCompletionFeatures.isInForStatement(position))
-    result["num_of_prev_qualifiers"] = MLFeatureValue.numerical(PyCompletionFeatures.getNumberOfQualifiersInExpresionFeature(position))
+
+    val positionParent = position.parent
+    if (positionParent is PyExpression) {
+      result["num_of_prev_qualifiers"] = MLFeatureValue.numerical(PyMlCompletionHelpers.getQualifiedComponents(positionParent).size)
+    }
 
     val neighboursKws = PyCompletionFeatures.getPrevNeighboursKeywordIds(position)
     if (neighboursKws.size > 0) result["prev_neighbour_keyword_1"] = MLFeatureValue.numerical(neighboursKws[0])
@@ -46,6 +53,7 @@ class PyContextFeatureProvider : ContextFeatureProvider {
     PyNamesMatchingMlCompletionFeatures.calculateNamedArgumentsNames(environment)
     PyNamesMatchingMlCompletionFeatures.calculateImportNames(environment)
     PyNamesMatchingMlCompletionFeatures.calculateStatementListNames(environment)
+    PyNamesMatchingMlCompletionFeatures.calculateEnclosingMethodName(environment)
 
     PyNamesMatchingMlCompletionFeatures.calculateSameLineLeftNames(environment).let { names ->
       result["have_opening_round_bracket"] = MLFeatureValue.binary(PyParenthesesFeatures.haveOpeningRoundBracket(names))
@@ -57,6 +65,14 @@ class PyContextFeatureProvider : ContextFeatureProvider {
       result["diff_lines_with_class_def"] = MLFeatureValue.numerical(diffLinesWithClassDef)
       result["containing_class_have_constructor"] = MLFeatureValue.binary(classHaveConstructor)
     }}
+
+    val cursorOffset = environment.lookup.lookupStart
+    val isInCondition = result["is_in_condition"]?.value as? Boolean ?: false
+    val isInForStatement = result["is_in_for_statement"]?.value as? Boolean ?: false
+    PyPrevCallsCompletionFeatures.calculatePrevCallsContextInfo(cursorOffset, position, isInCondition, isInForStatement)?.let {
+      PrevCallsModelsProviderService.instance.loadModelFor(it.qualifier)
+      environment.putUserData(PyPrevCallsCompletionFeatures.PREV_CALLS_CONTEXT_INFO_KEY, it)
+    }
 
     return result
   }

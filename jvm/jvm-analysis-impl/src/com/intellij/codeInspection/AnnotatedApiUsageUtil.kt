@@ -58,6 +58,13 @@ data class AnnotatedContainingDeclaration(
 internal object AnnotatedApiUsageUtil {
 
   /**
+   * Returns `true` iff the annotation with qualified name [annotationFqn] can be referenced from file [psiFile].
+   * It may be used to check whether it is necessary to run for the given file an inspection that checks usages of some annotations.
+   */
+  fun canAnnotationBeUsedInFile(annotationFqn: String, psiFile: PsiFile): Boolean =
+    JavaPsiFacade.getInstance(psiFile.project).findClass(annotationFqn, psiFile.resolveScope) != null
+
+  /**
    * Searches for an annotation on a [target] or its enclosing declaration (containing class or package).
    *
    * If a [target] is marked with annotation, it is returned immediately.

@@ -20,12 +20,13 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
-import com.intellij.usages.impl.*;
+import com.intellij.usages.impl.GroupNode;
+import com.intellij.usages.impl.UsageAdapter;
+import com.intellij.usages.impl.UsageNode;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,10 +35,6 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,8 +42,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 class ShowUsagesTable extends JBTable implements DataProvider {
-  static final Usage MORE_USAGES_SEPARATOR = NullUsage.INSTANCE;
-  static final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
+  final Usage MORE_USAGES_SEPARATOR = new UsageAdapter();
+  final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
+  final Usage USAGES_FILTERED_OUT_SEPARATOR = new UsageAdapter();
   private static final int MARGIN = 2;
 
   private final ShowUsagesTableCellRenderer myRenderer;
@@ -92,7 +90,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
   }
 
   @NotNull
-  Runnable prepareTable(final boolean previewMode, @NotNull Runnable appendMoreUsageRunnable, @NotNull Runnable showInMaximalScopeRunnable) {
+  Runnable prepareTable(@NotNull Runnable appendMoreUsageRunnable, @NotNull Runnable showInMaximalScopeRunnable) {
     SpeedSearchBase<JTable> speedSearch = new MySpeedSearch(this);
     speedSearch.setComparator(new SpeedSearchComparator(false));
 
@@ -107,10 +105,12 @@ class ShowUsagesTable extends JBTable implements DataProvider {
     final AtomicReference<java.util.List<Object>> selectedUsages = new AtomicReference<>();
     final AtomicBoolean moreUsagesSelected = new AtomicBoolean();
     final AtomicBoolean outsideScopeUsagesSelected = new AtomicBoolean();
+    final AtomicReference<ShowUsagesAction.FilteredOutUsagesNode> filteredOutUsagesSelected = new AtomicReference<>();
     getSelectionModel().addListSelectionListener(e -> {
       selectedUsages.set(null);
       outsideScopeUsagesSelected.set(false);
       moreUsagesSelected.set(false);
+      filteredOutUsagesSelected.set(null);
       java.util.List<Object> usages = null;
 
       for (int i : getSelectedRows()) {
@@ -122,29 +122,35 @@ class ShowUsagesTable extends JBTable implements DataProvider {
             usages = null;
             break;
           }
-          else if (usage == MORE_USAGES_SEPARATOR) {
+          if (usage == MORE_USAGES_SEPARATOR) {
             moreUsagesSelected.set(true);
             usages = null;
             break;
           }
-          else {
-            if (usages == null) usages = new ArrayList<>();
-            usages.add(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : usage);
+          if (usage == USAGES_FILTERED_OUT_SEPARATOR) {
+            filteredOutUsagesSelected.set((ShowUsagesAction.FilteredOutUsagesNode)value);
+            usages = null;
+            break;
           }
+          if (usages == null) usages = new ArrayList<>();
+          usages.add(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : usage);
         }
       }
 
       selectedUsages.set(usages);
     });
 
-    final Runnable itemChosenCallback = () -> {
+    return () -> {
       if (moreUsagesSelected.get()) {
         appendMoreUsageRunnable.run();
         return;
       }
-
       if (outsideScopeUsagesSelected.get()) {
         showInMaximalScopeRunnable.run();
+        return;
+      }
+      if (filteredOutUsagesSelected.get() != null) {
+        filteredOutUsagesSelected.get().onSelected();
         return;
       }
 
@@ -160,27 +166,6 @@ class ShowUsagesTable extends JBTable implements DataProvider {
         }
       }
     };
-
-    if (previewMode) {
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseReleased(MouseEvent e) {
-          if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
-            itemChosenCallback.run();
-          }
-        }
-      });
-      addKeyListener(new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            itemChosenCallback.run();
-          }
-        }
-      });
-    }
-
-    return itemChosenCallback;
   }
 
   @Nullable
@@ -246,7 +231,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
       UsageNode node = (UsageNode)element;
       if (node instanceof ShowUsagesAction.StringNode) return "";
       Usage usage = node.getUsage();
-      if (usage == MORE_USAGES_SEPARATOR || usage == USAGES_OUTSIDE_SCOPE_SEPARATOR) return "";
+      if (usage == getTable().MORE_USAGES_SEPARATOR || usage == getTable().USAGES_OUTSIDE_SCOPE_SEPARATOR || usage == getTable().USAGES_FILTERED_OUT_SEPARATOR) return "";
       GroupNode group = (GroupNode)node.getParent();
       String groupText = group == null ? "" : group.getGroup().getText(null);
       return groupText + usage.getPresentation().getPlainText();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.startup;
 
 import com.intellij.execution.ExecutionBundle;
@@ -46,8 +46,10 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 final class ProjectStartupConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   final static class ProjectStartupConfigurableProvider extends ConfigurableProvider {
@@ -310,7 +312,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     final Set<RunnerAndConfigurationSettings> shared = new HashSet<>(projectStartupTaskManager.getSharedConfigurations());
     final List<RunnerAndConfigurationSettings> list = new ArrayList<>(shared);
     list.addAll(projectStartupTaskManager.getLocalConfigurations());
-    Collections.sort(list, ProjectStartupTasksTableModel.RunnerAndConfigurationSettingsComparator.getInstance());
+    list.sort(ProjectStartupTasksTableModel.RunnerAndConfigurationSettingsComparator.getInstance());
 
     if (!Comparing.equal(list, myModel.getAllConfigurations())) return true;
     if (!Comparing.equal(shared, myModel.getSharedConfigurations())) return true;

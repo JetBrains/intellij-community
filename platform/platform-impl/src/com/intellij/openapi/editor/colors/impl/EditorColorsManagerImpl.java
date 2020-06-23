@@ -9,6 +9,8 @@ import com.intellij.configurationStore.SchemeExtensionProvider;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
@@ -181,6 +183,18 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     initEditableBundledSchemesCopies();
     resolveLinksToBundledSchemes();
     initScheme();
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        mySchemeManager.reload();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        mySchemeManager.reload();
+      }
+    });
   }
 
   private void initDefaultSchemes() {
@@ -264,9 +278,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       }
       catch (InvalidDataException e) {
         brokenSchemesList.add(scheme);
-        String message = "Color scheme '" + scheme.getName() + "'" +
-                         " points to incorrect or non-existent default (base) scheme " +
-                         e.getMessage();
+        String message = IdeBundle
+          .message("notification.content.color.scheme", scheme.getName(),
+                   e.getMessage());
         Notifications.Bus.notify(
           new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.incompatible.color.scheme"), message, NotificationType.ERROR));
       }

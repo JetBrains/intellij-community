@@ -97,9 +97,7 @@ public class HighlightNamesUtil {
     PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(elementToHighlight, PsiMethodCallExpression.class);
     if (methodCallExpression != null) {
       PsiElement qualifier = methodCallExpression.getMethodExpression().getQualifier();
-      if (qualifier == null || qualifier instanceof PsiThisExpression) {
-        return true;
-      }
+      return qualifier == null || qualifier instanceof PsiThisExpression;
     }
     return false;
   }
@@ -326,7 +324,7 @@ public class HighlightNamesUtil {
     return textRange.getStartOffset();
   }
 
-  static HighlightInfo highlightPackage(@NotNull PsiElement resolved, @NotNull PsiJavaCodeReferenceElement elementToHighlight, @NotNull TextAttributesScheme scheme) {
+  static @NotNull HighlightInfo highlightPackage(@NotNull PsiElement resolved, @NotNull PsiJavaCodeReferenceElement elementToHighlight, @NotNull TextAttributesScheme scheme) {
     PsiElement referenceNameElement = elementToHighlight.getReferenceNameElement();
     TextRange range;
     if (referenceNameElement == null) {

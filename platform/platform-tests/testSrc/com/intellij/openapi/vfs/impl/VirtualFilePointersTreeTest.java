@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -29,9 +30,9 @@ public class VirtualFilePointersTreeTest extends HeavyPlatformTestCase {
     VirtualFilePointer subdirPointer = createRecursivePointer("parent/dir/subdir");
     VirtualFilePointer filePointer = createPointer("parent/dir/subdir/file.txt");
     VirtualFile root = myDir;
-    VirtualFile parent = createChildDirectory(root, "parent");
-    VirtualFile dir = createChildDirectory(parent, "dir");
-    VirtualFile subdir = createChildDirectory(dir, "subdir");
+    VirtualFileSystemEntry parent = (VirtualFileSystemEntry)createChildDirectory(root, "parent");
+    VirtualFileSystemEntry dir = (VirtualFileSystemEntry)createChildDirectory(parent, "dir");
+    VirtualFileSystemEntry subdir = (VirtualFileSystemEntry)createChildDirectory(dir, "subdir");
     assertPointersUnder(subdir, "xxx.txt", parentPointer, dirPointer, subdirPointer);
     assertPointersUnder(subdir.getParent(), subdir.getName(), parentPointer, dirPointer, subdirPointer, filePointer);
     assertPointersUnder(dir.getParent(), dir.getName(), parentPointer, dirPointer, subdirPointer, filePointer);
@@ -45,10 +46,10 @@ public class VirtualFilePointersTreeTest extends HeavyPlatformTestCase {
     VirtualFilePointer subdirPointer = createRecursivePointer("parent/dir1/subdir");
     VirtualFilePointer filePointer = createPointer("parent/dir1/subdir/file.txt");
     VirtualFile root = myDir;
-    VirtualFile parent = createChildDirectory(root, "parent");
-    VirtualFile dir1 = createChildDirectory(parent, "dir1");
-    VirtualFile dir2 = createChildDirectory(parent, "dir2");
-    VirtualFile subdir = createChildDirectory(dir1, "subdir");
+    VirtualFileSystemEntry parent = (VirtualFileSystemEntry)createChildDirectory(root, "parent");
+    VirtualFileSystemEntry dir1 = (VirtualFileSystemEntry)createChildDirectory(parent, "dir1");
+    VirtualFileSystemEntry dir2 = (VirtualFileSystemEntry)createChildDirectory(parent, "dir2");
+    VirtualFileSystemEntry subdir = (VirtualFileSystemEntry)createChildDirectory(dir1, "subdir");
     assertPointersUnder(subdir, "xxx.txt", parentPointer, dir1Pointer, subdirPointer);
     assertPointersUnder(subdir.getParent(), subdir.getName(), parentPointer, dir1Pointer, subdirPointer, filePointer);
     assertPointersUnder(dir1.getParent(), dir1.getName(), parentPointer, dir1Pointer, subdirPointer, filePointer);
@@ -62,8 +63,8 @@ public class VirtualFilePointersTreeTest extends HeavyPlatformTestCase {
     VirtualFile root = myDir;
     VirtualFile parent = createChildDirectory(root, "parent");
     VirtualFile dir = createChildDirectory(parent, "dir");
-    VirtualFile subdir1 = createChildDirectory(dir, "subdir1");
-    VirtualFile subdir2 = createChildDirectory(dir, "subdir2");
+    VirtualFileSystemEntry subdir1 = (VirtualFileSystemEntry)createChildDirectory(dir, "subdir1");
+    VirtualFileSystemEntry subdir2 = (VirtualFileSystemEntry)createChildDirectory(dir, "subdir2");
     assertPointersUnder(subdir1, "inner", innerPointer);
     assertPointersUnder(subdir2, "xxx.txt");
   }
@@ -72,7 +73,7 @@ public class VirtualFilePointersTreeTest extends HeavyPlatformTestCase {
     VirtualFilePointer innerPointer = createRecursivePointer("temp/res/ext-resources");
     VirtualFile root = myDir;
     VirtualFile parent = createChildDirectory(root, "parent");
-    VirtualFile dir = createChildDirectory(parent, "dir");
+    VirtualFileSystemEntry dir = (VirtualFileSystemEntry)createChildDirectory(parent, "dir");
     assertPointersUnder(dir, "inner");
     assertTrue(innerPointer.isRecursive());
   }
@@ -81,8 +82,8 @@ public class VirtualFilePointersTreeTest extends HeavyPlatformTestCase {
     VirtualFilePointer p1 = createPointer("a/p1");
     VirtualFilePointer p2 = createPointer("b/p2");
     VirtualFile root = myDir;
-    VirtualFile a = createChildDirectory(root, "a");
-    VirtualFile b = createChildDirectory(root, "b");
+    VirtualFileSystemEntry a = (VirtualFileSystemEntry)createChildDirectory(root, "a");
+    VirtualFileSystemEntry b = (VirtualFileSystemEntry)createChildDirectory(root, "b");
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
   }
@@ -92,13 +93,13 @@ public class VirtualFilePointersTreeTest extends HeavyPlatformTestCase {
     createPointer("invalid/path");
     VirtualFilePointer p2 = createPointer("b/p2");
     VirtualFile root = myDir;
-    VirtualFile a = createChildDirectory(root, "a");
-    VirtualFile b = createChildDirectory(root, "b");
+    VirtualFileSystemEntry a = (VirtualFileSystemEntry)createChildDirectory(root, "a");
+    VirtualFileSystemEntry b = (VirtualFileSystemEntry)createChildDirectory(root, "b");
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
   }
 
-  private void assertPointersUnder(@NotNull VirtualFile file, @NotNull String childName, VirtualFilePointer @NotNull ... pointers) {
+  private void assertPointersUnder(@NotNull VirtualFileSystemEntry file, @NotNull String childName, VirtualFilePointer @NotNull ... pointers) {
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(file, childName), pointers);
   }
 

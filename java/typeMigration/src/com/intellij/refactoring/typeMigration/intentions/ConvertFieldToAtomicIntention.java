@@ -75,7 +75,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     if (psiTypeClass != null) {
       final String qualifiedName = psiTypeClass.getQualifiedName();
       if (qualifiedName != null) { //is already atomic
-        if (myFromToMap.values().contains(qualifiedName) ||
+        if (myFromToMap.containsValue(qualifiedName) ||
             qualifiedName.equals(AtomicReference.class.getName()) ||
             qualifiedName.equals(AtomicReferenceArray.class.getName())) {
           return false;

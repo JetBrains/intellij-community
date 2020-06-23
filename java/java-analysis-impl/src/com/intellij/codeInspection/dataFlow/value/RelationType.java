@@ -26,6 +26,20 @@ public enum RelationType {
     myName = name;
   }
 
+  /**
+   * @param other other relation to meet
+   * @return result of meet operation: the relation that is a sub-relation of both this and other; 
+   * null if result is bottom
+   */
+  public @Nullable RelationType meet(@NotNull RelationType other) {
+    if (isSubRelation(other)) return other;
+    if (other.isSubRelation(this)) return this;
+    if (this == NE && other == LE || this == LE && other == NE) return LT;
+    if (this == NE && other == GE || this == GE && other == NE) return GT;
+    if (this == LE && other == GE || this == GE && other == LE) return EQ;
+    return null;
+  }
+
   public boolean isSubRelation(RelationType other) {
     if (other == this) return true;
     switch (this) {

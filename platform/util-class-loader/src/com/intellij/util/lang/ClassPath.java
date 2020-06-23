@@ -37,11 +37,10 @@ public final class ClassPath {
   final boolean myPreloadJarContents;
   final boolean myCanHavePersistentIndex;
   final boolean myLazyClassloadingCaches;
-  @Nullable private final CachePoolImpl myCachePool;
-  @Nullable private final UrlClassLoader.CachingCondition myCachingCondition;
+  private final @Nullable CachePoolImpl myCachePool;
+  private final @Nullable UrlClassLoader.CachingCondition myCachingCondition;
   final boolean myLogErrorOnMissingJar;
-  @Nullable
-  private final LinkedHashSet<String> myJarAccessLog;
+  private final @Nullable LinkedHashSet<String> myJarAccessLog;
 
   public ClassPath(List<URL> urls,
                    boolean canLockJars,
@@ -69,10 +68,9 @@ public final class ClassPath {
     push(urls);
   }
 
-  /**
-   * @deprecated Adding additional urls to classpath at runtime could lead to hard-to-debug errors
-   */
+  /** @deprecated adding URLs to classpath at runtime could lead to hard-to-debug errors */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   void addURL(URL url) {
     push(Collections.singletonList(url));
   }

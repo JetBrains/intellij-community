@@ -16,19 +16,22 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /* package */ final class DfaCallArguments {
   final DfaValue myQualifier;
   final DfaValue[] myArguments;
-  final boolean myPure;
+  final @NotNull MutationSignature myMutation;
 
-  DfaCallArguments(DfaValue qualifier, DfaValue[] arguments, boolean pure) {
+  DfaCallArguments(DfaValue qualifier, DfaValue[] arguments, @NotNull MutationSignature mutation) {
     myQualifier = qualifier;
     myArguments = arguments;
-    myPure = pure;
+    myMutation = mutation;
   }
 
   @Override
@@ -36,13 +39,33 @@ import java.util.Objects;
     if (this == o) return true;
     if (!(o instanceof DfaCallArguments)) return false;
     DfaCallArguments that = (DfaCallArguments)o;
-    return myPure == that.myPure &&
-           Objects.equals(myQualifier, that.myQualifier) &&
+    return myQualifier == that.myQualifier &&
+           myMutation.equals(that.myMutation) &&
            Arrays.equals(myArguments, that.myArguments);
   }
 
   @Override
   public int hashCode() {
-    return (Objects.hashCode(myQualifier) * 31 + Arrays.hashCode(myArguments))*31+Boolean.hashCode(myPure);
+    return (Objects.hashCode(myQualifier) * 31 + Arrays.hashCode(myArguments))*31+myMutation.hashCode();
+  }
+
+  public void flush(DfaMemoryState state) {
+    if (myMutation.isPure()) {
+      return;
+    }
+    if (myMutation == MutationSignature.UNKNOWN || myArguments == null) {
+      state.flushFields();
+      return;
+    }
+    Set<DfaValue> qualifiers = new HashSet<>();
+    if (myQualifier != null && myMutation.mutatesThis()) {
+      qualifiers.add(myQualifier);
+    }
+    for (int i = 0; i < myArguments.length; i++) {
+      if (myMutation.mutatesArg(i)) {
+        qualifiers.add(myArguments[i]);
+      }
+    }
+    state.flushFieldsQualifiedBy(qualifiers);
   }
 }

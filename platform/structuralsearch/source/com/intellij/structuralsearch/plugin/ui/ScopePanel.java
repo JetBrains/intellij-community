@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.application.options.ModulesComboBox;
@@ -182,7 +182,10 @@ public class ScopePanel extends JPanel {
             }
             if (!found) {
               myScopesComboBox.selectItem("Selected Files"); // this scope name is not available in a properties file
-              myDirectoryComboBox.setDirectory(files[0].getParent());
+              final VirtualFile directory = files[0].getParent();
+              if (directory != null) {
+                myDirectoryComboBox.setDirectory(directory);
+              }
             }
           }
         }

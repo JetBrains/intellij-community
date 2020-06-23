@@ -52,7 +52,11 @@ import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManag
  */
 public class CertificateConfigurable implements SearchableConfigurable, Configurable.NoScroll, CertificateListener {
   private static final FileTypeDescriptor CERTIFICATE_DESCRIPTOR =
-    new FileTypeDescriptor(IdeBundle.message("settings.certificate.choose.certificate"), ".crt", ".cer", ".pem");
+    new FileTypeDescriptor(IdeBundle.message("settings.certificate.choose.certificate"),
+                           ".crt", ".CRT",
+                           ".cer", ".CER",
+                           ".pem", ".PEM",
+                           ".der", ".DER");
   @NonNls public static final String EMPTY_PANEL = "empty.panel";
 
   private JPanel myRootPanel;

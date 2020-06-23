@@ -93,7 +93,7 @@ public class UndoHelper {
     startListeningDocuments();
   }
 
-  public final Document[] getDocuments() {
+  public final Document @NotNull [] getDocuments() {
     return myCurrentDocuments.toArray(Document.EMPTY_ARRAY);
   }
 

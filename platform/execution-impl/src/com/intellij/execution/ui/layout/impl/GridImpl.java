@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
@@ -105,7 +105,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     cell.add(content);
     myContents.add(content);
     myContent2Cell.put(content, cell);
-    Collections.sort(myContents, myContentComparator);
+    myContents.sort(myContentComparator);
   }
 
   void remove(final Content content) {

@@ -42,7 +42,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
           if (STRING_GET_BYTES.test(bytesExpression) && bytesExpression.getMethodExpression().getQualifierExpression() != null) {
             // Do not suggest for UTF-8 before Java 12 due to JDK-8209576
             ProblemHighlightType highlight;
-            String message = "Can be replaced with 'Files.writeString()'";
+            String message = JavaBundle.message("inspection.message.can.be.replaced.with.files.writestring");
             if (level.isAtLeast(LanguageLevel.JDK_12) || isNonUtf8Charset(bytesExpression.getArgumentList().getExpressions()[0])) {
               highlight = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
             } else {

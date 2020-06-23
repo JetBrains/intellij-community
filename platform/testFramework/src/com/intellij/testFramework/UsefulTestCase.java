@@ -12,7 +12,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
@@ -38,7 +37,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.Equality;
 import gnu.trove.THashSet;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
@@ -61,6 +59,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
 /**
@@ -189,11 +188,6 @@ public abstract class UsefulTestCase extends TestCase {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
-      () -> {
-        if (isIconRequired()) {
-          //IconManager.deactivate();
-        }
-      },
       () -> disposeRootDisposable(),
       () -> cleanupSwingDataStructures(),
       () -> cleanupDeleteOnExitHookList(),
@@ -216,7 +210,8 @@ public abstract class UsefulTestCase extends TestCase {
           }
         }
       },
-      () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
+      () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
+      () -> clearFields(this)
     ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
   }
 
@@ -426,18 +421,18 @@ public abstract class UsefulTestCase extends TestCase {
     System.out.println("Setup costs");
     long totalSetup = 0;
     for (Map.Entry<String, Long> entry : TOTAL_SETUP_COST_MILLIS.entrySet()) {
-      System.out.println(String.format("  %s: %d ms", entry.getKey(), entry.getValue()));
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
       totalSetup += entry.getValue();
     }
     System.out.println("Teardown costs");
     long totalTeardown = 0;
     for (Map.Entry<String, Long> entry : TOTAL_TEARDOWN_COST_MILLIS.entrySet()) {
-      System.out.println(String.format("  %s: %d ms", entry.getKey(), entry.getValue()));
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
       totalTeardown += entry.getValue();
     }
-    System.out.println(String.format("Total overhead: setup %d ms, teardown %d ms", totalSetup, totalTeardown));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']", totalSetup));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTeardownMs' value='%d']", totalTeardown));
+    System.out.printf("Total overhead: setup %d ms, teardown %d ms%n", totalSetup, totalTeardown);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']%n", totalSetup);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalTeardownMs' value='%d']%n", totalTeardown);
   }
 
   @Override
@@ -529,15 +524,14 @@ public abstract class UsefulTestCase extends TestCase {
   public static <T> void assertOrderedEquals(@NotNull String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
                                              @NotNull Iterable<? extends T> expected) {
-    //noinspection unchecked
-    assertOrderedEquals(errorMsg, actual, expected, Equality.CANONICAL);
+    assertOrderedEquals(errorMsg, actual, expected, Objects::equals);
   }
 
   public static <T> void assertOrderedEquals(@NotNull String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
                                              @NotNull Iterable<? extends T> expected,
-                                             @NotNull Equality<? super T> comparator) {
-    if (!equals(actual, expected, comparator)) {
+                                             @NotNull BiPredicate<? super T, ? super T> predicate) {
+    if (!equals(actual, expected, predicate)) {
       String expectedString = toString(expected);
       String actualString = toString(actual);
       Assert.assertEquals(errorMsg, expectedString, actualString);
@@ -547,12 +541,13 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static <T> boolean equals(@NotNull Iterable<? extends T> a1,
                                     @NotNull Iterable<? extends T> a2,
-                                    @NotNull Equality<? super T> comparator) {
+                                    @NotNull BiPredicate<? super T, ? super T> predicate) {
     Iterator<? extends T> it1 = a1.iterator();
     Iterator<? extends T> it2 = a2.iterator();
     while (it1.hasNext() || it2.hasNext()) {
-      if (!it1.hasNext() || !it2.hasNext()) return false;
-      if (!comparator.equals(it1.next(), it2.next())) return false;
+      if (!it1.hasNext() || !it2.hasNext() || !predicate.test(it1.next(), it2.next())) {
+        return false;
+      }
     }
     return true;
   }
@@ -874,7 +869,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
-    if (!Comparing.equal(expected, actual)) {
+    if (!Objects.equals(expected, actual)) {
       throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
     }
   }
@@ -1046,8 +1041,7 @@ public abstract class UsefulTestCase extends TestCase {
 
       if (shouldOccur) {
         wasThrown = true;
-        final String errorMessage = exceptionCase.getAssertionErrorMessage();
-        assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), cause.getClass());
+        assertInstanceOf(cause, exceptionCase.getExpectedExceptionClass());
         if (expectedErrorMsgPart != null) {
           assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
         }
@@ -1068,7 +1062,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     finally {
       if (shouldOccur && !wasThrown) {
-        fail(exceptionCase.getAssertionErrorMessage());
+        fail(exceptionCase.getExpectedExceptionClass().getName() + " must be thrown.");
       }
     }
   }

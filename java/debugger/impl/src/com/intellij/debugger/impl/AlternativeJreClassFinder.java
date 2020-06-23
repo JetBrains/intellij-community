@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class AlternativeJreClassFinder extends NonClasspathClassFinder {
+public final class AlternativeJreClassFinder extends NonClasspathClassFinder {
   public AlternativeJreClassFinder(Project project) {
     super(project);
 

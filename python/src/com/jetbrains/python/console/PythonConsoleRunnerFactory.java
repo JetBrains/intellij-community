@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PythonConsoleRunnerFactory {
   @NotNull
   public static PythonConsoleRunnerFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(PythonConsoleRunnerFactory.class);
+    return ApplicationManager.getApplication().getService(PythonConsoleRunnerFactory.class);
   }
 
   @NotNull

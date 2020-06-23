@@ -39,6 +39,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
+import com.intellij.util.messages.impl.MessageBusEx;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -129,6 +130,15 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
         throw new IllegalStateException("earlyDisposable must be null on second opening of light project");
       }
     }
+
+    // Must be not only on temporarilyDisposed = true, but also on temporarilyDisposed = false,
+    // because events fired for temporarilyDisposed project between project close and project open and it can lead to cache population.
+    // Message bus implementation can be complicated to add owner.isDisposed check before getting subscribers, but as bus is a very important subsystem,
+    // better to not add any non-production logic
+
+    // light project is not disposed, so, subscriber cache contains handlers that will handle events for a temporarily disposed project,
+    // so, we clear subscriber cache. `isDisposed` for project returns `true` if `temporarilyDisposed`, so, handler will be not added.
+    ((MessageBusEx)getMessageBus()).clearAllSubscriberCache();
 
     temporarilyDisposed = value;
   }

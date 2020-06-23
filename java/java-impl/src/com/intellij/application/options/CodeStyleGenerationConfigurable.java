@@ -191,7 +191,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     text = text.trim();
     if (text.isEmpty()) return text;
     if (!StringUtil.isJavaIdentifier(text)) {
-      throw new ConfigurationException("Not a valid java identifier part in " + (prefix ? "prefix" : "suffix") + " \'" + text + "\'");
+      throw new ConfigurationException("Not a valid java identifier part in " + (prefix ? "prefix" : "suffix") + " '" + text + "'");
     }
     return text;
   }

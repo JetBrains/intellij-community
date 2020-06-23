@@ -40,7 +40,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   /**
    * By default button representing popup action group displays 'dropdown' icon.
    * This key allows to avoid 'dropdown' icon painting, just put it in ActionButton's presentation or template presentation of ActionGroup like this:
-   * <code>presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE)</code>
+   * {@code presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE)}
    */
 
   public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
@@ -189,7 +189,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
     if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     final ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
-    ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
+    String place = ActionPlaces.getActionGroupPopupPlace(event.getPlace());
+    ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(place, actionGroup, new MenuItemPresentationFactory() {
       @Override
       protected void processPresentation(Presentation presentation) {
         if (myNoIconsInPopup) {
@@ -280,21 +281,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   public Dimension getPreferredSize() {
     if (myMinimumButtonSize != null) myMinimumButtonSize.update();
     Icon icon = getIcon();
-    if (icon.getIconWidth() < myMinimumButtonSize.width &&
-        icon.getIconHeight() < myMinimumButtonSize.height) {
+    Dimension size = icon.getIconWidth() < myMinimumButtonSize.width && icon.getIconHeight() < myMinimumButtonSize.height ?
+            new Dimension(myMinimumButtonSize) :
+            new Dimension(Math.max(myMinimumButtonSize.width, icon.getIconWidth() + myInsets.left + myInsets.right),
+                          Math.max(myMinimumButtonSize.height, icon.getIconHeight() + myInsets.top + myInsets.bottom));
 
-      Dimension size = new Dimension(myMinimumButtonSize);
-      JBInsets.addTo(size, getInsets());
-      return size;
-    }
-    else {
-      Dimension size = new Dimension(
-        Math.max(myMinimumButtonSize.width, icon.getIconWidth() + myInsets.left + myInsets.right),
-        Math.max(myMinimumButtonSize.height, icon.getIconHeight() + myInsets.top + myInsets.bottom));
-
-      JBInsets.addTo(size, getInsets());
-      return size;
-    }
+    JBInsets.addTo(size, getInsets());
+    return size;
   }
 
   public void setIconInsets(@Nullable Insets insets) {

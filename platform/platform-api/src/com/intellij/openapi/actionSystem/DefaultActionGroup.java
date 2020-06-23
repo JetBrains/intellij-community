@@ -3,10 +3,11 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,28 +67,28 @@ public class DefaultActionGroup extends ActionGroup {
     this(Presentation.NULL_STRING, actions);
   }
 
-  public DefaultActionGroup(@NotNull Supplier<@Nls String> name, @NotNull List<? extends AnAction> actions) {
+  public DefaultActionGroup(@NotNull Supplier<@ActionText String> name, @NotNull List<? extends AnAction> actions) {
     this(name, false);
     addActions(actions);
   }
 
-  public DefaultActionGroup(@Nullable @Nls String name, @NotNull List<? extends AnAction> actions) {
+  public DefaultActionGroup(@Nullable @ActionText String name, @NotNull List<? extends AnAction> actions) {
     this(() -> name, actions);
   }
 
-  public DefaultActionGroup(@Nullable @Nls String shortName, boolean popup) {
+  public DefaultActionGroup(@Nullable @ActionText String shortName, boolean popup) {
     this(() -> shortName, popup);
   }
 
-  protected DefaultActionGroup(@NotNull Supplier<@Nls String> shortName, boolean popup) {
+  protected DefaultActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup) {
     super(shortName, popup);
   }
 
-  public static DefaultActionGroup createPopupGroup(@NotNull Supplier<@Nls String> shortName) {
+  public static DefaultActionGroup createPopupGroup(@NotNull Supplier<@ActionText String> shortName) {
     return new DefaultActionGroup(shortName, true);
   }
 
-  public static DefaultActionGroup createFlatGroup(@NotNull Supplier<@Nls String> shortName) {
+  public static DefaultActionGroup createFlatGroup(@NotNull Supplier<@ActionText String> shortName) {
     return new DefaultActionGroup(shortName, false);
   }
 
@@ -457,7 +458,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  public void addSeparator(@Nullable @Nls String separatorText) {
+  public void addSeparator(@Nullable @NlsContexts.Separator String separatorText) {
     add(Separator.create(separatorText));
   }
 

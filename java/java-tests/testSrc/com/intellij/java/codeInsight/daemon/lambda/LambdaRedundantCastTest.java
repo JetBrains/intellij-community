@@ -82,6 +82,13 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   public void testCastInsideLambdaReturnExpressionPassedToEnumConstant() { doTest(); }
   public void testGroundTargetTypeDiffersFromCastType() { doTest(); }
   public void testInferenceErrorForApplicableMethod() { doTest(); }
+  public void testLambdaWithCastInReturnStatement() { doTest(); }
+  public void testCastInNeighbourArgument() { doTest(); }
+  public void testErasedTargetType() { doTest(); }
+  public void testThrowsStatementInLambdaBody() { doTest(); }
+  public void testSynchronizeCasts() { doTest(); }
+  public void testBoxingInConditionalOfLambdaReturn() { doTest(); }
+  public void testRawMiddleMan() { doTest(); }
   public void testRejectReturnTypeChange() {
     doTest();
   }
@@ -89,9 +96,9 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   public void testInvalidConditional() {
     doTest();
   }
-  public void testSuperBoundLambda() {
-    doTest();
-  }
+  public void testSuperBoundLambda() { doTest(); }
+  public void testLambdaReturnChain() { doTest(); }
+  public void testExpectedTypeProducesBadReturnType() { doTest(); }
 
   private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);

@@ -21,6 +21,7 @@ import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
@@ -39,8 +40,6 @@ public class PyStackFrame extends XStackFrame {
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
   public static final String DOUBLE_UNDERSCORE = "__";
-  @NotNull @NonNls public static final String RETURN_VALUES_GROUP_NAME = "Return Values";
-  @NotNull @NonNls public static final String SPECIAL_VARIABLES_GROUP_NAME = "Special Variables";
   @NotNull @NonNls public static final Set<String> HIDE_TYPES = ContainerUtil.set("function", "type", "classobj", "module");
   public static final int DUNDER_VALUES_IND = 0;
   public static final int SPECIAL_TYPES_IND = DUNDER_VALUES_IND + 1;
@@ -186,11 +185,11 @@ public class PyStackFrame extends XStackFrame {
     }
     node.addChildren(filteredChildren, returnedValues.isEmpty() && isSpecialEmpty);
     if (!returnedValues.isEmpty()) {
-      addGroupValues(RETURN_VALUES_GROUP_NAME, AllIcons.Debugger.WatchLastReturnValue, node, returnedValues, "()");
+      addGroupValues(PyBundle.message("debugger.stack.frame.return.values"), AllIcons.Debugger.WatchLastReturnValue, node, returnedValues, "()");
     }
     if (!isSpecialEmpty) {
       final Map<String, XValue> specialElements = mergeSpecialGroupElementsOrdered(specialValuesGroups);
-      addGroupValues(SPECIAL_VARIABLES_GROUP_NAME, PythonIcons.Python.Debug.SpecialVar, node, specialElements, null);
+      addGroupValues(PyBundle.message("debugger.stack.frame.special.variables"), PythonIcons.Python.Debug.SpecialVar, node, specialElements, null);
     }
   }
 

@@ -8,6 +8,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,22 +94,22 @@ public class PagedFileStorage implements Forceable {
   protected final int myPageSize;
   protected final boolean myValuesAreBufferAligned;
 
-  public PagedFileStorage(Path file, StorageLock lock) throws IOException {
-    this(file, lock.myDefaultStorageLockContext, BUFFER_SIZE, false, false);
-  }
-
   public PagedFileStorage(Path file,
                           @Nullable StorageLockContext storageLockContext,
                           int pageSize,
                           boolean valuesAreBufferAligned,
-                          boolean nativeBytesOrder) throws IOException {
+                          boolean nativeBytesOrder) {
     myFile = file;
-    myStorageLockContext = storageLockContext != null ? storageLockContext : ourLock.myDefaultStorageLockContext;
+    myStorageLockContext = storageLockContext != null ? storageLockContext : ourLock.myDefaultContext;
     myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.myStorageLock.registerPagedFileStorage(this);
     myTypedIOBuffer = valuesAreBufferAligned ? null:new byte[8];
     myNativeBytesOrder = nativeBytesOrder;
+  }
+
+  public int getPageSize() {
+    return myPageSize;
   }
 
   public void lock() {
@@ -160,11 +161,11 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  int getOffsetInPage(long addr) {
+  public int getOffsetInPage(long addr) {
     return (int)(addr % myPageSize);
   }
 
-  ByteBufferWrapper getByteBuffer(long address, boolean modify) {
+  public ByteBufferWrapper getByteBuffer(long address, boolean modify) {
     long page = address / myPageSize;
     assert page >= 0 && page <= MAX_PAGES_COUNT:address + " in " + myFile;
     return getBufferWrapper(page, modify);
@@ -192,7 +193,7 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   public void putByte(final long addr, final byte b) {
     put(addr, b);
   }
@@ -462,10 +463,11 @@ public class PagedFileStorage implements Forceable {
     return isDirty;
   }
 
+  @ApiStatus.Internal
   public static class StorageLock {
     private static final int FILE_INDEX_MASK = 0xFFFF0000;
     private static final int FILE_INDEX_SHIFT = 16;
-    public final StorageLockContext myDefaultStorageLockContext;
+    public final StorageLockContext myDefaultContext;
     private final ConcurrentIntObjectMap<PagedFileStorage> myIndex2Storage = ContainerUtil.createConcurrentIntObjectMap();
 
     private final LinkedHashMap<Integer, ByteBufferWrapper> mySegments;
@@ -478,12 +480,8 @@ public class PagedFileStorage implements Forceable {
     private volatile long mySizeLimit;
     private volatile int myMappingChangeCount;
 
-    public StorageLock() {
-      this(true);
-    }
-
-    public StorageLock(boolean checkThreadAccess) {
-      myDefaultStorageLockContext = new StorageLockContext(this, checkThreadAccess);
+    private StorageLock() {
+      myDefaultContext = new StorageLockContext(this, true);
 
       mySizeLimit = UPPER_LIMIT;
       mySegments = new LinkedHashMap<Integer, ByteBufferWrapper>(10, 0.75f, true) {
@@ -505,14 +503,6 @@ public class PagedFileStorage implements Forceable {
           return wrapper;
         }
       };
-    }
-
-    public void lock() {
-      myDefaultStorageLockContext.lock();
-    }
-
-    public void unlock() {
-      myDefaultStorageLockContext.unlock();
     }
 
     private int registerPagedFileStorage(@NotNull PagedFileStorage storage) {
@@ -610,7 +600,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     @NotNull
-    private ByteBufferWrapper createValue(Integer key) throws IOException {
+    private ByteBufferWrapper createValue(Integer key) {
       final int storageIndex = key & FILE_INDEX_MASK;
       PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(storageIndex);
       assert owner != null: "No storage for index " + storageIndex;

@@ -8,7 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsShowConfirmationOptionImpl;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.actions.EditAction;
@@ -68,9 +69,10 @@ public class ConversionResultImpl implements ConversionResult {
 
     final List<VirtualFile> createdFiles = findVirtualFiles(myCreatedFiles);
     if (containsFilesUnderVcs(createdFiles, project)) {
-      final VcsShowConfirmationOptionImpl option = new VcsShowConfirmationOptionImpl("");
       final Collection<VirtualFile> selected = AbstractVcsHelper.getInstance(project)
-        .selectFilesToProcess(createdFiles, "Files Created", "Select files to be added to version control", null, null, option);
+        .selectFilesToProcess(createdFiles, VcsBundle.message("dialog.title.files.created"),
+                              VcsBundle.message("label.select.files.to.be.added.to.version.control"), null, null,
+                              VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);
       if (selected != null && !selected.isEmpty()) {
         final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
         changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), new ArrayList<>(selected));

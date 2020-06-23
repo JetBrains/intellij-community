@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization;
 
 import com.intellij.openapi.util.Couple;
@@ -13,11 +13,12 @@ import java.awt.*;
 import java.lang.reflect.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @ApiStatus.Internal
 public class PropertyCollector {
-  private final ConcurrentMap<Class<?>, List<MutableAccessor>> classToOwnFields = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Class<?>, List<MutableAccessor>> classToOwnFields = new ConcurrentHashMap<>();
 
   private final boolean collectAccessors;
   private final boolean collectPrivateFields;
@@ -42,8 +43,7 @@ public class PropertyCollector {
   /**
    * Result is not cached because caller should cache it if need.
    */
-  @NotNull
-  public List<MutableAccessor> collect(@NotNull Class<?> aClass) {
+  public @NotNull List<MutableAccessor> collect(@NotNull Class<?> aClass) {
     List<MutableAccessor> accessors = new ArrayList<>();
 
     Map<String, Couple<Method>> nameToAccessors;
@@ -127,8 +127,7 @@ public class PropertyCollector {
     while ((currentClass = currentClass.getSuperclass()) != null && !isAnnotatedAsTransient(currentClass) && currentClass != Object.class);
   }
 
-  @NotNull
-  private Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<? super MutableAccessor> accessors) {
+  private @NotNull Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<? super MutableAccessor> accessors) {
     // (name,(getter,setter))
     final Map<String, Couple<Method>> candidates = new TreeMap<>();
     for (Method method : aClass.getMethods()) {
@@ -172,8 +171,7 @@ public class PropertyCollector {
     classToOwnFields.clear();
   }
 
-  @Nullable
-  private static NameAndIsSetter getPropertyData(@NotNull String methodName) {
+  private static @Nullable NameAndIsSetter getPropertyData(@NotNull String methodName) {
     String part = "";
     boolean isSetter = false;
     if (methodName.startsWith("get")) {
@@ -203,8 +201,7 @@ public class PropertyCollector {
     return new NameAndIsSetter(decapitalize(part), isSetter);
   }
 
-  @NotNull
-  private static String decapitalize(@NotNull String name) {
+  private static @NotNull String decapitalize(@NotNull String name) {
     if (name.isEmpty() || ((name.length() > 1) && Character.isUpperCase(name.charAt(1)) && Character.isUpperCase(name.charAt(0)))) {
       return name;
     }

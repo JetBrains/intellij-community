@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.whitelist
 
-import com.intellij.internal.statistic.eventLog.EventLogBuildNumber
+import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.service.fus.FUSWhitelist
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import org.junit.Test
@@ -15,8 +15,8 @@ class StatisticsParseWhitelistWithBuildTest {
     assertEquals(expected, actual)
   }
 
-  private fun newBuild(vararg args: Int): EventLogBuildNumber {
-    return EventLogBuildNumber(*args)
+  private fun newBuild(vararg args: Int): EventLogBuild {
+    return EventLogBuild(*args)
   }
 
   @Test

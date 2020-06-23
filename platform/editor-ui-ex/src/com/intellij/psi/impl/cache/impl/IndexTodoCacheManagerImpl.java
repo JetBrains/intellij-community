@@ -3,7 +3,6 @@
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
@@ -23,7 +22,10 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -61,7 +63,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
           });
         }
       }
-    }, myProject, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
 
     return allFiles.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilCore.toPsiFileArray(allFiles);
   }
@@ -91,7 +93,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
       for (IndexPattern indexPattern : indexPatterns) {
         count[0] += data.getOrDefault(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), 0);
       }
-    }, myProject, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
     return count[0];
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.build.events;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,11 +52,14 @@ public interface BuildEvent {
    * @return The event text message.
    */
   @NotNull
+  @BuildEventsNls.Message
   String getMessage();
 
   @Nullable
+  @BuildEventsNls.Hint
   String getHint();
 
   @Nullable
+  @BuildEventsNls.Description
   String getDescription();
 }

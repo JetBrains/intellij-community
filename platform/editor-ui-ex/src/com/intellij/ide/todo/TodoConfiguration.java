@@ -62,7 +62,8 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
    */
   protected TodoPattern @NotNull [] getDefaultPatterns() {
     return new TodoPattern[]{
-      new TodoPattern("\\b(todo|fixme)\\b.*", TodoAttributesUtil.createDefault(), false)
+      new TodoPattern("\\btodo\\b.*", TodoAttributesUtil.createDefault(), false),
+      new TodoPattern("\\bfixme\\b.*", TodoAttributesUtil.createDefault(), false),
     };
   }
 

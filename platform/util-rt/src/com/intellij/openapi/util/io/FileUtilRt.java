@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -125,12 +125,17 @@ public class FileUtilRt {
         ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (args.length == 2) {
-              final Object second = args[1];
+              String methodName = method.getName();
+              Object second = args[1];
               if (second instanceof Throwable) {
-                throw (Throwable)second;
+                if (SystemInfoRt.isWindows && "visitFileFailed".equals(methodName) && ourNoSuchFileExceptionClass.isInstance(second)) {
+                  performDelete(args[0]);  // could be an aimless junction
+                }
+                else {
+                  throw (Throwable)second;
+                }
               }
-              final String methodName = method.getName();
-              if ("visitFile".equals(methodName) || "postVisitDirectory".equals(methodName)) {
+              else if ("visitFile".equals(methodName) || "postVisitDirectory".equals(methodName)) {
                 performDelete(args[0]);
               }
               else if (SystemInfoRt.isWindows && "preVisitDirectory".equals(methodName)) {

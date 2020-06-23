@@ -18,6 +18,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +30,7 @@ import com.intellij.util.SystemProperties;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinDef;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +96,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
 
+  @ActionText
   @NotNull
   public static String getActionName() {
     return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
@@ -117,7 +121,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return null;
   }
 
-  public static void showDialog(Project project, String message, String title, @NotNull File file, @Nullable DialogWrapper.DoNotAskOption option) {
+  public static void showDialog(Project project, @NlsContexts.DialogMessage String message, @NlsContexts.DialogTitle String title, @NotNull File file, @Nullable DialogWrapper.DoNotAskOption option) {
     String ok = getActionName();
     String cancel = IdeBundle.message("action.close");
     if (Messages.showOkCancelDialog(project, message, title, ok, cancel, Messages.getInformationIcon(), option) == Messages.OK) {
@@ -214,7 +218,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return path;
   }
 
-  private static void spawn(String... command) {
+  private static void spawn(@NonNls String... command) {
     LOG.debug(Arrays.toString(command));
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
@@ -248,7 +252,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       SystemInfo.isWindows ? "Explorer" :
       readDesktopEntryKey("Name").orElse("File Manager");
 
-    private static Optional<String> readDesktopEntryKey(String key) {
+    private static Optional<String> readDesktopEntryKey(@NonNls String key) {
       if (SystemInfo.hasXdgMime()) {
         String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
         if (appName != null && appName.endsWith(".desktop")) {

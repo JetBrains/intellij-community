@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
+import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,7 +31,9 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -143,6 +146,21 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       myLayout.show(myPanel, ERROR_CARD);
       return;
     }
+    if (JavaVersion.current().feature == 11) {
+      try {
+        Class.forName(JavaFxCommonNames.JAVAFX_SCENE_NODE);
+      }
+      catch (ClassNotFoundException exception) {
+        myErrorLabel.addHyperlinkListener(e1 -> {
+          downloadJavaFxDependencies();
+        });
+        myErrorLabel.setHyperlinkText(JavaFXBundle.message("javafx.scene.builder.editor.failed.to.open.file.error"),
+                                      JavaFXBundle.message("javafx.scene.builder.editor.download.javafx"), "");
+        myErrorLabel.setIcon(Messages.getErrorIcon());
+        myLayout.show(myPanel, ERROR_CARD);
+        return;
+      }
+    }
 
     final String description;
     if (e != null) {
@@ -168,6 +186,16 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     myErrorStack.setText(description);
     myErrorStack.setVisible(true);
     myLayout.show(myPanel, ERROR_CARD);
+  }
+
+  private void downloadJavaFxDependencies(String... coordinates) {
+    for (String coordinate : SceneBuilderUtil.JAVAFX_ARTIFACTS) {
+      RepositoryLibraryProperties libraryProperties =
+        new RepositoryLibraryProperties("org.openjfx:" + coordinate + ":" + SceneBuilderUtil.JAVAFX_VERSION, true);
+      JarRepositoryManager.loadDependenciesModal(myProject, libraryProperties, false, false, null, null);
+    }
+    SceneBuilderUtil.updateLoader();
+    updateState();
   }
 
   private static String getErrorMessage(Throwable e) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
@@ -26,6 +27,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.TextChunk;
 import com.intellij.util.FontUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author cdr
@@ -85,6 +88,16 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
       if (foreignSlicing == null) {
         append(" (in " + language.getDisplayName() + " file - stopped here)", SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
       }
+    }
+    SliceValueFilter filter = sliceUsage.params.valueFilter;
+    SliceUsage parent = sliceUsage.getParent();
+    SliceValueFilter parentFilter = parent == null ? null : parent.params.valueFilter;
+    String filterText = filter == null ? "" : filter.getPresentationText(sliceUsage.getElement());
+    String parentFilterText = parentFilter == null || parent.getElement() == null ? "" : 
+                              parentFilter.getPresentationText(parent.getElement());
+    if (!filterText.isEmpty() && !filterText.equals(parentFilterText)) {
+      String message = LangBundle.message("slice.analysis.title.filter", filterText);
+      append(" " + message, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }
 

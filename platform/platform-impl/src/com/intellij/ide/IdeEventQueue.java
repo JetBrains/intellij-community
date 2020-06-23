@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.LoggableEventWatcher;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.dnd.DnDManager;
@@ -16,9 +16,9 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -41,7 +41,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.EDT;
@@ -91,7 +90,6 @@ public final class IdeEventQueue extends EventQueue {
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
   private static PerformanceWatcher ourPerformanceWatcher;
-  private static EventWatcher ourEventWatcher;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -106,7 +104,6 @@ public final class IdeEventQueue extends EventQueue {
   private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
   private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
   private final IdePopupManager myPopupManager = new IdePopupManager();
-  private final ToolkitBugsProcessor myToolkitBugsProcessor = new ToolkitBugsProcessor();
 
   /**
    * Counter of processed events. It is used to assert that data context lives only inside single
@@ -202,7 +199,7 @@ public final class IdeEventQueue extends EventQueue {
     assert !(systemEventQueue instanceof IdeEventQueue) : systemEventQueue;
     systemEventQueue.push(this);
 
-    EDT.assertIsEdt();
+    EDT.updateEdt();
 
     KeyboardFocusManager keyboardFocusManager = IdeKeyboardFocusManager.replaceDefault();
     keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
@@ -379,7 +376,7 @@ public final class IdeEventQueue extends EventQueue {
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
-    EventWatcher eventWatcher = obtainEventWatcher();
+    EventWatcher eventWatcher = EventWatcher.getInstance();
     try {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventStarted();
@@ -390,6 +387,9 @@ public final class IdeEventQueue extends EventQueue {
 
       fixNestedSequenceEvent(e);
       // Add code below if you need
+
+      // Update EDT if it changes (might happen after Application disposal)
+      EDT.updateEdt();
 
       if (e.getID() == WindowEvent.WINDOW_ACTIVATED
           || e.getID() == WindowEvent.WINDOW_DEICONIFIED
@@ -472,9 +472,9 @@ public final class IdeEventQueue extends EventQueue {
           if (finalE1 instanceof KeyEvent) {
             maybeReady();
           }
-          if (eventWatcher instanceof LoggableEventWatcher &&
+          if (eventWatcher != null &&
               runnableClass != FLUSH_NOW_CLASS) {
-            ((LoggableEventWatcher)eventWatcher).logTimeMillis(
+            eventWatcher.logTimeMillis(
               runnableClass != Runnable.class ? runnableClass.getName() : finalE1.toString(),
               startedAt,
               runnableClass
@@ -493,13 +493,13 @@ public final class IdeEventQueue extends EventQueue {
           return;
         }
         if (ourRunnablesWithWrite.contains(runnableClass)) {
-          ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(processEventRunnable);
+          ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable);
           return;
         }
       }
 
       if (ourDefaultEventWithWrite) {
-        ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(processEventRunnable);
+        ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable);
       }
       else {
         processEventRunnable.run();
@@ -619,15 +619,6 @@ public final class IdeEventQueue extends EventQueue {
     return watcher;
   }
 
-  @Nullable
-  private static EventWatcher obtainEventWatcher() {
-    EventWatcher watcher = ourEventWatcher;
-    if (watcher == null) {
-      ourEventWatcher = watcher = EventWatcher.getInstance();
-    }
-    return watcher;
-  }
-
   private static boolean isMetaKeyPressedOnLinux(@NotNull AWTEvent e) {
     if (!ourSkipMetaPressOnLinux) {
       return false;
@@ -674,8 +665,9 @@ public final class IdeEventQueue extends EventQueue {
   @Override
   @NotNull
   public AWTEvent getNextEvent() throws InterruptedException {
-    AWTEvent event = appIsLoaded() ? ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> super.getNextEvent())
-                                   : super.getNextEvent();
+    AWTEvent event = appIsLoaded() ?
+                     ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> super.getNextEvent()) :
+                     super.getNextEvent();
     if (isKeyboardEvent(event) && myKeyboardEventsDispatched.incrementAndGet() > myKeyboardEventsPosted.get()) {
       throw new RuntimeException(event + "; posted: " + myKeyboardEventsPosted + "; dispatched: " + myKeyboardEventsDispatched);
     }
@@ -699,9 +691,8 @@ public final class IdeEventQueue extends EventQueue {
     if (isTestMode()) {
       ExceptionUtil.rethrow(t);
     }
-    if (!myToolkitBugsProcessor.process(t)) {
-      StartupAbortedException.processException(t);
-    }
+
+    StartupAbortedException.processException(t);
   }
 
   @NotNull
@@ -1263,8 +1254,6 @@ public final class IdeEventQueue extends EventQueue {
     Disposer.register(parentDisposable, () -> myInputMethodLock--);
   }
 
-  private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
-
   @Override
   public void postEvent(@NotNull AWTEvent event) {
     doPostEvent(event);
@@ -1331,7 +1320,7 @@ public final class IdeEventQueue extends EventQueue {
   private boolean isTypeaheadTimeoutExceeded() {
     if (!delayKeyEvents.get()) return false;
     long currentTypeaheadDelay = System.currentTimeMillis() - lastTypeaheadTimestamp;
-    if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimout").asDouble()) {
+    if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimeout").asDouble()) {
       // Log4j uses appenders. The appenders potentially may use invokeLater method
       // In this particular place it is possible to get a deadlock because of
       // sun.awt.PostEventQueue#flush implementation.
@@ -1374,10 +1363,14 @@ public final class IdeEventQueue extends EventQueue {
       if (listener.consumePostedEvent(event)) return false;
     }
 
-    String message = myFrequentEventDetector.getMessageOnEvent(event);
-    if (message != null) {
-      // we can't log right here, because logging has locks inside, and postEvents can deadlock if it's blocked by anything (IDEA-161322)
-      NonUrgentExecutor.getInstance().execute(() -> myFrequentEventDetector.logMessage(message));
+    if (event instanceof InvocationEvent && !ClientId.isCurrentlyUnderLocalId() && ClientId.Companion.getPropagateAcrossThreads()) {
+      // only do wrapping trickery with non-local events to preserve correct behaviour - local events will get dispatched under local ID anyways
+      ClientId clientId = ClientId.getCurrent();
+      super.postEvent(new InvocationEvent(event.getSource(), () -> ClientId.withClientId(clientId, () -> {
+        dispatchEvent(event);
+      })));
+
+      return true;
     }
 
     if (isKeyboardEvent(event)) {
@@ -1508,9 +1501,9 @@ public final class IdeEventQueue extends EventQueue {
       postDelayedKeyEvents();
     }
 
-    EventWatcher watcher = obtainEventWatcher();
-    if (watcher instanceof LoggableEventWatcher) {
-      ((LoggableEventWatcher)watcher).logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
+    EventWatcher watcher = EventWatcher.getInstance();
+    if (watcher != null) {
+      watcher.logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
     }
   }
 
@@ -1519,7 +1512,7 @@ public final class IdeEventQueue extends EventQueue {
       return false;
     }
 
-    ActionManager actionManager = ServiceManager.getServiceIfCreated(ActionManager.class);
+    ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     return actionManager instanceof ActionManagerImpl &&
            !((ActionManagerImpl)actionManager).isActionPopupStackEmpty() &&
            !((ActionManagerImpl)actionManager).isToolWindowContextMenuVisible();

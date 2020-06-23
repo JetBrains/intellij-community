@@ -2,14 +2,14 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class ImaginaryCaret extends UserDataHolderBase implements Caret {
   private final ImaginaryCaretModel myCaretModel;
-  private int myOffset;
+  private int myStart, myEnd;
 
   ImaginaryCaret(ImaginaryCaretModel caretModel) {
     myCaretModel = caretModel;
@@ -17,12 +17,12 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public int getSelectionStart() {
-    return myOffset;
+    return myStart;
   }
 
   @Override
   public int getSelectionEnd() {
-    return myOffset;
+    return myEnd;
   }
 
   @Override
@@ -44,20 +44,18 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public int getOffset() {
-    return myOffset;
+    return myStart;
   }
 
   @Override
   public void moveToOffset(int offset) {
-    myOffset = offset;
+    myStart = myEnd = offset;
   }
 
   @Override
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
-    myOffset = offset;
+    myStart = myEnd = offset;
   }
-
-
 
   private RuntimeException notImplemented() {
     return getEditor().notImplemented();
@@ -75,12 +73,12 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
-    throw notImplemented();
+    moveToOffset(getEditor().logicalPositionToOffset(pos));
   }
 
   @Override
   public void moveToVisualPosition(@NotNull VisualPosition pos) {
-    throw notImplemented();
+    moveToOffset(getEditor().visualPositionToOffset(pos));
   }
 
   @Override
@@ -91,7 +89,7 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
   @NotNull
   @Override
   public LogicalPosition getLogicalPosition() {
-    throw notImplemented();
+    return getEditor().offsetToLogicalPosition(myStart);
   }
 
   @NotNull
@@ -124,7 +122,7 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
   @Nullable
   @Override
   public String getSelectedText() {
-    throw notImplemented();
+    return getEditor().getDocument().getText(new TextRange(myStart, myEnd));
   }
 
   @Override
@@ -140,12 +138,14 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void setSelection(int startOffset, int endOffset) {
-    throw notImplemented();
+    if (startOffset < 0 || startOffset > endOffset) throw new IllegalArgumentException();
+    myStart = startOffset;
+    myEnd = endOffset;
   }
 
   @Override
   public void setSelection(int startOffset, int endOffset, boolean updateSystemSelection) {
-    throw notImplemented();
+    setSelection(startOffset, endOffset);
   }
 
   @Override
@@ -169,7 +169,7 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void removeSelection() {
-    throw notImplemented();
+    myStart = myEnd;
   }
 
   @Override

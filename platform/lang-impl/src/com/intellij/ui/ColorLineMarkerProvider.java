@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
 import com.intellij.codeInsight.daemon.NavigateAction;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ElementColorProvider;
@@ -66,7 +66,6 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
       super(element,
             element.getTextRange(),
             JBUI.scale(new ColorIcon(12, color)),
-            Pass.LINE_MARKERS,
             FunctionUtil.<Object, String>nullConstant(),
             (e, elt) -> {
               if (!elt.isWritable()) return;
@@ -76,9 +75,10 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
 
               if (Registry.is("ide.new.color.picker")) {
                 RelativePoint relativePoint = new RelativePoint(e.getComponent(), e.getPoint());
-                ColorPicker.showColorPickerPopup(element.getProject(), color, (c, l) -> WriteAction.run(() -> colorProvider.setColorTo(elt, c)), relativePoint);
+                ColorPicker.showColorPickerPopup(element.getProject(), color, (c, l) -> WriteAction.run(() -> colorProvider.setColorTo(elt, c)), relativePoint, true);
               } else {
-                final Color c = ColorChooser.chooseColor(editor.getProject(), editor.getComponent(), "Choose Color", color, true);
+                final Color c = ColorChooser.chooseColor(editor.getProject(), editor.getComponent(),
+                                                         IdeBundle.message("dialog.title.choose.color"), color, true);
                 if (c != null) {
                   WriteAction.run(() -> colorProvider.setColorTo(elt, c));
                 }
@@ -94,13 +94,13 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
     }
 
     @Override
-    public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
+    public Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
       return JBUI.scale(new ColorsIcon(12, infos.stream().map(_info -> ((MyInfo)_info).myColor).toArray(Color[]::new)));
     }
 
     @NotNull
     @Override
-    public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<MergeableLineMarkerInfo> infos) {
+    public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
       return FunctionUtil.nullConstant();
     }
   }

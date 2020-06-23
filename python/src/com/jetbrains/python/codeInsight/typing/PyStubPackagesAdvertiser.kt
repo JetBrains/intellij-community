@@ -18,6 +18,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache.Companion.StubPackagesForSource
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
@@ -49,7 +50,8 @@ private class PyStubPackagesAdvertiser : PyInspection() {
   @Suppress("MemberVisibilityCanBePrivate")
   var ignoredPackages: MutableList<String> = mutableListOf()
 
-  override fun createOptionsPanel(): JComponent = ListEditForm("Ignored stub packages", ignoredPackages).contentPanel
+  override fun createOptionsPanel(): JComponent = ListEditForm(PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages"),
+                                                               ignoredPackages).contentPanel
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
@@ -122,12 +124,11 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
       val (reqs, args) = toRequirementsAndExtraArgs(cached, ignoredStubPackages)
       if (reqs.isNotEmpty()) {
-        val plural = reqs.size > 1
         val reqsToString = PyPackageUtil.requirementsToString(reqs)
+        val message = PyBundle.message("code.insight.stub.forced.packages.are.not.installed.message", reqs.size, reqsToString)
 
         registerProblem(file,
-                        "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed. " +
-                        "${if (plural) "They" else "It"} contain${if (plural) "" else "s"} type hints needed for better code insight.",
+                        message,
                         createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager),
                         createIgnorePackagesQuickFix(reqs, packageManager))
       }
@@ -154,10 +155,11 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
         project.putUserData(BALLOON_SHOWING, true)
 
+        val descriptionTemplate = PyBundle.message("code.insight.stub.checked.packages.are.not.installed.message", reqs.size, reqsToString)
         val problemDescriptor = ProblemDescriptorImpl(
           file,
           file,
-          "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed",
+          descriptionTemplate,
           LocalQuickFix.EMPTY_ARRAY,
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           true,
@@ -288,10 +290,8 @@ private class PyStubPackagesAdvertiser : PyInspection() {
               }
             }
 
-            val plural = stubPkgNamesToUninstall.size > 1
-            val content = "Suggested ${stubPkgNamesToUninstall.joinToString { "'$it'" }} " +
-                          "${if (plural) "are" else "is"} incompatible with your current environment.<br/>" +
-                          "${if (plural) "These" else "This"} stub package${if (plural) "s" else ""} will be removed and ignored until new version is released."
+            val content = PyBundle.message("code.insight.stub.packages.ignored.notification.content",
+                                           stubPkgNamesToUninstall.joinToString { "'$it'" }, stubPkgNamesToUninstall.size > 1)
 
             BALLOON_NOTIFICATIONS.createNotification(content, NotificationType.WARNING).notify(project)
             PyPackageManagerUI(project, sdk, uninstallationListener).uninstall(stubPkgsToUninstall)
@@ -303,7 +303,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
         }
       }
 
-      val name = "Install stub package" + if (reqs.size > 1) "s" else ""
+      val name = PyBundle.message("code.insight.stub.packages.install.requirements.fix.name", reqs.size)
       return PyInstallRequirementsFix(name, module, sdk, reqs, args, installationListener)
     }
 

@@ -17,23 +17,28 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 public final class SmartPointerManagerImpl extends SmartPointerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(SmartPointerManagerImpl.class);
   private final Project myProject;
-  private final Key<SmartPointerTracker> POINTERS_KEY;
   private final PsiDocumentManagerBase myPsiDocManager;
+  private final Key<WeakReference<SmartPointerTracker>> LIGHT_TRACKER_KEY;
+  private final ConcurrentMap<VirtualFile, SmartPointerTracker> myPhysicalTrackers = ContainerUtil.createConcurrentWeakValueMap();
 
   public SmartPointerManagerImpl(@NotNull Project project) {
     myProject = project;
     myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-    POINTERS_KEY = Key.create("SMART_POINTERS " + (project.isDefault() ? "default" : project.hashCode()));
+    LIGHT_TRACKER_KEY = Key.create("SMART_POINTERS " + (project.isDefault() ? "default" : project.hashCode()));
   }
 
   @Override
@@ -141,16 +146,11 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
     SmartPointerElementInfo info = pointer.getElementInfo();
     if (!(info instanceof SelfElementInfo)) return;
 
-    SmartPointerTracker.PointerReference reference = new SmartPointerTracker.PointerReference(pointer, containingFile, POINTERS_KEY);
-    while (true) {
-      SmartPointerTracker pointers = getTracker(containingFile);
-      if (pointers == null) {
-        pointers = containingFile.putUserDataIfAbsent(POINTERS_KEY, new SmartPointerTracker());
-      }
-      if (pointers.addReference(reference, pointer)) {
-        break;
-      }
+    SmartPointerTracker tracker = getTracker(containingFile);
+    if (tracker == null) {
+      tracker = getOrCreateTracker(containingFile);
     }
+    tracker.addReference(pointer);
   }
 
   @Override
@@ -179,20 +179,30 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
         if (reference.get() != pointer) {
           throw new IllegalStateException("Reference points to " + reference.get());
         }
-        if (reference.key != POINTERS_KEY) {
-          throw new IllegalStateException("Reference from wrong project: " + reference.key + " vs " + POINTERS_KEY);
-        }
-        SmartPointerTracker pointers = getTracker(reference.file);
-        if (pointers != null) {
-          pointers.removeReference(reference);
-        }
+        reference.tracker.removeReference(reference);
       }
     }
   }
 
   @Nullable
-  SmartPointerTracker getTracker(@NotNull VirtualFile containingFile) {
-    return containingFile.getUserData(POINTERS_KEY);
+  SmartPointerTracker getTracker(@NotNull VirtualFile file) {
+    return file instanceof LightVirtualFile ? SoftReference.dereference(file.getUserData(LIGHT_TRACKER_KEY)) : myPhysicalTrackers.get(file);
+  }
+
+  @NotNull
+  private SmartPointerTracker getOrCreateTracker(@NotNull VirtualFile file) {
+    synchronized (myPhysicalTrackers) {
+      SmartPointerTracker tracker = getTracker(file);
+      if (tracker == null) {
+        tracker = new SmartPointerTracker();
+        if (file instanceof LightVirtualFile) {
+          file.putUserData(LIGHT_TRACKER_KEY, new WeakReference<>(tracker));
+        } else {
+          myPhysicalTrackers.put(file, tracker);
+        }
+      }
+      return tracker;
+    }
   }
 
   @TestOnly

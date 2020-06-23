@@ -254,6 +254,11 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
+  public void testOverridingNotNullCollectionWithNullable() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
   public void testNotNullCollectionItemWithNullableSuperType() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();

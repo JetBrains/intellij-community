@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,14 +11,18 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper
+import java.util.function.Supplier
 import javax.swing.Icon
 
 /**
  * If it is not possible to automatically determine suitable account, [GithubChooseAccountDialog] dialog will be shown.
  */
-abstract class AbstractAuthenticatingGithubUrlGroupingAction(text: String?, description: String?, icon: Icon?)
-  : AbstractGithubUrlGroupingAction(text, description, icon) {
+abstract class AbstractAuthenticatingGithubUrlGroupingAction(dynamicText: Supplier<String?>,
+                                                             dynamicDescription: Supplier<String?>,
+                                                             icon: Icon?)
+  : AbstractGithubUrlGroupingAction(dynamicText, dynamicDescription, icon) {
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repository: GitRepository, remote: GitRemote, remoteUrl: String) {
     if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
@@ -46,7 +50,7 @@ abstract class AbstractAuthenticatingGithubUrlGroupingAction(text: String?, desc
     val dialog = GithubChooseAccountDialog(project,
                                            null,
                                            accounts,
-                                           "Choose GitHub account for: $remoteUrl",
+                                           GithubBundle.message("account.choose.for", remoteUrl),
                                            false,
                                            true)
     DialogManager.show(dialog)

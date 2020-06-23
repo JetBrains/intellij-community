@@ -23,9 +23,10 @@ import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,8 +86,10 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
-    myConnection.subscribe(PowerSaveMode.TOPIC, this::updateStatus);
-    myConnection.subscribe(ProfileChangeAdapter.TOPIC,  new ProfileChangeAdapter() {
+
+    MessageBusConnection connection = myConnection;
+    connection.subscribe(PowerSaveMode.TOPIC, this::updateStatus);
+    connection.subscribe(ProfileChangeAdapter.TOPIC,  new ProfileChangeAdapter() {
       @Override
       public void profilesInitialized() {
         updateStatus();
@@ -102,7 +105,7 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
       }
     });
 
-    myConnection.subscribe(FileHighlightingSettingListener.SETTING_CHANGE, (__, ___) -> updateStatus());
+    connection.subscribe(FileHighlightingSettingListener.SETTING_CHANGE, (__, ___) -> updateStatus());
     updateStatus();
   }
 
@@ -124,7 +127,7 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
   }
 
   public void updateStatus() {
-    UIUtil.invokeLaterIfNeeded(() -> updateStatus(getCurrentFile()));
+    AppUIUtil.invokeOnEdt(() -> updateStatus(getCurrentFile()));
   }
 
   private void updateStatus(PsiFile file) {

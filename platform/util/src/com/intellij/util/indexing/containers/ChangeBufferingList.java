@@ -244,7 +244,8 @@ public class ChangeBufferingList implements Cloneable {
   }
 
   public ValueContainer.IntPredicate intPredicate() {
-    return getRandomAccessContainer().intPredicate();
+    RandomAccessIntContainer container = getRandomAccessContainer();
+    return container::contains;
   }
 
   public IntIdsIterator intIterator() {

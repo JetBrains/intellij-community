@@ -154,5 +154,11 @@
     <diff.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnTreeConflictDiffRequestProvider$SvnTreeConflictDiffTool"/>
     <applicationService serviceImplementation="org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder"/>
     <notificationWhitelist groupIds="Svn Roots Detection Errors"/>
+
+    <registryKey key="svn.use.incoming.optimization" defaultValue="false"
+                 description="Use remotely (in svn repository) changed files list to optimize incoming revisions processing"/>
+    <registryKey key="svn.lowest.supported.format.for.command.line" defaultValue="1.7.0"
+                 description="Lowest svn working copy format command line integration could be used with"/>
+    <registryKey key="svn.filter.unique.roots.by.url" defaultValue="false" description="Filter unique roots by obtaining repository urls"/>
   </extensions>
 </idea-plugin>

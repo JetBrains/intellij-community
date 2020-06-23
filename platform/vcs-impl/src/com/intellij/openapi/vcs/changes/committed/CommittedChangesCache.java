@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
@@ -6,10 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.SimplePersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -19,15 +16,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -41,6 +35,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -50,11 +45,12 @@ import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList
 /**
  * @author yole
  */
+@Service
 @State(
   name = "CommittedChangesCache",
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
-public class CommittedChangesCache extends SimplePersistentStateComponent<CommittedChangesCacheState> {
+public final class CommittedChangesCache extends SimplePersistentStateComponent<CommittedChangesCacheState> {
   private static final Logger LOG = Logger.getInstance(CommittedChangesCache.class);
 
   private final Project myProject;
@@ -63,7 +59,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   private int myPendingUpdateCount = 0;
   private ScheduledFuture myFuture;
   private List<CommittedChangeList> myCachedIncomingChangeLists;
-  @NotNull private final Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<>();
+  private final @NotNull Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<>();
 
   private MyRefreshRunnable myRefresnRunnable;
 
@@ -75,7 +71,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
                                                                                     CommittedChangesListener.class);
 
   public static CommittedChangesCache getInstance(Project project) {
-    return project.getComponent(CommittedChangesCache.class);
+    return project.getService(CommittedChangesCache.class);
   }
 
   public CommittedChangesCache(@NotNull Project project) {
@@ -99,27 +95,26 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     myLocationCache = new RepositoryLocationCache(project);
     myCachesHolder = new CachesHolder(project, myLocationCache);
     myTaskQueue = new ProgressManagerQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
-    ProjectLevelVcsManagerImpl.getInstanceImpl(project)
-      .addInitializationRequest(VcsInitObject.COMMITTED_CHANGES_CACHE, () -> {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          if (myProject.isDisposed()) {
-            return;
-          }
+    ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> {
+      ApplicationManager.getApplication().runReadAction(() -> {
+        if (myProject.isDisposed()) {
+          return;
+        }
 
-          myTaskQueue.start();
+        myTaskQueue.start();
 
-          MessageBusConnection connection = project.getMessageBus().connect();
-          connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
-          connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
-        });
+        MessageBusConnection connection = project.getMessageBus().connect();
+        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
+        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
       });
+    });
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
         cancelRefreshTimer();
       }
     });
-    myExternallyLoadedChangeLists = ContainerUtil.newConcurrentMap();
+    myExternallyLoadedChangeLists = new ConcurrentHashMap<>();
   }
 
   public MessageBus getMessageBus() {
@@ -232,10 +227,9 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     myTaskQueue.run(loader);
   }
 
-  @Nullable
-  public List<CommittedChangeList> getChanges(ChangeBrowserSettings settings, final VirtualFile file, @NotNull final AbstractVcs vcs,
-                                              final int maxCount, final boolean cacheOnly, final CommittedChangesProvider provider,
-                                              final RepositoryLocation location) throws VcsException {
+  public @Nullable List<CommittedChangeList> getChanges(ChangeBrowserSettings settings, final VirtualFile file, final @NotNull AbstractVcs vcs,
+                                                        final int maxCount, final boolean cacheOnly, final CommittedChangesProvider provider,
+                                                        final RepositoryLocation location) throws VcsException {
     if (settings instanceof CompositeCommittedChangesProvider.CompositeChangeBrowserSettings) {
       settings = ((CompositeCommittedChangesProvider.CompositeChangeBrowserSettings) settings).get(vcs);
     }
@@ -294,7 +288,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     return true;
   }
 
-  public void hasCachesForAnyRoot(@Nullable final Consumer<? super Boolean> continuation) {
+  public void hasCachesForAnyRoot(final @Nullable Consumer<? super Boolean> continuation) {
     myTaskQueue.run(() -> {
       final Ref<Boolean> success = new Ref<>();
       try {
@@ -333,8 +327,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     return resultRef.get();
   }
 
-  @Nullable
-  public Iterator<ChangesBunch> getBackBunchedIterator(final AbstractVcs vcs, final VirtualFile root, final RepositoryLocation location, final int bunchSize) {
+  public @Nullable Iterator<ChangesBunch> getBackBunchedIterator(final AbstractVcs vcs, final VirtualFile root, final RepositoryLocation location, final int bunchSize) {
     final ChangesCacheFile cacheFile = myCachesHolder.getCacheFile(vcs, root, location);
     try {
       if (! cacheFile.isEmpty()) {
@@ -391,8 +384,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     debug("Finished refreshing all caches");
   }
 
-  @NotNull
-  private List<CommittedChangeList> initCache(@NotNull ChangesCacheFile cacheFile) throws VcsException, IOException {
+  private @NotNull List<CommittedChangeList> initCache(@NotNull ChangesCacheFile cacheFile) throws VcsException, IOException {
     debug("Initializing cache for " + cacheFile.getLocation());
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
@@ -430,8 +422,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   }
 
   // todo: fix - would externally loaded necessarily for file? i.e. just not efficient now
-  @NotNull
-  private List<CommittedChangeList> refreshCache(@NotNull ChangesCacheFile cacheFile) throws VcsException, IOException {
+  private @NotNull List<CommittedChangeList> refreshCache(@NotNull ChangesCacheFile cacheFile) throws VcsException, IOException {
     debug("Refreshing cache for " + cacheFile.getLocation());
     final List<CommittedChangeList> newLists = new ArrayList<>();
 
@@ -508,8 +499,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     return savedChanges;
   }
 
-  @NotNull
-  private static List<CommittedChangeList> trimToSize(@NotNull List<CommittedChangeList> changes, int maxCount) {
+  private static @NotNull List<CommittedChangeList> trimToSize(@NotNull List<CommittedChangeList> changes, int maxCount) {
     if (maxCount > 0) {
       while (changes.size() > maxCount) {
         changes.remove(0);
@@ -575,15 +565,13 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
       myVcsZipper = vcsZipper;
     }
 
-    @NotNull
     @Override
-    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
+    public @NotNull Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
       return myVcsZipper.groupLocations(in);
     }
 
-    @NotNull
     @Override
-    public CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
+    public @NotNull CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
       if (lists.size() == 1) {
         return lists.get(0);
       }
@@ -623,14 +611,15 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
           fireChangesLoaded(location, Collections.emptyList());
         }
         catch (IOException e) {
-          VcsBalloonProblemNotifier.showOverChangesView(myProject, "Didn't update Repository changes with new message due to error: " + e.getMessage(),
-                                                        MessageType.ERROR);
+          VcsBalloonProblemNotifier
+            .showOverChangesView(myProject, VcsBundle.message("notification.content.didn.t.update.repository.changes", e.getMessage()),
+                                 MessageType.ERROR);
         }
       }
     });
   }
 
-  public void loadIncomingChangesAsync(@Nullable final Consumer<? super List<CommittedChangeList>> consumer, final boolean inBackground) {
+  public void loadIncomingChangesAsync(final @Nullable Consumer<? super List<CommittedChangeList>> consumer, final boolean inBackground) {
     debug("Loading incoming changes");
     final Runnable task = () -> {
       final List<CommittedChangeList> list = loadIncomingChanges(inBackground);
@@ -650,8 +639,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     });
   }
 
-  @Nullable
-  public List<CommittedChangeList> getCachedIncomingChanges() {
+  public @Nullable List<CommittedChangeList> getCachedIncomingChanges() {
     return myCachedIncomingChangeLists;
   }
 
@@ -660,7 +648,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   }
 
   public void processUpdatedFiles(final UpdatedFiles updatedFiles,
-                                  @Nullable final Consumer<? super List<CommittedChangeList>> incomingChangesConsumer) {
+                                  final @Nullable Consumer<? super List<CommittedChangeList>> incomingChangesConsumer) {
     final Runnable task = () -> {
       debug("Processing updated files");
       final Collection<ChangesCacheFile> caches = myCachesHolder.getAllCaches();
@@ -705,7 +693,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
 
   private void processUpdatedFilesAfterRefresh(final ChangesCacheFile cache,
                                                final UpdatedFiles updatedFiles,
-                                               @Nullable final Consumer<? super List<CommittedChangeList>> incomingChangesConsumer) {
+                                               final @Nullable Consumer<? super List<CommittedChangeList>> incomingChangesConsumer) {
     refreshCacheAsync(cache, false, new RefreshResultConsumer() {
       @Override
       public void receivedChanges(final List<CommittedChangeList> committedChangeLists) {
@@ -854,12 +842,12 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   }
 
   private void refreshCacheAsync(final ChangesCacheFile cache, final boolean initIfEmpty,
-                                 @Nullable final RefreshResultConsumer consumer) {
+                                 final @Nullable RefreshResultConsumer consumer) {
     refreshCacheAsync(cache, initIfEmpty, consumer, true);
   }
 
   private void refreshCacheAsync(final ChangesCacheFile cache, final boolean initIfEmpty,
-                                 @Nullable final RefreshResultConsumer consumer, final boolean asynch) {
+                                 final @Nullable RefreshResultConsumer consumer, final boolean asynch) {
     try {
       if (!initIfEmpty && cache.isEmpty()) {
         return;
@@ -925,8 +913,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     }
   }
 
-  @Nullable
-  public Pair<CommittedChangeList, Change> getIncomingChangeList(final VirtualFile file) {
+  public @Nullable Pair<CommittedChangeList, Change> getIncomingChangeList(final VirtualFile file) {
     if (myCachedIncomingChangeLists != null) {
       File ioFile = new File(file.getPath());
       for(CommittedChangeList changeList: myCachedIncomingChangeLists) {

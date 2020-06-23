@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -119,5 +120,14 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
     } else {
       ct.deleteAndRestoreComments(statement);
     }
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiExpression expression = myExpressionPtr.getElement();
+    PsiStatement statement = myStatementPtr.getElement();
+    if (expression == null || statement == null) return null;
+    return new DeleteSideEffectsAwareFix(PsiTreeUtil.findSameElementInCopy(statement, target),
+                                         PsiTreeUtil.findSameElementInCopy(expression, target));
   }
 }

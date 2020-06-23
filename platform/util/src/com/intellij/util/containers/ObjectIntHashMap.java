@@ -34,4 +34,10 @@ public class ObjectIntHashMap<K> extends TObjectIntHashMap<K> {
     int index = index(key);
     return index < 0 ? defaultValue : _values[index];
   }
+
+  public int put(K key, int value, int defaultValue) {
+    int index = index(key);
+    int prev = super.put(key, value);
+    return index >= 0 ? prev : defaultValue;
+  }
 }

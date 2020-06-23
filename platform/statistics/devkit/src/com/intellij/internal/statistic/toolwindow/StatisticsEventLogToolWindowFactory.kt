@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.toolwindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.NonEmptyActionGroup
+import com.intellij.internal.statistic.StatisticsDevKitUtil.DEFAULT_RECORDER
 import com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction
 import com.intellij.internal.statistic.eventLog.getEventLogProviders
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
@@ -17,7 +18,6 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.ContentFactory
 
-private const val DEFAULT_RECORDER = "FUS"
 
 /**
  * Creates a toolwindow with feature usage statistics event log
@@ -41,38 +41,34 @@ private class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware
     })
   }
 
-  override fun isApplicable(project: Project): Boolean {
-    return TestModeValidationRule.isTestModeEnabled()
+  override fun isApplicable(project: Project) = TestModeValidationRule.isTestModeEnabled()
+}
+
+private fun createNewSessionActionGroup(project: Project): NonEmptyActionGroup {
+  val actionGroup = NonEmptyActionGroup()
+  actionGroup.isPopup = true
+  actionGroup.templatePresentation.icon = AllIcons.General.Add
+
+  val actions = getEventLogProviders().map { logger ->
+    val recorder = logger.recorderId
+    CreateNewSessionAction(project, recorder)
   }
+  actionGroup.addAll(actions)
+  return actionGroup
+}
 
-  private fun createNewSessionActionGroup(project: Project): NonEmptyActionGroup {
-    val actionGroup = NonEmptyActionGroup()
-    actionGroup.isPopup = true
-    actionGroup.templatePresentation.icon = AllIcons.General.Add
-
-    val actions = getEventLogProviders().map { logger ->
-      val recorder = logger.recorderId
-      CreateNewSessionAction(project, recorder)
-    }
-    actionGroup.addAll(actions)
-    return actionGroup
+private class CreateNewSessionAction(private val project: Project, private val recorderId: String) : AnAction(recorderId) {
+  override fun actionPerformed(e: AnActionEvent) {
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(eventLogToolWindowsId) ?: return
+    createNewTab(project, toolWindow, recorderId)
   }
+}
 
-  private class CreateNewSessionAction(private val project: Project, private val recorderId: String) : AnAction(recorderId) {
-    override fun actionPerformed(e: AnActionEvent) {
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(eventLogToolWindowsId) ?: return
-      createNewTab(project, toolWindow, recorderId)
-    }
-  }
-
-  companion object {
-    private fun createNewTab(project: Project, toolWindow: ToolWindow, recorderId: String) {
-      val eventLogToolWindow = StatisticsEventLogToolWindow(project, recorderId)
-      val content = ContentFactory.SERVICE.getInstance().createContent(eventLogToolWindow.component, recorderId, true)
-      content.preferredFocusableComponent = eventLogToolWindow.component
-      toolWindow.contentManager.addContent(content)
-      RecordStateStatisticsEventLogAction.checkLogRecordingEnabled(project, recorderId)
-    }
-  }
-
+private fun createNewTab(project: Project, toolWindow: ToolWindow, recorderId: String) {
+  val eventLogToolWindow = StatisticsEventLogToolWindow(project, recorderId)
+  val content = ContentFactory.SERVICE.getInstance().createContent(eventLogToolWindow.component, recorderId, true)
+  content.preferredFocusableComponent = eventLogToolWindow.component
+  toolWindow.contentManager.addContent(content)
+  toolWindow.contentManager.setSelectedContent(content)
+  RecordStateStatisticsEventLogAction.checkLogRecordingEnabled(project, recorderId)
 }

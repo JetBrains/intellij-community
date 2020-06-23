@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search.impl
 
 import com.intellij.model.search.SearchParameters
@@ -13,8 +13,7 @@ internal class SearchParametersQuery<R>(
     return runSearch(myParameters.project, this, consumer)
   }
 
-  override fun decompose(): PrimitiveRequests<R> {
-    val parametersRequest: ParametersRequest<R, R> = ParametersRequest(myParameters, idTransform())
-    return PrimitiveRequests(Requests(parametersRequests = listOf(parametersRequest)))
+  override fun decompose(): Requests<R> {
+    return Requests(parametersRequests = listOf(ParametersRequest(myParameters, idTransform())))
   }
 }

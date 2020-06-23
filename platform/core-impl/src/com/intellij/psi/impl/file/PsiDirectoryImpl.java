@@ -28,6 +28,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.IconWithToolTip;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -527,7 +528,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   protected Icon getElementIcon(final int flags) {
-    return PlatformIcons.FOLDER_ICON;
+    return IconWithToolTip.tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
   }
 
   @Override

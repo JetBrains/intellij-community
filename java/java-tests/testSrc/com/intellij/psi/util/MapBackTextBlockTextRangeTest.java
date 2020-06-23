@@ -3,9 +3,8 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class MapBackTextBlockTextRangeTest extends LightPlatformCodeInsightTestCase {
@@ -33,9 +32,9 @@ public class MapBackTextBlockTextRangeTest extends LightPlatformCodeInsightTestC
   public void testContentWithBlankLines() {
     doTest("\"\"\"\n" +
            "     \n" +
-           " foo \n" +
+           " foo \t\f\n" +
            "     \n" +
-           "       \"\"\"", 0, 6, new TextRange(9, 22));
+           "       \"\"\"", 0, 6, new TextRange(9, 24));
   }
 
   public void testIndentNonZero() {
@@ -52,9 +51,9 @@ public class MapBackTextBlockTextRangeTest extends LightPlatformCodeInsightTestC
 
   private void doTest(String blockText, int from, int to, TextRange expectedRange) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-    PsiLiteralExpressionImpl textBlock = (PsiLiteralExpressionImpl)factory.createExpressionFromText(blockText, null);
-    assertSame(JavaTokenType.TEXT_BLOCK_LITERAL, textBlock.getLiteralElementType());
-    int indent = textBlock.getTextBlockIndent();
+    PsiLiteralExpression textBlock = (PsiLiteralExpression)factory.createExpressionFromText(blockText, null);
+    assertTrue(textBlock.isTextBlock());
+    int indent = PsiLiteralUtil.getTextBlockIndent(textBlock);
     assertTrue(indent >= 0);
     TextRange actualRange = PsiLiteralUtil.mapBackTextBlockRange(textBlock.getText(), from, to, indent);
     assertEquals(expectedRange, actualRange);

@@ -539,7 +539,7 @@ public class XSDModelLoader implements ModelLoader {
           fd1.comment = "array of " + fd1.elementType;
         }
         fd1.realIndex = td.fdMap.size();
-        boolean merge = globalMerge || globalChoice.containsKey(p) && globalChoice.values().contains(fd1.name);
+        boolean merge = globalMerge || globalChoice.containsKey(p) && globalChoice.containsValue(fd1.name);
         td.duplicates = Util.addToNameMap(td.fdMap, fd1, merge) || td.duplicates;
         globalChoice.put(p, fd1.name);
       } else if (p.getTerm() instanceof XSModelGroup) {

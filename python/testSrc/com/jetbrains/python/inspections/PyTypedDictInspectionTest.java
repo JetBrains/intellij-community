@@ -278,6 +278,28 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
   }
 
+  // PY-40906
+  public void testLiteralAsTypedDictKey() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict, Literal, Union\n" +
+                         "class Movie(TypedDict):\n" +
+                         "    name: str\n" +
+                         "    year: int\n" +
+                         "def get_value(movie: Movie, key: Literal['year', 'name']) -> Union[int, str]:\n" +
+                         "    return movie[key]\n" +
+                         "def get_value(movie: Movie, key: Literal['name']) -> Union[int, str]:\n" +
+                         "    return movie[key]\n" +
+                         "def get_value(movie: Movie, key: Literal['name1']) -> Union[int, str]:\n" +
+                         "    return movie[<warning descr=\"TypedDict \\\"Movie\\\" has no key 'name1'\">key</warning>]\n" +
+                         "def get_value(movie: Movie, key: Literal['year', 42]) -> Union[int, str]:\n" +
+                         "    return movie[<warning descr=\"TypedDict key must be a string literal; expected one of ('name', 'year')\">key</warning>]\n" +
+                         "def get_value(movie: Movie, key: Literal['year', 'name1', '42']) -> Union[int, str]:\n" +
+                         "    return movie[<warning descr=\"TypedDict \\\"Movie\\\" has no keys ('name1', '42')\">key</warning>]\n" +
+                         "def get_value(movie: Movie, key: Literal[42]) -> Union[int, str]:\n" +
+                         "    return movie[<warning descr=\"TypedDict key must be a string literal; expected one of ('name', 'year')\">key</warning>]"));
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

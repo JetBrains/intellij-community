@@ -134,6 +134,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
   }
 
   private static void startInplaceRename(Editor editor, PsiMethod method, PsiMethodReferenceExpression methodReference) {
+    if (!method.isPhysical()) return;
     PsiIdentifier nameIdentifier = method.getNameIdentifier();
     if (nameIdentifier == null) return;
     nameIdentifier = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(nameIdentifier);

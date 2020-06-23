@@ -234,7 +234,9 @@ public abstract class XmlAttributeDelegate {
       final String prefix = myAttribute.getNamespacePrefix();
       if (!prefix.isEmpty() && !myAttribute.getLocalName().isEmpty()) {
         refs = new PsiReference[referencesFromProviders.length + 2];
-        refs[0] = new SchemaPrefixReference(myAttribute, TextRange.from(0, prefix.length()), prefix, null);
+        XmlElement nameElement = myAttribute.getNameElement();
+        TextRange prefixRange = TextRange.from(nameElement == null ? 0 : nameElement.getStartOffsetInParent(), prefix.length());
+        refs[0] = new SchemaPrefixReference(myAttribute, prefixRange, prefix, null);
         refs[1] = new XmlAttributeReference(myAttribute);
       }
       else {

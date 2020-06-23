@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
+  @SafeFieldForPreview
   private final PsiType myType;
   private final String myName;
 
@@ -73,7 +74,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     addTypeCast(project, (PsiExpression)startElement, myType);
   }
 
-  private static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
+  public static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
     PsiExpression typeCast = createCastExpression(originalExpression, project, type);
     originalExpression.replace(typeCast);
   }

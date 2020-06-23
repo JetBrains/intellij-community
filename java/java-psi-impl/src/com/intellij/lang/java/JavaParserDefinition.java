@@ -81,7 +81,7 @@ public class JavaParserDefinition implements ParserDefinition {
       return ((JavaStubElementType)type).createPsi(node);
     }
 
-    throw new IllegalArgumentException("Not a Java node: " + node + " (" + type + ")");
+    throw new IllegalArgumentException("Not a Java node: " + node + " (" + type + ", " + type.getLanguage() + ")");
   }
 
   @Override

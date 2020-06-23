@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -27,7 +28,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(getProject());
-    codeStyleSettingsManager.setTemporarySettings(new CodeStyleSettings());
+    codeStyleSettingsManager.setTemporarySettings(CodeStyle.createTestSettings());
   }
 
   @Override

@@ -3,6 +3,7 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.inspections.PyNonAsciiCharInspection;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.PyFile;

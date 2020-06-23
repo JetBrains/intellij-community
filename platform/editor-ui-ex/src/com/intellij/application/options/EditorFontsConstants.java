@@ -35,11 +35,11 @@ public class EditorFontsConstants {
   }
 
   private static int round(int min, int max, int val) {
-    return val < min ? min : val > max ? max : val;
+    return Math.max(min, Math.min(max, val));
   }
 
   private static float round(float min, float max, float val) {
-    return val < min ? min : val > max ? max : val;
+    return Math.max(min, Math.min(max, val));
   }
 
   private EditorFontsConstants() {

@@ -3,7 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExpressionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,7 @@ import java.util.*;
 public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightUtil.Feature.RECORDS.isAvailable(holder.getFile())) {
+    if (!HighlightingFeature.RECORDS.isAvailable(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -44,6 +44,8 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
       private void checkCanonical(PsiMethod ctor) {
         PsiCodeBlock body = ctor.getBody();
         if (body == null) return;
+        PsiIdentifier nameIdentifier = ctor.getNameIdentifier();
+        if (nameIdentifier == null) return;
         PsiRecordComponent[] components = Objects.requireNonNull(ctor.getContainingClass()).getRecordComponents();
         PsiParameter[] parameters = ctor.getParameterList().getParameters();
         PsiAnnotation.TargetType[] targets = {PsiAnnotation.TargetType.PARAMETER, PsiAnnotation.TargetType.TYPE_USE};
@@ -57,7 +59,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
         int assignedCount = getAssignedComponentsCount(components, parameters, statements);
         if (statements.length == components.length && assignedCount == components.length && 
             ctor.getModifierList().getAnnotations().length == 0 && ctor.getDocComment() == null) {
-          holder.registerProblem(Objects.requireNonNull(ctor.getNameIdentifier()),
+          holder.registerProblem(nameIdentifier,
                                  JavaBundle.message("inspection.redundant.record.constructor.canonical.message"),
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(ctor));
           return;

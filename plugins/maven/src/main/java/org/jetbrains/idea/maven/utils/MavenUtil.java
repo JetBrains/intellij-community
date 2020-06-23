@@ -36,6 +36,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
@@ -117,13 +118,12 @@ public class MavenUtil {
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
 
 
-
-
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
     Pair.create(Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar"), "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML),
     Pair.create(Pattern.compile("maven-model-builder-\\d+\\.\\d+\\.\\d+\\.jar"), "org/apache/maven/model/" + MavenConstants.SUPER_POM_XML)
   };
+  public static final String MAVEN_NEW_PROJECT_MODEL_KEY = "maven.new.project.model";
 
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
 
@@ -242,15 +242,21 @@ public class MavenUtil {
   }
 
   public static File getBaseDir(@NotNull VirtualFile file) {
-    File baseDir = VfsUtilCore.virtualToIoFile(file.isDirectory() || file.getParent() == null ? file : file.getParent());
-    File dir = baseDir;
+    return VfsUtilCore.virtualToIoFile(getVFileBaseDir(file));
+  }
+
+  public static VirtualFile getVFileBaseDir(@NotNull VirtualFile file) {
+    VirtualFile baseDir = file.isDirectory() || file.getParent() == null ? file : file.getParent();
+    VirtualFile dir = baseDir;
     do {
-      if (new File(dir, ".mvn").isDirectory()) {
+      VirtualFile child = dir.findChild(".mvn");
+
+      if (child != null && child.isDirectory()) {
         baseDir = dir;
         break;
       }
     }
-    while ((dir = dir.getParentFile()) != null);
+    while ((dir = dir.getParent()) != null);
     return baseDir;
   }
 
@@ -921,7 +927,7 @@ public class MavenUtil {
     if (mavenHome != null) {
       result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
     }
-    return result == null ? doResolveSuperPomFile(MavenServerManager.getMavenLibDirectory()) : result;
+    return result == null ? doResolveSuperPomFile(new File(MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
   }
 
   @Nullable
@@ -995,7 +1001,9 @@ public class MavenUtil {
   }
 
   public static boolean newModelEnabled(Project project) {
-    return LegacyBridgeProjectLifecycleListener.Companion.enabled(project);
+    return LegacyBridgeProjectLifecycleListener.Companion.enabled(project) &&
+           (Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
+            || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY));
   }
 
   public interface MavenTaskHandler {

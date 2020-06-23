@@ -36,6 +36,8 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
+
 public class VcsLogManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
@@ -109,12 +111,11 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public VcsLogUiFactory<? extends MainVcsLogUi> getMainLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
-    Optional<CustomVcsLogUiFactoryProvider> customVcsLogUiFactoryProviderOptional =
-      CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.extensions(myProject)
-        .filter(p -> p.isActive(this)).findFirst();
-    return customVcsLogUiFactoryProviderOptional.isPresent() ?
-           customVcsLogUiFactoryProviderOptional.get().createLogUiFactory(logId, this, filters) :
-           new MainVcsLogUiFactory(logId, filters);
+    CustomVcsLogUiFactoryProvider factoryProvider = LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.findFirstSafe(myProject, p -> p.isActive(this));
+    if (factoryProvider == null) {
+      return new MainVcsLogUiFactory(logId, filters);
+    }
+    return factoryProvider.createLogUiFactory(logId, this, filters);
   }
 
   @NotNull
@@ -134,7 +135,10 @@ public class VcsLogManager implements Disposable {
                                               @NotNull LogWindowKind kind,
                                               boolean isClosedOnDispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (isDisposed()) throw new ProcessCanceledException();
+    if (isDisposed()) {
+      LOG.error("Trying to create new VcsLogUi on a disposed VcsLogManager instance");
+      throw new ProcessCanceledException();
+    }
 
     U ui = factory.createLogUi(myProject, myLogData);
     Disposer.register(ui, getTabsWatcher().addTabToWatch(ui.getId(), ui.getRefresher(), kind, isClosedOnDispose));

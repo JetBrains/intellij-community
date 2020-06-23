@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.google.common.collect.Sets;
@@ -6,6 +6,7 @@ import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.SettingsStep;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.WebProjectGenerator;
@@ -18,7 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Sergey Simonchik
@@ -84,7 +88,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
         box.setRenderer(SimpleListCellRenderer.create((label, tag, index) -> {
           final String text;
           if (tag == null) {
-            text = isBackgroundJobRunning() ? CommonBundle.getLoadingTreeNodeText() : "Unavailable";
+            text = isBackgroundJobRunning() ? CommonBundle.getLoadingTreeNodeText() : LangBundle.message("label.unavailable");
           }
           else {
             text = tag.getName();
@@ -142,7 +146,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   @NotNull
   private static List<GithubTagInfo> createSortedTagList(@NotNull Collection<? extends GithubTagInfo> tags) {
     List<GithubTagInfo> sortedTags = new ArrayList<>(tags);
-    Collections.sort(sortedTags, (tag1, tag2) -> {
+    sortedTags.sort((tag1, tag2) -> {
       GithubTagInfo.Version v1 = tag1.getVersion();
       GithubTagInfo.Version v2 = tag2.getVersion();
       return v2.compareTo(v1);

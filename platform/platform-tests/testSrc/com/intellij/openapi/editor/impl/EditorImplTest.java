@@ -4,10 +4,13 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -24,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.util.Collections;
 
 public class EditorImplTest extends AbstractEditorTest {
   public void testPositionCalculationForZeroWidthChars() {
@@ -512,7 +516,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText(StringUtil.repeat("a ", 1000));
     ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes());
     runWriteCommand(() -> getEditor().getDocument().deleteString(0, getEditor().getDocument().getTextLength()));
-    assertEquals(0, ((EditorImpl)getEditor()).getVisibleLineCount());
+    assertEquals(1, ((EditorImpl)getEditor()).getVisibleLineCount());
   }
 
   public void testDragInsideSelectionWithDndDisabled() {
@@ -628,12 +632,60 @@ public class EditorImplTest extends AbstractEditorTest {
     addCollapsedFoldRegion(1, 2, "");
     right();
     Caret caret = getEditor().getCaretModel().getPrimaryCaret();
-    assertEquals(1, caret.getOffset());
-    assertEquals(new LogicalPosition(0, 1), caret.getLogicalPosition());
+    assertEquals(2, caret.getOffset());
+    assertEquals(new LogicalPosition(0, 2), caret.getLogicalPosition());
     assertEquals(new VisualPosition(0, 1), caret.getVisualPosition());
     right();
     assertEquals(3, caret.getOffset());
     assertEquals(new LogicalPosition(0, 3), caret.getLogicalPosition());
     assertEquals(new VisualPosition(0, 2), caret.getVisualPosition());
+  }
+
+  public void testDragStartingAtBlockInlay() {
+    initText("abc<caret>");
+    addBlockInlay(0, true, 10);
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
+    mouse().pressAtXY(0, 0).dragToXY(0, getEditor().getLineHeight()).release();
+    checkResultByText("abc<caret>");
+  }
+
+  public void testMouseDraggingWithCamelHumpsDisabledForMouse() {
+    boolean savedOption = EditorSettingsExternalizable.getInstance().isCamelWords();
+    try {
+      EditorSettingsExternalizable.getInstance().setCamelWords(true);
+      initText("AbcDefGhi");
+      EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
+      getEditor().getSettings().setMouseClickSelectionHonorsCamelWords(false);
+      mouse().doubleClickNoReleaseAt(0, 4).dragTo(0, 5).release();
+      checkResultByText("<selection>AbcDefGhi<caret></selection>");
+    }
+    finally {
+      EditorSettingsExternalizable.getInstance().setCamelWords(savedOption);
+    }
+  }
+
+  public void testSettingFontPreferences() {
+    initText("");
+    EditorColorsScheme colorsScheme = getEditor().getColorsScheme();
+
+    FontPreferencesImpl preferences = new FontPreferencesImpl();
+    preferences.register("CustomFont", 32);
+    preferences.setUseLigatures(true);
+    colorsScheme.setFontPreferences(preferences);
+
+    FontPreferences p = colorsScheme.getFontPreferences();
+    assertEquals(Collections.singletonList("CustomFont"), p.getRealFontFamilies());
+    assertEquals(32, p.getSize("CustomFont"));
+    assertTrue(p.useLigatures());
+
+    FontPreferencesImpl preferences2 = new FontPreferencesImpl();
+    preferences2.register("CustomFont2", 23);
+    preferences2.setUseLigatures(false);
+    colorsScheme.setFontPreferences(preferences2);
+
+    FontPreferences p2 = colorsScheme.getFontPreferences();
+    assertEquals(Collections.singletonList("CustomFont2"), p2.getRealFontFamilies());
+    assertEquals(23, p2.getSize("CustomFont2"));
+    assertFalse(p.useLigatures());
   }
 }

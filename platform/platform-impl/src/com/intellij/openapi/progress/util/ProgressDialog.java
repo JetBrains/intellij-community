@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -19,6 +20,7 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
@@ -38,6 +40,7 @@ final class ProgressDialog implements Disposable {
   private final boolean myShouldShowBackground;
   private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> update(), 500, this);
   private boolean myWasShown;
+  private final long myStartMillis = System.currentTimeMillis();
 
   final Runnable myRepaintRunnable = new Runnable() {
     @Override
@@ -49,6 +52,9 @@ final class ProgressDialog implements Disposable {
       if (myProgressBar.isShowing()) {
         myProgressBar.setIndeterminate(myProgressWindow.isIndeterminate());
         myProgressBar.setValue((int)(fraction * 100));
+        if (myProgressBar.isIndeterminate() && isWriteActionProgress() && myProgressBar.getUI() instanceof DarculaProgressBarUI) {
+          ((DarculaProgressBarUI)myProgressBar.getUI()).updateIndeterminateAnimationIndex(myStartMillis);
+        }
       }
 
       myTextLabel.setText(fitTextToLabel(text, myTextLabel));
@@ -77,9 +83,8 @@ final class ProgressDialog implements Disposable {
   private JPanel myInnerPanel;
   DialogWrapper myPopup;
   private final Window myParentWindow;
-
-  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ModalityState.any(), this);
-  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ModalityState.any(), this);
+  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any());
+  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any());
 
   ProgressDialog(@NotNull ProgressWindow progressWindow,
                  boolean shouldShowBackground,
@@ -142,6 +147,8 @@ final class ProgressDialog implements Disposable {
     UIUtil.dispose(myTitlePanel);
     UIUtil.dispose(myBackgroundButton);
     UIUtil.dispose(myCancelButton);
+    myEnableCancelAlarm.cancelAllRequests();
+    myDisableCancelAlarm.cancelAllRequests();
   }
 
   @NotNull
@@ -171,9 +178,9 @@ final class ProgressDialog implements Disposable {
   }
 
   void enableCancelButtonIfNeeded(boolean enable) {
-    if (!myProgressWindow.myShouldShowCancel || myDisableCancelAlarm.isDisposed()) return;
-
-    (enable ? myEnableCancelAlarm : myDisableCancelAlarm).request();
+    if (myProgressWindow.myShouldShowCancel && !myUpdateAlarm.isDisposed()) {
+      (enable ? myEnableCancelAlarm : myDisableCancelAlarm).request();
+    }
   }
 
   private void createCenterPanel() {
@@ -256,7 +263,7 @@ final class ProgressDialog implements Disposable {
     myPopup.pack();
 
     SwingUtilities.invokeLater(() -> {
-      if (myPopup != null) {
+      if (myPopup != null && !myPopup.isDisposed()) {
         myProgressWindow.getFocusManager().requestFocusInProject(myCancelButton, myProgressWindow.myProject).doWhenDone(myRepaintRunnable);
       }
     });

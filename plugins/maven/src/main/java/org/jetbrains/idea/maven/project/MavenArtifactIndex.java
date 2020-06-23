@@ -1,6 +1,6 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,10 +8,7 @@ import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Sergey Evdokimov
@@ -67,7 +64,7 @@ public class MavenArtifactIndex {
 
     List<MavenArtifact> res = new SmartList<>();
     for (MavenArtifact artifact : artifacts) {
-      if (Comparing.equal(version, artifact.getVersion())) {
+      if (Objects.equals(version, artifact.getVersion())) {
         res.add(artifact);
       }
     }

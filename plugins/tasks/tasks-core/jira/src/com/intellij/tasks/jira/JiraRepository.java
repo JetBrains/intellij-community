@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.jira;
 
 import com.google.gson.Gson;
@@ -33,7 +19,22 @@ import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.commons.httpclient.*;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.Vector;
+import java.util.regex.Pattern;
+import org.apache.commons.httpclient.Cookie;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.StatusLine;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.xmlrpc.CommonsXmlRpcTransport;
@@ -41,12 +42,6 @@ import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
@@ -106,8 +101,8 @@ public class JiraRepository extends BaseRepositoryImpl {
 
     JiraRepository repository = (JiraRepository)o;
 
-    if (!Comparing.equal(mySearchQuery, repository.getSearchQuery())) return false;
-    if (!Comparing.equal(myJiraVersion, repository.getJiraVersion())) return false;
+    if (!Objects.equals(mySearchQuery, repository.getSearchQuery())) return false;
+    if (!Objects.equals(myJiraVersion, repository.getJiraVersion())) return false;
     if (!Comparing.equal(myInCloud, repository.isInCloud())) return false;
     return true;
   }

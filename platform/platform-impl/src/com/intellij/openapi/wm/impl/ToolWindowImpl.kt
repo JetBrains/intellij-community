@@ -7,7 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.*
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.EventPair
 import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -300,7 +300,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     additionalGearActions = value
   }
 
-  override fun setTitleActions(vararg actions: AnAction) {
+  override fun setTitleActions(actions: List<AnAction>) {
     ensureContentManagerInitialized()
     decorator!!.setTitleActions(actions)
   }
@@ -320,6 +320,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     if (isAvailable != value) {
       isAvailable = value
       toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
+
+      if (!value) {
+        contentUi?.dropCaches()
+      }
     }
   }
 
@@ -542,7 +546,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     return group
   }
 
-  private inner class GearActionGroup internal constructor() : DefaultActionGroup(), DumbAware {
+  private inner class GearActionGroup : DefaultActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
       templatePresentation.text = IdeBundle.message("show.options.menu")
@@ -572,7 +576,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  private inner class HideAction internal constructor() : AnAction(), DumbAware {
+  private inner class HideAction : AnAction(), DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
       toolWindowManager.hideToolWindow(id, false)
     }
@@ -618,8 +622,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       toolWindowManager.removeFromSideBar(id)
     }
 
-    override fun addAdditionalUsageData(event: AnActionEvent, data: FeatureUsageData) {
-      data.addData("toolwindow", id)
+    override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {
+      return listOf(ToolwindowFusEventFields.TOOLWINDOW with id)
     }
   }
 
@@ -644,8 +648,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       toolWindowManager.setContentUiType(id, if (state) ToolWindowContentUiType.COMBO else ToolWindowContentUiType.TABBED)
     }
 
-    override fun addAdditionalUsageData(event: AnActionEvent, data: FeatureUsageData) {
-      data.addData("toolwindow", id)
+    override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {
+      return listOf(ToolwindowFusEventFields.TOOLWINDOW with id)
     }
   }
 

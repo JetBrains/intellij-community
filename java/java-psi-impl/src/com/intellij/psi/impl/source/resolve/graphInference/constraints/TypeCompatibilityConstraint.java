@@ -36,7 +36,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<? super ConstraintFormula> constraints) {
     if (session.isProperType(myT) && session.isProperType(myS)) {
       final boolean assignable = TypeConversionUtil.isAssignable(myT, myS);
       if (!assignable) {

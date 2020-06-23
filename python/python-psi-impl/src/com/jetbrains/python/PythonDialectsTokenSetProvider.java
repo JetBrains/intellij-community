@@ -1,102 +1,100 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.TestOnly;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * Provides element types of various kinds for known Python dialects.
  *
  * @author vlan
  */
-public class PythonDialectsTokenSetProvider {
-  public static PythonDialectsTokenSetProvider INSTANCE = new PythonDialectsTokenSetProvider();
+@Service
+public final class PythonDialectsTokenSetProvider implements Disposable {
 
-  private final TokenSet myStatementTokens;
-  private final TokenSet myExpressionTokens;
-  private final TokenSet myKeywordTokens;
-  private final TokenSet myParameterTokens;
-  private final TokenSet myFunctionDeclarationTokens;
-  private final TokenSet myUnbalancedBracesRecoveryTokens;
-  private final TokenSet myReferenceExpressionTokens;
+  @NotNull
+  private final ConcurrentHashMap<String, TokenSet> myCache = new ConcurrentHashMap<>(7); // number of token types
 
-  private PythonDialectsTokenSetProvider() {
-    TokenSet stmts = TokenSet.EMPTY;
-    TokenSet exprs = TokenSet.EMPTY;
-    TokenSet keywords = TokenSet.EMPTY;
-    TokenSet parameters = TokenSet.EMPTY;
-    TokenSet functionDeclarations = TokenSet.EMPTY;
-    TokenSet recoveryTokens = TokenSet.EMPTY;
-    TokenSet referenceExpressions = TokenSet.EMPTY;
-    for(PythonDialectsTokenSetContributor contributor: PythonDialectsTokenSetContributor.EP_NAME.getExtensionList()) {
-      stmts = TokenSet.orSet(stmts, contributor.getStatementTokens());
-      exprs = TokenSet.orSet(exprs, contributor.getExpressionTokens());
-      keywords = TokenSet.orSet(keywords, contributor.getKeywordTokens());
-      parameters = TokenSet.orSet(parameters, contributor.getParameterTokens());
-      functionDeclarations = TokenSet.orSet(functionDeclarations, contributor.getFunctionDeclarationTokens());
-      recoveryTokens = TokenSet.orSet(recoveryTokens, contributor.getUnbalancedBracesRecoveryTokens());
-      referenceExpressions = TokenSet.orSet(referenceExpressions, contributor.getReferenceExpressionTokens());
-    }
-    myStatementTokens = stmts;
-    myExpressionTokens = exprs;
-    myKeywordTokens = keywords;
-    myParameterTokens = parameters;
-    myFunctionDeclarationTokens = functionDeclarations;
-    myUnbalancedBracesRecoveryTokens = recoveryTokens;
-    myReferenceExpressionTokens = referenceExpressions;
+  public PythonDialectsTokenSetProvider() {
+    PythonDialectsTokenSetContributor.EP_NAME.addChangeListener(myCache::clear, this);
+  }
+
+  @NotNull
+  public static PythonDialectsTokenSetProvider getInstance() {
+    return ApplicationManager.getApplication().getService(PythonDialectsTokenSetProvider.class);
   }
 
   /**
    * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyStatement}.
    */
   public TokenSet getStatementTokens() {
-    return myStatementTokens;
+    return getTokenSet("statement", PythonDialectsTokenSetContributor::getStatementTokens);
   }
 
   /**
    * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyExpression}.
    */
   public TokenSet getExpressionTokens() {
-    return myExpressionTokens;
+    return getTokenSet("expression", PythonDialectsTokenSetContributor::getExpressionTokens);
   }
 
   /**
    * Returns all element types of Python dialects that are language keywords.
    */
   public TokenSet getKeywordTokens() {
-    return myKeywordTokens;
+    return getTokenSet("keyword", PythonDialectsTokenSetContributor::getKeywordTokens);
   }
 
   /**
    * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyParameter}.
    */
   public TokenSet getParameterTokens() {
-    return myParameterTokens;
+    return getTokenSet("parameter", PythonDialectsTokenSetContributor::getParameterTokens);
   }
 
   /**
    * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyFunction}.
    */
   public TokenSet getFunctionDeclarationTokens() {
-    return myFunctionDeclarationTokens;
+    return getTokenSet("functionDeclaration", PythonDialectsTokenSetContributor::getFunctionDeclarationTokens);
   }
 
   /**
    * Returns all element types of Python dialects that can be used as unbalanced braces recovery tokens in the lexer.
    */
   public TokenSet getUnbalancedBracesRecoveryTokens() {
-    return myUnbalancedBracesRecoveryTokens;
+    return getTokenSet("unbalancedBracesRecovery", PythonDialectsTokenSetContributor::getUnbalancedBracesRecoveryTokens);
   }
 
   /**
    * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyReferenceExpression}.
    */
   public TokenSet getReferenceExpressionTokens() {
-    return myReferenceExpressionTokens;
+    return getTokenSet("referenceExpression", PythonDialectsTokenSetContributor::getReferenceExpressionTokens);
   }
 
-  @TestOnly
-  public static void reset() {
-    INSTANCE = new PythonDialectsTokenSetProvider();
+  @Override
+  public void dispose() {
+    myCache.clear();
+  }
+
+  private @NotNull TokenSet getTokenSet(@NotNull String key, @NotNull Function<PythonDialectsTokenSetContributor, TokenSet> getter) {
+    return myCache.computeIfAbsent(key, __ -> orSets(getter));
+  }
+
+  private static @NotNull TokenSet orSets(@NotNull Function<PythonDialectsTokenSetContributor, TokenSet> getter) {
+    return TokenSet.orSet(
+      StreamEx
+        .of(PythonDialectsTokenSetContributor.EP_NAME.getExtensionList())
+        .map(getter)
+        .toArray(TokenSet.class)
+    );
   }
 }

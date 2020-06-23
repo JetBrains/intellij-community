@@ -4,6 +4,53 @@ import java.util.*;
 
 public class TooBroadScope
 {
+    private String string = "";
+
+    public String getString() {
+        return string;
+    }
+
+    void process() {
+        final String string = getString();
+        this.string = "hello";
+        System.out.println();
+        System.out.println(string);
+    }
+
+    public void systemProperty() {
+        String prop = System.getProperty("iesd.licensing.clt");
+
+        System.setProperty("iesd.licensing.clt", "true");
+
+        if (prop == null) {
+            System.clearProperty("iesd.licensing.clt");
+        } else {
+            System.setProperty("iesd.licensing.clt", prop);
+        }
+    }
+
+    private String getBaseFontInfo() {
+        final StringBuilder <caret>sb = new StringBuilder();
+        final var sm = System.getSecurityManager();
+        sb.append(sm.getSecurityContext());
+        sb.append(',');
+        sb.append(sm.getClass());
+        return sb.toString();
+    }
+
+    String allowMovingStringBuilder() {
+        final StringBuilder  <warning descr="Scope of variable 'sb' is too broad">sb</warning> = new StringBuilder();
+        System.out.println();
+        sb.append(1);
+        return sb.toString();
+    }
+
+    void playThatRecord() {
+        record Record(double rpm) {}
+        final var <warning descr="Scope of variable 'record' is too broad">record</warning> = new Record(33.3333333333);
+        System.out.println();
+        System.out.println(record);
+    }
 
     void noClassCastException() {
         <error descr="Cannot resolve symbol 'a'">a</error> b;

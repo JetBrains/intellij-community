@@ -430,7 +430,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   protected Class<?> prepareTest(boolean withDebugInfo, boolean expectInstrumented, String... notNullAnnotations) throws IOException {
     String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
     File testFile = IdeaTestUtil.findSourceFile((JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH) + testName);
-    File classesDir = tempDir.newFolder("output");
+    File classesDir = tempDir.newDirectory("output");
     List<String> args = ContainerUtil.newArrayList("-cp", annotation.classes.getPath());
     if (withDebugInfo) args.add("-g");
     IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));

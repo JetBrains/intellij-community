@@ -79,6 +79,12 @@ public class GitCommand {
    * Name of environment variable that specifies editor for the git
    */
   public static final String GIT_EDITOR_ENV = "GIT_EDITOR";
+  /**
+   * Name of environment variable that specifies askpass for the git (http and ssh passphrase authentication)
+   */
+  public static final String GIT_ASK_PASS_ENV = "GIT_ASKPASS";
+  public static final String GIT_SSH_ASK_PASS_ENV = "SSH_ASKPASS";
+  public static final String DISPLAY_ENV = "DISPLAY";
 
   enum LockingPolicy {
     READ,

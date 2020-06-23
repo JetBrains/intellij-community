@@ -6,8 +6,6 @@ import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.PropertyCollector;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import gnu.trove.TObjectFloatHashMap;
@@ -22,6 +20,7 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal
 public class BeanBinding extends NotNullDeserializeBinding {
@@ -163,7 +162,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return weights;
   }
 
-  public final void sortBindings(@NotNull final TObjectFloatHashMap<? super String> weights) {
+  public final void sortBindings(final @NotNull TObjectFloatHashMap<? super String> weights) {
     Arrays.sort(myBindings, (o1, o2) -> {
       String n1 = o1.getAccessor().getName();
       String n2 = o2.getAccessor().getName();
@@ -214,7 +213,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
             if (data == null) {
               data = new LinkedHashMap<>();
             }
-            ContainerUtilRt.putValue(binding, child, data);
+            data.computeIfAbsent(binding, it -> new ArrayList<>()).add(child);
           }
           else {
             if (accessorNameTracker != null) {
@@ -293,15 +292,14 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   private static final class XmlSerializerPropertyCollector extends PropertyCollector {
-    private final Map<Class<?>, List<MutableAccessor>> accessorCache = ContainerUtil.newConcurrentMap();
+    private final Map<Class<?>, List<MutableAccessor>> accessorCache = new ConcurrentHashMap<>();
 
     XmlSerializerPropertyCollector() {
       super(PropertyCollector.COLLECT_ACCESSORS);
     }
 
     @Override
-    @NotNull
-    public List<MutableAccessor> collect(@NotNull Class<?> aClass) {
+    public @NotNull List<MutableAccessor> collect(@NotNull Class<?> aClass) {
       return accessorCache.computeIfAbsent(aClass, super::collect);
     }
 

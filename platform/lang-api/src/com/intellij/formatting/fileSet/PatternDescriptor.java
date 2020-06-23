@@ -1,14 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.fileSet;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.regex.Pattern;
 
 /**
  * Describes a set of files specified by a directory and/or by a file mask.
@@ -167,7 +166,7 @@ public class PatternDescriptor implements FileSetDescriptor {
   @Override
   public boolean equals(Object obj) {
     return obj instanceof PatternDescriptor &&
-           Comparing.equal(myRawPattern, ((PatternDescriptor)obj).getPattern());
+           Objects.equals(myRawPattern, ((PatternDescriptor)obj).getPattern());
   }
 
   public static boolean isValidPattern(@NotNull String pattern) {

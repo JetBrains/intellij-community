@@ -1,13 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.config;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -16,15 +17,13 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
  */
 @State(name = "RecentTaskRepositories", storages = @Storage("other.xml"))
-public class RecentTaskRepositories implements PersistentStateComponent<Element> {
+public class RecentTaskRepositories implements PersistentStateComponent<Element>, Disposable {
 
   private final Set<TaskRepository> myRepositories = new THashSet<>(HASHING_STRATEGY);
 
@@ -36,9 +35,19 @@ public class RecentTaskRepositories implements PersistentStateComponent<Element>
 
     @Override
     public boolean equals(TaskRepository o1, TaskRepository o2) {
-      return Comparing.equal(o1.getUrl(), o2.getUrl());
+      return Objects.equals(o1.getUrl(), o2.getUrl());
     }
   };
+
+  public RecentTaskRepositories() {
+    // remove repositories pertaining to non-existent types
+    TaskRepositoryType.addEPListChangeListener(this, () -> {
+      List<Class<?>> possibleRepositoryClasses = TaskRepositoryType.getRepositoryClasses();
+      myRepositories.removeIf(repository -> {
+        return !ContainerUtil.exists(possibleRepositoryClasses, clazz -> clazz.isAssignableFrom(repository.getClass()));
+      });
+    });
+  }
 
   public static RecentTaskRepositories getInstance() {
     return ServiceManager.getService(RecentTaskRepositories.class);
@@ -78,4 +87,7 @@ public class RecentTaskRepositories implements PersistentStateComponent<Element>
     myRepositories.clear();
     myRepositories.addAll(TaskManagerImpl.loadRepositories(state));
   }
+
+  @Override
+  public void dispose() {}
 }

@@ -2,7 +2,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -135,7 +135,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
   }
 
   @Override
-  public void linkSelected(LinkLabel linkLabel, String command) {
+  public void linkSelected(LinkLabel<String> linkLabel, String command) {
     if (command == null || !command.contains(":")) return;
     int semicolonPosition = command.indexOf(":");
     String group = command.substring(semicolonPosition + 1);
@@ -215,7 +215,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
   @Override
   public boolean beforeOkAction() {
     try {
-      PluginManagerCore.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
+      DisabledPluginsState.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
     }
     catch (IOException ignored) {
     }
@@ -252,7 +252,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
     }
 
     @Override
-    public void linkSelected(LinkLabel aSource, String command) {
+    public void linkSelected(LinkLabel<String> aSource, String command) {
       if (myGroup == null) return;
       boolean enable = "enable".equals(command);
       List<IdSet> idSets = myPluginGroups.getSets(myGroup);

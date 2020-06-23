@@ -15,9 +15,8 @@ import java.util.Locale;
 public class JavaNumberConverters {
   static final NumberConverter INTEGER_TO_HEX = new NumberConverter() {
     @Override
-    @Nullable
     @Contract(pure = true)
-    public String getConvertedText(@NotNull String text, @NotNull Number number) {
+    public @Nullable String getConvertedText(@NotNull String text, @NotNull Number number) {
       if (text.startsWith("0x") || text.startsWith("0X")) return null;
       if (number instanceof Integer) {
         return "0x" + Integer.toHexString(number.intValue());
@@ -33,9 +32,8 @@ public class JavaNumberConverters {
   };
   static final NumberConverter INTEGER_TO_BINARY = new NumberConverter() {
     @Override
-    @Nullable
     @Contract(pure = true)
-    public String getConvertedText(@NotNull String text, @NotNull Number number) {
+    public @Nullable String getConvertedText(@NotNull String text, @NotNull Number number) {
       if (text.startsWith("0b") || text.startsWith("0B")) return null;
       if (number instanceof Integer) {
         return "0b" + Integer.toBinaryString(number.intValue());
@@ -50,9 +48,8 @@ public class JavaNumberConverters {
     public String toString() { return "binary";}
   };
   static final NumberConverter INTEGER_TO_OCTAL = new NumberConverter() {
-    @Nullable
     @Override
-    public String getConvertedText(@NotNull String text, @NotNull Number number) {
+    public @Nullable String getConvertedText(@NotNull String text, @NotNull Number number) {
       if (ExpressionUtils.isOctalLiteralText(text)) return null;
       if (number instanceof Integer) {
         return "0" + Integer.toOctalString(number.intValue());
@@ -69,9 +66,8 @@ public class JavaNumberConverters {
     }
   };
   static final NumberConverter INTEGER_TO_DECIMAL = new NumberConverter() {
-    @Nullable
     @Override
-    public String getConvertedText(@NotNull String text, @NotNull Number number) {
+    public @Nullable String getConvertedText(@NotNull String text, @NotNull Number number) {
       if ("0L".equals(text) || "0l".equals(text) || text.charAt(0) != '0') return null;
       if (number instanceof Integer) {
         return Integer.toString(number.intValue());
@@ -89,9 +85,8 @@ public class JavaNumberConverters {
   };
   static final NumberConverter FLOAT_TO_HEX = new NumberConverter() {
     @Override
-    @Nullable
     @Contract(pure = true)
-    public String getConvertedText(@NotNull String originalText, @NotNull Number original) {
+    public @Nullable String getConvertedText(@NotNull String originalText, @NotNull Number original) {
       if (originalText.startsWith("0x") || originalText.startsWith("0X")) return null;
       if (original instanceof Float) {
         return Float.toHexString(original.floatValue()) + "f";
@@ -107,9 +102,8 @@ public class JavaNumberConverters {
   };
   static final NumberConverter FLOAT_TO_DECIMAL = new NumberConverter() {
     @Override
-    @Nullable
     @Contract(pure = true)
-    public String getConvertedText(@NotNull String originalText, @NotNull Number original) {
+    public @Nullable String getConvertedText(@NotNull String originalText, @NotNull Number original) {
       if (!originalText.startsWith("0x") && !originalText.startsWith("0X")) return null;
       if (original instanceof Float) {
         return Float.toString(original.floatValue()) + 'f';
@@ -125,12 +119,17 @@ public class JavaNumberConverters {
   };
   static final NumberConverter FLOAT_TO_PLAIN = new NumberConverter() {
     @Override
-    @Nullable
     @Contract(pure = true)
-    public String getConvertedText(@NotNull String text, @NotNull Number number) {
+    public @Nullable String getConvertedText(@NotNull String text, @NotNull Number number) {
       if (!(number instanceof Float) && !(number instanceof Double)) return null;
       if (!text.contains("e") && !text.contains("E")) return null;
-      String result = new BigDecimal(number.toString()).stripTrailingZeros().toPlainString();
+      String result;
+      try {
+        result = new BigDecimal(number.toString()).stripTrailingZeros().toPlainString();
+      }
+      catch (NumberFormatException ignored) {
+        return null;
+      }
       if (number instanceof Float) result += "f";
       else if (!result.contains(".")) {
         try {
@@ -150,9 +149,8 @@ public class JavaNumberConverters {
     private final DecimalFormat FORMAT = new DecimalFormat("0.0#############E00", new DecimalFormatSymbols(Locale.US));
     
     @Override
-    @Nullable
     @Contract(pure = true)
-    public String getConvertedText(@NotNull String text, @NotNull Number number) {
+    public @Nullable String getConvertedText(@NotNull String text, @NotNull Number number) {
       if (!(number instanceof Float) && !(number instanceof Double)) return null;
       if (text.contains("e") || text.contains("E")) return null;
       String result = FORMAT.format(Double.parseDouble(number.toString()));  // convert to double w/o adding parasitic digits

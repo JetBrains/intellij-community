@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.io.ResourceHandle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +88,7 @@ public class BasicJarHandler extends ZipHandlerBase {
     return myHandle;
   }
   
-  private static void trace(String msg) {
+  private static void trace(@NonNls String msg) {
     //System.out.println(msg);
     LOG.trace(msg);
   }

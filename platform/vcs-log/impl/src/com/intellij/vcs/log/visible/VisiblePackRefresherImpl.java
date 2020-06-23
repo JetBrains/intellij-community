@@ -77,7 +77,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       }
 
       @Override
-      protected boolean cancelRunningTasks(Request @NotNull [] requests) {
+      protected boolean cancelRunningTasks(@NotNull List<Request> requests) {
         return ContainerUtil.findInstance(requests, IndexingFinishedRequest.class) != null ||
                ContainerUtil.findInstance(requests, FilterRequest.class) != null;
       }

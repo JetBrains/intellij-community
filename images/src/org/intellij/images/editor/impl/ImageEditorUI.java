@@ -47,6 +47,7 @@ import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
+import org.intellij.images.thumbnail.actions.ShowBorderAction;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.intellij.images.vfs.IfsUtil;
@@ -126,6 +127,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     imageComponent.setGridLineZoomFactor(gridOptions.getLineZoomFactor());
     imageComponent.setGridLineSpan(gridOptions.getLineSpan());
     imageComponent.setGridLineColor(gridOptions.getLineColor());
+    imageComponent.setBorderVisible(ShowBorderAction.isBorderVisible());
 
     // Create layout
     ImageContainerPane view = new ImageContainerPane(imageComponent);

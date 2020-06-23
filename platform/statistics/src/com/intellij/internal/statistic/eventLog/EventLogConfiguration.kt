@@ -1,14 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
-import com.google.common.hash.Hashing
 import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.MathUtil
+import com.intellij.util.io.DigestUtil
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.security.SecureRandom
 import java.util.*
 import java.util.prefs.Preferences
@@ -36,12 +39,20 @@ object EventLogConfiguration {
       return anonymizedCache[data] ?: ""
     }
 
-    val hasher = Hashing.sha256().newHasher()
-    hasher.putBytes(salt)
-    hasher.putString(data, Charsets.UTF_8)
-    val result = hasher.hash().toString()
+    val result = hashSha256(salt, data)
     anonymizedCache[data] = result
     return result
+  }
+
+
+  /**
+   * Don't use this method directly, prefer [EventLogConfiguration.anonymize]
+   */
+  fun hashSha256(salt: ByteArray, data: String): String {
+    val md = DigestUtil.sha256()
+    md.update(salt)
+    md.update(data.toByteArray())
+    return StringUtil.toHexString(md.digest())
   }
 
   private fun String.shortedUUID(): String {
@@ -75,4 +86,8 @@ object EventLogConfiguration {
     }
     return salt
   }
+
+  fun getEventLogDataPath(): Path = Paths.get(PathManager.getSystemPath()).resolve("event-log-data")
+
+  fun getEventLogSettingsPath(): Path = getEventLogDataPath().resolve("settings")
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -69,7 +69,7 @@ public final class PluginLogo {
         HiDPIPluginLogoIcon.clearCache();
       });
 
-      UIThemeProvider.EP_NAME.addExtensionPointListener(() -> {
+      UIThemeProvider.EP_NAME.addChangeListener(() -> {
         Default = null;
         HiDPIPluginLogoIcon.clearCache();
       }, application);
@@ -104,7 +104,7 @@ public final class PluginLogo {
   }
 
   @NotNull
-  private static PluginLogoIconProvider getDefault() {
+  static PluginLogoIconProvider getDefault() {
     if (Default == null) {
       Default = new HiDPIPluginLogoIcon(AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.PluginLogoDisabled_40,
                                         AllIcons.Plugins.PluginLogo_80, AllIcons.Plugins.PluginLogoDisabled_80);

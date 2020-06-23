@@ -5,13 +5,13 @@ import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.notification.NotificationType;
@@ -49,13 +49,9 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -84,9 +80,11 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +110,7 @@ import static com.intellij.openapi.util.text.StringUtil.trimEnd;
  *
  * @author Bas Leijdekkers
  */
-public class StructuralSearchDialog extends DialogWrapper implements ProjectManagerListener, DocumentListener {
+public class StructuralSearchDialog extends DialogWrapper implements DocumentListener {
   @NonNls private static final String SEARCH_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog";
   @NonNls private static final String REPLACE_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog";
 
@@ -217,13 +215,25 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
         myAlarm.addRequest(runnable, 100);
       }
     };
-    getProject().getMessageBus().connect(getDisposable()).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
+    final MessageBusConnection connection = getProject().getMessageBus().connect(getDisposable());
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
+    connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        close(CANCEL_EXIT_CODE);
+      }
+    });
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        close(CANCEL_EXIT_CODE);
+      }
+    });
     myConfiguration = createConfiguration(null);
     setTitle(getDefaultTitle());
 
     init();
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
-    ProjectManager.getInstance().addProjectManagerListener(getProject(), this);
   }
 
   private void addRestartHighlightingListenerToCurrentEditor() {
@@ -362,7 +372,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) return;
 
-    WriteCommandAction.runWriteCommandAction(project, "Adjust line indent", "Structural Search",
+    WriteCommandAction.runWriteCommandAction(project, SSRBundle.message("command.name.adjust.line.indent"), "Structural Search",
                                              () -> CodeStyleManager.getInstance(project)
                                                .adjustLineIndent(file, new TextRange(0, document.getTextLength())), file);
   }
@@ -377,6 +387,8 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   }
 
   @NotNull
+  @Nls
+  @NlsContexts.DialogTitle
   String getDefaultTitle() {
     return myReplace ? SSRBundle.message("structural.replace.title") : SSRBundle.message("structural.search.title");
   }
@@ -405,7 +417,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       myScopePanel.setVisible(false);
     }
 
-    myFilterPanel = new FilterPanel(getProject(), StructuralSearchUtil.getProfileByFileType(myFileType), getDisposable());
+    myFilterPanel = new FilterPanel(getProject(), myFileType, getDisposable());
     myFilterPanel.setConstraintChangedCallback(() -> initiateValidation());
     myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
@@ -551,6 +563,8 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
           final FileTypeInfo item = myFileTypesComboBox.getSelectedItem();
           if (item == null) return;
           myFileType = item.getFileType();
+          myFilterPanel.setFileType(myFileType);
+
           myDialect = item.getDialect();
           myPatternContext = item.getContext();
           final String contextId = (myPatternContext == null) ? "" : myPatternContext.getId();
@@ -569,7 +583,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
           myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
           replaceDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
 
-          myFilterPanel.setProfile(profile);
           initiateValidation();
         }
       }
@@ -585,20 +598,13 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
           ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(getConfiguration());
         }
       });
-    if (Registry.is("ssr.separate.inspections")) {
-      templateActionGroup.add(
-        new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFileTypesComboBox));
-            if (project == null) {
-              return;
-            }
-            final InspectionProfileImpl inspectionProfile = InspectionProfileManager.getInstance(project).getCurrentProfile();
-            StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), inspectionProfile, project);
-          }
-        });
-    }
+    templateActionGroup.add(
+      new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), getProject());
+        }
+      });
     templateActionGroup.addSeparator();
     templateActionGroup.addAll(
       new CopyConfigurationAction(),
@@ -690,7 +696,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     return panel;
   }
 
-  private Project getProject() {
+  Project getProject() {
     return mySearchContext.getProject();
   }
 
@@ -737,7 +743,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     assert psiFile != null;
     final TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
     WriteCommandAction
-      .runWriteCommandAction(getProject(), "Live search template builder", "Structural Search",
+      .runWriteCommandAction(getProject(), SSRBundle.message("command.name.live.search.template.builder"), "Structural Search",
                              () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
   }
 
@@ -936,7 +942,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   void reportMessage(@Nullable String message, boolean error, @NotNull JComponent component) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myBalloon != null) myBalloon.hide();
-      //noinspection HardCodedStringLiteral
       component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
       component.repaint();
 
@@ -1058,7 +1063,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       if (scope != null) myScopePanel.setScope(scope);
     }
 
-    UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());
 
     myMatchCase.setSelected(matchOptions.isCaseSensitiveMatch());
     myFileTypesComboBox.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect(), matchOptions.getPatternContext());
@@ -1066,9 +1070,15 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     if (searchEditor != null) {
       searchEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
     }
+    UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());
 
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     if (myReplace) {
+      final Editor replaceEditor = myReplaceCriteriaEdit.getEditor();
+      if (replaceEditor != null) {
+        replaceEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
+      }
+      myRecursive.setSelected(false);
       if (configuration instanceof ReplaceConfiguration) {
         final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
 
@@ -1085,11 +1095,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
         myReformat.setSelected(properties.getBoolean(REFORMAT_STATE));
         myUseStaticImport.setSelected(properties.getBoolean(USE_STATIC_IMPORT_STATE));
       }
-      final Editor replaceEditor = myReplaceCriteriaEdit.getEditor();
-      if (replaceEditor != null) {
-        replaceEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-      }
-      myRecursive.setSelected(false);
     }
     else {
       if (configuration instanceof ReplaceConfiguration) {
@@ -1106,6 +1111,9 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       final boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(scope.getDisplayName());
       // We need to reset search within hierarchy scope during online validation since the scope works with user participation
       matchOptions.setScope(searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : scope);
+    }
+    else {
+      matchOptions.setScope(null);
     }
     matchOptions.setFileType(myFileType);
     matchOptions.setDialect(myDialect);
@@ -1157,14 +1165,8 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   }
 
   @Override
-  public void projectClosing(@NotNull Project project) {
-    close(CANCEL_EXIT_CODE);
-  }
-
-  @Override
   public void dispose() {
     getProject().putUserData(STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION, myConfiguration);
-    ProjectManager.getInstance().removeProjectManagerListener(getProject(), this);
 
     if (myReplace) storeDimensions(REPLACE_DIMENSION_SERVICE_KEY, SEARCH_DIMENSION_SERVICE_KEY);
     else storeDimensions(SEARCH_DIMENSION_SERVICE_KEY, REPLACE_DIMENSION_SERVICE_KEY);
@@ -1214,7 +1216,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       if (editorTextField == null) {
         return;
       }
-      @SuppressWarnings("HardCodedStringLiteral")
       final Object object = editorTextField.getClientProperty("JComponent.outline");
       if ("error".equals(object) || "warning".equals(object)) {
         myErrorBorder.paintBorder(c, g, x, y, width, height);
@@ -1331,7 +1332,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       }, myDisposable, myReplace);
       editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
       getDocument().putUserData(STRUCTURAL_SEARCH_ERROR_CALLBACK, () -> {
-        //noinspection HardCodedStringLiteral
         putClientProperty("JComponent.outline", "error");
         repaint();
         getOKAction().setEnabled(false);

@@ -26,13 +26,13 @@ public class ColorProgressBar extends JComponent {
 
   public static final Color GREEN = new JBColor(() -> {
     UISettings settings = UISettings.getInstance();
-    return settings == null || null == settings.getColorBlindness()
+    return null == settings.getColorBlindness()
            ? new JBColor(new Color(0x6cad74), new Color(0x4a8c53))
            : new JBColor(new Color(0x6ca69c), new Color(0x639990));
   });
   public static final Color RED = new JBColor(() -> {
     UISettings settings = UISettings.getInstance();
-    return settings == null || null == settings.getColorBlindness()
+    return null == settings.getColorBlindness()
            ? new JBColor(new Color(0xd67b76), new Color(0xe55757))
            : new JBColor(new Color(0xcc7447), new Color(0xcc7447));
   });
@@ -143,21 +143,21 @@ public class ColorProgressBar extends JComponent {
     if (myIndeterminate) {
 
       int startFrom = bricksToDraw < INDETERMINATE_BRICKS_DRAW ? 0 : bricksToDraw - INDETERMINATE_BRICKS_DRAW;
-      int endTo = bricksToDraw + INDETERMINATE_BRICKS_DRAW < getBricksToDraw(1) ? bricksToDraw + INDETERMINATE_BRICKS_DRAW  : getBricksToDraw(1);
+      int endTo = Math.min(bricksToDraw + INDETERMINATE_BRICKS_DRAW, getBricksToDraw(1));
 
       for (int i = startFrom; i <= endTo; i++) {
         g2.setPaint(myColor);
 
         int startXOffset = x_offset + (BRICK_WIDTH + BRICK_SPACE) * i;
-        LinePainter2D.paint((Graphics2D)g2, startXOffset, y_center, startXOffset + BRICK_WIDTH - 1, y_center);
+        LinePainter2D.paint(g2, startXOffset, y_center, startXOffset + BRICK_WIDTH - 1, y_center);
 
         for (int j = 0; j < y_steps; j++) {
           Color color = ColorUtil.toAlpha(myColor, 255 - alpha_step * (j + 1));
           g2.setPaint(color);
-          LinePainter2D.paint((Graphics2D)g2, startXOffset, y_center - 1 - j, startXOffset + BRICK_WIDTH - 1, y_center - 1 - j);
+          LinePainter2D.paint(g2, startXOffset, y_center - 1 - j, startXOffset + BRICK_WIDTH - 1, y_center - 1 - j);
 
           if (!(y_center % 2 != 0 && j == y_steps - 1)) {
-            LinePainter2D.paint((Graphics2D)g2, startXOffset, y_center + 1 + j, startXOffset + BRICK_WIDTH - 1, y_center + 1 + j);
+            LinePainter2D.paint(g2, startXOffset, y_center + 1 + j, startXOffset + BRICK_WIDTH - 1, y_center + 1 + j);
           }
         }
         g2.setColor(
@@ -168,13 +168,13 @@ public class ColorProgressBar extends JComponent {
     } else {
       for (int i = 0; i < bricksToDraw; i++) {
         g2.setPaint(myColor);
-        LinePainter2D.paint((Graphics2D)g2, x_offset, y_center, x_offset + BRICK_WIDTH - 1, y_center);
+        LinePainter2D.paint(g2, x_offset, y_center, x_offset + BRICK_WIDTH - 1, y_center);
         for (int j = 0; j < y_steps; j++) {
           Color color = ColorUtil.toAlpha(myColor, 255 - alpha_step * (j + 1));
           g2.setPaint(color);
-          LinePainter2D.paint((Graphics2D)g2, x_offset, y_center - 1 - j, x_offset + BRICK_WIDTH - 1, y_center - 1 - j);
+          LinePainter2D.paint(g2, x_offset, y_center - 1 - j, x_offset + BRICK_WIDTH - 1, y_center - 1 - j);
           if (!(y_center % 2 != 0 && j == y_steps - 1)) {
-            LinePainter2D.paint((Graphics2D)g2, x_offset, y_center + 1 + j, x_offset + BRICK_WIDTH - 1, y_center + 1 + j);
+            LinePainter2D.paint(g2, x_offset, y_center + 1 + j, x_offset + BRICK_WIDTH - 1, y_center + 1 + j);
           }
         }
         g2.setColor(
@@ -210,7 +210,7 @@ public class ColorProgressBar extends JComponent {
     return myColor;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static void main(String[] args) {
     JFrame frame = new JFrame("ColorProgressBar Test");
     frame.addWindowListener(

@@ -227,7 +227,8 @@ public class HgRegularUpdater implements HgUpdater {
     HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, repository);
     HgCommandResult result = new HgRebaseCommand(project, repository).startRebase();
     if (HgErrorUtil.isCommandExecutionFailed(result)) {
-      new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't rebase repository.");
+      new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"),
+                                                       HgBundle.message("action.hg4idea.Rebase.error"));
       return;
     }
     //noinspection ConstantConditions
@@ -238,7 +239,8 @@ public class HgRegularUpdater implements HgUpdater {
       }
       result = rebaseCommand.continueRebase();
       if (HgErrorUtil.isAbort(result)) {
-        new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue rebasing");
+        new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"),
+                                                         HgBundle.message("action.hg4idea.Rebase.Continue.error"));
         break;
       }
     }

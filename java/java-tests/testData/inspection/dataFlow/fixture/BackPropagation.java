@@ -70,8 +70,8 @@ public class BackPropagation {
 
   void update(int x, int y, int z) {
     if (y == z) {
-      <warning descr="Variable update does nothing">x</warning>+=y-z;
-      <warning descr="Variable update does nothing">x</warning>-=y-z;
+      <warning descr="Variable update does nothing">x</warning>+=<warning descr="Result of 'y-z' is always '0'">y-z</warning>;
+      <warning descr="Variable update does nothing">x</warning>-=<warning descr="Result of 'y-z' is always '0'">y-z</warning>;
     }
   }
   

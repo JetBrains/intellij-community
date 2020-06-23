@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
 import org.jetbrains.annotations.Nls;
@@ -21,12 +22,12 @@ public abstract class BaseTaskAction extends AnAction implements DumbAware {
   protected BaseTaskAction() {
   }
 
-  protected BaseTaskAction(@Nls(capitalization = Nls.Capitalization.Title) String text) {
+  protected BaseTaskAction(@NlsActions.ActionText String text) {
     super(text);
   }
 
-  protected BaseTaskAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) final String text,
-                           @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) final String description,
+  protected BaseTaskAction(@Nullable @NlsActions.ActionText final String text,
+                           @Nullable @NlsActions.ActionDescription final String description,
                            @Nullable final Icon icon) {
     super(text, description, icon);
   }

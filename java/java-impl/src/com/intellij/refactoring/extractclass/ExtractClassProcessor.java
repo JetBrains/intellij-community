@@ -175,13 +175,13 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       fieldsNeedingGetter.addAll(visitor.getFieldsNeedingGetter());
       fieldsNeedingGetter.addAll(srcVisitor.getFieldsNeedingGetter());
       for (PsiField field : fieldsNeedingGetter) {
-        conflicts.putValue(field, "Field \'" + field.getName() + "\' needs getter");
+        conflicts.putValue(field, "Field '" + field.getName() + "' needs getter");
       }
       final Set<PsiField> fieldsNeedingSetter = new LinkedHashSet<>();
       fieldsNeedingSetter.addAll(visitor.getFieldsNeedingSetter());
       fieldsNeedingSetter.addAll(srcVisitor.getFieldsNeedingSetter());
       for (PsiField field : fieldsNeedingSetter) {
-        conflicts.putValue(field, "Field \'" + field.getName() + "\' needs setter");
+        conflicts.putValue(field, "Field '" + field.getName() + "' needs setter");
       }
     }
     checkConflicts(refUsages, conflicts);

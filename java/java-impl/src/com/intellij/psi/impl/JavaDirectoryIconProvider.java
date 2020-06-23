@@ -19,6 +19,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.IconWithToolTip;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,7 @@ final class JavaDirectoryIconProvider extends IconProvider implements DumbAware 
         symbolIcon = AllIcons.Nodes.Module;
       }
       else if (isValidPackage(psiDirectory)) {
-        symbolIcon = PlatformIcons.PACKAGE_ICON;
+        symbolIcon = IconWithToolTip.tooltipOnlyIfComposite(PlatformIcons.PACKAGE_ICON);
       }
       else if (!Registry.is("ide.hide.excluded.files") && ProjectRootManager.getInstance(project).getFileIndex().isExcluded(vFile)) {
         symbolIcon = AllIcons.Modules.ExcludeRoot;

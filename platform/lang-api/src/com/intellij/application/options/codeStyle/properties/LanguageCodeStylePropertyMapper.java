@@ -87,7 +87,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   private List<CustomCodeStyleSettings> getCustomSettings() {
     List<CustomCodeStyleSettings> customSettingsList = new ArrayList<>();
     addCustomSettings(customSettingsList, getRootSettings(), CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
-    addCustomSettings(customSettingsList, getRootSettings(), LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
+    addCustomSettings(customSettingsList, getRootSettings(), new ArrayList<>(LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()));
     return customSettingsList;
   }
 

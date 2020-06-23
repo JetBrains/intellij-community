@@ -123,7 +123,7 @@ public class JpsOutputLoaderManager {
 
   @Nullable
   private Pair<String, Integer> getNearestCommit(boolean isForceUpdate) {
-    Set<String> allCacheKeys = myServerClient.getAllCacheKeys();
+    Set<String> allCacheKeys = myServerClient.getAllCacheKeys(myProject);
 
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
     List<Iterator<String>> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject);

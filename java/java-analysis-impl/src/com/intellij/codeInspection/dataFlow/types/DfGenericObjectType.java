@@ -182,6 +182,9 @@ class DfGenericObjectType extends DfAntiConstantType<Object> implements DfRefere
     if (isSuperType(other)) return this;
     if (other.isSuperType(this)) return other;
     if (!(other instanceof DfReferenceType)) return TOP;
+    if (other instanceof DfNullConstantType) {
+      return other.join(this);
+    }
     DfReferenceType type = (DfReferenceType)other;
     TypeConstraint constraint = getConstraint().join(type.getConstraint());
     DfaNullability nullability = getNullability().unite(type.getNullability());

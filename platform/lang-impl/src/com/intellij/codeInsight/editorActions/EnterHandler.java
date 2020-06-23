@@ -93,11 +93,20 @@ public class EnterHandler extends BaseEnterHandler {
     if (caretOffset < length && text.charAt(caretOffset) != '\n') {
       int offset1 = CharArrayUtil.shiftBackward(text, caretOffset, " \t");
       if (offset1 < 0 || text.charAt(offset1) == '\n') {
-        int offset2 = CharArrayUtil.shiftForward(text, offset1 + 1, " \t");
-        boolean isEmptyLine = offset2 >= length || text.charAt(offset2) == '\n';
-        if (!isEmptyLine) { // we are in leading spaces of a non-empty line
-          myOriginalHandler.execute(editor, caret, dataContext);
-          return;
+        boolean fastProcessEnterInsideIndent = true;
+        for(EnterHandlerDelegate delegate: EnterHandlerDelegate.EP_NAME.getExtensionList()) {
+          if (delegate.invokeInsideIndent(offset1, editor, dataContext)) {
+            fastProcessEnterInsideIndent = false;
+            break;
+          }
+        }
+        if (fastProcessEnterInsideIndent) {
+          int offset2 = CharArrayUtil.shiftForward(text, offset1 + 1, " \t");
+          boolean isEmptyLine = offset2 >= length || text.charAt(offset2) == '\n';
+          if (!isEmptyLine) { // we are in leading spaces of a non-empty line
+            myOriginalHandler.execute(editor, caret, dataContext);
+            return;
+          }
         }
       }
     }

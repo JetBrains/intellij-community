@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -176,7 +176,9 @@ final class ObjectTree {
   static <T> void executeActionWithRecursiveGuard(@NotNull T object, @NotNull List<T> recursiveGuard, @NotNull Consumer<? super T> action) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (recursiveGuard) {
-      if (ArrayUtil.indexOf(recursiveGuard, object, ContainerUtil.identityStrategy()) != -1) return;
+      if (ArrayUtil.indexOf(recursiveGuard, object, (t, t2) -> t == t2) != -1) {
+        return;
+      }
       recursiveGuard.add(object);
     }
 
@@ -186,7 +188,7 @@ final class ObjectTree {
     finally {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (recursiveGuard) {
-        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, ContainerUtil.identityStrategy());
+        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, (t, t2) -> t == t2);
         assert i != -1;
         recursiveGuard.remove(i);
       }
@@ -248,6 +250,11 @@ final class ObjectTree {
 
   void clearDisposedObjectTraces() {
     myDisposedObjects.clear();
+    synchronized (treeLock) {
+      for (ObjectNode value : myObject2NodeMap.values()) {
+        value.clearTrace();
+      }
+    }
   }
 
   @Nullable

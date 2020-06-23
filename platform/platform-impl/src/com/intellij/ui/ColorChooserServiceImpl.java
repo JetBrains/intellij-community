@@ -16,7 +16,10 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.picker.ColorListener;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -30,7 +33,7 @@ public class ColorChooserServiceImpl extends ColorChooserService {
   @Nullable
   @Override
   public Color showDialog(Component parent,
-                          String caption,
+                          @NlsContexts.DialogTitle String caption,
                           Color preselectedColor,
                           boolean enableOpacity,
                           List<? extends ColorPickerListener> listeners,
@@ -42,11 +45,16 @@ public class ColorChooserServiceImpl extends ColorChooserService {
   @Override
   public Color showDialog(Project project,
                           Component parent,
-                          @Nls(capitalization = Nls.Capitalization.Title) String caption,
+                          @NlsContexts.DialogTitle String caption,
                           Color preselectedColor,
                           boolean enableOpacity,
                           List<? extends ColorPickerListener> listeners,
                           boolean opacityInPercent) {
     return showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
+  }
+
+  @Override
+  public void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
+    ColorPicker.showColorPickerPopup(project, currentColor, listener, location, showAlpha);
   }
 }

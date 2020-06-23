@@ -4,6 +4,7 @@ package org.intellij.lang.regexp.inspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpBackref;
@@ -44,7 +45,7 @@ public class AnonymousGroupInspection extends LocalInspectionTool {
       if (group.getNode().getLastChildNode().getElementType() != RegExpTT.GROUP_END) {
         return;
       }
-      myHolder.registerProblem(group.getFirstChild(), "Anonymous capturing group");
+      myHolder.registerProblem(group.getFirstChild(), RegExpBundle.message("inspection.warning.anonymous.capturing.group"));
     }
 
     @Override
@@ -53,7 +54,7 @@ public class AnonymousGroupInspection extends LocalInspectionTool {
       if (types.isEmpty()) {
         return;
       }
-      myHolder.registerProblem(backref, "Numeric back reference");
+      myHolder.registerProblem(backref, RegExpBundle.message("inspection.warning.numeric.back.reference"));
     }
   }
 }

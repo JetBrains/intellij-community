@@ -250,7 +250,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   @NotNull
   protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
     StringBuilder buffer = new StringBuilder();
-    StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "\'", buffer);
+    StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "'", buffer);
     return buffer.toString();
   }
 

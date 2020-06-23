@@ -203,7 +203,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, result12 -> result12.equals(MergeResult.CANCEL) ? VcsBundle
         .message("patch.apply.abort.action") : null);
       request.putUserData(DiffUserDataKeysEx.MERGE_CANCEL_HANDLER, viewer -> {
-        String message = XmlStringUtil.wrapInHtml(VcsBundle.message("patch.apply.abort.and.rollback.prompt"));
+        String message = VcsBundle.message("patch.apply.abort.and.rollback.prompt");
         String title = VcsBundle.message("patch.apply.abort.title");
         String yesText = VcsBundle.message("patch.apply.abort.and.rollback.action");
         String noText = VcsBundle.message("patch.apply.skip.action");

@@ -2,6 +2,7 @@
   <id>com.jetbrains.filePrediction</id>
   <name>Next File Prediction</name>
   <vendor>JetBrains</vendor>
+  <resource-bundle>messages.FilePredictionBundle</resource-bundle>
 
   <description><![CDATA[Predicts next file which will be open in IDE to start long running analysis and pre-load caches.]]></description>
 
@@ -9,22 +10,47 @@
   <depends optional="true" config-file="file-prediction-vcs.xml">com.jetbrains.changeReminder</depends>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.filePrediction.featureProvider" interface="com.intellij.filePrediction.FilePredictionFeatureProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.filePrediction.referencesProvider" interface="com.intellij.filePrediction.FileExternalReferencesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.candidateProvider" interface="com.intellij.filePrediction.candidates.FilePredictionCandidateProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.featureProvider" interface="com.intellij.filePrediction.features.FilePredictionFeatureProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.referencesProvider" interface="com.intellij.filePrediction.references.FileExternalReferencesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.ml.model" interface="com.intellij.filePrediction.predictor.model.FilePredictionModelProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <notificationWhitelist groupIds="NextFilePrediction"/>
     <registryKey key="filePrediction.calculate.features" defaultValue="true" description="Record opened files features to predict which file will be opened next and pre-load caches."/>
+    <registryKey key="filePrediction.action.use.all.candidates" defaultValue="false" description="If true, 'Show Next File Candidates' action will use all available providers."/>
+    <registryKey key="filePrediction.action.calculate.candidates" defaultValue="30" description="Number of candidates used to predict next file in 'Show Next File Candidates' action."/>
+    <registryKey key="filePrediction.action.show.candidates" defaultValue="10" description="Number of next file candidates to show in 'Show Next File Candidates' action."/>
 
-    <statistics.counterUsagesCollector groupId="file.prediction" version="3"/>
+    <statistics.counterUsagesCollector groupId="file.prediction" version="5"/>
 
-    <filePrediction.featureProvider implementation="com.intellij.filePrediction.FilePredictionGeneralFeatures"/>
-    <filePrediction.featureProvider implementation="com.intellij.filePrediction.history.FilePredictionHistoryFeatures"/>
+    <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionReferenceProvider"/>
+    <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionNeighborFilesProvider"/>
+    <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionRecentFilesProvider"/>
 
-    <projectService serviceImplementation="com.intellij.filePrediction.history.FilePredictionHistory"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionGeneralFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionFileTypeFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.FilePredictionHistoryFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.context.FilePredictionContextFeatures"/>
+
+    <filePrediction.ml.model implementation="com.intellij.filePrediction.predictor.model.FilePredictionMLModelProvider"/>
+
+    <applicationService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>
+    <projectService serviceImplementation="com.intellij.filePrediction.features.history.FilePredictionHistory"/>
+    <projectService serviceImplementation="com.intellij.filePrediction.features.history.context.FilePredictionContext"/>
   </extensions>
 
   <projectListeners>
     <listener class="com.intellij.filePrediction.FilePredictionEditorManagerListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+
+  <applicationListeners>
+    <listener class="com.intellij.filePrediction.features.history.FilePredictionProjectListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
+
+  <actions>
+    <action internal="true" id="PredictNextFileCandidates"
+            class="com.intellij.filePrediction.actions.FilePredictionNextCandidatesAction"/>
+  </actions>
 </idea-plugin>

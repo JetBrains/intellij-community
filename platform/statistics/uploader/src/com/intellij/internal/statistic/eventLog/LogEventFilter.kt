@@ -15,7 +15,7 @@ class LogEventWhitelistFilter(val whitelist: FUSWhitelist) : LogEventFilter {
 
 object LogEventSnapshotBuildFilter : LogEventFilter {
   override fun accepts(event: LogEvent): Boolean {
-    val parts = EventLogBuildNumber.fromString(event.build)?.components
+    val parts = EventLogBuild.fromString(event.build)?.components
     return parts != null && (parts.size != 2 || parts[1] != 0)
   }
 }

@@ -35,6 +35,11 @@
     <item name='java.security.Identity boolean identityEquals(java.security.Identity) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.security.Identity int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.security.Identity java.lang.String getInfo()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -345,6 +350,11 @@
     <item name='java.security.Provider.ServiceKey boolean matches(java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.security.Provider.ServiceKey int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.security.Provider.UString UString(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -355,6 +365,11 @@
     </item>
     <item name='java.security.Provider.UString boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.security.Provider.UString int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.security.Provider.UString java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>

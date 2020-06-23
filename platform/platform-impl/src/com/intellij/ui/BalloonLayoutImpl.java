@@ -53,7 +53,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
   private final Runnable myCloseAll = () -> {
     for (Balloon balloon : new ArrayList<>(myBalloons)) {
       BalloonLayoutData layoutData = myLayoutData.get(balloon);
-      NotificationCollector.getInstance().logNotificationBalloonClosedByUser(layoutData.id, layoutData.groupId);
+      NotificationCollector.getInstance().logNotificationBalloonClosedByUser(layoutData.id, layoutData.displayId, layoutData.groupId);
       remove(balloon, true);
     }
   };

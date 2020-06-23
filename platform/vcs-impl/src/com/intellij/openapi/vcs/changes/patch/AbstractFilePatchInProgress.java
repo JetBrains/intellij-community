@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -6,7 +6,6 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -17,13 +16,13 @@ import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractFilePatchInProgress<T extends FilePatch> implements Strippable {
   protected final T myPatch;
@@ -349,7 +348,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
     private final int myAfterIdx;
 
     private PatchStrippable(final FilePatch patch) {
-      final boolean onePath = patch.isDeletedFile() || patch.isNewFile() || Comparing.equal(patch.getAfterName(), patch.getBeforeName());
+      final boolean onePath = patch.isDeletedFile() || patch.isNewFile() || Objects.equals(patch.getAfterName(), patch.getBeforeName());
       final int size = onePath ? 1 : 2;
       myParts = new StripCapablePath[size];
 

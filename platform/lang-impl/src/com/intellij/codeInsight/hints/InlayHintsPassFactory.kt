@@ -26,9 +26,14 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
 
     val settings = InlayHintsSettings.instance()
     val language = file.language
-    val collectors = HintUtils.getHintProvidersForLanguage(language, file.project)
-      .mapNotNull { it.getCollectorWrapperFor(file, editor, language) }
-      .filter { settings.hintsShouldBeShown(it.key, language) }
+    val collectors = if (isHintsEnabledForEditor(editor)) {
+      HintUtils.getHintProvidersForLanguage(language, file.project)
+        .mapNotNull { it.getCollectorWrapperFor(file, editor, language) }
+        .filter { settings.hintsShouldBeShown(it.key, language) }
+    }
+    else {
+      emptyList()
+    }
     return InlayHintsPass(file, collectors, editor)
   }
 
@@ -44,6 +49,8 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
 
     @JvmStatic
     private val PSI_MODIFICATION_STAMP = Key.create<Long>("inlay.psi.modification.stamp")
+    @JvmStatic
+    private val HINTS_DISABLED_FOR_EDITOR = Key.create<Boolean>("inlay.hints.enabled.for.editor")
 
     fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
       editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationStamp(file))
@@ -51,6 +58,21 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
 
     private fun getCurrentModificationStamp(file: PsiFile): Long {
       return file.manager.modificationTracker.modificationCount
+    }
+
+    private fun isHintsEnabledForEditor(editor: Editor): Boolean {
+      return editor.getUserData(HINTS_DISABLED_FOR_EDITOR) != true
+    }
+
+    @JvmStatic
+    fun setHintsEnabled(editor: Editor, value: Boolean) {
+      if (value) {
+        editor.putUserData(HINTS_DISABLED_FOR_EDITOR, null)
+      }
+      else {
+        editor.putUserData(HINTS_DISABLED_FOR_EDITOR, true)
+      }
+      forceHintsUpdateOnNextPass()
     }
   }
 }

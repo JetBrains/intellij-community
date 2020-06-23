@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
  * Has its own {@code null}-object instance, which is hidden from outside world, preventing accidental &quot;unwrapping&quot;.
  */
 public final class NotNullizer {
-
   private final Object myNull;
 
   @Contract(pure = true)
@@ -18,8 +17,7 @@ public final class NotNullizer {
   }
 
   @Contract(pure = true)
-  @NotNull
-  private <T> T fakeNull() {
+  private @NotNull <T> T fakeNull() {
     //noinspection unchecked
     return (T)myNull;
   }
@@ -40,8 +38,7 @@ public final class NotNullizer {
    * @see #nullize(Object)
    */
   @Contract(value = "!null -> param1", pure = true)
-  @NotNull
-  public <T> T notNullize(@Nullable T value) {
+  public @NotNull <T> T notNullize(@Nullable T value) {
     if (value == null) {
       return fakeNull();
     }
@@ -57,8 +54,7 @@ public final class NotNullizer {
    * @see #notNullize(Object)
    */
   @Contract(pure = true)
-  @Nullable
-  public <T> T nullize(@NotNull T value) {
+  public @Nullable <T> T nullize(@NotNull T value) {
     return value == myNull ? null : value;
   }
 }

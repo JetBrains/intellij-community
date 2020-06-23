@@ -1,14 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.logger
 
-import com.google.gson.JsonParser
+import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
 import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventValidator.assertLogEventIsValid
 import com.intellij.internal.statistics.StatisticsTestEventValidator.isValid
 import org.junit.Test
+import java.lang.IllegalStateException
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class FeatureEventLogEscapingTest {
@@ -183,6 +188,36 @@ class FeatureEventLogEscapingTest {
     testEventDataEscaping(event, data)
   }
 
+  @Test
+  fun testEventDataWithUnicodeInObjectEscaping() {
+    val event = newEvent()
+    event.event.addData("key", mapOf("fo\uFFFDo" to "foo\uFFDDValue"))
+
+    val data = HashMap<String, Any>()
+    data["key"] = mapOf("fo?o" to "foo?Value")
+    testEventDataEscaping(event, data)
+  }
+
+  @Test
+  fun testEventDataWithUnicodeInObjectListEscaping() {
+    val event = newEvent()
+    event.event.addData("key", listOf(mapOf("fo\uFFFDo" to "foo\uFFDDValue"), mapOf("ba\uFFFDr" to "bar\uFFDDValue")))
+
+    val data = HashMap<String, Any>()
+    data["key"] = listOf(mapOf("fo?o" to "foo?Value"), mapOf("ba?r" to "bar?Value"))
+    testEventDataEscaping(event, data)
+  }
+
+  @Test
+  fun testEventDataWithUnicodeInNestedObjectEscaping() {
+    val event = newEvent()
+    event.event.addData("key", mapOf("fo\uFFFDo" to mapOf("ba\uFFFDr" to "bar\uFFDDValue")))
+
+    val data = HashMap<String, Any>()
+    data["key"] = mapOf("fo?o" to mapOf("ba?r" to "bar?Value"))
+    testEventDataEscaping(event, data)
+  }
+
   private fun testEventIdEscaping(event: LogEvent, expectedEventId: String) {
     testEventEscaping(event, "group.id", expectedEventId)
   }
@@ -198,23 +233,38 @@ class FeatureEventLogEscapingTest {
   private fun testEventEscaping(event: LogEvent, expectedGroupId: String,
                                 expectedEventId: String,
                                 expectedData: Map<String, Any> = HashMap()) {
-    val json = JsonParser().parse(LogEventSerializer.toString(event)).asJsonObject
+    val json = Gson().fromJson(LogEventSerializer.toString(event), JsonObject::class.java)
     assertLogEventIsValid(json, false)
 
     assertEquals(expectedGroupId, json.getAsJsonObject("group").get("id").asString)
     assertEquals(expectedEventId, json.getAsJsonObject("event").get("id").asString)
 
     val obj = json.getAsJsonObject("event").get("data").asJsonObject
-    for (option in expectedData.keys) {
+    validateJsonObject(expectedData.keys, expectedData, obj)
+  }
+
+  private fun validateJsonObject(keys: Set<String>, expectedData: Any?, obj: JsonObject) {
+    val expectedMap = expectedData as? Map<*, *>
+    assertNotNull(expectedMap)
+
+    for (option in keys) {
       assertTrue(isValid(option))
-      assertTrue(obj.get(option).isJsonPrimitive || obj.get(option).isJsonArray)
-      when {
-        obj.get(option).isJsonPrimitive -> assertEquals(obj.get(option).asString, expectedData[option])
-        obj.get(option).isJsonArray -> {
-          for ((dataPart, expected) in obj.getAsJsonArray(option).zip(expectedData[option] as Collection<*>)) {
-            assertEquals(dataPart.asString, expected)
+      val expectedValue = expectedData[option]
+      when (val jsonElement = obj.get(option)) {
+        is JsonPrimitive -> assertEquals(expectedValue, jsonElement.asString)
+        is JsonArray -> {
+          for ((dataPart, expected) in jsonElement.zip(expectedValue as Collection<*>)) {
+            if (dataPart is JsonObject) {
+              validateJsonObject(dataPart.keySet(), expected, dataPart)
+            } else {
+              assertEquals(expected, dataPart.asString)
+            }
           }
         }
+        is JsonObject -> {
+          validateJsonObject(jsonElement.keySet(), expectedValue, jsonElement)
+        }
+        else -> throw IllegalStateException("Unsupported type of event data")
       }
     }
   }

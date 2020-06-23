@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.PsiBuilderFactory;
@@ -50,8 +50,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   private final AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
-  public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC =
-    Topic.create("ANY_PSI_CHANGE_TOPIC", AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
+  public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = new Topic<>(AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public PsiManagerImpl(@NotNull Project project) {
     // we need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
@@ -346,66 +345,73 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
         }
       }
       for (PsiTreeChangeListener listener : myTreeChangeListeners) {
-        try {
-          switch (event.getCode()) {
-            case BEFORE_CHILD_ADDITION:
-              listener.beforeChildAddition(event);
-              break;
-
-            case BEFORE_CHILD_REMOVAL:
-              listener.beforeChildRemoval(event);
-              break;
-
-            case BEFORE_CHILD_REPLACEMENT:
-              listener.beforeChildReplacement(event);
-              break;
-
-            case BEFORE_CHILD_MOVEMENT:
-              listener.beforeChildMovement(event);
-              break;
-
-            case BEFORE_CHILDREN_CHANGE:
-              listener.beforeChildrenChange(event);
-              break;
-
-            case BEFORE_PROPERTY_CHANGE:
-              listener.beforePropertyChange(event);
-              break;
-
-            case CHILD_ADDED:
-              listener.childAdded(event);
-              break;
-
-            case CHILD_REMOVED:
-              listener.childRemoved(event);
-              break;
-
-            case CHILD_REPLACED:
-              listener.childReplaced(event);
-              break;
-
-            case CHILD_MOVED:
-              listener.childMoved(event);
-              break;
-
-            case CHILDREN_CHANGED:
-              listener.childrenChanged(event);
-              break;
-
-            case PROPERTY_CHANGED:
-              listener.propertyChanged(event);
-              break;
-          }
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
+        notifyPsiTreeChangeListener(event, listener);
+      }
+      for (PsiTreeChangeListener listener : PsiTreeChangeListener.EP.getExtensions(myProject)) {
+        notifyPsiTreeChangeListener(event, listener);
       }
     }
     finally {
       if (isRealTreeChange) {
         myTreeChangeEventIsFiring = false;
       }
+    }
+  }
+
+  private static void notifyPsiTreeChangeListener(@NotNull PsiTreeChangeEventImpl event, PsiTreeChangeListener listener) {
+    try {
+      switch (event.getCode()) {
+        case BEFORE_CHILD_ADDITION:
+          listener.beforeChildAddition(event);
+          break;
+
+        case BEFORE_CHILD_REMOVAL:
+          listener.beforeChildRemoval(event);
+          break;
+
+        case BEFORE_CHILD_REPLACEMENT:
+          listener.beforeChildReplacement(event);
+          break;
+
+        case BEFORE_CHILD_MOVEMENT:
+          listener.beforeChildMovement(event);
+          break;
+
+        case BEFORE_CHILDREN_CHANGE:
+          listener.beforeChildrenChange(event);
+          break;
+
+        case BEFORE_PROPERTY_CHANGE:
+          listener.beforePropertyChange(event);
+          break;
+
+        case CHILD_ADDED:
+          listener.childAdded(event);
+          break;
+
+        case CHILD_REMOVED:
+          listener.childRemoved(event);
+          break;
+
+        case CHILD_REPLACED:
+          listener.childReplaced(event);
+          break;
+
+        case CHILD_MOVED:
+          listener.childMoved(event);
+          break;
+
+        case CHILDREN_CHANGED:
+          listener.childrenChanged(event);
+          break;
+
+        case PROPERTY_CHANGED:
+          listener.propertyChanged(event);
+          break;
+      }
+    }
+    catch (Throwable e) {
+      LOG.error(e);
     }
   }
 

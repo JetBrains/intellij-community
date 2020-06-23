@@ -23,6 +23,7 @@ import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author peter
@@ -62,12 +63,12 @@ public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions 
     properties.setValue(prefix + "isSearchForTextOccurrences", isSearchForTextOccurrences, true);
   }
 
-  private String findPrefix() {
+  private @NotNull String findPrefix() {
     return getClass().getSimpleName() + ".";
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (!super.equals(o)) return false;
     if (getClass() != o.getClass()) return false;
@@ -82,7 +83,7 @@ public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions 
     return result;
   }
 
-  protected void addUsageTypes(@NotNull LinkedHashSet<? super String> to) {
+  protected void addUsageTypes(@NotNull Set<? super String> to) {
     if (isUsages) {
       to.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }

@@ -24,19 +24,15 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 
 class MarkdownCodeFenceErrorHighlightingIntention() : IntentionAction {
-  init {
-    val settingsListener = object : MarkdownApplicationSettings.SettingsChangedListener {
-      override fun settingsChanged(settings: MarkdownApplicationSettings) =
-        ProjectManager.getInstance().openProjects.forEach { project ->
-          FileEditorManager.getInstance(project).openFiles
-            .filter { file -> file.fileType == MarkdownFileType.INSTANCE }
-            .mapNotNull { file -> PsiManager.getInstance(project).findFile(file) }
-            .forEach { DaemonCodeAnalyzerImpl.getInstance(project).restart(it) }
-        }
-    }
 
-    ApplicationManager.getApplication().messageBus.connect().subscribe<MarkdownApplicationSettings.SettingsChangedListener>(
-      MarkdownApplicationSettings.SettingsChangedListener.TOPIC, settingsListener)
+  companion object SettingsListener : MarkdownApplicationSettings.SettingsChangedListener {
+    override fun settingsChanged(settings: MarkdownApplicationSettings) =
+      ProjectManager.getInstance().openProjects.forEach { project ->
+        FileEditorManager.getInstance(project).openFiles
+          .filter { file -> file.fileType == MarkdownFileType.INSTANCE }
+          .mapNotNull { file -> PsiManager.getInstance(project).findFile(file) }
+          .forEach { DaemonCodeAnalyzerImpl.getInstance(project).restart(it) }
+      }
   }
 
   override fun getText(): String = MarkdownBundle.message("markdown.hide.errors.intention.text")

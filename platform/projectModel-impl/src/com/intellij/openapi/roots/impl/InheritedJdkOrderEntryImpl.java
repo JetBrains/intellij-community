@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.impl;
 
@@ -27,12 +13,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
-/**
- * @author dsl
- */
-class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements InheritedJdkOrderEntry, ClonableOrderEntry, WritableOrderEntry {
+final class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements InheritedJdkOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   @NonNls public static final String ENTRY_TYPE = JpsModuleRootModelSerializer.INHERITED_JDK_TYPE;
   private final MyProjectJdkListener myListener = new MyProjectJdkListener();
 
@@ -45,7 +29,7 @@ class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements In
 
   InheritedJdkOrderEntryImpl(@NotNull Element element, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
     this(rootModel, projectRootManager);
-    if (!element.getName().equals(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
+    if (!element.getName().equals(JpsModuleRootModelSerializer.ORDER_ENTRY_TAG)) {
       throw new InvalidDataException(element.getName());
     }
   }
@@ -80,12 +64,14 @@ class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements In
   }
 
   @Override
+  @Nullable
   public Sdk getJdk() {
     final Project project = getRootModel().getModule().getProject();
     return getRootModel().getConfigurationAccessor().getProjectSdk(project);
   }
 
   @Override
+  @Nullable
   public String getJdkName() {
     final Project project = getRootModel().getModule().getProject();
     return getRootModel().getConfigurationAccessor().getProjectSdkName(project);

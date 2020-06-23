@@ -22,8 +22,7 @@ public final class ExtensionInstantiationException extends RuntimeException {
     myExtensionOwner = extensionOwner;
   }
 
-  @Nullable
-  public PluginId getExtensionOwnerId() {
+  public @Nullable PluginId getExtensionOwnerId() {
     return myExtensionOwner != null ? myExtensionOwner.getPluginId() : null;
   }
 

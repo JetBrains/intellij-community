@@ -882,7 +882,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     assert infos != null;
     final List<MatchResult> matches = new SmartList<>(matchResult.getChildren());
     matches.add(matchResult);
-    Collections.sort(matches, Comparator.comparingInt((MatchResult result) -> result.getMatch().getTextOffset()).reversed());
+    matches.sort(Comparator.comparingInt((MatchResult result) -> result.getMatch().getTextOffset()).reversed());
     for (MatchResult match : matches) {
       final ParameterInfo typeInfo = infos.get(match.getName());
       if (typeInfo != null) out.insert(typeInfo.getStartIndex() + offset, match.getMatchImage());

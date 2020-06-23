@@ -582,7 +582,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Override
     public String toString() {
-      return "provider=\'" + myProvider.getName() + "\', login='" + myLogin + '\'';
+      return "provider='" + myProvider.getName() + "', login='" + myLogin + '\'';
     }
   }
 }

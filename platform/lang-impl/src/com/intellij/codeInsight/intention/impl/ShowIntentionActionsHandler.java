@@ -14,6 +14,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewEditor;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -26,6 +27,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.IntentionsCollector;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -97,7 +99,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       });
     }
     else if (showFeedbackOnEmptyMenu) {
-      HintManager.getInstance().showInformationHint(editor, "No context actions available at this location");
+      HintManager.getInstance().showInformationHint(editor, LangBundle.message("hint.text.no.context.actions.available.at.this.location"));
     }
   }
 
@@ -176,7 +178,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       PsiFile fileToApply = null;
 
       Editor injectedEditor = null;
-      if (injectedFile != null) {
+      // TODO: support intention preview in injections
+      if (injectedFile != null && !(hostEditor instanceof IntentionPreviewEditor)) {
         injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
         if (predicate.process(injectedFile, injectedEditor)) {
           editorToApply = injectedEditor;
@@ -192,22 +195,25 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return Pair.create(fileToApply, editorToApply);
     }
     catch (IntentionPreviewUnsupportedOperationException e) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw e;
+      }
       return null;
     }
   }
 
   public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
-                                              @NotNull final Editor hostEditor,
+                                              @Nullable final Editor hostEditor,
                                               @NotNull final IntentionAction action,
-                                              @NotNull String text) {
+                                              @NotNull String commandName) {
     final Project project = hostFile.getProject();
-    return chooseActionAndInvoke(hostFile, hostEditor, action, text, project);
+    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, project);
   }
 
   static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                        @Nullable final Editor hostEditor,
                                        @NotNull final IntentionAction action,
-                                       @NotNull String text,
+                                       @NotNull String commandName,
                                        @NotNull final Project project) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
@@ -218,7 +224,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (pair == null) return false;
 
     CommandProcessor.getInstance().executeCommand(project, () ->
-      invokeIntention(action, pair.second, pair.first), text, null);
+      invokeIntention(action, pair.second, pair.first), commandName, null);
 
     checkPsiTextConsistency(hostFile);
 
@@ -241,11 +247,11 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return;
     }
 
-    Runnable r = () -> action.invoke(file.getProject(), editor, file);
     if (action.startInWriteAction()) {
-      WriteAction.run(r::run);
-    } else {
-      r.run();
+      WriteAction.run(() -> action.invoke(file.getProject(), editor, file));
+    }
+    else {
+      action.invoke(file.getProject(), editor, file);
     }
   }
 

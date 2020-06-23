@@ -6,9 +6,11 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
-  @NotNull
-  TargetEnvironment prepareEnvironment(@NotNull ProgressIndicator progressIndicator) throws ExecutionException;
+  void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
+                                       @Nullable TargetEnvironmentConfiguration configuration,
+                                       @NotNull ProgressIndicator progressIndicator) throws ExecutionException;
 }

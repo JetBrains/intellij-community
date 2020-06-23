@@ -3,7 +3,7 @@ package git4idea.history
 
 import com.intellij.openapi.util.registry.Registry
 
-class GitCommitRequirements(val includeRootChanges: Boolean = true,
+class GitCommitRequirements(private val includeRootChanges: Boolean = true,
                             val diffRenameLimit: DiffRenameLimit = DiffRenameLimit.GIT_CONFIG,
                             val diffInMergeCommits: DiffInMergeCommits = DiffInMergeCommits.COMBINED_DIFF) {
 

@@ -87,10 +87,11 @@ public class PySdkFlavorTest extends PyTestCase {
   // TODO: Add tests for MayaPy and IronPython SDK flavors
 
   @NotNull
-  private static Sdk createMockSdk(@NotNull PythonSdkFlavor flavor, @NotNull String versionOutput) {
+  private Sdk createMockSdk(@NotNull PythonSdkFlavor flavor, @NotNull String versionOutput) {
     final String versionString = flavor.getVersionStringFromOutput(versionOutput);
     final ProjectJdkImpl sdk = new ProjectJdkImpl("Test", PythonSdkType.getInstance(), "/path/to/sdk", versionString);
     sdk.setSdkAdditionalData(new PythonSdkAdditionalData(flavor));
+    disposeOnTearDown(sdk);
     return sdk;
   }
 }

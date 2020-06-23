@@ -71,10 +71,6 @@ public final class TextMateDefaultColorsProvider {
     return DEFAULT_HIGHLIGHTING_RULES.keySet();
   }
 
-  public TextAttributes getTextAttributes(CharSequence selector) {
-    return getTextAttributesKey(selector).getDefaultAttributes();
-  }
-
   public TextAttributesKey getTextAttributesKey(CharSequence selector) {
     return DEFAULT_HIGHLIGHTING_RULES.getOrDefault(selector, HighlighterColors.TEXT);
   }

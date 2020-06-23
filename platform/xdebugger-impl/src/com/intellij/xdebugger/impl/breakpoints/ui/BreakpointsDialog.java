@@ -74,14 +74,13 @@ public class BreakpointsDialog extends DialogWrapper {
 
   private final Collection<BreakpointItem> myBreakpointItems = new ArrayList<>();
 
-  private final SingleAlarm myRebuildAlarm = new SingleAlarm(new Runnable() {
-    @Override
-    public void run() {
-      collectItems();
-      myTreeController.rebuildTree(myBreakpointItems);
-      myDetailController.doUpdateDetailView(true);
-    }
-  }, 100, myDisposable);
+  private final SingleAlarm myRebuildAlarm = new SingleAlarm(() -> updateBreakpoints(), 100, myDisposable);
+
+  private void updateBreakpoints() {
+    collectItems();
+    myTreeController.rebuildTree(myBreakpointItems);
+    myDetailController.doUpdateDetailView(true);
+  }
 
   private final List<XBreakpointGroupingRule> myRulesAvailable = new ArrayList<>();
 
@@ -170,7 +169,7 @@ public class BreakpointsDialog extends DialogWrapper {
         });
       myTreeController.selectFirstBreakpointItem();
     }
-    selectBreakpoint(myInitialBreakpoint);
+    selectBreakpoint(myInitialBreakpoint, false);
   }
 
   @Nullable
@@ -423,7 +422,7 @@ public class BreakpointsDialog extends DialogWrapper {
       saveCurrentItem();
       XBreakpoint<?> breakpoint = myType.addBreakpoint(myProject, null);
       if (breakpoint != null) {
-        selectBreakpoint(breakpoint);
+        selectBreakpoint(breakpoint, true);
       }
     }
   }
@@ -434,7 +433,10 @@ public class BreakpointsDialog extends DialogWrapper {
     super.toFront();
   }
 
-  public boolean selectBreakpoint(Object breakpoint) {
+  public boolean selectBreakpoint(Object breakpoint, boolean update) {
+    if (update) {
+      updateBreakpoints();
+    }
     if (breakpoint != null) {
       for (BreakpointItem item : myBreakpointItems) {
         if (item.getBreakpoint() == breakpoint) {

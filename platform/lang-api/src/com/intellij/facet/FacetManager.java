@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet;
 
 import com.intellij.openapi.module.Module;
@@ -10,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.NonExtendable
 public abstract class FacetManager implements FacetModel {
-  public static final Topic<FacetManagerListener> FACETS_TOPIC = Topic.create("facet changes", FacetManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
+  public static final Topic<FacetManagerListener> FACETS_TOPIC = new Topic<>(FacetManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public static FacetManager getInstance(@NotNull Module module) {
     return module.getComponent(FacetManager.class);

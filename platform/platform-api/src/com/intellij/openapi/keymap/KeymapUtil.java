@@ -269,7 +269,7 @@ public class KeymapUtil {
    */
   @NotNull
   public static MouseShortcut parseMouseShortcut(@NotNull String keystrokeString) throws InvalidDataException {
-    if (Registry.is("ide.mac.forceTouch") && keystrokeString.startsWith("Force touch")) {
+    if (keystrokeString.startsWith("Force touch")) {
       return new PressureShortcut(2);
     }
 
@@ -317,7 +317,7 @@ public class KeymapUtil {
    */
   @NotNull
   public static String getMouseShortcutString(@NotNull MouseShortcut shortcut) {
-    if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
+    if (shortcut instanceof PressureShortcut) {
       return "Force touch";
     }
 

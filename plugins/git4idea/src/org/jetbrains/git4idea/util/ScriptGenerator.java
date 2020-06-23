@@ -4,14 +4,21 @@ package org.jetbrains.git4idea.util;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
+import git4idea.config.GitExecutable;
+import org.apache.commons.codec.DecoderException;
+import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
+import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
+import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Script generator utility class. It uses to generate a temporary scripts that
@@ -29,7 +36,7 @@ public class ScriptGenerator {
   /**
    * The class paths for the script
    */
-  private final ArrayList<String> myPaths = new ArrayList<>();
+  private final ArrayList<File> myPaths = new ArrayList<>();
   /**
    * The internal parameters for the script
    */
@@ -41,47 +48,26 @@ public class ScriptGenerator {
    * @param prefix    the script prefix
    * @param mainClass the script main class
    */
-  public ScriptGenerator(final String prefix, final Class mainClass) {
+  public ScriptGenerator(@NotNull String prefix, @NotNull Class mainClass) {
     myPrefix = prefix;
     myMainClass = mainClass;
     addClasses(myMainClass);
+    addClasses(XmlRpcClientLite.class, DecoderException.class);
   }
 
   /**
    * Add jar or directory that contains the class to the classpath
    *
    * @param classes classes which sources will be added
-   * @return this script generator
    */
-  public ScriptGenerator addClasses(final Class... classes) {
+  private void addClasses(final Class... classes) {
     for (Class<?> c : classes) {
-      addPath(PathUtil.getJarPathForClass(c));
+      File classPath = new File(PathUtil.getJarPathForClass(c));
+      if (!myPaths.contains(classPath)) {
+        // the size of path is expected to be quite small, so no optimization is done here
+        myPaths.add(classPath);
+      }
     }
-    return this;
-  }
-
-  /**
-   * Add path to class path. The methods checks if the path has been already added to the classpath.
-   *
-   * @param path the path to add
-   */
-  private void addPath(final String path) {
-    if (!myPaths.contains(path)) {
-      // the size of path is expected to be quite small, so no optimization is done here
-      myPaths.add(path);
-    }
-  }
-
-  /**
-   * Add source for the specified resource
-   *
-   * @param base     the resource base
-   * @param resource the resource name
-   * @return this script generator
-   */
-  public ScriptGenerator addResource(final Class base, @NonNls String resource) {
-    addPath(getJarForResource(base, resource));
-    return this;
   }
 
   /**
@@ -123,8 +109,8 @@ public class ScriptGenerator {
   }
 
   @NotNull
-  public File generate(boolean useBatchFile) throws IOException {
-    String commandLine = commandLine();
+  public File generate(@NotNull GitExecutable executable, boolean useBatchFile) throws IOException {
+    String commandLine = commandLine(executable);
     return useBatchFile ? generateBatch(myPrefix, commandLine)
                         : generateShell(myPrefix, commandLine);
   }
@@ -132,43 +118,49 @@ public class ScriptGenerator {
   /**
    * @return a command line for the the executable program
    */
-  public String commandLine() {
+  public String commandLine(@NotNull GitExecutable executable) {
     StringBuilder cmd = new StringBuilder();
-    cmd.append('\"').append(System.getProperty("java.home")).append(File.separatorChar).append("bin").append(File.separatorChar)
-      .append("java\" -cp \"");
-    boolean first = true;
-    for (String p : myPaths) {
-      if (!first) {
-        cmd.append(File.pathSeparatorChar);
-      }
-      else {
-        first = false;
-      }
-      cmd.append(p);
+
+    if (executable instanceof GitExecutable.Wsl) {
+      List<String> envs = ContainerUtil.newArrayList(
+        GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV,
+        GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV,
+        GitAskPassXmlRpcHandler.IJ_ASK_PASS_HANDLER_ENV,
+        GitAskPassXmlRpcHandler.IJ_ASK_PASS_PORT_ENV,
+        GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV);
+      cmd.append("export WSLENV=");
+      cmd.append(StringUtil.join(envs, it -> it + "/w", ":"));
+      cmd.append("\n");
+
+      cmd.append('"');
+      File javaExecutable = new File(String.format("%s\\bin\\java.exe", System.getProperty("java.home")));
+      cmd.append(executable.convertFilePath(javaExecutable));
+      cmd.append('"');
     }
-    cmd.append("\" ");
+    else {
+      cmd.append('"');
+      cmd.append(String.format("%s/bin/java", System.getProperty("java.home")));
+      cmd.append('"');
+    }
+
+    cmd.append(" -cp ");
+    cmd.append('"');
+    String classpathSeparator = String.valueOf(File.pathSeparatorChar);
+    cmd.append(StringUtil.join(myPaths, file -> file.getPath(), classpathSeparator));
+    cmd.append('"');
+
+    cmd.append(' ');
     cmd.append(myMainClass.getName());
+
     for (String p : myInternalParameters) {
       cmd.append(' ');
       cmd.append(p);
     }
+
     String line = cmd.toString();
     if (SystemInfo.isWindows) {
       line = line.replace('\\', '/');
     }
     return line;
-  }
-
-  /**
-   * Get path for resources.jar
-   *
-   * @param context a context class
-   * @param res     a resource
-   * @return a path to classpath entry
-   */
-  @SuppressWarnings({"SameParameterValue"})
-  public static String getJarForResource(Class context, String res) {
-    String resourceRoot = PathManager.getResourceRoot(context, res);
-    return new File(resourceRoot).getAbsoluteFile().getAbsolutePath();
   }
 }

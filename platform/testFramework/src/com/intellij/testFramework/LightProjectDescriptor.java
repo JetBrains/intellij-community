@@ -54,7 +54,7 @@ public class LightProjectDescriptor {
     WriteAction.run(() -> {
       Module module = createMainModule(project);
       handler.moduleCreated(module);
-      VirtualFile sourceRoot = createSourcesRoot(module);
+      VirtualFile sourceRoot = createDirForSources(module);
       if (sourceRoot != null) {
         handler.sourceRootCreated(sourceRoot);
         createContentEntry(module, sourceRoot);
@@ -90,9 +90,24 @@ public class LightProjectDescriptor {
     return EmptyModuleType.EMPTY_MODULE;
   }
 
+  /**
+   * Creates in-memory directory {@code temp:///some/path} where sources for test project will be placed.
+   * Please keep in mind that this directory will be marked as "Source root". If you want to disable this
+   * behaviour use {@link #markDirForSourcesAsSourceRoot()}.
+   * @see #markDirForSourcesAsSourceRoot()
+   */
   @Nullable
-  public VirtualFile createSourcesRoot(@NotNull Module module) {
+  public VirtualFile createDirForSources(@NotNull Module module) {
     return createSourceRoot(module, "src");
+  }
+
+  /**
+   * Configures whether directory created by {@link #createDirForSources(Module)} should be marked as "Source root".
+   * <p></p>
+   * If you wonder about when this can be helpful: RubyMine does this. See this method overrides and according JavaDoc.
+   */
+  protected boolean markDirForSourcesAsSourceRoot() {
+    return true;
   }
 
   protected VirtualFile createSourceRoot(@NotNull Module module, String srcPath) {
@@ -147,7 +162,9 @@ public class LightProjectDescriptor {
       }
 
       ContentEntry contentEntry = model.addContentEntry(srcRoot);
-      contentEntry.addSourceFolder(srcRoot, getSourceRootType());
+      if (markDirForSourcesAsSourceRoot()) {
+        contentEntry.addSourceFolder(srcRoot, getSourceRootType());
+      }
 
       configureModule(module, model, contentEntry);
     });

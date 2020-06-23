@@ -2,13 +2,16 @@
 package com.intellij.ide;
 
 import com.intellij.Patches;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +38,7 @@ import java.util.Set;
  */
 public final class ClipboardSynchronizer implements Disposable {
   private static final Logger LOG = Logger.getInstance(ClipboardSynchronizer.class);
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("System Clipboard");
 
   private final ClipboardHandler myClipboardHandler;
 
@@ -140,7 +144,13 @@ public final class ClipboardSynchronizer implements Disposable {
     public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
       Clipboard clipboard = getClipboard();
       if (clipboard !=null) {
-        clipboard.setContents(content, owner);
+        try {
+          clipboard.setContents(content, owner);
+        }
+        catch (IllegalStateException e) {
+          LOG.debug(e);
+          NOTIFICATION_GROUP.createNotification(UIBundle.message("clipboard.is.unavailable"), MessageType.WARNING).notify(null);
+        }
       }
     }
 

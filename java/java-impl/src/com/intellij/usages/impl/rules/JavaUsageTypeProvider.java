@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 
@@ -69,7 +55,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
             return UsageType.RECURSION;
           }
           if (qualifier != null && !(qualifier instanceof PsiThisExpression) && calledMethod != null) {
-            if (Comparing.equal(containerMethod.getName(), calledMethod.getName()) &&
+            if (Objects.equals(containerMethod.getName(), calledMethod.getName()) &&
                 haveCommonSuperMethod(containerMethod, calledMethod)) {
               boolean parametersDelegated = parametersDelegated(containerMethod, callExpression);
 
@@ -265,7 +251,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
       if (target instanceof PsiElementUsageTarget) {
         PsiElement element = ((PsiElementUsageTarget)target).getElement();
         if (element instanceof PsiClass) {
-          if (Comparing.equal(qualifier.getReferenceName(), target.getName())) {
+          if (Objects.equals(qualifier.getReferenceName(), target.getName())) {
             return true;
           }
         }

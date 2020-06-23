@@ -27,6 +27,8 @@ import com.intellij.psi.util.ClassKind;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -77,8 +79,8 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
                                                                             final JavaClassReferenceProvider provider) {
 
     if (extendClass != null) {
-      if (StringUtil.isNotEmpty(extendClass.value())) {
-        provider.setOption(JavaClassReferenceProvider.EXTEND_CLASS_NAMES, new String[]{extendClass.value()});
+      if (extendClass.value().length > 0) {
+        provider.setOption(JavaClassReferenceProvider.SUPER_CLASSES, Arrays.asList(extendClass.value()));
       }
       if (extendClass.instantiatable()) {
         provider.setOption(JavaClassReferenceProvider.INSTANTIATABLE, Boolean.TRUE);

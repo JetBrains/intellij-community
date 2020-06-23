@@ -16,10 +16,11 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public final class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
   public PlatformProjectViewOpener() {
@@ -63,10 +64,10 @@ public final class PlatformProjectViewOpener implements DirectoryProjectConfigur
     }
 
     @Override
-    public void toolWindowRegistered(@NotNull String id) {
-      if (id.equals(ToolWindowId.PROJECT_VIEW)) {
+    public void toolWindowsRegistered(@NotNull List<String> id) {
+      if (id.contains(ToolWindowId.PROJECT_VIEW)) {
         Disposer.dispose(this);
-        activateProjectToolWindow(myProject, ToolWindowManagerEx.getInstanceEx(myProject).getToolWindow(id));
+        activateProjectToolWindow(myProject, ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW));
       }
     }
 

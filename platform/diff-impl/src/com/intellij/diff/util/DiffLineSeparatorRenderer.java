@@ -67,7 +67,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
    * Gutter
    */
   @Override
-  public void paint(Editor editor, Graphics g, Rectangle r) {
+  public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
     if (!myCondition.get()) return;
 
     int y = r.y;

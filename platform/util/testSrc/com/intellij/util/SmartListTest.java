@@ -95,6 +95,7 @@ public class SmartListTest {
     l.set(1, 3);
   }
 
+  @SuppressWarnings("RedundantOperationOnEmptyContainer")
   @Test(expected = IndexOutOfBoundsException.class)
   public void testFourElement2() {
     SmartList<Integer> l = new SmartList<>();
@@ -119,7 +120,7 @@ public class SmartListTest {
     l.get(1);
   }
 
-  @SuppressWarnings("CollectionAddedToSelf")
+  @SuppressWarnings({"CollectionAddedToSelf", "RedundantOperationOnEmptyContainer"})
   @Test(expected = ConcurrentModificationException.class)
   public void testFourElement3() {
     SmartList<Integer> l = new SmartList<>();
@@ -196,6 +197,7 @@ public class SmartListTest {
     assertThat(l.get(2)).isEqualTo(1);
   }
 
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   @Test
   public void testEmptyToArray() {
     SmartList<Integer> l = new SmartList<>();

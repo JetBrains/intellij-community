@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -10,7 +10,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LineSeparator;
@@ -26,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 
 /**
  * <p>Represents a file in {@link VirtualFileSystem}. A particular file is represented by equal
@@ -128,9 +128,27 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * ({@link File#separatorChar}) replaced to the forward slash ({@code '/'}).
    *
    * @return the path
+   * @see #toNioPath()
    */
   @NotNull
   public abstract String getPath();
+
+  /**
+   * @return a related {@link Path} for a given virtual file where possible otherwise an
+   * exception is thrown.
+   * The returned {@link Path} may not have a default filesystem behind.
+   * <br/>
+   * Use {@link #getFileSystem()} and {@link VirtualFileSystem#getNioPath(VirtualFile)}
+   * to avoid the exception
+   *
+   * @throws UnsupportedOperationException if this VirtualFile does not have an associated {@link Path}
+   */
+  @NotNull
+  public Path toNioPath() {
+    Path path = getFileSystem().getNioPath(this);
+    if (path != null) return path;
+    throw new UnsupportedOperationException("Failed to map " + this + " (filesystem " + getFileSystem() + ") into nio Path");
+  }
 
   /**
    * <p>Returns the URL of this file. The URL is a string that uniquely identifies a file in all file systems.
@@ -319,9 +337,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Returns the {@link FileType} of this file, or {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN} if a type cannot be determined
    * (i.e. file type is not registered via {@link FileTypeRegistry}).
    *
-   * <p> Performance notice: consider using {@link FileTypeRegistry#isFileOfType} or {@link FileTypeRegistry#getFileTypeByFileName}
-   * if this method is to be called for massive file collections, e.g. in {@link BulkFileListener}. See {@code FileTypeRegistry} javadoc
-   * for the details.
+   * <p> Performance notice: this method can be slow. See {@link FileTypeRegistry} javadoc for the details.
    *
    * @see FileTypeRegistry
    */

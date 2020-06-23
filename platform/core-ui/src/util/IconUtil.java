@@ -167,7 +167,7 @@ public class IconUtil {
   };
 
   @Iconable.IconFlags
-  private static int filterFileIconFlags(VirtualFile file, @Iconable.IconFlags int flags) {
+  private static int filterFileIconFlags(@NotNull VirtualFile file, @Iconable.IconFlags int flags) {
     UserDataHolder fileTypeDataHolder = ObjectUtils.tryCast(file.getFileType(), UserDataHolder.class);
     int fileTypeFlagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0);
     int flagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask);
@@ -181,14 +181,14 @@ public class IconUtil {
     return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
   }
 
-  private static Icon getBaseIcon(VirtualFile vFile) {
+  private static Icon getBaseIcon(@NotNull VirtualFile vFile) {
     Icon icon = TypePresentationService.getService().getIcon(vFile);
     if (icon != null) {
       return icon;
     }
     FileType fileType = vFile.getFileType();
     if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
-      return PlatformIcons.FOLDER_ICON;
+      return IconWithToolTip.tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
     }
     return fileType.getIcon();
   }
@@ -281,24 +281,14 @@ public class IconUtil {
   }
 
   @NotNull
-  public static Icon getAddFolderIcon() {
-    return AllIcons.ToolbarDecorator.AddFolder;
-  }
-
-  @NotNull
   public static Icon getAnalyzeIcon() {
-    return getToolbarDecoratorIcon("analyze.png");
+    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png");
   }
 
   public static void paintInCenterOf(@NotNull Component c, @NotNull Graphics g, @NotNull Icon icon) {
     final int x = (c.getWidth() - icon.getIconWidth()) / 2;
     final int y = (c.getHeight() - icon.getIconHeight()) / 2;
     icon.paintIcon(c, g, x, y);
-  }
-
-  @NotNull
-  private static Icon getToolbarDecoratorIcon(@NotNull String name) {
-    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + name);
   }
 
   @NotNull
@@ -424,7 +414,7 @@ public class IconUtil {
   @Deprecated
   @NotNull
   public static Icon scale(@NotNull final Icon source, double _scale) {
-    final double scale = Math.min(32, Math.max(.1, _scale));
+    final double scale = MathUtil.clamp(_scale, .1, 32);
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {

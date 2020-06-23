@@ -1,11 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-
-import java.util.HashMap;
-import java.util.Map;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 /**
  * Defines possible types of a wrap.
@@ -40,7 +38,7 @@ public enum WrapType {
    */
   CHOP_DOWN_IF_LONG(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM);
 
-  private static final Map<Integer, WrapType> LEGACY_MAPPINGS = new HashMap<>();
+  private static final Int2ObjectOpenHashMap<WrapType> LEGACY_MAPPINGS = new Int2ObjectOpenHashMap<>();
 
   static {
     for (WrapType wrapType : values()) {

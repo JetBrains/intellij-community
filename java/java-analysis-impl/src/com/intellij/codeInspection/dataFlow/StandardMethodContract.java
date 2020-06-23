@@ -4,6 +4,8 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -227,7 +229,7 @@ public final class StandardMethodContract extends MethodContract {
     String arrow = "->";
     int arrowIndex = clause.indexOf(arrow);
     if (arrowIndex < 0) {
-      throw ParseException.forClause("A contract clause must be in form arg1, ..., argN -> return-value", text, clauseIndex);
+      throw ParseException.forClause(JavaAnalysisBundle.message("inspection.contract.checker.clause.syntax"), text, clauseIndex);
     }
 
     String beforeArrow = clause.substring(0, arrowIndex);
@@ -245,20 +247,21 @@ public final class StandardMethodContract extends MethodContract {
     String returnValueString = clause.substring(arrowIndex + arrow.length());
     ContractReturnValue returnValue = ContractReturnValue.valueOf(returnValueString);
     if (returnValue == null) {
-      throw ParseException.forReturnValue(
-        "Return value should be one of: null, !null, true, false, this, new, paramN, fail, _. Found: " + returnValueString,
-        text, clauseIndex);
+      String possibleValues = "null, !null, true, false, this, new, paramN, fail, _";
+      String message = JavaAnalysisBundle.message("inspection.contract.checker.unknown.return.value", possibleValues, returnValueString);
+      throw ParseException.forReturnValue(message, text, clauseIndex);
     }
     return new StandardMethodContract(args, returnValue);
   }
 
   private static ValueConstraint parseConstraint(String name, String text, int clauseIndex, int constraintIndex) throws ParseException {
-    if (StringUtil.isEmpty(name)) throw new ParseException("Constraint should not be empty");
+    if (StringUtil.isEmpty(name)) throw new ParseException(JavaAnalysisBundle.message("inspection.contract.checker.empty.constraint"));
     for (ValueConstraint constraint : ValueConstraint.values()) {
       if (constraint.toString().equals(name)) return constraint;
     }
-    throw ParseException
-      .forConstraint("Constraint should be one of: null, !null, true, false, _. Found: " + name, text, clauseIndex, constraintIndex);
+    String allowedClause = StreamEx.of(ValueConstraint.values()).joining(", ");
+    String message = JavaAnalysisBundle.message("inspection.contract.checker.unknown.constraint", allowedClause, name);
+    throw ParseException.forConstraint(message, text, clauseIndex, constraintIndex);
   }
 
   public enum ValueConstraint {
@@ -345,11 +348,11 @@ public final class StandardMethodContract extends MethodContract {
   public static class ParseException extends Exception {
     private final @Nullable TextRange myRange;
 
-    ParseException(String message) {
+    ParseException(@InspectionMessage String message) {
       this(message, null);
     }
 
-    ParseException(String message, @Nullable TextRange range) {
+    ParseException(@InspectionMessage String message, @Nullable TextRange range) {
       super(message);
       myRange = range != null && range.isEmpty() ? null : range;
     }
@@ -358,7 +361,7 @@ public final class StandardMethodContract extends MethodContract {
       return myRange;
     }
 
-    static ParseException forConstraint(String message, String text, int clauseNumber, int constraintNumber) {
+    static ParseException forConstraint(@InspectionMessage String message, String text, int clauseNumber, int constraintNumber) {
       TextRange range = findClauseRange(text, clauseNumber);
       if (range == null) {
         return new ParseException(message);
@@ -384,7 +387,7 @@ public final class StandardMethodContract extends MethodContract {
       return new ParseException(message, new TextRange(start, end));
     }
 
-    static ParseException forReturnValue(String message, String text, int clauseNumber) {
+    static ParseException forReturnValue(@InspectionMessage String message, String text, int clauseNumber) {
       TextRange range = findClauseRange(text, clauseNumber);
       if (range == null) {
         return new ParseException(message);
@@ -401,7 +404,7 @@ public final class StandardMethodContract extends MethodContract {
       return new ParseException(message, new TextRange(index, range.getEndOffset()));
     }
 
-    static ParseException forClause(String message, String text, int clauseNumber) {
+    static ParseException forClause(@InspectionMessage String message, String text, int clauseNumber) {
       TextRange range = findClauseRange(text, clauseNumber);
       return range == null ? new ParseException(message) : new ParseException(message, range);
     }

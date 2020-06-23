@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -28,6 +28,8 @@ public interface FileEditor extends UserDataHolder, Disposable {
    * @see #isValid()
    */
   @NonNls String PROP_VALID = "valid";
+
+  FileEditor[] EMPTY_ARRAY = {};
 
   /**
    * @return component which represents editor in the UI.
@@ -99,14 +101,14 @@ public interface FileEditor extends UserDataHolder, Disposable {
   }
 
   /**
-   * Removes specified listener
+   * Adds specified listener.
    *
    * @param listener to be added
    */
   void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   /**
-   * Adds specified listener
+   * Removes specified listener.
    *
    * @param listener to be removed
    */

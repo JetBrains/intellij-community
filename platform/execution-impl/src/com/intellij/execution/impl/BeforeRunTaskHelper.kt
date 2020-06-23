@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.BeforeRunTask
@@ -32,7 +32,7 @@ internal fun getEffectiveBeforeRunTaskList(ownTasks: List<BeforeRunTask<*>>, tem
 
 internal fun getHardcodedBeforeRunTasks(configuration: RunConfiguration, factory: ConfigurationFactory): List<BeforeRunTask<*>> {
   var result: MutableList<BeforeRunTask<*>>? = null
-  for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensionList(configuration.project)) {
+  for (provider in BeforeRunTaskProvider.EP_NAME.getExtensions(configuration.project)) {
     val task = provider.createTask(configuration) ?: continue
     if (task.isEnabled) {
       factory.configureBeforeRunTaskDefaults(provider.id, task)

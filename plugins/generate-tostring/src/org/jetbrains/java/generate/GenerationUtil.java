@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.generate;
 
 import com.intellij.CommonBundle;
@@ -55,7 +55,7 @@ public class GenerationUtil {
             // plugin related error - could be recoverable.
             Messages.showMessageDialog(project, JavaBundle
               .message("generate.tostring.handle.exception.plugin.warning.message", e.getMessage()), CommonBundle.message("title.warning"), Messages.getWarningIcon());
-        } 
+        }
         else {
           // unknown error (such as NPE) - not recoverable
           Messages.showMessageDialog(project, JavaBundle.message("generate.tostring.handle.exception.error.message", e.getMessage()),
@@ -186,7 +186,7 @@ public class GenerationUtil {
       List<Element> elements = ElementUtils.getOnlyAsFieldAndMethodElements(selectedMembers, selectedNotNullMembers, useAccessors);
       // sort elements if enabled and not using chooser dialog
       if (sortElements != 0 && sortElements < 3) {
-        Collections.sort(elements, new ElementComparator(sortElements));
+        elements.sort(new ElementComparator(sortElements));
       }
       vc.put("members", elements);
 

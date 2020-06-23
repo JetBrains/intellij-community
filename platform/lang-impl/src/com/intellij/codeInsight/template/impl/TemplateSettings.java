@@ -19,7 +19,6 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -150,7 +149,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       if (o == null || getClass() != o.getClass()) return false;
 
       TemplateKey that = (TemplateKey)o;
-      return Comparing.equal(groupName, that.groupName) && Comparing.equal(key, that.key);
+      return Objects.equals(groupName, that.groupName) && Objects.equals(key, that.key);
     }
 
     public int hashCode() {
@@ -275,7 +274,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
     doLoadTemplates(mySchemeManager.loadSchemes());
 
-    Macro.EP_NAME.addExtensionPointListener(() -> {
+    Macro.EP_NAME.addChangeListener(() -> {
       for (TemplateImpl template : myTemplates.values()) {
         template.dropParsedData();
       }
@@ -284,8 +283,8 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       }
     }, ApplicationManager.getApplication());
 
-    DefaultLiveTemplateEP.EP_NAME.addExtensionPointListener(mySchemeManager::reload,
-                                                            ApplicationManager.getApplication());
+    DefaultLiveTemplateEP.EP_NAME.addChangeListener(mySchemeManager::reload,
+                                                    ApplicationManager.getApplication());
   }
 
   private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {
@@ -301,13 +300,13 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return ServiceManager.getService(TemplateSettings.class);
   }
 
-  boolean differsFromDefault(@NotNull TemplateImpl t) {
+  private boolean differsFromDefault(TemplateImpl t) {
     TemplateImpl def = getDefaultTemplate(t);
     return def == null || !t.equals(def) || !t.contextsEqual(def);
   }
 
   @Nullable
-  public TemplateImpl getDefaultTemplate(@NotNull TemplateImpl t) {
+  public TemplateImpl getDefaultTemplate(TemplateImpl t) {
     return myDefaultTemplates.get(TemplateKey.keyOf(t));
   }
 
@@ -523,23 +522,27 @@ public final class TemplateSettings implements PersistentStateComponent<Template
                                @NotNull String defTemplate,
                                boolean registerTemplate, ClassLoader loader, PluginInfo info) throws JDOMException, InvalidDataException, IOException {
     InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(requestor, defTemplate);
-    if (inputStream != null) {
-      Element element = JDOMUtil.load(inputStream);
-      TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), loader);
-      if (defGroup != null) {
-        for (TemplateImpl template : defGroup.getElements()) {
-          String key = template.getKey();
-          String groupName = template.getGroupName();
-          if (StringUtil.isNotEmpty(key) && StringUtil.isNotEmpty(groupName)) {
-            myPredefinedTemplates.put(Pair.create(key, groupName), info);
-          }
+    if (inputStream == null) {
+      LOG.error("Unable to find template resource: " + defTemplate +
+                "; classLoader: " + loader +
+                "; plugin: " + info);
+      return;
+    }
+    Element element = JDOMUtil.load(inputStream);
+    TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), loader);
+    if (defGroup != null) {
+      for (TemplateImpl template : defGroup.getElements()) {
+        String key = template.getKey();
+        String groupName = template.getGroupName();
+        if (StringUtil.isNotEmpty(key) && StringUtil.isNotEmpty(groupName)) {
+          myPredefinedTemplates.put(Pair.create(key, groupName), info);
         }
+      }
 
-        TemplateGroup group = mergeParsedGroup(element, true, registerTemplate, defGroup);
-        if (group != null && group.getReplace() != null) {
-          for (TemplateImpl template : myTemplates.get(group.getReplace())) {
-            removeTemplate(template);
-          }
+      TemplateGroup group = mergeParsedGroup(element, true, registerTemplate, defGroup);
+      if (group != null && group.getReplace() != null) {
+        for (TemplateImpl template : myTemplates.get(group.getReplace())) {
+          removeTemplate(template);
         }
       }
     }

@@ -3,11 +3,13 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +30,7 @@ public interface StatusBarWidget extends Disposable {
     DEFAULT, MAC
   }
 
-  @NotNull
+  @NonNls @NotNull
   String ID();
 
   @Nullable
@@ -54,7 +56,7 @@ public interface StatusBarWidget extends Disposable {
 
   interface WidgetPresentation {
     @Nullable
-    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @Tooltip
     String getTooltipText();
 
     @Nullable
@@ -71,7 +73,7 @@ public interface StatusBarWidget extends Disposable {
 
   interface TextPresentation extends WidgetPresentation {
     @NotNull
-    @Nls
+    @NlsContexts.Label
     String getText();
 
     /**

@@ -9,9 +9,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BitUtil;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -34,7 +34,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     Presentation presentation = getTemplatePresentation();
     String text = projectPath.equals(displayName) ? FileUtil.getLocationRelativeToUserHome(projectPath) : displayName;
     presentation.setText(text, false);
-    presentation.setDescription(PathUtil.toSystemDependentName(projectPath));
+    presentation.setDescription(FileUtil.toSystemDependentName(projectPath));
   }
 
   @Override
@@ -46,8 +46,8 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     Path file = Paths.get(myProjectPath).normalize();
     if (!Files.exists(file)) {
       if (Messages.showDialog(project, IdeBundle
-                                .message("message.the.path.0.does.not.exist.maybe.on.remote", PathUtil.toSystemDependentName(myProjectPath)),
-                              "Reopen Project", new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
+                                .message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(myProjectPath)),
+                              IdeBundle.message("dialog.title.reopen.project"), new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
         myIsRemoved = true;
         RecentProjectsManager.getInstance().removePath(myProjectPath);
       }
@@ -79,9 +79,10 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     return myProjectName;
   }
 
+  @NlsActions.ActionText
   @Nullable
   @Override
   public String getTemplateText() {
-    return "Reopen Project";
+    return IdeBundle.message("action.ReopenProject.reopen.project.text");
   }
 }

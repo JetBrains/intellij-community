@@ -107,7 +107,9 @@ public class StringConcatenationInspection extends BaseInspection {
     final PsiExpression[] operands = polyadicExpression.getOperands();
     for (PsiExpression operand : operands) {
       final PsiModifierListOwner element1 = getAnnotatableElement(operand);
-      if (element1 != null) {
+      if (element1 != null && 
+          (!element1.getManager().isInProject(element1) || 
+           JavaPsiFacade.getInstance(element1.getProject()).findClass(AnnotationUtil.NON_NLS, element1.getResolveScope()) != null)) {
         final InspectionGadgetsFix fix = createAddAnnotationFix(element1);
         result.add(fix);
       }

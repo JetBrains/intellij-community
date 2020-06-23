@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.util.ui.accessibility.SimpleAccessible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public interface ActiveGutterRenderer extends LineMarkerRenderer, SimpleAccessib
   @NotNull
   @Override
   default String getAccessibleName() {
-    return "marker: unknown";
+    return PlatformEditorBundle.message("accessible.name.marker.unknown");
   }
 
   @Nullable

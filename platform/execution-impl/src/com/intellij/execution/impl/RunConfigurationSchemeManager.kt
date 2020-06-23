@@ -22,10 +22,6 @@ private val LOG = logger<RunConfigurationSchemeManager>()
 internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val templateDifferenceHelper: TemplateDifferenceHelper, private val isShared: Boolean, private val isWrapSchemeIntoComponentElement: Boolean) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
 
-  private val converters by lazy {
-    ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.filterIsInstance(RunConfigurationConverter::class.java)
-  }
-
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
     // here only isShared, because for workspace `workspaceSchemeManagerProvider.load` is used (see RunManagerImpl.loadState)
     return when {
@@ -57,7 +53,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
       element = element.getChild("configuration") ?: throw RuntimeException("Unexpected element: " + JDOMUtil.write(element))
     }
 
-    converters.any {
+    ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.filterIsInstance<RunConfigurationConverter>().any {
       LOG.runAndLogException { it.convertRunConfigurationOnDemand(element) } ?: false
     }
 

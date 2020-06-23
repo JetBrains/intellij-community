@@ -16,23 +16,30 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
+
+import static com.intellij.openapi.vcs.VcsBundle.BUNDLE;
 
 public enum ColorMode {
-  AUTHOR("author", "Author"),
-  ORDER("order", "Order"),
-  NONE("none", "Hide");
+  AUTHOR("author", "annotations.color.mode.author"),
+  ORDER("order", "annotations.color.mode.order"),
+  NONE("none", "annotations.color.mode.hide");
 
-  private static final String KEY = "annotate.color.mode";
+  private static final String KEY = "annotate.color.mode"; //NON-NLS
   private final String myId;
-  private final String myDescription;
+  private final String myDescriptionKey;
 
-  ColorMode(String id, String description) {
+  ColorMode(@NotNull @NonNls String id,
+            @NotNull @PropertyKey(resourceBundle = BUNDLE) String descriptionKey) {
     myId = id;
-    myDescription = description;
+    myDescriptionKey = descriptionKey;
   }
 
   public String getDescription() {
-    return myDescription;
+    return VcsBundle.message(myDescriptionKey);
   }
 
   boolean isSet() {

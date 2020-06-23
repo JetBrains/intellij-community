@@ -18,17 +18,11 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 
 public abstract class LazyUiDisposable<T> implements Activatable {
-  private Throwable myAllocation;
-
   private final AtomicReference<JComponent> myUI;
   private final Disposable myParent;
   private final T myChild;
 
   public LazyUiDisposable(@Nullable Disposable parent, @NotNull JComponent ui, @NotNull T child) {
-    if (Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("idea.is.internal"))) {
-      myAllocation = new Exception();
-    }
-
     myUI = new AtomicReference<>(ui);
     myParent = parent;
     myChild = child;
@@ -65,10 +59,6 @@ public abstract class LazyUiDisposable<T> implements Activatable {
     if (myChild instanceof Disposable) {
       Disposer.register(parent, (Disposable)myChild);
     }
-  }
-
-  @Override
-  public final void hideNotify() {
   }
 
   protected abstract void initialize(@NotNull Disposable parent, @NotNull T child, @Nullable Project project);

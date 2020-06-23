@@ -2,7 +2,7 @@
 package com.jetbrains.python.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -283,11 +283,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   private void doNegativeTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyBundle.message("INTN.add.type.hint.for.variable.family")));
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message("INTN.add.type.hint.for.variable.family")));
   }
 
   public void doMultiFileAnnotationTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doMultiFileTest(PyBundle.message("INTN.add.type.hint.for.variable.family")));
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doMultiFileTest(PyPsiBundle.message("INTN.add.type.hint.for.variable.family")));
   }
 
   private void doMultiFileTest(@NotNull String hint) {
@@ -301,6 +301,6 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   private void doTest(@NotNull LanguageLevel languageLevel) {
-    doTest(PyBundle.message("INTN.add.type.hint.for.variable.family"), languageLevel);
+    doTest(PyPsiBundle.message("INTN.add.type.hint.for.variable.family"), languageLevel);
   }
 }

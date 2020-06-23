@@ -104,10 +104,10 @@ class ModuleHighlightUtil {
     return results;
   }
 
-  private static <T extends PsiStatement> void checkDuplicateRefs(Iterable<? extends T> statements,
-                                                                  Function<? super T, String> ref,
-                                                                  @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
-                                                                  List<? super HighlightInfo> results) {
+  private static <T extends PsiStatement> void checkDuplicateRefs(@NotNull Iterable<? extends T> statements,
+                                                                  @NotNull Function<? super T, String> ref,
+                                                                  @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
+                                                                  @NotNull List<? super HighlightInfo> results) {
     Set<String> filter = new THashSet<>();
     for (T statement : statements) {
       String refText = ref.apply(statement);
@@ -261,7 +261,7 @@ class ModuleHighlightUtil {
     return null;
   }
 
-  private static boolean isPackageEmpty(PsiDirectory[] directories, String packageName, boolean anyFile) {
+  private static boolean isPackageEmpty(PsiDirectory @NotNull [] directories, @NotNull String packageName, boolean anyFile) {
     if (anyFile) {
       return Arrays.stream(directories).noneMatch(dir -> dir.getFiles().length > 0);
     }
@@ -404,20 +404,21 @@ class ModuleHighlightUtil {
     return Collections.emptyList();
   }
 
+  @NotNull
   private static QuickFixFactory factory() {
     return QuickFixFactory.getInstance();
   }
 
-  private static TextRange range(PsiJavaModule module) {
+  private static @NotNull TextRange range(@NotNull PsiJavaModule module) {
     PsiKeyword kw = PsiTreeUtil.getChildOfType(module, PsiKeyword.class);
     return new TextRange(kw != null ? kw.getTextOffset() : module.getTextOffset(), module.getNameIdentifier().getTextRange().getEndOffset());
   }
 
-  private static PsiElement range(PsiJavaCodeReferenceElement refElement) {
+  private static @NotNull PsiElement range(@NotNull PsiJavaCodeReferenceElement refElement) {
     return ObjectUtils.notNull(refElement.getReferenceNameElement(), refElement);
   }
 
-  private static HighlightInfo duplicateReference(PsiElement refElement, String message) {
+  private static HighlightInfo duplicateReference(@NotNull PsiElement refElement, @NotNull String message) {
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create();
     QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(refElement, QuickFixBundle.message("delete.reference.fix.text")));
     return info;

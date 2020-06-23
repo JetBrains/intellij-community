@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.override;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
@@ -18,7 +17,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -27,6 +25,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -69,14 +68,14 @@ public class PyOverrideImplementUtil {
     PyPsiUtils.assertValid(cls);
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    chooseAndOverrideOrImplementMethods(project, editor, cls, getAllSuperMethods(cls, context), false);
+    chooseAndOverrideOrImplementMethods(project, editor, cls, PyPsiRefactoringUtil.getAllSuperMethods(cls, context), false);
   }
 
   public static void chooseAndImplementMethods(@NotNull Project project,
                                                @NotNull Editor editor,
                                                @NotNull PyClass cls,
                                                @NotNull TypeEvalContext context) {
-    chooseAndImplementMethods(project, editor, cls, getAllSuperAbstractMethods(cls, context));
+    chooseAndImplementMethods(project, editor, cls, PyPsiRefactoringUtil.getAllSuperAbstractMethods(cls, context));
   }
 
   public static void chooseAndImplementMethods(@NotNull Project project,
@@ -328,49 +327,6 @@ public class PyOverrideImplementUtil {
       }
     }
     return toClass.getName();
-  }
-
-  @NotNull
-  public static List<PyFunction> getAllSuperAbstractMethods(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
-    return ContainerUtil.filter(getAllSuperMethods(cls, context), method -> isAbstractMethodForClass(method, cls, context));
-  }
-
-  private static boolean isAbstractMethodForClass(@NotNull PyFunction method, @NotNull PyClass cls, @NotNull TypeEvalContext context) {
-    final String methodName = method.getName();
-    if (methodName == null ||
-        cls.findMethodByName(methodName, false, context) != null ||
-        cls.findClassAttribute(methodName, false, context) != null) {
-      return false;
-    }
-    final PyClass methodClass = method.getContainingClass();
-    if (methodClass != null) {
-      for (PyClass ancestor : cls.getAncestorClasses(context)) {
-        if (ancestor.equals(methodClass)) break;
-        if (ancestor.findClassAttribute(methodName, false, context) != null) return false;
-      }
-    }
-    return method.onlyRaisesNotImplementedError() || PyKnownDecoratorUtil.hasAbstractDecorator(method, context);
-  }
-
-  /**
-   * Returns all super functions available through MRO.
-   */
-  @NotNull
-  public static List<PyFunction> getAllSuperMethods(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
-    final Map<String, PyFunction> functions = Maps.newLinkedHashMap();
-    for (final PyClassLikeType type : pyClass.getAncestorTypes(context)) {
-      if (type != null) {
-        for (PyFunction function : PyTypeUtil.getMembersOfType(type, PyFunction.class, false, context)) {
-          final String name = function.getName();
-          if (name != null) {
-            if (!functions.containsKey(name) || PyiUtil.isOverload(functions.get(name), context) && !PyiUtil.isOverload(function, context)) {
-              functions.put(name, function);
-            }
-          }
-        }
-      }
-    }
-    return Lists.newArrayList(functions.values());
   }
 
   /**

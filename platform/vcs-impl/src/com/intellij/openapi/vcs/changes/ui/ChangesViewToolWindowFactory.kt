@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.COMMIT_TOOLWINDOW_ID
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi.HIDE_ID_LABEL
@@ -36,7 +35,7 @@ import javax.swing.JComponent
 private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
   override fun updateState(project: Project, toolWindow: ToolWindow) {
     super.updateState(project, toolWindow)
-    toolWindow.stripeTitle = project.vcsManager.allActiveVcss.singleOrNull()?.displayName ?: ToolWindowId.VCS
+    toolWindow.stripeTitle = project.vcsManager.allActiveVcss.singleOrNull()?.displayName ?: ChangesViewContentManager.TOOLWINDOW_ID
   }
 }
 

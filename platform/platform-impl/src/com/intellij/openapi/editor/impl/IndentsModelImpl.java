@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -8,17 +8,17 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.IndentGuideDescriptor;
 import com.intellij.openapi.editor.IndentsModel;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.util.IntPair;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class IndentsModelImpl implements IndentsModel {
-
-  private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = new HashMap<>();
-  private       List<IndentGuideDescriptor>         myIndents        = new ArrayList<>();
+public final class IndentsModelImpl implements IndentsModel {
+  private final Object2ObjectMap<IntPair, IndentGuideDescriptor> myIndentsByLines = new Object2ObjectOpenHashMap<>();
+  private List<IndentGuideDescriptor> myIndents = new ArrayList<>();
   @NotNull private final EditorImpl myEditor;
 
   public IndentsModelImpl(@NotNull EditorImpl editor) {
@@ -57,36 +57,6 @@ public class IndentsModelImpl implements IndentsModel {
     myIndentsByLines.clear();
     for (IndentGuideDescriptor descriptor : myIndents) {
       myIndentsByLines.put(new IntPair(descriptor.startLine, descriptor.endLine), descriptor);
-    }
-  }
-
-  private static class IntPair {
-
-    private final int start;
-    private final int end;
-
-    IntPair(int start, int end) {
-      this.start = start;
-      this.end = end;
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * start + end;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      IntPair that = (IntPair)o;
-      return start == that.start && end == that.end;
-    }
-
-    @Override
-    public String toString() {
-      return "start=" + start + ", end=" + end;
     }
   }
 }

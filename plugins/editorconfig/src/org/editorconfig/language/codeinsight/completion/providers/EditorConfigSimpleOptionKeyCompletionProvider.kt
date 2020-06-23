@@ -3,11 +3,14 @@ package org.editorconfig.language.codeinsight.completion.providers
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
+import org.editorconfig.Utils
+import org.editorconfig.configmanagement.completion.EditorConfigCompletionWeigher
 import org.editorconfig.language.codeinsight.completion.providers.EditorConfigCompletionProviderUtil.createLookupAndCheckDeprecation
 import org.editorconfig.language.codeinsight.completion.withSeparatorIn
 import org.editorconfig.language.psi.EditorConfigElementTypes
@@ -46,7 +49,12 @@ object EditorConfigSimpleOptionKeyCompletionProvider : EditorConfigCompletionPro
       rawCompletionItems.map { it.withSeparatorIn(section.containingFile) }
     }
     else rawCompletionItems
-    completionItems.forEach(result::addElement)
+    if (Utils.isFullIntellijSettingsSupport()) {
+      val orderedResult = result.withRelevanceSorter(CompletionSorter.emptySorter().weigh(EditorConfigCompletionWeigher()))
+      completionItems.forEach (orderedResult::addElement)
+    }
+    else
+      completionItems.forEach(result::addElement)
   }
 
   private fun needSeparatorAfter(space: PsiElement?) =

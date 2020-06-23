@@ -55,15 +55,16 @@ public class SearchRequestCollector {
                           short searchContext,
                           boolean caseSensitive,
                           String containerName,
-                          PsiElement searchTarget, @NotNull RequestResultProcessor processor) {
+                          PsiElement searchTarget,
+                          @NotNull RequestResultProcessor processor) {
     if (!makesSenseToSearch(word, searchScope)) return;
 
-    Collection<PsiSearchRequest> requests = null;
     if (searchTarget != null &&
         searchScope instanceof GlobalSearchScope &&
         ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
 
-      SearchScope restrictedCodeUsageSearchScope = ReadAction.compute(() -> ScopeOptimizer.calculateOverallRestrictedUseScope(CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), searchTarget));
+      SearchScope restrictedCodeUsageSearchScope = ReadAction.compute(() -> ScopeOptimizer.calculateOverallRestrictedUseScope(
+        CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), searchTarget));
       if (restrictedCodeUsageSearchScope != null) {
         short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
                                         ? UsageSearchContext.IN_COMMENTS |
@@ -72,17 +73,22 @@ public class SearchRequestCollector {
                                           UsageSearchContext.IN_PLAIN_TEXT
                                         : (short)(searchContext ^ UsageSearchContext.IN_CODE);
         SearchScope searchCodeUsageEffectiveScope = searchScope.intersectWith(restrictedCodeUsageSearchScope);
-        requests = Arrays.asList(
-          new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
-          new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
+
+        PsiSearchRequest inCode =
+          new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName,
+                               getSearchSession(), processor);
+        PsiSearchRequest outsideCode =
+          new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, getSearchSession(), processor);
+        synchronized (lock) {
+          myWordRequests.add(inCode);
+          myWordRequests.add(outsideCode);
+        }
+        return;
       }
     }
-    if (requests == null) {
-      requests = Collections.singleton(new PsiSearchRequest(searchScope, word, searchContext, caseSensitive, containerName, processor));
-    }
-
+    PsiSearchRequest request = new PsiSearchRequest(searchScope, word, searchContext, caseSensitive, containerName, getSearchSession(), processor);
     synchronized (lock) {
-      myWordRequests.addAll(requests);
+      myWordRequests.add(request);
     }
   }
   public void searchWord(@NotNull String word,

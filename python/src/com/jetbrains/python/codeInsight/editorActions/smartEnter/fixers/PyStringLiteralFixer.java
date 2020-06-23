@@ -41,10 +41,10 @@ public class PyStringLiteralFixer extends PyFixer<PyStringLiteralExpression> {
         editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\"\"\"".substring(suffixLength));
       }
     }
-    else if (StringUtil.startsWith(text, "\'\'\'")) {
-      final int suffixLength = StringUtil.commonSuffixLength(text, "\'\'\'");
+    else if (StringUtil.startsWith(text, "'''")) {
+      final int suffixLength = StringUtil.commonSuffixLength(text, "'''");
       if (suffixLength != 3) {
-        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\'\'\'".substring(suffixLength));
+        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "'''".substring(suffixLength));
       }
     }
     else if (StringUtil.startsWith(text, "\"")) {
@@ -52,9 +52,9 @@ public class PyStringLiteralFixer extends PyFixer<PyStringLiteralExpression> {
         editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\"");
       }
     }
-    else if (StringUtil.startsWith(text, "\'")) {
-      if (!StringUtil.endsWith(text, "\'")) {
-        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\'");
+    else if (StringUtil.startsWith(text, "'")) {
+      if (!StringUtil.endsWith(text, "'")) {
+        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "'");
       }
     }
   }

@@ -8,9 +8,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.*;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
@@ -82,8 +79,6 @@ public class JavaFxModuleUtil {
   public static class JavaFxDetectionStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      VirtualFileManager.getInstance().addVirtualFileListener(new FxmlPresenceListener(project), project);
-
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return;
       }
@@ -97,61 +92,6 @@ public class JavaFxModuleUtil {
       if (!project.isDisposed() && project.isOpen()) {
         hasJavaFxArtifacts(project);
         getCachedJavaFxModules(project);
-      }
-    }
-  }
-
-  private static class FxmlPresenceListener implements VirtualFileListener {
-    private static final Key<ModificationTracker> KEY = Key.create("fxml.presence.modification.tracker");
-    private final SimpleModificationTracker myModificationTracker;
-
-    FxmlPresenceListener(@NotNull Project project) {
-      myModificationTracker = new SimpleModificationTracker();
-      project.putUserData(KEY, myModificationTracker);
-    }
-
-    private static ModificationTracker getModificationTracker(@NotNull Project project) {
-      return () -> {
-        final ModificationTracker tracker = project.getUserData(KEY);
-        return tracker != null ? tracker.getModificationCount() + 1 : 0;
-      };
-    }
-
-    @Override
-    public void fileCreated(@NotNull VirtualFileEvent event) {
-      checkEvent(event);
-    }
-
-    @Override
-    public void fileDeleted(@NotNull VirtualFileEvent event) {
-      checkEvent(event);
-    }
-
-    @Override
-    public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-      checkEvent(event);
-    }
-
-    @Override
-    public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-      checkEvent(event);
-    }
-
-    @Override
-    public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-      if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-        final String oldName = (String)event.getOldValue();
-        final String newName = (String)event.getNewValue();
-        if (oldName != null && newName != null &&
-            oldName.endsWith(JavaFxFileTypeFactory.DOT_FXML_EXTENSION) != newName.endsWith(JavaFxFileTypeFactory.DOT_FXML_EXTENSION)) {
-          myModificationTracker.incModificationCount();
-        }
-      }
-    }
-
-    private void checkEvent(@NotNull VirtualFileEvent event) {
-      if (JavaFxFileTypeFactory.isFxml(event.getFile())) {
-        myModificationTracker.incModificationCount();
       }
     }
   }

@@ -66,7 +66,7 @@ public class WindowWrapperBuilder {
   }
 
   @NotNull
-  public WindowWrapperBuilder setDimensionServiceKey(@Nullable String dimensionServiceKey) {
+  public WindowWrapperBuilder setDimensionServiceKey(@Nullable @NonNls String dimensionServiceKey) {
     myDimensionServiceKey = dimensionServiceKey;
     return this;
   }

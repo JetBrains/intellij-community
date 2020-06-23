@@ -89,6 +89,10 @@ public final class TemporaryPlacesRegistry {
         newHost.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
         place.elementPointer = SmartPointerManager.createPointer(newHost);
       }
+      else if (!element.isValidHost()) {
+        element.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, null);
+        return true;
+      }
       else {
         element.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
       }

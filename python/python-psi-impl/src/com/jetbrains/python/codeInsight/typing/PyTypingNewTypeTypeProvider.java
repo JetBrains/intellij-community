@@ -1,0 +1,117 @@
+package com.jetbrains.python.codeInsight.typing;
+
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveResult;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
+import com.jetbrains.python.psi.impl.stubs.PyTypingNewTypeStubImpl;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.stubs.PyTypingNewTypeStub;
+import com.jetbrains.python.psi.types.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
+
+  @Override
+  public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function,
+                                           @NotNull PyCallSiteExpression callSite,
+                                           @NotNull TypeEvalContext context) {
+    return callSite instanceof PyCallExpression && PyTypingTypeProvider.NEW_TYPE.equals(function.getQualifiedName())
+           ? PyTypeUtil.notNullToRef(getNewTypeFromAST((PyCallExpression)callSite, context))
+           : null;
+  }
+
+  @Override
+  public @Nullable PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
+    return getNewTypeForCallee(referenceExpression, context);
+  }
+
+  @Override
+  public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
+    if (referenceTarget instanceof PyTargetExpression) {
+      return PyTypeUtil.notNullToRef(getNewTypeForTarget((PyTargetExpression)referenceTarget, context));
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PyTypingNewType getNewTypeForCallee(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
+    if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null;
+
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final ResolveResult[] resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false);
+
+    for (PsiElement element : PyUtil.filterTopPriorityResults(resolveResults)) {
+      if (element instanceof PyTargetExpression) {
+        final PyTypingNewType typeForTarget = getNewTypeForTarget((PyTargetExpression)element, context);
+        if (typeForTarget != null) {
+          return typeForTarget;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyTypingNewType getNewTypeForTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    final PyTargetExpressionStub stub = target.getStub();
+    return stub != null
+           ? getNewTypeFromStub(target, stub.getCustomStub(PyTypingNewTypeStub.class), context)
+           : getNewTypeFromAST(target, context);
+  }
+
+  @Nullable
+  private static PyTypingNewType getNewTypeFromStub(@NotNull PyTargetExpression target,
+                                                    @Nullable PyTypingNewTypeStub stub,
+                                                    @NotNull TypeEvalContext context) {
+    if (stub == null) return null;
+    final PyClassType type = getClassType(stub, context, target);
+    return type != null ? new PyTypingNewType(type, stub.getName(), target) : null;
+  }
+
+  @Nullable
+  private static PyTypingNewType getNewTypeFromStub(@NotNull PyCallExpression call,
+                                                    @Nullable PyTypingNewTypeStub stub,
+                                                    @NotNull TypeEvalContext context) {
+    if (stub == null) return null;
+    final PyClassType type = getClassType(stub, context, call);
+    return type != null ? new PyTypingNewType(type, stub.getName(), getDeclaration(call, context)) : null;
+  }
+
+  @Nullable
+  private static PyTypingNewType getNewTypeFromAST(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    if (!context.maySwitchToAST(target)) return null;
+    return getNewTypeFromStub(target, PyTypingNewTypeStubImpl.Companion.create(target), context);
+  }
+
+  @Nullable
+  private static PyTypingNewType getNewTypeFromAST(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    if (!context.maySwitchToAST(call)) return null;
+    return getNewTypeFromStub(call, PyTypingNewTypeStubImpl.Companion.create(call), context);
+  }
+
+  @Nullable
+  private static PyClassType getClassType(@NotNull PyTypingNewTypeStub stub,
+                                          @NotNull TypeEvalContext context,
+                                          @NotNull PsiElement anchor) {
+    final PyType type = Ref.deref(PyTypingTypeProvider.getStringBasedType(stub.getClassType(), anchor, context));
+    final PyClassType result = PyUtil.as(type, PyClassType.class);
+    if (result != null) {
+      return PyUtil.as(result.toClass(), PyClassType.class);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyTargetExpression getDeclaration(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    final PsiElement parent = call.getParent();
+    if (parent instanceof PyAssignmentStatement) {
+      return PyUtil.as(((PyAssignmentStatement)parent).getLeftHandSideExpression(), PyTargetExpression.class);
+    }
+    return null;
+  }
+}

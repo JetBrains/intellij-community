@@ -17,6 +17,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +25,9 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.internal.statistic.StatisticsStringUtil.isEmpty;
+import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
 
 public class EventLogStatisticsService implements StatisticsService {
   private static final ContentType APPLICATION_JSON = ContentType.create("application/json", Consts.UTF_8);
@@ -43,6 +47,17 @@ public class EventLogStatisticsService implements StatisticsService {
     myDeviceConfiguration = device;
     myRecorderConfiguration = config;
     mySettingsService = new EventLogUploadSettingsService(config.getRecorderId(), application);
+    mySendListener = listener;
+  }
+
+  @TestOnly
+  public EventLogStatisticsService(@NotNull DeviceConfiguration device,
+                                   @NotNull EventLogRecorderConfig config,
+                                   @Nullable EventLogSendListener listener,
+                                   @Nullable EventLogUploadSettingsService settingsService) {
+    myDeviceConfiguration = device;
+    myRecorderConfiguration = config;
+    mySettingsService = settingsService;
     mySendListener = listener;
   }
 
@@ -95,11 +110,11 @@ public class EventLogStatisticsService implements StatisticsService {
         final LogEventRecordRequest recordRequest =
           LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger);
         final String error = validate(recordRequest, file);
-        if (StatisticsEventLogUtil.isNotEmpty(error) || recordRequest == null) {
+        if (isNotEmpty(error) || recordRequest == null) {
           if (logger.isTraceEnabled()) {
             logger.trace(file.getName() + "-> " + error);
           }
-          decorator.onFailed(recordRequest);
+          decorator.onFailed(recordRequest, null);
           toRemove.add(file);
           continue;
         }
@@ -107,19 +122,20 @@ public class EventLogStatisticsService implements StatisticsService {
         try {
           HttpResponse response = execute(info.getUserAgent(), serviceUrl, recordRequest);
           int code = response.getStatusLine().getStatusCode();
+          String content = getResponseMessage(response);
           if (code == HttpStatus.SC_OK) {
-            decorator.onSucceed(recordRequest);
+            decorator.onSucceed(recordRequest, content);
             toRemove.add(file);
           }
           else {
-            decorator.onFailed(recordRequest);
+            decorator.onFailed(recordRequest, content);
             if (code == HttpURLConnection.HTTP_BAD_REQUEST) {
               toRemove.add(file);
             }
           }
 
           if (logger.isTraceEnabled()) {
-            logger.trace(file.getName() + " -> " + getResponseMessage(response));
+            logger.trace(file.getName() + " -> " + content);
           }
         }
         catch (Exception e) {
@@ -168,13 +184,13 @@ public class EventLogStatisticsService implements StatisticsService {
       return "File is empty or has invalid format: " + file.getName();
     }
 
-    if (StatisticsEventLogUtil.isEmpty(request.getDevice())) {
+    if (isEmpty(request.getDevice())) {
       return "Cannot upload event log, device ID is empty";
     }
-    else if (StatisticsEventLogUtil.isEmpty(request.getProduct())) {
+    else if (isEmpty(request.getProduct())) {
       return "Cannot upload event log, product code is empty";
     }
-    else if (StatisticsEventLogUtil.isEmpty(request.getRecorder())) {
+    else if (isEmpty(request.getRecorder())) {
       return "Cannot upload event log, recorder code is empty";
     }
     else if (request.getRecords().isEmpty()) {
@@ -238,12 +254,12 @@ public class EventLogStatisticsService implements StatisticsService {
     }
 
     @Override
-    public void onSucceed(@NotNull LogEventRecordRequest request) {
+    public void onSucceed(@NotNull LogEventRecordRequest request, @NotNull String content) {
       mySucceed++;
     }
 
     @Override
-    public void onFailed(@Nullable LogEventRecordRequest request) {
+    public void onFailed(@Nullable LogEventRecordRequest request, @Nullable String content) {
       myFailed++;
     }
 

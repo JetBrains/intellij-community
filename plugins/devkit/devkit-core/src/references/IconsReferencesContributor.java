@@ -40,9 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UastContextKt;
-import org.jetbrains.uast.UastLiteralUtils;
+import org.jetbrains.uast.UastUtils;
 
 import java.util.Collection;
 import java.util.List;
@@ -241,17 +239,10 @@ public class IconsReferencesContributor extends PsiReferenceContributor
       UastReferenceRegistrar.uastInjectionHostReferenceProvider((uElement, referencePsiElement) -> new PsiReference[]{
         new IconPsiReferenceBase(referencePsiElement) {
 
-          private UElement getUElement() {
-            return UastContextKt.toUElement(getElement());
-          }
-
           @Override
           public PsiElement resolve() {
-            final UElement uElement = getUElement();
-            if (uElement == null) return null;
-
-            String value = UastLiteralUtils.getValueIfStringLiteral(uElement);
-            return resolveIconPath(value, getElement());
+            String value = UastUtils.evaluateString(uElement);
+            return resolveIconPath(value, referencePsiElement);
           }
 
           @Override
@@ -312,7 +303,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   @Nullable
-  private static PsiField resolveIconPath(String pathStr, PsiElement element) {
+  private static PsiField resolveIconPath(@Nullable String pathStr, PsiElement element) {
     if (pathStr == null) {
       return null;
     }

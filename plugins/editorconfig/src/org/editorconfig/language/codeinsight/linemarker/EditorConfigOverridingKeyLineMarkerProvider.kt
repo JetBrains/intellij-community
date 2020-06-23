@@ -16,7 +16,7 @@ import java.awt.event.MouseEvent
 class EditorConfigOverridingKeyLineMarkerProvider : LineMarkerProvider {
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
-  override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
+  override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
     for (element in elements) {
       if (element !is EditorConfigFlatOptionKey) continue
       val reference = element.reference
@@ -32,7 +32,6 @@ class EditorConfigOverridingKeyLineMarkerProvider : LineMarkerProvider {
         identifier,
         identifier.textRange,
         AllIcons.Gutter.OverridingMethod,
-        Pass.LINE_MARKERS,
         createTooltipProvider(parents),
         createNavigationHandler(parents),
         GutterIconRenderer.Alignment.RIGHT

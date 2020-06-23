@@ -62,7 +62,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
   @Override
   protected void process(@NotNull PsiElement highlightingElement,
                          @NotNull PsiClass psiClass,
-                         @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
+                         @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     final boolean descriptionEnabled = myDescriptionOption.isEnabled();
     final boolean beforeAfterEnabled = myBeforeAfterOption.isEnabled();
     if (!descriptionEnabled && !beforeAfterEnabled) return;
@@ -112,7 +112,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
 
   private static void addDescriptionFileGutterIcon(PsiElement highlightingElement,
                                                    PsiFile descriptionFile,
-                                                   Collection<? super RelatedItemLineMarkerInfo> result) {
+                                                   Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
       .create(DevkitIcons.Gutter.DescriptionFile, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTarget(descriptionFile)
@@ -124,7 +124,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
 
   private static void addBeforeAfterTemplateFilesGutterIcon(PsiElement highlightingElement,
                                                             PsiDirectory descriptionDirectory,
-                                                            Collection<? super RelatedItemLineMarkerInfo> result) {
+                                                            Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     final List<PsiFile> templateFiles = new SortedList<>(Comparator.comparing(PsiFileSystemItem::getName));
     for (PsiFile file : descriptionDirectory.getFiles()) {
       final String fileName = file.getName();

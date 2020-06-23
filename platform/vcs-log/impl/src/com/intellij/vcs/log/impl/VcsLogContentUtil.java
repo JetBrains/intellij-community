@@ -7,10 +7,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.TabGroupId;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
@@ -25,43 +25,37 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Set;
+import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
  */
-public class VcsLogContentUtil {
+public final class VcsLogContentUtil {
   @Nullable
   public static VcsLogUiEx getLogUi(@NotNull JComponent c) {
-    VcsLogPanel vcsLogPanel = null;
-    if (c instanceof VcsLogPanel) {
-      vcsLogPanel = (VcsLogPanel)c;
-    }
-    else if (c instanceof JPanel) {
-      vcsLogPanel = recursiveFindLogPanelInstance(c);
-    }
-
-    if (vcsLogPanel != null) {
-      return vcsLogPanel.getUi();
-    }
-    return null;
+    return ContainerUtil.getFirstItem(getLogUis(c));
   }
 
-  @Nullable
-  private static VcsLogPanel recursiveFindLogPanelInstance(@NotNull JComponent component) {
-    VcsLogPanel instance = ContainerUtil.findInstance(component.getComponents(), VcsLogPanel.class);
-    if (instance != null) return instance;
+  public static List<VcsLogUiEx> getLogUis(@NotNull JComponent c) {
+    Set<VcsLogPanel> panels = new HashSet<>();
+    collectLogPanelInstances(c, panels);
+
+    return ContainerUtil.map(panels, VcsLogPanel::getUi);
+  }
+
+  private static void collectLogPanelInstances(@NotNull JComponent component, @NotNull Set<VcsLogPanel> result) {
+    if (component instanceof VcsLogPanel) {
+      result.add((VcsLogPanel)component);
+      return;
+    }
     for (Component childComponent : component.getComponents()) {
       if (childComponent instanceof JComponent) {
-        instance = recursiveFindLogPanelInstance((JComponent)childComponent);
-        if (instance != null) return instance;
+        collectLogPanelInstances((JComponent)childComponent, result);
       }
     }
-    return null;
   }
 
   @Nullable
@@ -75,7 +69,7 @@ public class VcsLogContentUtil {
   public static <U extends VcsLogUiEx> U find(@NotNull Project project,
                                               @NotNull Class<U> clazz, boolean select,
                                               @NotNull Condition<? super U> condition) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     if (toolWindow == null) {
       return null;
     }
@@ -116,7 +110,7 @@ public class VcsLogContentUtil {
   public static Set<String> getExistingLogIds(@NotNull Project project) {
     Set<String> existingIds;
 
-    ContentManager contentManager = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).getContentManager();
+    ContentManager contentManager = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).getContentManager();
     TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(contentManager, VcsLogContentProvider.TAB_NAME);
     if (tabbedContent != null) {
       existingIds = ContainerUtil.map2SetNotNull(tabbedContent.getTabs(), pair -> {
@@ -127,7 +121,8 @@ public class VcsLogContentUtil {
     }
     else {
       existingIds = ContainerUtil.map2SetNotNull(Arrays.asList(contentManager.getContents()), content -> {
-        if (!VcsLogContentProvider.TAB_NAME.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY))) return null;
+        TabGroupId groupId = content.getUserData(Content.TAB_GROUP_ID_KEY);
+        if (groupId == null || !VcsLogContentProvider.TAB_NAME.equals(groupId.getId())) return null;
         return getId(content);
       });
     }
@@ -137,15 +132,15 @@ public class VcsLogContentUtil {
 
 
   public static <U extends VcsLogUiEx> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
-                                                    @NotNull @NonNls String groupId, @NotNull @NonNls String tabId,
+                                                    @NotNull @NonNls String groupId,
                                                     @NotNull Supplier<String> tabGroupDisplayName,
                                                     @NotNull Function<U, String> tabDisplayName,
                                                     @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
     U logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.TOOL_WINDOW);
 
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi),
-                                   groupId, tabId, tabGroupDisplayName, () -> tabDisplayName.apply(logUi),
+                                   groupId, tabGroupDisplayName, () -> tabDisplayName.apply(logUi),
                                    focus, logUi);
     if (focus) {
       toolWindow.activate(null);
@@ -207,7 +202,7 @@ public class VcsLogContentUtil {
   }
 
   public static void updateLogUiName(@NotNull Project project, @NotNull VcsLogUi ui) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     if (toolWindow == null) return;
 
     ContentManager manager = toolWindow.getContentManager();

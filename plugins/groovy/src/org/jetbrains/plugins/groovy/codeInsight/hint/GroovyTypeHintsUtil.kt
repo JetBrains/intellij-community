@@ -19,8 +19,9 @@ fun PresentationFactory.buildRepresentation(type: PsiType, postfix: String = "")
       else {
         emptyList()
       }
+      val className: String = classType.className ?: classType.presentableText
       return seq(
-        psiSingleReference(smallText(classType.name)) { classType.resolve() },
+        psiSingleReference(smallText(className)) { classType.resolve() },
         *classParameters.toTypedArray()
       )
     }

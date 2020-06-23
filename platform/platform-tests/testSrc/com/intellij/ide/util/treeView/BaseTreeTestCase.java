@@ -231,7 +231,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   AbstractTreeUi _createUi() {
     return new AbstractTreeUi() {
       @Override
-      protected void yield(Runnable runnable) {
+      protected void yieldToEDT(@NotNull Runnable runnable) {
         SimpleTimer.getInstance().setUp(runnable, 100);
       }
 

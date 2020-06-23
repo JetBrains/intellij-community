@@ -592,7 +592,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param inlayPresenter function to render text of inlay. Inlays come to this function only if inlayFilter returned true
    * @param inlayFilter    filter to check only required inlays
    */
-  void testInlays(Function<? super Inlay, String> inlayPresenter, Predicate<? super Inlay> inlayFilter);
+  void testInlays(Function<? super Inlay<?>, String> inlayPresenter, Predicate<? super Inlay<?>> inlayFilter);
 
   void checkResultWithInlays(String text);
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -13,6 +12,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -139,7 +139,7 @@ public enum PythonHelper implements HelperPackage {
     @NotNull
     @Override
     public GeneralCommandLine newCommandLine(@NotNull String sdkPath, @NotNull List<String> parameters) {
-      final List<String> args = Lists.newArrayList();
+      final List<String> args = new ArrayList<>();
       args.add(sdkPath);
       args.add(asParamString());
       args.addAll(parameters);

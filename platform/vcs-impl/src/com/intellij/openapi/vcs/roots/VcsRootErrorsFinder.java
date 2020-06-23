@@ -95,7 +95,7 @@ public class VcsRootErrorsFinder {
   private List<String> mappingsToPathsWithSelectedVcs(@NotNull List<? extends VcsDirectoryMapping> mappings) {
     List<String> paths = new ArrayList<>();
     for (VcsDirectoryMapping mapping : mappings) {
-      if (StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
+      if (mapping.isNoneMapping()) {
         continue;
       }
       if (!mapping.isDefaultMapping()) {

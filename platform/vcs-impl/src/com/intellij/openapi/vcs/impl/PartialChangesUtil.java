@@ -1,13 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
+
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListChange;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.ex.ExclusionState;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
@@ -18,15 +26,13 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.ThreeStateCheckBox;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.openapi.diagnostic.Logger.getInstance;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PartialChangesUtil {
   private static final Logger LOG = getInstance(PartialChangesUtil.class);
@@ -163,7 +169,7 @@ public class PartialChangesUtil {
                                         @NotNull LocalChangeList targetChangeList,
                                         @NotNull LocalChangeList oldDefaultList) {
     LocalChangeList defaultChangeList = clm.getDefaultChangeList();
-    if (Comparing.equal(defaultChangeList.getId(), targetChangeList.getId())) {
+    if (Objects.equals(defaultChangeList.getId(), targetChangeList.getId())) {
       clm.setDefaultChangeList(oldDefaultList, true);
       LOG.debug(String.format("Active changelist restored: %s -> %s", targetChangeList.getName(), oldDefaultList.getName()));
     }

@@ -230,7 +230,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
       @Nullable
       private PsiType calcTypeByParent() {
-        return parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnType() : ((PsiVariable)parent).getType();
+        PsiType type = parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnType() : ((PsiVariable)parent).getType();
+        if (type instanceof PsiArrayType) { //for c-style array, e.g. String args[]
+          return type.getDeepComponentType();
+        }
+        return type;
       }
 
       @Override
@@ -240,7 +244,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
           PsiType type = calcTypeByParent();
           if (!(type instanceof PsiClassReferenceType)) {
             PsiUtilCore.ensureValid(parent);
-            throw new IllegalStateException("No reference type for " + parent.getClass());
+            throw new IllegalStateException("No reference type for " + parent.getClass() + "; type: " + (type != null ? type.getClass() : "null"));
           }
           result = ((PsiClassReferenceType)type).getReference();
         }

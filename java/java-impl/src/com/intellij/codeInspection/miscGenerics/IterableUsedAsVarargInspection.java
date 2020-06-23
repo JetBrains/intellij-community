@@ -53,6 +53,10 @@ public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspect
         if (argCopy == null) return;
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(holder.getProject());
         String className = elementClass.getQualifiedName();
+        if (className == null) {
+          className = elementClass.getName();
+          if (className == null) return;
+        }
         String replacement = "new " + className + "[0]";
         argCopy.replace(factory.createExpressionFromText(replacement, argCopy));
         JavaResolveResult copyResult = callCopy.getMethodExpression().advancedResolve(false);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.icons.AllIcons;
@@ -51,10 +51,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class RepositoryAttachDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH = "Downloaded.Files.Path";
@@ -234,7 +232,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     final int caret = field.getCaretPosition();
     myFilterString = field.getText();
 
-    if (!force && Comparing.equal(myFilterString, prevFilter)) return;
+    if (!force && Objects.equals(myFilterString, prevFilter)) return;
     int prevSize = myShownItems.size();
     myShownItems.clear();
 
@@ -268,7 +266,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     for (String coord : myShownItems) {
       items.add(new LibItem(coord));
     }
-    Collections.sort(items, (o1, o2) -> Comparing.compare(o1, o2));
+    items.sort((o1, o2) -> Comparing.compare(o1, o2));
     myShownItems.clear();
     for (LibItem it : items) {
       myShownItems.add(it.coord);

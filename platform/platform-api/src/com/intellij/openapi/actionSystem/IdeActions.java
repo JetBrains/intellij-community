@@ -224,6 +224,7 @@ public interface IdeActions {
 
   @NonNls String GROUP_OTHER_MENU = "OtherMenu";
   @NonNls String GROUP_EDITOR = "EditorActions";
+  @NonNls String GROUP_EDITOR_BIDI_TEXT_DIRECTION = "EditorBidiTextDirection";
 
   @NonNls String ACTION_TOGGLE_LINE_BREAKPOINT = "ToggleLineBreakpoint";
 
@@ -350,5 +351,5 @@ public interface IdeActions {
   @NonNls String BREADCRUMBS_SHOW_BELOW = "EditorBreadcrumbsShowBelow";
   @NonNls String BREADCRUMBS_HIDE_BOTH = "EditorBreadcrumbsHideBoth";
 
-  @NonNls String ACTION_RESTOR_FONT_PREVIEW_TEXT = "RestoreFontPreviewTextAction";
+  @NonNls String ACTION_RESTORE_FONT_PREVIEW_TEXT = "RestoreFontPreviewTextAction";
 }

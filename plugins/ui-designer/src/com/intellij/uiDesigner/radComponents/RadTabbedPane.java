@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -29,6 +28,7 @@ import javax.swing.plaf.TabbedPaneUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
+import java.util.Objects;
 
 /**
  * @author Anton Katilin
@@ -257,7 +257,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     catch (Exception e) {
       LOG.error(e);
     }
-    return !Comparing.equal(oldTitle, childTitle.getResolvedValue());
+    return !Objects.equals(oldTitle, childTitle.getResolvedValue());
   }
 
   @Override public void loadLwProperty(final LwComponent lwComponent, final LwIntrospectedProperty lwProperty, final IntrospectedProperty property) {

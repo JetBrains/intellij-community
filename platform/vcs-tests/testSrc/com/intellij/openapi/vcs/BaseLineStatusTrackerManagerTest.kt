@@ -8,7 +8,6 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.ex.*
@@ -38,7 +37,7 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
       .append(ThrowableRunnable { UIUtil.dispatchAllInvocationEvents() })
       .append(ThrowableRunnable { lstm.resetExcludedFromCommitMarkers() })
       .append(ThrowableRunnable { lstm.releaseAllTrackers() })
-      .append(ThrowableRunnable { DiffIterableUtil.setVerifyEnabled(Registry.`is`("diff.verify.iterable")) })
+      .append(ThrowableRunnable { DiffIterableUtil.setVerifyEnabled(false) })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
   }

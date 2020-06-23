@@ -94,17 +94,6 @@ class MyList<E> extends ArrayList<E> {
 
   void m() {
     removeRange(0, 1);
-    new MyList2().removeRange(0, 0);
-  }
-
-  public boolean add(@NotNull E e) {
-    return super.add(e);
-  }
-}
-class MyList2 extends ArrayList {
-  @Override
-  protected void removeRange(int a, int b) {
-    super.removeRange(a, b);
   }
 }
 ////////////////

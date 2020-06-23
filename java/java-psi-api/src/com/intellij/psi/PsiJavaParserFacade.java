@@ -220,7 +220,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text does not specify a valid annotation.
    */
   @NotNull
-  PsiAnnotation createAnnotationFromText(@NotNull String annotationText, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, @Nullable PsiElement context) throws IncorrectOperationException;
 
   @NotNull
   PsiEnumConstant createEnumConstantFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;

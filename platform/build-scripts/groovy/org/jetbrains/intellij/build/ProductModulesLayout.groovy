@@ -29,10 +29,8 @@ class ProductModulesLayout {
   List<String> productImplementationModules = []
 
   /**
-   * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. It may also
-   * includes names of optional modules (added via {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#withOptionalModule})
-   * from these plugins which need to be included into the plugin distribution for this product. Layouts of the bundled plugins are specified
-   * in {@link #allNonTrivialPlugins} list.
+   * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. Layouts of the
+   * bundled plugins are specified in {@link #allNonTrivialPlugins} list.
    */
   List<String> bundledPluginModules = new ArrayList<>(DEFAULT_BUNDLED_PLUGINS)
 
@@ -135,7 +133,7 @@ class ProductModulesLayout {
    */
   List<String> getIncludedPluginModules(Set<String> enabledPluginModules) {
     def modulesFromNonTrivialPlugins = allNonTrivialPlugins.findAll { enabledPluginModules.contains(it.mainModule) }.
-      collectMany { it.getActualModules(enabledPluginModules).values() }
+      collectMany { it.moduleJars.values() }
     (enabledPluginModules + modulesFromNonTrivialPlugins) as List<String>
   }
 

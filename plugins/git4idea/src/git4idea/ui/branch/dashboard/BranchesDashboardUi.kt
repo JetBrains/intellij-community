@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
@@ -26,6 +27,7 @@ import com.intellij.util.ui.StatusText.getDefaultEmptyText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
+import com.intellij.vcs.log.VcsLogBranchLikeFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogFilterCollection.*
 import com.intellij.vcs.log.data.VcsLogData
@@ -84,17 +86,17 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val branchNames = tree.getSelectedBranchNames()
     val oldFilters = ui.filterUi.filters
     val newFilters = if (branchNames.isNotEmpty()) {
-      oldFilters.with(VcsLogFilterObject.fromBranches(branchNames)).without(RANGE_FILTER).without(REVISION_FILTER)
+      oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(branchNames))
     } else {
-      oldFilters.without(BRANCH_FILTER).without(RANGE_FILTER).without(REVISION_FILTER)
+      oldFilters.without(VcsLogBranchLikeFilter::class.java)
     }
     ui.filterUi.filters = newFilters
   }
 
   private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
     override fun getOrderedComponents(): List<Component> = listOf(tree.component, logUi.table,
-                                                                  logUi.mainFrame.changesBrowser.preferredFocusedComponent,
-                                                                  logUi.mainFrame.filterUi.textFilterComponent.textEditor)
+                                                                  logUi.changesBrowser.preferredFocusedComponent,
+                                                                  logUi.filterUi.textFilterComponent.textEditor)
   }
 
   init {
@@ -108,7 +110,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     uiController.registerDataPackListener(logUi.logData)
     uiController.registerLogUiPropertiesListener(logUi.properties)
     branchesSearchField.setVerticalSizeReferent(logUi.toolbar)
-    branchViewSplitter.secondComponent = logUi.mainFrame
+    branchViewSplitter.secondComponent = logUi.mainLogComponent
     val isDiffPreviewInEditor = isDiffPreviewInEditor()
     val diffPreview = logUi.createDiffPreview(isDiffPreviewInEditor)
     if (isDiffPreviewInEditor) {
@@ -268,8 +270,14 @@ internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: V
     BranchesDashboardUi(logData.project, this)
       .also { branchesUi -> Disposer.register(this, branchesUi) }
 
+  internal val mainLogComponent: JComponent
+    get() = mainFrame
+
+  internal val changesBrowser: ChangesBrowserBase
+    get() = mainFrame.changesBrowser
+
   override fun createMainFrame(logData: VcsLogData, uiProperties: MainVcsLogUiProperties, filterUi: VcsLogFilterUiEx) =
-    MainFrame(logData, this, uiProperties, filterUi, false)
+    MainFrame(logData, this, uiProperties, filterUi, false, this)
       .apply {
         isFocusCycleRoot = false
         focusTraversalPolicy = null //new focus traversal policy will be configured include branches tree

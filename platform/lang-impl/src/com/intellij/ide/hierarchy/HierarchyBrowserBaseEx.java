@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.fileEditor.PsiElementNavigatable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
@@ -182,9 +183,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @Nullable
   protected abstract PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
 
+  @ActionText
   @NotNull
   protected abstract String getPrevOccurenceActionNameImpl();
 
+  @ActionText
   @NotNull
   protected abstract String getNextOccurenceActionNameImpl();
 
@@ -455,6 +458,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @NotNull
   private OccurenceNavigator getOccurrenceNavigator() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     String currentViewType = getCurrentViewType();
     if (currentViewType != null) {
       OccurenceNavigator navigator = myType2Sheet.get(currentViewType).myOccurenceNavigator;
@@ -493,7 +497,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   @NotNull
-  public StructureTreeModel getTreeModel(@NotNull String viewType) {
+  public StructureTreeModel<?> getTreeModel(@NotNull String viewType) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myType2Sheet.get(viewType).myStructureTreeModel;
   }
 
@@ -507,7 +512,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   @Override
-  StructureTreeModel getCurrentBuilder() {
+  StructureTreeModel<?> getCurrentBuilder() {
     String viewType = getCurrentViewType();
     if (viewType == null) {
       return null;
@@ -566,6 +571,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   protected void doRefresh(boolean currentBuilderOnly) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     if (currentBuilderOnly) LOG.assertTrue(getCurrentViewType() != null);
 
     if (!isValidBase()) return;

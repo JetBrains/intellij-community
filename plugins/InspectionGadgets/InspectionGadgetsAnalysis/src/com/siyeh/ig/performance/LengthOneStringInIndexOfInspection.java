@@ -82,7 +82,7 @@ public class LengthOneStringInIndexOfInspection
     final int length = text.length();
     final String character = text.substring(1, length - 1);
     switch (character) {
-      case "\'":
+      case "'":
         return "'\\''";
       case "\\\"":
         return "'\"'";

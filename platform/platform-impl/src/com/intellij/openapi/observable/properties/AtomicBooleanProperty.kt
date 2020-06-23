@@ -4,11 +4,11 @@ package com.intellij.openapi.observable.properties
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
-class AtomicBooleanProperty(initial: Boolean) : BooleanProperty {
+class AtomicBooleanProperty(initial: Boolean) : BooleanProperty, AtomicProperty<Boolean> {
 
-  private val value = AtomicBoolean(initial)
+  private val value = AtomicReference(initial)
 
   private val changeListeners = CopyOnWriteArrayList<(Boolean) -> Unit>()
   private val setListeners = CopyOnWriteArrayList<() -> Unit>()
@@ -20,14 +20,29 @@ class AtomicBooleanProperty(initial: Boolean) : BooleanProperty {
 
   override fun set(value: Boolean) {
     val oldValue = this.value.getAndSet(value)
-    when {
-      !oldValue && value -> setListeners.forEach { it() }
-      oldValue && !value -> resetListeners.forEach { it() }
-    }
-    changeListeners.forEach { it(value) }
+    submitChangeEvents(oldValue, value)
   }
 
-  override fun get() = value.get()
+  override fun updateAndGet(update: (Boolean) -> Boolean): Boolean {
+    var oldValue: Boolean? = null
+    val newValue = value.updateAndGet {
+      oldValue = it
+      update(it)
+    }
+    submitChangeEvents(oldValue!!, newValue)
+    return newValue
+  }
+
+
+  private fun submitChangeEvents(oldValue: Boolean, newValue: Boolean) {
+    when {
+      !oldValue && newValue -> setListeners.forEach { it() }
+      oldValue && !newValue -> resetListeners.forEach { it() }
+    }
+    changeListeners.forEach { it(newValue) }
+  }
+
+  override fun get(): Boolean = value.get()
 
   override fun afterChange(listener: (Boolean) -> Unit) {
     changeListeners.add(listener)
@@ -46,12 +61,12 @@ class AtomicBooleanProperty(initial: Boolean) : BooleanProperty {
     Disposer.register(parentDisposable, Disposable { setListeners.remove(listener) })
   }
 
-  fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {
+  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {
     resetListeners.add(listener)
     Disposer.register(parentDisposable, Disposable { resetListeners.remove(listener) })
   }
 
-  fun afterChange(listener: (Boolean) -> Unit, parentDisposable: Disposable) {
+  override fun afterChange(listener: (Boolean) -> Unit, parentDisposable: Disposable) {
     changeListeners.add(listener)
     Disposer.register(parentDisposable, Disposable { changeListeners.remove(listener) })
   }

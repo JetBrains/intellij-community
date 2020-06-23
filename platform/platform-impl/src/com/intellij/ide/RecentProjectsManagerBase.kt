@@ -20,7 +20,6 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -33,6 +32,7 @@ import com.intellij.util.io.outputStream
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.pooledThreadSingleAlarm
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import gnu.trove.THashMap
 import gnu.trove.THashSet
@@ -72,6 +72,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     fun isFileSystemPath(path: String): Boolean {
       return path.indexOf('/') != -1 || path.indexOf('\\') != -1
     }
+
+    @JvmField
+    var dontReopenProjects = false
   }
 
   private val modCounter = AtomicLong()
@@ -216,7 +219,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   override fun setLastProjectCreationLocation(value: String?) {
-    val newValue = PathUtil.toSystemIndependentName(StringUtil.nullize(value, true))
+    val newValue = PathUtil.toSystemIndependentName(value.nullize(nullizeSpaces = true))
     synchronized(stateLock) {
       state.lastProjectLocation = newValue
     }
@@ -230,7 +233,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       }
 
       for (project in openProjects) {
-        val path = getProjectPath(project!!)
+        val path = getProjectPath(project)
         val info = if (path == null) null else state.additionalInfo.get(path)
         if (info != null) {
           info.opened = true
@@ -346,7 +349,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       val openProjects = ProjectManager.getInstance().openProjects
       if (openProjects.isNotEmpty()) {
         val openProject = openProjects[openProjects.size - 1]
-        val path = manager.getProjectPath(openProject!!)
+        val path = manager.getProjectPath(openProject)
         if (path != null) {
           manager.markPathRecent(path, openProject)
         }
@@ -384,7 +387,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   override fun willReopenProjectOnStart(): Boolean {
-    if (!GeneralSettings.getInstance().isReopenLastProject) {
+    if (!GeneralSettings.getInstance().isReopenLastProject || dontReopenProjects) {
       return false
     }
 
@@ -611,7 +614,7 @@ private fun convertToSystemIndependentPaths(list: MutableList<String>) {
 @Service
 @State(name = "RecentDirectoryProjectsManager", storages = [Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED, deprecated = true)])
 private class OldRecentDirectoryProjectsManager : PersistentStateComponent<RecentProjectManagerState> {
-  internal var loadedState: RecentProjectManagerState? = null
+  var loadedState: RecentProjectManagerState? = null
 
   companion object {
     private val emptyState = RecentProjectManagerState()

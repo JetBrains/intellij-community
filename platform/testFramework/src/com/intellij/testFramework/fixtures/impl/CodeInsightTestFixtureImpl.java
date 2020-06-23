@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -53,7 +53,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -120,7 +119,6 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -865,7 +863,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public Collection<UsageInfo> testFindUsages(final String @NotNull ... fileNames) {
     assertInitialized();
-    configureByFiles(fileNames);
+    if (fileNames.length > 0) {
+      configureByFiles(fileNames);
+    }
     int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
     PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), flags);
     assertNotNull("Cannot find referenced element", targetElement);
@@ -877,9 +877,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public Collection<Usage> testFindUsagesUsingAction(String @NotNull ... fileNames) {
     assertInitialized();
     configureByFiles(fileNames);
-    EdtTestUtil.runInEdtAndWait(() -> {
-      myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES);
-    });
+    EdtTestUtil.runInEdtAndWait(() -> myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES));
     Disposer.register(getTestRootDisposable(), () -> {
       UsageViewContentManager usageViewManager = UsageViewContentManager.getInstance(getProject());
       Content selectedContent;
@@ -914,8 +912,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public String getUsageViewTreeTextRepresentation(@NotNull final Collection<? extends UsageInfo> usages) {
     UsageViewImpl usageView = (UsageViewImpl)UsageViewManager
       .getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY,
-                                                 StreamEx.of(usages)
-                                                   .map(usageInfo -> new UsageInfo2UsageAdapter(usageInfo)).toArray(Usage.EMPTY_ARRAY),
+                                                 ContainerUtil.map(usages, usage -> new UsageInfo2UsageAdapter(usage)).toArray(Usage.EMPTY_ARRAY),
                                                  new UsageViewPresentation(),
                                                  null);
     return getUsageViewTreeTextRepresentation(usageView);
@@ -1205,7 +1202,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
       ensureIndexesUpToDate(getProject());
       ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivitiesRegisteredDynamically();
-      CodeStyle.setTemporarySettings(getProject(), new CodeStyleSettings());
+      CodeStyle.setTemporarySettings(getProject(), CodeStyle.createTestSettings());
 
       IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
       if (policy != null) {
@@ -1230,43 +1227,42 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     runAll(
-      () -> {
-        EdtTestUtil.runInEdtAndWait(() -> {
-          if (ApplicationManager.getApplication() == null) {
-            return;
-          }
+      () -> EdtTestUtil.runInEdtAndWait(() -> {
+        if (ApplicationManager.getApplication() == null) {
+          return;
+        }
 
-          Project project;
-          try {
-            project = myProjectFixture.getProject();
-          }
-          catch (AssertionError ignore) {
-            project = null;
-          }
+        Project project;
+        try {
+          project = myProjectFixture.getProject();
+        }
+        catch (AssertionError ignore) {
+          project = null;
+        }
 
-          if (project != null) {
-            CodeStyle.dropTemporarySettings(project);
-            // clear "show param info" delayed requests leaking project
-            AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
-            if (autoPopupController != null) {
-              autoPopupController.cancelAllRequests();
-            }
+        if (project != null) {
+          CodeStyle.dropTemporarySettings(project);
+          // clear "show param info" delayed requests leaking project
+          AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
+          if (autoPopupController != null) {
+            autoPopupController.cancelAllRequests();
           }
+        }
 
-          // return default value to avoid unnecessary save
-          DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings = ServiceManager.getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
-          if (daemonCodeAnalyzerSettings != null) {
-            daemonCodeAnalyzerSettings.setImportHintEnabled(true);
-          }
+        // return default value to avoid unnecessary save
+        DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings =
+          ApplicationManager.getApplication().getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
+        if (daemonCodeAnalyzerSettings != null) {
+          daemonCodeAnalyzerSettings.setImportHintEnabled(true);
+        }
 
-          if (project != null) {
-            closeOpenFiles();
-            ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
-            // needed for myVirtualFilePointerTracker check below
-            ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
-          }
-        });
-      },
+        if (project != null) {
+          closeOpenFiles();
+          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+          // needed for myVirtualFilePointerTracker check below
+          ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
+        }
+      }),
       () -> {
         clearFileAndEditor();
         myPsiManager = null;
@@ -1646,7 +1642,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     actualText = StringUtil.convertLineSeparators(actualText);
 
-    if (!Comparing.equal(expectedText, actualText)) {
+    if (!Objects.equals(expectedText, actualText)) {
       if (loader.filePath != null) {
         if (loader.caretState.hasExplicitCaret()) {
           int offset = editor.getCaretModel().getOffset();
@@ -1831,8 +1827,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void testInlays(java.util.function.Function<? super Inlay, String> inlayPresenter,
-                         Predicate<? super Inlay> inlayFilter) {
+  public void testInlays(java.util.function.Function<? super Inlay<?>, String> inlayPresenter,
+                         Predicate<? super Inlay<?>> inlayFilter) {
     InlayHintsChecker checker = new InlayHintsChecker(this);
     try {
       checker.setUp();
@@ -1912,9 +1908,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     DataContext dataContext = SimpleDataContext.getSimpleContext(
       CommonDataKeys.PSI_FILE.getName(), ObjectUtils.tryCast(context, PsiFile.class), SimpleDataContext.getProjectContext(getProject()));
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
-    return new ClassSearchEverywhereContributor(event) {{
+    ClassSearchEverywhereContributor contributor = new ClassSearchEverywhereContributor(event) {{
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));
     }};
+    Disposer.register(getProjectDisposable(), contributor);
+    return contributor;
   }
 
   protected void bringRealEditorBack() {

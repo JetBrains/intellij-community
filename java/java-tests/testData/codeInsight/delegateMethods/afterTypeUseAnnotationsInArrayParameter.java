@@ -1,4 +1,9 @@
-import org.jetbrains.annotations.NotNull;
+package org.jetbrains.annotations;
+
+import java.lang.annotation.*;
+
+@Target({ElementType.PARAMETER, ElementType.TYPE_USE})
+@interface NotNull {}
 
 class Test1 {
     void m(@NotNull String... strings) { }

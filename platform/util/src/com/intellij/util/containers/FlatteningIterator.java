@@ -28,7 +28,7 @@ public abstract class FlatteningIterator<Group, Value> implements Iterator<Value
 
   public FlatteningIterator(Iterator<? extends Group> groups) {
     valuesIterator = groups;
-    groupIterator = Collections.<Value>emptyList().iterator();
+    groupIterator = Collections.emptyIterator();
   }
 
   @Override

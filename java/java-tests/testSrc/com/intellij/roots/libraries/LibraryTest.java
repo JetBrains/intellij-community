@@ -9,8 +9,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTableImpl;
@@ -19,21 +17,20 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.roots.ModuleRootManagerTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -66,14 +63,6 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertFalse(LibraryTableImplUtil.isValidLibrary(library));
   }
 
-  public void testAddRemoveModuleLibrary() {
-    ModuleRootModificationUtil.addModuleLibrary(myModule, getJDomJar().getUrl());
-    Library library = assertOneElement(OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(myModule)));
-    assertTrue(LibraryTableImplUtil.isValidLibrary(library));
-    ModuleRootModificationUtil.updateModel(myModule, model -> model.getModuleLibraryTable().removeLibrary(library));
-    assertFalse(LibraryTableImplUtil.isValidLibrary(library));
-  }
-
   public void testLibrarySerialization() throws IOException {
     final long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
 
@@ -101,16 +90,6 @@ public class LibraryTest extends ModuleRootManagerTestCase {
       "  </SOURCES>\n" +
       "</library>"
     );
-  }
-
-  public void testResolveDependencyToAddedLibrary() {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    model.addInvalidLibrary("jdom", LibraryTablesRegistrar.PROJECT_LEVEL);
-    commit(model);
-    assertEmpty(getLibraries());
-
-    Library library = createLibrary("jdom", getJDomJar(), null);
-    assertSameElements(getLibraries(), library);
   }
 
   public void testFindLibraryByNameAfterRename() {
@@ -185,94 +164,6 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     createLibrary("a", null, null);
     ((LibraryTableBase)getProjectLibraryTable()).loadState(new Element("component").addContent(new Element("library").setAttribute("name", "a")));
     assertEquals("a", assertOneElement(getProjectLibraryTable().getLibraries()).getName());
-  }
-
-  public void testNonCommittedLibraryIsDisposed() {
-    LibraryTable table = getProjectLibraryTable();
-    LibraryTable.ModifiableModel model = table.getModifiableModel();
-    Library library = model.createLibrary("a");
-    model.removeLibrary(library);
-    commit(model);
-    assertEmpty(table.getLibraries());
-  }
-
-  public void testMergeAddRemoveChanges() {
-    Library a = createLibrary("a", null, null);
-    LibraryTable table = getProjectLibraryTable();
-
-    LibraryTable.ModifiableModel model1 = table.getModifiableModel();
-    model1.removeLibrary(a);
-
-    LibraryTable.ModifiableModel model2 = table.getModifiableModel();
-    model2.createLibrary("b");
-    commit(model1);
-    commit(model2);
-
-    assertAllLibrariesAreNotDisposed();
-    assertEquals("b", assertOneElement(table.getLibraries()).getName());
-  }
-
-  public void testMergeAddAddChanges() {
-    createLibrary("a", null, null);
-    LibraryTable table = getProjectLibraryTable();
-
-    LibraryTable.ModifiableModel model1 = table.getModifiableModel();
-    model1.createLibrary("b");
-
-    LibraryTable.ModifiableModel model2 = table.getModifiableModel();
-    model2.createLibrary("c");
-    commit(model1);
-    commit(model2);
-
-    assertAllLibrariesAreNotDisposed();
-    assertSameElements(ContainerUtil.map(table.getLibraries(), Library::getName), "a", "b", "c");
-  }
-
-  public void testMergeRemoveRemoveChanges() {
-    Library a = createLibrary("a", null, null);
-    Library b = createLibrary("b", null, null);
-    LibraryTable table = getProjectLibraryTable();
-
-    LibraryTable.ModifiableModel model1 = table.getModifiableModel();
-    model1.removeLibrary(a);
-
-    LibraryTable.ModifiableModel model2 = table.getModifiableModel();
-    model2.removeLibrary(b);
-    commit(model1);
-    commit(model2);
-
-    assertAllLibrariesAreNotDisposed();
-    assertEmpty(table.getLibraries());
-  }
-
-  private void assertAllLibrariesAreNotDisposed() {
-    for (Library library : getProjectLibraryTable().getLibraries()) {
-      assertEmpty(library.getUrls(OrderRootType.CLASSES));
-    }
-  }
-
-  public void testResolveDependencyToRenamedLibrary() {
-    Library library = createLibrary("jdom2", getJDomJar(), null);
-
-    final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    model.addInvalidLibrary("jdom", LibraryTablesRegistrar.PROJECT_LEVEL);
-    commit(model);
-    assertEmpty(getLibraries());
-
-    Library.ModifiableModel libModel = library.getModifiableModel();
-    libModel.setName("jdom");
-    commit(libModel);
-    assertSameElements(getLibraries(), library);
-  }
-
-  private Collection<Library> getLibraries() {
-    CommonProcessors.CollectProcessor<Library> processor = new CommonProcessors.CollectProcessor<>();
-    ModuleRootManager.getInstance(myModule).orderEntries().forEachLibrary(processor);
-    return processor.getResults();
-  }
-
-  private static void commit(final ModifiableRootModel model) {
-    WriteAction.runAndWait(() -> model.commit());
   }
 
   public void testNativePathSerialization() {
@@ -450,40 +341,6 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
     assertTrue(rootsChanged.get());
-  }
-
-  public void testAddRemoveExcludedRoot() {
-    VirtualFile jar = getJDomJar();
-    LibraryEx library = (LibraryEx)createLibrary("junit", jar, null);
-    assertEmpty(library.getExcludedRoots());
-
-    LibraryEx.ModifiableModelEx model = library.getModifiableModel();
-    model.addExcludedRoot(jar.getUrl());
-    commit(model);
-    assertOrderedEquals(library.getExcludedRoots(), jar);
-
-    LibraryEx.ModifiableModelEx model2 = library.getModifiableModel();
-    model2.removeExcludedRoot(jar.getUrl());
-    commit(model2);
-    assertEmpty(library.getExcludedRoots());
-  }
-
-  public void testRemoveExcludedRootWhenParentRootIsRemoved() {
-    VirtualFile jar = getJDomJar();
-    LibraryEx library = (LibraryEx)createLibrary("junit", jar, null);
-
-    LibraryEx.ModifiableModelEx model = library.getModifiableModel();
-    VirtualFile excluded = jar.findChild("org");
-    assertNotNull(excluded);
-    model.addExcludedRoot(excluded.getUrl());
-    commit(model);
-
-    assertOrderedEquals(library.getExcludedRoots(), excluded);
-    LibraryEx.ModifiableModelEx model2 = library.getModifiableModel();
-    model2.removeRoot(jar.getUrl(), OrderRootType.CLASSES);
-    commit(model2);
-
-    assertEmpty(library.getExcludedRoots());
   }
 
   private static void commit(final Library.ModifiableModel modifiableModel) {

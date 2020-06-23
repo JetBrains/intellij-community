@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -10,7 +10,6 @@ import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class JVMNameUtil {
   private static final Logger LOG = Logger.getInstance(JVMNameUtil.class);
@@ -210,7 +210,7 @@ public class JVMNameUtil {
       if (allClasses.size() > 1) {
         String name = ReadAction.compute(() -> getClassVMName(getClassAt(mySourcePosition)));
         for (ReferenceType aClass : allClasses) {
-          if (Comparing.equal(aClass.name(), name)) {
+          if (Objects.equals(aClass.name(), name)) {
             return name;
           }
         }

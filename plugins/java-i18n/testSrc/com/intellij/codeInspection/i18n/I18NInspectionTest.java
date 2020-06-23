@@ -57,6 +57,16 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
       myTool.setIgnoreForAllButNls(old);
     }
   }
+  
+  public void testNlsOnlyFields() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
 
   public void testNlsPackage() {
     myFixture.addFileToProject("package-info.java", "@Nls\n" +
@@ -98,6 +108,34 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   }
   
   public void testNlsTypeUse() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
+  public void testNonNlsIndirect() {
+    doTest();
+  }
+
+  public void testNlsIndirect() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
+  public void testNonNlsMeta() {
+    doTest();
+  }
+  
+  public void testNlsMeta() {
     boolean old = myTool.setIgnoreForAllButNls(true);
     try {
       doTest();

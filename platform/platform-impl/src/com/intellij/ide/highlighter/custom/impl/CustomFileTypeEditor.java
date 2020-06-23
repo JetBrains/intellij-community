@@ -172,6 +172,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     return panel;
   }
 
+  @NotNull
   public SyntaxTable getSyntaxTable() {
     SyntaxTable syntaxTable = new SyntaxTable();
     syntaxTable.setLineComment(myLineComment.getText());

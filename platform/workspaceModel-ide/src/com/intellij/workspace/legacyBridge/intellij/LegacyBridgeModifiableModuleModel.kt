@@ -4,19 +4,20 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.JpsFileEntitySource
+import com.intellij.workspace.ide.NonPersistentEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.storagePlace
+import com.intellij.workspace.ide.getInstance
+import com.intellij.workspace.jps.JpsProjectEntitiesLoader
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 
 internal class LegacyBridgeModifiableModuleModel(
@@ -29,8 +30,8 @@ internal class LegacyBridgeModifiableModuleModel(
 
   private val myModulesToAdd = HashBiMap.create<String, LegacyBridgeModule>()
   private val myModulesToDispose = HashBiMap.create<String, LegacyBridgeModule>()
-
   private val myNewNameToModule = HashBiMap.create<String, LegacyBridgeModule>()
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   // TODO Add cache?
   override fun getModules(): Array<Module> {
@@ -47,10 +48,11 @@ internal class LegacyBridgeModifiableModuleModel(
     val moduleEntity = diff.addModuleEntity(
       name = moduleName,
       dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
-      source = object : EntitySource {}
+      source = NonPersistentEntitySource
     )
 
     val module = LegacyBridgeModuleImpl(moduleEntity.persistentId(), moduleName, project, null, entityStoreOnDiff, diff)
+    moduleManager.addUncommittedModule(module)
     myModulesToAdd[moduleName] = module
 
     module.init {}
@@ -73,27 +75,20 @@ internal class LegacyBridgeModifiableModuleModel(
     if (findModuleByName(moduleName) != null) {
       throw ModuleWithNameAlreadyExists("Module already exists: $moduleName", moduleName)
     }
+    removeUnloadedModule(moduleName)
 
-    // TODO get entity source from ProjectModelExternalSource instead
-    val entitySource = JpsFileEntitySource.FileInDirectory(VirtualFileUrlManager.fromPath(PathUtil.getParentPath(canonicalPath)), project.storagePlace!!)
+    val entitySource = JpsProjectEntitiesLoader.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
 
     val moduleEntity = diff.addModuleEntity(
       name = moduleName,
       dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
+      type = moduleTypeId,
       source = entitySource
     )
 
     val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStoreOnDiff, diff = diff, isNew = true)
+    moduleManager.addUncommittedModule(moduleInstance)
     myModulesToAdd[moduleName] = moduleInstance
-
-    moduleInstance.setModuleType(moduleTypeId)
-    // TODO Don't forget to store options in module entities
-    if (options != null) {
-      for ((key, value) in options) {
-        @Suppress("DEPRECATION")
-        moduleInstance.setOption(key, value)
-      }
-    }
 
     return moduleInstance
   }
@@ -113,9 +108,19 @@ internal class LegacyBridgeModifiableModuleModel(
     return null
   }
 
+  private fun removeUnloadedModule(moduleName: String) {
+    // If module name equals to already unloaded module, the previous should be removed from store
+    val unloadedModuleDescription = moduleManager.getUnloadedModuleDescription(moduleName)
+    if (unloadedModuleDescription != null) {
+      val moduleEntity = entityStoreOnDiff.current.resolve(ModuleId(unloadedModuleDescription.name))
+                         ?: error("Could not find module to remove by id: ${unloadedModuleDescription.name}")
+      diff.removeEntity(moduleEntity)
+    }
+  }
+
   // TODO Actually load module content
   override fun loadModule(filePath: String): Module =
-    newModule(filePath, "", null)
+    newModule(filePath, "")
 
   override fun disposeModule(module: Module) {
     module as LegacyBridgeModule
@@ -125,6 +130,7 @@ internal class LegacyBridgeModifiableModuleModel(
     }
 
     if (myModulesToAdd.inverse().remove(module) != null) {
+      (ModuleManager.getInstance(project) as LegacyBridgeModuleManagerComponent).removeUncommittedModule(module.name)
       Disposer.dispose(module)
     }
 
@@ -150,7 +156,9 @@ internal class LegacyBridgeModifiableModuleModel(
 
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
+    val moduleManager = ModuleManager.getInstance(project) as LegacyBridgeModuleManagerComponent
     for (moduleToAdd in myModulesToAdd.values) {
+      moduleManager.removeUncommittedModule(moduleToAdd.name)
       Disposer.dispose(moduleToAdd)
     }
 
@@ -183,8 +191,6 @@ internal class LegacyBridgeModifiableModuleModel(
       diff.removeEntity(moduleEntity)
     }
 
-    moduleManager.setNewModuleInstances(myModulesToAdd.values.toList())
-
     for (entry in myNewNameToModule.entries) {
       val entity = storage.resolve(entry.value.moduleEntityId) ?:
         error("Unable to resolve module by id: ${entry.value.moduleEntityId}")
@@ -207,6 +213,7 @@ internal class LegacyBridgeModifiableModuleModel(
     if (module.name != newName) { // if renaming to itself, forget it altogether
       myNewNameToModule[newName] = module
     }
+    removeUnloadedModule(newName)
 
     if (oldModule != null) {
       throw ModuleWithNameAlreadyExists(ProjectModelBundle.message("module.already.exists.error", newName), newName)

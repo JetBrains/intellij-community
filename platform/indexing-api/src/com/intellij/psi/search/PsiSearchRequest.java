@@ -16,6 +16,7 @@
 package com.intellij.psi.search;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -27,14 +28,17 @@ public class PsiSearchRequest {
   public final boolean caseSensitive;
   public final RequestResultProcessor processor;
   public final String containerName;
+  private final SearchSession mySession;
 
   PsiSearchRequest(@NotNull SearchScope searchScope,
                    @NotNull String word,
                    short searchContext,
                    boolean caseSensitive,
-                   String containerName,
+                   @Nullable String containerName,
+                   @NotNull SearchSession session,
                    @NotNull RequestResultProcessor processor) {
     this.containerName = containerName;
+    mySession = session;
     if (word.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
@@ -75,5 +79,10 @@ public class PsiSearchRequest {
     result = 31 * result + (caseSensitive ? 1 : 0);
     result = 31 * result + processor.hashCode();
     return result;
+  }
+
+  @NotNull
+  public SearchSession getSearchSession() {
+    return mySession;
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
+import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -230,7 +230,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
       }
     }
 
-    diffContent.putUserData(DiffUserDataKeysEx.REVISION_INFO, new Pair<>(path, revisionNumber));
+    diffContent.putUserData(DiffVcsDataKeys.REVISION_INFO, new Pair<>(path, revisionNumber));
 
     return diffContent;
   }

@@ -4,7 +4,7 @@ package com.intellij.grazie
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
-import java.io.File
+import java.nio.file.Path
 
 internal object GraziePlugin {
   const val id = "tanvd.grazi"
@@ -29,6 +29,6 @@ internal object GraziePlugin {
   val classLoader: ClassLoader
     get() = descriptor.pluginClassLoader
 
-  val libFolder: File
-    get() = descriptor.path.resolve("lib")
+  val libFolder: Path
+    get() = descriptor.pluginPath.resolve("lib")
 }

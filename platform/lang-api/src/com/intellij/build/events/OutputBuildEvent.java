@@ -15,6 +15,7 @@
  */
 package com.intellij.build.events;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface OutputBuildEvent {
   @NotNull
+  @BuildEventsNls.Message
   String getMessage();
 
   boolean isStdOut();

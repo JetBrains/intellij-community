@@ -51,7 +51,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
   }
 
   @Override
-  public OutputStream getProcessInput() {
+  public @NotNull OutputStream getProcessInput() {
     return myProcess.getOutputStream();
   }
 

@@ -209,10 +209,18 @@ fun VcsLogFilterCollection.with(filter: VcsLogFilter?): VcsLogFilterCollection {
   return VcsLogFilterCollectionImpl(filterSet)
 }
 
-fun VcsLogFilterCollection.without(filterKey: FilterKey<*>): VcsLogFilterCollection {
+fun VcsLogFilterCollection.without(condition: (VcsLogFilter) -> Boolean): VcsLogFilterCollection {
   val filterSet = createFilterSet()
-  this.filters.forEach { if (it.key != filterKey) filterSet.add(it) }
+  this.filters.forEach { if (!(condition(it))) filterSet.add(it) }
   return VcsLogFilterCollectionImpl(filterSet)
+}
+
+fun VcsLogFilterCollection.without(filterKey: FilterKey<*>): VcsLogFilterCollection {
+  return without { it.key == filterKey }
+}
+
+fun <T : VcsLogFilter> VcsLogFilterCollection.without(filterClass: Class<T>): VcsLogFilterCollection {
+  return without { filterClass.isInstance(it) }
 }
 
 fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean {
@@ -245,7 +253,7 @@ private fun VcsLogFilter.withPrefix(): String {
   return ""
 }
 
-private fun createFilterSet() = OpenTHashSet<VcsLogFilter>(FilterByKeyHashingStrategy())
+private fun createFilterSet() = OpenTHashSet(FilterByKeyHashingStrategy())
 
 private fun <T> OpenTHashSet<T>.replace(element: T): Boolean {
   val isModified = remove(element)

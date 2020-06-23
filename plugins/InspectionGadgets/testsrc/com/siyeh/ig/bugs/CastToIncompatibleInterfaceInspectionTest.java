@@ -26,6 +26,11 @@ public class CastToIncompatibleInterfaceInspectionTest extends LightJavaInspecti
            "}");
   }
 
+  /** @noinspection InstanceofIncompatibleInterface*/
+  public void testNullOrInstance() {
+    doTest("class X { static I foo(X x) {if (x == null || x instanceof I) return (I)x;return null;}} interface I {}");
+  }
+
   public void testCastToIncompatibleInterface() {
     doTest();
   }

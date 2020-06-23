@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author yole
@@ -29,8 +30,8 @@ public class ColoredOutputTypeRegistry {
     return ServiceManager.getService(ColoredOutputTypeRegistry.class);
   }
 
-  private final Map<String, ProcessOutputType> myStdoutAttrsToKeyMap = ContainerUtil.newConcurrentMap();
-  private final Map<String, ProcessOutputType> myStderrAttrsToKeyMap = ContainerUtil.newConcurrentMap();
+  private final Map<String, ProcessOutputType> myStdoutAttrsToKeyMap = new ConcurrentHashMap<>();
+  private final Map<String, ProcessOutputType> myStderrAttrsToKeyMap = new ConcurrentHashMap<>();
 
   private static final TextAttributesKey[] myAnsiColorKeys = new TextAttributesKey[]{
     ConsoleHighlighter.BLACK,
@@ -81,8 +82,7 @@ public class ColoredOutputTypeRegistry {
 
      see full doc at http://en.wikipedia.org/wiki/ANSI_escape_code
   */
-  @NotNull
-  public ProcessOutputType getOutputType(@NonNls String attribute, @NotNull Key streamType) {
+  public @NotNull ProcessOutputType getOutputType(@NonNls String attribute, @NotNull Key streamType) {
     ProcessOutputType streamOutputType = streamType instanceof ProcessOutputType ? (ProcessOutputType)streamType
                                                                                  : (ProcessOutputType)ProcessOutputTypes.STDOUT;
     Map<String, ProcessOutputType> attrsToKeyMap = ProcessOutputType.isStdout(streamType) ? myStdoutAttrsToKeyMap : myStderrAttrsToKeyMap;
@@ -111,8 +111,7 @@ public class ColoredOutputTypeRegistry {
    * Creates an {@link ProcessOutputType} from the {@link AnsiTerminalEmulator terminal emulator state} and stream type. Output type may be used
    * later to print to the console
    */
-  @NotNull
-  public ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType) {
+  public @NotNull ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType) {
     Map<String, ProcessOutputType> attrsToKeyMap = ProcessOutputType.isStdout(streamType) ? myStdoutAttrsToKeyMap : myStderrAttrsToKeyMap;
     String ansiSerializedState = terminal.getAnsiSerializedSGRState();
     ProcessOutputType key = attrsToKeyMap.get(ansiSerializedState);
@@ -133,8 +132,7 @@ public class ColoredOutputTypeRegistry {
    * @deprecated use {@link #getOutputType(String, Key)} instead
    */
   @Deprecated
-  @NotNull
-  public Key getOutputKey(@NonNls String attribute) {
+  public @NotNull Key getOutputKey(@NonNls String attribute) {
     return getOutputType(attribute, ProcessOutputTypes.STDOUT);
   }
 
@@ -146,8 +144,7 @@ public class ColoredOutputTypeRegistry {
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(colorKey).getForegroundColor();
   }
 
-  @NotNull
-  private static Color getDefaultForegroundColor() {
+  private static @NotNull Color getDefaultForegroundColor() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attr = scheme.getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY);
     Color color = attr != null ? attr.getForegroundColor() : null;
@@ -157,8 +154,7 @@ public class ColoredOutputTypeRegistry {
     return color;
   }
 
-  @NotNull
-  private static Color getDefaultBackgroundColor() {
+  private static @NotNull Color getDefaultBackgroundColor() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Color color = scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
     if (color == null) {
@@ -174,8 +170,7 @@ public class ColoredOutputTypeRegistry {
     return myAnsiColorKeys[value];
   }
 
-  @NotNull
-  private static ConsoleViewContentType createAnsiConsoleViewContentType(@NotNull String attribute) {
+  private static @NotNull ConsoleViewContentType createAnsiConsoleViewContentType(@NotNull String attribute) {
     int foregroundColor = -1;
     int backgroundColor = -1;
     boolean inverse = false;
@@ -236,13 +231,10 @@ public class ColoredOutputTypeRegistry {
   private static class AnsiConsoleViewContentType extends ConsoleViewContentType {
     private final int myBackgroundColorIndex;
     private final int myForegroundColorIndex;
-    @Nullable
-    private final Color myEnforcedBackgroundColor;
-    @Nullable
-    private final Color myEnforcedForegroundColor;
+    private final @Nullable Color myEnforcedBackgroundColor;
+    private final @Nullable Color myEnforcedForegroundColor;
     private final boolean myInverse;
-    @NotNull
-    private final List<EffectType> myEffectTypes;
+    private final @NotNull List<EffectType> myEffectTypes;
     private final int myFontType;
 
     private AnsiConsoleViewContentType(@NotNull String attribute,
@@ -287,8 +279,7 @@ public class ColoredOutputTypeRegistry {
     /**
      * Computes effect types that can be represented by our editor
      */
-    @NotNull
-    private static List<EffectType> computeEffectTypes(@NotNull AnsiTerminalEmulator terminalEmulator) {
+    private static @NotNull List<EffectType> computeEffectTypes(@NotNull AnsiTerminalEmulator terminalEmulator) {
       ArrayList<EffectType> result = new ArrayList<>();
       AnsiTerminalEmulator.Underline underline = terminalEmulator.getUnderline();
       if (underline == AnsiTerminalEmulator.Underline.SINGLE_UNDERLINE) {

@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.ui.components.JBCheckBox;
@@ -14,10 +14,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 
 import javax.swing.*;
+import java.util.Objects;
 
 import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
 
-public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
+public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration>, Disposable {
 
   @NotNull private final Project myProject;
 
@@ -86,7 +87,7 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     }
     if (configuration.isRunUnderTerminal() != myRunUnderTerminal.isSelected()) return true;
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
-    if (!Comparing.equal(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim())) return true;
+    if (!Objects.equals(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim())) return true;
     if (!configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim())) return true;
 
     return false;
@@ -108,5 +109,14 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
       vcs17.invokeRefreshSvnRoots();
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }
+  }
+
+  @Override
+  public void dispose() {
+  }
+
+  private void createUIComponents() {
+    myCommandLineClient = new TextFieldWithBrowseButton(null, this);
+    myConfigurationDirectoryText = new TextFieldWithBrowseButton(null, this);
   }
 }

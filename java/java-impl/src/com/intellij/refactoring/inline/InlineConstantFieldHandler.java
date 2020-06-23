@@ -65,7 +65,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     }
 
     if (field instanceof PsiEnumConstant) {
-      String message = getRefactoringName() + " is not supported for enum constants";
+      String message = JavaRefactoringBundle.message("inline.constant.field.not.supported.for.enum.constants", getRefactoringName());
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
       return;
     }

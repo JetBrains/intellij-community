@@ -38,11 +38,14 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   @PsiModifier.ModifierConstant
   @NotNull
   private final String newVisibility;
+  @NotNull
   private PsiMethod method;
+  @NotNull
   private final String oldName;
   private final String oldType;
   String[] oldParameterNames;
   String[] oldParameterTypes;
+  @NotNull
   private final String newName;
   final CanonicalTypes.Type newReturnType;
   final ParameterInfoImpl[] newParms;
@@ -75,7 +78,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
    */
   public JavaChangeInfoImpl(@PsiModifier.ModifierConstant @NotNull String newVisibility,
                             @NotNull PsiMethod method,
-                            String newName,
+                            @NotNull String newName,
                             CanonicalTypes.Type newType,
                             ParameterInfoImpl @NotNull [] newParms,
                             ThrownExceptionInfo @Nullable [] newExceptions,
@@ -91,14 +94,14 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
    */
   public JavaChangeInfoImpl(@PsiModifier.ModifierConstant @NotNull String newVisibility,
                             @NotNull PsiMethod method,
-                            String newName,
+                            @NotNull String newName,
                             CanonicalTypes.Type newType,
                             ParameterInfoImpl @NotNull [] newParms,
                             ThrownExceptionInfo @Nullable [] newExceptions,
                             boolean generateDelegate,
                             @NotNull Set<PsiMethod> propagateParametersMethods,
                             @NotNull Set<PsiMethod> propagateExceptionsMethods,
-                            String oldName) {
+                            @NotNull String oldName) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
 
     this.newVisibility = newVisibility;
@@ -288,7 +291,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
-  public PsiMethod getMethod() {
+  public @NotNull PsiMethod getMethod() {
     return method;
   }
 
@@ -298,16 +301,16 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
-  public void updateMethod(PsiMethod method) {
+  public void updateMethod(@NotNull PsiMethod method) {
     this.method = method;
   }
 
   @Override
-  public Collection<PsiMethod> getMethodsToPropagateParameters() {
+  public @NotNull Collection<PsiMethod> getMethodsToPropagateParameters() {
     return propagateParametersMethods;
   }
 
-  public ParameterInfoImpl[] getCreatedParmsInfoWithoutVarargs() {
+  public ParameterInfoImpl @NotNull [] getCreatedParmsInfoWithoutVarargs() {
     List<ParameterInfoImpl> result = new ArrayList<>();
     for (ParameterInfoImpl newParm : newParms) {
       if (newParm.oldParameterIndex < 0 && !newParm.isVarargType()) {
@@ -341,6 +344,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
+  @NotNull
   public String getNewName() {
     return newName;
   }
@@ -411,6 +415,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
+  @NotNull
   public String getOldName() {
     return oldName;
   }
@@ -461,7 +466,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
         : that.newReturnType != null) {
       return false;
     }
-    if (newVisibility != null ? !newVisibility.equals(that.newVisibility) : that.newVisibility != null) return false;
+    if (!newVisibility.equals(that.newVisibility)) return false;
     if (!oldName.equals(that.oldName)) return false;
     if (!Arrays.equals(oldParameterNames, that.oldParameterNames)) return false;
     if (!Arrays.equals(oldParameterTypes, that.oldParameterTypes)) return false;
@@ -475,7 +480,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
 
   @Override
   public int hashCode() {
-    int result = newVisibility != null ? newVisibility.hashCode() : 0;
+    int result = newVisibility.hashCode();
     if (checkMethodEquality()) {
       result = 31 * result + method.hashCode();
     }

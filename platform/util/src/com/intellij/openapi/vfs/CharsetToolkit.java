@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.ArrayUtil;
@@ -45,7 +45,7 @@ import java.util.Map;
  *
  * @author Guillaume LAFORGE
  */
-public class CharsetToolkit {
+public final class CharsetToolkit {
   public static final String UTF8 = "UTF-8";
 
   public static final Charset UTF8_CHARSET = StandardCharsets.UTF_8;
@@ -105,8 +105,7 @@ public class CharsetToolkit {
     this.defaultCharset = defaultCharset;
   }
 
-  @NotNull
-  public static InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
+  public static @NotNull InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
     if (!stream.markSupported()) {
       stream = new BufferedInputStream(stream);
     }
@@ -210,8 +209,7 @@ public class CharsetToolkit {
   /**
    * Retrieves the default Charset
    */
-  @NotNull
-  public Charset getDefaultCharset() {
+  public @NotNull Charset getDefaultCharset() {
     return defaultCharset;
   }
 
@@ -262,22 +260,19 @@ public class CharsetToolkit {
     return null;
   }
 
-  @NotNull
-  public static String bytesToString(byte @NotNull [] bytes, @NotNull final Charset defaultCharset) {
+  public static @NotNull String bytesToString(byte @NotNull [] bytes, final @NotNull Charset defaultCharset) {
     Charset charset = new CharsetToolkit(bytes, defaultCharset).guessEncoding(bytes.length);
     if (charset == null) charset = defaultCharset; // binary content. This is silly but method contract says to return something anyway
     return decodeString(bytes, charset);
   }
 
-  @NotNull
-  public static String decodeString(byte @NotNull [] bytes, @NotNull final Charset charset) {
+  public static @NotNull String decodeString(byte @NotNull [] bytes, final @NotNull Charset charset) {
     int bomLength = getBOMLength(bytes, charset);
     final CharBuffer charBuffer = charset.decode(ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength));
     return charBuffer.toString();
   }
 
-  @Nullable
-  public static String tryDecodeString(byte @NotNull [] bytes, @NotNull final Charset charset) {
+  public static @Nullable String tryDecodeString(byte @NotNull [] bytes, final @NotNull Charset charset) {
     try {
       int bomLength = getBOMLength(bytes, charset);
       ByteBuffer buffer = ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength);
@@ -298,13 +293,11 @@ public class CharsetToolkit {
     BINARY         // binary: char with code < BINARY_THRESHOLD(9) was found
   }
 
-  @NotNull
-  public GuessedEncoding guessFromContent(int guess_length) {
+  public @NotNull GuessedEncoding guessFromContent(int guess_length) {
     return guessFromContent(0, guess_length);
   }
 
-  @NotNull
-  public GuessedEncoding guessFromContent(int startOffset, int endOffset) {
+  public @NotNull GuessedEncoding guessFromContent(int startOffset, int endOffset) {
     // if a byte has its most significant bit set, the file is in UTF-8 or in the default encoding
     // otherwise, the file is in US-ASCII
     boolean highOrderBit = false;
@@ -412,13 +405,11 @@ public class CharsetToolkit {
     return GuessedEncoding.VALID_UTF8;
   }
 
-  @Nullable
-  public Charset guessFromBOM() {
+  public @Nullable Charset guessFromBOM() {
     return guessFromBOM(buffer);
   }
 
-  @Nullable
-  public static Charset guessFromBOM(byte @NotNull [] buffer) {
+  public static @Nullable Charset guessFromBOM(byte @NotNull [] buffer) {
     if (hasUTF8Bom(buffer)) return StandardCharsets.UTF_8;
     if (hasUTF32BEBom(buffer)) return UTF_32BE_CHARSET;
     if (hasUTF32LEBom(buffer)) return UTF_32LE_CHARSET;
@@ -487,16 +478,14 @@ public class CharsetToolkit {
   /**
    * Retrieve the default charset of the system.
    */
-  @NotNull
-  public static Charset getDefaultSystemCharset() {
+  public static @NotNull Charset getDefaultSystemCharset() {
     return Charset.defaultCharset();
   }
 
   /**
    * Retrieve the platform charset of the system (determined by "sun.jnu.encoding" property)
    */
-  @NotNull
-  public static Charset getPlatformCharset() {
+  public static @NotNull Charset getPlatformCharset() {
     String name = System.getProperty("sun.jnu.encoding");
     return ObjectUtils.notNull(forName(name), getDefaultSystemCharset());
   }
@@ -583,8 +572,7 @@ public class CharsetToolkit {
            || Arrays.equals(getMandatoryBom(charset), bom);
   }
 
-  @Nullable
-  public static Charset forName(@Nullable String name) {
+  public static @Nullable Charset forName(@Nullable String name) {
     Charset charset = null;
     if (name != null) {
       try {

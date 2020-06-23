@@ -108,7 +108,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                       p.getTypeText());
       }
     }
-    return "<html> Change signature of " + targetMethodName + "(" + buf.toString() + ")</html>";
+    return "<html> Change signature of " + targetMethodName + "(" + buf + ")</html>";
   }
 
   @Nullable

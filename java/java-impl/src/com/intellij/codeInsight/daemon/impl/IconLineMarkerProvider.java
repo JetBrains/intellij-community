@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  */
 public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
   @Override
-  public LineMarkerInfo<PsiElement> getLineMarkerInfo(@NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     UCallExpression expression = UastContextKt.toUElement(element, UCallExpression.class);
     if (expression == null) {
       return null;

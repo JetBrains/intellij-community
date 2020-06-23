@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,7 +20,11 @@ public interface TabbedPane {
 
   int getTabCount();
 
-  void insertTab(@Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, Icon icon, @NotNull Component c, String tip, int index);
+  void insertTab(@NlsContexts.TabTitle @NotNull String title,
+                 Icon icon,
+                 @NotNull Component c,
+                 @NlsContexts.Tooltip String tip,
+                 int index);
 
   void setTabPlacement(int tabPlacement);
 
@@ -44,7 +48,7 @@ public interface TabbedPane {
 
   Component getTabComponentAt(int index);
 
-  void setTitleAt(int index, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title);
+  void setTitleAt(int index, @NlsContexts.TabTitle @NotNull String title);
 
   void setToolTipTextAt(int index, String toolTipText);
 

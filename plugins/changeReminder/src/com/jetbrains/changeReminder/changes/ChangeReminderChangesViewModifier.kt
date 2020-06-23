@@ -9,16 +9,16 @@ import com.jetbrains.changeReminder.anyGitRootsForIndexing
 import com.jetbrains.changeReminder.plugin.UserSettings
 import com.jetbrains.changeReminder.predict.PredictionService
 
-class ChangeReminderChangesViewModifier(private val project: Project) : ChangesViewModifier {
+private class ChangeReminderChangesViewModifier(private val project: Project) : ChangesViewModifier {
   private val userSettings = service<UserSettings>()
 
   override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
-    val predictionService = project.service<PredictionService>()
     if (userSettings.isPluginEnabled && project.anyGitRootsForIndexing()) {
+      val predictionService = project.service<PredictionService>()
       val prediction = predictionService.predictionDataToDisplay
       if (prediction.predictionToDisplay.isNotEmpty()) {
         val node = ChangeReminderBrowserNode(prediction, predictionService)
-        builder.insertChangeNode(node)
+        builder.insertSubtreeRoot(node)
         builder.insertFilesIntoNode(prediction.predictionToDisplay, node)
       }
     }

@@ -120,6 +120,9 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
       if (methodName == "findExtension" || methodName == "forLanguage") {
         return findObjectLeaks(qualifiedCall.callExpression, "Extension instance")
       }
+      if (methodName == "getName") {
+        return emptyList()
+      }
     }
 
     var parent = element?.uastParent

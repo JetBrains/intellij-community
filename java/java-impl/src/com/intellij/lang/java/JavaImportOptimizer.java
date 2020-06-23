@@ -8,6 +8,7 @@ import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -90,6 +91,9 @@ public class JavaImportOptimizer implements ImportOptimizer {
 
   @Override
   public boolean supports(@NotNull PsiFile file) {
-    return file instanceof PsiJavaFile && !TemplateLanguageUtil.isTemplateDataFile(file);
+    return file instanceof PsiJavaFile
+           && !TemplateLanguageUtil.isTemplateDataFile(file)
+           && ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInSource(file.getViewProvider().getVirtualFile())
+      ;
   }
 }

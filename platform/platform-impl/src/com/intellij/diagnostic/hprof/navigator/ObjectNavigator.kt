@@ -21,6 +21,7 @@ import com.intellij.diagnostic.hprof.classstore.HProfMetadata
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
 import com.intellij.diagnostic.hprof.visitors.CreateAuxiliaryFilesVisitor
 import gnu.trove.TLongArrayList
+import org.jetbrains.annotations.NonNls
 import java.nio.channels.FileChannel
 
 abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Long) {
@@ -53,12 +54,12 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
   abstract fun getWeakReferenceId(): Long
   abstract fun getSoftWeakReferenceIndex(): Int
 
-  fun goToInstanceField(className: String?, fieldName: String) {
+  fun goToInstanceField(@NonNls className: String?, @NonNls fieldName: String) {
     val objectId = getInstanceFieldObjectId(className, fieldName)
     goTo(objectId, ReferenceResolution.ALL_REFERENCES)
   }
 
-  fun getInstanceFieldObjectId(className: String?, name: String): Long {
+  fun getInstanceFieldObjectId(@NonNls className: String?, @NonNls name: String): Long {
     val refs = getReferencesCopy()
     className?.let {
       assert(className == getClass().name.substringBeforeLast('!')) { "Expected $className, got ${getClass().name}" }
@@ -67,7 +68,7 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
     return refs[indexOfField]
   }
 
-  fun goToStaticField(className: String, fieldName: String) {
+  fun goToStaticField(@NonNls className: String, @NonNls fieldName: String) {
     val objectId = getStaticFieldObjectId(className, fieldName)
     goTo(objectId, ReferenceResolution.ALL_REFERENCES)
   }

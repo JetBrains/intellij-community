@@ -26,6 +26,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -766,14 +767,18 @@ public class CFGBuilder {
     }
     PsiLocalVariable localFn = ExpressionUtils.resolveLocalVariable(stripped);
     if (localFn != null) {
-      PsiLambdaExpression localLambda =
-        ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(localFn.getInitializer()), PsiLambdaExpression.class);
-      if (myAnalyzer.wasAdded(localLambda)) {
-        PsiElement scope = PsiUtil.getVariableCodeBlock(localFn, null);
-        List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(localFn, scope);
-        if (ContainerUtil.getOnlyItem(refs) == stripped) {
-          myAnalyzer.removeLambda(localLambda);
-          return tryInlineLambda(argCount, localLambda, resultNullability, pushArgs);
+      PsiElement parent =
+        PsiTreeUtil.getParentOfType(functionalExpression, PsiLambdaExpression.class, PsiClass.class, PsiMethod.class);
+      if (PsiTreeUtil.isAncestor(parent, localFn, true)) {
+        PsiLambdaExpression localLambda =
+          ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(localFn.getInitializer()), PsiLambdaExpression.class);
+        if (myAnalyzer.wasAdded(localLambda)) {
+          PsiElement scope = PsiUtil.getVariableCodeBlock(localFn, null);
+          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(localFn, scope);
+          if (ContainerUtil.getOnlyItem(refs) == stripped) {
+            myAnalyzer.removeLambda(localLambda);
+            return tryInlineLambda(argCount, localLambda, resultNullability, pushArgs);
+          }
         }
       }
     }

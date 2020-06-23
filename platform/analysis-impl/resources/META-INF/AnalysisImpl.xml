@@ -11,11 +11,13 @@
     <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
 
     <extensionPoint name="psi.fileReferenceHelper" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper" dynamic="true"/>
+    <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger" dynamic="true"/>
     <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider" dynamic="true"/>
+    <extensionPoint name="elementLookupRenderer" interface="com.intellij.codeInsight.lookup.impl.ElementLookupRenderer" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
-    <projectService serviceImplementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager" preload="notHeadless"/>
+    <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"
+      serviceImplementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager" preload="notHeadless"/>
     <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
                     serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy"
@@ -29,10 +31,18 @@
                         serviceImplementation="com.intellij.ide.plugins.PluginUtilImpl"/>
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletion"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletionImpl"/>
+    <applicationService serviceImplementation="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
 
+    <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
+                    serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
     <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
                     serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
+    <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
+                    serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"
+                    serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
 
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix"
@@ -41,5 +51,10 @@
              order="last"/>
 
     <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndexImpl"/>
+
+    <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.PlainTextFormatter"/>
+    <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.JsonInspectionsReportConverter"/>
+    <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.JsonSingleFileInspectionsReportConverter"/>
+    <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.StaticAnalysisReportConverter"/>
   </extensions>
 </idea-plugin>

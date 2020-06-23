@@ -53,15 +53,9 @@ public interface ModifiableModuleModel {
   }
 
   /**
-   * Creates a module of the specified type at the specified path and adds it to the project
-   * to which the module manager is related. {@link #commit()} must be called to
-   * bring the changes in effect.
-   *
-   * @param filePath     path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
-   * @param moduleTypeId ID of the module type to create.
-   * @param options      map of module options to be used when creating the module
-   * @return the module instance.
+   * @deprecated use {@link #newModule(String, String)} instead
    */
+  @Deprecated
   @NotNull
   Module newModule(@NotNull String filePath, @NotNull String moduleTypeId, @Nullable Map<String, String> options);
 

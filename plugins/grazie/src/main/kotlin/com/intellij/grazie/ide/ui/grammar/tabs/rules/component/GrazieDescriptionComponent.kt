@@ -15,6 +15,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.layout.migLayout.*
 import com.intellij.util.ui.JBUI
@@ -22,6 +23,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.html.*
 import net.miginfocom.layout.CC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.NotNull
 import org.languagetool.rules.IncorrectExample
 import org.languagetool.rules.Rule
 import java.awt.BorderLayout
@@ -51,7 +53,7 @@ class GrazieDescriptionComponent : GrazieUIComponent.ViewOnly {
   val listener: (Any) -> Unit
     get() = { selection ->
       link.component.isVisible = if (selection is RuleWithLang && selection.rule.url != null) {
-        link.listener = LinkListener { _: Any?, _: Any? -> BrowserUtil.browse(selection.rule.url!!) }
+        link.listener = LinkListener { _: @NotNull LinkLabel<Any?>, _: Any? -> BrowserUtil.browse(selection.rule.url!!) }
         true
       }
       else false

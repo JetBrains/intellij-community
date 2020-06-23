@@ -3,6 +3,7 @@ package com.intellij.execution.wsl;
 
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialPromptDialog;
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
@@ -17,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +43,7 @@ public class WSLDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
-  private static final String UNC_PREFIX = "\\\\wsl$\\";
+  public static final String UNC_PREFIX = "\\\\wsl$\\";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
@@ -203,7 +205,8 @@ public class WSLDistribution {
       commandLineString.append(realParamsList.get(1));
     }
     else {
-      commandLineString.append(commandLine.getCommandLineString());
+      List<String> bashParameters = ContainerUtil.prepend(realParamsList, commandLine.getExePath());
+      commandLineString.append(StringUtil.join(bashParameters, CommandLineUtil::posixQuote, " "));
     }
 
     if (askForSudo) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
@@ -424,7 +427,7 @@ public class WSLDistribution {
    */
   @ApiStatus.Experimental
   @NotNull
-  File getUNCRoot() {
+  public File getUNCRoot() {
     return new File(UNC_PREFIX + myDescriptor.getMsId());
   }
 

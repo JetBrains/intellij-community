@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
+import com.intellij.openapi.editor.markup.UIController;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -110,7 +111,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     setBorder(createEmptyBorder());
 
     updateOnInspectionProfileChanged(project);
-    project.getMessageBus().connect(this).subscribe(LafManagerListener.TOPIC, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LafManagerListener.TOPIC, this);
   }
 
   private void updateOnInspectionProfileChanged(@NotNull Project project) {
@@ -242,6 +243,8 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @Override
   public void dispose() {
+    removeAll();
+    myEditorField.getDocument().putUserData(DATA_KEY, null);
   }
 
   @CalledInAwt
@@ -325,6 +328,12 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
         }
       }
       return false;
+    }
+
+    @Override
+    @NotNull
+    protected UIController createUIController(@NotNull Editor editor) {
+      return new SimplifiedUIController();
     }
   }
 }

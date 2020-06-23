@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.editor.actions;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.*;
@@ -29,6 +28,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -50,10 +50,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
@@ -203,8 +201,8 @@ public class BackgroundImageDialog extends DialogWrapper {
     UIUtil.removeScrollBorder(myPreviewPanel);
     myPreviewPanel.setBorder(new SideBorder(JBColor.border(), SideBorder.ALL));
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(createToggleAction(EDITOR, "Editor and tools"));
-    actionGroup.add(createToggleAction(FRAME, "Empty frame"));
+    actionGroup.add(createToggleAction(EDITOR, IdeBundle.message("toggle.editor.and.tools")));
+    actionGroup.add(createToggleAction(FRAME, IdeBundle.message("toggle.empty.frame")));
     myToolbar = ActionManager.getInstance().createActionToolbar(getTitle(), actionGroup, true);
     JComponent toolbarComponent = myToolbar.getComponent();
     toolbarComponent.setBorder(JBUI.Borders.empty());
@@ -247,7 +245,7 @@ public class BackgroundImageDialog extends DialogWrapper {
         boolean b = e.getSource() == myOpacitySpinner;
         if (b) {
           int value = (Integer)myOpacitySpinner.getValue();
-          myOpacitySpinner.setValue(Math.min(Math.max(0, value), 100));
+          myOpacitySpinner.setValue(MathUtil.clamp(value, 0, 100));
           myOpacitySlider.setValue(value);
         }
         else {
@@ -261,7 +259,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     myOpacitySlider.addChangeListener(opacitySync);
     myOpacitySlider.setValue(15);
     myOpacitySpinner.setValue(15);
-    boolean perProject = !Comparing.equal(getBackgroundSpec(myProject, getSystemProp(true)), getBackgroundSpec(null, getSystemProp(true)));
+    boolean perProject = !Objects.equals(getBackgroundSpec(myProject, getSystemProp(true)), getBackgroundSpec(null, getSystemProp(true)));
     myThisProjectOnlyCb.setSelected(perProject);
     myAdjusting = false;
   }
@@ -531,8 +529,7 @@ public class BackgroundImageDialog extends DialogWrapper {
       @Override
       public Dimension getPreferredSize() {
         Dimension d = super.getSize();
-        d.width = Math.max(d.width, d.height);
-        d.height = Math.max(d.width, d.height);
+        d.width = d.height = Math.max(d.width, d.height);
         return d;
       }
 

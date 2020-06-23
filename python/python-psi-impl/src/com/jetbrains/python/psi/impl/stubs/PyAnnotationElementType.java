@@ -63,7 +63,7 @@ public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub,
   @Override
   public boolean shouldCreateStub(ASTNode node) {
     final IElementType parentType = node.getTreeParent().getElementType();
-    return PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens().contains(parentType)
-           || PythonDialectsTokenSetProvider.INSTANCE.getParameterTokens().contains(parentType);
+    return PythonDialectsTokenSetProvider.getInstance().getFunctionDeclarationTokens().contains(parentType)
+           || PythonDialectsTokenSetProvider.getInstance().getParameterTokens().contains(parentType);
   }
 }

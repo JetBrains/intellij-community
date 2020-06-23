@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.application.options.colors.fileStatus.FileStatusColorsConfigurable;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
@@ -15,27 +16,32 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
+import com.intellij.openapi.vcs.impl.VcsEP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurable;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.map2Set;
 
-public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
+public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract
+  implements Configurable.NoScroll, Configurable.WithEpDependencies {
   @NotNull private final Project myProject;
   private VcsDirectoryConfigurationPanel myMappings;
   private VcsGeneralConfigurationConfigurable myGeneralPanel;
 
   public VcsManagerConfigurable(@NotNull Project project) {
     myProject = project;
+  }
+
+  @Override
+  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
+    return Arrays.asList(
+      VcsEP.EP_NAME, VcsConfigurableProvider.EP_NAME
+    );
   }
 
   @Override
@@ -119,7 +125,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
     result.add(new FileStatusColorsConfigurable());
 
-    Set<String> projectConfigurableIds = map2Set(Configurable.PROJECT_CONFIGURABLE.getExtensionList(myProject), ep -> ep.id);
+    Set<String> projectConfigurableIds = map2Set(Configurable.PROJECT_CONFIGURABLE.getExtensions(myProject), ep -> ep.id);
     for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(myProject).getAllVcss()) {
       if (!projectConfigurableIds.contains(getVcsConfigurableId(descriptor.getDisplayName()))) {
         result.add(wrapConfigurable(new VcsConfigurableEP(myProject, descriptor)));

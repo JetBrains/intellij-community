@@ -1,12 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.ui;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.options.GridOptions;
 import org.intellij.images.options.TransparencyChessboardOptions;
+import org.intellij.images.options.impl.ImageEditorColorSchemeSettingsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +67,7 @@ public class ImageComponent extends JComponent {
     private boolean myFileSizeVisible = true;
     private boolean myFileNameVisible = true;
     private double zoomFactor = 1d;
+    private boolean myBorderVisible = true;
 
     public ImageComponent() {
         updateUI();
@@ -146,6 +151,16 @@ public class ImageComponent extends JComponent {
         boolean oldValue = myFileNameVisible;
         myFileNameVisible = fileNameVisible;
         firePropertyChange(FILE_NAME_VISIBLE_PROP, oldValue, fileNameVisible);
+    }
+
+    public boolean isBorderVisible() {
+        return myBorderVisible;
+    }
+
+    public void setBorderVisible(boolean borderVisible) {
+        boolean oldValue = myBorderVisible;
+        myBorderVisible = borderVisible;
+        firePropertyChange("Border.visible", oldValue, myBorderVisible);
     }
 
     public void setGridLineZoomFactor(int lineZoomFactor) {
@@ -388,7 +403,9 @@ public class ImageComponent extends JComponent {
         }
 
         public Color getLineColor() {
-            return lineColor;
+            EditorColorsScheme editorScheme = EditorColorsManager.getInstance().getGlobalScheme();
+            Color color = editorScheme.getColor(ImageEditorColorSchemeSettingsKt.getGRID_LINE_COLOR_KEY());
+            return color != null ? color : JBColor.DARK_GRAY;
         }
 
         public void setLineColor(Color lineColor) {

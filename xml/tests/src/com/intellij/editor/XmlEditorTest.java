@@ -15,8 +15,7 @@
  */
 package com.intellij.editor;
 
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -54,15 +53,14 @@ public class XmlEditorTest extends LightJavaCodeInsightTestCase {
                           "</g>\n" +
                           "</svg>");
 
-    CodeStyleSettings clone = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().clone();
-    clone.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
-    try {
-      CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(clone);
-      EditorTestUtil.performTypingAction(getEditor(), 'x');
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
+    CodeStyle.doWithTemporarySettings(
+      getProject(),
+      CodeStyle.getSettings(getProject()),
+      clone -> {
+        clone.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
+        EditorTestUtil.performTypingAction(getEditor(), 'x');
+      }
+    );
     checkResultByText("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n" +
                       "<svg version=\"1.1\" id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
                       "<g>\n" +
@@ -76,15 +74,14 @@ public class XmlEditorTest extends LightJavaCodeInsightTestCase {
     configureFromFileText("a.xml",
                           "<!-- Some very long and informative xml comment to trigger hard wrapping indeed. Too short? Dave, let me ask you something. Are hard wraps working? What do we live for? What ice-cream do you like? Who am I?????????????????????????????????????????????????????????????????????????????????????????????????<caret>-->");
 
-    CodeStyleSettings clone = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().clone();
-    clone.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
-    try {
-      CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(clone);
-      EditorTestUtil.performTypingAction(getEditor(), '?');
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
+    CodeStyle.doWithTemporarySettings(
+      getProject(),
+      CodeStyle.getSettings(getProject()),
+      clone -> {
+        clone.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
+        EditorTestUtil.performTypingAction(getEditor(), '?');
+      }
+    );
     checkResultByText("<!-- Some very long and informative xml comment to trigger hard wrapping indeed. Too short? Dave, let me ask you \n" +
                       "something. Are hard wraps working? What do we live for? What ice-cream do you like? Who am I??????????????????????????????????????????????????????????????????????????????????????????????????-->");
   }

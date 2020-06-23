@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.intentions.style
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
@@ -16,6 +15,7 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -34,21 +34,15 @@ internal class InferMethodParametersTypesIntention : Intention() {
    */
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val method: GrMethod = element as GrMethod
-    val options = SignatureInferenceOptions(GlobalSearchScope.allScope(project), DefaultInferenceContext, lazy { unreachable() })
+    val options = SignatureInferenceOptions(GlobalSearchScope.allScope(project), false, DefaultInferenceContext, lazy { unreachable() })
     val virtualMethod = runInferenceProcess(method, options)
     substituteMethodSignature(virtualMethod, method)
   }
 
 
   private fun substituteMethodSignature(sourceMethod: GrMethod, sinkMethod: GrMethod) {
-    if (!sinkMethod.isConstructor) {
-      val returnType = if (sinkMethod.annotations.all { it.qualifiedName != CommonClassNames.JAVA_LANG_OVERRIDE }) {
-        sourceMethod.inferredReturnType?.takeIf { it != PsiType.NULL } ?: getJavaLangObject(sinkMethod)
-      }
-      else {
-        sourceMethod.returnType
-      }
-      GrReferenceAdjuster.shortenAllReferencesIn(sinkMethod.setReturnType(returnType))
+    if (!sinkMethod.isConstructor && !sinkMethod.modifierList.hasModifierProperty(GrModifier.DEF)) {
+      sinkMethod.modifierList.setModifierProperty(GrModifier.DEF, true)
     }
     if (sourceMethod.hasTypeParameters()) {
       when {
@@ -62,8 +56,8 @@ internal class InferMethodParametersTypesIntention : Intention() {
     }
     for ((actual, inferred) in sinkMethod.parameters.zip(sourceMethod.parameters)) {
       actual.setType(inferred.type)
-      actual.modifierList.setModifierProperty("def", false)
-      if (actual.isVarArgs && !inferred.isVarArgs) {
+      actual.modifierList.setModifierProperty(GrModifier.DEF, false)
+      if (actual.isVarArgs) {
         actual.ellipsisDots!!.delete()
       }
       val currentAnnotations = actual.annotations.map { it.text }
@@ -76,7 +70,11 @@ internal class InferMethodParametersTypesIntention : Intention() {
       }
     }
     sinkMethod.typeParameters.forEach { GrReferenceAdjuster.shortenAllReferencesIn(it.originalElement as GroovyPsiElement?) }
-    sinkMethod.modifierList.setModifierProperty("def", false)
+    if (!sinkMethod.isConstructor && sinkMethod.returnTypeElement == null) {
+      val returnType = sinkMethod.inferredReturnType?.takeIf { it != PsiType.NULL } ?: getJavaLangObject(sinkMethod)
+      GrReferenceAdjuster.shortenAllReferencesIn(sinkMethod.setReturnType(returnType))
+    }
+    sinkMethod.modifierList.setModifierProperty(GrModifier.DEF, false)
   }
 
   private fun collectParameterSubstitutor(virtualMethod: GrMethod): PsiSubstitutor {

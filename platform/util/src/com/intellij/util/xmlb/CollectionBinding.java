@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
@@ -16,9 +16,8 @@ final class CollectionBinding extends AbstractCollectionBinding  {
     super(ClassUtil.typeToClass(type.getActualTypeArguments()[0]), accessor);
   }
 
-  @NotNull
   @Override
-  protected Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
+  protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     Collection result;
     boolean isContextMutable = context != null && ClassUtil.isMutableCollection(context);
     if (isContextMutable) {
@@ -47,9 +46,8 @@ final class CollectionBinding extends AbstractCollectionBinding  {
     return o instanceof Set ? new TreeSet((Set)o) : (Collection<Object>)o;
   }
 
-  @NotNull
   @Override
-  protected String getCollectionTagName(@Nullable final Object target) {
+  protected @NotNull String getCollectionTagName(final @Nullable Object target) {
     if (target instanceof Set) {
       return Constants.SET;
     }

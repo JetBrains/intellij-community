@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.Disposable;
@@ -131,7 +131,8 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   void editDescription(@Nullable String startValue) {
     myLayout.show(myInfoComponent, EDIT_DESCRIPTION_CARD);
     myDescriptionTextField.setText(StringUtil.notNullize(startValue));
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myDescriptionTextField, true));
+    SwingUtilities.invokeLater(() -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+      () -> IdeFocusManager.getGlobalInstance().requestFocus(myDescriptionTextField, true)));
     myPainter.setNeedsRepaint(true);
   }
 

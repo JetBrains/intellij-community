@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
@@ -37,23 +38,23 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.Callable
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 @Suppress("ComponentNotRegistered")
 class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleManagerEx(), Disposable {
   val outOfTreeModulesPath: String =
     FileUtilRt.toSystemIndependentName(File(PathManager.getTempPath(), "outOfTreeProjectModules-${project.locationHash}").path)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   private val LOG = Logger.getInstance(javaClass)
 
-  private val idToModule: ConcurrentMap<ModuleId, LegacyBridgeModule> = ConcurrentHashMap()
+  private val idToModule = Collections.synchronizedMap(LinkedHashMap<ModuleId, LegacyBridgeModule>())
   internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
-  private val newModuleInstances = mutableMapOf<ModuleId, LegacyBridgeModule>()
+  private val uncommittedModules = mutableMapOf<String, LegacyBridgeModule>()
 
   override fun dispose() {
     val modules = idToModule.values.toList()
     idToModule.clear()
+    uncommittedModules.clear()
 
     for (module in modules) {
       Disposer.dispose(module)
@@ -62,7 +63,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
   internal class MyProjectServiceContainerInitializedListener : ProjectServiceContainerInitializedListener {
     override fun serviceCreated(project: Project) {
-      val activity = StartUpMeasurer.startMainActivity("[WM] module loading")
+      val activity = StartUpMeasurer.startMainActivity("(wm) module loading")
       val manager = ModuleManagerComponent.getInstance(project) as? LegacyBridgeModuleManagerComponent ?: return
 
       val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
@@ -70,9 +71,9 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         .filter { !unloadedNames.contains(it.name) }
         .toList()
       manager.loadModules(entities)
-      WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
       activity.end()
-      activity.setDescription("[WM] module count: ${manager.modules.size}")
+      activity.setDescription("(wm) module count: ${manager.modules.size}")
+      WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
     }
   }
 
@@ -82,12 +83,14 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
       val busConnection = project.messageBus.connect(this)
       busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
         override fun projectOpened(eventProject: Project) {
+          val activity = StartUpMeasurer.startActivity("(wm) ProjectManagerListener.projectOpened")
           if (project == eventProject) {
             fireModulesAdded()
             for (module in idToModule.values) {
               (module as ModuleEx).projectOpened()
             }
           }
+          activity.end()
         }
 
         override fun projectClosed(eventProject: Project) {
@@ -99,166 +102,199 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         }
       })
 
-      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
-        override fun changed(event: EntityStoreChanged) = LOG.bracket("ModuleManagerComponent.EntityStoreChange") {
-          val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
-          val changes = event.getChanges(ModuleEntity::class.java)
-          if (changes.isEmpty() && moduleLibraryChanges.isEmpty()) return@bracket
-
-          executeOrQueueOnDispatchThread {
-            LOG.bracket("ModuleManagerComponent.handleModulesChange") {
-              incModificationCount()
-
-              for (change in moduleLibraryChanges) when (change) {
-                is EntityChange.Removed -> {
-                  val moduleRootComponent = getModuleRootComponentByLibrary(change.entity)
-                  val persistentId = change.entity.persistentId()
-                  val moduleLibrary = moduleRootComponent.moduleLibraries.firstOrNull { it.entityId == persistentId }
-                                      ?: error("Could not find library '${change.entity.name}' in module ${moduleRootComponent.module.name}")
-                  moduleRootComponent.moduleLibraries.remove(moduleLibrary)
-                  Disposer.dispose(moduleLibrary)
-                }
-                is EntityChange.Replaced -> {
-                  val idBefore = change.oldEntity.persistentId()
-                  val idAfter = change.newEntity.persistentId()
-
-                  if (idBefore != idAfter) {
-                    if (idBefore.tableId != idAfter.tableId) {
-                      throw UnsupportedOperationException(
-                        "Changing library table id is not allowed by replace entity operation." +
-                        "old library id: '$idBefore' new library id: '$idAfter'")
-                    }
-
-                    val moduleRootComponent = getModuleRootComponentByLibrary(change.oldEntity)
-                    val moduleLibrary = moduleRootComponent.moduleLibraries.firstOrNull { it.entityId == idBefore }
-                                        ?: error("Could not find library '${idBefore.name}' in module ${moduleRootComponent.module.name}")
-                    moduleLibrary.entityId = idAfter
-                  }
-
-                  Unit
-                }
-                is EntityChange.Added -> Unit // Add events are handled after adding new modules
-              }.let {  } // exhaustive when
-
-              val unloadedModulesSetOriginal = unloadedModules.keys.toList()
-              val unloadedModulesSet = unloadedModulesSetOriginal.toMutableSet()
-              val oldModuleNames = mutableMapOf<Module, String>()
-
-              nextChange@ for (change in changes) when (change) {
-                is EntityChange.Removed -> {
-                  fireBeforeModuleRemoved(change.entity.persistentId())
-                  removeModuleAndFireEvent(change.entity.persistentId())
-                  unloadedModulesSet.remove(change.entity.name)
-                }
-
-                is EntityChange.Added -> {
-                  val moduleId = change.entity.persistentId()
-                  val alreadyCreatedModule = newModuleInstances.remove(moduleId)
-                  val module = if (alreadyCreatedModule != null) {
-                    unloadedModulesSet.remove(change.entity.name)
-                    unloadedModules.remove(change.entity.name)
-
-                    (alreadyCreatedModule as LegacyBridgeModuleImpl).entityStore = entityStore
-                    alreadyCreatedModule.diff = null
-                    if (WorkspaceModelTopics.getInstance(project).modulesAreLoaded) addModule(alreadyCreatedModule)
-                    alreadyCreatedModule
-                  }
-                  else {
-                    if (change.entity.name in unloadedModules.keys) {
-                      // Skip unloaded modules if it was not added via API
-                      continue@nextChange
-                    }
-
-                    if (WorkspaceModelTopics.getInstance(project).modulesAreLoaded) addModule(change.entity)
-                    else continue@nextChange
-                  }
-
-                  if (project.isOpen) {
-                    fireModuleAddedInWriteAction(module)
-                  }
-                }
-
-                is EntityChange.Replaced -> {
-                  val oldId = change.oldEntity.persistentId()
-                  val newId = change.newEntity.persistentId()
-
-                  if (oldId != newId) {
-                    unloadedModulesSet.remove(change.newEntity.name)
-                    unloadedModules.remove(change.newEntity.name)
-                    renameModule(oldId, newId)
-                    oldModuleNames[idToModule.getValue(newId)] = oldId.name
-                  }
-                }
-              }
-
-              val modulesToCheck = mutableSetOf<Module>()
-              for (change in moduleLibraryChanges) when (change) {
-                is EntityChange.Added -> {
-                  val moduleRootComponent = getModuleRootComponentByLibrary(change.entity)
-                  modulesToCheck.add(moduleRootComponent.module)
-
-                  val addedLibraryId = change.entity.persistentId()
-                  val alreadyCreatedLibrary = moduleRootComponent.newModuleLibraries.firstOrNull { it.entityId == addedLibraryId }
-                  val libraryImpl = if (alreadyCreatedLibrary != null) {
-                    moduleRootComponent.newModuleLibraries.remove(alreadyCreatedLibrary)
-                    alreadyCreatedLibrary.entityStore = entityStore
-                    alreadyCreatedLibrary.modifiableModelFactory = null
-                    alreadyCreatedLibrary
-                  }
-                  else {
-                    moduleRootComponent.createModuleLibrary(addedLibraryId)
-                  }
-
-                  moduleRootComponent.moduleLibraries.add(libraryImpl)
-
-                  Unit
-                }
-                is EntityChange.Replaced -> Unit
-                is EntityChange.Removed -> Unit
-              }.let {  } // exhaustive when
-
-              if (oldModuleNames.isNotEmpty()) {
-                project.messageBus
-                  .syncPublisher(ProjectTopics.MODULES)
-                  .modulesRenamed(project, oldModuleNames.keys.toList()) { module -> oldModuleNames[module] }
-              }
-
-              if (unloadedModulesSet.isNotEmpty()) {
-                val loadedModules = modules.map { it.name }.toMutableList()
-                loadedModules.removeAll(unloadedModulesSet)
-                AutomaticModuleUnloader.getInstance(project).setLoadedModules(loadedModules)
-              }
-
-              for (module in modulesToCheck) {
-                val newModuleLibraries = LegacyBridgeModuleRootComponent.getInstance(module).newModuleLibraries
-                if (newModuleLibraries.isNotEmpty()) {
-                  LOG.error("Not all module library instances were handled in change event. Leftovers:\n" +
-                            newModuleLibraries.joinToString(separator = "\n"))
-                  newModuleLibraries.clear()
-                }
-              }
-
-              if (newModuleInstances.isNotEmpty()) {
-                LOG.error("Not all module instances were handled in change event. Leftovers:\n" +
-                          newModuleInstances.keys.joinToString(separator = "\n"))
-                newModuleInstances.clear()
-              }
-
-              incModificationCount()
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object: WorkspaceModelChangeListener {
+        override fun beforeChanged(event: EntityStoreChanged) = LOG.bracket("ModuleManagerComponent.BeforeEntityStoreChange") {
+          for (change in event.getAllChanges()) {
+            @Suppress("UNCHECKED_CAST")
+            when (change.entity()) {
+              is FacetEntity -> FacetEntityChangeListener.getInstance(project).processBeforeChange(change as EntityChange<FacetEntity>)
             }
           }
         }
+
+        override fun changed(event: EntityStoreChanged) = LOG.bracket("ModuleManagerComponent.EntityStoreChange") {
+
+          val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
+          val changes = event.getChanges(ModuleEntity::class.java)
+          val facetChanges = event.getChanges(FacetEntity::class.java)
+          if (changes.isEmpty() && moduleLibraryChanges.isEmpty() && facetChanges.isEmpty()) return@bracket
+
+          executeOrQueueOnDispatchThread {
+            incModificationCount()
+
+            val modulesToCheck = mutableSetOf<Module>()
+
+            val unloadedModulesSetOriginal = unloadedModules.keys.toList()
+            val unloadedModulesSet = unloadedModulesSetOriginal.toMutableSet()
+            val oldModuleNames = mutableMapOf<Module, String>()
+
+            for (change in moduleLibraryChanges) when (change) {
+              is EntityChange.Removed -> processModuleLibraryChange(change, modulesToCheck)
+              is EntityChange.Replaced -> processModuleLibraryChange(change, modulesToCheck)
+              is EntityChange.Added -> Unit
+            }
+
+            for (change in facetChanges) when (change) {
+              is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change)
+              is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change)
+              is EntityChange.Added -> Unit
+            }
+
+            for (change in changes) processModuleChange(change, unloadedModulesSet, oldModuleNames)
+
+            for (change in moduleLibraryChanges) when (change) {
+              is EntityChange.Removed -> Unit
+              is EntityChange.Replaced -> Unit
+              is EntityChange.Added -> processModuleLibraryChange(change, modulesToCheck)
+            }
+
+            for (change in facetChanges) when (change) {
+              is EntityChange.Removed -> Unit
+              is EntityChange.Replaced -> Unit
+              is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change)
+            }
+
+            // After every change processed
+            postProcessModules(modulesToCheck, oldModuleNames, unloadedModulesSet)
+
+            incModificationCount()
+          }
+        }
       })
-      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, FacetEntityChangeListener(project))
+
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, LegacyBridgeProjectRootsChangeListener(project))
     }
   }
 
-  @ApiStatus.Internal
-  internal fun setNewModuleInstances(addedInstances: List<LegacyBridgeModule>) {
-    if (newModuleInstances.isNotEmpty()) error("newModuleInstances are not empty")
-    for (instance in addedInstances) {
-      newModuleInstances[instance.moduleEntityId] = instance
+  private fun postProcessModules(modulesToCheck: MutableSet<Module>,
+                                 oldModuleNames: MutableMap<Module, String>,
+                                 unloadedModulesSet: MutableSet<String>) {
+    for (module in modulesToCheck) {
+      val newModuleLibraries = LegacyBridgeModuleRootComponent.getInstance(module).newModuleLibraries
+      if (newModuleLibraries.isNotEmpty()) {
+        LOG.error("Not all module library instances were handled in change event. Leftovers:\n" +
+                  newModuleLibraries.joinToString(separator = "\n"))
+        newModuleLibraries.clear()
+      }
     }
+
+    if (oldModuleNames.isNotEmpty()) {
+      project.messageBus
+        .syncPublisher(ProjectTopics.MODULES)
+        .modulesRenamed(project, oldModuleNames.keys.toList()) { module -> oldModuleNames[module] }
+    }
+
+    if (unloadedModulesSet.isNotEmpty()) {
+      val loadedModules = modules.map { it.name }.toMutableList()
+      loadedModules.removeAll(unloadedModulesSet)
+      AutomaticModuleUnloader.getInstance(project).setLoadedModules(loadedModules)
+    }
+  }
+
+  private fun processModuleChange(change: EntityChange<ModuleEntity>,
+                                  unloadedModulesSet: MutableSet<String>,
+                                  oldModuleNames: MutableMap<Module, String>) {
+    when (change) {
+      is EntityChange.Removed -> {
+        // It's possible case then idToModule doesn't contain element e.g if unloaded module was removed
+        idToModule[change.entity.persistentId()]?.let {
+          fireBeforeModuleRemoved(change.entity.persistentId())
+          removeModuleAndFireEvent(change.entity.persistentId())
+        }
+        unloadedModulesSet.remove(change.entity.name)
+      }
+
+      is EntityChange.Added -> {
+        val moduleId = change.entity.persistentId()
+        val alreadyCreatedModule = uncommittedModules.remove(moduleId.name)
+        val module = if (alreadyCreatedModule != null) {
+          unloadedModulesSet.remove(change.entity.name)
+          unloadedModules.remove(change.entity.name)
+
+          (alreadyCreatedModule as LegacyBridgeModuleImpl).entityStore = entityStore
+          alreadyCreatedModule.diff = null
+          if (WorkspaceModelTopics.getInstance(project).modulesAreLoaded) addModule(alreadyCreatedModule)
+          alreadyCreatedModule
+        }
+        else {
+          if (change.entity.name in unloadedModules.keys) {
+            // Skip unloaded modules if it was not added via API
+            return
+          }
+
+          if (WorkspaceModelTopics.getInstance(project).modulesAreLoaded) addModule(change.entity)
+          else return
+        }
+
+        if (project.isOpen) {
+          fireModuleAddedInWriteAction(module)
+        }
+      }
+
+      is EntityChange.Replaced -> {
+        val oldId = change.oldEntity.persistentId()
+        val newId = change.newEntity.persistentId()
+
+        if (oldId != newId) {
+          unloadedModulesSet.remove(change.newEntity.name)
+          unloadedModules.remove(change.newEntity.name)
+          renameModule(oldId, newId)
+          oldModuleNames[idToModule.getValue(newId)] = oldId.name
+        }
+      }
+    }
+  }
+
+  private fun processModuleLibraryChange(change: EntityChange<LibraryEntity>, modulesToCheck: MutableSet<Module>) {
+    when (change) {
+      is EntityChange.Removed -> {
+        val moduleRootComponent = getModuleRootComponentByLibrary(change.entity)
+        val persistentId = change.entity.persistentId()
+        val moduleLibrary = moduleRootComponent.moduleLibraries.firstOrNull { it.entityId == persistentId }
+                            ?: error("Could not find library '${change.entity.name}' in module ${moduleRootComponent.module.name}")
+        moduleRootComponent.moduleLibraries.remove(moduleLibrary)
+        Disposer.dispose(moduleLibrary)
+      }
+      is EntityChange.Replaced -> {
+        val idBefore = change.oldEntity.persistentId()
+        val idAfter = change.newEntity.persistentId()
+
+        if (idBefore != idAfter) {
+          if (idBefore.tableId != idAfter.tableId) {
+            throw UnsupportedOperationException(
+              "Changing library table id is not allowed by replace entity operation." +
+              "old library id: '$idBefore' new library id: '$idAfter'")
+          }
+
+          val moduleRootComponent = getModuleRootComponentByLibrary(change.oldEntity)
+          val moduleLibrary = moduleRootComponent.moduleLibraries.firstOrNull { it.entityId == idBefore }
+                              ?: error("Could not find library '${idBefore.name}' in module ${moduleRootComponent.module.name}")
+          moduleLibrary.entityId = idAfter
+        }
+
+        Unit
+      }
+      is EntityChange.Added -> {
+        val moduleRootComponent = getModuleRootComponentByLibrary(change.entity)
+        modulesToCheck.add(moduleRootComponent.module)
+
+        val addedLibraryId = change.entity.persistentId()
+        val alreadyCreatedLibrary = moduleRootComponent.newModuleLibraries.firstOrNull { it.entityId == addedLibraryId }
+        val libraryImpl = if (alreadyCreatedLibrary != null) {
+          moduleRootComponent.newModuleLibraries.remove(alreadyCreatedLibrary)
+          alreadyCreatedLibrary.entityStore = entityStore
+          alreadyCreatedLibrary.modifiableModelFactory = null
+          alreadyCreatedLibrary
+        }
+        else {
+          moduleRootComponent.createModuleLibrary(addedLibraryId)
+        }
+
+        moduleRootComponent.moduleLibraries.add(libraryImpl)
+
+        Unit
+      }
+    }.let {} // exhaustive when
   }
 
   private fun getModuleRootComponentByLibrary(entity: LibraryEntity): LegacyBridgeModuleRootComponent {
@@ -423,21 +459,14 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     val moduleFile = File(filePath)
 
     WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-      JpsProjectEntitiesLoader.loadModule(moduleFile, project.storagePlace!!, builder)
+      JpsProjectEntitiesLoader.loadModule(moduleFile, project.configLocation!!, builder, virtualFileManager)
     }
 
     return findModuleByName(moduleName)
            ?: error("Module '$moduleName' was not found after loading: $filePath")
   }
 
-  override fun getUnloadedModuleDescription(moduleName: String): UnloadedModuleDescription? {
-    if (moduleName !in unloadedModules) return null
-
-    // TODO Optimize?
-    val moduleEntity = entityStore.current.entities(ModuleEntity::class.java).filter { it.name == moduleName }.firstOrNull()
-                       ?: return null
-    return getUnloadedModuleDescription(moduleEntity)
-  }
+  override fun getUnloadedModuleDescription(moduleName: String): UnloadedModuleDescription? = unloadedModules[moduleName]
 
   override fun getModules(): Array<Module> = idToModule.values.toTypedArray()
 
@@ -450,6 +479,19 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   override fun getSortedModules(): Array<Module> = entityStore.cachedValue(sortedModulesValue, idToModule.keys.toSet())
 
   override fun findModuleByName(name: String): Module? = idToModule[ModuleId(name)]
+
+  @ApiStatus.Internal
+  internal fun findUncommittedModuleByName(name: String): Module? = uncommittedModules[name]
+
+  @ApiStatus.Internal
+  internal fun addUncommittedModule(module: LegacyBridgeModule) {
+    uncommittedModules[module.name] = module
+  }
+
+  @ApiStatus.Internal
+  internal fun removeUncommittedModule(name: String) {
+    uncommittedModules.remove(name)
+  }
 
   override fun disposeModule(module: Module) = ApplicationManager.getApplication().runWriteAction {
     val modifiableModel = modifiableModel
@@ -485,6 +527,11 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
     unloadedModules.keys.removeAll { it !in names }
     runWriteAction {
+      if (modulesToUnload.isNotEmpty()) {
+        // we need to save module configurations before unloading, otherwise their settings will be lost
+        saveComponentManager(project)
+      }
+
       ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(
         {
           for (moduleId in modulesToUnload) {
@@ -500,8 +547,6 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
               }
               val unloadedModuleDescription = UnloadedModuleDescriptionImpl(modulePath, description.dependencyModuleNames, contentRoots)
               unloadedModules[moduleId.name] = unloadedModuleDescription
-              // we need to save module configuration before unloading, otherwise its settings will be lost
-              saveComponentManager(module)
             }
 
             removeModuleAndFireEvent(moduleId)
@@ -518,20 +563,6 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     unloadedModules.forEach { this.unloadedModules.remove(it.name) }
 
     UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = this.unloadedModules.keys.toList()
-  }
-
-  private fun getUnloadedModuleDescription(moduleEntity: ModuleEntity): UnloadedModuleDescriptionImpl {
-    val provider = LegacyBridgeFilePointerProvider.getInstance(project)
-
-    val modulePath = getModulePath(moduleEntity)
-    val dependencyModuleNames = moduleEntity.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>().map { it.module.name }
-    val contentRoots = moduleEntity.contentRoots.map { it.url }.map { provider.getAndCacheFilePointer(it) }.toList()
-
-    return UnloadedModuleDescriptionImpl(
-      modulePath = modulePath,
-      dependencyModuleNames = dependencyModuleNames,
-      contentRoots = contentRoots
-    )
   }
 
   internal fun getModuleFilePath(moduleEntity: ModuleEntity): String {
@@ -559,6 +590,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     module.init {
       try {
         val moduleStore = module.stateStore as ModuleStoreBase
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(modulePath)
         moduleStore.setPath(modulePath, null, isNew)
         moduleStore.storageManager.addMacro("MODULE_FILE", modulePath)
       }
@@ -570,15 +602,16 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     return module
   }
 
-  internal fun getModulePath(moduleEntity: ModuleEntity): ModulePath = ModulePath(
-    path = getModuleFilePath(moduleEntity),
-    group = moduleEntity.groupPath?.path?.joinToString(separator = ModuleManagerImpl.MODULE_GROUP_SEPARATOR)
-  )
-
   companion object {
     @JvmStatic
     fun getInstance(project: Project): LegacyBridgeModuleManagerComponent {
       return ModuleManagerComponent.getInstance(project) as LegacyBridgeModuleManagerComponent
+    }
+
+    private fun EntityChange<LibraryEntity>.isModuleLibrary(): Boolean = when (this) {
+      is EntityChange.Added -> entity.tableId is LibraryTableId.ModuleLibraryTableId
+      is EntityChange.Removed -> entity.tableId is LibraryTableId.ModuleLibraryTableId
+      is EntityChange.Replaced -> oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
     }
 
     private fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges() =
@@ -589,6 +622,12 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
           is EntityChange.Replaced -> it.oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
         }
       }
+
+    private fun EntityChange<*>.entity(): TypedEntity = when (this) {
+      is EntityChange.Added -> entity
+      is EntityChange.Removed -> entity
+      is EntityChange.Replaced -> oldEntity
+    }
 
     internal fun getModuleGroupPath(module: Module, entityStore: TypedEntityStore): Array<String>? {
       val moduleId = (module as LegacyBridgeModule).moduleEntityId

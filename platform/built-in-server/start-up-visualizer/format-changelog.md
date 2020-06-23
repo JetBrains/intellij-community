@@ -1,3 +1,11 @@
+# 21
+
+* `tasks waiting` removed. No such activity anymore.
+
+# 20
+
+* new compact format for service events.
+
 # 19
 
 * add `eua showing` (to separate `showUserAgreementAndConsentsIfNeeded` from `config importing`).

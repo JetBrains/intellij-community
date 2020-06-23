@@ -238,7 +238,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         conflicts.putValue(targetClass, "Cannot inline into anonymous class.");
       }
       else if (PsiTreeUtil.isAncestor(mySuperClass, targetClass, false)) {
-        conflicts.putValue(targetClass, "Cannot inline into the inner class. Move \'" + targetClass.getName() + "\' to upper level");
+        conflicts.putValue(targetClass, "Cannot inline into the inner class. Move '" + targetClass.getName() + "' to upper level");
       }
       else {
         for (MemberInfo info : myMemberInfos) {

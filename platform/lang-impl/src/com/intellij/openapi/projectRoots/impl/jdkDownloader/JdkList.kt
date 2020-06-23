@@ -25,7 +25,6 @@ import org.tukaani.xz.XZInputStream
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
-import java.lang.RuntimeException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -83,8 +82,14 @@ data class JdkItem(
   val archiveFileName: String,
   val installFolderName: String,
 
-  val sharedIndexAliases: List<String>
+  val sharedIndexAliases: List<String>,
+
+  private val saveToFile: (File) -> Unit
 ) {
+
+  fun writeMarkerFile(file: File) {
+    saveToFile(file)
+  }
 
   val vendorPrefix
     get() = suggestedSdkName.split("-").dropLast(1).joinToString("-")
@@ -113,6 +118,9 @@ data class JdkItem(
    */
   val versionString
     get() = JavaVersion.tryParse(jdkVersion)?.let(JdkVersionDetector::formatVersionString) ?: jdkVersion
+
+  val presentableVersionString
+    get() = JavaVersion.tryParse(jdkVersion)?.toFeatureMinorUpdateString() ?: jdkVersion
 
   val versionPresentationText: String
     get() = jdkVersion
@@ -280,6 +288,7 @@ object JdkListParser {
       flavour = item["flavour"]?.asText()
     )
 
+    val contents = ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(item)
     return JdkItem(product = product,
                    isDefaultItem = item["default"]?.let { filters.testPredicate(it) == true } ?: false,
                    isVisibleOnUI = item["listed"]?.let { filters.testPredicate(it) == true } ?: true,
@@ -301,7 +310,9 @@ object JdkListParser {
                    unpackedSize = pkg["unpacked_size"]?.asLong() ?: return null,
                    installFolderName = pkg["install_folder_name"]?.asText() ?: return null,
 
-                   sharedIndexAliases = (item["shared_index_aliases"] as? ArrayNode)?.mapNotNull { it.asText() } ?: listOf()
+                   sharedIndexAliases = (item["shared_index_aliases"] as? ArrayNode)?.mapNotNull { it.asText() } ?: listOf(),
+
+                   saveToFile = { file -> file.writeBytes(contents) }
     )
   }
 }
@@ -359,7 +370,8 @@ class JdkListDownloader {
       downloadJdkList(feedUrl, progress)
     }
     catch (t: IOException) {
-      throw RuntimeException("Failed to download the list of available JDKs from $feedUrl. ${t.message}", t)
+      Logger.getInstance(javaClass).warn("Failed to download the list of available JDKs from $feedUrl. ${t.message}")
+      return emptyList()
     }
 
     val rawData = try {

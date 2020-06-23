@@ -20,8 +20,8 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -55,7 +55,7 @@ public abstract class InlineActionHandler {
   public abstract void inlineElement(Project project, Editor editor, PsiElement element);
 
   @Nullable
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @ActionText
   public String getActionName(PsiElement element) {
     return null;
   }

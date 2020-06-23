@@ -73,7 +73,7 @@ public class PySurroundWithTest extends PyTestCase {
   }
 
   private void doTestSurroundWithCustomFoldingRegion() {
-    final Surrounder surrounder = ContainerUtil.find(CustomFoldingSurroundDescriptor.SURROUNDERS,
+    final Surrounder surrounder = ContainerUtil.find(CustomFoldingSurroundDescriptor.getAllSurrounders(),
                                                      (Condition<Surrounder>)surrounder1 -> surrounder1.getTemplateDescription().contains("<editor-fold"));
     assertNotNull(surrounder);
     doTest(surrounder);

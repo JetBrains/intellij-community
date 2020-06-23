@@ -15,8 +15,8 @@
  */
 package com.intellij.util.indexing.containers;
 
-import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 
 public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
   private int[] mySet;
@@ -89,19 +89,8 @@ public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
   }
 
   @Override
-  public IntIdsIterator intIterator() {
+  public @NotNull IntIdsIterator intIterator() {
     return new Iterator();
-  }
-
-  @Override
-  public ValueContainer.IntPredicate intPredicate() {
-    return new ValueContainer.IntPredicate() {
-
-      @Override
-      public boolean contains(int id) {
-        return SortedIdSet.this.contains(id);
-      }
-    };
   }
 
   private class Iterator implements IntIdsIterator {
@@ -207,7 +196,7 @@ public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
   }
 
   @Override
-  public RandomAccessIntContainer ensureContainerCapacity(int count) {
+  public @NotNull RandomAccessIntContainer ensureContainerCapacity(int count) {
     int newSize = mySetLength + count;
     if (newSize < mySet.length) return this;
     if (newSize > ChangeBufferingList.MAX_FILES) {

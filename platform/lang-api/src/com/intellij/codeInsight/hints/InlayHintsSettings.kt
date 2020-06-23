@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.configurationStore.deserializeInto
@@ -6,21 +6,35 @@ import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.messages.Topic
 import org.jdom.Element
 
-@State(name = "InlayHintsSettings", storages = [Storage("workspace.xml")])
+@State(name = "InlayHintsSettings", storages = [Storage("editor.xml"), Storage("workspace.xml", deprecated = true)])
 class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
-  private val listener = ApplicationManager.getApplication().messageBus.syncPublisher(INLAY_SETTINGS_CHANGED)
+  companion object {
+    @JvmStatic
+    fun instance(): InlayHintsSettings {
+      return ApplicationManager.getApplication().getService(InlayHintsSettings::class.java)
+    }
+
+    /**
+     * Inlay hints settings changed.
+     */
+    @Topic.AppLevel
+    @JvmStatic
+    val INLAY_SETTINGS_CHANGED = Topic(SettingsListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
+  }
+
+  private val listener: SettingsListener
+    get() = ApplicationManager.getApplication().messageBus.syncPublisher(INLAY_SETTINGS_CHANGED)
 
   private var myState = State()
   private val lock = Any()
 
   class State {
-    var disabledHintProviderIds: MutableSet<String> = hashSetOf()
+    val disabledHintProviderIds = sortedSetOf<String>()
     // We can't store Map<String, Any> directly, because values deserialized as Object
     var settingsMapElement = Element("settingsMapElement")
 
@@ -28,7 +42,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
 
     var isEnabled: Boolean = true
 
-    var disabledLanguages: MutableSet<String> = hashSetOf()
+    val disabledLanguages = sortedSetOf<String>()
   }
 
   private val myCachedSettingsMap: MutableMap<String, Any> = hashMapOf()
@@ -38,7 +52,8 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
       val id = key.getFullId(language)
       if (enable) {
         myState.disabledHintProviderIds.remove(id)
-      } else {
+      }
+      else {
         myState.disabledHintProviderIds.add(id)
       }
     }
@@ -127,7 +142,9 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   fun hintsEnabled(key: SettingsKey<*>, language: Language) : Boolean = synchronized(lock) {
     var lang: Language? = language
     while (lang != null) {
-      if (key.getFullId(lang) in myState.disabledHintProviderIds) return false
+      if (key.getFullId(lang) in myState.disabledHintProviderIds) {
+        return false
+      }
       lang = lang.baseLanguage
     }
     return true
@@ -167,16 +184,6 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     settingsElementChildren.first().deserializeInto(settings)
     myCachedSettingsMap[id] = settings
     return settings
-  }
-
-  companion object {
-    @JvmStatic
-    fun instance(): InlayHintsSettings {
-      return ServiceManager.getService(InlayHintsSettings::class.java)
-    }
-
-    @JvmStatic
-    val INLAY_SETTINGS_CHANGED: Topic<SettingsListener> = Topic.create("Inlay hints settings changed", SettingsListener::class.java)
   }
 
   interface SettingsListener {

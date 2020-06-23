@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,6 +10,8 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.PathUtil;
+import kotlin.Lazy;
+import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -19,8 +21,8 @@ import java.util.List;
 /**
  * @author yole
  */
-public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
-  private final VirtualFile mySourceRoot;
+public final class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
+  private final Lazy<VirtualFile> mySourceRoot;
 
   public LightTempDirTestFixtureImpl() {
     this(false);
@@ -28,17 +30,19 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
 
   public LightTempDirTestFixtureImpl(boolean usePlatformSourceRoot) {
     if (usePlatformSourceRoot) {
-      mySourceRoot = null;
+      mySourceRoot = LazyKt.lazyOf(null);
     }
     else {
-      VirtualFile fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
-      Assert.assertNotNull(fsRoot);
-      try {
-        mySourceRoot = WriteAction.computeAndWait(() -> fsRoot.createChildDirectory(this, "root"));
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      mySourceRoot = LazyKt.lazy(() -> {
+        VirtualFile fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+        Assert.assertNotNull(fsRoot);
+        try {
+          return WriteAction.computeAndWait(() -> fsRoot.createChildDirectory(this, "root"));
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      });
     }
   }
 
@@ -55,9 +59,8 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     }
   }
 
-  @NotNull
   @Override
-  public VirtualFile findOrCreateDir(@NotNull String path) {
+  public @NotNull VirtualFile findOrCreateDir(@NotNull String path) {
     return WriteAction.computeAndWait(() -> {
       try {
         return findOrCreateChildDir(getSourceRoot(), path);
@@ -68,15 +71,13 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     });
   }
 
-  @NotNull
   @Override
-  public VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir) {
+  public @NotNull VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir) {
     return copyAll(dataDir, targetDir, VirtualFileFilter.ALL);
   }
 
-  @NotNull
   @Override
-  public VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir, @NotNull VirtualFileFilter filter) {
+  public @NotNull VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir, @NotNull VirtualFileFilter filter) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
@@ -125,9 +126,8 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     return root;
   }
 
-  @NotNull
   @Override
-  public String getTempDirPath() {
+  public @NotNull String getTempDirPath() {
     return "temp:///root";
   }
 
@@ -142,33 +142,40 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     return result;
   }
 
-  @NotNull
   @Override
-  public VirtualFile createFile(@NotNull String targetPath) {
-    String path = PathUtil.getParentPath(targetPath);
-    String name = PathUtil.getFileName(targetPath);
+  public @NotNull VirtualFile createFile(@NotNull String targetPath) {
     try {
-      return WriteAction.computeAndWait(() -> {
-        VirtualFile targetDir = findOrCreateDir(path);
-        return targetDir.createChildData(this, name);
-      });
+      return WriteAction.computeAndWait(() -> doCreateFile(targetPath));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  @NotNull
+  private @NotNull VirtualFile doCreateFile(@NotNull String targetPath) throws IOException {
+    String path = PathUtil.getParentPath(targetPath);
+    String name = PathUtil.getFileName(targetPath);
+    VirtualFile targetDir = findOrCreateDir(path);
+    return targetDir.createChildData(this, name);
+  }
+
   @Override
-  public VirtualFile createFile(@NotNull String name, @NotNull String text) throws IOException {
-    VirtualFile file = createFile(name);
-    WriteAction.runAndWait(() -> VfsUtil.saveText(file, text));
-    return file;
+  public @NotNull VirtualFile createFile(@NotNull String name, @NotNull String text) throws IOException {
+    return WriteAction.computeAndWait(() -> {
+      VirtualFile file = doCreateFile(name);
+      VfsUtil.saveText(file, text);
+      return file;
+    });
   }
 
   public void deleteAll() {
-    WriteAction.runAndWait(() -> {
-      VirtualFile[] toDelete = mySourceRoot != null ? new VirtualFile[]{mySourceRoot} : getSourceRoot().getChildren();
+    if (!mySourceRoot.isInitialized()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      VirtualFile sourceRoot = mySourceRoot.getValue();
+      VirtualFile[] toDelete = sourceRoot == null ? getSourceRoot().getChildren() : new VirtualFile[]{sourceRoot};
       for (VirtualFile file : toDelete) {
         try {
           file.delete(this);
@@ -178,8 +185,8 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     });
   }
 
-  @NotNull
-  private VirtualFile getSourceRoot() {
-    return mySourceRoot != null ? mySourceRoot : LightPlatformTestCase.getSourceRoot();
+  private @NotNull VirtualFile getSourceRoot() {
+    VirtualFile sourceRoot = mySourceRoot.getValue();
+    return sourceRoot == null ? LightPlatformTestCase.getSourceRoot() : sourceRoot;
   }
 }

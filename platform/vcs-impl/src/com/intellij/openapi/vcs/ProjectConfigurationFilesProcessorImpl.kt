@@ -51,7 +51,11 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
   fun filterNotProjectConfigurationFiles(files: List<VirtualFile>): List<VirtualFile> {
     val projectConfigurationFiles = doFilterFiles(files)
 
-    foundProjectConfigurationFiles.set(projectConfigurationFiles.isNotEmpty())
+    if (projectConfigurationFiles.isNotEmpty()) {
+      if (foundProjectConfigurationFiles.compareAndSet(false, true)) {
+        LOG.debug("Found new project configuration files ", projectConfigurationFiles)
+      }
+    }
 
     return files - projectConfigurationFiles
   }
@@ -81,6 +85,8 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
   override fun doActionOnChosenFiles(files: Collection<VirtualFile>) {
     addChosenFiles(files)
   }
+
+  override val notificationDisplayId: String = "project.configuration.files.added.notification"
 
   override val askedBeforeProperty = ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
 

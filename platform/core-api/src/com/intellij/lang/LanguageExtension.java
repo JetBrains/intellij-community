@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -24,7 +24,6 @@ import java.util.Set;
 import static com.intellij.lang.LanguageUtil.matchingMetaLanguages;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
-
   private final T myDefaultImplementation;
   private final /* non static!!! */ Key<T> myCacheKey;
   private final /* non static!!! */ Key<List<T>> myAllCacheKey;
@@ -56,12 +55,35 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @TestOnly
   public void clearCache(@NotNull Language language) {
-    Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);
-    for (Language derivedLanguage : languages) {
-      derivedLanguage.putUserData(myCacheKey, null);
-      derivedLanguage.putUserData(myAllCacheKey, null);
-    }
+    clearCacheForDerivedLanguages(language);
     clearCache();
+  }
+
+  private void clearCacheForDerivedLanguages(@NotNull Language language) {
+    Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);  // includes language itself
+    for (Language derivedLanguage : languages) {
+      clearCacheForLanguage(derivedLanguage);
+
+      Collection<MetaLanguage> metaLanguages = matchingMetaLanguages(derivedLanguage);
+      for (MetaLanguage metaLanguage : metaLanguages) {
+        clearCacheForLanguage(metaLanguage);
+      }
+    }
+    if (language instanceof MetaLanguage) {
+      Collection<Language> matchingLanguages = ((MetaLanguage)language).getMatchingLanguages();
+      for (Language matchingLanguage : matchingLanguages) {
+        Set<Language> matchingDerivedLanguages = LanguageUtil.getAllDerivedLanguages(matchingLanguage);  // includes language itself
+        for (Language derivedLanguage : matchingDerivedLanguages) {
+          clearCacheForLanguage(derivedLanguage);
+        }
+      }
+    }
+  }
+
+  private void clearCacheForLanguage(Language language) {
+    language.putUserData(myCacheKey, null);
+    language.putUserData(myAllCacheKey, null);
+    super.invalidateCacheForExtension(language.getID());
   }
 
   @Override
@@ -70,11 +92,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
     final Language language = Language.findLanguageByID(key);
     if (language != null) {
-      Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);
-      for (Language derivedLanguage : languages) {
-        derivedLanguage.putUserData(myCacheKey, null);
-        derivedLanguage.putUserData(myAllCacheKey, null);
-      }
+      clearCacheForDerivedLanguages(language);
     }
   }
 
@@ -156,15 +174,13 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @Override
   public void addExplicitExtension(@NotNull Language key, @NotNull T t) {
-    key.putUserData(myCacheKey, null);
-    key.putUserData(myAllCacheKey, null);
+    clearCacheForLanguage(key);
     super.addExplicitExtension(key, t);
   }
 
   @Override
   public void removeExplicitExtension(@NotNull Language key, @NotNull T t) {
-    key.putUserData(myCacheKey, null);
-    key.putUserData(myAllCacheKey, null);
+    clearCacheForLanguage(key);
     super.removeExplicitExtension(key, t);
   }
 

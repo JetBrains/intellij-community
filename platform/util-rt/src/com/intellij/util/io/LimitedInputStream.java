@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -40,7 +26,7 @@ public class LimitedInputStream extends FilterInputStream {
 
   @Override
   public int read() throws IOException {
-    if (myBytesRead == myReadLimit) return -1;
+    if (remainingLimit() <= 0 ) return -1;
     final int r = super.read();
     if (r >= 0) myBytesRead++;
     return r;
@@ -53,8 +39,10 @@ public class LimitedInputStream extends FilterInputStream {
 
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
-    if (myBytesRead >= myReadLimit) return -1;
-    len = Math.min(len, myReadLimit - myBytesRead);
+    if (len == 0) return 0;
+
+    if (remainingLimit() <= 0) return -1;
+    len = Math.min(len, remainingLimit());
     if (len <= 0) return -1;
 
     final int actuallyRead = super.read(b, off, len);
@@ -65,7 +53,7 @@ public class LimitedInputStream extends FilterInputStream {
 
   @Override
   public long skip(long n) throws IOException {
-    n = Math.min(n, myReadLimit - myBytesRead);
+    n = Math.min(n, remainingLimit());
     if (n <= 0) return 0;
 
     final long skipped = super.skip(n);
@@ -75,7 +63,7 @@ public class LimitedInputStream extends FilterInputStream {
 
   @Override
   public int available() throws IOException {
-    return Math.min(super.available(), myReadLimit - myBytesRead);
+    return Math.min(super.available(), remainingLimit());
   }
 
   protected int remainingLimit() {

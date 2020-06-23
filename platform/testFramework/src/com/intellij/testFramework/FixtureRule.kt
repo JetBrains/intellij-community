@@ -56,7 +56,6 @@ open class ApplicationRule : ExternalResource() {
 
   public final override fun before() {
     TestApplicationManager.getInstance()
-    TestRunnerUtil.replaceIdeEventQueueSafely()
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
   }
 }
@@ -133,19 +132,17 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
   }
 
   public override fun after() {
-    if (projectOpened.compareAndSet(true, false)) {
-      if (sharedProject != null) {
-        val undoManager = UndoManager.getInstance(sharedProject!!) as UndoManagerImpl
-        ApplicationManager.getApplication().invokeAndWait {
-          undoManager.dropHistoryInTests()
-          undoManager.flushCurrentCommandMerger()
-        }
-      }
-      sharedProject?.let {
-        runInEdtAndWait {
-          (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(it, false)
-        }
-      }
+    if (!projectOpened.compareAndSet(true, false)) {
+      return
+    }
+
+    val project = sharedProject ?: return
+    val undoManager = UndoManager.getInstance(project) as UndoManagerImpl
+    runInEdtAndWait {
+      undoManager.dropHistoryInTests()
+      undoManager.flushCurrentCommandMerger()
+
+      (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, false)
     }
   }
 
@@ -337,8 +334,10 @@ class WrapRule(private val before: () -> () -> Unit) : TestRule {
   }
 }
 
-suspend fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: suspend (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task = task, directoryBased = directoryBased, loadComponentState = true)
+suspend fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false,
+                                                        useDefaultProjectSettings: Boolean = true, task: suspend (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, task = task, directoryBased = directoryBased, loadComponentState = true,
+                      useDefaultProjectSettings = useDefaultProjectSettings)
 }
 
 suspend fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: (suspend (VirtualFile) -> Path)? = null, task: suspend (Project) -> Unit) {

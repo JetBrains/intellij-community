@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("DEPRECATION") // declared for import com.intellij.codeInsight.completion.CompletionProgressIndicator
 
 package com.intellij.internal
 
-import com.google.common.collect.Lists
 import com.google.gson.Gson
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
@@ -42,6 +41,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
@@ -210,7 +210,7 @@ internal class CompletionQualityStatsAction : AnAction() {
   // Find offsets to words and words on which we want to try completion
   private fun getCompletionAttempts(file: PsiFile, wordSet: HashMap<String, Int>): List<Pair<Int, String>> {
     val maxWordFrequency = 2
-    val res = Lists.newArrayList<Pair<Int, String>>()
+    val res = ArrayList<Pair<Int, String>>()
     val text = file.text
 
     for (range in StringUtil.getWordIndicesIn(text)) {
@@ -390,6 +390,7 @@ class CompletionQualityDialog(project: Project, editor: Editor?) : DialogWrapper
     fileTypeCombo = createFileTypesCombo()
 
     scopeChooserCombo = ScopeChooserCombo(project, false, true, "")
+    Disposer.register(disposable, scopeChooserCombo)
 
     if (editor != null) {
       PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let {

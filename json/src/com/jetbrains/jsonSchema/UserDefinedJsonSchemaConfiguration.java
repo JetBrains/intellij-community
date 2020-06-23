@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonBundle;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -110,7 +109,7 @@ public class UserDefinedJsonSchemaConfiguration {
   public void setPatterns(@Nullable List<Item> patterns) {
     this.patterns.clear();
     if (patterns != null) this.patterns.addAll(patterns);
-    Collections.sort(this.patterns, ITEM_COMPARATOR);
+    this.patterns.sort(ITEM_COMPARATOR);
     myCalculatedPatterns.drop();
   }
 

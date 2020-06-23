@@ -81,6 +81,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   override fun filesChanged(events: List<VFileEvent>) {
     if (!needProcessExternalFiles()) return
 
+    LOG.debug("Got events", events)
     val configDir = project.getProjectConfigDir()
     val externallyAddedFiles =
       events.asSequence()
@@ -112,9 +113,12 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   override fun dispose() {
     super.dispose()
     queue.clear()
-    unprocessedFiles.clear()
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.clear()
+    }
   }
 
+  override val notificationDisplayId: String = "externally.added.files.notification"
   override val askedBeforeProperty = ASKED_ADD_EXTERNAL_FILES_PROPERTY
   override val doForCurrentProjectProperty: String? = null
 

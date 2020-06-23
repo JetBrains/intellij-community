@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -31,11 +31,7 @@ import java.util.Set;
  * @author dmitrylomov
  */
 public abstract class FileBasedIndex {
-  public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
-
-  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, @NotNull ProgressIndicator indicator) {
-    iterateIndexableFiles(processor, project, indicator);
-  }
+  public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator);
 
   /**
    * @return the file which the current thread is indexing right now, or {@code null} if current thread isn't indexing.
@@ -126,7 +122,7 @@ public abstract class FileBasedIndex {
   @ApiStatus.Internal
   public abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter);
 
-  public abstract void requestRebuild(@NotNull ID<?, ?> indexId, Throwable throwable);
+  public abstract void requestRebuild(@NotNull ID<?, ?> indexId, @NotNull Throwable throwable);
 
   public abstract <K> void scheduleRebuild(@NotNull ID<K, ?> indexId, @NotNull Throwable e);
 
@@ -143,16 +139,21 @@ public abstract class FileBasedIndex {
    * {@link com.intellij.openapi.project.IndexNotReadyException} are not expected to be happen here.
    *
    * <p> In smart mode, the behavior is similar to direct command execution
-   *
    * @param command - a command to execute
-   * @param project - project where dumb mode will be ignored
    * @param dumbModeAccessType - defines in which manner command should be executed. Does a client expect only reliable data
-   *                           or any data from index is fine (even outdated and not yet updated)?
    */
   @ApiStatus.Experimental
   public void ignoreDumbMode(@NotNull Runnable command,
-                             @NotNull Project project,
                              @NotNull DumbModeAccessType dumbModeAccessType) {
+    ignoreDumbMode(dumbModeAccessType, () -> {
+      command.run();
+      return null;
+    });
+  }
+
+  @ApiStatus.Experimental
+  public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
+                                                   @NotNull ThrowableComputable<T, E> computable) throws E {
     throw new UnsupportedOperationException();
   }
 
@@ -189,10 +190,6 @@ public abstract class FileBasedIndex {
           if (!Registry.is("indexer.follows.symlinks")) {
             return false;
           }
-          Boolean indexSymlink = file.getUserData(INDEX_SYMLINK);
-          if (indexSymlink != null) {
-            return indexSymlink;
-          }
           VirtualFile canonicalFile = file.getCanonicalFile();
           if (canonicalFile != null) {
             return acceptFilter.accept(canonicalFile);
@@ -208,19 +205,6 @@ public abstract class FileBasedIndex {
 
   public void invalidateCaches() {
     throw new IncorrectOperationException();
-  }
-
-  /**
-   * Sets whether the symlink and its descendant files should be indexed or not.
-   * @param symlink file/folder that is a symlink, i.e. <pre>symlink.is(VFileProperty.SYMLINK) == true</pre>
-   * @param indexingStatus How the symlink and its descendant files are indexed:<br>
-   *                       {@code Boolean.TRUE} - indexed;
-   *                       {@code Boolean.FALSE} - not indexed;
-   *                       {@code null} - (default) indexed only if the symlink target file is indexed.
-   */
-  @ApiStatus.Internal
-  public void setSymlinkIndexingStatus(@NotNull VirtualFile symlink, @Nullable Boolean indexingStatus) {
-    symlink.putUserData(FileBasedIndex.INDEX_SYMLINK, indexingStatus);
   }
 
   @FunctionalInterface
@@ -242,7 +226,7 @@ public abstract class FileBasedIndex {
    * @see DefaultFileTypeSpecificInputFilter
    */
   public interface FileTypeSpecificInputFilter extends InputFilter {
-    void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
+    void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink);
   }
 
   /** @deprecated inline true */
@@ -252,11 +236,15 @@ public abstract class FileBasedIndex {
   @ApiStatus.Internal
   public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
 
-  private static final Key<Boolean> INDEX_SYMLINK = Key.create("index symlink");
-
   @ApiStatus.Internal
   public static boolean isIndexAccessDuringDumbModeEnabled() {
     return !ourDisableIndexAccessDuringDumbMode;
   }
   private static final boolean ourDisableIndexAccessDuringDumbMode = SystemProperties.getBooleanProperty("idea.disable.index.access.during.dumb.mode", false);
+
+  @ApiStatus.Internal
+  public static final boolean USE_IN_MEMORY_INDEX = SystemProperties.is("idea.use.in.memory.file.based.index");
+
+  @ApiStatus.Internal
+  public static final boolean IGNORE_PLAIN_TEXT_FILES = SystemProperties.is("idea.ignore.plain.text.indexing");
 }

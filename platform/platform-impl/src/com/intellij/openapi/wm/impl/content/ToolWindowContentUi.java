@@ -22,7 +22,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
-import com.intellij.ui.layout.migLayout.MigLayoutBuilderKt;
+import com.intellij.ui.layout.migLayout.MigLayoutUtilKt;
 import com.intellij.ui.layout.migLayout.patched.MigLayout;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.Alarm;
@@ -31,7 +31,6 @@ import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LocationOnDragTracker;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -224,6 +223,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
     contentComponent.revalidate();
     contentComponent.repaint();
+  }
+
+  public void dropCaches() {
+    tabsLayout.dropCaches();
   }
 
   private void rebuild() {
@@ -453,9 +456,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     }
 
     if (Boolean.TRUE == content.getUserData(Content.TABBED_CONTENT_KEY)) {
-      final String groupName = content.getUserData(Content.TAB_GROUP_NAME_KEY);
-      if (groupName != null) {
-        group.addAction(createMergeTabsAction(contentManager, groupName, ContentUtilEx.getDisplayPrefix(content)));
+      TabGroupId groupId = content.getUserData(Content.TAB_GROUP_ID_KEY);
+      if (groupId != null) {
+        group.addAction(createMergeTabsAction(contentManager, groupId));
       }
     }
 
@@ -484,7 +487,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   @NotNull
   private static AnAction createSplitTabsAction(@NotNull TabbedContent content) {
-    return new DumbAwareAction(IdeBundle.message("action.text.split.0.group", ContentUtilEx.getDisplayPrefix(content))) {
+    return new DumbAwareAction(IdeBundle.message("action.text.split.0.group", content.getTitlePrefix())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         content.split();
@@ -493,11 +496,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   @NotNull
-  private static AnAction createMergeTabsAction(@NotNull ContentManager manager, @NonNls String tabPrefix, @Nls String displayPrefix) {
-    return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.0.group", displayPrefix)) {
+  private static AnAction createMergeTabsAction(@NotNull ContentManager manager, @NotNull TabGroupId groupId) {
+    return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.0.group", groupId.getDisplayName())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        ContentUtilEx.mergeTabs(manager, tabPrefix);
+        ContentUtilEx.mergeTabs(manager, groupId);
       }
     };
   }
@@ -612,7 +615,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   private final class TabPanel extends JPanel implements UISettingsListener {
     private TabPanel() {
-      super(new MigLayout(MigLayoutBuilderKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
+      super(new MigLayout(MigLayoutUtilKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
 
       setOpaque(false);
       setBorder(JBUI.Borders.emptyRight(2));

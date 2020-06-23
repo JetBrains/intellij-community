@@ -65,7 +65,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
     final String name = getDummyFileName();
     final LightVirtualFile virtualFile = new LightVirtualFile(name, PythonFileType.INSTANCE, contents);
-    virtualFile.putUserData(LanguageLevel.KEY, langLevel);
+    PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, langLevel);
     final PsiFile psiFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(virtualFile, PythonLanguage.getInstance(), physical, true);
     assert psiFile != null;
     return psiFile;
@@ -126,7 +126,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     VirtualFile vfile = destination == null ? null : destination.getVirtualFile();
     Charset charset;
     if (vfile == null) {
-      charset = (preferUTF8 ? StandardCharsets.UTF_8 : Charset.forName("US-ASCII"));
+      charset = (preferUTF8 ? StandardCharsets.UTF_8 : StandardCharsets.US_ASCII);
     }
     else {
       charset = vfile.getCharset();
@@ -143,10 +143,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
         buf.append("\\'");
       }
       else if ((c == '\r' || c == '\n') && !useMulti) {
-        if (c == '\r') {
-          buf.append("\\r");
-        }
-        else if (c == '\n') buf.append("\\n");
+        buf.append(c == '\r' ? "\\r" : "\\n");
       }
       else if (!encoder.canEncode(new String(Character.toChars(c)))) {
         if (c <= 0xff) {

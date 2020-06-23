@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -10,7 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurationTreePopupFactory {
   private NodeDescriptor<?> root;
@@ -28,7 +31,7 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
       RunConfigurable.Companion.configurationTypeSorted(project, true,
                                                         ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()));
     myOtherTypes = new ArrayList<>(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList());
-    Collections.sort(myOtherTypes, (o1, o2) -> RunConfigurationListManagerHelperKt.compareTypesForUi(o1, o2));
+    myOtherTypes.sort((o1, o2) -> RunConfigurationListManagerHelperKt.compareTypesForUi(o1, o2));
     myOtherTypes.removeAll(myTypesToShow);
     myGroups = createGroups(project, myTypesToShow);
   }

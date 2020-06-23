@@ -71,17 +71,17 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
 
   @Override
   protected String getAutoUpdateTitle() {
-    return "Auto Show Bytecode for Selected Element";
+    return JavaByteCodeViewerBundle.message("show.bytecode.for.current.element.action.name");
   }
 
   @Override
   protected String getAutoUpdateDescription() {
-    return "Show bytecode for current element automatically";
+    return JavaByteCodeViewerBundle.message("show.bytecode.for.current.element.action.description");
   }
 
   @Override
   protected String getRestorePopupDescription() {
-    return "Restore bytecode popup behavior";
+    return JavaByteCodeViewerBundle.message("show.bytecode.restore.popup.action.description");
   }
 
   @Override

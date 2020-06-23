@@ -40,6 +40,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,7 +210,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return panel;
   }
 
-  private static JComponent actionToolbar(String id, AnAction action) {
+  private static JComponent actionToolbar(@NonNls String id, AnAction action) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(id, new DefaultActionGroup(action), true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.getComponent().setBorder(JBUI.Borders.empty());
@@ -450,6 +451,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else if (t instanceof Freeze) {
       info.append(DiagnosticBundle.message("error.list.message.blame.freeze"));
     }
+    else if (t instanceof JBRCrash) {
+      info.append(DiagnosticBundle.message("error.list.message.blame.jbr.crash"));
+    }
     else {
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
@@ -534,7 +538,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateAssigneePanel(MessageCluster cluster) {
-    if (cluster.submitter instanceof ITNReporter && !(cluster.first.getThrowable() instanceof Freeze)) {
+    if (cluster.submitter instanceof ITNReporter) {
       myAssigneePanel.setVisible(true);
       myAssigneeCombo.setEnabled(cluster.isUnsent());
       Integer assignee = cluster.first.getAssigneeId();
@@ -633,6 +637,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     String message;
     if (pluginsToDisable.size() == 1) {
       IdeaPluginDescriptor plugin = pluginsToDisable.iterator().next();
+      //noinspection HardCodedStringLiteral
       message = "<html>" +
                 DiagnosticBundle.message("error.dialog.disable.prompt", plugin.getName()) + "<br/>" +
                 DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") + "<br/><br/>" +
@@ -640,6 +645,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
                 "</html>";
     }
     else {
+      //noinspection HardCodedStringLiteral
       message = "<html>" +
                 DiagnosticBundle.message("error.dialog.disable.prompt.multiple") + "<br/>" +
                 DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps.multiple" : "error.dialog.disable.prompt.lone.multiple") + "<br/><br/>" +
@@ -680,7 +686,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         continue;
       }
 
-      if (!PluginManagerCore.processAllDependencies(rootDescriptor, false, pluginIdMap, descriptor -> {
+      if (!PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, false, pluginIdMap, descriptor -> {
         if (!descriptor.isEnabled()) {
           // if disabled, no need to process it's dependencies
           return FileVisitResult.SKIP_SUBTREE;

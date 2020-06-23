@@ -31,5 +31,6 @@ public class HelpTooltipManager extends HelpTooltip {
 
   public void hideTooltip() {
     hidePopup(true);
+    myPopupBuilder = null;
   }
 }

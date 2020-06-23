@@ -335,7 +335,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   @NotNull
-  protected List<SimpleDiffChange> getDiffChanges() {
+  public List<SimpleDiffChange> getDiffChanges() {
     return myModel.getChanges();
   }
 

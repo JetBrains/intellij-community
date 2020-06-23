@@ -176,6 +176,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
            "}");
   }
 
+  @SuppressWarnings("RedundantArrayCreation")
   public void testArrayArgument() {
     doTest("import org.slf4j.*;" +
            "class X {" +
@@ -186,6 +187,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
            "}");
   }
 
+  @SuppressWarnings("RedundantArrayCreation")
   public void testArrayWithException() {
     doTest("import org.slf4j.*;" +
            "class X {" +

@@ -10,12 +10,10 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -65,20 +63,26 @@ public final class TargetedCommandLine {
   }
 
   public List<String> collectCommandsSynchronously() throws ExecutionException {
-    String command = resolvePromise(myExePath.getTargetValue(), "exe path");
-    if (command == null) {
-      throw new ExecutionException("Resolved value for exe path is null");
+    try {
+      return collectCommands().blockingGet(0);
     }
+    catch (java.util.concurrent.ExecutionException | TimeoutException e) {
+      throw new ExecutionException("Couldn't collect commands", e);
+    }
+  }
 
-    List<String> commandLine = new ArrayList<>(myParameters.size() + 1);
-
-    commandLine.add(command);
-
+  public @NotNull Promise<@NotNull List<@NotNull String>> collectCommands() {
+    List<Promise<String>> promises = new ArrayList<>(myParameters.size() + 1);
+    promises.add(myExePath.getTargetValue().then(command -> {
+      if (command == null) {
+        throw new IllegalStateException("Resolved value for exe path is null");
+      }
+      return command;
+    }));
     for (TargetValue<String> parameter : myParameters) {
-      commandLine.add(resolvePromise(parameter.getTargetValue(), "parameter"));
+      promises.add(parameter.getTargetValue());
     }
-
-    return commandLine;
+    return Promises.collectResults(promises);
   }
 
   @Nullable

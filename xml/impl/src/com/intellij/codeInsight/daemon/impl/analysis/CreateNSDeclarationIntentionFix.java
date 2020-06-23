@@ -293,9 +293,9 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(ContainerUtil.newArrayList(namespacesToChooseFrom))
-        .setRenderer(XmlNSRenderer.INSTANCE)
+        .setRenderer(new XmlNSRenderer<>())
         .setTitle(title)
-        .setItemChosenCallback((selectedValue) -> {
+        .setItemChosenCallback(selectedValue -> {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           CommandProcessor.getInstance().executeCommand(
             project,

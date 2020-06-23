@@ -36,11 +36,11 @@ public final class ForcedSoftWrapsNotificationProvider extends EditorNotificatio
 
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(EditorBundle.message("forced.soft.wrap.message"));
-    panel.createActionLabel(EditorBundle.message("forced.soft.wrap.hide.message"), () -> {
+    panel.createActionLabel(EditorBundle.message("notification.hide.message"), () -> {
       editor.putUserData(EditorImpl.FORCED_SOFT_WRAPS, null);
       EditorNotifications.getInstance(project).updateNotifications(file);
     });
-    panel.createActionLabel(EditorBundle.message("forced.soft.wrap.dont.show.again.message"), () -> {
+    panel.createActionLabel(EditorBundle.message("notification.dont.show.again.message"), () -> {
       PropertiesComponent.getInstance().setValue(DISABLED_NOTIFICATION_KEY, "true");
       EditorNotifications.getInstance(project).updateAllNotifications();
     });

@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.vcs.ViewUpdateInfoNotification;
@@ -191,7 +190,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
     }
 
     if (result.success() || mergeConflictDetector.hasHappened()) {
-      VfsUtil.markDirtyAndRefresh(false, true, false, root);
+      GitUtil.refreshVfsInRoot(root);
       repository.update();
       if (updatedRanges != null &&
           AbstractCommonUpdateAction.showsCustomNotification(singletonList(GitVcs.getInstance(project))) &&
@@ -215,7 +214,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
         VcsNotifier.getInstance(project).notify(notification);
       }
       else {
-        showUpdates(project, root, currentRev, beforeLabel, getActionName());
+        showUpdates(project, repository, currentRev, beforeLabel, getActionName());
       }
     }
     else if (localChangesDetector.wasMessageDetected()) {
@@ -233,13 +232,13 @@ abstract class GitMergeAction extends GitRepositoryAction {
   }
 
   private static void showUpdates(@NotNull Project project,
-                                  @NotNull VirtualFile root,
+                                  @NotNull GitRepository repository,
                                   @NotNull GitRevisionNumber currentRev,
                                   @NotNull Label beforeLabel,
                                   @NotNull String actionName) {
     try {
       UpdatedFiles files = UpdatedFiles.create();
-      MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
+      MergeChangeCollector collector = new MergeChangeCollector(project, repository, currentRev);
       collector.collect(files);
 
       GuiUtils.invokeLaterIfNeeded(() -> {

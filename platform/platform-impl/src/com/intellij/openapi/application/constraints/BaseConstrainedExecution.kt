@@ -3,7 +3,9 @@ package com.intellij.openapi.application.constraints
 
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.containers.map2Array
 import kotlinx.coroutines.Runnable
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.BooleanSupplier
 
 /**
@@ -32,32 +34,42 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
   protected open fun composeExpiration(): Expiration? = null
   protected open fun composeCancellationCondition(): BooleanSupplier? = null
 
-  override fun scheduleWithinConstraints(runnable: Runnable, condition: BooleanSupplier?) {
-    val attemptChain = mutableListOf<ContextConstraint>()
-
-    fun inner() {
-      if (attemptChain.size > 3000) {
-        val lastCauses = attemptChain.takeLast(15)
-        LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together: " + lastCauses.joinToString())
-      }
-
-      if (condition?.asBoolean == false) return
-      for (constraint in constraints) {
-        if (!constraint.isCorrectContext()) {
-          return constraint.schedule(Runnable {
-            LOG.assertTrue(constraint.isCorrectContext())
-            attemptChain.add(constraint)
-            inner()
-          })
-        }
-      }
-      runnable.run()
-    }
-
-    inner()
-  }
+  override fun scheduleWithinConstraints(runnable: Runnable, condition: BooleanSupplier?) =
+    scheduleWithinConstraints(runnable, condition, constraints)
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.openapi.application.constraints.ConstrainedExecution")
+
+    @JvmStatic
+    @ApiStatus.Internal
+    fun scheduleWithinConstraints(runnable: Runnable, condition: BooleanSupplier?, constraints: Array<ContextConstraint>) {
+      val attemptChain = mutableListOf<ContextConstraint>()
+
+      fun inner() {
+        if (attemptChain.size > 3000) {
+          val lastCauses = attemptChain.takeLast(15)
+          LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together",
+                    *lastCauses.map2Array { it.toString() })
+        }
+
+        if (condition?.asBoolean == false) return
+        for (constraint in constraints) {
+          if (!constraint.isCorrectContext()) {
+            return constraint.schedule(Runnable {
+              if (!constraint.isCorrectContext()) {
+                LOG.error("ContextConstraint scheduled into incorrect context: $constraint",
+                          *constraints.map2Array { it.toString() })
+              }
+              attemptChain.add(constraint)
+              inner()
+            })
+          }
+        }
+        runnable.run()
+      }
+
+      inner()
+    }
+
   }
 }

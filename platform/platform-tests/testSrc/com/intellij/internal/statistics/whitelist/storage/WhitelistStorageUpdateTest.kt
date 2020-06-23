@@ -25,7 +25,6 @@ class WhitelistStorageUpdateTest : UsefulTestCase() {
   }
 
   override fun tearDown() {
-    super.tearDown()
     try {
       myFixture?.tearDown()
     }
@@ -33,7 +32,7 @@ class WhitelistStorageUpdateTest : UsefulTestCase() {
       addSuppressedException(e)
     }
     finally {
-      myFixture = null
+      super.tearDown()
     }
   }
 

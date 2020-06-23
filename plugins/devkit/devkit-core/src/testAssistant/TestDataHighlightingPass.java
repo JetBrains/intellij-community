@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +42,7 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
   private static final TextAttributes CARET_ATTRIBUTES = new TextAttributes(PlatformColors.BLUE, null, null, null, Font.BOLD);
   private static final String CARET = "<caret>";
 
-  protected TestDataHighlightingPass(@NotNull final Project project, @Nullable final Document document) {
+  protected TestDataHighlightingPass(@NotNull final Project project, @NotNull final Document document) {
     super(project, document);
   }
 
@@ -55,30 +54,22 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     removeHighlighters();
 
-    if (myDocument == null) {
-      return;
-    }
     final MarkupModel model = DocumentMarkupModel.forDocument(myDocument, myProject, true);
     final String text = myDocument.getText();
 
-    if (text != null) {
-      int ind = -1;
-      while ((ind = text.indexOf(CARET, ind + 1)) >= 0) {
-        final RangeHighlighter highlighter = model.addRangeHighlighter(ind,
-                                                                       ind + CARET.length(),
-                                                                       HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                       CARET_ATTRIBUTES,
-                                                                       HighlighterTargetArea.EXACT_RANGE);
-        highlighter.setGutterIconRenderer(ICON_RENDERER);
-        highlighter.putUserData(KEY, VALUE);
-      }
+    int ind = -1;
+    while ((ind = text.indexOf(CARET, ind + 1)) >= 0) {
+      final RangeHighlighter highlighter = model.addRangeHighlighter(ind,
+                                                                     ind + CARET.length(),
+                                                                     HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                     CARET_ATTRIBUTES,
+                                                                     HighlighterTargetArea.EXACT_RANGE);
+      highlighter.setGutterIconRenderer(ICON_RENDERER);
+      highlighter.putUserData(KEY, VALUE);
     }
   }
 
   private void removeHighlighters() {
-    if (myDocument == null) {
-      return;
-    }
     final MarkupModel model = DocumentMarkupModel.forDocument(myDocument, myProject, true);
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
       if (highlighter.getUserData(KEY) == VALUE) {

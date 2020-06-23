@@ -16,12 +16,17 @@
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PsiReferenceEx;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,7 +51,7 @@ public class PyDunderSlotsReference extends PsiReferenceBase<PyStringLiteralExpr
       if (referenceClass != null && referenceClass.isSubclass(elementClass, null)) {
         String elementName = ((PyTargetExpression) element).getReferencedName();
         String referenceName = myElement.getStringValue();
-        if (Comparing.equal(elementName, referenceName)) {
+        if (Objects.equals(elementName, referenceName)) {
           return true;
         }
       }

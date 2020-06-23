@@ -19,7 +19,7 @@ public class PyExpressionStatementImpl extends PyElementImpl implements PyExpres
   @Override
   @NotNull
   public PyExpression getExpression() {
-    return childToPsiNotNull(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
+    return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
   @Override

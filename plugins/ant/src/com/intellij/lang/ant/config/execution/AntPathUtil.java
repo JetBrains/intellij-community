@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.rt.compiler.JavacRunner;
+import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +37,7 @@ class AntPathUtil {
   }
 
   public static String getIdeaRtJarPath() {
-    final Class<?> aClass = JavacRunner.class;
+    final Class<?> aClass = CommandLineWrapper.class;
     return PathUtil.getJarPathForClass(aClass);
   }
 }

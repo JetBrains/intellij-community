@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.components.*;
@@ -10,13 +10,14 @@ import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @State(name = "PyPackageService", storages = @Storage(value = "packages.xml", roamingType = RoamingType.DISABLED))
 public class PyPackageService implements
                               PersistentStateComponent<PyPackageService> {
-  public volatile Map<String, Boolean> sdkToUsersite = ContainerUtil.newConcurrentMap();
+  public volatile Map<String, Boolean> sdkToUsersite = new ConcurrentHashMap<>();
   public volatile List<String> additionalRepositories = ContainerUtil.createConcurrentList();
-  @SystemIndependent public volatile String virtualEnvBasePath;
+  public volatile @SystemIndependent String virtualEnvBasePath;
   public volatile Boolean PYPI_REMOVED = false;
 
   public long LAST_TIME_CHECKED = 0;
@@ -30,7 +31,7 @@ public class PyPackageService implements
   public void loadState(@NotNull PyPackageService state) {
     XmlSerializerUtil.copyBean(state, this);
   }
-  
+
   public void addSdkToUserSite(String sdk, boolean useUsersite) {
     sdkToUsersite.put(sdk, useUsersite);
   }
@@ -64,9 +65,7 @@ public class PyPackageService implements
     return ServiceManager.getService(PyPackageService.class);
   }
 
-  @Nullable
-  @SystemIndependent
-  public String getVirtualEnvBasePath() {
+  public @Nullable @SystemIndependent String getVirtualEnvBasePath() {
     return virtualEnvBasePath;
   }
 

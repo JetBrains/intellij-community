@@ -4,12 +4,12 @@ package com.intellij.util.indexing.impl.forward;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.*;
+import com.intellij.util.io.VoidDataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,26 +18,22 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class SingleEntryIndexForwardIndexAccessor<V> implements ForwardIndexAccessor<Integer, V> {
+public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardIndexAccessor<Integer, V, Void> {
   private static final Logger LOG = Logger.getInstance(SingleEntryIndexForwardIndexAccessor.class);
-  private final ID<Integer, V> myIndexId;
-  private final VolatileNotNullLazyValue<UpdatableIndex<Integer, V, ?>> myIndex = new VolatileNotNullLazyValue<UpdatableIndex<Integer, V, ?>>() {
-    @NotNull
-    @Override
-    protected UpdatableIndex<Integer, V, ?> compute() {
-      return ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(myIndexId);
-    }
-  };
+  private final VolatileNotNullLazyValue<UpdatableIndex<Integer, V, ?>> myIndex;
 
   @SuppressWarnings("unchecked")
-  public SingleEntryIndexForwardIndexAccessor(IndexExtension<?, ?, V> extension) {
+  public SingleEntryIndexForwardIndexAccessor(IndexExtension<Integer, V, ?> extension) {
+    super(VoidDataExternalizer.INSTANCE);
     LOG.assertTrue(extension instanceof SingleEntryFileBasedIndexExtension);
-    myIndexId = (ID<Integer, V>)extension.getName();
+    IndexId<?, ?> name = extension.getName();
+    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    myIndex = VolatileNotNullLazyValue.createValue(() -> fileBasedIndex.getIndex((ID<Integer, V>)name));
   }
 
   @NotNull
   @Override
-  public InputDataDiffBuilder<Integer, V> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
+  public final InputDataDiffBuilder<Integer, V> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
     Map<Integer, V> data;
     try {
       data = ProgressManager.getInstance().computeInNonCancelableSection(() -> myIndex.getValue().getIndexedFileData(inputId));
@@ -45,13 +41,35 @@ public class SingleEntryIndexForwardIndexAccessor<V> implements ForwardIndexAcce
     catch (StorageException e) {
       throw new IOException(e);
     }
-    return new SingleValueDiffBuilder<>(inputId, data);
+    return createDiffBuilderByMap(inputId, data);
   }
 
   @Nullable
   @Override
-  public ByteArraySequence serializeIndexedData(@NotNull InputData<Integer, V> data) {
+  public Void convertToDataType(@NotNull InputData<Integer, V> data) {
     return null;
+  }
+
+
+  @Override
+  public @NotNull InputDataDiffBuilder<Integer, V> createDiffBuilderByMap(int inputId, @Nullable Map<Integer, V> map) throws IOException {
+    return new SingleValueDiffBuilder<>(inputId, ContainerUtil.notNullize(map));
+  }
+
+  @Nullable
+  @Override
+  public final ByteArraySequence serializeIndexedData(@NotNull InputData<Integer, V> data) {
+    return null;
+  }
+
+  @Override
+  protected @Nullable Map<Integer, V> convertToMap(int inputId, @Nullable Void inputData) throws IOException {
+    try {
+      return ProgressManager.getInstance().computeInNonCancelableSection(() -> myIndex.getValue().getIndexedFileData(inputId));
+    }
+    catch (StorageException e) {
+      throw new IOException(e);
+    }
   }
 
   public static class SingleValueDiffBuilder<V> extends DirectInputDataDiffBuilder<Integer, V> {

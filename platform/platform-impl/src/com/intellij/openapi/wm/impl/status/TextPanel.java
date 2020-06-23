@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts.StatusBarText;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -114,7 +115,7 @@ Android Studio: b/156739439 */
     myAlignment = alignment;
   }
 
-  public final void setText(@Nullable String text) {
+  public final void setText(@Nullable @StatusBarText String text) {
     text = StringUtil.notNullize(text);
     if (text.equals(myText)) {
       return;

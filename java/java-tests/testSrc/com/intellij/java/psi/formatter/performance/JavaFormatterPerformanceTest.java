@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.performance;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormatterImpl;
 import com.intellij.formatting.FormattingModel;
@@ -39,7 +40,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
     PsiFile file = createFile(testFile.getName(), text);
     astTraverser(SourceTreeToPsiMap.psiElementToTree(file)).forEach(node -> {});
 
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
     FormatterImpl formatter = (FormatterImpl)FormatterEx.getInstanceEx();
     CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(StdFileTypes.JAVA);
 

@@ -65,10 +65,10 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
       for (String eachPair : pairs) {
         try {
           String[] splits = eachPair.split(MODIFIER_DELIMITER);
-          Integer code = Integer.valueOf(splits[0]);
-          Integer modifier = Integer.valueOf(splits[1]);
+          int code = Integer.parseInt(splits[0]);
+          int modifier = Integer.parseInt(splits[1]);
           //noinspection MagicConstant
-          type(robot, code.intValue(), modifier.intValue());
+          type(robot, code, modifier);
         }
         catch (NumberFormatException e) {
           dumpError(context, "Invalid code: " + eachPair);

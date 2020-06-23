@@ -339,6 +339,69 @@ class FeatureUsageSettingsEventsTest {
     assertNotDefaultState(printer.getOptionByName("absDoubleOption"), "absDoubleOption", 3.4, "float", false, withProject, defaultProject)
   }
 
+  @Test
+  fun `record enum fields`() {
+    val component = TestComponent()
+    component.loadState(ComponentStateWithEnum(ComponentStateWithEnum.EnumOption.BAR, ComponentStateWithEnum.EnumOption.BAR))
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logConfigurationState(spec.name, component.state, null)
+
+    val withProject = false
+    val defaultProject = false
+    Assert.assertEquals(3, printer.result.size)
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("enumOption"), "enumOption", null, "enum", false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absEnumOption"), "absEnumOption", ComponentStateWithEnum.EnumOption.BAR.name, "enum", false, withProject, defaultProject)
+  }
+
+  @Test
+  fun `record string field`() {
+    val component = TestComponent()
+    component.loadState(ComponentStateWithString("notDefault", "predefined"))
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logConfigurationState(spec.name, component.state, null)
+
+    val withProject = false
+    val defaultProject = false
+    Assert.assertEquals(3, printer.result.size)
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("stringOption"), "stringOption", null, "string", false, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absStringOption"), "absStringOption", "predefined", "string", false, withProject, defaultProject)
+  }
+
+  @Test
+  fun `record only predefined strings`() {
+    val component = TestComponent()
+    component.loadState(ComponentStateWithString(absStringOpt = "notPredefined"))
+    val spec = getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter(false)
+    printer.logConfigurationState(spec.name, component.state, null)
+
+    val withProject = false
+    val defaultProject = false
+    Assert.assertEquals(2, printer.result.size)
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absStringOption"), "absStringOption", null, "string", false, withProject, defaultProject)
+  }
+
+  @Test
+  fun `not record string field without possible values`() {
+    val component = TestComponent()
+    component.loadState(ComponentStateWithString(absStringOptWithoutPossibleValues = "notPredefined"))
+    val recordDefault = false
+    val printer = TestFeatureUsageSettingsEventsPrinter(recordDefault)
+    printer.logConfigurationState(getStateSpec(component).name, component.state, null)
+
+    val withProject = false
+    val defaultProject = false
+    Assert.assertEquals(2, printer.result.size)
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("absStringOptionWithoutPossibleValues"), "absStringOptionWithoutPossibleValues", null,
+                          "string", recordDefault, withProject, defaultProject)
+  }
+
   private fun assertDefaultWithoutDefaultRecording(printer: TestFeatureUsageSettingsEventsPrinter,
                                                    withProject: Boolean,
                                                    defaultProject: Boolean) {
@@ -368,6 +431,9 @@ class FeatureUsageSettingsEventsTest {
     if (withDefaultRecorded) size++
     if (withProject) size++
     if (defaultProject) size++
+    if (event.data.containsKey("plugin_type")) size++
+    if (event.data.containsKey("plugin_version")) size++
+    if (event.data.containsKey("plugin")) size++
 
     assertThat(event.data).hasSize(size)
     assertThat(event.data["component"]).isEqualTo("MyTestComponent")
@@ -385,6 +451,7 @@ class FeatureUsageSettingsEventsTest {
     if (defaultProject) {
       assertThat(event.data["default_project"]).isEqualTo(true)
     }
+    assertThat(event.data["plugin_type"]).isNotNull
   }
 
   private fun assertDefaultState(printer: TestFeatureUsageSettingsEventsPrinter, withProject: Boolean, defaultProject: Boolean) {
@@ -405,6 +472,9 @@ class FeatureUsageSettingsEventsTest {
     var size = 5
     if (withProject) size++
     if (defaultProject) size++
+    if (event.data.containsKey("plugin_type")) size++
+    if (event.data.containsKey("plugin_version")) size++
+    if (event.data.containsKey("plugin")) size++
 
     assertThat(event.data).hasSize(size)
     assertThat(event.data["component"]).isEqualTo("MyTestComponent")
@@ -412,6 +482,7 @@ class FeatureUsageSettingsEventsTest {
     assertThat(event.data["name"]).isEqualTo(name)
     assertThat(event.data["value"]).isEqualTo(value)
     assertThat(event.data["default"]).isEqualTo(true)
+    assertThat(event.data["plugin_type"]).isNotNull
     if (withProject) {
       assertThat(event.data).containsKey("project")
     }
@@ -481,12 +552,9 @@ class FeatureUsageSettingsEventsTest {
   }
 
   @Suppress("unused")
-  private open class ComponentState(bool: Boolean = false, str: String = "string-option", list: List<Int> = ArrayList()) {
+  private open class ComponentState(bool: Boolean = false, list: List<Int> = ArrayList()) {
     @Attribute("bool-value")
     val boolOption: Boolean = bool
-
-    @Attribute("str-value")
-    val strOption: String = str
 
     @Attribute("int-values")
     val intOption: List<Int> = list
@@ -495,8 +563,7 @@ class FeatureUsageSettingsEventsTest {
   @Suppress("unused")
   private class MultiComponentState(bool: Boolean = false,
                                     secondBool: Boolean = true,
-                                    str: String = "string-option",
-                                    list: List<Int> = ArrayList()) : ComponentState(bool, str, list) {
+                                    list: List<Int> = ArrayList()) : ComponentState(bool, list) {
     @Attribute("second-bool-value")
     val secondBoolOption: Boolean = secondBool
   }
@@ -511,8 +578,7 @@ class FeatureUsageSettingsEventsTest {
                                             absFloatOpt: Float = 0.0F,
                                             absDoubleOpt: Double = 0.0,
                                             bool: Boolean = false,
-                                            str: String = "string-option",
-                                            list: List<Int> = ArrayList()) : ComponentState(bool, str, list) {
+                                            list: List<Int> = ArrayList()) : ComponentState(bool, list) {
     @Attribute("int-option")
     val integerOption: Int = intOpt
 
@@ -540,5 +606,34 @@ class FeatureUsageSettingsEventsTest {
     @Attribute("abs-double-option")
     @field:ReportValue
     val absDoubleOption: Double = absDoubleOpt
+  }
+
+  private class ComponentStateWithEnum(enumOpt: EnumOption = EnumOption.FOO,
+                                       absEnumOpt: EnumOption = EnumOption.FOO) : ComponentState() {
+    @Attribute("enum-option")
+    val enumOption: EnumOption = enumOpt
+
+    @Attribute("abs-enum-option")
+    @field:ReportValue
+    val absEnumOption: EnumOption = absEnumOpt
+
+    enum class EnumOption {
+      FOO, BAR
+    }
+  }
+
+  private class ComponentStateWithString(stringOpt: String = "test",
+                                         absStringOpt: String = "test",
+                                         absStringOptWithoutPossibleValues: String = "test") : ComponentState() {
+    @Attribute("string-option")
+    val stringOption: String = stringOpt
+
+    @Attribute("abs-string-option")
+    @field:ReportValue(possibleValues = ["predefined"])
+    val absStringOption: String = absStringOpt
+
+    @Attribute("abs-string-option-without-possible-values")
+    @field:ReportValue
+    val absStringOptionWithoutPossibleValues: String = absStringOptWithoutPossibleValues
   }
 }

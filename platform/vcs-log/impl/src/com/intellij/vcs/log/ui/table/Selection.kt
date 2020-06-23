@@ -23,6 +23,7 @@ import com.intellij.vcs.log.util.TroveUtil
 import gnu.trove.TIntHashSet
 import java.awt.Rectangle
 import javax.swing.JTable
+import kotlin.math.max
 
 internal class Selection(private val table: VcsLogGraphTable) {
   private val selectedCommits: TIntHashSet = TIntHashSet()
@@ -104,7 +105,7 @@ internal class Selection(private val table: VcsLogGraphTable) {
 
   private fun scrollToRow(row: Int?, delta: Int?) {
     val startRect = table.getCellRect(row!!, 0, true)
-    table.scrollRectToVisible(Rectangle(startRect.x, Math.max(startRect.y - delta!!, 0),
+    table.scrollRectToVisible(Rectangle(startRect.x, max(startRect.y - delta!!, 0),
                                         startRect.width, table.visibleRect.height))
   }
 }

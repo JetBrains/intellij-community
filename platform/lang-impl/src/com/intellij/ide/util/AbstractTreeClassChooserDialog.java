@@ -31,6 +31,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -63,15 +64,15 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   private ChooseByNamePanel myGotoByNamePanel;
   private T myInitialClass;
 
-  public AbstractTreeClassChooserDialog(String title, Project project, final Class<T> elementClass) {
+  public AbstractTreeClassChooserDialog(@NlsContexts.DialogTitle String title, Project project, final Class<T> elementClass) {
     this(title, project, elementClass, null);
   }
 
-  public AbstractTreeClassChooserDialog(String title, Project project, final Class<T> elementClass, @Nullable T initialClass) {
+  public AbstractTreeClassChooserDialog(@NlsContexts.DialogTitle String title, Project project, final Class<T> elementClass, @Nullable T initialClass) {
     this(title, project, GlobalSearchScope.projectScope(project), elementClass, null, initialClass);
   }
 
-  public AbstractTreeClassChooserDialog(String title,
+  public AbstractTreeClassChooserDialog(@NlsContexts.DialogTitle String title,
                                         @NotNull Project project,
                                         GlobalSearchScope scope,
                                         @NotNull Class<T> elementClass,
@@ -80,7 +81,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     this(title, project, scope, elementClass, classFilter, null, initialClass, false, true);
   }
 
-  public AbstractTreeClassChooserDialog(String title,
+  public AbstractTreeClassChooserDialog(@NlsContexts.DialogTitle String title,
                                         @NotNull Project project,
                                         GlobalSearchScope scope,
                                         @NotNull Class<T> elementClass,
@@ -160,7 +161,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         TreePath path = myTree.getPathForLocation(event.getX(), event.getY());
         if (path != null && myTree.isPathSelected(path)) {
           doOKAction();

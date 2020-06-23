@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.openapi.extensions.BaseExtensionPointName;
@@ -17,14 +17,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageOptions>implements SearchableConfigurable,
+public final class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageOptions>implements SearchableConfigurable,
                                                                                                   Configurable.WithEpDependencies {
   private CoverageOptionsPanel myPanel;
   private final CoverageOptionsProvider myManager;
   private final Project myProject;
 
-  public CoverageOptionsConfigurable(CoverageOptionsProvider manager, Project project) {
-    myManager = manager;
+  public CoverageOptionsConfigurable(Project project) {
+    myManager = CoverageOptionsProvider.getInstance(project);
     myProject = project;
   }
 

@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 
@@ -17,16 +17,16 @@ import java.util.function.Function;
  * needed again if it's still running. Function results should be ready for concurrent access, preferably thread-safe.
  */
 @ApiStatus.Internal
-public class DiskQueryRelay<Param, Result> {
-  private final Function<Param, Result> myFunction;
+public final class DiskQueryRelay<Param, Result> {
+  private final @NotNull Function<? super Param, ? extends Result> myFunction;
 
   /**
    * We remember the submitted tasks in "myTasks" until they're finished, to avoid creating many-many similar threads
    * in case the callee is interrupted by "checkCanceled", restarted, comes again with the same query, is interrupted again, and so on.
    */
-  private final Map<Param, Future<Result>> myTasks = ContainerUtil.newConcurrentMap();
+  private final Map<Param, Future<Result>> myTasks = new ConcurrentHashMap<>();
 
-  public DiskQueryRelay(@NotNull Function<Param, Result> function) {
+  public DiskQueryRelay(@NotNull Function<? super Param, ? extends Result> function) {
     myFunction = function;
   }
 
@@ -49,5 +49,4 @@ public class DiskQueryRelay<Param, Result> {
     }
     return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
   }
-
 }

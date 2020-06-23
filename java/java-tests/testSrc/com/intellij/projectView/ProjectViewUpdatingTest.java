@@ -287,7 +287,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
   }
 
-  class NodeWrapper extends AbstractTreeNode<Object> {
+  static class NodeWrapper extends AbstractTreeNode<Object> {
     String myName;
     List<NodeWrapper> myChildren = new ArrayList<>();
 

@@ -2,6 +2,7 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.ui.content.impl.ContentManagerImpl;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import javax.swing.*;
 public final class ContentFactoryImpl implements ContentFactory {
   @NotNull
   @Override
-  public ContentImpl createContent(JComponent component, @Nullable String displayName, boolean isLockable) {
+  public ContentImpl createContent(JComponent component, @Nullable @NlsContexts.TabTitle String displayName, boolean isLockable) {
     return new ContentImpl(component, displayName, isLockable);
   }
 

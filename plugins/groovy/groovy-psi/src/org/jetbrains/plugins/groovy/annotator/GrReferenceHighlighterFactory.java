@@ -24,7 +24,7 @@ final class GrReferenceHighlighterFactory implements TextEditorHighlightingPassF
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     PsiFile groovyFile = file.getViewProvider().getPsi(GroovyLanguage.INSTANCE);
-    return groovyFile instanceof GroovyFileBase ? new GrReferenceHighlighter(editor.getDocument(), (GroovyFileBase)groovyFile) : null;
+    return groovyFile instanceof GroovyFileBase ? new GrReferenceHighlighter((GroovyFileBase)groovyFile, editor.getDocument()) : null;
   }
 
   static boolean shouldHighlight(@NotNull PsiFile file) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,8 +90,10 @@ public interface OccurenceNavigator {
   boolean hasPreviousOccurence();
   OccurenceInfo goNextOccurence();
   OccurenceInfo goPreviousOccurence();
+  @ActionText
   @NotNull
   String getNextOccurenceActionName();
+  @ActionText
   @NotNull
   String getPreviousOccurenceActionName();
 }

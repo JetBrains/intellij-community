@@ -32,7 +32,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
     diffDataByChange = THashMap(object : TObjectHashingStrategy<Change> {
       override fun equals(o1: Change?, o2: Change?) = o1 == o2 &&
                                                       o1?.beforeRevision == o2?.beforeRevision &&
-                                                      o2?.afterRevision == o2?.afterRevision
+                                                      o1?.afterRevision == o2?.afterRevision
 
       override fun computeHashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
     })

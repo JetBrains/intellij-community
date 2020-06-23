@@ -5,7 +5,7 @@ class A{
 class B extends A {
 
   @Override
-  Object fo<caret>o(Object a) {
+  void fo<caret>o(Object a) {
 
   }
 }

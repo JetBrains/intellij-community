@@ -84,7 +84,7 @@ class TestDirectory extends TestPackage {
     }
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     if (file == null) {
-      throw new RuntimeConfigurationError("Directory \'" + dirName + "\' is not found");
+      throw new RuntimeConfigurationError("Directory '" + dirName + "' is not found");
     }
     final Module module = getConfiguration().getConfigurationModule().getModule();
     if (module == null) {

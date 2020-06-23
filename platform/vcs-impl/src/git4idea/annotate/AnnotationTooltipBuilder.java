@@ -2,6 +2,7 @@
 package git4idea.annotate;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.containers.Convertor;
@@ -32,15 +33,18 @@ public class AnnotationTooltipBuilder {
   public void appendRevisionLine(@NotNull VcsRevisionNumber revisionNumber,
                                  @Nullable Convertor<? super VcsRevisionNumber, String> linkBuilder) {
     appendNewline();
-    append("commit ");
 
-    String link = myAsHtml && linkBuilder != null ? linkBuilder.convert(revisionNumber) : null;
-    if (link != null) {
-      appendRaw(link);
+    String revision;
+    if (myAsHtml) {
+      revision = linkBuilder != null ? linkBuilder.convert(revisionNumber) : null;
+      if (revision == null) {
+        revision = XmlStringUtil.escapeString(revisionNumber.asString());
+      }
     }
     else {
-      append(revisionNumber.asString());
+      revision = revisionNumber.asString();
     }
+    appendRaw(VcsBundle.message("commit.description.tooltip.commit", revision));
   }
 
   public void appendLine(@NotNull String content) {

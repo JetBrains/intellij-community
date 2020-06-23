@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.execution.filters.LineNumbersMapping
 import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
@@ -13,7 +16,6 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
-import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -87,21 +89,34 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.openFileInEditor(getTestFile("Navigation.class"))
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
       myFixture.editor.caretModel.moveToOffset(offset(11, 14))  // m2(): usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(14, 10))  // m2(): usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(14, 17))  // int i: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(15, 21))  // int i: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(15, 13))  // int r: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(16, 28))  // int r: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(19, 24))  // throws: declaration, m4() call
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
     }
   }
+
+  fun testNameHighlightingInsideCompiledFile() {
+    myFixture.setReadEditorMarkupModel(true)
+    myFixture.openFileInEditor(getTestFile("NamesHighlightingInsideCompiledFile.class"))
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
+      val infos = myFixture.doHighlighting()
+      assertTrue(infos.toString(), infos.all { info: HighlightInfo -> info.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY })
+      assertEquals(68, infos.size)
+    }
+  }
+
+  private fun highlightUnderCaret() =
+    myFixture.doHighlighting().filter { it.severity === HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY }
 
   fun testLineNumberMapping() {
     Registry.get("decompiler.use.line.mapping").withValue(true) {
@@ -160,7 +175,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun checkStructure(file: VirtualFile, s: String) {
     val editor = FileEditorManager.getInstance(project).openFile(file, false)[0]
-    val builder = StructureViewBuilder.PROVIDER.getStructureViewBuilder(StdFileTypes.CLASS, file, project)!!
+    val builder = StructureViewBuilder.PROVIDER.getStructureViewBuilder(JavaClassFileType.INSTANCE, file, project)!!
     val svc = builder.createStructureView(editor, project) as StructureViewComponent
     Disposer.register(myFixture.testRootDisposable, svc)
     svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
@@ -179,7 +194,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
       if (file.isDirectory) {
         println(file.path)
       }
-      else if (file.fileType === StdFileTypes.CLASS && !file.name.contains('$')) {
+      else if (file.fileType === JavaClassFileType.INSTANCE && !file.name.contains('$')) {
         val decompiled = (psiManager.findFile(file)!! as ClsFileImpl).mirror.text
         assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name.endsWith("-info.class"))
 
@@ -192,7 +207,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
           }
         }
       }
-      else if (ArchiveFileType.INSTANCE == file.fileType) {
+      else if (file.fileType === ArchiveFileType.INSTANCE) {
         val jarRoot = JarFileSystem.getInstance().getRootByLocal(file)
         if (jarRoot != null) {
           VfsUtilCore.visitChildrenRecursively(jarRoot, this)

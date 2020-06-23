@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
@@ -76,7 +77,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
     popupGroup.addAction(new HgBranchPopupActions.HgShowUnnamedHeadsForCurrentBranchAction(myCurrentRepository));
     popupGroup.addAll(createRepositoriesActions());
 
-    popupGroup.addSeparator("Common Branches");
+    popupGroup.addSeparator(HgBundle.message("hg4idea.branch.common.branches.separator"));
     List<HgCommonBranchActions> branchActions =
       myMultiRootBranchConfig.getLocalBranchNames().stream()
         .map(b -> createLocalBranchActions(allRepositories, b, false))
@@ -89,7 +90,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
     }
     wrapWithMoreActionIfNeeded(myProject, popupGroup, branchActions, topShownBranches, SHOW_ALL_BRANCHES_KEY, true);
 
-    popupGroup.addSeparator("Common Bookmarks");
+    popupGroup.addSeparator(HgBundle.message("hg4idea.branch.common.bookmarks.separator"));
     List<HgCommonBranchActions> bookmarkActions = ((HgMultiRootBranchConfig)myMultiRootBranchConfig).getBookmarkNames().stream()
       .map(bm -> createLocalBranchActions(allRepositories, bm, true))
       .filter(Objects::nonNull).sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
@@ -115,7 +116,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
   @NotNull
   protected LightActionGroup createRepositoriesActions() {
     LightActionGroup popupGroup = new LightActionGroup(false);
-    popupGroup.addSeparator("Repositories");
+    popupGroup.addSeparator(HgBundle.message("repositories"));
     List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
       .map(repo -> new RootAction<>(repo, new HgBranchPopupActions(repo.getProject(), repo).createActions(),
                                     getDisplayableBranchOrBookmarkText(repo)))
@@ -127,7 +128,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
 
   @Override
   protected void fillPopupWithCurrentRepositoryActions(@NotNull LightActionGroup popupGroup, @Nullable LightActionGroup actions) {
-    popupGroup.addAll(new HgBranchPopupActions(myProject, myCurrentRepository).createActions(actions, myRepoTitleInfo, true));
+    popupGroup.addAll(new HgBranchPopupActions(myProject, myCurrentRepository).createActions(actions, myInSpecificRepository ? myCurrentRepository : null, true));
   }
 }
 

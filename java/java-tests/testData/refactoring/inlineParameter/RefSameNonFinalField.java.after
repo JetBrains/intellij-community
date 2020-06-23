@@ -2,12 +2,12 @@ public class Subject {
   private int myInt;
   private int t;
 
-  public void wp() {
+  public void wp(String s) {
     myInt += t;
   }
 
   void foo() {
-      wp();
-      wp();
+      wp("s1");
+      wp("s2");
   }
 }

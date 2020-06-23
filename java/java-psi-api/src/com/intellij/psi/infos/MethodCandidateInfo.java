@@ -328,6 +328,11 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     return incompleteSubstitutor;
   }
+  
+  @NotNull
+  public PsiSubstitutor getSubstitutorFromQualifier() {
+    return super.getSubstitutor();
+  }
 
   @NotNull
   @Override

@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -32,6 +33,8 @@ public class DelayedNotificator implements ChangeListListener {
     myScheduler.submit(() -> {
       try {
         command.doNotify(getMulticaster());
+      }
+      catch (ProcessCanceledException ignore) {
       }
       catch (Throwable e) {
         LOG.error(e);

@@ -9,10 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class ClassFinder {
   private final List<String> classNameList = new ArrayList<>();
@@ -35,15 +32,18 @@ public class ClassFinder {
       }
     }
     else {
-      String className = file.getName();
-      if (className.endsWith(".class")) {
-        int dollar = className.lastIndexOf("$");
-        if (dollar != -1) {
-          className = className.substring(dollar + 1);
-          // most likely something like RecursionManagerTest$_testMayCache_closure5 or other anonymous class
-          // may cause https://issues.apache.org/jira/browse/GROOVY-5351
-          if (!Character.isUpperCase(className.charAt(0))) return null;
-        }
+      String nestedClassName = file.getName();
+      if (!nestedClassName.endsWith(".class")) {
+        return null;
+      }
+      nestedClassName = StringUtil.trimEnd(nestedClassName, ".class");
+
+      List<String> names = Arrays.asList(nestedClassName.split("\\$"));
+      Collections.reverse(names);
+      for (String className : names) {
+        // most likely something like RecursionManagerTest$_testMayCache_closure5 or other anonymous class
+        // may cause https://issues.apache.org/jira/browse/GROOVY-5351
+        if (!Character.isUpperCase(className.charAt(0))) return null;
 
         // A test may be named Test*, *Test, *Tests*, *TestCase, *TestSuite, *Suite, etc
         List<String> words = Arrays.asList(NameUtilCore.nameToWords(className));

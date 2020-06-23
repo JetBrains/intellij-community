@@ -31,7 +31,7 @@ public class EditSourceOnDoubleClickHandler {
   public static void install(final TreeTable treeTable) {
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         if (ModalityState.current().dominates(ModalityState.NON_MODAL)) return false;
         if (treeTable.getTree().getPathForLocation(e.getX(), e.getY()) == null) return false;
         DataContext dataContext = DataManager.getInstance().getDataContext(treeTable);
@@ -46,7 +46,7 @@ public class EditSourceOnDoubleClickHandler {
   public static void install(final JTable table) {
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         if (ModalityState.current().dominates(ModalityState.NON_MODAL)) return false;
         if (table.columnAtPoint(e.getPoint()) < 0) return false;
         if (table.rowAtPoint(e.getPoint()) < 0) return false;
@@ -62,7 +62,7 @@ public class EditSourceOnDoubleClickHandler {
   public static void install(final JList list, final Runnable whenPerformed) {
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         Point point = e.getPoint();
         int index = list.locationToIndex(point);
         if (index == -1) return false;
@@ -96,7 +96,7 @@ public class EditSourceOnDoubleClickHandler {
     }
 
     @Override
-    public boolean onDoubleClick(MouseEvent e) {
+    public boolean onDoubleClick(@NotNull MouseEvent e) {
       TreePath clickPath = WideSelectionTreeUI.isWideSelection(myTree)
                            ? myTree.getClosestPathForLocation(e.getX(), e.getY())
                            : myTree.getPathForLocation(e.getX(), e.getY());
@@ -107,7 +107,7 @@ public class EditSourceOnDoubleClickHandler {
       if (project == null) return false;
 
       TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath == null || !clickPath.equals(selectionPath)) return false;
+      if (!clickPath.equals(selectionPath)) return false;
 
       //Node expansion for non-leafs has a higher priority
       if (isToggleEvent(myTree, e)) return false;

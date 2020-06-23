@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="b3c77"/>
-          <text value="Fork owner:"/>
+          <text resource-bundle="messages/GithubBundle" key="select.fork.owner"/>
         </properties>
       </component>
       <component id="b3c77" class="com.intellij.openapi.ui.ComboBox" binding="myComboBox">

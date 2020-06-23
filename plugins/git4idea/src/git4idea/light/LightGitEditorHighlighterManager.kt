@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.BaseSingleTaskController
 import git4idea.index.isTracked
 import git4idea.index.repositoryPath
+import org.jetbrains.annotations.NotNull
 
 private val LOG = Logger.getInstance("#git4idea.light.LightGitEditorHighlighterManager")
 
@@ -87,7 +88,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
 
     if (lst == null) {
       lst = SimpleLocalLineStatusTracker.createTracker(lightEditService.project, editor.document, file,
-                                                       LocalLineStatusTracker.Mode.DEFAULT)
+                                                       LocalLineStatusTracker.Mode(true, true, false))
     }
     readBaseVersion(file, status.repositoryPath)
   }
@@ -102,7 +103,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
   }
 
   private inner class MySingleTaskController :
-    BaseSingleTaskController<Request, BaseVersion>("Light Git Editor Highlighter", this::setBaseVersion, this) {
+    BaseSingleTaskController<Request, BaseVersion>("light.highlighter", this::setBaseVersion, this) {
     override fun process(requests: List<Request>, previousResult: BaseVersion?): BaseVersion {
       val request = requests.last()
       try {
@@ -114,7 +115,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
       }
     }
 
-    override fun cancelRunningTasks(requests: Array<out Request>?): Boolean = true
+    override fun cancelRunningTasks(requests: List<Request>): Boolean = true
   }
 
   private data class Request(val file: VirtualFile, val repositoryPath: String)

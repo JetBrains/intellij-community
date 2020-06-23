@@ -17,19 +17,17 @@ public final class ModulePathMacroManager extends PathMacroManager {
     myModule = module;
   }
 
-  @NotNull
   @Override
-  public ExpandMacroToPathMap getExpandMacroMap() {
+  public @NotNull ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = super.getExpandMacroMap();
     addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModule.getModuleFilePath()));
     return result;
   }
 
-  @NotNull
   @Override
-  public ReplacePathToMacroMap computeReplacePathMap() {
-    final ReplacePathToMacroMap result = super.computeReplacePathMap();
-    final String modulePath = PathMacroUtil.getModuleDir(myModule.getModuleFilePath());
+  public @NotNull ReplacePathToMacroMap computeReplacePathMap() {
+    ReplacePathToMacroMap result = super.computeReplacePathMap();
+    String modulePath = PathMacroUtil.getModuleDir(myModule.getModuleFilePath());
     addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath, PathMacroUtil.getUserHomePath());
     return result;
   }

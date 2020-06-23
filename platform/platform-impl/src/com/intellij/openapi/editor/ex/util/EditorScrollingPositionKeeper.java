@@ -1,48 +1,38 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
  * Allows to keep vertical scrolling position in editor for operations that affect editor contents (changing document, collapsing/expanding
- * folding regions, etc). If caret is in view, then (optionally) its vertical position is preserved, otherwise, the code displayed in top
- * left corner of editor viewport. {@link #savePosition()} method should be called before the operation, to save scrolling position, and
+ * folding regions, etc). If caret is in view, then its vertical position is preserved, otherwise, the code displayed in top left corner of
+ * editor viewport. {@link #savePosition()} method should be called before the operation, to save scrolling position, and
  * {@link #restorePosition(boolean)} method - after the operation, to restore the position.
  */
 public class EditorScrollingPositionKeeper implements Disposable {
   private final Editor myEditor;
-  private final boolean myIgnoreCaret;
   private int myViewportShift;
   private RangeMarker myTopLeftCornerMarker;
 
   public EditorScrollingPositionKeeper(@NotNull Editor editor) {
-    this(editor, false);
-  }
-
-  /**
-   * @param ignoreCaret if {@code true}, caret position will be ignored, and top-left corner of editor will be used as an anchor
-   */
-  public EditorScrollingPositionKeeper(@NotNull Editor editor, boolean ignoreCaret) {
     myEditor = editor;
-    myIgnoreCaret = ignoreCaret;
   }
 
   public void savePosition() {
     disposeMarker();
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleAreaOnScrollingFinished();
-    int caretY = myIgnoreCaret ? 0 : myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line);
-    if (myIgnoreCaret ||
-        visibleArea.height > 0 && (caretY + myEditor.getLineHeight() <= visibleArea.y || caretY >= (visibleArea.y + visibleArea.height))) {
+    int caretY = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line);
+    if (visibleArea.height > 0 && (caretY + myEditor.getLineHeight() <= visibleArea.y || caretY >= (visibleArea.y + visibleArea.height))) {
       int topLeftCornerOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(visibleArea.getLocation()));
       myTopLeftCornerMarker = myEditor.getDocument().createRangeMarker(topLeftCornerOffset, topLeftCornerOffset);
       myViewportShift = myEditor.offsetToXY(topLeftCornerOffset).y - visibleArea.y;
@@ -122,9 +112,12 @@ public class EditorScrollingPositionKeeper implements Disposable {
     private final List<EditorScrollingPositionKeeper> myKeepers;
 
     public ForDocument(@Nullable Document document) {
-      myKeepers = document == null ? Collections.emptyList()
-                                   : ContainerUtil.map(EditorFactory.getInstance().getEditors(document),
-                                                       EditorScrollingPositionKeeper::new);
+      if (document == null) {
+        myKeepers = Collections.emptyList();
+      }
+      else {
+        myKeepers = EditorFactory.getInstance().editors(document).map(EditorScrollingPositionKeeper::new).collect(Collectors.toList());
+      }
     }
 
     public void savePosition() {

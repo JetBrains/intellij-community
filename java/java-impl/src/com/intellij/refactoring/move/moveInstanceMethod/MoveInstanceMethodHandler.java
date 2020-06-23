@@ -118,7 +118,8 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
         showErrorHint(project, dataContext, message);
       }
       else {
-        final String suggestToMakeStaticMessage = "Would you like to make method \'" + method.getName() + "\' static and then move?";
+        final String suggestToMakeStaticMessage =
+          JavaRefactoringBundle.message("move.instance.method.handler.make.method.static", method.getName());
         if (Messages
           .showYesNoCancelDialog(project, message + ". " + suggestToMakeStaticMessage,
                                  getRefactoringName(), Messages.getErrorIcon()) == Messages.YES) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
@@ -22,10 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -153,7 +150,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       languages.add(provider.getLanguage());
     }
-    Collections.sort(languages, (l1, l2) -> Comparing.compare(getLanguageName(l1), getLanguageName(l2)));
+    languages.sort((l1, l2) -> Comparing.compare(getLanguageName(l1), getLanguageName(l2)));
     return languages;
   }
 
@@ -365,7 +362,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
       this.getClass().getCanonicalName() + " for language #" + getLanguage().getID() + " doesn't implement createConfigurable()");
   }
 
-  private static final AtomicReference<List<LanguageCodeStyleSettingsProvider>> ourSettingsPagesProviders = new AtomicReference<>();
+  private static final AtomicReference<Set<LanguageCodeStyleSettingsProvider>> ourSettingsPagesProviders = new AtomicReference<>();
 
   @ApiStatus.Internal
   public static void resetSettingsPagesProviders() {
@@ -375,26 +372,42 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   /**
    * @return A list of providers implementing {@link #createConfigurable(CodeStyleSettings, CodeStyleSettings)}
    */
-  public static List<LanguageCodeStyleSettingsProvider> getSettingsPagesProviders() {
+  public static Set<LanguageCodeStyleSettingsProvider> getSettingsPagesProviders() {
     return ourSettingsPagesProviders.updateAndGet(__ -> __ != null ? __ : calcSettingPagesProviders());
   }
 
   @NotNull
-  protected static List<LanguageCodeStyleSettingsProvider> calcSettingPagesProviders() {
-    List<LanguageCodeStyleSettingsProvider> settingsPagesProviders = new ArrayList<>();
+  protected static Set<LanguageCodeStyleSettingsProvider> calcSettingPagesProviders() {
+    Set<LanguageCodeStyleSettingsProvider> settingsPagesProviders = new HashSet<>();
     for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
-      try {
-        Method configMethod = provider.getClass().getMethod("createConfigurable", CodeStyleSettings.class, CodeStyleSettings.class);
-        Class declaringClass = configMethod.getDeclaringClass();
-        if (!declaringClass.equals(LanguageCodeStyleSettingsProvider.class)) {
-          settingsPagesProviders.add(provider);
-        }
-      }
-      catch (NoSuchMethodException e) {
-        // Do not add the provider.
-      }
+      registerSettingsPageProvider(settingsPagesProviders, provider);
     }
     return settingsPagesProviders;
+  }
+
+  @ApiStatus.Internal
+  public static void registerSettingsPageProvider(@NotNull LanguageCodeStyleSettingsProvider provider) {
+    registerSettingsPageProvider(ourSettingsPagesProviders.get(), provider);
+  }
+
+  @ApiStatus.Internal
+  public static void unregisterSettingsPageProvider(@NotNull LanguageCodeStyleSettingsProvider provider) {
+    ourSettingsPagesProviders.get().remove(provider);
+  }
+
+  private static void registerSettingsPageProvider(@NotNull Set<LanguageCodeStyleSettingsProvider> settingsPagesProviders,
+                                                   @NotNull LanguageCodeStyleSettingsProvider provider) {
+    try {
+      Method
+        configMethod = provider.getClass().getMethod("createConfigurable", CodeStyleSettings.class, CodeStyleSettings.class);
+      Class<?> declaringClass = configMethod.getDeclaringClass();
+      if (!declaringClass.equals(LanguageCodeStyleSettingsProvider.class)) {
+        settingsPagesProviders.add(provider);
+      }
+    }
+    catch (NoSuchMethodException e) {
+      // Do not add the provider.
+    }
   }
 
   @ApiStatus.Experimental

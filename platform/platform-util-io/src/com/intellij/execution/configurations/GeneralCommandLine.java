@@ -12,7 +12,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -20,6 +20,7 @@ import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ import java.util.*;
  * The {@link #getCharset()} method is used by classes like {@link com.intellij.execution.process.OSProcessHandler OSProcessHandler}
  * or {@link com.intellij.execution.util.ExecUtil ExecUtil} to decode bytes of a child's output stream. For proper conversion,
  * the same value should be used on another side of the pipe. Chances are you don't have to mess with the setting -
- * because a platform-dependent guessing behind {@link Charset#defaultCharset()} is used by default and a child process
+ * because a platform-dependent guessing behind {@link EncodingManager#getDefaultConsoleEncoding()} is used by default and a child process
  * may happen to use a similar heuristic.
  * If the above automagic fails or more control is needed, the charset may be set explicitly. Again, do not forget the other side -
  * call {@code addParameter("-Dfile.encoding=...")} for Java-based tools, or use {@code withEnvironment("HGENCODING", "...")}
@@ -85,18 +86,18 @@ public class GeneralCommandLine implements UserDataHolder {
   private final Map<String, String> myEnvParams = new MyTHashMap();
   private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
-  private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
-  private boolean myRedirectErrorStream = false;
+  private Charset myCharset = EncodingManager.getInstance().getDefaultConsoleEncoding();
+  private boolean myRedirectErrorStream;
   private File myInputFile;
   private Map<Object, Object> myUserData;
 
   public GeneralCommandLine() { }
 
-  public GeneralCommandLine(String @NotNull ... command) {
+  public GeneralCommandLine(@NonNls String @NotNull ... command) {
     this(Arrays.asList(command));
   }
 
-  public GeneralCommandLine(@NotNull List<String> command) {
+  public GeneralCommandLine(@NonNls @NotNull List<String> command) {
     int size = command.size();
     if (size > 0) {
       setExePath(command.get(0));
@@ -391,14 +392,16 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     for (Map.Entry<String, String> entry : myEnvParams.entrySet()) {
-      String name = entry.getKey(), value = entry.getValue();
+      String name = entry.getKey();
+      String value = entry.getValue();
       if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.name", name));
       if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
     }
 
     String exePath = myExePath;
     if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
-      String systemPath = System.getenv("PATH"), shellPath = EnvironmentUtil.getValue("PATH");
+      String systemPath = System.getenv("PATH");
+      String shellPath = EnvironmentUtil.getValue("PATH");
       if (!Objects.equals(systemPath, shellPath)) {
         File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
         if (exeFile != null) {

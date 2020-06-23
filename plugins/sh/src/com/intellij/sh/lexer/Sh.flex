@@ -79,7 +79,7 @@ LineTerminator           = \r\n | \r | \n
 LineContinuation         = "\\" {LineTerminator}
 WhiteSpace               = [ \t\f] {LineContinuation}*
 
-Shebang                  = #\! {InputCharacter}* {LineTerminator}?
+Shebang                  = #\! {InputCharacter}*
 Comment                  = # {InputCharacter}*
 
 EscapedChar              = "\\" [^\n]

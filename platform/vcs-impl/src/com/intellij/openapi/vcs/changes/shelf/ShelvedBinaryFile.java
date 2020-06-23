@@ -11,17 +11,21 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentBinaryContentRevision;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+
+import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 
 /**
  * @author yole
@@ -32,7 +36,7 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
   @Nullable public String SHELVED_PATH;         // null if binary file was deleted
   private Change myChange;
 
-  public ShelvedBinaryFile() {
+  ShelvedBinaryFile() {
   }
 
   public ShelvedBinaryFile(final String beforePath, final String afterPath, @Nullable final String shelvedPath) {
@@ -84,6 +88,11 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
       if (BEFORE_PATH != null) {
         final FilePath file = VcsUtil.getFilePath(new File(baseDir, BEFORE_PATH), false);
         before = new CurrentBinaryContentRevision(file) {
+          @Override
+          public byte @Nullable [] getBinaryContent() throws VcsException {
+            return ObjectUtils.chooseNotNull(super.getBinaryContent(), EMPTY_BYTE_ARRAY);
+          }
+
           @NotNull
           @Override
           public VcsRevisionNumber getRevisionNumber() {

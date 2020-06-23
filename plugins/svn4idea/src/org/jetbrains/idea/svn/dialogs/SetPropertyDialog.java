@@ -37,7 +37,7 @@ public class SetPropertyDialog extends DialogWrapper {
   private final String myPropertyName;
   private final File[] myFiles;
 
-  private JComboBox myPropertyNameBox;
+  private JComboBox<String> myPropertyNameBox;
   private JRadioButton mySetPropertyButton;
   private JTextArea myValueText;
   private JRadioButton myDeletePropertyButton;
@@ -108,7 +108,7 @@ public class SetPropertyDialog extends DialogWrapper {
       if (e.getStateChange() == ItemEvent.SELECTED) {
         String name = getPropertyName();
         updatePropertyValue(name);
-        getOKAction().setEnabled(name != null && !"".equals(name.trim()));
+        getOKAction().setEnabled(name != null && !name.trim().isEmpty());
       }
     });
     Component editor = myPropertyNameBox.getEditor().getEditorComponent();
@@ -119,16 +119,16 @@ public class SetPropertyDialog extends DialogWrapper {
         protected void textChanged(@NotNull DocumentEvent e) {
           String name = getPropertyName();
           updatePropertyValue(name);
-          getOKAction().setEnabled(name != null && !"".equals(name.trim()));
+          getOKAction().setEnabled(name != null && !name.trim().isEmpty());
         }
       });
 
     }
-    getOKAction().setEnabled(myPropertyName != null && !"".equals(myPropertyName.trim()));
+    getOKAction().setEnabled(myPropertyName != null && !myPropertyName.trim().isEmpty());
   }
 
   private void updatePropertyValue(String name) {
-    if (myFiles.length == 0 || myFiles.length > 1) {
+    if (myFiles.length != 1) {
       return;
     }
     File file = myFiles[0];
@@ -187,9 +187,7 @@ public class SetPropertyDialog extends DialogWrapper {
           @Override
           public void handleProperty(File path, PropertyData property) {
             String name = property.getName();
-            if (name != null) {
-              names.add(name);
-            }
+            names.add(name);
           }
 
           @Override

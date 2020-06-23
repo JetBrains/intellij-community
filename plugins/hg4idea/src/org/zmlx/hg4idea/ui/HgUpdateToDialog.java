@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.Collection;
@@ -24,9 +25,9 @@ public class HgUpdateToDialog extends HgCommonDialogWithChoices {
 
   public HgUpdateToDialog(Project project, @NotNull Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
     super(project, repos, selectedRepo);
-    myBranchesBorderPanel.setBorder(IdeBorderFactory.createTitledBorder("Switch to"));
-    hgRepositorySelectorComponent.setTitle("Select repository to switch");
-    setTitle("Switch Working Directory");
+    myBranchesBorderPanel.setBorder(IdeBorderFactory.createTitledBorder(HgBundle.message("hg4idea.switch")));
+    hgRepositorySelectorComponent.setTitle(HgBundle.message("hg4idea.switch.title"));
+    setTitle(HgBundle.message("hg4idea.switch.title"));
     cleanCbx.setVisible(true);
     cleanCbx.setEnabled(true);
   }

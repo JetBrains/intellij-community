@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -8,7 +8,7 @@ import com.intellij.util.messages.Topic;
 
 @Service
 public final class PowerSaveMode {
-  public static final Topic<Listener> TOPIC = new Topic<>("PowerSaveMode.Listener", Listener.class);
+  public static final Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   private static final String POWER_SAVE_MODE = "power.save.mode";
 

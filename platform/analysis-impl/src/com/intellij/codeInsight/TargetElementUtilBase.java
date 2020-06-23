@@ -47,7 +47,7 @@ public final class TargetElementUtilBase {
    * @param file language source for the {@link #isIdentifierPart(PsiFile, CharSequence, int)}
    * @see PsiTreeUtilKt#elementsAroundOffsetUp(PsiFile, int)
    */
-  public static int adjustOffset(@Nullable PsiFile file, Document document, final int offset) {
+  public static int adjustOffset(@Nullable PsiFile file, @NotNull Document document, final int offset) {
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;
     int textLength = document.getTextLength();
@@ -72,7 +72,7 @@ public final class TargetElementUtilBase {
    * @see Character#isJavaIdentifierPart(char)
    * @see TargetElementEvaluatorEx#isIdentifierPart(PsiFile, CharSequence, int)
    */
-  private static boolean isIdentifierPart(@Nullable PsiFile file, CharSequence text, int offset) {
+  private static boolean isIdentifierPart(@Nullable PsiFile file, @NotNull CharSequence text, int offset) {
     if (file != null) {
       TargetElementEvaluatorEx evaluator = getElementEvaluatorsEx(file.getLanguage());
       if (evaluator != null && evaluator.isIdentifierPart(file, text, offset)) return true;
@@ -165,7 +165,7 @@ public final class TargetElementUtilBase {
     return getReferencedElement(ref, flags);
   }
 
-  static @Nullable PsiElement getReferencedElement(@NotNull PsiReference ref, int flags) {
+  private static @Nullable PsiElement getReferencedElement(@NotNull PsiReference ref, int flags) {
     final Language language = ref.getElement().getLanguage();
     TargetElementEvaluator evaluator = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     if (evaluator != null) {
@@ -240,11 +240,11 @@ public final class TargetElementUtilBase {
   }
 
   @Nullable
-  static PsiElement getReferencedElement(@NotNull PsiFile file,
-                                         int offset,
-                                         int flags,
-                                         @NotNull Editor editor,
-                                         @Nullable PsiElement leafElement) {
+  private static PsiElement getReferencedElement(@NotNull PsiFile file,
+                                                 int offset,
+                                                 int flags,
+                                                 @NotNull Editor editor,
+                                                 @Nullable PsiElement leafElement) {
     final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
     //if (referenceOrReferencedElement == null) {
     //  return getReferenceOrReferencedElement(file, editor, flags, offset);
@@ -277,7 +277,7 @@ public final class TargetElementUtilBase {
    * @see #findTargetElement(Editor, int, int)
    */
   @Nullable
-  public static PsiElement findTargetElement(Editor editor, int flags) {
+  public static PsiElement findTargetElement(@NotNull Editor editor, int flags) {
     int offset = editor.getCaretModel().getOffset();
     return findTargetElement(editor, flags, offset);
   }

@@ -72,7 +72,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       @NotNull
       @Override
       protected Promise<? super Object> selectImpl(Configurable configurable) {
-        myFilter.update(null, false, true);
+        myFilter.update(null);
         return myTreeView.select(configurable);
       }
 
@@ -249,7 +249,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     }
 
     myTreeView.select(configurable)
-      .onSuccess(it -> myFilter.update(filter, false, true));
+      .onSuccess(it -> myFilter.update(filter));
 
     Disposer.register(this, myTreeView);
     installSpotlightRemover();

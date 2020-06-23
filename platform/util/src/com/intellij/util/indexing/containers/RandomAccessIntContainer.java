@@ -15,18 +15,23 @@
  */
 package com.intellij.util.indexing.containers;
 
-import com.intellij.util.indexing.ValueContainer;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents random access container of int-s, namely indexed input ids.
+ */
 interface RandomAccessIntContainer {
   Object clone();
   boolean add(int value);
   boolean remove(int value);
+
+  @NotNull
   IntIdsIterator intIterator();
-  ValueContainer.IntPredicate intPredicate();
+
   void compact();
   int size();
-
   boolean contains(int value);
 
+  @NotNull
   RandomAccessIntContainer ensureContainerCapacity(int diff);
 }

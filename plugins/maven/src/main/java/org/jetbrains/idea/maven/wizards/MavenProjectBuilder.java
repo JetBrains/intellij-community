@@ -198,7 +198,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     }
 
     boolean isFromUI = model != null;
-    if (isFromUI && !MavenUtil.newModelEnabled(project)) {
+    if (isFromUI) {
       return manager.importProjects(new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel));
     }
     return manager.importProjects();

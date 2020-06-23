@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.export;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -105,7 +107,8 @@ public class ExportTestResultsAction extends DumbAwareAction {
                    && Messages.showOkCancelDialog(project,
                                                   ExecutionBundle.message("export.test.results.file.exists.message", filename),
                                                   ExecutionBundle.message("export.test.results.file.exists.title"),
-                                                  "Overwrite", "Cancel",
+                                                  TestRunnerBundle.message("inspections.settings.overwrite.action.text"),
+                                                  CommonBundle.getCancelButtonText(),
                                                   Messages.getQuestionIcon()
       ) != Messages.OK;
     }

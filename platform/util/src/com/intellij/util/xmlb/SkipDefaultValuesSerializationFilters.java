@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Comparing;
@@ -46,8 +46,7 @@ public class SkipDefaultValuesSerializationFilters extends SerializationFilterBa
     return getDefaultValue(c);
   }
 
-  @NotNull
-  public Object getDefaultValue(Class<?> c) {
+  public @NotNull Object getDefaultValue(Class<?> c) {
     Object o = myDefaultBeans.get(c);
 
     if (o == null) {

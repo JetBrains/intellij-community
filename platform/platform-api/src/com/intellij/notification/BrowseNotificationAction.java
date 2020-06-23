@@ -17,6 +17,7 @@ package com.intellij.notification;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class BrowseNotificationAction extends NotificationAction {
   private final String myUrl;
 
-  public BrowseNotificationAction(@NotNull String text, @NotNull String url) {
+  public BrowseNotificationAction(@NotNull @NotificationContent String text, @NotNull String url) {
     super(text);
     myUrl = url;
   }

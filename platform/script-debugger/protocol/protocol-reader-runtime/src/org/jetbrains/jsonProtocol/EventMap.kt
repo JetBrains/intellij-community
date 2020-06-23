@@ -1,16 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jsonProtocol
 
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.io.JsonReaderEx
+import java.util.concurrent.ConcurrentHashMap
 
 abstract class EventType<T, R : ResponseResultReader>(val methodName: String) {
   abstract fun read(protocolReader: R, reader: JsonReaderEx): T
 }
 
 class EventMap<R : ResponseResultReader>(private val protocolReader: R) {
-  private val nameToHandler = ContainerUtil.newConcurrentMap<String, MutableList<(Any?) -> Unit>>()
-  private val nameToType = ContainerUtil.newConcurrentMap<String, EventType<*, R>>()
+  private val nameToHandler = ConcurrentHashMap<String, MutableList<(Any?) -> Unit>>()
+  private val nameToType = ConcurrentHashMap<String, EventType<*, R>>()
 
   fun <T : Any?> add(type: EventType<T, R>, handler: (T) -> Unit) {
     nameToType.put(type.methodName, type)

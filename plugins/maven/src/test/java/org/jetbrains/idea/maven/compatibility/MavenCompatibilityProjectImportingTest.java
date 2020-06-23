@@ -10,7 +10,6 @@ public class MavenCompatibilityProjectImportingTest extends MavenCompatibilityTe
 
     doTest(() -> {
 
-      assertEquals(myMavenVersion, MavenServerManager.getInstance().getCurrentMavenVersion());
       importProject("<groupId>test</groupId>" +
                     "<artifactId>project</artifactId>" +
                     "<version>1</version>");

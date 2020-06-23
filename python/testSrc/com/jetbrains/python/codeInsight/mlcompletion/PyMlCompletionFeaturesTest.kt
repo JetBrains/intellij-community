@@ -1,16 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.mlcompletion
 
-import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
-import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
-import com.intellij.codeInsight.lookup.LookupElement
-import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.Assert
+import com.jetbrains.python.psi.impl.PyFunctionImpl
+import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 
-class PyMlCompletionFeaturesTest: PyTestCase() {
+class PyMlCompletionFeaturesTest: PyMlCompletionTestCase() {
   override fun getTestDataPath(): String = super.getTestDataPath() + "/codeInsight/mlcompletion"
 
   override fun setUp() {
@@ -105,6 +101,12 @@ class PyMlCompletionFeaturesTest: PyTestCase() {
 
   fun testInsideClassAfterConstructor() = doContextFeaturesTest(Pair("containing_class_have_constructor", MLFeatureValue.binary(true)),
                                                                 Pair("diff_lines_with_class_def", MLFeatureValue.numerical(4)))
+
+  fun testNumOfPrevQualifiersIs3() = doContextFeaturesTest(Pair("num_of_prev_qualifiers", MLFeatureValue.numerical(3)))
+
+  fun testNumOfPrevQualifiersIs4() = doContextFeaturesTest(Pair("num_of_prev_qualifiers", MLFeatureValue.numerical(4)))
+
+  fun testNumOfPrevQualifiersIs1() = doContextFeaturesTest(Pair("num_of_prev_qualifiers", MLFeatureValue.numerical(1)))
 
   // Element features
 
@@ -252,84 +254,48 @@ class PyMlCompletionFeaturesTest: PyTestCase() {
                                                           Pair("receiver_num_matched_tokens", MLFeatureValue.numerical(3)),
                                                           Pair("receiver_tokens_num", MLFeatureValue.numerical(3)))
 
-  private fun doContextFeaturesTest(vararg expected: Pair<String, MLFeatureValue>) = doContextFeaturesTest(listOf(*expected), emptyList())
+  fun testMatchesWithEnclosingMethodTheSameName() = doElementFeaturesTest(
+    "_qwer_tyuio_asdf_gh",
+    Pair("number_of_tokens", MLFeatureValue.numerical(4)),
+    Pair("matches_with_enclosing_method", MLFeatureValue.binary(true)),
+    Pair("matched_tokens_with_enclosing_method", MLFeatureValue.numerical(4))
+  )
 
-  private fun doContextFeaturesTest(expectedDefined: List<Pair<String, MLFeatureValue>>, expectedUndefined: List<String>) {
-    doWithInstalledProviders { contextFeaturesProvider, _ ->
-      invokeCompletion()
-      assertHasFeatures(contextFeaturesProvider.features, expectedDefined)
-      assertHasNotFeatures(contextFeaturesProvider.features, expectedUndefined)
-    }
-  }
+  fun testMatchesWithEnclosingMethodAlmostTheSameName() = doElementFeaturesTest(
+    "_qwer_tyuio_asdf_gh",
+    listOf(Pair("number_of_tokens", MLFeatureValue.numerical(4)),
+    Pair("matched_tokens_with_enclosing_method", MLFeatureValue.numerical(4))),
+    listOf("matches_with_enclosing_method")
+  )
 
-  private fun doElementFeaturesTest(checks: List<Pair<String, List<Pair<String, MLFeatureValue>>>>) {
-    checks.forEach {
-      doElementFeaturesTest(it.first, it.second, emptyList())
-    }
-  }
+  fun testLocationSameFileAndMethodAndClass() = doElementFeaturesTest(
+    "some_variable",
+    Pair("is_the_same_file", MLFeatureValue.binary(true)),
+    Pair("is_the_same_class", MLFeatureValue.binary(true)),
+    Pair("is_the_same_method", MLFeatureValue.binary(true))
+  )
 
-  private fun doElementFeaturesTest(elementToSelect: String, vararg expected: Pair<String, MLFeatureValue>) {
-    doElementFeaturesTest(elementToSelect, arrayListOf(*expected), emptyList())
-  }
+  fun testLocationSameFileAndClass() = doElementFeaturesTest(
+    "some_variable",
+    listOf(Pair("is_the_same_file", MLFeatureValue.binary(true)), Pair("is_the_same_class", MLFeatureValue.binary(true))),
+    listOf("is_the_same_method")
+  )
 
-  private fun doElementFeaturesTest(elementToSelect: String,
-                                    expectedDefined: List<Pair<String, MLFeatureValue>>,
-                                    expectedUndefined: List<String>) {
-    val selector: (LookupElement) -> Boolean = { it.lookupString == elementToSelect }
-    doElementFeaturesInternalTest(selector, expectedDefined, expectedUndefined)
-  }
+  fun testLocationSameFileAndMethod() = doElementFeaturesTest(
+    "some_variable",
+    listOf(Pair("is_the_same_file", MLFeatureValue.binary(true)), Pair("is_the_same_method", MLFeatureValue.binary(true))),
+    listOf("is_the_same_class")
+  )
 
-  private fun doElementFeaturesInternalTest(selector: (LookupElement) -> Boolean,
-                                            expectedDefined: List<Pair<String, MLFeatureValue>>,
-                                            expectedUndefined: List<String>) {
-    doWithInstalledProviders { _, elementFeaturesProvider ->
-      invokeCompletion()
+  fun testLocationSameFileOnly() = doElementFeaturesTest(
+    "some_function",
+    listOf(Pair("is_the_same_file", MLFeatureValue.binary(true))),
+    listOf("is_the_same_class", "is_the_same_method")
+  )
 
-      val selected = myFixture.lookupElements!!.find(selector)
-      assertNotNull(selected)
-
-      val features = elementFeaturesProvider.features[selected]
-      assertNotNull(features)
-      assertHasFeatures(features!!, expectedDefined)
-      assertHasNotFeatures(features, expectedUndefined)
-    }
-  }
-
-  private fun doWithInstalledProviders(action: (contextFeaturesProvider: PyAdapterContextFeatureProvider,
-                                                                  elementFeaturesProvider: PyAdapterElementFeatureProvider) -> Unit) {
-    val contextFeaturesProvider = PyAdapterContextFeatureProvider(PyContextFeatureProvider())
-    val elementFeaturesProvider = PyAdapterElementFeatureProvider(PyElementFeatureProvider())
-    try {
-      ContextFeatureProvider.EP_NAME.addExplicitExtension(PythonLanguage.INSTANCE, contextFeaturesProvider)
-      ElementFeatureProvider.EP_NAME.addExplicitExtension(PythonLanguage.INSTANCE, elementFeaturesProvider)
-      action(contextFeaturesProvider, elementFeaturesProvider)
-    }
-    finally {
-      ContextFeatureProvider.EP_NAME.removeExplicitExtension(PythonLanguage.INSTANCE, contextFeaturesProvider)
-      ElementFeatureProvider.EP_NAME.removeExplicitExtension(PythonLanguage.INSTANCE, elementFeaturesProvider)
-    }
-  }
-
-  private fun assertHasFeatures(actual: Map<String, MLFeatureValue>,
-                                expectedDefined: List<Pair<String, MLFeatureValue>>) {
-    for (pair in expectedDefined) {
-      Assert.assertTrue("Assert has feature: ${pair.first}", actual.containsKey(pair.first))
-      Assert.assertEquals("Check feature value: ${pair.first}", pair.second.toString(), actual[pair.first].toString())
-    }
-  }
-
-  private fun assertHasNotFeatures(actual: Map<String, MLFeatureValue>, expected: List<String>) {
-    for (value in expected) {
-      Assert.assertFalse("Assert has not feature: $value", actual.containsKey(value))
-    }
-  }
-
-  private fun invokeCompletion() {
-    myFixture.configureByFile(getTestName(true) + ".py")
-    myFixture.completeBasic()
-  }
-
-  private fun kwId(kw: String): Int {
-    return PyMlCompletionHelpers.getKeywordId(kw)!!
-  }
+  fun testLocationDifferentFile() = doElementFeaturesTest(
+    "min",
+    emptyList(),
+    listOf("is_the_same_file", "is_the_same_class", "is_the_same_method")
+  )
 }

@@ -3,6 +3,7 @@ package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -52,7 +53,7 @@ public class LimitedPool<T> {
 
   private void ensureCapacity() {
     if (myStorage.length <= myIndex) {
-      int newCapacity = Math.min(myMaxCapacity, Math.max(10, myStorage.length * 3 / 2));
+      int newCapacity = MathUtil.clamp(myStorage.length * 3 / 2, 10, myMaxCapacity);
       myStorage = ArrayUtil.realloc(myStorage, newCapacity, ArrayUtil.OBJECT_ARRAY_FACTORY);
     }
   }

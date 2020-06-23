@@ -24,7 +24,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test exten
   public void testFinalWithoutInnerClass() {
     doTest("class Issue {\n" +
            "    public static void main(String[] args) {\n" +
-           "        /*Unnecessary 'final' on variable 's'*/final/**/ Integer s;\n" +
+           "        /*Unnecessary 'final' on variable 's'*/final/**/ int s;\n" +
            "        if (args.length == 0) {\n" +
            "            s = 1;\n" +
            "        } else {\n" +

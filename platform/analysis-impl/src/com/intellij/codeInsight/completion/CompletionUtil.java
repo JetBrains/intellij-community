@@ -245,7 +245,7 @@ public class CompletionUtil {
 
   @NotNull
   @ApiStatus.Internal
-  public static CompletionAssertions.WatchingInsertionContext createInsertionContext(@Nullable Lookup lookup,
+  public static CompletionAssertions.WatchingInsertionContext createInsertionContext(@Nullable List<LookupElement> lookupItems,
                                                                                      LookupElement item,
                                                                                      char completionChar,
                                                                                      Editor editor,
@@ -259,14 +259,21 @@ public class CompletionUtil {
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
     offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
 
-    List<LookupElement> items = lookup != null ? lookup.getItems() : Collections.emptyList();
+    List<LookupElement> items = lookupItems == null ? Collections.emptyList() : lookupItems;
+
     return new CompletionAssertions.WatchingInsertionContext(offsetMap, psiFile, completionChar, items, editor);
   }
 
   @ApiStatus.Internal
-  public static int calcIdEndOffset(CompletionProcessEx indicator) {
-    return indicator.getOffsetMap().containsOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
-           indicator.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) :
-           CompletionInitializationContext.calcDefaultIdentifierEnd(indicator.getEditor(), indicator.getCaret().getOffset());
+  public static int calcIdEndOffset(OffsetMap offsetMap, Editor editor, Integer initOffset) {
+    return offsetMap.containsOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
+           offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) :
+           CompletionInitializationContext.calcDefaultIdentifierEnd(editor, initOffset);
   }
+
+  @ApiStatus.Internal
+  public static int calcIdEndOffset(CompletionProcessEx indicator) {
+    return calcIdEndOffset(indicator.getOffsetMap(), indicator.getEditor(), indicator.getCaret().getOffset());
+  }
+
 }

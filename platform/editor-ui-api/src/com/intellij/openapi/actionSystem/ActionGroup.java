@@ -2,7 +2,6 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,6 +12,9 @@ import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.NlsActions.ActionDescription;
+import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
  * Represents a group of actions.
@@ -58,22 +60,24 @@ public abstract class ActionGroup extends AnAction {
    * @param popup {@code true} if this group is a popup, {@code false}
    *  otherwise
    */
-  public ActionGroup(@Nls(capitalization = Nls.Capitalization.Title) String shortName, boolean popup){
+  public ActionGroup(@ActionText String shortName, boolean popup){
     this(() -> shortName, popup);
   }
 
-  public ActionGroup(@NotNull Supplier<String> shortName, boolean popup){
+  public ActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup){
     super(shortName);
     setPopup(popup);
   }
 
-  public ActionGroup(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                     @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public ActionGroup(@ActionText String text,
+                     @ActionDescription String description,
                      Icon icon) {
     super(text, description, icon);
   }
 
-  public ActionGroup(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+  public ActionGroup(@NotNull Supplier<@ActionText String> dynamicText,
+                     @NotNull Supplier<@ActionDescription String> dynamicDescription,
+                     Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 

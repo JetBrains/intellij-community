@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -15,6 +15,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.analysis.problemsView.toolWindow.ProblemsView.selectHighlightInfoIfVisible;
 
 public class GotoNextErrorHandler implements CodeInsightActionHandler {
   private final boolean myGoForward;
@@ -51,10 +53,9 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
             HighlightInfo fullInfo = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project))
               .findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false);
             DaemonTooltipUtil.showInfoTooltip(fullInfo != null ? fullInfo : infoToGo,
-                                              editor, editor.getCaretModel().getOffset(), 0, false, true);
+                                              editor, editor.getCaretModel().getOffset(), false, true);
           }
         });
-
         return;
       }
     }
@@ -108,7 +109,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     HintManager.getInstance().showInformationHint(editor, message);
   }
 
-  static void navigateToError(Project project, final Editor editor, HighlightInfo info, @Nullable Runnable postNavigateRunnable) {
+  static void navigateToError(@NotNull Project project, @NotNull Editor editor, @NotNull HighlightInfo info, @Nullable Runnable postNavigateRunnable) {
     int oldOffset = editor.getCaretModel().getOffset();
 
     final int offset = getNavigationPositionFor(info, editor.getDocument());
@@ -139,6 +140,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     );
 
     IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
+    selectHighlightInfoIfVisible(project, info);
   }
 
   private static int getNavigationPositionFor(HighlightInfo info, Document document) {

@@ -3,6 +3,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts.Label;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,7 +13,7 @@ public abstract class PublicFieldBasedOptionDescription extends BooleanOptionDes
   private static final Logger LOG = Logger.getInstance(PublicFieldBasedOptionDescription.class);
   private final String myFieldName;
 
-  public PublicFieldBasedOptionDescription(String option, String configurableId, String fieldName) {
+  public PublicFieldBasedOptionDescription(@Label String option, String configurableId, String fieldName) {
     super(option, configurableId);
     myFieldName = fieldName;
   }

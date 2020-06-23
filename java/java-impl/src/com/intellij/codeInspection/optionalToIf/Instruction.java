@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.optionalToIf;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Contract;
@@ -47,7 +48,7 @@ interface Instruction {
 
     @Override
     public String generate() {
-      return Arrays.stream(myBlock.getCodeBlock().getStatements()).map(s -> s.getText()).collect(Collectors.joining("\n"));
+      return StringUtil.join(myBlock.getCodeBlock().getStatements(), s -> s.getText(), "\n");
     }
   }
 
@@ -79,7 +80,7 @@ interface Instruction {
 
     @Override
     public String generate() {
-      return myLhs.getName() + " = " + myRhs.getText() + ";\n";
+      return myLhs.getName() + "=" + myRhs.getText() + ";\n";
     }
 
     @Nullable
@@ -106,7 +107,10 @@ interface Instruction {
 
     @Override
     public String generate() {
-      return myLhs.getType().getCanonicalText() + " " + myLhs.getName() + " = " + myRhs.getText() + ";\n";
+      if (myLhs.getInitializer() == myRhs) return myLhs.getText();
+      PsiVariable copy = (PsiVariable)myLhs.copy();
+      copy.setInitializer(myRhs);
+      return copy.getText();
     }
 
     @Nullable
@@ -139,15 +143,15 @@ interface Instruction {
 
     @Override
     public String generate() {
-      if (myInstructions.size() == 1 && !hasElseBranch()) {
-        return "if(" + myCondition.getText() + ") " + myInstructions.get(0).generate();
+      if (myInstructions.size() == 1 && !hasElseBranch() && !(myInstructions.get(0) instanceof Declaration)) {
+        return "if(" + myCondition.getText() + ")" + myInstructions.get(0).generate();
       }
-      String thenBranch = "if(" + myCondition.getText() + ") {\n" +
-                          myInstructions.stream().map(i -> i.generate()).collect(Collectors.joining()) +
+      String thenBranch = "if(" + myCondition.getText() + "){\n" +
+                          StringUtil.join(myInstructions, i -> i.generate(), "") +
                           "}\n";
       if (myElseInstructions == null) return thenBranch;
       return thenBranch +
-             "else {\n" + myElseInstructions.stream().map(i -> i.generate()).collect(Collectors.joining()) + "\n}";
+             "else{\n" + StringUtil.join(myElseInstructions, i -> i.generate(), "") + "\n}";
     }
 
     @Nullable

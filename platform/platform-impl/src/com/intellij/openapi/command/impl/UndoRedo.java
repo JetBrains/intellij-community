@@ -11,6 +11,8 @@ import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,8 +58,10 @@ abstract class UndoRedo {
 
   protected abstract UndoRedoStacksHolder getReverseStackHolder();
 
+  @DialogTitle
   protected abstract String getActionName();
 
+  @DialogMessage
   protected abstract String getActionName(String commandName);
 
   protected abstract EditorAndState getBeforeState();

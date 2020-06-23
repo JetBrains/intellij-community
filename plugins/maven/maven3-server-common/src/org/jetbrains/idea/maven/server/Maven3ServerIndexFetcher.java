@@ -72,14 +72,10 @@ public class Maven3ServerIndexFetcher extends AbstractResourceFetcher {
                       myWagonManager.getProxy(mirrorRepository.getProtocol()));
     }
     catch (AuthenticationException e) {
-      IOException newEx = new IOException("Authentication exception connecting to " + repository);
-      newEx.initCause(e);
-      throw newEx;
+      throw new IOException("Authentication exception connecting to " + repository, e);
     }
     catch (WagonException e) {
-      IOException newEx = new IOException("Wagon exception connecting to " + repository);
-      newEx.initCause(e);
-      throw newEx;
+      throw new IOException("Wagon exception connecting to " + repository, e);
     }
   }
 
@@ -101,9 +97,7 @@ public class Maven3ServerIndexFetcher extends AbstractResourceFetcher {
       myWagon.get(name, targetFile);
     }
     catch (AuthorizationException e) {
-      IOException newEx = new IOException("Authorization exception retrieving " + name);
-      newEx.initCause(e);
-      throw newEx;
+      throw new IOException("Authorization exception retrieving " + name, e);
     }
     catch (ResourceDoesNotExistException e) {
       IOException newEx = new FileNotFoundException("Resource " + name + " does not exist");
@@ -111,9 +105,7 @@ public class Maven3ServerIndexFetcher extends AbstractResourceFetcher {
       throw newEx;
     }
     catch (WagonException e) {
-      IOException newEx = new IOException("Transfer for " + name + " failed");
-      newEx.initCause(e);
-      throw newEx;
+      throw new IOException("Transfer for " + name + " failed", e);
     }
   }
 }

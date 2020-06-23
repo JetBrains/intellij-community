@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.ide.IdeBundle;
@@ -30,7 +29,6 @@ import java.util.function.Consumer;
 
 public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvider, SearchTopHitProvider {
   // project level here means not that EP itself in project area, but that extensions applicable for project only
-  @VisibleForTesting
   public static final ExtensionPointName<OptionsSearchTopHitProvider.ProjectLevelProvider>
     PROJECT_LEVEL_EP = new ExtensionPointName<>("com.intellij.search.projectOptionsTopHitProvider");
 
@@ -39,14 +37,12 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
    * <p>
    * ConfigurableOptionsTopHitProvider will be refactored later.
    */
-  @NotNull
   @Deprecated
-  public abstract Collection<OptionDescription> getOptions(@Nullable Project project);
+  public abstract @NotNull Collection<OptionDescription> getOptions(@Nullable Project project);
 
-  @NotNull
-  private static Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider,
-                                                                @Nullable Project project,
-                                                                @Nullable PluginDescriptor pluginDescriptor) {
+  private static @NotNull Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider,
+                                                                         @Nullable Project project,
+                                                                         @Nullable PluginDescriptor pluginDescriptor) {
     TopHitCache cache = project == null || provider instanceof ApplicationLevelProvider
        ? TopHitCache.getInstance()
        : ProjectTopHitCache.getInstance(project);
@@ -96,8 +92,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     }
   }
 
-  @Nullable
-  private static String checkPattern(@NotNull String pattern) {
+  private static @Nullable String checkPattern(@NotNull String pattern) {
     if (!pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator())) {
       return null;
     }
@@ -107,8 +102,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   }
 
   @Override
-  @NotNull
-  public abstract String getId();
+  public abstract @NotNull String getId();
 
   public static String messageApp(@PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String property) {
     return StringUtil.stripHtml(ApplicationBundle.message(property), false);
@@ -190,7 +184,10 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       com.intellij.diagnostic.Activity activity = StartUpMeasurer.startActivity("cache options in " + name);
       SearchTopHitProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
         if (provider instanceof OptionsSearchTopHitProvider && (project == null || !(provider instanceof ApplicationLevelProvider))) {
-          cache((OptionsSearchTopHitProvider)provider, indicator, project, pluginDescriptor);
+          OptionsSearchTopHitProvider p = (OptionsSearchTopHitProvider)provider;
+          if (p.preloadNeeded() && (indicator == null || !indicator.isCanceled()) && (project == null || !project.isDisposed())) {
+            getCachedOptions(p, project, pluginDescriptor);
+          }
         }
       });
 
@@ -203,16 +200,6 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
         });
       }
       activity.end();
-    }
-
-    private static void cache(@NotNull OptionsSearchTopHitProvider provider,
-                              @Nullable ProgressIndicator indicator,
-                              @Nullable Project project,
-                              @Nullable PluginDescriptor pluginDescriptor) {
-      if (!provider.preloadNeeded()) return;
-      if (indicator != null && indicator.isCanceled()) return;  // if application is closed
-      if (project != null && project.isDisposed()) return; // if project is closed
-      getCachedOptions(provider, project, pluginDescriptor);
     }
   }
 }

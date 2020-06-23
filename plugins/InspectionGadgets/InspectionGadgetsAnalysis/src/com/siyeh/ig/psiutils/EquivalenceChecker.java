@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -607,7 +606,12 @@ public class EquivalenceChecker {
     }
     final PsiClass containingClass1 = PsiTreeUtil.getParentOfType(thisExpression1, PsiClass.class);
     final PsiClass containingClass2 = PsiTreeUtil.getParentOfType(thisExpression2, PsiClass.class);
-    return Match.exact(containingClass1 == containingClass2);
+    if (containingClass1 == null || containingClass2 == null) {
+      return EXACT_MISMATCH;
+    }
+    return Match.exact(containingClass1 == containingClass2 ||
+                       containingClass2.isInheritor(containingClass1, false) ||
+                       containingClass1.isInheritor(containingClass2, false));
   }
 
   protected Match lambdaExpressionsMatch(PsiLambdaExpression expression1, PsiLambdaExpression expression2) {
@@ -709,7 +713,7 @@ public class EquivalenceChecker {
       if (!match.isExactMatch() && PsiUtil.isArrayClass(((PsiMember)element1).getContainingClass()) &&
           !((GenericsUtil.getLeastUpperBound(qualifier1.getType(), qualifier2.getType(),
                                              referenceExpression1.getManager())) instanceof PsiArrayType)) {
-        // access to the member (length or clone()) of incompatible arrays 
+        // access to the member (length or clone()) of incompatible arrays
         return EXACT_MISMATCH;
       }
       if (match.isExactMismatch()) {
@@ -837,8 +841,8 @@ public class EquivalenceChecker {
     List<PsiMember> children2 = PsiTreeUtil.getChildrenOfTypeAsList(class2, PsiMember.class);
     int size = children1.size();
     if (size != children2.size()) return EXACT_MISMATCH;
-    Collections.sort(children1, MEMBER_COMPARATOR);
-    Collections.sort(children2, MEMBER_COMPARATOR);
+    children1.sort(MEMBER_COMPARATOR);
+    children2.sort(MEMBER_COMPARATOR);
     for (int i = 0; i < size; i++) {
       // first pass checks only signatures for accurate reference tracking
       PsiElement child1 = children1.get(i);

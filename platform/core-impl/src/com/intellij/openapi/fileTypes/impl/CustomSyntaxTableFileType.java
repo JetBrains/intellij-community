@@ -17,10 +17,12 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.fileTypes.FileType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Author: dmitrylomov
  */
 public interface CustomSyntaxTableFileType extends FileType {
+  @NotNull
   SyntaxTable getSyntaxTable();
 }

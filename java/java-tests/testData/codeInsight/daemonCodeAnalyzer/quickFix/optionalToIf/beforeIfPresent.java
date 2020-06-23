@@ -10,9 +10,9 @@ class Test {
 
   void lambdaIsNotSimplified(String in, String p1, String p2) {
     if (in == null || p1 == null) throw new IllegalArgumentException();
-    Optional.ofNullable(in).ifPresent(s -> {
+    Optional./* comment1 */ofNullable(in).ifPresent(s -> {
       String tmp = "foo";
-      tmp = "bar";
+      tmp = "bar"; // comment2
     });
   }
 

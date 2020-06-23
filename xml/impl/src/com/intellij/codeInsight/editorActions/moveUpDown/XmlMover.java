@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.xml.TagNameVariantCollector;
 import com.intellij.psi.impl.source.xml.XmlDocumentImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -247,7 +248,7 @@ public class XmlMover extends LineMover {
       final int line = document.getLineNumber(offset + 1);
       final LineRange toMove2 = info.toMove2;
       if (toMove2 == null) return;
-      info.toMove2 = new LineRange(toMove2.startLine, Math.min(Math.max(line, toMove2.endLine), document.getLineCount() - 1));
+      info.toMove2 = new LineRange(toMove2.startLine, MathUtil.clamp(line, toMove2.endLine, document.getLineCount() - 1));
     }
   }
 

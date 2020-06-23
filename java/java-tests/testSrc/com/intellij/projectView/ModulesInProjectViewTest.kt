@@ -2,10 +2,12 @@
 package com.intellij.projectView
 
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Queryable
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import java.nio.file.Path
 
 class ModulesInProjectViewTest : BaseProjectViewTestCase() {
   init {
@@ -171,6 +173,11 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
           | test modules with common parent group.iml
           |
           """.trimMargin())
+  }
+
+  override fun getProjectDirOrFile(): Path {
+    //use directory-based project to ensure that .iws/.ipr file won't break the test (they may be created if workspace model is used)
+    return getProjectDirOrFile(true)
   }
 
   override fun getTestPath() = null

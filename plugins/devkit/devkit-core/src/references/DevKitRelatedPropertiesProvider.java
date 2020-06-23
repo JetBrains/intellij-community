@@ -39,7 +39,7 @@ public class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProv
   }
 
   @Override
-  protected void collectNavigationMarkers(@NotNull PsiElement leaf, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
+  protected void collectNavigationMarkers(@NotNull PsiElement leaf, @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     if (!(leaf instanceof XmlToken)) return;
     if (leaf.getNode().getElementType() != XmlTokenType.XML_NAME) return;
     PsiElement prev = PsiTreeUtil.getPrevSiblingOfType(leaf, XmlToken.class);

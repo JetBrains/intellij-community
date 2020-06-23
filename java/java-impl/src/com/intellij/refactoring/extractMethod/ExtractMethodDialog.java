@@ -59,7 +59,7 @@ import java.util.function.Supplier;
  */
 public class ExtractMethodDialog extends RefactoringDialog implements AbstractExtractDialog {
   static final String EXTRACT_METHOD_DEFAULT_VISIBILITY = "extract.method.default.visibility";
-  static final String EXTRACT_METHOD_GENERATE_ANNOTATIONS = "extractMethod.generateAnnotations";
+  public static final String EXTRACT_METHOD_GENERATE_ANNOTATIONS = "extractMethod.generateAnnotations";
 
   private final Project myProject;
   private final PsiType myReturnType;
@@ -95,7 +95,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
   private Map<PsiVariable, ParameterInfo> myInitialParameterInfos;
 
-  protected ExtractMethodDialog(Project project, PsiClass targetClass, InputVariables inputVariables,
+  public ExtractMethodDialog(Project project, PsiClass targetClass, InputVariables inputVariables,
                                 PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
                                 boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
                                 String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,

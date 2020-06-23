@@ -2,7 +2,7 @@ class Test {
 
     {
         f((Bar) getComponent());
-        f1((<warning descr="Casting 'getComponent()' to 'Bar' is redundant">Bar</warning>) getComponent());
+        f1((Bar) getComponent());
         Bar b = (<warning descr="Casting 'getComponent()' to 'Bar' is redundant">Bar</warning>) getComponent();
     }
 

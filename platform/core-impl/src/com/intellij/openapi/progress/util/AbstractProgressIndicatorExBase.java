@@ -160,8 +160,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
       delegate.initStateFrom(this);
       ProgressIndicatorEx[] stateDelegates = myStateDelegates;
       if (stateDelegates == null) {
-        myStateDelegates = stateDelegates = new ProgressIndicatorEx[1];
-        stateDelegates[0] = delegate;
+        myStateDelegates = new ProgressIndicatorEx[]{delegate};
       }
       else {
         // hard throw is essential for avoiding deadlocks
@@ -204,6 +203,12 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
         action.execute(each);
       }
     }
+  }
+
+  @Override
+  public void initStateFrom(@NotNull ProgressIndicator indicator) {
+    super.initStateFrom(indicator);
+    delegate(it -> it.initStateFrom(this));
   }
 
   protected void onProgressChange() {

@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PackageDirectoryCache;
@@ -21,6 +22,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +64,11 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       List<VirtualFile> invalidRoots = ContainerUtil.filter(roots, f -> !f.isValid());
       if (!invalidRoots.isEmpty()) {
         roots = ContainerUtil.filter(roots, VirtualFile::isValid);
-        LOG.error("Invalid roots returned by " + getClass() + ": " + invalidRoots);
+        PluginException.logPluginError(
+          LOG,
+          "Invalid roots returned by " + getClass().getName() + ": " + invalidRoots,
+          null, getClass()
+        );
       }
       myCache = cache = PackageDirectoryCache.createCache(roots);
     }
@@ -86,6 +92,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     return getCache(scope).getDirectoriesByPackageName("");
   }
 
+  @Contract(pure = true)
   public List<VirtualFile> getClassRoots() {
     return getClassRoots(ALL_SCOPE);
   }

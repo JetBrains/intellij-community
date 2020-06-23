@@ -161,6 +161,9 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
         else if (myCurrentComponent == null && myQueuedComponent == null) {
           maybeShowFor(myProcessingComponent, me);
         }
+        else if (myQueuedComponent == null) {
+          hideCurrent(me);
+        }
       }
       else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
         boolean clickOnTooltip = myCurrentTipUi != null &&
@@ -366,7 +369,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   public IdeTooltip show(final IdeTooltip tooltip, boolean now, final boolean animationEnabled) {
     myAlarm.cancelAllRequests();
 
-    hideCurrent(null, tooltip, null, null);
+    hideCurrent(null, tooltip);
 
     myQueuedComponent = tooltip.getComponent();
     myQueuedTooltip = tooltip;
@@ -382,7 +385,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       }
 
       if (tooltip.beforeShow()) {
-        show(tooltip, null, animationEnabled);
+        doShow(tooltip, animationEnabled);
       }
       else {
         hideCurrent(null, tooltip, null, null, animationEnabled);
@@ -399,7 +402,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     return tooltip;
   }
 
-  private void show(final IdeTooltip tooltip, @Nullable Runnable beforeShow, boolean animationEnabled) {
+  private void doShow(final IdeTooltip tooltip, boolean animationEnabled) {
     boolean toCenterX;
     boolean toCenterY;
 
@@ -455,10 +458,6 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
 
 
-    if (beforeShow != null) {
-      beforeShow.run();
-    }
-
     myCurrentTipUi = (BalloonImpl)builder.createBalloon();
     myCurrentTipUi.setAnimationEnabled(animationEnabled);
     tooltip.setUi(myCurrentTipUi);
@@ -487,43 +486,43 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     }, tooltip.getDismissDelay());
   }
 
-  @SuppressWarnings({"UnusedParameters"})
+  @SuppressWarnings("UnusedParameters")
   public Color getTextForeground(boolean awtTooltip) {
     return UIUtil.getToolTipForeground();
   }
 
-  @SuppressWarnings({"UnusedParameters"})
+  @SuppressWarnings("UnusedParameters")
   public Color getLinkForeground(boolean awtTooltip) {
     return JBUI.CurrentTheme.Link.linkColor();
   }
 
-  @SuppressWarnings({"UnusedParameters"})
+  @SuppressWarnings("UnusedParameters")
   public Color getTextBackground(boolean awtTooltip) {
     Color color = EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY);
     return color != null ? color : UIUtil.getToolTipBackground();
   }
 
-  @SuppressWarnings({"UnusedParameters"})
+  @SuppressWarnings("UnusedParameters")
   public String getUlImg(boolean awtTooltip) {
     return StartupUiUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 
-  @SuppressWarnings({"UnusedParameters"})
+  @SuppressWarnings("UnusedParameters")
   public Color getBorderColor(boolean awtTooltip) {
     return new JBColor(Gray._160, new Color(91, 93, 95));
   }
 
-  @SuppressWarnings({"UnusedParameters"})
+  @SuppressWarnings("UnusedParameters")
   public boolean isOwnBorderAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
-  @SuppressWarnings({"UnusedParameters"})
+  @SuppressWarnings("UnusedParameters")
   public boolean isOpaqueAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
-  @SuppressWarnings({"UnusedParameters"})
+  @SuppressWarnings("UnusedParameters")
   public Font getTextFont(boolean awtTooltip) {
     return UIManager.getFont("ToolTip.font");
   }
@@ -532,12 +531,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     return myCurrentTooltip != null;
   }
 
-  public boolean hasScheduled() {
-    return myShowRequest != null;
-  }
-
   public boolean hideCurrent(@Nullable MouseEvent me) {
-    return hideCurrent(me, null, null, null);
+    return hideCurrent(me, null);
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event) {
@@ -545,10 +540,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me,
-                              @Nullable IdeTooltip tooltipToShow,
-                              @Nullable AnAction action,
-                              @Nullable AnActionEvent event) {
-    return hideCurrent(me, tooltipToShow, action, event, myCurrentTipUi != null && myCurrentTipUi.isAnimationEnabled());
+                              @Nullable IdeTooltip tooltipToShow) {
+    return hideCurrent(me, tooltipToShow, null, null, myCurrentTipUi != null && myCurrentTipUi.isAnimationEnabled());
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me, @Nullable IdeTooltip tooltipToShow, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {

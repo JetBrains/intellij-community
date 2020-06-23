@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -177,7 +178,7 @@ public class JBAutoscroller implements ActionListener {
     }
 
     protected int getScrollDelta(int low, int high, int value) {
-      return value - (value > high ? high : value < low ? low : value);
+      return value - MathUtil.clamp(value, low, high);
     }
   }
 

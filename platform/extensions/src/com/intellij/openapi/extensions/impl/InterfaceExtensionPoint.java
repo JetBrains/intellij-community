@@ -16,32 +16,32 @@ import java.util.Set;
 @ApiStatus.Internal
 public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull PluginDescriptor pluginDescriptor) {
-    super(name, clazz.getName(), pluginDescriptor, false);
-
-    myExtensionClass = clazz;
+    super(name, clazz.getName(), pluginDescriptor, clazz, false);
   }
 
   public InterfaceExtensionPoint(@NotNull String name,
                                  @NotNull String className,
                                  @NotNull PluginDescriptor pluginDescriptor,
                                  boolean dynamic) {
-    super(name, className, pluginDescriptor, dynamic);
+    super(name, className, pluginDescriptor, null, dynamic);
   }
 
-  @NotNull
   @Override
-  public ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
-    InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getDescriptor(), isDynamic());
+  public @NotNull ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
+    InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), isDynamic());
     result.setComponentManager(manager);
     return result;
   }
 
   @Override
-  @NotNull
-  protected ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManager componentManager) {
+  protected @NotNull ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManager componentManager) {
     String implementationClassName = extensionElement.getAttributeValue("implementation");
     if (implementationClassName == null) {
-      throw componentManager.createError("Attribute \"implementation\" is not specified for \"" + getName() + "\" extension", pluginDescriptor.getPluginId());
+      // deprecated
+      implementationClassName = extensionElement.getAttributeValue("implementationClass");
+      if (implementationClassName == null) {
+        throw componentManager.createError("Attribute \"implementation\" is not specified for \"" + getName() + "\" extension", pluginDescriptor.getPluginId());
+      }
     }
 
     String orderId = extensionElement.getAttributeValue("id");
@@ -51,7 +51,10 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   }
 
   @Override
-  public void unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks) {
+  void unregisterExtensions(@NotNull ComponentManager componentManager,
+                            @NotNull PluginDescriptor pluginDescriptor,
+                            @NotNull List<Element> elements,
+                            @NotNull List<Runnable> listenerCallbacks) {
     Set<String> implementationClassNames = new HashSet<>();
     for (Element element : elements) {
       implementationClassNames.add(element.getAttributeValue("implementation"));
@@ -69,8 +72,12 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
 
     // has custom attributes
     for (Attribute attribute : extensionElement.getAttributes()) {
-      final String name = attribute.getName();
-      if (!"implementation".equals(name) && !"id".equals(name) && !"order".equals(name) && !"os".equals(name)) {
+      String name = attribute.getName();
+      if (!("implementation".equals(name) ||
+            "implementationClass".equals(name) ||
+            "id".equals(name) ||
+            "order".equals(name) ||
+            "os".equals(name))) {
         return true;
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -80,13 +80,14 @@ public class MavenProjectsTree {
     }
   };
 
-  public MavenProjectsTree(Project project) {
+  public MavenProjectsTree(@NotNull Project project) {
     myProject = project;
   }
 
   Project getProject() {
     return myProject;
   }
+
 
   public MavenProjectReaderProjectLocator getProjectLocator() {
     return myProjectLocator;
@@ -1495,9 +1496,9 @@ public class MavenProjectsTree {
 
     @Override
     public boolean equals(MavenCoordinate o1, MavenCoordinate o2) {
-      return Comparing.equal(o1.getArtifactId(), o2.getArtifactId())
-             && Comparing.equal(o1.getVersion(), o2.getVersion())
-             && Comparing.equal(o1.getGroupId(), o2.getGroupId());
+      return Objects.equals(o1.getArtifactId(), o2.getArtifactId())
+             && Objects.equals(o1.getVersion(), o2.getVersion())
+             && Objects.equals(o1.getGroupId(), o2.getGroupId());
     }
   }
 }

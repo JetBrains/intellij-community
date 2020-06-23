@@ -22,7 +22,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -141,7 +140,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
   private class DomElementsTrafficLightRenderer extends TrafficLightRenderer {
     DomElementsTrafficLightRenderer(@NotNull XmlFile xmlFile) {
       super(xmlFile.getProject(),
-            PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile));
+            xmlFile.getViewProvider().getDocument());
     }
 
     @NotNull
@@ -173,16 +172,10 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
       }
     }
 
-    protected boolean isInspectionCompleted() {
+    boolean isInspectionCompleted() {
       return ContainerUtil.and(myDomElements,
                                element -> myAnnotationsManager.getHighlightStatus(element) == DomHighlightStatus.INSPECTIONS_FINISHED);
     }
-
-    protected boolean isErrorAnalyzingFinished() {
-      return ContainerUtil.and(myDomElements,
-                               element -> myAnnotationsManager.getHighlightStatus(element).compareTo(DomHighlightStatus.ANNOTATORS_FINISHED) >= 0);
-    }
-
   }
 
 }

@@ -169,9 +169,8 @@ public class UsedIconsListingAction extends AnAction {
                                      MultiMap<String, PsiAnnotation> annotations,
                                      PsiClass iconClass) {
     final HashMap<String, String> mappings = new HashMap<>();
-    int size = mappings.size();
     collectFields(iconClass, "", mappings);
-    System.out.println("Found " + (mappings.size() - size) + " icons in " + iconClass.getQualifiedName());
+    System.out.println("Found " + mappings.size() + " icons in " + iconClass.getQualifiedName());
 
     GlobalSearchScope useScope = (GlobalSearchScope)iconClass.getUseScope();
 

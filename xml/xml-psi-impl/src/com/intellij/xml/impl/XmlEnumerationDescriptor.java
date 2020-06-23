@@ -1,11 +1,12 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.impl;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.util.XmlEnumeratedReferenceSet;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public abstract class XmlEnumerationDescriptor<T extends XmlElement> {
 
   public PsiElement getValueDeclaration(XmlElement attributeValue, String value) {
     String defaultValue = getDefaultValue();
-    if (Comparing.equal(defaultValue, value)) {
+    if (Objects.equals(defaultValue, value)) {
       return getDefaultValueDeclaration();
     }
     return isFixed() ? null : getEnumeratedValueDeclaration(attributeValue, value);

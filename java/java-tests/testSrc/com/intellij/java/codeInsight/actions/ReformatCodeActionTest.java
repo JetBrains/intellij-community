@@ -131,7 +131,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     return myWorkingDirectory;
   }
 
-  protected void injectMockDialogFlags(ReformatFilesOptions options) {
+  protected void injectMockDialogFlags(@NotNull ReformatFilesOptions options) {
     ReformatCodeAction.setTestOptions(options);
   }
 

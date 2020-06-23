@@ -86,11 +86,11 @@ public class EventLogSystemLogger {
 
   private static void logEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull FeatureUsageData data) {
     final StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
-    provider.getLogger().log(new EventLogGroup(GROUP, provider.getVersion()), eventId, data.build(), false);
+    provider.getLogger().logAsync(new EventLogGroup(GROUP, provider.getVersion()), eventId, data.build(), false);
   }
 
   private static void logEvent(@NotNull String recorderId, @NotNull String eventId) {
     final StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
-    provider.getLogger().log(new EventLogGroup(GROUP, provider.getVersion()), eventId, false);
+    provider.getLogger().logAsync(new EventLogGroup(GROUP, provider.getVersion()), eventId, false);
   }
 }

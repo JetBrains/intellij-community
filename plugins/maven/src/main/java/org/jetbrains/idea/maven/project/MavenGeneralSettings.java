@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Comparing;
@@ -34,6 +20,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class MavenGeneralSettings implements Cloneable {
@@ -138,7 +125,6 @@ public class MavenGeneralSettings implements Cloneable {
   public void setOutputLevel(MavenExecutionOptions.LoggingLevel value) {
     if (value == null) return; // null may come from deserializator
     if (!Comparing.equal(this.outputLevel, value)) {
-      MavenServerManager.getInstance().setLoggingLevel(value);
       this.outputLevel = value;
       changed();
     }
@@ -159,9 +145,8 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setMavenHome(@NotNull final String mavenHome) {
-    if (!Comparing.equal(this.mavenHome, mavenHome)) {
+    if (!Objects.equals(this.mavenHome, mavenHome)) {
       this.mavenHome = mavenHome;
-      MavenServerManager.getInstance().setMavenHome(mavenHome);
       myDefaultPluginsCache = null;
       changed();
     }
@@ -183,7 +168,7 @@ public class MavenGeneralSettings implements Cloneable {
   public void setUserSettingsFile(@Nullable String mavenSettingsFile) {
     if (mavenSettingsFile == null) return;
 
-    if (!Comparing.equal(this.mavenSettingsFile, mavenSettingsFile)) {
+    if (!Objects.equals(this.mavenSettingsFile, mavenSettingsFile)) {
       this.mavenSettingsFile = mavenSettingsFile;
       changed();
     }
@@ -228,7 +213,7 @@ public class MavenGeneralSettings implements Cloneable {
   public void setLocalRepository(final @Nullable String overridenLocalRepository) {
     if (overridenLocalRepository == null) return;
 
-    if (!Comparing.equal(this.overriddenLocalRepository, overridenLocalRepository)) {
+    if (!Objects.equals(this.overriddenLocalRepository, overridenLocalRepository)) {
       this.overriddenLocalRepository = overridenLocalRepository;
       MavenServerManager.getInstance().shutdown(true);
       changed();
@@ -251,6 +236,7 @@ public class MavenGeneralSettings implements Cloneable {
       return result;
     }
     result = MavenUtil.resolveSuperPomFile(getEffectiveMavenHome());
+    myEffectiveSuperPomCache = result;
     return result;
   }
 
@@ -353,7 +339,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (!overriddenLocalRepository.equals(that.overriddenLocalRepository)) return false;
     if (!mavenHome.equals(that.mavenHome)) return false;
     if (!mavenSettingsFile.equals(that.mavenSettingsFile)) return false;
-    if (!Comparing.equal(threads, that.threads)) return false;
+    if (!Objects.equals(threads, that.threads)) return false;
 
     return true;
   }

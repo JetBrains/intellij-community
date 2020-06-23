@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
@@ -34,15 +34,18 @@ import java.util.*;
 public class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "file.types";
-  }
+  private final EventLogGroup GROUP = new EventLogGroup("file.types", 3);
+
+  private final EventId3<Object, String, Integer> FILE_IN_PROJECT = GROUP.registerEvent(
+    "file.in.project",
+    EventFields.PluginInfoFromInstance,
+    EventFields.String("file_type").withCustomRule("file_type"),
+    EventFields.Int("count")
+  );
 
   @Override
-  public int getVersion() {
-    return 3;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
@@ -73,9 +76,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
         Integer count = counter.get();
         if (count != 0) {
-          FeatureUsageData data = newFeatureUsageData(fileType);
-          data.addCount(StatisticsUtil.getNextPowerOfTwo(count));
-          events.add(new MetricEvent("file.in.project", data));
+          events.add(FILE_IN_PROJECT.metric(fileType, getSafeFileTypeName(fileType), StatisticsUtil.getNextPowerOfTwo(count)));
         }
       }).wrapProgress(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
     }
@@ -87,8 +88,13 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     final FeatureUsageData data = new FeatureUsageData();
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(type.getClass());
     data.addPluginInfo(info);
-    data.addData("file_type", info.isDevelopedByJetBrains() ? type.getName() : DEFAULT_ID);
+    data.addData("file_type", getSafeFileTypeName(type));
     return data;
+  }
+
+  public static String getSafeFileTypeName(@NotNull FileType fileType) {
+    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(fileType.getClass());
+    return info.isDevelopedByJetBrains() ? fileType.getName() : DEFAULT_ID;
   }
 
   public static class ValidationRule extends CustomWhiteListRule {

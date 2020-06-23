@@ -3,6 +3,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -24,13 +25,13 @@ import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author peter
  */
-public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>{
+public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass> {
   private static final GenericValueReferenceProvider ourProvider = new GenericValueReferenceProvider();
 
   @Override
@@ -40,7 +41,9 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
   }
 
   @Override
-  public List<DomElementProblemDescriptor> checkForProblems(@NotNull final ExtendClass extend, @NotNull final DomElement _element, @NotNull final DomElementAnnotationHolder holder,
+  public List<DomElementProblemDescriptor> checkForProblems(@NotNull final ExtendClass extend,
+                                                            @NotNull final DomElement _element,
+                                                            @NotNull final DomElementAnnotationHolder holder,
                                                             @NotNull final DomHighlightingHelper helper) {
     if (!(_element instanceof GenericDomValue)) return Collections.emptyList();
     GenericDomValue element = (GenericDomValue)_element;
@@ -52,31 +55,41 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
 
     if (valueObject instanceof PsiClass) {
       psiClass = (PsiClass)valueObject;
-    } else if (valueObject instanceof PsiClassType) {
+    }
+    else if (valueObject instanceof PsiClassType) {
       psiClass = ((PsiClassType)valueObject).resolve();
     }
 
     if (psiClass != null) {
-        return checkExtendClass(element, psiClass, extend.value(),
-                                extend.instantiatable(), extend.canBeDecorator(), extend.allowInterface(),
-                                extend.allowNonPublic(), extend.allowAbstract(), extend.allowEnum(), holder);
+      return checkExtendClass(element, psiClass, extend.value(),
+                              extend.instantiatable(), extend.canBeDecorator(), extend.allowInterface(),
+                              extend.allowNonPublic(), extend.allowAbstract(), extend.allowEnum(), holder);
     }
     return Collections.emptyList();
   }
 
   @NotNull
-  public static List<DomElementProblemDescriptor> checkExtendClass(final GenericDomValue element, final PsiClass value, final String name,
-                                                                   final boolean instantiatable, final boolean canBeDecorator, final boolean allowInterface,
+  public static List<DomElementProblemDescriptor> checkExtendClass(final GenericDomValue element,
+                                                                   final PsiClass value,
+                                                                   final String[] names,
+                                                                   final boolean instantiatable,
+                                                                   final boolean canBeDecorator,
+                                                                   final boolean allowInterface,
                                                                    final boolean allowNonPublic,
                                                                    final boolean allowAbstract,
                                                                    final boolean allowEnum,
                                                                    final DomElementAnnotationHolder holder) {
     final Project project = element.getManager().getProject();
-    PsiClass[] extendClasses = JavaPsiFacade.getInstance(project).findClasses(name, GlobalSearchScope.allScope(project));
+    Set<PsiClass> toExtend =
+      Arrays.stream(names).map(s -> JavaPsiFacade.getInstance(project).findClass(s, GlobalSearchScope.allScope(project)))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+
     final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
-    if (extendClasses.length > 0) {
-      if (!name.equals(value.getQualifiedName()) && ContainerUtil.find(extendClasses, aClass -> value.isInheritor(aClass, true)) == null) {
-        String message = JavaBundle.message("class.is.not.a.subclass", value.getQualifiedName(), name);
+    if (toExtend.size() > 0) {
+      if (!Arrays.asList(names).contains(value.getQualifiedName())
+          && ContainerUtil.find(toExtend, aClass -> value.isInheritor(aClass, true)) == null) {
+        String message = JavaBundle.message("class.is.not.a.subclass", value.getQualifiedName(), StringUtil.join(names, ","));
         list.add(holder.createProblem(element, message));
       }
     }
@@ -100,7 +113,8 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
               final PsiType psiType = typeElement.getType();
               if (psiType instanceof PsiClassType) {
                 final PsiClass psiClass = ((PsiClassType)psiType).resolve();
-                if (psiClass != null && ContainerUtil.find(extendClasses, aClass -> InheritanceUtil.isInheritorOrSelf(psiClass, aClass, true)) != null) {
+                if (psiClass != null &&
+                    ContainerUtil.find(toExtend, aClass -> InheritanceUtil.isInheritorOrSelf(psiClass, aClass, true)) != null) {
                   hasConstructor = true;
                   break;
                 }
@@ -108,7 +122,8 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
             }
           }
           if (!hasConstructor) {
-            list.add(holder.createProblem(element, JavaBundle.message("class.decorator.or.has.default.constructor", value.getQualifiedName())));
+            list.add(
+              holder.createProblem(element, JavaBundle.message("class.decorator.or.has.default.constructor", value.getQualifiedName())));
           }
         }
         else {
@@ -128,7 +143,8 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
     return list;
   }
 
-  public static List<DomElementProblemDescriptor> checkExtendsClassInReferences(final GenericDomValue element, final DomElementAnnotationHolder holder) {
+  public static List<DomElementProblemDescriptor> checkExtendsClassInReferences(final GenericDomValue element,
+                                                                                final DomElementAnnotationHolder holder) {
     if (!isPsiClassType(element)) {
       return Collections.emptyList();
     }
@@ -147,7 +163,7 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
       .unique();
     for (String className : superClasses) {
       final List<DomElementProblemDescriptor> problemDescriptors =
-        checkExtendClass(element, ((PsiClass)valueObject), className, false, false, true, false, true, true, holder);
+        checkExtendClass(element, ((PsiClass)valueObject), new String[]{className}, false, false, true, false, true, true, holder);
       if (!problemDescriptors.isEmpty()) {
         return problemDescriptors;
       }

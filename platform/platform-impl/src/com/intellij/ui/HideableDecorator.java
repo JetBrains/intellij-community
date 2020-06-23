@@ -3,8 +3,8 @@ package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,12 +30,12 @@ public class HideableDecorator {
   private JComponent myContent;
   private Dimension myPreviousContentSize;
 
-  public HideableDecorator(JPanel panel, @Nls(capitalization = Nls.Capitalization.Title) String title, boolean adjustWindow) {
+  public HideableDecorator(JPanel panel, @NlsContexts.Separator String title, boolean adjustWindow) {
     this(panel, title, adjustWindow, null);
   }
 
   public HideableDecorator(JPanel panel,
-                           @Nls(capitalization = Nls.Capitalization.Title) String title,
+                           @NlsContexts.Separator String title,
                            boolean adjustWindow,
                            @Nullable JComponent northEastComponent) {
     myPanel = panel;

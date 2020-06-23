@@ -7,6 +7,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestRunnableState;
@@ -100,7 +101,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
       builder.buildAndExecute();
     }
     catch (ExecutionException e1) {
-      Messages.showErrorDialog(project, e1.getMessage(), "Import Failed");
+      Messages.showErrorDialog(project, e1.getMessage(), SmRunnerBundle.message("sm.test.runner.abstract.import.test.error.title"));
     }
   }
 

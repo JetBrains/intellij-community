@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
@@ -14,7 +14,8 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import kotlin.math.max
 import kotlin.math.min
 
-class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
+class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewProcessModel,
+                                                commentableRangesModel: SingleValueModel<List<Range>?>,
                                                 reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                 viewer: UnifiedDiffViewer,
                                                 componentsFactory: GHPRDiffEditorReviewComponentsFactory)
@@ -29,12 +30,15 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
   init {
     val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
 
-    GHPREditorCommentableRangesController(commentableRanges, componentsFactory, inlaysManager) { fileLine ->
+    val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManager,
+                                                                                componentsFactory) { fileLine ->
       val (indices, side) = viewer.transferLineFromOneside(fileLine)
-      val line = side.select(indices).takeIf { it >= 0 } ?: return@GHPREditorCommentableRangesController null
+      val line = side.select(indices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
 
       side to line
     }
+
+    GHPREditorCommentableRangesController(commentableRanges, gutterIconRendererFactory, viewer.editor)
     GHPREditorReviewThreadsController(editorThreads, componentsFactory, inlaysManager)
   }
 

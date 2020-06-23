@@ -16,10 +16,11 @@
 package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
 public interface TargetElementEvaluatorEx extends TargetElementEvaluator {
-  boolean isIdentifierPart(PsiFile element, CharSequence text, int offset);
+  boolean isIdentifierPart(@NotNull PsiFile element, @NotNull CharSequence text, int offset);
 }

@@ -4,6 +4,7 @@ package com.intellij.usages;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +16,6 @@ public class FindUsagesProcessPresentation {
 
   private boolean myShowPanelIfOnlyOneUsage;
   private boolean myShowNotFoundMessage;
-  private Factory<ProgressIndicator> myProgressIndicatorFactory;
   private Collection<VirtualFile> myLargeFiles;
   private boolean myShowFindOptionsPrompt = true;
   private volatile Runnable mySearchWithProjectFiles;
@@ -41,13 +41,12 @@ public class FindUsagesProcessPresentation {
     myShowPanelIfOnlyOneUsage = showPanelIfOnlyOneUsage;
   }
 
-  public Factory<ProgressIndicator> getProgressIndicatorFactory() {
-    return myProgressIndicatorFactory;
-  }
-
-  public void setProgressIndicatorFactory(@NotNull Factory<ProgressIndicator> progressIndicatorFactory) {
-    myProgressIndicatorFactory = progressIndicatorFactory;
-  }
+  /**
+   * @deprecated passed factory is not used
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public void setProgressIndicatorFactory(@SuppressWarnings("unused") @NotNull Factory<ProgressIndicator> progressIndicatorFactory) {}
 
   @Nullable
   public Runnable searchIncludingProjectFileUsages() {

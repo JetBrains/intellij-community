@@ -23,20 +23,23 @@ import org.jetbrains.annotations.NotNull;
 public interface RegExpChar extends RegExpAtom, RegExpClassElement {
     /** Character type */
     enum Type {
-        /** a plain character ("a") */
+        /** A plain character, e.g.: a */
         CHAR,
 
-        /** a hex encoded character value ("\x61") */
+        /** Aa hex encoded character value, e.g.: \x61 */
         HEX,
 
-        /** an octal encoded character value ("\0141") */
+        /** An octal encoded character value, e.g.: \0141 */
         OCT,
 
-        /** a unicode escape character ("\u0061") */
+        /** A unicode escape character, e.g.: \u0061 */
         UNICODE,
 
-        /** a named character (\N{LATIN SMALL LETTER A}) */
+        /** A named character, e.g.: \N{LATIN SMALL LETTER A} */
         NAMED,
+
+        /** A control character, e.g.: \c@ */
+        CONTROL,
     }
 
     /**

@@ -111,8 +111,7 @@ public class SourceCodeChecker {
           }
           int startLine = document.getLineNumber(range.getStartOffset()) + 1;
           int endLine = document.getLineNumber(range.getEndOffset()) + 1;
-          // Android Studio: allow line 0 as a valid location (for all instant run instrumented classes)
-          res = getLinesStream(locations, psiFile).allMatch(line -> line == 0 || (startLine <= line && line <= endLine));
+          res = getLinesStream(locations, psiFile).allMatch(line -> startLine <= line && line <= endLine);
           if (!res) {
             LOG.debug("Source check failed: Method " + method.name() + ", source: " + ((NavigationItem)psiMethod).getName() +
                       "\nLines: " + getLinesStream(locations, psiFile).joining(", ") +

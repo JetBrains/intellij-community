@@ -103,11 +103,21 @@
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void cancelAcquire(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void setHead(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this,param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void setHead(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void setHeadAndPropagate(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void setState(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void unparkSuccessor(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

@@ -361,9 +361,6 @@ public class RecursionManager {
     "com.intellij.lang.ecmascript6.psi.impl.ES6ImportSpecifierImpl.multiResolve(",
     "com.intellij.lang.javascript.psi.types.JSTypeBaseImpl.substitute(",
 
-    // IDEA-228815
-    "org.jetbrains.plugins.groovy.intentions.style.inference.InferenceProcessKt.runInferenceProcess(",
-
     // IDEA-228814
     "com.intellij.psi.infos.MethodCandidateInfo.getPertinentApplicabilityLevel(",
     "com.intellij.psi.ThreadLocalTypes.performWithTypes(",

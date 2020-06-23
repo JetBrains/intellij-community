@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -39,6 +40,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private String myCommentText;
   private HyperlinkListener myHyperlinkListener = BrowserHyperlinkListener.INSTANCE;
   private boolean myCommentBelow = true;
+  private boolean myCommentAllowAutoWrapping = true;
   private String myHTDescription;
   private String myHTLinkText;
   private Runnable myHTAction;
@@ -82,7 +84,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param labelText text for the label.
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withLabel(@NotNull String labelText) {
+  public ComponentPanelBuilder withLabel(@NotNull @NlsContexts.Label String labelText) {
     myLabelText = labelText;
     return this;
   }
@@ -107,8 +109,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param comment help context styled text written below the owner component.
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withComment(@NotNull String comment) {
+  public ComponentPanelBuilder withComment(@NotNull @NlsContexts.DetailedDescription String comment) {
+    return withComment(comment, true);
+  }
+
+  public ComponentPanelBuilder withComment(@NotNull @NlsContexts.DetailedDescription String comment, boolean allowAutoWrapping) {
     myCommentText = comment;
+    myCommentAllowAutoWrapping = allowAutoWrapping;
     valid = StringUtil.isEmpty(comment) || StringUtil.isEmpty(myHTDescription);
     return this;
   }
@@ -156,7 +163,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param description help tooltip description.
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withTooltip(@NotNull String description) {
+  public ComponentPanelBuilder withTooltip(@NotNull @NlsContexts.Tooltip String description) {
     myHTDescription = description;
     valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(description);
     return this;
@@ -171,7 +178,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    *
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withTooltipLink(@NotNull String linkText, @NotNull Runnable action) {
+  public ComponentPanelBuilder withTooltipLink(@NotNull @NlsContexts.LinkLabel String linkText, @NotNull Runnable action) {
     myHTLinkText = linkText;
     myHTAction = action;
     return this;
@@ -261,20 +268,26 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   @NotNull
-  public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow) {
-    return createCommentComponent(commentText, isCommentBelow, 70);
+  public static JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText, boolean isCommentBelow) {
+    return createCommentComponent(commentText, isCommentBelow, 70, true);
   }
 
   @NotNull
-  public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow, int maxLineLength) {
-    return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, maxLineLength);
+  public static JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
+                                              boolean isCommentBelow,
+                                              int maxLineLength,
+                                              boolean allowAutoWrapping) {
+    return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, maxLineLength, allowAutoWrapping);
   }
 
-  private static JLabel createCommentComponent(@NotNull Supplier<? extends JBLabel> labelSupplier, @Nullable String commentText,
-                                              boolean isCommentBelow, int maxLineLength) {
+  private static JLabel createCommentComponent(@NotNull Supplier<? extends JBLabel> labelSupplier,
+                                               @Nullable @NlsContexts.DetailedDescription String commentText,
+                                               boolean isCommentBelow,
+                                               int maxLineLength,
+                                               boolean allowAutoWrapping) {
     // todo why our JBLabel cannot render html if render panel without frame (test only)
     boolean isCopyable = SystemProperties.getBooleanProperty("idea.ui.comment.copyable", true);
-    JLabel component = labelSupplier.get().setCopyable(isCopyable).setAllowAutoWrapping(true);
+    JLabel component = labelSupplier.get().setCopyable(isCopyable).setAllowAutoWrapping(allowAutoWrapping);
 
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
@@ -290,14 +303,17 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     return component;
   }
 
-  public static JLabel createNonWrappingCommentComponent(@NotNull String commentText) {
+  public static JLabel createNonWrappingCommentComponent(@NotNull @NlsContexts.DetailedDescription String commentText) {
     JBLabel component = new JBLabel(commentText);
     component.setForeground(UIUtil.getContextHelpForeground());
     setCommentFont(component);
     return component;
   }
 
-  private static void setCommentText(@NotNull JLabel component, @Nullable String commentText, boolean isCommentBelow, int maxLineLength) {
+  private static void setCommentText(@NotNull JLabel component,
+                                     @Nullable @NlsContexts.DetailedDescription String commentText,
+                                     boolean isCommentBelow,
+                                     int maxLineLength) {
     if (commentText != null) {
       String css = "<head><style type=\"text/css\">\n" +
                          "a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}\n" +
@@ -347,7 +363,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         protected HyperlinkListener createHyperlinkListener() {
           return myHyperlinkListener;
         }
-      }, myCommentText, myCommentBelow, 70);
+      }, myCommentText, myCommentBelow, 70, myCommentAllowAutoWrapping);
       comment.setBorder(getCommentBorder());
     }
 

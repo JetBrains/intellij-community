@@ -203,10 +203,10 @@ class JavaUastApiTest : AbstractJavaUastTest() {
 
   @Test
   fun testDefaultConstructorRef() = doTest("Simple/ComplexCalls.java") { _, file ->
-    val call = file.findElementByTextFromPsi<UCallExpression>("new A()")
+    val call = file.findElementByTextFromPsi<UCallExpression>("new C()")
     TestCase.assertEquals(UastCallKind.CONSTRUCTOR_CALL, call.kind)
     TestCase.assertEquals(null, call.resolve())
-    TestCase.assertEquals("A", (call.classReference?.resolve() as? PsiClass)?.qualifiedName)
+    TestCase.assertEquals("C", (call.classReference?.resolve() as? PsiClass)?.qualifiedName)
   }
 
 }

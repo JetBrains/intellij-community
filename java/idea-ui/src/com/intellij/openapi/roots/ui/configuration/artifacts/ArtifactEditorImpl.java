@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModuleO
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -58,6 +57,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class ArtifactEditorImpl implements ArtifactEditorEx {
   private JPanel myMainPanel;
@@ -441,7 +441,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   public boolean isModified() {
     return myBuildOnMakeCheckBox.isSelected() != myOriginalArtifact.isBuildOnMake()
-        || !Comparing.equal(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath())
+        || !Objects.equals(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath())
         || myPropertiesEditors.isModified()
         || myLayoutTreeComponent.isPropertiesModified();
   }
@@ -463,7 +463,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   public void updateOutputPath(@NotNull String oldArtifactName, @NotNull final String newArtifactName) {
     final String oldDefaultPath = ArtifactUtil.getDefaultArtifactOutputPath(oldArtifactName, myProject);
-    if (Comparing.equal(oldDefaultPath, getConfiguredOutputPath())) {
+    if (Objects.equals(oldDefaultPath, getConfiguredOutputPath())) {
       setOutputPath(ArtifactUtil.getDefaultArtifactOutputPath(newArtifactName, myProject));
     }
     final CompositePackagingElement<?> root = getRootElement();

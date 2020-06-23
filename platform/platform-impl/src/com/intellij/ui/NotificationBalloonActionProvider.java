@@ -25,6 +25,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   private final String myDisplayGroupId;
   private final Component myRepaintPanel;
   private final String myNotificationId;
+  private final String myNotificationDisplayId;
   private BalloonImpl.ActionButton mySettingButton;
   private BalloonImpl.ActionButton myCloseButton;
   private List<BalloonImpl.ActionButton> myActions;
@@ -35,12 +36,14 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
                                            @Nullable Component repaintPanel,
                                            @NotNull BalloonLayoutData layoutData,
                                            @Nullable String displayGroupId,
-                                           @NotNull String notificationId) {
+                                           @NotNull String notificationId,
+                                           @Nullable String notificationDisplayId) {
     myLayoutData = layoutData;
     myDisplayGroupId = displayGroupId;
     myBalloon = balloon;
     myRepaintPanel = repaintPanel;
     myNotificationId = notificationId;
+    myNotificationDisplayId = notificationDisplayId;
   }
 
   @NotNull
@@ -57,7 +60,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
         AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover,
         "Turn notification off or change its behavior",
         event -> myBalloon.runWithSmartFadeoutPause(() -> {
-          NotificationCollector.getInstance().logNotificationSettingsClicked(myNotificationId, myDisplayGroupId);
+          NotificationCollector.getInstance().logNotificationSettingsClicked(myNotificationId, myNotificationDisplayId, myDisplayGroupId);
           final NotificationsConfigurable configurable = new NotificationsConfigurable();
           ShowSettingsUtil.getInstance().editConfigurable(myLayoutData.project, configurable, () -> {
             //noinspection ConstantConditions
@@ -99,11 +102,11 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
           else {
             BalloonLayoutData.MergeInfo mergeInfo = myLayoutData.mergeData;
             if (mergeInfo != null && mergeInfo.linkIds != null) {
-              for (String notificationId : mergeInfo.linkIds) {
-                NotificationCollector.getInstance().logNotificationBalloonClosedByUser(notificationId, myDisplayGroupId);
+              for (BalloonLayoutData.ID id : mergeInfo.linkIds) {
+                NotificationCollector.getInstance().logNotificationBalloonClosedByUser(id.notificationId, id.notificationDisplayId, myDisplayGroupId);
               }
             }
-            NotificationCollector.getInstance().logNotificationBalloonClosedByUser(myNotificationId, myDisplayGroupId);
+            NotificationCollector.getInstance().logNotificationBalloonClosedByUser(myNotificationId, myNotificationDisplayId, myDisplayGroupId);
             myBalloon.hide();
           }
         });

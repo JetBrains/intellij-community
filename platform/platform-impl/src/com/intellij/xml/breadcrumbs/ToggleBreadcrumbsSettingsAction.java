@@ -45,7 +45,7 @@ class ToggleBreadcrumbsSettingsAction extends ToggleBreadcrumbsAction {
   }
 
   @Override
-  public void setSelected(AnActionEvent event, boolean selected) {
+  public void setSelected(@NotNull AnActionEvent event, boolean selected) {
     Editor editor = findEditor(event);
     boolean modified = editor != null && BreadcrumbsForceShownSettings.setForcedShown(null, editor);
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();

@@ -2,11 +2,11 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -70,16 +70,16 @@ abstract class ContentLayout {
 
   public abstract void showContentPopup(ListPopup listPopup);
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @ActionText
   public abstract String getCloseActionName();
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @ActionText
   public abstract String getCloseAllButThisActionName();
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @ActionText
   public abstract String getPreviousContentActionName();
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @ActionText
   public abstract String getNextContentActionName();
 
   protected boolean shouldShowId() {

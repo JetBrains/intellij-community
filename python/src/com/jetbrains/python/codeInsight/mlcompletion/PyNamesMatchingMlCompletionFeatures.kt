@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.mlcompletion
 import com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatures
+import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
@@ -25,6 +26,8 @@ object PyNamesMatchingMlCompletionFeatures {
 
   val statementListOrFileNamesKey = Key<Map<String, Int>>("py.ml.completion.statement.list.names")
   val statementListOrFileTokensKey = Key<Map<String, Int>>("py.ml.completion.statement.list.tokens")
+
+  private val enclosingMethodName = Key<String>("py.ml.completion.enclosing.method.name")
 
   data class PyScopeMatchingFeatures(val sumMatches: Int,
                                      val sumTokensMatches: Int,
@@ -55,6 +58,14 @@ object PyNamesMatchingMlCompletionFeatures {
     val numMatchedTokens = tokensMatched(maxMatchedToken, element.lookupString)
     val receiverTokensNum = getNumTokensFeature(maxMatchedToken)
     return MatchingWithReceiverFeatures(matchesWithReceiver, receiverTokensNum, numMatchedTokens)
+  }
+
+  fun getMatchingWithEnclosingMethodFeatures(contextFeatures: ContextFeatures, element: LookupElement): Map<String, MLFeatureValue> {
+    val name = contextFeatures.getUserData(enclosingMethodName) ?: return emptyMap()
+    val result = mutableMapOf<String, MLFeatureValue>()
+    if (element.lookupString == name) result["matches_with_enclosing_method"] = MLFeatureValue.binary(true)
+    result["matched_tokens_with_enclosing_method"] = MLFeatureValue.numerical(tokensMatched (name, element.lookupString))
+    return result
   }
 
   fun calculateFunBodyNames(environment: CompletionEnvironment) {
@@ -106,6 +117,12 @@ object PyNamesMatchingMlCompletionFeatures {
       ?.mapNotNull { it.firstChild }
       ?.mapNotNull { it.text }
       ?.let { putTokensAndNamesToUserData(environment, namedArgumentsNamesKey, namedArgumentsTokensKey, it) }
+  }
+
+  fun calculateEnclosingMethodName(environment: CompletionEnvironment) {
+    val position = environment.parameters.position
+    val name = PsiTreeUtil.getParentOfType(position, PyFunction::class.java)?.name ?: return
+    environment.putUserData(enclosingMethodName, name)
   }
 
   private fun putTokensAndNamesToUserData(environment: CompletionEnvironment,

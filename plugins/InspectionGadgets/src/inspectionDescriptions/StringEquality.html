@@ -1,7 +1,8 @@
 <html>
 <body>
-Reports any use of <b>==</b> or <b>!=</b> to test for String equality,
-instead of an <b>equals()</b> call.
+Reports any use of <b>==</b> or <b>!=</b> to compare strings, which compares object identity.
+In most cases strings should be compared with an <b>equals()</b> call instead,
+which does a character-by-character comparison when the strings are different objects.
 <!-- tooltip end -->
 <p>
 

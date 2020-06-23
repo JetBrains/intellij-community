@@ -1,4 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.ide.HelpTooltip
@@ -205,7 +207,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       })
 
       it.messageBus.connect(disp).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-        override fun after(events: MutableList<out VFileEvent>) {
+        override fun after(events: List<VFileEvent>) {
           updatePathLater()
         }
       })
@@ -284,8 +286,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
   }
 
-  open fun getCustomTitle(): String? = null
-
   protected var isClipped = false
   var titleString = ""
 
@@ -323,9 +323,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       classTitle.getLong() + it
     } ?: pathPatterns.firstOrNull { it.preferredWidth < width }?.let { it.createTitle() } ?: ""
 
-    getCustomTitle()?.let {
-      titleString = it
-    }
     label.text = titleString
     HelpTooltip.dispose(label)
 

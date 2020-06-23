@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.containers;
 
@@ -36,8 +36,7 @@ public class MultiMap<K, V> implements Serializable {
     putAllValues(toCopy);
   }
 
-  @NotNull
-  public MultiMap<K, V> copy() {
+  public @NotNull MultiMap<K, V> copy() {
     return new MultiMap<>(this);
   }
 
@@ -45,23 +44,19 @@ public class MultiMap<K, V> implements Serializable {
     myMap = createMap(initialCapacity, loadFactor);
   }
 
-  @NotNull
-  protected Map<K, Collection<V>> createMap() {
+  protected @NotNull Map<K, Collection<V>> createMap() {
     return new java.util.HashMap<>();
   }
 
-  @NotNull
-  protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
+  protected @NotNull Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
     return new HashMap<>(initialCapacity, loadFactor);
   }
 
-  @NotNull
-  protected Collection<V> createCollection() {
+  protected @NotNull Collection<V> createCollection() {
     return new SmartList<>();
   }
 
-  @NotNull
-  protected Collection<V> createEmptyCollection() {
+  protected @NotNull Collection<V> createEmptyCollection() {
     return Collections.emptyList();
   }
 
@@ -95,8 +90,7 @@ public class MultiMap<K, V> implements Serializable {
     list.add(value);
   }
 
-  @NotNull
-  public Set<Map.Entry<K, Collection<V>>> entrySet() {
+  public @NotNull Set<Map.Entry<K, Collection<V>>> entrySet() {
     return myMap.entrySet();
   }
 
@@ -124,14 +118,12 @@ public class MultiMap<K, V> implements Serializable {
     return false;
   }
 
-  @NotNull
-  public Collection<V> get(final K key) {
+  public @NotNull Collection<V> get(final K key) {
     final Collection<V> collection = myMap.get(key);
     return collection == null ? createEmptyCollection() : collection;
   }
 
-  @NotNull
-  public Collection<V> getModifiable(final K key) {
+  public @NotNull Collection<V> getModifiable(final K key) {
     Collection<V> collection = myMap.get(key);
     if (collection == null) {
       myMap.put(key, collection = createCollection());
@@ -139,8 +131,7 @@ public class MultiMap<K, V> implements Serializable {
     return collection;
   }
 
-  @NotNull
-  public Set<K> keySet() {
+  public @NotNull Set<K> keySet() {
     return myMap.keySet();
   }
 
@@ -172,13 +163,11 @@ public class MultiMap<K, V> implements Serializable {
     return false;
   }
 
-  @NotNull
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     if (values == null) {
       values = new AbstractCollection<V>() {
-        @NotNull
         @Override
-        public Iterator<V> iterator() {
+        public @NotNull Iterator<V> iterator() {
           return new Iterator<V>() {
 
             private final Iterator<Collection<V>> mapIterator = myMap.values().iterator();
@@ -239,13 +228,11 @@ public class MultiMap<K, V> implements Serializable {
     myMap.clear();
   }
 
-  @Nullable
-  public Collection<V> remove(K key) {
+  public @Nullable Collection<V> remove(K key) {
     return myMap.remove(key);
   }
 
-  @NotNull
-  public static <K, V> MultiMap<K, V> emptyInstance() {
+  public static @NotNull <K, V> MultiMap<K, V> emptyInstance() {
     //noinspection unchecked
     return (MultiMap<K, V>)EMPTY;
   }
@@ -253,140 +240,115 @@ public class MultiMap<K, V> implements Serializable {
   /**
    * Null keys supported.
    */
-  @NotNull
-  public static <K, V> MultiMap<K, V> create() {
+  public static @NotNull <K, V> MultiMap<K, V> create() {
     return new MultiMap<>();
   }
 
-  @NotNull
-  public static <K, V> MultiMap<K, V> create(@NotNull final TObjectHashingStrategy<K> strategy) {
+  public static @NotNull <K, V> MultiMap<K, V> create(final @NotNull TObjectHashingStrategy<K> strategy) {
     return new MultiMap<K, V>() {
-      @NotNull
       @Override
-      protected Map<K, Collection<V>> createMap() {
+      protected @NotNull Map<K, Collection<V>> createMap() {
         return new THashMap<>(strategy);
       }
     };
   }
 
-  @NotNull
-  public static <K, V> MultiMap<K, V> createLinked() {
+  public static @NotNull <K, V> MultiMap<K, V> createLinked() {
     return new LinkedMultiMap<>();
   }
 
-  @NotNull
-  public static <K, V> MultiMap<K, V> createLinkedSet() {
+  public static @NotNull <K, V> MultiMap<K, V> createLinkedSet() {
     return new LinkedMultiMap<K, V>() {
-      @NotNull
       @Override
-      protected Collection<V> createCollection() {
+      protected @NotNull Collection<V> createCollection() {
         return new LinkedHashSet<>();
       }
 
-      @NotNull
       @Override
-      protected Collection<V> createEmptyCollection() {
+      protected @NotNull Collection<V> createEmptyCollection() {
         return Collections.emptySet();
       }
     };
   }
 
-  @NotNull
-  public static <K, V> MultiMap<K, V> createOrderedSet() {
+  public static @NotNull <K, V> MultiMap<K, V> createOrderedSet() {
     return new LinkedMultiMap<K, V>() {
-      @NotNull
       @Override
-      protected Collection<V> createCollection() {
+      protected @NotNull Collection<V> createCollection() {
         return new OrderedSet<>();
       }
 
-      @NotNull
       @Override
-      protected Collection<V> createEmptyCollection() {
+      protected @NotNull Collection<V> createEmptyCollection() {
         return Collections.emptySet();
       }
     };
   }
 
-  @NotNull
-  public static <K, V> MultiMap<K, V> createObjectLinkedOpenHashSet() {
+  public static @NotNull <K, V> MultiMap<K, V> createObjectLinkedOpenHashSet() {
     return new LinkedMultiMap<K, V>() {
-      @NotNull
       @Override
-      protected Collection<V> createCollection() {
+      protected @NotNull Collection<V> createCollection() {
         return new ObjectLinkedOpenHashSet<>();
       }
 
-      @NotNull
       @Override
-      protected Collection<V> createEmptyCollection() {
+      protected @NotNull Collection<V> createEmptyCollection() {
         return Collections.emptySet();
       }
     };
   }
 
-  @NotNull
-  public static <K, V> MultiMap<K, V> createSmart() {
+  public static @NotNull <K, V> MultiMap<K, V> createSmart() {
     return new MultiMap<K, V>() {
-      @NotNull
       @Override
-      protected Map<K, Collection<V>> createMap() {
+      protected @NotNull Map<K, Collection<V>> createMap() {
         return new THashMap<>();
       }
     };
   }
 
-  @NotNull
-  public static <K, V> MultiMap<K, V> createConcurrentSet() {
+  public static @NotNull <K, V> MultiMap<K, V> createConcurrentSet() {
     return new ConcurrentMultiMap<K, V>() {
-      @NotNull
       @Override
-      protected Collection<V> createCollection() {
+      protected @NotNull Collection<V> createCollection() {
         return ContainerUtil.newConcurrentSet();
       }
 
-      @NotNull
       @Override
-      protected Collection<V> createEmptyCollection() {
+      protected @NotNull Collection<V> createEmptyCollection() {
         return Collections.emptySet();
       }
     };
   }
 
-  @NotNull
-  public static <K, V> MultiMap<K, V> createSet() {
+  public static @NotNull <K, V> MultiMap<K, V> createSet() {
     return createSet(ContainerUtil.canonicalStrategy());
   }
 
-  @NotNull
-  public static <K, V> MultiMap<K, V> createSet(@NotNull final TObjectHashingStrategy<K> strategy) {
+  public static @NotNull <K, V> MultiMap<K, V> createSet(final @NotNull TObjectHashingStrategy<K> strategy) {
     return new MultiMap<K, V>() {
-      @NotNull
       @Override
-      protected Collection<V> createCollection() {
+      protected @NotNull Collection<V> createCollection() {
         return new SmartHashSet<>();
       }
 
-      @NotNull
       @Override
-      protected Collection<V> createEmptyCollection() {
+      protected @NotNull Collection<V> createEmptyCollection() {
         return Collections.emptySet();
       }
 
-      @NotNull
       @Override
-      protected Map<K, Collection<V>> createMap() {
+      protected @NotNull Map<K, Collection<V>> createMap() {
         return new THashMap<>(strategy);
       }
     };
   }
 
-  @NotNull
-  public static <K, V> MultiMap<K, V> createWeakKey() {
+  public static @NotNull <K, V> MultiMap<K, V> createWeakKey() {
     return new MultiMap<K, V>() {
-      @NotNull
       @Override
-      protected Map<K, Collection<V>> createMap() {
+      protected @NotNull Map<K, Collection<V>> createMap() {
         return ContainerUtil.createWeakMap();
       }
     };
@@ -420,9 +382,8 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   private static class EmptyMap extends MultiMap<Object, Object> {
-    @NotNull
     @Override
-    protected Map<Object, Collection<Object>> createMap() {
+    protected @NotNull Map<Object, Collection<Object>> createMap() {
       return Collections.emptyMap();
     }
 
@@ -451,9 +412,8 @@ public class MultiMap<K, V> implements Serializable {
       throw new UnsupportedOperationException();
     }
 
-    @Nullable
     @Override
-    public Collection<Object> remove(Object key) {
+    public @Nullable Collection<Object> remove(Object key) {
       throw new UnsupportedOperationException();
     }
   }

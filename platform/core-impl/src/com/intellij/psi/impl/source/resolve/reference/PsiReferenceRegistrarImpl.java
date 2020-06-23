@@ -31,7 +31,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private static final Logger LOG = Logger.getInstance(PsiReferenceRegistrarImpl.class);
   private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = new THashMap<>();
   private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = new THashMap<>();
-  private final ConcurrentMap<Class, ProviderBinding[]> myBindingCache;
+  private final ConcurrentMap<Class<?>, ProviderBinding[]> myBindingCache;
   private boolean myInitialized;
 
   PsiReferenceRegistrarImpl() {
@@ -71,13 +71,13 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       LOG.error("Reference provider registration is only allowed from PsiReferenceContributor");
     }
 
-    final Class scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
+    Class<?> scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
     final List<PatternCondition<? super T>> conditions = pattern.getCondition().getConditions();
     for (PatternCondition<? super T> _condition : conditions) {
       if (!(_condition instanceof PsiNamePatternCondition)) {
         continue;
       }
-      final PsiNamePatternCondition<?> nameCondition = (PsiNamePatternCondition)_condition;
+      PsiNamePatternCondition<?> nameCondition = (PsiNamePatternCondition<?>)_condition;
       List<PatternCondition<? super String>> conditions1 = nameCondition.getNamePattern().getCondition().getConditions();
       for (PatternCondition<? super String> condition1 : conditions1) {
         if (condition1 instanceof ValuePatternCondition) {
@@ -106,7 +106,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     myBindingCache.clear();
   }
 
-  public void unregisterReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
+  public void unregisterReferenceProvider(@NotNull Class<?> scope, @NotNull PsiReferenceProvider provider) {
     final SimpleProviderBinding binding = myBindingsMap.get(scope);
     if (binding != null) {
       binding.unregisterProvider(provider);
@@ -119,11 +119,11 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
 
   private void registerNamedReferenceProvider(String @NotNull [] names,
                                               final PsiNamePatternCondition<?> nameCondition,
-                                              @NotNull Class scopeClass,
+                                              @NotNull Class<?> scopeClass,
                                               final boolean caseSensitive,
                                               @NotNull PsiReferenceProvider provider,
                                               final double priority,
-                                              @NotNull ElementPattern pattern,
+                                              @NotNull ElementPattern<?> pattern,
                                               @Nullable Disposable parentDisposable) {
     NamedObjectProviderBinding providerBinding = myNamedBindingsMap.get(scopeClass);
 

@@ -185,7 +185,10 @@ public final class WideSelectionListUI extends BasicListUI {
           Object value = dataModel.getElementAt(index);
           Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
           rendererPane.add(c);
-          Dimension cellSize = UIUtil.updateListRowHeight(c.getPreferredSize());
+          Dimension cellSize = c.getPreferredSize();
+          if (UIUtil.getClientProperty(c, "IgnoreListRowHeight") == null) {
+            cellSize = UIUtil.updateListRowHeight(cellSize);
+          }
           if (fixedCellWidth == -1) {
             cellWidth = Math.max(cellSize.width, cellWidth);
           }

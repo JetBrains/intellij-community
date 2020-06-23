@@ -598,4 +598,19 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   public void testIncompleteFromImport() {
     assertUnresolved();
   }
+
+  // PY-38322
+  public void testDunderAllDynamicallyBuiltInHelperFunction() {
+    assertResolvesTo(PyTargetExpression.class, "bar");
+  }
+
+  // PY-38322 PY-39171
+  public void testImportOfNestedBinarySubModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        assertResolvesTo(PyFunction.class, "func");
+      });
+    });
+  }
 }

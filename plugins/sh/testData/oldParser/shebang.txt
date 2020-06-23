@@ -1,8 +1,10 @@
 SHELL_SCRIPT
-  PsiComment(shebang)('#!/bin/bash\n')
+  PsiComment(shebang)('#!/bin/bash')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
-  PsiComment(Comment)('#!/bin/sh\n')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('#!/bin/sh')
+  PsiElement(\n)('\n')
   COMMANDS_LIST
     GENERIC_COMMAND_DIRECTIVE
       LITERAL
@@ -23,7 +25,8 @@ SHELL_SCRIPT
   PsiComment(Comment)('#!/bin/sh')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
-  PsiComment(Comment)('#!/bin/sh\n')
+  PsiComment(Comment)('#!/bin/sh')
+  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
@@ -60,7 +63,8 @@ SHELL_SCRIPT
         PsiElement(word)('echo')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
-  PsiComment(Comment)('#!/bin/sh\n')
+  PsiComment(Comment)('#!/bin/sh')
+  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     GENERIC_COMMAND_DIRECTIVE

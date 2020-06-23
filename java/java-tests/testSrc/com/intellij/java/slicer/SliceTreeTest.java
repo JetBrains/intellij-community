@@ -23,7 +23,7 @@ public class SliceTreeTest extends SliceTestCase {
   private SliceTreeStructure configureTree(@NonNls final String name) throws Exception {
     configureByFile("/codeInsight/slice/backward/"+ name +".java");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    PsiElement element = new SliceHandler(true).getExpressionAtCaret(getEditor(), getFile());
+    PsiElement element = SliceHandler.create(true).getExpressionAtCaret(getEditor(), getFile());
     assertNotNull(element);
     Collection<HighlightInfo> errors = highlightErrors();
     assertEmpty(errors);

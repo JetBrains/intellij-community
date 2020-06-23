@@ -505,7 +505,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       if (!(aClass instanceof PsiTypeParameter)) return null;
       final PsiTypeParameter methodTypeParameter = (PsiTypeParameter)aClass;
       if (methodTypeParameter.getOwner() != containingElement) return null;
-      if (result.keySet().contains(methodTypeParameter)) return null;
+      if (result.containsKey(methodTypeParameter)) return null;
       result.put(methodTypeParameter, classTypeParameter);
     }
     return result;

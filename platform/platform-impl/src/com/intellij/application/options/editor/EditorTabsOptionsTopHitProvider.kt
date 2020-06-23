@@ -16,5 +16,5 @@ class EditorTabsOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationL
     , openTabsAtTheEnd
     , reuseNotModifiedTabs
     , scrollTabLayoutInEditor
-    , useSmallFont).map(CheckboxDescriptor::asOptionDescriptor) + tabPlacementsOptionDescriptors + closeButtonPlacementOptionDescription
+    , useSmallFont).map(CheckboxDescriptor::asUiOptionDescriptor) + tabPlacementsOptionDescriptors + closeButtonPlacementOptionDescription
 }

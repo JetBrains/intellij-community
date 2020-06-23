@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.Color;
+import java.util.function.Supplier;
 
 public final class RenderingUtil {
   /**
@@ -25,6 +26,12 @@ public final class RenderingUtil {
    */
   @ApiStatus.Internal
   public static final Key<JComponent> FOCUSABLE_SIBLING = Key.create("FOCUSABLE_SIBLING");
+
+  /**
+   * This key can be set to provide a custom selection background.
+   */
+  @ApiStatus.Internal
+  public static final Key<Supplier<Color>> CUSTOM_SELECTION_BACKGROUND = Key.create("CUSTOM_SELECTION_BACKGROUND");
 
 
   @NotNull
@@ -66,19 +73,22 @@ public final class RenderingUtil {
 
   @NotNull
   public static Color getSelectionBackground(@NotNull JList<?> list) {
-    return UIUtil.getListSelectionBackground(isFocused(list));
+    Color background = getCustomSelectionBackground(list);
+    return background != null ? background : UIUtil.getListSelectionBackground(isFocused(list));
   }
 
   @NotNull
   public static Color getSelectionBackground(@NotNull JTable table) {
-    return UIUtil.getTableSelectionBackground(isFocused(table));
+    Color background = getCustomSelectionBackground(table);
+    return background != null ? background : UIUtil.getTableSelectionBackground(isFocused(table));
   }
 
   @NotNull
   public static Color getSelectionBackground(@NotNull JTree tree) {
     JTable table = getTableFor(tree);
     if (table != null) return getSelectionBackground(table); // tree table
-    return UIUtil.getTreeSelectionBackground(isFocused(tree));
+    Color background = getCustomSelectionBackground(tree);
+    return background != null ? background : UIUtil.getTreeSelectionBackground(isFocused(tree));
   }
 
 
@@ -153,5 +163,10 @@ public final class RenderingUtil {
     if (property instanceof JTable) return (JTable)property;
     JComponent sibling = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
     return sibling instanceof JTable ? (JTable)sibling : null;
+  }
+
+  private static Color getCustomSelectionBackground(@NotNull JComponent component) {
+    Supplier<Color> supplier = UIUtil.getClientProperty(component, CUSTOM_SELECTION_BACKGROUND);
+    return supplier == null ? null : supplier.get();
   }
 }

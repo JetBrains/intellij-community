@@ -107,7 +107,7 @@ abstract class TerminalOperation implements Operation {
                            @NotNull String code,
                            @NotNull OptionalToIfContext context) {
       myFn.transform(context, inVar.getName());
-      return "{\n" + myFn.getStatementText() + "}\n";
+      return "{\n" + myFn.getStatementText() + "\n}\n";
     }
   }
 
@@ -143,13 +143,13 @@ abstract class TerminalOperation implements Operation {
       myElseFn.transform(context);
       myIfPresentFn.transform(context, outVar.getName());
       context.addBeforeStep(outVar.getDeclaration("null"));
-      context.addAfterStep("if (" + outVar.getName() + " == null) {\n" +
-                           "{" + myElseFn.getStatementText() + "}" +
+      context.addAfterStep("if(" + outVar.getName() + "==null){\n" +
+                           "{\n" + myElseFn.getStatementText() + "\n}" +
                            "}" +
-                           "else {\n" +
-                           "{" + myIfPresentFn.getStatementText() + "}" +
+                           "else{\n" +
+                           "{\n" + myIfPresentFn.getStatementText() + "\n}" +
                            "}\n");
-      return outVar.getName() + " = " + inVar.getName() + ";";
+      return outVar.getName() + "=" + inVar.getName() + ";";
     }
   }
 
@@ -203,11 +203,11 @@ abstract class TerminalOperation implements Operation {
         return context.createResult(inVar.getName());
       }
       context.addBeforeStep(outVar.getDeclaration("null"));
-      context.addAfterStep("if (" + outVar.getName() + " == null) {\n" +
-                           outVar.getName() + " = " + myFn.getStatementText() +
-                           "}" +
+      context.addAfterStep("if(" + outVar.getName() + "==null){\n" +
+                           outVar.getName() + "=" + myFn.getStatementText() +
+                           "\n}" +
                            context.createResult(outVar.getName()));
-      return outVar.getName() + " = " + inVar.getName() + ";";
+      return outVar.getName() + "=" + inVar.getName() + ";";
     }
   }
 

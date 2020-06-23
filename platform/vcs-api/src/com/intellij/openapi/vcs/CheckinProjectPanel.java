@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.vcs.commit.CommitWorkflowHandler;
@@ -96,5 +97,6 @@ public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
   @NotNull
   String getCommitMessage();
 
+  @NlsContexts.Button
   String getCommitActionName();
 }

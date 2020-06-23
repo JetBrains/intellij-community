@@ -4,10 +4,10 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.ShallowNodeComparator;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTNode> {
@@ -52,7 +52,7 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     if (oldNode instanceof PsiErrorElement && newNode instanceof PsiErrorElement) {
       final PsiErrorElement e1 = (PsiErrorElement)oldNode;
       final PsiErrorElement e2 = (PsiErrorElement)newNode;
-      if (!Comparing.equal(e1.getErrorDescription(), e2.getErrorDescription())) return ThreeState.NO;
+      if (!Objects.equals(e1.getErrorDescription(), e2.getErrorDescription())) return ThreeState.NO;
     }
 
     return ThreeState.UNSURE;
@@ -102,7 +102,7 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     if (n1 instanceof PsiErrorElement && n2 instanceof PsiErrorElement) {
       final PsiErrorElement e1 = (PsiErrorElement)n1;
       final PsiErrorElement e2 = (PsiErrorElement)n2;
-      if (!Comparing.equal(e1.getErrorDescription(), e2.getErrorDescription())) return false;
+      if (!Objects.equals(e1.getErrorDescription(), e2.getErrorDescription())) return false;
     }
 
     return ((TreeElement)n1).hc() == ((TreeElement)n2).hc();

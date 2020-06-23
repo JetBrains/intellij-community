@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
 import groovy.transform.CompileStatic
@@ -6,8 +6,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.util.LiteralUtilKt
 import org.jetbrains.plugins.groovy.util.BaseTest
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
+import org.jetbrains.plugins.groovy.util.TestUtils
 import org.junit.Assert
 import org.junit.Test
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_LONG
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER
 
 @CompileStatic
 class LiteralTest extends GroovyLatestTest implements BaseTest {
@@ -58,5 +63,34 @@ class LiteralTest extends GroovyLatestTest implements BaseTest {
     for (string in data) {
       assert LiteralUtilKt.isZero(elementUnderCaret(string, GrLiteral))
     }
+  }
+
+  @Test
+  void 'integer literals without suffix'() {
+    def data = [
+      "2147483647"                                                        : JAVA_LANG_INTEGER,
+      "0b1111111111111111111111111111111"                                 : JAVA_LANG_INTEGER,
+      "017777777777"                                                      : JAVA_LANG_INTEGER,
+      "0x7FFFFFFF"                                                        : JAVA_LANG_INTEGER,
+      "2147483648"                                                        : JAVA_LANG_LONG,
+      "0b10000000000000000000000000000000"                                : JAVA_LANG_LONG,
+      "020000000000"                                                      : JAVA_LANG_LONG,
+      "0x80000000"                                                        : JAVA_LANG_LONG,
+      "9223372036854775807"                                               : JAVA_LANG_LONG,
+      "0b111111111111111111111111111111111111111111111111111111111111111" : JAVA_LANG_LONG,
+      "0777777777777777777777"                                            : JAVA_LANG_LONG,
+      "0x7FFFFFFFFFFFFFFF"                                                : JAVA_LANG_LONG,
+      "9223372036854775808"                                               : JAVA_MATH_BIG_INTEGER,
+      "0b1000000000000000000000000000000000000000000000000000000000000000": JAVA_MATH_BIG_INTEGER,
+      "01000000000000000000000"                                           : JAVA_MATH_BIG_INTEGER,
+      "0x8000000000000000"                                                : JAVA_MATH_BIG_INTEGER,
+    ]
+    TestUtils.runAll(data) { literalText, literalType ->
+      def literal = elementUnderCaret(literalText, GrLiteral)
+      Assert.assertEquals(literalText, literalType, literal.type.canonicalText)
+      def value = literal.value
+      Assert.assertNotNull(literalText, value)
+      Assert.assertEquals(value.class.name, literalType)
+    }.run()
   }
 }

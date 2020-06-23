@@ -105,7 +105,7 @@ public class HgReadDetailsTest extends HgPlatformTest {
     hg("commit -m '" + message + "'");
 
     return Couple.of(new HgWorkingCopyRevisionsCommand(myProject).tip(myProject.getBaseDir()).getChangeset(),
-                     message + "\n" + changedFiles.toString());
+                     message + "\n" + changedFiles);
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash
 
 import com.intellij.openapi.diagnostic.Attachment
@@ -21,7 +21,6 @@ import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.index.GitIndexUtil
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils.addTextConvParameters
-import org.apache.commons.lang.ArrayUtils
 
 
 private val LOG = logger<GitRevisionContentPreLoader>()
@@ -36,7 +35,7 @@ class GitRevisionContentPreLoader(val project: Project) {
     for (change in changes) {
       val beforeRevision = change.beforeRevision
       if (beforeRevision !is GitContentRevision || beforeRevision.getRevisionNumber() != head) {
-        LOG.info("Skipping change $change because of ${beforeRevision?.revisionNumber?.asString()}")
+        LOG.info("Skipping change $change because beforeRevision is '${beforeRevision?.revisionNumber?.toString()}'")
         continue
       }
 
@@ -107,30 +106,28 @@ class GitRevisionContentPreLoader(val project: Project) {
     val result = mutableMapOf<FilePath, ByteArray>()
     var currentPosition = 0
     for ((hash, path, _) in hashes) {
-      val separatorBytes = "$RECORD_SEPARATOR${hash}".toByteArray()
+      val separatorBytes = "$RECORD_SEPARATOR${hash}\n".toByteArray()
       if (!ArrayUtil.startsWith(output, currentPosition, separatorBytes)) {
         LOG.error("Unexpected output for hash $hash at position $currentPosition", Attachment("catfile.txt", String(output)))
         return null
       }
 
-      val eol = '\n'.toByte()
-      val eolIndex = ArrayUtils.indexOf(output, eol, currentPosition + separatorBytes.size)
-      if (eolIndex < 0) {
-        LOG.error("Unexpected output for hash $hash at position $currentPosition", Attachment("catfile.txt", String(output)))
-        return null
-      }
+      val startIndex = currentPosition + separatorBytes.size
 
       val plainSeparatorBytes = RECORD_SEPARATOR.toByteArray()
-      val nextSeparator = ArrayUtil.indexOf(output, plainSeparatorBytes, eolIndex)
+      val nextSeparator = ArrayUtil.indexOf(output, plainSeparatorBytes, startIndex)
 
-      val startIndex = eolIndex + 1
       val endIndex = if (nextSeparator > 0) nextSeparator else output.size
       if (endIndex > output.size) {
         LOG.error("Unexpected output for hash $hash at position $currentPosition", Attachment("catfile.txt", String(output)))
         return null
       }
+      if (endIndex <= startIndex || output[endIndex - 1] != '\n'.toByte()) {
+        LOG.error("Unexpected output for hash $hash at position $endIndex", Attachment("catfile.txt", String(output)))
+        return null
+      }
 
-      val content = output.copyOfRange(startIndex, endIndex - 1) // -1 because the content is followed by a newline
+      val content   = output.copyOfRange(startIndex, endIndex - 1) // -1 because the content is followed by a newline
       result[path] = content
       currentPosition = endIndex
     }

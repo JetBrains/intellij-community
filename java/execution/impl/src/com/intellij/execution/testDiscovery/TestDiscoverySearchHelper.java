@@ -2,7 +2,7 @@
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.actions.FormatChangedTextUtil;
+import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,7 @@ public class TestDiscoverySearchHelper {
             final PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
             if (classes.length == 0 || TestFrameworks.detectFramework(classes[0]) == null) return;
           }
-          final List<TextRange> changedTextRanges = FormatChangedTextUtil.getInstance().getChangedTextRanges(project, psiFile);
+          final List<TextRange> changedTextRanges = VcsFacade.getInstance().getChangedTextRanges(project, psiFile);
           for (TextRange textRange : changedTextRanges) {
             final PsiElement start = psiFile.findElementAt(textRange.getStartOffset());
             final PsiElement end = psiFile.findElementAt(textRange.getEndOffset());

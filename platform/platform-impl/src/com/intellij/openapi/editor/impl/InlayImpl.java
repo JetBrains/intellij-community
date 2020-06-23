@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
-abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayImpl> extends RangeMarkerWithGetterImpl implements Inlay<R> {
+abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayImpl<?, ?>> extends RangeMarkerWithGetterImpl implements Inlay<R> {
   static final Key<Integer> OFFSET_BEFORE_DISPOSAL = Key.create("inlay.offset.before.disposal");
 
   @NotNull
@@ -42,6 +43,11 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
   @Override
   public Editor getEditor() {
     return myEditor;
+  }
+
+  @Override
+  public boolean isValid() {
+    return !myEditor.isDisposed() && super.isValid();
   }
 
   @Override
@@ -109,7 +115,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
   @Nullable
   @Override
   public Rectangle getBounds() {
-    if (myEditor.getFoldingModel().isOffsetCollapsed(getOffset())) return null;
+    if (EditorUtil.isInlayFolded(this)) return null;
     Point pos = getPosition();
     return new Rectangle(pos.x, pos.y, getWidthInPixels(), getHeightInPixels());
   }

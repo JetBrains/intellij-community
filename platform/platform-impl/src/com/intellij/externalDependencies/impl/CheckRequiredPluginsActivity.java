@@ -4,19 +4,18 @@ package com.intellij.externalDependencies.impl;
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.*;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-final class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
+final class CheckRequiredPluginsActivity implements StartupActivity {
+  private static final Logger LOG = Logger.getInstance(CheckRequiredPluginsActivity.class);
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Required Plugins", NotificationDisplayType.BALLOON, true);
 
   CheckRequiredPluginsActivity() {
@@ -51,6 +51,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
     final List<String> errorMessages = new ArrayList<>();
     final List<IdeaPluginDescriptor> disabled = new ArrayList<>();
     final List<PluginId> notInstalled = new ArrayList<>();
+    List<IdeaPluginDescriptor> pluginsToEnableWithoutRestart = new ArrayList<>();
     for (DependencyOnPlugin dependency : dependencies) {
       PluginId pluginId = PluginId.getId(dependency.getPluginId());
       IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
@@ -59,9 +60,26 @@ final class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
         notInstalled.add(pluginId);
         continue;
       }
+
       if (!plugin.isEnabled()) {
-        errorMessages.add("Plugin '" + plugin.getName() + "' required for '" + project.getName() + "' project is disabled.");
-        disabled.add(plugin);
+        boolean canEnableWithoutRestart = false;
+        if (Registry.is("ide.plugins.load.automatically")) {
+          IdeaPluginDescriptorImpl fullDescriptor = PluginDescriptorLoader.tryLoadFullDescriptor((IdeaPluginDescriptorImpl)plugin);
+          String message = fullDescriptor == null
+                           ? "Cannot load full descriptor for " + plugin.getPluginId()
+                           : DynamicPlugins.checkCanUnloadWithoutRestart((IdeaPluginDescriptorImpl)plugin);
+          if (message == null) {
+            canEnableWithoutRestart = true;
+            pluginsToEnableWithoutRestart.add(plugin);
+          }
+          else {
+            LOG.info("Required plugin " + plugin.getPluginId() + " can't be enabled without restart: " + message);
+          }
+        }
+        if (!canEnableWithoutRestart) {
+          errorMessages.add("Plugin '" + plugin.getName() + "' required for '" + project.getName() + "' project is disabled.");
+          disabled.add(plugin);
+        }
         continue;
       }
 
@@ -92,6 +110,15 @@ final class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
       }
     }
 
+    if (!pluginsToEnableWithoutRestart.isEmpty()) {
+      LOG.info("Automatically enabling plugins required for this project: " +
+               StringUtil.join(pluginsToEnableWithoutRestart, (plugin) -> plugin.getPluginId().toString(), ", "));
+      for (IdeaPluginDescriptor descriptor : pluginsToEnableWithoutRestart) {
+        ProjectPluginTracker.getInstance().registerProjectPlugin(project, descriptor);
+      }
+      ApplicationManager.getApplication().invokeLater(() -> PluginEnabler.enablePlugins(project, pluginsToEnableWithoutRestart, true));
+    }
+
     if (!errorMessages.isEmpty()) {
       if (!disabled.isEmpty() && notInstalled.isEmpty()) {
         String plugins = disabled.size() == 1 ? disabled.get(0).getName() : "required plugins";
@@ -109,7 +136,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
                                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                                   if ("enable".equals(event.getDescription())) {
                                     notification.expire();
-                                    PluginManager.getInstance().enablePlugins(disabled, true);
+                                    DisabledPluginsState.enablePlugins(disabled, true);
                                     PluginManagerMain.notifyPluginsUpdated(project);
                                   }
                                   else {

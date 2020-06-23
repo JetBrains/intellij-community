@@ -15,7 +15,5 @@ UFile (package = )
                         UAnnotation (fqName = TestAnnotation)
                         ULiteralExpression (value = 0)
         UMethod (name = values)
-            UBlockExpression
         UMethod (name = valueOf)
             UParameter (name = name)
-            UBlockExpression

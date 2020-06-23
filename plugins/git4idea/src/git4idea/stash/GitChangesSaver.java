@@ -125,7 +125,7 @@ public abstract class GitChangesSaver {
    */
   @NotNull
   protected static String getConflictRightPanelTitle() {
-    return "Changes from remote";
+    return GitBundle.getString("save.load.conflict.dialog.diff.right.title");
   }
 
   /**
@@ -133,7 +133,7 @@ public abstract class GitChangesSaver {
    */
   @NotNull
   protected static String getConflictLeftPanelTitle() {
-    return "Your uncommitted changes";
+    return GitBundle.getString("save.load.conflict.dialog.diff.left.title");
   }
 
   protected class ShowSavedChangesNotificationListener implements NotificationListener {

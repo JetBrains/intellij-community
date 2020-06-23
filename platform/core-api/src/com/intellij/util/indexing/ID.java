@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.indexing;
 
@@ -20,7 +6,6 @@ import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
@@ -33,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev
@@ -100,7 +86,7 @@ public class ID<K, V> extends IndexId<K,V> {
       String actualPluginIdStr = actualPluginId == null ? null : actualPluginId.getIdString();
       String requiredPluginIdStr = requiredPluginId == null ? null : requiredPluginId.getIdString();
 
-      if (!Comparing.equal(actualPluginIdStr, requiredPluginIdStr)) {
+      if (!Objects.equals(actualPluginIdStr, requiredPluginIdStr)) {
         Throwable registrationStackTrace = ourIdToRegistrationStackTrace.get(id);
         String message = "ID with name '" + name +
                          "' requested for plugin " + requiredPluginIdStr +
@@ -122,8 +108,14 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return myUniqueId;
+  }
+
+  @Override
+  public final boolean equals(Object obj) {
+    // IDs are singletons per unique ID. Compare them by object identity.
+    return this == obj;
   }
 
   public int getUniqueId() {

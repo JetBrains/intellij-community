@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.unscramble;
 
@@ -34,7 +34,7 @@ import static com.intellij.openapi.application.ex.ClipboardUtil.getTextInClipboa
 /**
  * @author yole
  */
-public class AnalyzeStacktraceUtil {
+public final class AnalyzeStacktraceUtil {
   public static final ProjectExtensionPointName<Filter> EP_NAME = new ProjectExtensionPointName<>("com.intellij.analyzeStacktraceFilter");
 
   private AnalyzeStacktraceUtil() {
@@ -87,7 +87,8 @@ public class AnalyzeStacktraceUtil {
     final ConsoleViewImpl console = (ConsoleViewImpl)consoleView;
     ConsoleViewUtil.enableReplaceActionForConsoleViewEditor(console.getEditor());
     console.getEditor().getSettings().setCaretRowShown(true);
-    toolbarActions.add(new AnnotateStackTraceAction(console.getEditor(), console.getHyperlinks()));
+    toolbarActions.add(ActionManager.getInstance().getAction("AnalyzeStacktraceToolbar"));
+
     RunContentManager.getInstance(project).showRunContent(executor, descriptor);
     consoleView.allowHeavyFilters();
     if (consoleFactory == null) {
@@ -100,9 +101,9 @@ public class AnalyzeStacktraceUtil {
     MyConsolePanel(ExecutionConsole consoleView, ActionGroup toolbarActions) {
       super(new BorderLayout());
       JPanel toolbarPanel = new JPanel(new BorderLayout());
-      toolbarPanel.add(ActionManager.getInstance()
-                         .createActionToolbar(ActionPlaces.ANALYZE_STACKTRACE_PANEL_TOOLBAR, toolbarActions, false)
-                         .getComponent());
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANALYZE_STACKTRACE_PANEL_TOOLBAR, toolbarActions, false);
+      toolbar.setTargetComponent(consoleView.getComponent());
+      toolbarPanel.add(toolbar.getComponent());
       add(toolbarPanel, BorderLayout.WEST);
       add(consoleView.getComponent(), BorderLayout.CENTER);
     }
@@ -148,7 +149,7 @@ public class AnalyzeStacktraceUtil {
       return myEditor;
     }
 
-    public final void setText(@NotNull final String text) {
+    public final void setText(final @NotNull String text) {
       Runnable runnable = () -> ApplicationManager.getApplication().runWriteAction(() -> {
         final Document document = myEditor.getDocument();
         document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
@@ -161,7 +162,6 @@ public class AnalyzeStacktraceUtil {
       if (text != null) {
         setText(text);
       }
-
     }
 
     @Override

@@ -116,8 +116,8 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     @Override
     public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
       CompletionProcess process = myParameters.getProcess();
-      if (process instanceof CompletionProgressIndicator) {
-        ((CompletionProgressIndicator)process)
+      if (process instanceof CompletionProcessBase) {
+        ((CompletionProcessBase)process)
           .addWatchedPrefix(myParameters.getOffset() - getPrefixMatcher().getPrefix().length(), prefixCondition);
       }
     }
@@ -198,7 +198,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   @NotNull
   @Override
   protected CompletionSorterImpl processStatsWeigher(@NotNull CompletionSorterImpl sorter,
-                                                     @NotNull Weigher<Object, Object> weigher,
+                                                     @NotNull Weigher weigher,
                                                      @NotNull CompletionLocation location) {
     CompletionSorterImpl processedSorter = super.processStatsWeigher(sorter, weigher, location);
     return processedSorter.withClassifier(new ClassifierFactory<LookupElement>("stats") {

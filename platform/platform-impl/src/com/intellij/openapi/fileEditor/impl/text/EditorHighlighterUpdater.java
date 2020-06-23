@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.Disposable;
@@ -40,9 +40,9 @@ public class EditorHighlighterUpdater {
     myProject = project;
     myEditor = editor;
     myFile = file;
-    MessageBusConnection myConnection = project.getMessageBus().connect(parentDisposable);
-    myConnection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
-    myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+    MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);
+    connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
+    connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
         updateHighlighters();

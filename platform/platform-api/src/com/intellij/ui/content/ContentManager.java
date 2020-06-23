@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -90,6 +91,7 @@ public interface ContentManager extends Disposable, BusyObject {
 
   int getIndexOfContent(@NotNull Content content);
 
+  @ActionText
   @NotNull
   String getCloseActionName();
 
@@ -106,12 +108,15 @@ public interface ContentManager extends Disposable, BusyObject {
   /**
    * Returns the localized name of the "Close All but This" action.
    */
+  @ActionText
   @NotNull
   String getCloseAllButThisActionName();
 
+  @ActionText
   @NotNull
   String getPreviousContentActionName();
 
+  @ActionText
   @NotNull
   String getNextContentActionName();
 

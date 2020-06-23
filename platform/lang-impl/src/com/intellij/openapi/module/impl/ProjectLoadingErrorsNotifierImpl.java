@@ -80,7 +80,7 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
       if (descriptions.isEmpty()) continue;
 
       final String invalidElements = getInvalidElementsString(type, descriptions);
-      final String errorText = ProjectBundle.message("error.message.configuration.cannot.load") + " " + invalidElements + " <a href=\"\">Details...</a>";
+      final String errorText = ProjectBundle.message("error.message.configuration.cannot.load", invalidElements);
 
       Notifications.Bus.notify(new Notification(NotificationGroup.createIdWithTitle("Project Loading Error", ProjectBundle.message("notification.group.project.loading.error")),
                                                 ProjectBundle.message("notification.title.error.loading.project"), errorText, NotificationType.ERROR,

@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 /**
@@ -85,7 +86,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
   @Override
   public void processNewEntryResponse(String relativeLocalDirectory,
                                       String repositoryFilePath,
-                                      IResponseServices responseServoces,
+                                      IResponseServices responseServices,
                                       String entryLine,
                                       IClientEnvironment clientEnvironment) throws IOException {
     // we set the date the file was last modified in the Entry line
@@ -96,7 +97,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     entry.setDummyTimestamp();
 
     clientEnvironment.getAdminWriter().setEntry(fileObject.getParent(), entry, clientEnvironment.getCvsFileSystem());
-    responseServoces.getEventSender().notifyEntryListeners(fileObject, entry);
+    responseServices.getEventSender().notifyEntryListeners(fileObject, entry);
   }
 
   @Override
@@ -271,7 +272,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
 
     final boolean binary = entry.isBinary();
     final boolean readOnly = FileUtils.isReadOnlyMode(mode);
-    final Charset charSet = entry.isUnicode() ? Charset.forName("UTF-16LE") : null;
+    final Charset charSet = entry.isUnicode() ? StandardCharsets.UTF_16LE : null;
     writeFile(fileObject, fileLength, connectionStreams.getInputStream(), connectionStreams.getReaderFactory(), binary, readOnly,
               clientEnvironment, charSet);
 

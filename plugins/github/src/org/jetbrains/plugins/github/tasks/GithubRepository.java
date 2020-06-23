@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -12,10 +12,21 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.Comment;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskState;
+import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
@@ -31,13 +42,6 @@ import org.jetbrains.plugins.github.exceptions.GithubJsonException;
 import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.issue.GithubIssuesLoadingHelper;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Dennis.Ushakov
@@ -389,8 +393,8 @@ public class GithubRepository extends BaseRepository {
     if (!(o instanceof GithubRepository)) return false;
 
     GithubRepository that = (GithubRepository)o;
-    if (!Comparing.equal(getRepoAuthor(), that.getRepoAuthor())) return false;
-    if (!Comparing.equal(getRepoName(), that.getRepoName())) return false;
+    if (!Objects.equals(getRepoAuthor(), that.getRepoAuthor())) return false;
+    if (!Objects.equals(getRepoName(), that.getRepoName())) return false;
     if (!Comparing.equal(isAssignedIssuesOnly(), that.isAssignedIssuesOnly())) return false;
 
     return true;

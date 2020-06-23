@@ -5,8 +5,6 @@ package com.intellij.ide.actions;
 import com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -14,20 +12,26 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
 /**
  * @author peter
@@ -140,13 +144,13 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     }
 
     @Override
-    public Builder setTitle(String title) {
+    public Builder setTitle(@NlsContexts.DialogTitle String title) {
       myDialog.setTitle(title);
       return this;
     }
 
     @Override
-    public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
+    public Builder addKind(@Nls @NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
       myDialog.getKindCombo().addItem(name, icon, templateName);
       if (myDialog.getKindCombo().getComboBox().getItemCount() > 1) {
         myDialog.setTemplateKindComponentsVisible(true);
@@ -222,13 +226,13 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     private NonBlockingPopupBuilderImpl(@NotNull Project project) {myProject = project;}
 
     @Override
-    public Builder setTitle(String title) {
+    public Builder setTitle(@Nls String title) {
       myTitle = title;
       return this;
     }
 
     @Override
-    public Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {
+    public Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {
       myTemplatesList.add(Trinity.create(kind, icon, templateName));
       return this;
     }
@@ -310,13 +314,18 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   }
 
   public interface Builder {
-    Builder setTitle(String title);
+    Builder setTitle(@DialogTitle String title);
     Builder setValidator(InputValidator validator);
-    Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName);
+    Builder addKind(@NlsContexts.ListItem @NotNull String kind, @Nullable Icon icon, @NonNls @NotNull String templateName);
     @Nullable
-    <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator);
+    <T extends PsiElement> T show(@DialogTitle @NotNull String errorTitle,
+                                  @NonNls @Nullable String selectedItem,
+                                  @NotNull FileCreator<T> creator);
 
-    <T extends PsiElement> void show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator, Consumer<? super T> elementConsumer);
+    <T extends PsiElement> void show(@DialogTitle @NotNull String errorTitle,
+                                     @NonNls @Nullable String selectedItem,
+                                     @NotNull FileCreator<T> creator,
+                                     Consumer<? super T> elementConsumer);
 
     @Nullable
     Map<String,String> getCustomProperties();
@@ -325,10 +334,11 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   public interface FileCreator<T> {
 
     @Nullable
-    T createFile(@NotNull String name, @NotNull String templateName);
+    T createFile(@NonNls @NotNull String name, @NonNls @NotNull String templateName);
 
+    @NlsContexts.Command
     @NotNull
-    String getActionName(@NotNull String name, @NotNull String templateName);
+    String getActionName(@NonNls @NotNull String name, @NonNls @NotNull String templateName);
 
     boolean startInWriteAction();
   }

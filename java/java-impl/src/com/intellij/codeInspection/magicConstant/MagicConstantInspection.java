@@ -49,24 +49,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
 
   private static final CallMapper<AllowedValues> SPECIAL_CASES = new CallMapper<AllowedValues>()
     .register(CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
-              MagicConstantInspection::getCalendarGetValues)
-    .register(CallMatcher.instanceCall("java.awt.Toolkit", "getMenuShortcutKeyMaskEx"),
-              // Support especially java.awt.Toolkit.getMenuShortcutKeyMaskEx which is annoying false-positive,
-              // until we can normally annotate Java9+ methods
-              call -> {
-                PsiMethod method = call.resolveMethod();
-                if (method != null) {
-                  PsiClass aClass = method.getContainingClass();
-                  if (aClass != null) {
-                    for (PsiMethod psiMethod : aClass.findMethodsByName("getMenuShortcutKeyMask", false)) {
-                      if (psiMethod.getParameterList().isEmpty()) {
-                        return MagicConstantUtils.getAllowedValues(psiMethod, PsiType.INT);
-                      }
-                    }
-                  }
-                }
-                return null;
-              });
+              MagicConstantInspection::getCalendarGetValues);
 
   @Nls
   @NotNull
@@ -294,7 +277,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       return value.getText();
     };
     String values = StreamEx.of(allowedValues.getValues()).map(formatter).collect(Joining.with(", ").cutAfterDelimiter().maxCodePoints(100));
-    String message = "Should be one of: " + values + (allowedValues.isFlagSet() ? " or their combination" : "");
+    String message = JavaBundle.message("inspection.magic.constants.should.be.one.of.values", values, allowedValues.isFlagSet() ? 1 : 0);
     holder.registerProblem(argument, message, suggestMagicConstant(argument, allowedValues));
   }
 

@@ -46,7 +46,7 @@ public class RegExpFileType extends LanguageFileType {
     @Override
     @NotNull
     public String getDescription() {
-        return "Regular Expression";
+        return RegExpBundle.message("file.type.description.regular.expression");
     }
 
     @Override

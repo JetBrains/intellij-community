@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
@@ -27,28 +28,26 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
-import git4idea.rebase.GitCommitEditingAction;
+import git4idea.rebase.GitSingleCommitEditingAction;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Objects;
 
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static git4idea.reset.GitResetMode.SOFT;
 import static java.util.Collections.singletonMap;
 
-public class GitUncommitAction extends GitCommitEditingAction {
+public class GitUncommitAction extends GitSingleCommitEditingAction {
   private static final Logger LOG = Logger.getInstance(GitUncommitAction.class);
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-
+  protected void update(@NotNull AnActionEvent e, @NotNull SingleCommitEditingData commitEditingData) {
     if (e.getPresentation().isEnabledAndVisible()) {
+      VcsLogUi logUi = commitEditingData.getLogUi();
       // DataPack is unavailable during refresh
-      DataPackBase dataPackBase = ((VisiblePack)getUi(e).getDataPack()).getDataPack();
+      DataPackBase dataPackBase = ((VisiblePack)logUi.getDataPack()).getDataPack();
       if (!(dataPackBase instanceof DataPack)) {
         e.getPresentation().setVisible(true);
         e.getPresentation().setEnabled(false);
@@ -56,7 +55,7 @@ public class GitUncommitAction extends GitCommitEditingAction {
       }
 
       // support undo only for the last commit in the branch
-      if (isHeadCommit(e)) {
+      if (commitEditingData.isHeadCommit()) {
         e.getPresentation().setEnabled(true);
       }
       else {
@@ -67,15 +66,15 @@ public class GitUncommitAction extends GitCommitEditingAction {
   }
 
   @Override
-  public void actionPerformedAfterChecks(@NotNull AnActionEvent e) {
-    Project project = Objects.requireNonNull(e.getProject());
-    VcsShortCommitDetails commit = getSelectedCommit(e);
+  public void actionPerformedAfterChecks(@NotNull SingleCommitEditingData commitEditingData) {
+    Project project = commitEditingData.getProject();
+    VcsShortCommitDetails commit = commitEditingData.getSelectedCommit();
     ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(),
                                                       null, GitBundle.message("git.undo.action.select.target.changelist.title"), commit.getSubject());
     chooser.show();
     LocalChangeList selectedList = chooser.getSelectedList();
     if (selectedList != null) {
-      resetInBackground(getLogData(e), getRepository(e), commit, selectedList);
+      resetInBackground(commitEditingData.getLogData(), commitEditingData.getRepository(), commit, selectedList);
     }
   }
 

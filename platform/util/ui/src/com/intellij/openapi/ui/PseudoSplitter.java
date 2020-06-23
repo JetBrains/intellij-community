@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
+import com.intellij.util.MathUtil;
+
 import javax.swing.*;
 
 public class PseudoSplitter extends Splitter {
@@ -38,7 +40,7 @@ public class PseudoSplitter extends Splitter {
     int total = getSizeForComp(this);
     if (myFirstIsFixed) {
       float fixedProportion = ((float)myFirstFixedSize) / (total - getDividerWidth());
-      myProportion = Math.min(0.95f, Math.max(0.05f, fixedProportion));
+      myProportion = MathUtil.clamp(fixedProportion, 0.05f, 0.95f);
     }
     super.doLayout();
   }

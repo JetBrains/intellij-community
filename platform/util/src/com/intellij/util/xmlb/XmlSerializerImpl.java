@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.SerializationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.CollectionBean;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -23,18 +22,17 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class XmlSerializerImpl {
   public abstract static class XmlSerializerBase implements Serializer {
-    @Nullable
     @Override
-    public final Binding getBinding(@NotNull Class<?> aClass, @NotNull Type type) {
+    public final @Nullable Binding getBinding(@NotNull Class<?> aClass, @NotNull Type type) {
       return ClassUtil.isPrimitive(aClass) ? null : getRootBinding(aClass, type);
     }
 
     @Override
-    @NotNull
-    public final synchronized Binding getRootBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @NotNull MutableAccessor accessor) {
+    public final synchronized @NotNull Binding getRootBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @NotNull MutableAccessor accessor) {
       // do not cache because client will cache it in any case
       Binding binding = createClassBinding(aClass, accessor, originalType);
       if (binding == null) {
@@ -47,16 +45,14 @@ public final class XmlSerializerImpl {
       return binding;
     }
 
-    @Nullable
     @Override
-    public final Binding getBinding(@NotNull MutableAccessor accessor) {
+    public final @Nullable Binding getBinding(@NotNull MutableAccessor accessor) {
       Type type = accessor.getGenericType();
       Class<?> aClass = ClassUtil.typeToClass(type);
       return ClassUtil.isPrimitive(aClass) ? null : getRootBinding(aClass, type, accessor);
     }
 
-    @Nullable
-    protected static Binding createClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
+    protected static @Nullable Binding createClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
       if (aClass.isArray()) {
         if (Element.class.isAssignableFrom(aClass.getComponentType())) {
           assert accessor != null;
@@ -97,19 +93,17 @@ public final class XmlSerializerImpl {
   static class XmlSerializer extends XmlSerializerBase {
     private Reference<Map<Type, Binding>> ourBindings;
 
-    @NotNull
-    private Map<Type, Binding> getBindingCacheMap() {
+    private @NotNull Map<Type, Binding> getBindingCacheMap() {
       Map<Type, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
       if (map == null) {
-        map = ContainerUtil.newConcurrentMap();
+        map = new ConcurrentHashMap<>();
         ourBindings = new SoftReference<>(map);
       }
       return map;
     }
 
-    @NotNull
     @Override
-    public synchronized Binding getRootBinding(@NotNull Class<?> aClass, @NotNull Type originalType) {
+    public synchronized @NotNull Binding getRootBinding(@NotNull Class<?> aClass, @NotNull Type originalType) {
       Map<Type, Binding> map = getBindingCacheMap();
       Binding binding = map.get(originalType);
       if (binding == null) {
@@ -133,8 +127,7 @@ public final class XmlSerializerImpl {
 
   static final XmlSerializer serializer = new XmlSerializer();
 
-  @NotNull
-  static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws SerializationException {
+  static @NotNull Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws SerializationException {
     try {
       Class<?> aClass = object.getClass();
       Binding binding = serializer.getRootBinding(aClass);
@@ -155,8 +148,7 @@ public final class XmlSerializerImpl {
     }
   }
 
-  @Nullable
-  static Object convert(@Nullable String value, @NotNull Class<?> valueClass) {
+  static @Nullable Object convert(@Nullable String value, @NotNull Class<?> valueClass) {
     if (value == null) {
       return null;
     }
@@ -291,8 +283,7 @@ public final class XmlSerializerImpl {
     return false;
   }
 
-  @NotNull
-  static String convertToString(@NotNull Object value) {
+  static @NotNull String convertToString(@NotNull Object value) {
     if (value instanceof Date) {
       return Long.toString(((Date)value).getTime());
     }
@@ -301,8 +292,7 @@ public final class XmlSerializerImpl {
     }
   }
 
-  @NotNull
-  static String getTextValue(@NotNull Element element, @NotNull String defaultText) {
+  static @NotNull String getTextValue(@NotNull Element element, @NotNull String defaultText) {
     List<Content> content = element.getContent();
     int size = content.size();
     StringBuilder builder = null;

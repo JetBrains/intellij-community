@@ -15,6 +15,7 @@
  */
 package com.intellij.util.indexing.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.TIntArrayList;
@@ -23,6 +24,8 @@ import gnu.trove.TIntObjectHashMap;
 import java.util.List;
 
 class FileId2ValueMapping<Value> {
+  private static final Logger LOG = Logger.getInstance(FileId2ValueMapping.class);
+
   private final TIntObjectHashMap<Value> id2ValueMap;
   private final ValueContainerImpl<Value> valueContainer;
   private boolean myOnePerFileValidationEnabled = true;
@@ -70,10 +73,10 @@ class FileId2ValueMapping<Value> {
     if (mapped != null) {
       valueContainer.removeValue(inputId, mapped);
     }
-    if (DebugAssertions.EXTRA_SANITY_CHECKS && myOnePerFileValidationEnabled) {
+    if (IndexDebugProperties.EXTRA_SANITY_CHECKS && myOnePerFileValidationEnabled) {
       for (final InvertedIndexValueIterator<Value> valueIterator = valueContainer.getValueIterator(); valueIterator.hasNext();) {
         valueIterator.next();
-        DebugAssertions.assertTrue(!valueIterator.getValueAssociationPredicate().contains(inputId));
+        LOG.assertTrue(!valueIterator.getValueAssociationPredicate().contains(inputId));
       }
     }
     return mapped != null;

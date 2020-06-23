@@ -1,13 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,11 +22,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.jetbrains.python.PyBundle;
+import java.io.File;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
-import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -72,11 +76,11 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     }
     else {
       if (isModuleMode() && !myQualifiedNameRegex.matcher(myScriptName).matches()) {
-        throw new RuntimeConfigurationWarning("Provide a qualified name of a module");
+        throw new RuntimeConfigurationWarning(PyBundle.message("python.provide.a.qualified.name.of.a.module"));
       }
     }
     if (isRedirectInput() && !new File(myInputFile).exists()) {
-      throw new RuntimeConfigurationWarning("Input file doesn't exist");
+      throw new RuntimeConfigurationWarning(PyBundle.message("python.input.file.doesn.t.exist"));
     }
   }
 
@@ -175,8 +179,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public RefactoringElementListener getRefactoringElementListener(PsiElement element) {
     if (element instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
-      if (virtualFile != null && Comparing.equal(new File(virtualFile.getPath()).getAbsolutePath(),
-                                                 new File(myScriptName).getAbsolutePath())) {
+      if (virtualFile != null &&
+          Objects.equals(new File(virtualFile.getPath()).getAbsolutePath(), new File(myScriptName).getAbsolutePath())) {
         return new RefactoringElementAdapter() {
           @Override
           public void elementRenamedOrMoved(@NotNull PsiElement newElement) {

@@ -3,11 +3,11 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -492,7 +492,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         if (epQualifiedName != null && epQualifiedName.startsWith(pluginId + ".")) {
           holder.createProblem(extensionPoint.getQualifiedName(), ProblemHighlightType.WARNING,
                                DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous"), null,
-                               new LocalQuickFixBase(DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous.fix")) {
+                               new LocalQuickFix() {
+                                 @Override
+                                 public @IntentionFamilyName @NotNull String getFamilyName() {
+                                   return DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous.fix");
+                                 }
+
                                  @Override
                                  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                                    extensionPoint.getQualifiedName().undefine();
@@ -800,17 +805,31 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkMaxLength(productDescriptor.getCode(), 15, holder);
 
     String releaseDate = productDescriptor.getReleaseDate().getValue();
-    if (releaseDate == null) return;
+    if (releaseDate != null && !isPlaceHolder(releaseDate)) {
+      try {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
+        dateFormat.setLenient(false);
+        dateFormat.parse(releaseDate);
+      }
+      catch (ParseException e) {
+        holder.createProblem(productDescriptor.getReleaseDate(),
+                             DevKitBundle.message("inspections.plugin.xml.product.descriptor.invalid.date"));
+      }
+    }
+    String version = productDescriptor.getReleaseVersion().getValue();
+    if (version != null && !isPlaceHolder(version)) {
+      try {
+        Integer.parseInt(version);
+      }
+      catch (NumberFormatException e) {
+        holder.createProblem(productDescriptor.getReleaseVersion(),
+                             DevKitBundle.message("inspections.plugin.xml.product.descriptor.invalid.version"));
+      }
+    }
+  }
 
-    try {
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
-      dateFormat.setLenient(false);
-      dateFormat.parse(releaseDate);
-    }
-    catch (ParseException e) {
-      holder.createProblem(productDescriptor.getReleaseDate(),
-                           DevKitBundle.message("inspections.plugin.xml.product.descriptor.invalid.date"));
-    }
+  private static boolean isPlaceHolder(@Nullable String value) {
+    return value != null && value.length() > 4 && value.startsWith("__") && value.endsWith("__");
   }
 
   private static void annotateAddToGroup(AddToGroup addToGroup, DomElementAnnotationHolder holder) {

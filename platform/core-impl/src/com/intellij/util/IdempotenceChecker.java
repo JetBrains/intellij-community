@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -311,6 +312,14 @@ public class IdempotenceChecker {
    */
   public static boolean areRandomChecksEnabled() {
     return ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest();
+  }
+
+  /**
+   * Useful when your test checks how many times a specific code was called, and random checks make that test flaky.
+   */
+  @TestOnly
+  public static void disableRandomChecksUntil(Disposable parentDisposable) {
+    ourRateCheckProperty.setValue(0, parentDisposable);
   }
 
   /**

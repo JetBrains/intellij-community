@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   private final List<Configurable> myConfigurables = new ArrayList<>();
   private final Action myHelpAction = new MyHelpAction();
 
-  public UpdateOrStatusOptionsDialog(Project project, String title, Map<Configurable, AbstractVcs> envToConfMap) {
+  public UpdateOrStatusOptionsDialog(Project project, @NlsContexts.DialogTitle String title, Map<Configurable, AbstractVcs> envToConfMap) {
     super(project);
     setTitle(title);
     myProject = project;

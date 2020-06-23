@@ -2,7 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventPair;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public final class ToolWindowMoveAction extends DumbAwareAction implements FusAwareAction {
   public enum Anchor {
@@ -165,11 +167,12 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
   }
 
   @Override
-  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
+  public @NotNull List<EventPair> getAdditionalUsageData(@NotNull AnActionEvent event) {
     ToolWindow toolWindow = getToolWindow(event);
     if (toolWindow != null) {
-      data.addData("toolwindow", toolWindow.getId());
+      return Collections.singletonList(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindow.getId()));
     }
+    return Collections.emptyList();
   }
 
   public static final class Group extends DefaultActionGroup {

@@ -4,7 +4,6 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
@@ -24,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +43,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   public static final String ALTERNATIVE_ID = "UnusedDeclaration";
 
-  final List<EntryPoint> myExtensions = ContainerUtil.createLockFreeCopyOnWriteList();
   final UnusedSymbolLocalInspectionBase myLocalInspectionBase = createUnusedSymbolLocalInspection();
 
   private static final Key<Set<RefElement>> PROCESSED_SUSPICIOUS_ELEMENTS_KEY = Key.create("java.unused.declaration.processed.suspicious.elements");
@@ -60,18 +57,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   @TestOnly
   public UnusedDeclarationInspectionBase(boolean enabledInEditor) {
-    List<EntryPoint> extensions = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList();
-    List<EntryPoint> deadCodeAddIns = new ArrayList<>(extensions.size());
-    for (EntryPoint entryPoint : extensions) {
-      try {
-        deadCodeAddIns.add(entryPoint.clone());
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-    Collections.sort(deadCodeAddIns, (o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName()));
-    myExtensions.addAll(deadCodeAddIns);
     myEnabledInEditor = enabledInEditor;
   }
 
@@ -125,7 +110,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
     myLocalInspectionBase.readSettings(node);
-    for (EntryPoint extension : myExtensions) {
+    for (EntryPoint extension : getExtensions()) {
       extension.readExternal(node);
     }
 
@@ -145,7 +130,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   protected void writeUnusedDeclarationSettings(Element node) throws WriteExternalException {
     super.writeSettings(node);
-    for (EntryPoint extension : myExtensions) {
+    for (EntryPoint extension : getExtensions()) {
       extension.writeExternal(node);
     }
   }
@@ -161,7 +146,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   private static boolean isSerializationImplicitlyUsedField(@NotNull UField field) {
     final String name = field.getName();
-    if (!HighlightUtilBase.SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !"serialPersistentFields".equals(name)) return false;
+    if (!CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !"serialPersistentFields".equals(name)) return false;
     if (!field.isStatic()) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(field, UClass.class);
     return aClass == null || isSerializable(aClass, null);
@@ -290,7 +275,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     }
     if (element != null) {
-      for (EntryPoint extension : myExtensions) {
+      for (EntryPoint extension : getExtensions()) {
         if (extension.isSelected() && extension.isEntryPoint(owner, element)) {
           return true;
         }
@@ -335,7 +320,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(project);
       if (entryPointsManager.isEntryPoint(element)) return true;
     }
-    for (EntryPoint extension : myExtensions) {
+    for (EntryPoint extension : getExtensions()) {
       if (extension.isSelected() && extension.isEntryPoint(element)) {
         return true;
       }
@@ -694,7 +679,18 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   public List<EntryPoint> getExtensions() {
-    return myExtensions;
+    List<EntryPoint> extensions = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList();
+    List<EntryPoint> deadCodeAddIns = new ArrayList<>(extensions.size());
+    for (EntryPoint entryPoint : extensions) {
+      try {
+        deadCodeAddIns.add(entryPoint.clone());
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+    deadCodeAddIns.sort((o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName()));
+    return deadCodeAddIns;
   }
 
   public static String getDisplayNameText() {

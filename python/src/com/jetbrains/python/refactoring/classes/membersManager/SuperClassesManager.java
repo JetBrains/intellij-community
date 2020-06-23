@@ -5,7 +5,7 @@ import com.google.common.collect.Lists;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.ui.PyClassCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +53,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
                                               final PyClass @NotNull ... to) {
     final Collection<PyClass> elements = fetchElements(members);
     for (final PyClass destClass : to) {
-      PyClassRefactoringUtil.addSuperclasses(from.getProject(), destClass, elements.toArray(new PyClass[members.size()]));
+      PyPsiRefactoringUtil.addSuperclasses(from.getProject(), destClass, elements.toArray(new PyClass[members.size()]));
     }
 
     final List<PyExpression> expressionsToDelete = getExpressionsBySuperClass(from, elements);

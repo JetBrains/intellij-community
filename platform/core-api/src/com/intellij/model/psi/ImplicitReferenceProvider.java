@@ -10,6 +10,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+/**
+ * @see com.intellij.navigation.DirectNavigationProvider
+ */
 public interface ImplicitReferenceProvider {
 
   @Internal

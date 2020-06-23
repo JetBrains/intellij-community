@@ -332,9 +332,9 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       inLib |= !fileIndex.isInContent(psiDirectory.getVirtualFile());
     }
 
-    return inLib ? "Package \'" +
+    return inLib ? "Package '" +
                    aPackage.getName() +
-                   "\' contains directories in libraries which cannot be moved. Do you want to move current directory" : null;
+                   "' contains directories in libraries which cannot be moved. Do you want to move current directory" : null;
   }
 
   private static boolean canMoveOrRearrangePackages(PsiElement[] elements) {
@@ -439,10 +439,12 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
 
        final String moveDirectoryDescription;
        if (myDirectories.length > 1) {
-         moveDirectoryDescription = "Move everything from " + myDirectories.length + " directories to another directory";
+         moveDirectoryDescription =
+           JavaRefactoringBundle.message("move.everything.from.directories.to.another.directory", myDirectories.length);
        }
        else {
-         moveDirectoryDescription = "Move everything from " + myDirectories[0].getVirtualFile().getPresentableUrl() + " to another directory";
+         moveDirectoryDescription =
+           JavaRefactoringBundle.message("move.everything.to.another.directory", myDirectories[0].getVirtualFile().getPresentableUrl());
        }
        myRbMoveDirectory = new JRadioButton();
        myRbMoveDirectory.setMnemonic('e');

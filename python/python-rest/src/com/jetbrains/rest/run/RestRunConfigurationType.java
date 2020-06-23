@@ -89,7 +89,7 @@ public final class RestRunConfigurationType implements ConfigurationType {
 
   private static class DocutilsRunConfigurationFactory extends RestConfigurationFactory {
     protected DocutilsRunConfigurationFactory(ConfigurationType type) {
-      super(type, "Docutils task", "Docutils task");
+      super(type, RestBundle.message("runcfg.docutils.docutils.task"), "Docutils task");
     }
 
     @Override
@@ -101,7 +101,7 @@ public final class RestRunConfigurationType implements ConfigurationType {
 
   private static class SphinxRunConfigurationFactory extends RestConfigurationFactory {
     protected SphinxRunConfigurationFactory(ConfigurationType type) {
-      super(type, "Sphinx task", "Sphinx task");
+      super(type, RestBundle.message("runcfg.docutils.sphinx.task"), "Sphinx task");
     }
 
     @Override

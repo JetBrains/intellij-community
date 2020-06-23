@@ -324,21 +324,25 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   @Override
   public void delete() throws IncorrectOperationException {
-    PsiElement parent = getParent();
+    deleteElementFromParent(this);
+  }
+
+  public static void deleteElementFromParent(@NotNull PsiElement element) {
+    PsiElement parent = element.getParent();
     if (parent instanceof ASTDelegatePsiElement) {
-      CheckUtil.checkWritable(this);
-      ((ASTDelegatePsiElement)parent).deleteChildInternal(getNode());
+      CheckUtil.checkWritable(element);
+      ((ASTDelegatePsiElement)parent).deleteChildInternal(element.getNode());
     }
     else if (parent instanceof CompositeElement) {
-      CheckUtil.checkWritable(this);
-      ((CompositeElement)parent).deleteChildInternal(getNode());
+      CheckUtil.checkWritable(element);
+      ((CompositeElement)parent).deleteChildInternal(element.getNode());
     }
     else if (parent instanceof PsiFile) {
-      CheckUtil.checkWritable(this);
-      parent.deleteChildRange(this, this);
+      CheckUtil.checkWritable(element);
+      parent.deleteChildRange(element, element);
     }
     else {
-      throw new UnsupportedOperationException(getClass().getName() + " under " + (parent == null ? "null" : parent.getClass().getName()));
+      throw new UnsupportedOperationException(element.getClass().getName() + " under " + (parent == null ? "null" : parent.getClass().getName()));
     }
   }
 

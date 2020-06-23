@@ -18,6 +18,7 @@ public interface MessageEvent extends BuildEvent {
   Kind getKind();
 
   @NotNull
+  @BuildEventsNls.Title
   String getGroup();
 
   @Nullable

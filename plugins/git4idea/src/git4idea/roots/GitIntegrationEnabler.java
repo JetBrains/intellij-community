@@ -29,7 +29,7 @@ public final class GitIntegrationEnabler extends VcsIntegrationEnabler {
       return true;
     }
     else {
-      vcsNotifier.notifyError(GitBundle.message("git.integration.could.not.git.init", projectDir.getPresentableUrl()), result.getErrorOutputAsHtmlString());
+      vcsNotifier.notifyError(GitBundle.message("git.integration.could.not.git.init", projectDir.getPresentableUrl()), result.getErrorOutputAsHtmlString(), true);
       LOG.info(result.getErrorOutputAsHtmlString());
       return false;
     }

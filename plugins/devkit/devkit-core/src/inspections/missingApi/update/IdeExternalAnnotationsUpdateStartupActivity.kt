@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
 import com.intellij.openapi.application.Application
@@ -32,7 +32,7 @@ class IdeExternalAnnotationsUpdateStartupActivity : StartupActivity {
 
   private fun subscribeToJdkChanges(project: Project, application: Application) {
     val connection = application.messageBus.connect(project)
-    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Adapter() {
+    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
       override fun jdkAdded(jdk: Sdk) {
         if (jdk.sdkType == IdeaJdk.getInstance()) {
           updateAnnotationsLaterIfNecessary(project, jdk)

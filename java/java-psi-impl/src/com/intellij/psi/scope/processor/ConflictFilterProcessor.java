@@ -26,7 +26,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
                                  PsiConflictResolver @NotNull [] resolvers,
                                  @NotNull List<CandidateInfo> container,
                                  @NotNull PsiElement place,
-                                 PsiFile placeFile) {
+                                 @NotNull PsiFile placeFile) {
     super(filter, container);
     myResolvers = resolvers;
     myName = name;
@@ -46,7 +46,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     return true;
   }
 
-  protected boolean stopAtFoundResult(JavaResolveResult cachedResult) {
+  protected boolean stopAtFoundResult(@NotNull JavaResolveResult cachedResult) {
     return cachedResult.isAccessible();
   }
 
@@ -55,7 +55,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     add(new CandidateInfo(element, substitutor));
   }
 
-  protected void add(CandidateInfo info) {
+  protected void add(@NotNull CandidateInfo info) {
     myCachedResult = null;
     myResults.add(info);
   }

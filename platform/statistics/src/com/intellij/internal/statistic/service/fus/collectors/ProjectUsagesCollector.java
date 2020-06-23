@@ -2,8 +2,6 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
-import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.openapi.application.ReadAction;
@@ -19,7 +17,6 @@ import org.jetbrains.concurrency.Promises;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * <p>Use it to create a collector which records project state.</p>
@@ -36,7 +33,7 @@ import java.util.stream.Collectors;
  * <ol>
  *  <li>
  *    If group is not whitelisted, add it to local whitelist with "Add Test Group to Local Whitelist" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction}
+ *    {@link com.intellij.internal.statistic.actions.localWhitelist.AddTestGroupToLocalWhitelistAction}
  *  </li>
  *  <li>
  *    Open toolwindow with event logs with "Show Statistics Event Log" action.<br/>
@@ -50,8 +47,11 @@ import java.util.stream.Collectors;
  * @see ApplicationUsagesCollector
  * @see FUCounterUsageLogger
  */
+@ApiStatus.Internal
 public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
-  private static final ExtensionPointName<ProjectUsagesCollector> EP_NAME =
+
+  @ApiStatus.Internal
+  public static final ExtensionPointName<ProjectUsagesCollector> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.projectUsagesCollector");
 
   @NotNull
@@ -83,14 +83,7 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
    */
   @NotNull
   protected Set<MetricEvent> getMetrics(@NotNull Project project) {
-    return getUsages(project).stream().
-      filter(descriptor -> descriptor.getValue() > 0).
-      map(descriptor -> {
-      if (descriptor.getValue() == 1) {
-        return MetricEventFactoryKt.newMetric(descriptor.getKey(), descriptor.getData());
-      }
-      return MetricEventFactoryKt.newCounterMetric(descriptor.getKey(), descriptor.getValue(), descriptor.getData());
-    }).collect(Collectors.toSet());
+    return Collections.emptySet();
   }
 
   /**
@@ -99,16 +92,6 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
    */
   protected boolean requiresReadAccess() {
     return false;
-  }
-
-  /**
-   * @deprecated use {@link ProjectUsagesCollector#getMetrics(Project, ProgressIndicator)}
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public Set<UsageDescriptor> getUsages(@NotNull Project project) {
-    return Collections.emptySet();
   }
 
   @Nullable

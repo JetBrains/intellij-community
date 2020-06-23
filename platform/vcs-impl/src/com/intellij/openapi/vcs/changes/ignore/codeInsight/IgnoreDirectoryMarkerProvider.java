@@ -53,14 +53,13 @@ import java.util.regex.Pattern;
  */
 public final class IgnoreDirectoryMarkerProvider implements LineMarkerProvider {
 
-  @Nullable
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     return null;
   }
 
   @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
       if (!(element instanceof IgnoreEntryFile)) {

@@ -11,10 +11,9 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PyCompositeAnnotator implements Annotator {
-  private final PyAnnotator[] myAnnotators = ExtensionPointName.<PyAnnotator>create("Pythonid.pyAnnotator").getExtensions();
-
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    PyAnnotatingVisitor.runAnnotators(element, holder, myAnnotators);
+    PyAnnotator[] annotators = ExtensionPointName.<PyAnnotator>create("Pythonid.pyAnnotator").getExtensions();
+    PyAnnotatingVisitor.runAnnotators(element, holder, annotators);
   }
 }

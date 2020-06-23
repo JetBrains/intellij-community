@@ -89,7 +89,8 @@ public class GitRebaseUtils {
     LOG.warn(String.format("Refusing to %s: no rebase spec", action));
     VcsNotifier.getInstance(project).notifyError(
       GitBundle.getString("rebase.notification.no.rebase.in.progress.continue.title"),
-      GitBundle.getString("rebase.notification.no.rebase.in.progress.message")
+      GitBundle.getString("rebase.notification.no.rebase.in.progress.message"),
+      true
     );
   }
 
@@ -109,7 +110,8 @@ public class GitRebaseUtils {
       LOG.warn("Refusing to abort: no rebase spec");
       VcsNotifier.getInstance(project).notifyError(
         GitBundle.getString("rebase.notification.no.rebase.in.progress.abort.title"),
-        GitBundle.getString("rebase.notification.no.rebase.in.progress.message")
+        GitBundle.getString("rebase.notification.no.rebase.in.progress.message"),
+        true
       );
     }
   }

@@ -1,18 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 final class TestDataHighlightingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
-  public static final List<String> SUPPORTED_FILE_TYPES = Collections.singletonList(StdFileTypes.JAVA.getDefaultExtension());
+  public static final List<String> SUPPORTED_FILE_TYPES = Collections.singletonList(JavaFileType.INSTANCE.getDefaultExtension());
   public static final List<String> SUPPORTED_IN_TEST_DATA_FILE_TYPES =
     ContainerUtil.immutableList("js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj");
   private static final int MAX_HOPES = 3;
@@ -39,8 +39,9 @@ final class TestDataHighlightingPassFactory implements TextEditorHighlightingPas
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
       Project project = file.getProject();
-      if (isSupported(virtualFile, project)) {
-        return new TestDataHighlightingPass(project, PsiDocumentManager.getInstance(project).getDocument(file));
+      Document document = file.getViewProvider().getDocument();
+      if (isSupported(virtualFile, project) && document != null) {
+        return new TestDataHighlightingPass(project, document);
       }
     }
     return null;

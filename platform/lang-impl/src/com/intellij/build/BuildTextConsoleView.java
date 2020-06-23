@@ -2,13 +2,17 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.execution.filters.CompositeFilter;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.LazyFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,12 +27,20 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsoleView, AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
-  public BuildTextConsoleView(Project project) {
-    this(project, false);
+  public BuildTextConsoleView(@NotNull Project project, boolean viewer, @NotNull List<Filter> executionFilters) {
+    super(project, GlobalSearchScope.allScope(project), viewer, false);
+    executionFilters.forEach(this::addMessageFilter);
   }
 
-  public BuildTextConsoleView(@NotNull Project project, boolean viewer) {
-    super(project, viewer);
+  @Override
+  protected CompositeFilter createCompositeFilter() {
+    CompositeFilter compositeFilter = super.createCompositeFilter();
+    // add build execution filters with higher priority than all other predefined message filters
+    Project project = getProject();
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    List<Filter> predefinedMessageFilters = ConsoleViewUtil.computeConsoleFilters(project, this, scope);
+    predefinedMessageFilters.forEach(compositeFilter::addFilter);
+    return compositeFilter;
   }
 
   @Override

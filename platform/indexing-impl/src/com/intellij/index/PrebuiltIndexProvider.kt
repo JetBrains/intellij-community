@@ -18,9 +18,13 @@ import com.intellij.util.io.PersistentHashMap
 import java.io.File
 import java.io.FileFilter
 import java.io.IOException
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.withLock
+
 
 abstract class PrebuiltIndexProvider<Value>: Disposable {
   private val myFileContentHashing = FileContentHashing()
+  private val myOpenCloseLock = ReentrantReadWriteLock()
   private var myPrebuiltIndexStorage: PersistentHashMap<HashCode, Value>? = null
 
   protected abstract val dirName: String
@@ -32,51 +36,64 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
 
     @JvmField
     val DEBUG_PREBUILT_INDICES: Boolean = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false)
+
+    @JvmField
+    val USE_PREBUILT_INDEX = Registry.`is`("use.prebuilt.indices")
   }
 
   init {
     init()
   }
 
-  internal fun init() : Boolean {
-    if (Registry.`is`("use.prebuilt.indices")) {
-      var indexesRoot = findPrebuiltIndicesRoot()
-      try {
-        if (indexesRoot != null && indexesRoot.exists()) {
-          // we should copy prebuilt indexes to a writable folder
-          indexesRoot = copyPrebuiltIndicesToIndexRoot(indexesRoot)
-          // otherwise we can get access denied error, because persistent hash map opens file for read and write
+  internal fun init() {
+    myOpenCloseLock.writeLock().withLock {
+      if (USE_PREBUILT_INDEX) {
+        var indexesRoot = findPrebuiltIndicesRoot()
+        try {
+          if (indexesRoot != null && indexesRoot.exists()) {
+            // we should copy prebuilt indexes to a writable folder
+            indexesRoot = copyPrebuiltIndicesToIndexRoot(indexesRoot)
+            // otherwise we can get access denied error, because persistent hash map opens file for read and write
 
-          myPrebuiltIndexStorage = openIndexStorage(indexesRoot)
+            myPrebuiltIndexStorage = openIndexStorage(indexesRoot)
 
-          LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage?.baseFile?.toAbsolutePath())
+            LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage?.baseFile?.toAbsolutePath())
+          }
+          else {
+            LOG.info("Prebuilt $indexName indices are missing for $dirName")
+          }
         }
-        else {
-          LOG.info("Prebuilt $indexName indices are missing for $dirName")
+        catch (e: ProcessCanceledException) {
+          throw e
         }
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Exception) {
-        myPrebuiltIndexStorage = null
-        LOG.warn("Prebuilt indices can't be loaded at " + indexesRoot!!, e)
+        catch (e: Exception) {
+          myPrebuiltIndexStorage = null
+          LOG.warn("Prebuilt indices can't be loaded at " + indexesRoot!!, e)
+        }
       }
     }
-    return myPrebuiltIndexStorage != null
   }
 
-  fun get(fileContent: FileContent): Value? {
-    if (myPrebuiltIndexStorage != null) {
-      val hashCode = myFileContentHashing.hashString(fileContent)
-      try {
-        return myPrebuiltIndexStorage!!.get(hashCode)
-      }
-      catch (e: Exception) {
-        LOG.error("Error reading prebuilt stubs from " + myPrebuiltIndexStorage!!.baseFile, e)
-        myPrebuiltIndexStorage = null
+  protected fun get(fileContent: FileContent): Value? {
+    var corrupted = false
+
+    myOpenCloseLock.readLock().withLock {
+      if (myPrebuiltIndexStorage != null) {
+        val hashCode = myFileContentHashing.hashString(fileContent)
+        try {
+          return myPrebuiltIndexStorage!!.get(hashCode)
+        }
+        catch (e: Exception) {
+          LOG.error("Error reading prebuilt stubs from " + myPrebuiltIndexStorage!!.baseFile, e)
+          corrupted = true
+        }
       }
     }
+
+    if (corrupted) {
+      doDispose()
+    }
+
     return null
   }
 
@@ -114,12 +131,19 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
   open fun indexRoot(): File = File(PathManager.getHomePath(), "index/$dirName") // compiled binary
 
   override fun dispose() {
-    if (myPrebuiltIndexStorage != null) {
-      try {
-        myPrebuiltIndexStorage!!.close()
-      }
-      catch (e: IOException) {
-        LOG.error(e)
+    doDispose()
+  }
+
+  private fun doDispose() {
+    myOpenCloseLock.writeLock().withLock {
+      if (myPrebuiltIndexStorage != null) {
+        try {
+          myPrebuiltIndexStorage!!.close()
+        }
+        catch (e: IOException) {
+          LOG.error(e)
+        }
+        myPrebuiltIndexStorage = null
       }
     }
   }

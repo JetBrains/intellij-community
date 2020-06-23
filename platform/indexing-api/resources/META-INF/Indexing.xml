@@ -6,5 +6,9 @@
     <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension" dynamic="true"/>
     <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+
+    <extensionPoint name="indexingFlavor" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.util.indexing.flavor.FileIndexingFlavorProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

@@ -8,14 +8,10 @@ import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.util.cls.ClsFormatException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.InvertedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -58,9 +54,10 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
       VirtualFile file = fileContent.getFile();
       try {
         if (decompiler instanceof Full) {
-          return ((Full) decompiler).getStubBuilder().buildFileStub(fileContent);
+          return ((Full)decompiler).getStubBuilder().buildFileStub(fileContent);
         }
-      } catch (ClsFormatException e) {
+      }
+      catch (ClsFormatException e) {
         if (LOG.isDebugEnabled()) LOG.debug(file.getPath(), e);
         else LOG.info(file.getPath() + ": " + e.getMessage());
       }
@@ -71,7 +68,8 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
           LOG.info("No stub built for the file " + fileContent);
         }
         return stub;
-      } catch (ClsFormatException e) {
+      }
+      catch (ClsFormatException e) {
         if (LOG.isDebugEnabled()) LOG.debug(file.getPath(), e);
         else LOG.info(file.getPath() + ": " + e.getMessage());
       }
@@ -80,30 +78,17 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
     });
   }
 
-  private static final Comparator<Object> CLASS_NAME_COMPARATOR = Comparator.comparing(o -> o.getClass().getName());
-
   @Override
   public int getStubVersion() {
-    int version = STUB_VERSION;
-
-    if (!InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED) {
-      List<ClassFileDecompilers.Decompiler> decompilers = ContainerUtil.newArrayList(ClassFileDecompilers.EP_NAME.getExtensions());
-      decompilers.sort(CLASS_NAME_COMPARATOR);
-      for (ClassFileDecompilers.Decompiler decompiler : decompilers) {
-        if (decompiler instanceof Full) {
-          version = version * 31 + ((Full)decompiler).getStubBuilder().getStubVersion() + decompiler.getClass().getName().hashCode();
-        }
-      }
-    }
-
-    return version;
+    return STUB_VERSION;
   }
 
   private static <T> T setContentAndCompute(@NotNull FileContent content, @NotNull Supplier<T> computation) {
     try {
       content.getFile().setPreloadedContentHint(content.getContent());
       return computation.get();
-    } finally {
+    }
+    finally {
       content.getFile().setPreloadedContentHint(null);
     }
   }

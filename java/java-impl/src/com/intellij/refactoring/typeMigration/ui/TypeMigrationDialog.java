@@ -181,8 +181,8 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     protected void canRun() throws ConfigurationException {
       super.canRun();
       if (!checkType(getMigrationType()))
-        throw new ConfigurationException("\'" + StringUtil.escapeXmlEntities(myTypeCodeFragment.getText()) + "\' is an invalid type");
-      if (isVoidVariableMigration()) throw new ConfigurationException("\'void\' is not applicable");
+        throw new ConfigurationException("'" + StringUtil.escapeXmlEntities(myTypeCodeFragment.getText()) + "' is an invalid type");
+      if (isVoidVariableMigration()) throw new ConfigurationException("'void' is not applicable");
     }
 
     @Override

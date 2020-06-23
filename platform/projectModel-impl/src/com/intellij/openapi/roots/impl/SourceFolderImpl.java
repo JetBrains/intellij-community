@@ -85,6 +85,7 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
 
   @Override
   public void setPackagePrefix(@NotNull String packagePrefix) {
+    getRootModel().assertWritable();
     JavaSourceRootProperties properties = getJavaProperties();
     if (properties != null) {
       properties.setPackagePrefix(packagePrefix);

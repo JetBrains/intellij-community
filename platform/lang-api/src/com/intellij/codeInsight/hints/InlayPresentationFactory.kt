@@ -53,7 +53,7 @@ interface InlayPresentationFactory {
    */
   @Contract(pure = true)
   fun mouseHandling(base: InlayPresentation,
-                    clickListener: ((MouseEvent, Point) -> Unit)?,
+                    clickListener: ClickListener?,
                     hoverListener: HoverListener?) : InlayPresentation
 
   interface HoverListener {

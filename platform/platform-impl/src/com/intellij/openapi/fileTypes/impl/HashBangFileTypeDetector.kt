@@ -10,10 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile
 /**
  * @author yole
  */
-open class HashBangFileTypeDetector @JvmOverloads constructor(
+open class HashBangFileTypeDetector constructor(
   val fileType: FileType,
-  val marker: String,
-  val _version: Int = 1
+  val marker: String
 ) : FileTypeRegistry.FileTypeDetector {
   override fun detect(file: VirtualFile, firstBytes: ByteSequence, firstCharsIfText: CharSequence?): FileType? {
     return if (FileUtil.isHashBangLine(firstCharsIfText, marker)) fileType else null
@@ -29,6 +28,4 @@ open class HashBangFileTypeDetector @JvmOverloads constructor(
     // In future, it can be reduced for performance sake.
     return 256
   }
-
-  override fun getVersion() = _version
 }

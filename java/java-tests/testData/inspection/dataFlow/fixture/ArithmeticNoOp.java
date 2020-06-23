@@ -16,7 +16,7 @@ public class ArithmeticNoOp {
       long a = x >> y;
       long b = x << y;
       long c = x >>> y;
-      long d = y >>> x;
+      long d = <warning descr="Result of 'y >>> x' is always '0'">y >>> x</warning>;
       if (<warning descr="Condition 'a == x' is always 'true'">a == x</warning>) {}
       if (<warning descr="Condition 'b == x' is always 'true'">b == x</warning>) {}
       if (<warning descr="Condition 'c == x' is always 'true'">c == x</warning>) {}

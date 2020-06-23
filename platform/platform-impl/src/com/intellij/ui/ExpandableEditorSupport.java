@@ -1,23 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
+
+import static java.util.Arrays.asList;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.fields.ExpandableSupport;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.util.List;
-
-import static java.util.Arrays.asList;
+import java.util.Objects;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.ScrollPaneConstants;
+import org.jetbrains.annotations.NotNull;
 
 public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> {
   public ExpandableEditorSupport(@NotNull EditorTextField field) {
@@ -44,7 +46,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
     label.setBorder(JBUI.Borders.empty(5, 3, 5, 7));
     editor.getContentComponent().putClientProperty(Expandable.class, this);
     editor.getScrollPane().setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     editor.getScrollPane().getVerticalScrollBar().setBackground(background);
     editor.getScrollPane().getVerticalScrollBar().add(JBScrollBar.LEADING, label);
     editor.getScrollPane().setViewportBorder(JBUI.Borders.empty(4, 6));
@@ -106,7 +108,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
 
   @NotNull
   protected EditorTextField createPopupEditor(@NotNull EditorTextField field, @NotNull String text) {
-    if (Comparing.equal(text, field.getText())) {
+    if (Objects.equals(text, field.getText())) {
       return new EditorTextField(field.getDocument(), field.getProject(), field.getFileType());
     }
     else {

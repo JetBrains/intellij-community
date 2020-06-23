@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.Disposable
@@ -27,7 +27,6 @@ import javax.swing.event.TreeExpansionListener
 
 internal class PredictionService(val project: Project) : Disposable {
   private val changesViewManager = ChangesViewManager.getInstance(project)
-  private val changeListManager = ChangeListManager.getInstance(project)
 
   private data class PredictionRequirements(val dataManager: VcsLogData, val filesHistoryProvider: FilesHistoryProvider)
 
@@ -60,7 +59,7 @@ internal class PredictionService(val project: Project) : Disposable {
   private val changeListsListener = object : ChangeListAdapter() {
     private var lastChanges: Collection<Change> = listOf()
     override fun changeListsChanged() {
-      val changes = changeListManager.defaultChangeList.changes
+      val changes = ChangeListManager.getInstance(project).defaultChangeList.changes
       if (!haveEqualElements(changes, lastChanges)) {
         if (changes.size <= Registry.intValue("vcs.changeReminder.changes.limit")) {
           val prevFiles = lastChanges.map { ChangesUtil.getFilePath(it) }
@@ -165,7 +164,7 @@ internal class PredictionService(val project: Project) : Disposable {
 
   private fun calculatePrediction() = synchronized(LOCK) {
     nodeExpandedListener.tryToSubscribe()
-    val changes = changeListManager.defaultChangeList.changes
+    val changes = ChangeListManager.getInstance(project).defaultChangeList.changes
     if (changes.size > Registry.intValue("vcs.changeReminder.changes.limit")) {
       setEmptyPrediction(PredictionData.EmptyPredictionReason.TOO_MANY_FILES)
       return

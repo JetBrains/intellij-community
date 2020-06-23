@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {XYChartManager} from "@/charts/ChartManager"
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {TimeLineGuide, TimeLineItem, transformToTimeLineItems} from "@/timeline/timeLineChartHelper"
-import {Item} from "@/state/data"
+import {ItemV0} from "@/state/data"
 import {DataManager, SERVICE_WAITING} from "@/state/DataManager"
 
 export const LABEL_DURATION_THRESHOLD = 20
@@ -144,7 +144,7 @@ export abstract class BaseTimeLineChartManager extends XYChartManager {
     return durationAxis
   }
 
-  protected transformParallelToTimeLineItems(originalItems: Array<Item>, colorSet: am4core.ColorSet, threadRowFirstIndex: number): Array<TimeLineItem> {
+  protected transformParallelToTimeLineItems(originalItems: Array<ItemV0>, colorSet: am4core.ColorSet, threadRowFirstIndex: number): Array<TimeLineItem> {
     // events must be already sorted by time
     const items = transformToTimeLineItems(originalItems)
     items.sort((a, b) => collator.compare(a.thread, b.thread))

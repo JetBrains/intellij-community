@@ -28,9 +28,9 @@ import java.util.Set;
 
 public class ModulesScope extends GlobalSearchScope {
   private final ProjectFileIndex myProjectFileIndex;
-  private final Set<Module> myModules;
+  private final Set<? extends Module> myModules;
 
-  public ModulesScope(@NotNull Set<Module> modules, @NotNull Project project) {
+  public ModulesScope(@NotNull Set<? extends Module> modules, @NotNull Project project) {
     super(project);
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myModules = modules;

@@ -20,6 +20,12 @@ internal class ExternalCompilerConfigurationStorage(private val project: Project
   var loadedState: Map<String, String>? = null
     private set
 
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): ExternalCompilerConfigurationStorage = 
+      project.getService(ExternalCompilerConfigurationStorage::class.java)
+  } 
+  
   override fun getState(): Element {
     val result = Element("state")
     if (!project.isExternalStorageEnabled) {

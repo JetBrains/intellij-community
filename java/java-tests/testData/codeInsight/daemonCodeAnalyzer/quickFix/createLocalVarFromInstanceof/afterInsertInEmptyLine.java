@@ -4,7 +4,7 @@ class X {
         if (o instanceof String) {
             String a;
             String b;
-            String o1 = (String) o;
+            String s = (String) o;
             <caret>
 
             String c;

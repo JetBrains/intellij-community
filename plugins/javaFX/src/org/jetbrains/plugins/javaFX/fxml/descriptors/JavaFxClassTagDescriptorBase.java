@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -193,7 +192,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
   public XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable XmlTag context) {
     if (context != null) {
       final String name = context.getName();
-      if (Comparing.equal(name, getName())) {
+      if (Objects.equals(name, getName())) {
         final PsiClass psiClass = getPsiClass();
         if (psiClass != null) {
           final List<XmlAttributeDescriptor> descriptors = new ArrayList<>();

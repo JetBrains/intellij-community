@@ -402,8 +402,8 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
         if (!TypeConversionUtil.isAssignable(componentType, itemType)) continue;
         if (JavaGenericsUtil.isRawToGeneric(componentType, itemType)) {
           String description = JavaErrorBundle.message("generics.unchecked.assignment",
-                                                       JavaHighlightUtil.formatType(itemType),
-                                                       JavaHighlightUtil.formatType(componentType));
+                                                       itemType.getCanonicalText(),
+                                                       componentType.getCanonicalText());
           if (!arrayTypeFixChecked) {
             final PsiType checkResult = JavaHighlightUtil.sameType(initializers);
             fix = checkResult != null ? VariableArrayTypeFix.createFix(arrayInitializer, checkResult) : null;
@@ -425,8 +425,8 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       if (!TypeConversionUtil.isAssignable(parameterType, itemType)) return;
       if (JavaGenericsUtil.isRawToGeneric(parameterType, itemType)) {
         String description = JavaErrorBundle.message("generics.unchecked.assignment",
-                                                     JavaHighlightUtil.formatType(itemType),
-                                                     JavaHighlightUtil.formatType(parameterType));
+                                                     itemType.getCanonicalText(),
+                                                     parameterType.getCanonicalText());
         registerProblem(description, expression, parameter, fixesSupplier.get());
       }
     }

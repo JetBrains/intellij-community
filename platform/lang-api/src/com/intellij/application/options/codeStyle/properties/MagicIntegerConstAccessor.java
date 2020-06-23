@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
-import com.intellij.util.containers.BidirectionalMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MagicIntegerConstAccessor extends ExternalStringAccessor<Integer> implements CodeStyleChoiceList {
-  private final BidirectionalMap<Integer, String> myValueMap = new BidirectionalMap<>();
+  private final Int2ObjectOpenHashMap<String> myValueMap = new Int2ObjectOpenHashMap<>();
+  private final Object2ObjectOpenHashMap<String, IntArrayList> myValueToKeysMap = new Object2ObjectOpenHashMap<>();
 
   public MagicIntegerConstAccessor(@NotNull Object object,
                                    @NotNull Field field,
@@ -18,26 +21,26 @@ public class MagicIntegerConstAccessor extends ExternalStringAccessor<Integer> i
                                    String[] strValues) {
     super(object, field);
     for (int i = 0; i < Math.min(intValues.length, strValues.length); i ++) {
-      myValueMap.put(intValues[i], strValues[i]);
+      String value = strValues[i];
+      int intValue = intValues[i];
+      myValueMap.put(intValue, value);
+      myValueToKeysMap.computeIfAbsent(value, __ -> new IntArrayList()).add(intValue);
     }
   }
 
-  @Nullable
   @Override
-  protected final Integer fromExternal(@NotNull String str) {
-    List<Integer> keys = myValueMap.getKeysByValue(str);
-    return keys != null && keys.size() > 0 ? keys.get(0) : null;
+  protected final @Nullable Integer fromExternal(@NotNull String str) {
+    IntArrayList keys = myValueToKeysMap.get(str);
+    return keys != null && keys.size() > 0 ? keys.getInt(0) : null;
   }
 
-  @NotNull
   @Override
-  protected final String toExternal(@NotNull Integer value) {
-    return myValueMap.get(value);
+  protected final @NotNull String toExternal(@NotNull Integer value) {
+    return myValueMap.get(value.intValue());
   }
 
-  @NotNull
   @Override
-  public final List<String> getChoices() {
+  public final @NotNull List<String> getChoices() {
     return new ArrayList<>(myValueMap.values());
   }
 }

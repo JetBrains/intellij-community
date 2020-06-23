@@ -16,7 +16,6 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -29,7 +28,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -52,6 +51,7 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
+import com.intellij.util.ListSelection;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.text.DateFormatUtil;
@@ -69,7 +69,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellEditor;
+import javax.swing.tree.TreeCellEditor;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -115,7 +118,7 @@ public class ShelvedChangesViewManager implements Disposable {
   public static final DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
 
   public static ShelvedChangesViewManager getInstance(Project project) {
-    return project.getComponent(ShelvedChangesViewManager.class);
+    return project.getService(ShelvedChangesViewManager.class);
   }
 
   public ShelvedChangesViewManager(Project project) {
@@ -124,7 +127,6 @@ public class ShelvedChangesViewManager implements Disposable {
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
 
     project.getMessageBus().connect().subscribe(ShelveChangesManager.SHELF_TOPIC, e -> scheduleContentUpdate());
-    StartupManager.getInstance(project).registerPostStartupDumbAwareActivity(() -> scheduleContentUpdate());
   }
 
   private void scheduleContentUpdate() {
@@ -155,7 +157,6 @@ public class ShelvedChangesViewManager implements Disposable {
 
         myContent.setCloseable(false);
         myContent.setDisposer(myPanel);
-        addContent(myContent);
         DnDSupport.createBuilder(myPanel.myTree)
           .setImageProvider(myPanel::createDraggedImage)
           .setBeanProvider(myPanel::createDragStartBean)
@@ -163,6 +164,7 @@ public class ShelvedChangesViewManager implements Disposable {
           .setDropHandler(dnDTarget)
           .setDisposableParent(myContent)
           .install();
+        addContent(myContent);
       }
       updateTreeIfShown(tree -> {
         tree.rebuildTree();
@@ -204,7 +206,7 @@ public class ShelvedChangesViewManager implements Disposable {
       createShelvedListsWithChangesNode(shelvedLists, createTagNode(VcsBundle.message("shelve.recently.deleted.node")));
     }
 
-    private void createShelvedListsWithChangesNode(@NotNull List<? extends ShelvedChangeList> shelvedLists, @NotNull MutableTreeNode parentNode) {
+    private void createShelvedListsWithChangesNode(@NotNull List<? extends ShelvedChangeList> shelvedLists, @NotNull ChangesBrowserNode<?> parentNode) {
       shelvedLists.forEach(changeList -> {
         List<ShelvedWrapper> shelvedChanges = new ArrayList<>();
         requireNonNull(changeList.getChanges()).stream().map(ShelvedWrapper::new).forEach(shelvedChanges::add);
@@ -213,7 +215,7 @@ public class ShelvedChangesViewManager implements Disposable {
         shelvedChanges.sort(comparing(s -> s.getChange(myProject), CHANGE_COMPARATOR));
 
         ShelvedListNode shelvedListNode = new ShelvedListNode(changeList);
-        myModel.insertNodeInto(shelvedListNode, parentNode, parentNode.getChildCount());
+        insertSubtreeRoot(shelvedListNode, parentNode);
         for (ShelvedWrapper shelved : shelvedChanges) {
           Change change = shelved.getChange(myProject);
           FilePath filePath = ChangesUtil.getFilePath(change);
@@ -295,7 +297,7 @@ public class ShelvedChangesViewManager implements Disposable {
       return;
     }
 
-    ChangesViewPreview diffPreview = myPanel.myDiffPreview;
+    DiffPreview diffPreview = myPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       ((EditorTabPreview)diffPreview).closePreview();
     }
@@ -493,6 +495,14 @@ public class ShelvedChangesViewManager implements Disposable {
     return notNullize(dataContext.getData(SHELVED_BINARY_FILE_KEY));
   }
 
+  @NotNull
+  public static List<String> getSelectedShelvedChangeNames(@NotNull final DataContext dataContext) {
+    ChangesTree shelvedChangeTree = dataContext.getData(SHELVED_CHANGES_TREE);
+    if (shelvedChangeTree == null) return emptyList();
+    return StreamEx.of(VcsTreeModelData.selected(shelvedChangeTree).userObjectsStream(ShelvedWrapper.class))
+      .map(ShelvedWrapper::getRequestName).toList();
+  }
+
   private static class MyShelveDeleteProvider implements DeleteProvider {
     @NotNull private final Project myProject;
     @NotNull private final ShelfTree myTree;
@@ -622,7 +632,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @NotNull private final JPanel myRootPanel = new JPanel(new BorderLayout());
 
     private MyShelvedPreviewProcessor myChangeProcessor;
-    private ChangesViewPreview myDiffPreview;
+    private DiffPreview myDiffPreview;
 
     private ShelfToolWindowPanel(@NotNull Project project) {
       myProject = project;
@@ -631,7 +641,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
       myTree = new ShelfTree(myProject);
       myTree.setEditable(true);
-      myTree.setDragEnabled(true);
+      myTree.setDragEnabled(!ApplicationManager.getApplication().isHeadlessEnvironment());
       myTree.getGroupingSupport().setGroupingKeysOrSkip(myShelveChangesManager.getGrouping());
       myTree.addGroupingChangeListener(e -> {
         myShelveChangesManager.setGrouping(myTree.getGroupingSupport().getGroupingKeys());
@@ -1056,6 +1066,15 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public boolean canEat(Update update) {
       return true;
+    }
+  }
+
+  public static class PostStartupActivity implements StartupActivity.Background {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+
+      getInstance(project).scheduleContentUpdate();
     }
   }
 }

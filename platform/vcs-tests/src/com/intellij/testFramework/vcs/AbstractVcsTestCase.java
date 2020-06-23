@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.ProcessOutput;
@@ -34,7 +34,6 @@ import org.junit.Assert;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -228,7 +227,7 @@ public abstract class AbstractVcsTestCase {
   }
 
   public static void sortChanges(final List<? extends Change> changes) {
-    Collections.sort(changes, (o1, o2) -> {
+    changes.sort((o1, o2) -> {
       final String p1 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o1).getPath());
       final String p2 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o2).getPath());
       return p1.compareTo(p2);

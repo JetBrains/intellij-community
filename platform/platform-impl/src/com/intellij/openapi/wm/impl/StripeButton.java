@@ -19,7 +19,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 
 /**
@@ -51,21 +54,18 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
 
     setBorder(JBUI.Borders.empty(5, 5, 0, 5));
 
-    addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        String id = toolWindow.getId();
-        if (myPressedWhenSelected) {
-          toolWindow.getToolWindowManager().hideToolWindow(id, false);
-        }
-        else {
-          toolWindow.getToolWindowManager().activated$intellij_platform_ide_impl(toolWindow);
-        }
-
-        myPressedWhenSelected = false;
-        //noinspection SpellCheckingInspection
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + id);
+    addActionListener(e -> {
+      String id = toolWindow.getId();
+      if (myPressedWhenSelected) {
+        toolWindow.getToolWindowManager().hideToolWindow(id, false);
       }
+      else {
+        toolWindow.getToolWindowManager().activated$intellij_platform_ide_impl(toolWindow);
+      }
+
+      myPressedWhenSelected = false;
+      //noinspection SpellCheckingInspection
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + id);
     });
     addMouseListener(new PopupHandler() {
       @Override
@@ -86,16 +86,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
     });
   }
 
-  void init(@NotNull ToolWindowImpl toolWindow, @NotNull WindowInfo info) {
-    updateState(toolWindow);
-    updateText(toolWindow);
-    updateIcon(toolWindow.getIcon());
-
-    apply(info);
-  }
-
-  @NotNull
-  public WindowInfo getWindowInfo() {
+  public @NotNull WindowInfo getWindowInfo() {
     return toolWindow.getWindowInfo();
   }
 
@@ -104,9 +95,8 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
     return toolWindow.getId();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
       return toolWindow;
     }
@@ -253,8 +243,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
     myLastStripe = stripe;
   }
 
-  @NotNull
-  public ToolWindowImpl getToolWindow() {
+  public @NotNull ToolWindowImpl getToolWindow() {
     return toolWindow;
   }
 
@@ -275,8 +264,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
       .DRAG_START_DEADZONE;
   }
 
-  @Nullable
-  private static JLayeredPane findLayeredPane(MouseEvent e) {
+  private static @Nullable JLayeredPane findLayeredPane(MouseEvent e) {
     if (!(e.getComponent() instanceof JComponent)) {
       return null;
     }
@@ -343,8 +331,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
   private void updateText(@NotNull ToolWindowImpl toolWindow) {
     String text = toolWindow.getStripeTitle();
     if (UISettings.getInstance().getShowToolWindowsNumbers()) {
-      String toolWindowId = toolWindow.getId();
-      int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindowId);
+      int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindow.getId());
       if (mnemonic != -1) {
         text = (char)mnemonic + ": " + text;
         setMnemonic2(mnemonic);
@@ -358,12 +345,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
 
   private void updateState(@NotNull ToolWindowImpl toolWindow) {
     boolean toShow = toolWindow.isAvailable() || toolWindow.isPlaceholderMode();
-    if (UISettings.getInstance().getAlwaysShowWindowsButton()) {
-      setVisible(toolWindow.isShowStripeButton() || isSelected());
-    }
-    else {
-      setVisible(toShow && (toolWindow.isShowStripeButton() || isSelected()));
-    }
+    setVisible(toShow && (toolWindow.isShowStripeButton() || isSelected()));
     setEnabled(toolWindow.isAvailable());
   }
 

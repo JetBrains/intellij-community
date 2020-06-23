@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.CommonBundle
@@ -127,7 +127,7 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
     }
   }
 
-  override fun file(): File? = EditCustomPropertiesAction.file.value
+  override fun file(): File? = file.value
   override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} properties\n\n"
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
@@ -140,7 +140,7 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
     val file = lazy { VMOptions.getWriteFile() }
   }
 
-  override fun file(): File? = EditCustomVmOptionsAction.file.value
+  override fun file(): File? = file.value
   override fun template(): String =
       if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))
         "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options, see https://developer.android.com/studio/intro/studio-config.html\n"

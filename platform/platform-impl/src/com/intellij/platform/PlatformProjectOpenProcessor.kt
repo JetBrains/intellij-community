@@ -2,6 +2,7 @@
 package com.intellij.platform
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
@@ -171,7 +172,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
               projectToClose = openProjects[openProjects.size - 1]
             }
           }
-          if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectDir)) {
+          if (checkExistingProjectOnOpen(projectToClose, options.callback, projectDir)) {
             return null
           }
         }
@@ -392,11 +393,15 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
 }
 
 private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project? {
-  val conversionResult = runActivity("project conversion", category = ActivityCategory.MAIN) {
-    ConversionService.getInstance().convert(path)
-  }
-  if (conversionResult.openingIsCanceled()) {
-    return null
+  var conversionResult:ConversionResult? = null
+
+  if (options.runConversionsBeforeOpen) {
+    conversionResult = runActivity("project conversion", category = ActivityCategory.MAIN) {
+      ConversionService.getInstance().convert(path)
+    }
+    if (conversionResult.openingIsCanceled()) {
+      return null
+    }
   }
 
   val project = ProjectManagerImpl.doCreateProject(options.projectName, path)
@@ -407,7 +412,7 @@ private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project
     return null
   }
 
-  if (!conversionResult.conversionNotNeeded()) {
+  if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
     StartupManager.getInstance(project).registerPostStartupActivity {
       conversionResult.postStartupActivity(project)
     }

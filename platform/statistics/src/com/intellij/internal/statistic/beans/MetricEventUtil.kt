@@ -116,3 +116,24 @@ fun <T, V> addMetricIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, 
     set.add(eventIdFunc(value))
   }
 }
+
+interface MetricDifferenceBuilder<T> {
+  fun add(eventId: String, valueFunction: (T) -> Any)
+  fun addBool(eventId: String, valueFunction: (T) -> Boolean)
+}
+
+fun <T> addMetricsIfDiffers(set: MutableSet<in MetricEvent>,
+                            settingsBean: T,
+                            defaultSettingsBean: T,
+                            data: FeatureUsageData,
+                            callback: MetricDifferenceBuilder<T>.() -> Unit) {
+  callback(object : MetricDifferenceBuilder<T> {
+    override fun add(eventId: String, valueFunction: (T) -> Any) {
+      addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, eventId, data)
+    }
+
+    override fun addBool(eventId: String, valueFunction: (T) -> Boolean) {
+      addBoolIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, eventId, data)
+    }
+  })
+}

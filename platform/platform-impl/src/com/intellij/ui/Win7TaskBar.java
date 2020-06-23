@@ -3,15 +3,12 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.User32Ex;
 import com.intellij.util.io.jna.DisposableMemory;
 import com.sun.jna.Function;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.ptr.PointerByReference;
-import com.sun.jna.win32.StdCallLibrary;
-import com.sun.jna.win32.W32APIOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -42,23 +39,6 @@ final class Win7TaskBar {
   private static Function mySetProgressValue;
   private static Function mySetProgressState;
   private static Function mySetOverlayIcon;
-
-  public interface User32Ex extends StdCallLibrary {
-    User32Ex INSTANCE = Native.load("user32", User32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
-
-    int LookupIconIdFromDirectoryEx(Memory pResBits, boolean fIcon, int cxDesired, int cyDesired, int Flags);
-
-    WinDef.HICON CreateIconFromResourceEx(Pointer pResBits,
-                                          WinDef.DWORD dwResSize,
-                                          boolean fIcon,
-                                          WinDef.DWORD dwVer,
-                                          int cxDesired,
-                                          int cyDesired,
-                                          int Flags);
-
-    @SuppressWarnings("UnusedReturnValue")
-    boolean FlashWindow(WinDef.HWND hwnd, boolean bInvert);
-  }
 
   private static final boolean ourInitialized;
   static {

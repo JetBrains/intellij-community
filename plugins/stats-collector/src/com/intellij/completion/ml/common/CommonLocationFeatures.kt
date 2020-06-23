@@ -11,7 +11,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.util.PlatformUtils
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.stats.completion.prefix
 
 class CommonLocationFeatures : ContextFeatureProvider {
   override fun getName(): String = "common"
@@ -21,9 +22,13 @@ class CommonLocationFeatures : ContextFeatureProvider {
     val caretOffset = lookup.lookupStart
     val logicalPosition = editor.offsetToLogicalPosition(caretOffset)
     val lineStartOffset = editor.document.getLineStartOffset(logicalPosition.line)
+    val position = environment.parameters.position
+    val prefixLength = lookup.prefix().length
     val linePrefix = editor.document.getText(TextRange(lineStartOffset, caretOffset))
 
-    putNGramScorer(environment)
+    putNGramScorers(environment)
+    val prefixToDrop = if (prefixLength > 0) prefixLength else 0
+    putContextSimilarityScorers(linePrefix.dropLast(prefixToDrop), position, environment)
 
     val result = mutableMapOf(
       "line_num" to MLFeatureValue.float(logicalPosition.line),
@@ -36,15 +41,22 @@ class CommonLocationFeatures : ContextFeatureProvider {
       result["dumb_mode"] = MLFeatureValue.binary(true)
     }
 
-    result.addPsiParents(environment.parameters.position, 10)
+    result["is_after_dot"] = MLFeatureValue.binary(isAfterDot(position))
+
+    result.addPsiParents(position, 10)
     return result
   }
 
-  private fun putNGramScorer(environment: CompletionEnvironment) {
-    val scoringFunction = NGram.createScoringFunction(environment.parameters, 4)
-    if(scoringFunction != null) {
-      environment.putUserData(NGram.NGRAM_SCORER_KEY, scoringFunction)
-    }
+  private fun putNGramScorers(environment: CompletionEnvironment) {
+    for ((key, scorer) in NGram.getScorers(environment.parameters, 4))
+      environment.putUserData(key, scorer)
+  }
+
+  private fun putContextSimilarityScorers(line: String, position: PsiElement, environment: CompletionEnvironment) {
+    environment.putUserData(ContextSimilarityUtil.LINE_SIMILARITY_SCORER_KEY,
+                            ContextSimilarityUtil.createLineSimilarityScoringFunction(line))
+    environment.putUserData(ContextSimilarityUtil.PARENT_SIMILARITY_SCORER_KEY,
+                            ContextSimilarityUtil.createParentSimilarityScoringFunction(position))
   }
 
   private fun MutableMap<String, MLFeatureValue>.addPsiParents(position: PsiElement, numParents: Int) {
@@ -56,5 +68,10 @@ class CommonLocationFeatures : ContextFeatureProvider {
       this[parentName] = MLFeatureValue.className(curParent::class.java)
       if (curParent is PsiFileSystemItem) return
     }
+  }
+
+  private fun isAfterDot(position: PsiElement) : Boolean {
+    val prev = PsiTreeUtil.prevVisibleLeaf(position)
+    return prev != null && prev.text == "."
   }
 }

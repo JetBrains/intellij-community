@@ -35,6 +35,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
   private static final LanguageResolvingConverter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
+  private static final ActionOrGroupResolveConverter ACTION_CONVERTER = new ActionOrGroupResolveConverter.OnlyActions();
 
   @Override
   public void registerExtensions(@NotNull final Extension extension, @NotNull final DomExtensionsRegistrar registrar) {
@@ -107,6 +108,9 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
           if ("language".equals(attributeName)) {
             extension.setConverter(LANGUAGE_CONVERTER);
           }
+          else if ("action".equals(attributeName)) {
+            extension.setConverter(ACTION_CONVERTER);
+          }
         }
         else if (clazz == PsiClass.class) {
           markAsClass(extension, true, withElement);
@@ -163,8 +167,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       final String withClassName = withElement.getImplements().getStringValue();
       extension.addCustomAnnotation(new ExtendClassImpl() {
         @Override
-        public String value() {
-          return withClassName;
+        public String[] value() {
+          return new String[]{withClassName};
         }
       });
     }
@@ -307,8 +311,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
 
     @Override
-    public String value() {
-      return myInterfaceName;
+    public String[] value() {
+      return new String[]{myInterfaceName};
     }
   }
 

@@ -17,7 +17,7 @@ import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +49,10 @@ public final class DefaultTreeUI extends BasicTreeUI {
    * @deprecated use {@link RenderingHelper#SHRINK_LONG_RENDERER} instead
    */
   @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.2")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static final Key<Boolean> SHRINK_LONG_RENDERER = Key.create("resize renderer component if it exceed a visible area");
+  @ApiStatus.Internal
+  public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
@@ -118,6 +120,10 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   private static boolean isLeadSelectionNeeded(@NotNull JTree tree, int row) {
     return 1 < tree.getSelectionCount() && tree.isRowSelected(row - 1) && tree.isRowSelected(row + 1);
+  }
+
+  private static boolean isLargeModelAllowed(@Nullable JTree tree) {
+    return is("ide.tree.large.model.allowed") || UIUtil.isClientPropertyTrue(tree, LARGE_MODEL_ALLOWED);
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -251,7 +257,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   @Override
   protected void installDefaults() {
     super.installDefaults();
-    if (!is("ide.tree.large.model.allowed")) largeModel = false;
+    if (!isLargeModelAllowed(getTree())) largeModel = false;
     JTree tree = getTree();
     if (tree != null) {
       LookAndFeel.installBorder(tree, "Tree.border");
@@ -311,12 +317,12 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   @Override
   protected void setLargeModel(boolean large) {
-    super.setLargeModel(large && is("ide.tree.large.model.allowed"));
+    super.setLargeModel(large && isLargeModelAllowed(getTree()));
   }
 
   @Override
   protected void setModel(TreeModel model) {
-    if (!is("ide.tree.large.model.allowed")) largeModel = false;
+    if (!isLargeModelAllowed(getTree())) largeModel = false;
     super.setModel(model);
   }
 

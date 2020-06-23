@@ -92,17 +92,17 @@ val RunnersThatRequireTestCaseClass: Set<String> = setOf<String>(PythonTestConfi
 
 /**
  * Checks if element could be test target
- * @param testCaseClassRequired see [PythonUnitTestUtil] docs
+ * @param testCaseClassRequired see [PythonUnitTestDetectorsBasedOnSettings] docs
  */
 fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEvalContext: TypeEvalContext): Boolean = when (element) {
-  is PyFile -> PythonUnitTestUtil.isTestFile(element, testCaseClassRequired, typeEvalContext)
+  is PyFile -> PythonUnitTestDetectorsBasedOnSettings.isTestFile(element, testCaseClassRequired, typeEvalContext)
   is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any {
-    it is PyFile && PythonUnitTestUtil.isTestFile(it, testCaseClassRequired, typeEvalContext)
+    it is PyFile && PythonUnitTestDetectorsBasedOnSettings.isTestFile(it, testCaseClassRequired, typeEvalContext)
   }
-  is PyFunction -> PythonUnitTestUtil.isTestFunction(element,
-                                                     testCaseClassRequired, typeEvalContext)
+  is PyFunction -> PythonUnitTestDetectorsBasedOnSettings.isTestFunction(element,
+                                                                                                                         testCaseClassRequired, typeEvalContext)
   is com.jetbrains.python.psi.PyClass -> {
-    PythonUnitTestUtil.isTestClass(element, testCaseClassRequired, typeEvalContext)
+    PythonUnitTestDetectorsBasedOnSettings.isTestClass(element, testCaseClassRequired, typeEvalContext)
   }
   else -> false
 }
@@ -284,10 +284,10 @@ data class ConfigurationTarget(@ConfigField override var target: String,
    */
   fun checkValid() {
     if (targetType != PyRunTargetVariant.CUSTOM && target.isEmpty()) {
-      throw RuntimeConfigurationWarning("Target not provided")
+      throw RuntimeConfigurationWarning(PyBundle.message("python.testing.target.not.provided"))
     }
     if (targetType == PyRunTargetVariant.PYTHON && !isWellFormed()) {
-      throw RuntimeConfigurationError("Provide a qualified name of function, class or a module")
+      throw RuntimeConfigurationError(PyBundle.message("python.testing.provide.qualified.name"))
     }
   }
 

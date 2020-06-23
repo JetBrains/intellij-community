@@ -60,6 +60,6 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
   }
 
   interface Introspector {
-    fun introspect(subject: Introspectable)
+    fun introspect(subject: Introspectable): CompletableFuture<*>?
   }
 }

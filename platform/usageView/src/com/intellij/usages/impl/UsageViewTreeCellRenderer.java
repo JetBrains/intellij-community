@@ -61,12 +61,15 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   @DirtyUI
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    if (myView.isDisposed()) {
+      return;
+    }
+
     boolean showAsReadOnly = false;
     if (value instanceof Node && value != tree.getModel().getRoot()) {
       Node node = (Node)value;
       if (!node.isValid()) {
-        append(UsageViewBundle.message("node.invalid") + " ", StartupUiUtil.isUnderDarcula()
-                                                              ? ourInvalidAttributesDarcula : ourInvalidAttributes);
+        append(UsageViewBundle.message("node.invalid") + " ", StartupUiUtil.isUnderDarcula() ? ourInvalidAttributesDarcula : ourInvalidAttributes);
       }
       if (myPresentation.isShowReadOnlyStatusAsRed() && node.isReadOnly()) {
         showAsReadOnly = true;

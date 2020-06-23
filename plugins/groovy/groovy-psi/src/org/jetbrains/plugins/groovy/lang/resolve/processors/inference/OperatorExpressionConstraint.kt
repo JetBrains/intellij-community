@@ -7,7 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperat
 
 class OperatorExpressionConstraint(private val expression: GrOperatorExpression) : GrConstraintFormula() {
 
-  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean {
     val reference = expression.reference
     if (reference != null) {
       val result = reference.advancedResolve()

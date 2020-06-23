@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.RefreshCollisionPassType.*
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
+import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ConcurrencyUtil.once
 import com.intellij.util.EventDispatcher
@@ -54,13 +55,9 @@ class MockProjectAware(override val projectId: ExternalSystemProjectId) : Extern
   private fun doRefreshProject(context: ExternalSystemProjectReloadContext) {
     val refreshStatus = refreshStatus.get()
     eventDispatcher.multicaster.beforeProjectRefresh()
-    refresh.startTask()
-    try {
+    refresh.task {
       refreshCounter.incrementAndGet()
       eventDispatcher.multicaster.insideProjectRefresh(context)
-    }
-    finally {
-      refresh.finishTask()
     }
     eventDispatcher.multicaster.afterProjectRefresh(refreshStatus)
   }

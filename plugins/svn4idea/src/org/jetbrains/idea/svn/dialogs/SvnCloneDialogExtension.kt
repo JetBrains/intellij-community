@@ -25,7 +25,7 @@ class SvnCloneDialogExtension(project: Project) : CheckoutDialog(project, Projec
     return this.isOKActionEnabled
   }
 
-  override fun getOkButtonText() = SvnBundle.getString("checkout.dialog.button")
+  override fun getOkButtonText() = SvnBundle.message("checkout.dialog.button")
 
   override fun doValidateAll(): MutableList<ValidationInfo> {
     return super.doValidateAll()

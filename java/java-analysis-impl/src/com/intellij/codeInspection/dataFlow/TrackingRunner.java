@@ -1382,26 +1382,18 @@ public class TrackingRunner extends DataFlowRunner {
   }
 
   private static MemoryStateChange findRelationAddedChange(MemoryStateChange history, DfaVariableValue var, Relation relation) {
-    List<RelationType> subRelations;
-    switch (relation.myRelationType) {
-      case NE:
-        if (relation.myCounterpart.getDfType() instanceof DfConstantType) {
-          return history.findRelation(var, rel -> rel.equals(relation) ||
-                                                  rel.myRelationType == RelationType.EQ && 
-                                                  rel.myCounterpart.getDfType() instanceof DfConstantType,
-                                      true);
-        }
-        subRelations = Arrays.asList(RelationType.NE, RelationType.GT, RelationType.LT);
-        break;
-      case LE:
-        subRelations = Arrays.asList(RelationType.EQ, RelationType.LT);
-        break;
-      case GE:
-        subRelations = Arrays.asList(RelationType.EQ, RelationType.GT);
-        break;
-      default:
-        subRelations = Collections.singletonList(relation.myRelationType);
+    if (relation.myRelationType == RelationType.NE && relation.myCounterpart.getDfType() instanceof DfConstantType) {
+      return history.findRelation(var, rel -> rel.equals(relation) ||
+                                              rel.myRelationType == RelationType.EQ &&
+                                              rel.myCounterpart.getDfType() instanceof DfConstantType,
+                                  true);
     }
-    return history.findRelation(var, rel -> rel.myCounterpart == relation.myCounterpart && subRelations.contains(rel.myRelationType), true);
+    MemoryStateChange exact = history.findRelation(var, rel -> rel.myCounterpart == relation.myCounterpart &&
+                                                                   relation.myRelationType.equals(rel.myRelationType), true);
+    if (exact != null) {
+      return exact;
+    }
+    return history.findRelation(var, rel -> rel.myCounterpart == relation.myCounterpart &&
+                                            relation.myRelationType.isSubRelation(rel.myRelationType), true);
   }
 }

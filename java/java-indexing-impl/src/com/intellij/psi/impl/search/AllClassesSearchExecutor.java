@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -22,7 +22,10 @@ import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
   @Override
@@ -63,7 +66,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     });
 
     List<String> sorted = new ArrayList<>(names);
-    Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
+    sorted.sort(String.CASE_INSENSITIVE_ORDER);
 
     return processClassesByNames(parameters.getProject(), scope, sorted, processor);
   }

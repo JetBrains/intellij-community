@@ -45,16 +45,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(I18nizeMultipleStringsDialog.class);
   private static final @NonNls String LAST_USED_PROPERTIES_FILE = "LAST_USED_PROPERTIES_FILE";
+  private static final @NonNls String LAST_USED_CONTEXT = "I18N_FIX_LAST_USED_CONTEXT";
 
   @NotNull private final Project myProject;
   private final List<I18nizedPropertyData<D>> myKeyValuePairs;
@@ -85,7 +83,7 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     myResourceBundleManager = resourceBundleManager;
     myMarkAsNonNlsButtonIcon = markAsNonNlsButtonIcon;
     myContextModules = contextFiles.stream().map(ModuleUtilCore::findModuleForFile).filter(Objects::nonNull).collect(Collectors.toSet());
-    setTitle(PropertiesBundle.message("i18nize.dialog.title"));
+    setTitle(PropertiesBundle.message("i18nize.multiple.strings.dialog.title"));
     init();
   }
 
@@ -121,8 +119,15 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     });
 
     if (!files.isEmpty()) {
-      myPropertiesFile.setSelectedItem(ObjectUtils.notNull(PropertiesComponent.getInstance(myProject).getValue(LAST_USED_PROPERTIES_FILE),
-                                                           files.get(0)));
+      String contextString = getContextString();
+      String preselectedFile;
+      if (contextString != null && contextString.equals(PropertiesComponent.getInstance(myProject).getValue(LAST_USED_CONTEXT))) {
+        preselectedFile = PropertiesComponent.getInstance(myProject).getValue(LAST_USED_PROPERTIES_FILE);
+      }
+      else {
+        preselectedFile = null;
+      }
+      myPropertiesFile.setSelectedItem(ObjectUtils.notNull(preselectedFile, files.get(0)));
     }
     return component;
   }
@@ -220,7 +225,13 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   protected void doOKAction() {
     TableUtil.stopEditing(myTable);
     PropertiesComponent.getInstance(myProject).setValue(LAST_USED_PROPERTIES_FILE, (String)myPropertiesFile.getSelectedItem());
+    PropertiesComponent.getInstance(myProject).setValue(LAST_USED_CONTEXT, getContextString());
     super.doOKAction();
+  }
+
+  @Nullable
+  private String getContextString() {
+    return myContextModules.stream().map(Module::getName).min(Comparator.naturalOrder()).orElse(null);
   }
 
   @Override

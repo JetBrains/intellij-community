@@ -106,7 +106,7 @@ public class MockProject extends MockComponentManager implements Project {
   public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> componentType, boolean createIfNotYet) {
     List<T> result = new ArrayList<>();
     DefaultPicoContainer container = (DefaultPicoContainer)getPicoContainer();
-    for (ComponentAdapter componentAdapter : container.getComponentAdapters()) {
+    for (ComponentAdapter componentAdapter : container.unsafeGetAdapters()) {
       if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
         // may be null in the case of the "implicit" adapter representing "this".
         //noinspection unchecked

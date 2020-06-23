@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.ide
 
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
@@ -60,10 +61,12 @@ class WorkspaceModelTopics : Disposable {
   fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
 
   internal fun notifyModulesAreLoaded() {
+    val activity = StartUpMeasurer.startActivity("(wm) After modules are loaded")
     sendToQueue = false
     val application = ApplicationManager.getApplication()
     application.invokeAndWait {
       application.runWriteAction {
+        val innerActivity = activity.startChild("(wm) WriteAction. After modules are loaded")
         allEvents.forEach { queue ->
           queue.events.forEach { (isBefore, event) ->
             if (isBefore) queue.originalListener.beforeChanged(event)
@@ -71,11 +74,13 @@ class WorkspaceModelTopics : Disposable {
           }
           queue.events.clear()
         }
+        innerActivity.end()
       }
     }
     allEvents.forEach { it.collectToQueue = false }
     allEvents.clear()
     modulesAreLoaded = true
+    activity.end()
   }
 
   private class EventsDispatcher(val originalListener: WorkspaceModelChangeListener) : WorkspaceModelChangeListener {

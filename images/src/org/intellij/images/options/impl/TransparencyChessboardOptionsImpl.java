@@ -18,6 +18,7 @@ package org.intellij.images.options.impl;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.util.JdomKt;
+import org.intellij.images.options.DefaultImageEditorSettings;
 import org.intellij.images.options.TransparencyChessboardOptions;
 import org.jdom.Element;
 
@@ -30,7 +31,6 @@ import java.beans.PropertyChangeSupport;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class TransparencyChessboardOptionsImpl implements TransparencyChessboardOptions, JDOMExternalizable {
-  private boolean showDefault = true;
   private int cellSize = DEFAULT_CELL_SIZE;
   private Color whiteColor = DEFAULT_WHITE_COLOR;
   private Color blackColor = DEFAULT_BLACK_COLOR;
@@ -42,12 +42,12 @@ final class TransparencyChessboardOptionsImpl implements TransparencyChessboardO
 
   @Override
   public boolean isShowDefault() {
-    return showDefault;
+    return DefaultImageEditorSettings.INSTANCE.getShowChessboard();
   }
 
   @Override
   public int getCellSize() {
-    return cellSize;
+    return DefaultImageEditorSettings.INSTANCE.getChessboardCellSize();
   }
 
   @Override
@@ -61,11 +61,6 @@ final class TransparencyChessboardOptionsImpl implements TransparencyChessboardO
   }
 
   void setShowDefault(boolean showDefault) {
-    boolean oldValue = this.showDefault;
-    if (oldValue != showDefault) {
-      this.showDefault = showDefault;
-      propertyChangeSupport.firePropertyChange(ATTR_SHOW_DEFAULT, oldValue, this.showDefault);
-    }
   }
 
   void setCellSize(int cellSize) {
@@ -136,38 +131,9 @@ final class TransparencyChessboardOptionsImpl implements TransparencyChessboardO
 
   @Override
   public void writeExternal(Element element) {
-    JdomKt.addOptionTag(element, ATTR_SHOW_DEFAULT, Boolean.toString(showDefault), "setting");
+    JdomKt.addOptionTag(element, ATTR_SHOW_DEFAULT, Boolean.toString(isShowDefault()), "setting");
     JdomKt.addOptionTag(element, ATTR_CELL_SIZE, Integer.toString(cellSize), "setting");
     JDOMExternalizerEx.write(element, ATTR_WHITE_COLOR, whiteColor);
     JDOMExternalizerEx.write(element, ATTR_BLACK_COLOR, blackColor);
-  }
-
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof TransparencyChessboardOptions)) {
-      return false;
-    }
-
-    TransparencyChessboardOptions otherOptions = (TransparencyChessboardOptions)o;
-
-    return cellSize == otherOptions.getCellSize() &&
-           showDefault == otherOptions.isShowDefault() &&
-           (blackColor != null ?
-            blackColor.equals(otherOptions.getBlackColor()) :
-            otherOptions.getBlackColor() == null) &&
-           (whiteColor != null ?
-            whiteColor.equals(otherOptions.getWhiteColor()) :
-            otherOptions.getWhiteColor() == null);
-  }
-
-  public int hashCode() {
-    int result;
-    result = (showDefault ? 1 : 0);
-    result = 29 * result + cellSize;
-    result = 29 * result + (whiteColor != null ? whiteColor.hashCode() : 0);
-    result = 29 * result + (blackColor != null ? blackColor.hashCode() : 0);
-    return result;
   }
 }

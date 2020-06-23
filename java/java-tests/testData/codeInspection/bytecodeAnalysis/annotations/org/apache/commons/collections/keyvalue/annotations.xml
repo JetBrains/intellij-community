@@ -28,6 +28,11 @@
     <item name='org.apache.commons.collections.keyvalue.AbstractMapEntry boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.keyvalue.AbstractMapEntry java.lang.Object setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.keyvalue.AbstractMapEntryDecorator AbstractMapEntryDecorator(java.util.Map.Entry)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -64,6 +69,16 @@
     </item>
     <item name='org.apache.commons.collections.keyvalue.DefaultKeyValue boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.keyvalue.DefaultKeyValue java.lang.Object setKey(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.keyvalue.DefaultKeyValue java.lang.Object setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.keyvalue.DefaultKeyValue java.util.Map.Entry toMapEntry()'>
         <annotation name='org.jetbrains.annotations.Contract'>

@@ -23,3 +23,14 @@ class SettingsComponentNameValidator : CustomWhiteListRule() {
     return context.eventData.containsKey("component") && data == context.eventData["component"]
   }
 }
+
+class SettingsValueValidator : CustomWhiteListRule() {
+  override fun acceptRuleId(ruleId: String?): Boolean = "setting_value" == ruleId
+
+  override fun doValidate(data: String, context: EventContext): ValidationResultType {
+    val componentName = context.eventData["component"] as? String ?: return REJECTED
+    val optionName = context.eventData["name"] as? String ?: return REJECTED
+    if (!isComponentNameWhitelisted(componentName) || !isComponentOptionNameWhitelisted(optionName)) return REJECTED
+    return acceptWhenReportedByJetBrainsPlugin(context)
+  }
+}

@@ -43,7 +43,10 @@ import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -309,6 +312,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
+  @NlsContexts.Checkbox
   protected String getDoNotShowMessage() {
     return UIBundle.message("dialog.options.do.not.show");
   }
@@ -1049,6 +1053,14 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * Calls doOKAction. This is intended for internal use.
+   */
+  @ApiStatus.Internal
+  public final void performOKAction() {
+    doOKAction();
+  }
+
+  /**
    * This method is invoked by default implementation of "OK" action. It just closes dialog
    * with {@code OK_EXIT_CODE}. This is convenient place to override functionality of "OK" action.
    * Note that the method does nothing if "OK" action isn't enabled.
@@ -1489,7 +1501,7 @@ public abstract class DialogWrapper {
   @Deprecated
   protected final void setCancelButtonIcon(@SuppressWarnings("unused") Icon icon) { }
 
-  protected final void setCancelButtonText(@Nls @NotNull String text) {
+  protected final void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
     myCancelAction.putValue(Action.NAME, text);
   }
 
@@ -1518,7 +1530,7 @@ public abstract class DialogWrapper {
    *             {@link AbstractButton#setText(String)}
    *             {@link AbstractButton#updateDisplayedMnemonicIndex(String, int)}
    */
-  protected final void setOKButtonText(@Nls @NotNull String text) {
+  protected final void setOKButtonText(@NlsContexts.Button @NotNull String text) {
     myOKAction.putValue(Action.NAME, text);
   }
 
@@ -1526,7 +1538,7 @@ public abstract class DialogWrapper {
     myOKAction.putValue(Action.MNEMONIC_KEY, c);
   }
 
-  protected final void setOKButtonTooltip(@Nls String text) {
+  protected final void setOKButtonTooltip(@NlsContexts.Tooltip String text) {
     myOKAction.putValue(Action.SHORT_DESCRIPTION, text);
   }
 
@@ -1583,7 +1595,7 @@ public abstract class DialogWrapper {
    * @param title title
    * @see JDialog#setTitle
    */
-  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public void setTitle(@NlsContexts.DialogTitle String title) {
     myPeer.setTitle(title);
   }
 
@@ -1933,11 +1945,11 @@ public abstract class DialogWrapper {
    * <code>{@link #setErrorText(String, JComponent)}</code> method.
    * @param text the error text to display
    */
-  protected void setErrorText(@Nls @Nullable final String text) {
+  protected void setErrorText(@NlsContexts.DialogMessage @Nullable final String text) {
     setErrorText(text, null);
   }
 
-  protected void setErrorText(@Nls @Nullable final String text, @Nullable final JComponent component) {
+  protected void setErrorText(@NlsContexts.DialogMessage @Nullable final String text, @Nullable final JComponent component) {
     setErrorInfoAll(text == null ?
                     Collections.emptyList() :
                     Collections.singletonList(new ValidationInfo(text, component)));
@@ -2201,7 +2213,7 @@ public abstract class DialogWrapper {
     boolean shouldSaveOptionsOnCancel();
 
     @NotNull
-    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NlsContexts.Checkbox
     String getDoNotShowMessage();
   }
 

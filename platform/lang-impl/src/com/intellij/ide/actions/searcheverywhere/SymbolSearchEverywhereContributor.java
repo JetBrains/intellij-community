@@ -4,7 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
-import com.intellij.lang.Language;
+import com.intellij.ide.util.gotoByName.LanguageRef;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeUICustomization;
@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor {
 
-  private final PersistentSearchEverywhereContributorFilter<Language> myFilter;
+  private final PersistentSearchEverywhereContributorFilter<LanguageRef> myFilter;
 
   public SymbolSearchEverywhereContributor(@NotNull AnActionEvent event) {
     super(event);
@@ -42,7 +42,7 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
 
   @NotNull
   @Override
-  protected FilteringGotoByModel<Language> createModel(@NotNull Project project) {
+  protected FilteringGotoByModel<LanguageRef> createModel(@NotNull Project project) {
     GotoSymbolModel2 model = new GotoSymbolModel2(project);
     if (myFilter != null) {
       model.setFilterItems(myFilter.getSelectedElements());

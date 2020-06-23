@@ -594,17 +594,14 @@ public abstract class GroovyRefactoringUtil {
     return parent instanceof GrStatementOwner ? ((GrStatementOwner) parent) : null;
   }
 
-  @Nullable
-  public static PsiType getType(@Nullable PsiParameter myParameter) {
-    if (myParameter == null) return null;
+  @NotNull
+  private static PsiType getType(@NotNull PsiParameter myParameter) {
     PsiType type = myParameter.getType();
     return type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
   }
 
-    @Nullable
-  public static PsiType getSubstitutedType(@Nullable GrParameter parameter) {
-    if (parameter == null) return null;
-
+  @NotNull
+  public static PsiType getSubstitutedType(@NotNull GrParameter parameter) {
     final PsiType type = getType(parameter);
 
     if (type instanceof PsiArrayType) {

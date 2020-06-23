@@ -22,7 +22,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property, PsiLanguageInjectionHost {
+public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property, PsiLanguageInjectionHost, PsiNameIdentifierOwner {
   private static final Logger LOG = Logger.getInstance(PropertyImpl.class);
 
   public PropertyImpl(@NotNull ASTNode node) {
@@ -122,6 +122,11 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return unescape(getValue());
   }
 
+  @Override
+  public @Nullable PsiElement getNameIdentifier() {
+    return getKeyNode().getPsi();
+  }
+
 
   public static String unescape(String s) {
     if (s == null) return null;
@@ -184,7 +189,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
               default:
                 outChars.append("\\u");
                 int start = off - i - 1;
-                int end = start + 4 < s.length() ? start + 4 : s.length();
+                int end = Math.min(start + 4, s.length());
                 outChars.append(s, start, end);
                 i=4;
                 error = true;
@@ -283,7 +288,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
                 break;
               default:
                 int start = off - i - 1;
-                int end = start + 4 < s.length() ? start + 4 : s.length();
+                int end = Math.min(start + 4, s.length());
                 i=4;
                 error = true;
                 off = end;

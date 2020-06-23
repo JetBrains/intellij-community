@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,7 +44,7 @@ public class XmlDefaultAttributeValueInspection extends XmlSuppressableInspectio
         if (!(parent instanceof XmlAttribute)) {
           return;
         }
-        if (parent.getParent() instanceof HtmlTag) return;
+        if (parent.getParent() instanceof HtmlTag || HtmlUtil.isHtmlFile(parent.getParent())) return;
         XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
         if (descriptor == null || descriptor.isRequired()) {
           return;

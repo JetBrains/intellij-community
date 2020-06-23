@@ -208,8 +208,8 @@ class EchoTeamCityMessages(object):
             return "%s:%s (%s)" % (str(location[0]), str(location[1]), str(location[2]))
         return str(location)
 
-    def pytest_collection_modifyitems(self, session, config, items):
-        self.teamcity.testCount(len(items))
+    def pytest_collection_finish(self, session):
+        self.teamcity.testCount(len(session.items))
 
     def pytest_runtest_logstart(self, nodeid, location):
         # test name fetched from location passed as metainfo to PyCharm
@@ -238,8 +238,9 @@ class EchoTeamCityMessages(object):
     def report_test_output(self, report, test_id):
         for (secname, data) in report.sections:
             # https://github.com/JetBrains/teamcity-messages/issues/112
-            # CollectReport doesn't have 'when' property
-            if hasattr(report, "when") and report.when not in secname:
+            # CollectReport didn't have 'when' property, but now it has.
+            # But we still need output on 'collect' state
+            if hasattr(report, "when") and report.when not in secname and report.when != 'collect':
                 continue
             if not data:
                 continue

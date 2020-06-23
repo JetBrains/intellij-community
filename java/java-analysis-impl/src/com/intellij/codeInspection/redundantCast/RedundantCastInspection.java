@@ -7,12 +7,10 @@ import com.intellij.codeInspection.miscGenerics.SuspiciousMethodCallUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +24,6 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   @NonNls private static final String SHORT_NAME = "RedundantCast";
 
   public boolean IGNORE_SUSPICIOUS_METHOD_CALLS;
-
 
   public RedundantCastInspection() {
     myQuickFixAction = new AcceptSuggested();
@@ -50,13 +47,6 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   @Override
   public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return getDescriptions(field, manager, isOnTheFly);
-  }
-
-  @Override
-  public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (IGNORE_SUSPICIOUS_METHOD_CALLS) {
-      super.writeSettings(node);
-    }
   }
 
   @Override

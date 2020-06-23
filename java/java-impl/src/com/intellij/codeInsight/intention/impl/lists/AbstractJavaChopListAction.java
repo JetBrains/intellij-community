@@ -1,8 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.lists;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +16,12 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class AbstractJavaChopListAction<L extends PsiElement, E extends PsiElement> extends AbstractChopListAction<L, E> {
+  @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (!(element.getContainingFile() instanceof PsiJavaFile)) return false;
+    return super.isAvailable(project, editor, element);
+  }
+
   @Override
   @Nullable
   PsiElement prevBreak(@NotNull PsiElement element) {

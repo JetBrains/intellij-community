@@ -30,6 +30,10 @@ public abstract class FileStatusManager {
 
   public abstract void fileStatusChanged(VirtualFile file);
 
+  /**
+   * @deprecated Please use overload with parent disposable
+   */
+  @Deprecated
   public abstract void addFileStatusListener(@NotNull FileStatusListener listener);
 
   public abstract void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable);

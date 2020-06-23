@@ -47,7 +47,7 @@ public final class ImportCommand extends Command {
 
 	// Fields =================================================================
 
-	private final Map<SimpleStringPattern, KeywordSubstitution> wrapperMap = new HashMap();
+	private final Map<SimpleStringPattern, KeywordSubstitution> wrapperMap = new HashMap<>();
 	private String logMessage;
 	private String module;
 	private String releaseTag;
@@ -82,7 +82,7 @@ public final class ImportCommand extends Command {
 		requests.addArgumentRequest(getReleaseTag());
 
 		final File rootDirectory = clientEnvironment.getCvsFileSystem().getLocalFileSystem().getRootDirectory();
-		addFileRequests(rootDirectory, requests, requestProcessor, clientEnvironment);
+		addFileRequests(rootDirectory, requests, clientEnvironment);
 
 		// This is necessary when importing a directory structure with CVS directories.
 		// If requests.addLocalPathDirectoryRequest(); would be used, the repository path
@@ -108,18 +108,7 @@ public final class ImportCommand extends Command {
 
 	@Override
         public String getCvsCommandLine() {
-		@NonNls final StringBuilder cvsArguments = new StringBuilder("import ");
-		cvsArguments.append(getCvsArguments());
-
-		cvsArguments.append(' ');
-		cvsArguments.append(getModule());
-
-		cvsArguments.append(' ');
-		cvsArguments.append(getVendorTag());
-
-		cvsArguments.append(' ');
-		cvsArguments.append(getReleaseTag());
-		return cvsArguments.toString();
+		return "import " + getCvsArguments() + ' ' + getModule() + ' ' + getVendorTag() + ' ' + getReleaseTag();
 	}
 
 	// Accessing ==============================================================
@@ -235,14 +224,8 @@ public final class ImportCommand extends Command {
 		for (final SimpleStringPattern pattern : wrapperMap.keySet()) {
 			final KeywordSubstitution keywordSubstitutionOptions = wrapperMap.get(pattern);
 
-			@NonNls final StringBuilder buffer = new StringBuilder();
-			buffer.append(pattern.toString());
-			buffer.append(" -k '");
-			buffer.append(keywordSubstitutionOptions.toString());
-			buffer.append("'");
-
 			requests.addArgumentRequest("-W");
-			requests.addArgumentRequest(buffer.toString());
+			requests.addArgumentRequest(pattern + " -k '" + keywordSubstitutionOptions + "'");
 		}
 	}
 
@@ -250,7 +233,7 @@ public final class ImportCommand extends Command {
 	 * Adds recursively all request for files and directories in the specified
 	 * directory to the specified requestList.
 	 */
-	private void addFileRequests(File directory, Requests requests, IRequestProcessor requestProcessor, IClientEnvironment clientEnvironment) {
+	private void addFileRequests(File directory, Requests requests, IClientEnvironment clientEnvironment) {
 		final DirectoryObject directoryObject = clientEnvironment.getCvsFileSystem().getLocalFileSystem().getDirectoryObject(directory);
 
 		final String relativePath = directoryObject.toUnixPath();
@@ -265,7 +248,7 @@ public final class ImportCommand extends Command {
 			return;
 		}
 
-		final List<File> subdirectories = new ArrayList();
+		final List<File> subdirectories = new ArrayList<>();
 
 		for (final File file : files) {
 			if (file.isDirectory()) {
@@ -294,7 +277,7 @@ public final class ImportCommand extends Command {
 		}
 
 		for (final File subdirectory : subdirectories) {
-			addFileRequests(subdirectory, requests, requestProcessor, clientEnvironment);
+			addFileRequests(subdirectory, requests, clientEnvironment);
 		}
 	}
 

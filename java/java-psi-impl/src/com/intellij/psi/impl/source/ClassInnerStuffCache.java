@@ -7,7 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -91,7 +90,7 @@ public class ClassInnerStuffCache {
   }
 
   private boolean isAnonymousClass() {
-    return myClass.getName() == null || myClass instanceof ClsClassImpl && ((ClsClassImpl)myClass).isAnonymousClass();
+    return myClass.getName() == null || myClass instanceof PsiAnonymousClass;
   }
 
   private static <T> T[] copy(T[] value) {

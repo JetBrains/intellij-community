@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -19,11 +18,11 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.FilteringProcessor;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import javax.swing.Icon;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -45,7 +44,7 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
     @Override
     public boolean equals(final PsiElement o1, final PsiElement o2) {
       if (o1 instanceof PsiNamedElement && o2 instanceof PsiNamedElement) {
-        return Comparing.equal(((PsiNamedElement)o1).getName(), ((PsiNamedElement)o2).getName());
+        return Objects.equals(((PsiNamedElement)o1).getName(), ((PsiNamedElement)o2).getName());
       }
       return o1.equals(o2);
     }

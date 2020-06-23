@@ -6,7 +6,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -93,12 +95,12 @@ public class DialogBuilder implements Disposable {
     return this;
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@DialogTitle String title) {
     myTitle = title;
   }
 
   @NotNull
-  public DialogBuilder title(@NotNull String title) {
+  public DialogBuilder title(@NotNull @DialogTitle String title) {
     myTitle = title;
     return this;
   }
@@ -436,11 +438,11 @@ public class DialogBuilder implements Disposable {
     }
   }
 
-  public void setErrorText(@Nullable final String text) {
+  public void setErrorText(@NlsContexts.DialogMessage @Nullable final String text) {
     myDialogWrapper.setErrorText(text);
   }
 
-  public void setErrorText(@Nullable final String text, @Nullable JComponent component) {
+  public void setErrorText(@NlsContexts.DialogMessage @Nullable final String text, @Nullable JComponent component) {
     myDialogWrapper.setErrorText(text, component);
   }
 }

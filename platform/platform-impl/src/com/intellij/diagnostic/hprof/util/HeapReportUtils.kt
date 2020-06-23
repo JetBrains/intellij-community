@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic.hprof.util
 
+import org.jetbrains.annotations.NonNls
 import java.util.Locale
 
 object HeapReportUtils {
@@ -39,7 +40,7 @@ object HeapReportUtils {
     return toShortStringAsSize(size).padStart(STRING_PADDING_FOR_SIZE)
   }
 
-  fun sectionHeader(name: String): String {
+  fun sectionHeader(@NonNls name: String): String {
     val uppercaseName = name.toUpperCase(Locale.US)
     return if (uppercaseName.length >= SECTION_HEADER_SIZE - 2) {
       uppercaseName

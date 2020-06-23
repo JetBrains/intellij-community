@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class CommonActionsManagerImpl extends CommonActionsManager {
+final class CommonActionsManagerImpl extends CommonActionsManager {
   @Override
   public AnAction createPrevOccurenceAction(OccurenceNavigator navigator) {
     return new PreviousOccurenceToolbarAction(navigator);

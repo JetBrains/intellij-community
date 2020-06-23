@@ -129,7 +129,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     filesToDelete = cmd.filesToDeleteOnTermination
 
     val actual = ParametersList()
-    cmd.build().collectCommandsSynchronously().forEach {actual.add(it)}
+    actual.addAll(cmd.build().collectCommandsSynchronously())
     val toCompare = mutableListOf<String>()
     actual.parameters.forEachIndexed { i, arg ->
       if (i > 0 && !arg.startsWith("-Dfile.encoding=")) {

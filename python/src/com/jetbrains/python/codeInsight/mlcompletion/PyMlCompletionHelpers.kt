@@ -4,6 +4,9 @@ package com.jetbrains.python.codeInsight.mlcompletion
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.PsiElement
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyQualifiedExpression
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
@@ -30,4 +33,11 @@ object PyMlCompletionHelpers {
       return emptyMap()
     }
   }
+
+  fun getQualifiedComponents(element: PyExpression): List<String> =
+    generateSequence<PsiElement>(element) { it.firstChild }
+      .filterIsInstance<PyQualifiedExpression>()
+      .mapNotNull { it.name }
+      .toList()
+      .asReversed()
 }

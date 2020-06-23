@@ -6,11 +6,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.messages.SimpleMessageBusConnection
 import org.jdom.JDOMException
 import org.junit.ClassRule
 import org.junit.Rule
@@ -32,7 +32,7 @@ class RecentProjectsTest {
 
   @Rule
   @JvmField
-  val busConnection = RecentProjectManagerListenerRule()
+  internal val busConnection = RecentProjectManagerListenerRule()
 
   @Rule
   @JvmField
@@ -151,16 +151,16 @@ class RecentProjectsTest {
   }
 }
 
-class RecentProjectManagerListenerRule : ExternalResource() {
-  private val disposable = Disposer.newDisposable()
+internal class RecentProjectManagerListenerRule : ExternalResource() {
+  private var connection: SimpleMessageBusConnection? = null
 
   override fun before() {
-    val connection = ApplicationManager.getApplication().messageBus.connect()
-    connection.subscribe(ProjectManager.TOPIC, RecentProjectsManagerBase.MyProjectListener())
-    connection.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
+    connection = ApplicationManager.getApplication().messageBus.simpleConnect()
+    connection!!.subscribe(ProjectManager.TOPIC, RecentProjectsManagerBase.MyProjectListener())
+    connection!!.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
   }
 
   override fun after() {
-    Disposer.dispose(disposable)
+    connection?.disconnect()
   }
 }

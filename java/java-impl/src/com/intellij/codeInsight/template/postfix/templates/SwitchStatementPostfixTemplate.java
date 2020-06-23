@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.lang.surroundWith.Surrounder;
@@ -87,7 +87,7 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
           PsiSwitchStatement switchStatement = (PsiSwitchStatement)factory.createStatementFromText("switch(1){case 1:}", null);
           return postprocessSwitch(editor, expr, codeStyleManager, parent, switchStatement);
         }
-        else if (HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(expr)) {
+        else if (HighlightingFeature.ENHANCED_SWITCH.isAvailable(expr)) {
           PsiSwitchExpression switchExpression = (PsiSwitchExpression)factory.createExpressionFromText("switch(1){case 1->1;}", null);
           return postprocessSwitch(editor, expr, codeStyleManager, expr, switchExpression);
         }
@@ -131,7 +131,7 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
-        boolean isEnhancedSwitchAvailable = HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(context);
+        boolean isEnhancedSwitchAvailable = HighlightingFeature.ENHANCED_SWITCH.isAvailable(context);
         List<PsiElement> result = new ArrayList<>();
 
         for (PsiElement element = PsiTreeUtil.getNonStrictParentOfType(context, PsiExpression.class, PsiStatement.class);

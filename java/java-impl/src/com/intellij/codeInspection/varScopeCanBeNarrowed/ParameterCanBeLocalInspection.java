@@ -3,6 +3,7 @@ package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -27,10 +28,6 @@ import java.util.*;
  */
 public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "ParameterCanBeLocal";
-
-  protected ConvertParameterToLocalQuickFix createFix() {
-    return new ConvertParameterToLocalQuickFix();
-  }
 
   @Override
   @NotNull
@@ -67,16 +64,16 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
   }
 
   @NotNull
-  private ProblemDescriptor createProblem(@NotNull InspectionManager manager,
-                                          @NotNull PsiIdentifier identifier,
-                                          boolean isOnTheFly) {
+  private static ProblemDescriptor createProblem(@NotNull InspectionManager manager,
+                                                 @NotNull PsiIdentifier identifier,
+                                                 boolean isOnTheFly) {
     return manager.createProblemDescriptor(
       identifier,
       JavaBundle.message("inspection.parameter.can.be.local.problem.descriptor"),
       true,
       ProblemHighlightType.LIKE_UNUSED_SYMBOL,
       isOnTheFly,
-      createFix()
+      new ConvertParameterToLocalQuickFix()
     );
   }
 
@@ -145,6 +142,11 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      WriteAction.run(() -> super.applyFix(project, descriptor));
+    }
+
+    @Override
     protected PsiElement applyChanges(@NotNull final Project project,
                                       @NotNull final String localName,
                                       @Nullable final PsiExpression initializer,
@@ -179,7 +181,8 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
           @Override
           protected void performRefactoring(UsageInfo @NotNull [] usages) {
             final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-            newDeclaration = moveDeclaration(elementFactory, localName, parameter, initializer, action, references);
+            newDeclaration = WriteAction.compute(
+              () -> moveDeclaration(elementFactory, localName, parameter, initializer, action, references));
             super.performRefactoring(usages);
           }
         }

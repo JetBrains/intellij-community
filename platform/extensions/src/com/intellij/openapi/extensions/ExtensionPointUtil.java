@@ -11,22 +11,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ExtensionPointUtil {
-  @NotNull
-  public static <V extends ClearableLazyValue<?>> V dropLazyValueOnChange(@NotNull V lazyValue,
-                                                                          @NotNull ExtensionPointName<?> extensionPointName,
-                                                                          @Nullable Disposable parentDisposable) {
-    extensionPointName.getPoint(null).addExtensionPointListener(lazyValue::drop, false, parentDisposable);
+  public static @NotNull <V extends ClearableLazyValue<?>> V dropLazyValueOnChange(@NotNull V lazyValue,
+                                                                                   @NotNull ExtensionPointName<?> extensionPointName,
+                                                                                   @Nullable Disposable parentDisposable) {
+    extensionPointName.addChangeListener(lazyValue::drop, parentDisposable);
     return lazyValue;
   }
 
-  @NotNull
-  public static <T> Disposable createExtensionDisposable(@NotNull T extensionObject,
-                                                         @NotNull ExtensionPointName<T> extensionPointName) {
+  public static @NotNull <T> Disposable createExtensionDisposable(@NotNull T extensionObject,
+                                                                  @NotNull ExtensionPointName<T> extensionPointName) {
     return createExtensionDisposable(extensionObject, extensionPointName.getPoint(null));
   }
 
-  @NotNull
-  public static <T> Disposable createExtensionDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<T> extensionPoint) {
+  public static @NotNull <T> Disposable createExtensionDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<T> extensionPoint) {
     Disposable disposable = createDisposable(extensionObject, extensionPoint);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<T>() {
       @Override
@@ -39,9 +36,8 @@ public final class ExtensionPointUtil {
     return disposable;
   }
 
-  @NotNull
-  public static <T> Disposable createKeyedExtensionDisposable(@NotNull T extensionObject,
-                                                              @NotNull ExtensionPoint<KeyedLazyInstance<T>> extensionPoint) {
+  public static @NotNull <T> Disposable createKeyedExtensionDisposable(@NotNull T extensionObject,
+                                                                       @NotNull ExtensionPoint<KeyedLazyInstance<T>> extensionPoint) {
     Disposable disposable = createDisposable(extensionObject, extensionPoint);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
       @Override
@@ -54,8 +50,7 @@ public final class ExtensionPointUtil {
     return disposable;
   }
 
-  @NotNull
-  private static <T> Disposable createDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<?> extensionPoint) {
+  private static @NotNull <T> Disposable createDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<?> extensionPoint) {
     Disposable disposable = Disposer.newDisposable("Disposable for [" + extensionObject + "]");
     ComponentManager manager = ((ExtensionPointImpl<?>)extensionPoint).getComponentManager();
     Disposer.register(manager, disposable);

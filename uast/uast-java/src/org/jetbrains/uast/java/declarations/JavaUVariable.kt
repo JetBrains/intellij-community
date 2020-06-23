@@ -3,7 +3,10 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiParameterImpl
+import com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl
 import com.intellij.psi.util.PsiTypesUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
@@ -26,22 +29,24 @@ abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaAbstractUElem
     javaPsi.typeElement?.let { UastFacade.findPlugin(it)?.convertOpt<UTypeReferenceExpression>(javaPsi.typeElement, this) }
   }
 
-  override val uastAnchor: UIdentifier
-    get() = UIdentifier(javaPsi.nameIdentifier, this)
+  abstract override val sourcePsi: PsiVariable?
+
+  override val uastAnchor: UIdentifier?
+    get() = sourcePsi?.let {  UIdentifier(it.nameIdentifier, this) }
 
   override fun equals(other: Any?): Boolean = other is AbstractJavaUVariable && javaPsi == other.javaPsi
   override fun hashCode(): Int = javaPsi.hashCode()
 }
 
-open class JavaUVariable(
-  override val sourcePsi: PsiVariable,
+class JavaUVariable(
+  override val javaPsi: PsiVariable,
   givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UVariableEx, PsiVariable by sourcePsi {
+) : AbstractJavaUVariable(givenParent), UVariableEx, PsiVariable by javaPsi {
   @Suppress("OverridingDeprecatedMember")
   override val psi: PsiVariable
     get() = javaPsi
 
-  override val javaPsi: PsiVariable = sourcePsi
+  override val sourcePsi: PsiVariable? get() = javaPsi.takeIf { it.isPhysical || it is PsiLocalVariableImpl}
 
   companion object {
     fun create(psi: PsiVariable, containingElement: UElement?): UVariable {
@@ -54,23 +59,25 @@ open class JavaUVariable(
       }
     }
   }
-  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
+  override fun getOriginalElement(): PsiElement? = javaPsi.originalElement
 }
 
-open class JavaUParameter(
-  override val sourcePsi: PsiParameter,
+class JavaUParameter(
+  override val javaPsi: PsiParameter,
   givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UParameterEx, PsiParameter by sourcePsi {
+) : AbstractJavaUVariable(givenParent), UParameterEx, PsiParameter by javaPsi {
 
   @Suppress("OverridingDeprecatedMember")
   override val psi: PsiParameter
     get() = javaPsi
 
-  override val javaPsi: PsiParameter = sourcePsi
-  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
+  override val sourcePsi: PsiParameter?
+    get() = javaPsi.takeIf { it.isPhysical || (it is PsiParameterImpl && it.parentOfType<PsiMethod>()?.let { canBeSourcePsi(it) } == true) }
+
+  override fun getOriginalElement(): PsiElement? = javaPsi.originalElement
 }
 
-open class JavaUField(
+class JavaUField(
   override val sourcePsi: PsiField,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), UFieldEx, PsiField by sourcePsi {
@@ -82,7 +89,7 @@ open class JavaUField(
   override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }
 
-open class JavaULocalVariable(
+class JavaULocalVariable(
   override val sourcePsi: PsiLocalVariable,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), ULocalVariableEx, PsiLocalVariable by sourcePsi {
@@ -104,7 +111,7 @@ open class JavaULocalVariable(
 
 }
 
-open class JavaUEnumConstant(
+class JavaUEnumConstant(
   override val sourcePsi: PsiEnumConstant,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), UEnumConstantEx, UCallExpressionEx, PsiEnumConstant by sourcePsi, UMultiResolvable {

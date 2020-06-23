@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.validation;
 
 import com.intellij.lang.ant.AntImportsIndex;
@@ -18,6 +18,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -59,6 +60,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
   @Override
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBackground(UIUtil.getToolTipActionBackground());
     panel.setBorder(IdeBorderFactory.createTitledBorder("File Context", false));
     myCombo = new ComboBox();
     myCombo.putClientProperty(CONTEXTS_COMBO_KEY, Boolean.TRUE);
@@ -88,7 +90,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     }
 
     final List<String> paths = new ArrayList<>(myPathToFileMap.keySet());
-    Collections.sort(paths, Comparator.naturalOrder());
+    paths.sort(Comparator.naturalOrder());
 
     myCombo.addItem(NONE);
     for (String path : paths) {

@@ -111,7 +111,7 @@ public class OptionsEditorContext {
     }
 
     if (myErrors.containsKey(configurable)) {
-      Map<Configurable, ConfigurationException> newErrors = new THashMap<>();
+      Map<Configurable, ConfigurationException> newErrors = new THashMap<>(myErrors);
       newErrors.remove(configurable);
       fireErrorsChanged(newErrors, null);
     }

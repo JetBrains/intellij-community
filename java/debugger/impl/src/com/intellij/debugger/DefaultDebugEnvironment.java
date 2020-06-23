@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.debugger.impl.AlternativeJreClassFinder;
@@ -14,12 +12,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Comparator;
 
@@ -30,6 +30,9 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
   private final ExecutionEnvironment environment;
   private final RunProfileState state;
   private final boolean myNeedParametersSet;
+
+  @TestOnly
+  public static final KeyWithDefaultValue<Integer> DEBUGGER_TRACE_MODE = KeyWithDefaultValue.create("DEBUGGER_TRACE_MODE", 0);
 
   public DefaultDebugEnvironment(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state, RemoteConnection remoteConnection, boolean pollConnection) {
     this(environment, state, remoteConnection, pollConnection ? LOCAL_START_TIMEOUT : 0);
@@ -124,5 +127,10 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
       }
     }
     return ProjectRootManager.getInstance(environment.getProject()).getProjectSdk();
+  }
+
+  public int getTraceMode() {
+    //noinspection ConstantConditions, TestOnlyProblems
+    return environment.getUserData(DEBUGGER_TRACE_MODE);
   }
 }

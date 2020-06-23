@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PySyntheticType implements PyType {
@@ -44,7 +45,7 @@ public class PySyntheticType implements PyType {
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    final List<Object> result = Lists.newArrayList();
+    final List<Object> result = new ArrayList<>();
     for (PyCustomMember member : myMembers) {
       result.add(LookupElementBuilder.create(member.getName()));
     }

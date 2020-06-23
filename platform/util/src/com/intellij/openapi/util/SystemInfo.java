@@ -78,6 +78,11 @@ public final class SystemInfo {
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
   public static final boolean isKDE = isXWindow && !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
+  public static final boolean isXfce = isXWindow && (notNull(System.getenv("GDMSESSION"), "").startsWith("xfce")) ||
+                                       StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).contains("xfce");
+  public static final boolean isI3= isXWindow && (notNull(System.getenv("GDMSESSION"), "").startsWith("i3")) ||
+                                    StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).contains("i3");
+
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
@@ -110,8 +115,7 @@ public final class SystemInfo {
   public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
 
-  @NotNull
-  public static String getMacOSMajorVersion() {
+  public static @NotNull String getMacOSMajorVersion() {
     return getMacOSMajorVersion(OS_VERSION);
   }
 
@@ -120,35 +124,29 @@ public final class SystemInfo {
     return String.format("%d.%d", parts[0], parts[1]);
   }
 
-  @NotNull
-  public static String getMacOSVersionCode() {
+  public static @NotNull String getMacOSVersionCode() {
     return getMacOSVersionCode(OS_VERSION);
   }
 
-  @NotNull
-  public static String getMacOSMajorVersionCode() {
+  public static @NotNull String getMacOSMajorVersionCode() {
     return getMacOSMajorVersionCode(OS_VERSION);
   }
 
-  @NotNull
-  public static String getMacOSMinorVersionCode() {
+  public static @NotNull String getMacOSMinorVersionCode() {
     return getMacOSMinorVersionCode(OS_VERSION);
   }
 
-  @NotNull
-  public static String getMacOSVersionCode(@NotNull String version) {
+  public static @NotNull String getMacOSVersionCode(@NotNull String version) {
     int[] parts = getMacOSVersionParts(version);
     return String.format("%02d%d%d", parts[0], normalize(parts[1]), normalize(parts[2]));
   }
 
-  @NotNull
-  public static String getMacOSMajorVersionCode(@NotNull String version) {
+  public static @NotNull String getMacOSMajorVersionCode(@NotNull String version) {
     int[] parts = getMacOSVersionParts(version);
     return String.format("%02d%d%d", parts[0], normalize(parts[1]), 0);
   }
 
-  @NotNull
-  public static String getMacOSMinorVersionCode(@NotNull String version) {
+  public static @NotNull String getMacOSMinorVersionCode(@NotNull String version) {
     int[] parts = getMacOSVersionParts(version);
     return String.format("%02d%02d", parts[1], parts[2]);
   }

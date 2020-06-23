@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -209,8 +210,8 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
 
     @Override
-    void setComponentValue(final Object value) {
-      getComponent().setSelected(((Boolean) value).booleanValue());
+    void setComponentValue(Object value) {
+      getComponent().setSelected((Boolean)value);
     }
   }
 
@@ -252,12 +253,12 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
    * Initial checkbox value is obtained from {@code getter}.
    * After the apply, the value from the check box is written back to model via {@code setter}.
    */
-  protected void checkBox(@NotNull String title, @NotNull Getter<Boolean> getter, @NotNull Setter<Boolean> setter) {
+  protected void checkBox(@NlsContexts.Checkbox @NotNull String title, @NotNull Getter<Boolean> getter, @NotNull Setter<Boolean> setter) {
     CheckboxField field = new CheckboxField(new BeanMethodAccessor<>(getter, setter), title);
     myFields.add(field);
   }
 
-  protected void checkBox(@NotNull String title, @NotNull KMutableProperty0<Boolean> prop) {
+  protected void checkBox(@NlsContexts.Checkbox @NotNull String title, @NotNull KMutableProperty0<Boolean> prop) {
     myFields.add(new CheckboxField(new BeanKPropertyAccessor<>(prop), title));
   }
 

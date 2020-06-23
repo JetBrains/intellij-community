@@ -41,7 +41,7 @@ class CompressorTest {
   }
 
   @Test fun recursiveZip() {
-    val dir = tempDir.newFolder("dir")
+    val dir = tempDir.newDirectory("dir")
     tempDir.newFile("dir/f1").writeText("1")
     tempDir.newFile("dir/f2").writeText("2")
     tempDir.newFile("dir/d1/f11").writeText("11")
@@ -63,7 +63,7 @@ class CompressorTest {
   }
 
   @Test fun recursiveTarWithPrefix() {
-    val dir = tempDir.newFolder("dir")
+    val dir = tempDir.newDirectory("dir")
     tempDir.newFile("dir/f1").writeText("1")
     tempDir.newFile("dir/f2").writeText("2")
     tempDir.newFile("dir/d1/f11").writeText("11")

@@ -5,10 +5,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 @State(name = "CodeStyleSettingsManager", storages = @Storage("code.style.schemes"))
 public final class AppCodeStyleSettingsManager extends CodeStyleSettingsManager {
@@ -20,13 +22,13 @@ public final class AppCodeStyleSettingsManager extends CodeStyleSettingsManager 
   @Override
   protected void registerExtensionPointListeners(@NotNull Disposable disposable) {
     super.registerExtensionPointListeners(disposable);
-    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(
-      LanguageCodeStyleSettingsProvider::resetSettingsPagesProviders, disposable);
   }
 
   @Override
   protected Collection<CodeStyleSettings> enumSettings() {
-    return getMainProjectCodeStyle() != null ?
-           Collections.singletonList(getMainProjectCodeStyle()) : Collections.emptyList();
+    List<CodeStyleSettings> appSettings = new ArrayList<>();
+    appSettings.add(CodeStyleSettings.getDefaults());
+    ObjectUtils.consumeIfNotNull(getMainProjectCodeStyle(), settings -> appSettings.add(settings));
+    return appSettings;
   }
 }

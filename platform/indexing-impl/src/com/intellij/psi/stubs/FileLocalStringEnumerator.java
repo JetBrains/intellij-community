@@ -45,9 +45,8 @@ class FileLocalStringEnumerator implements AbstractStringEnumerator {
   void write(@NotNull DataOutput stream) throws IOException {
     assert myEnumerates != null;
     DataInputOutputUtil.writeINT(stream, myStrings.size());
-    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
     for(String s: myStrings) {
-      IOUtil.writeUTFFast(buffer, stream, s);
+      IOUtil.writeUTF(stream, s);
     }
   }
 
@@ -70,10 +69,9 @@ class FileLocalStringEnumerator implements AbstractStringEnumerator {
 
   void read(@NotNull DataInput stream, @NotNull UnaryOperator<String> mapping) throws IOException {
     int numberOfStrings = DataInputOutputUtil.readINT(stream);
-    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
     myStrings.ensureCapacity(myStrings.size() + numberOfStrings);
     for (int i = 0; i < numberOfStrings; i++) {
-      myStrings.add(mapping.apply(IOUtil.readUTFFast(buffer, stream)));
+      myStrings.add(mapping.apply(IOUtil.readUTF(stream)));
     }
   }
 }

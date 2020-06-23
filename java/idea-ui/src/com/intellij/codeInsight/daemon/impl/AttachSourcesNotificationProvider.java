@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.CommonBundle;
@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -49,7 +50,10 @@ import javax.swing.*;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -59,6 +63,14 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     new ExtensionPointName<>("com.intellij.attachSourcesProvider");
 
   private static final Key<EditorNotificationPanel> KEY = Key.create("add sources to class");
+
+  public AttachSourcesNotificationProvider() {
+    EXTENSION_POINT_NAME.addChangeListener(() -> {
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        EditorNotifications.getInstance(project).updateNotifications(AttachSourcesNotificationProvider.this);
+      }
+    }, null);
+  }
 
   @NotNull
   @Override
@@ -102,7 +114,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           }
         }
 
-        Collections.sort(actions, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+        actions.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
         AttachSourcesProvider.AttachSourcesAction defaultAction;
         if (findSourceFileInSameJar(file) != null) {
@@ -295,7 +307,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           }
 
           @Override
-          public PopupStep onChosen(LibraryOrderEntry libraryOrderEntry, boolean finalChoice) {
+          public PopupStep<?> onChosen(LibraryOrderEntry libraryOrderEntry, boolean finalChoice) {
             if (libraryOrderEntry != null) {
               appendSources(libraryOrderEntry.getLibrary(), files);
             }

@@ -26,12 +26,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.text.FilePathHashingStrategy;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -153,7 +155,7 @@ public class RefreshWorker {
     List<VirtualFile> children = snapshot.getSecond();
 
     String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
-    Set<String> newNames = newTroveSet(strategy, upToDateNames);
+    Set<String> newNames = new THashSet<>(Arrays.asList(upToDateNames), strategy);
     if (dir.allChildrenLoaded() && children.size() < upToDateNames.length) {
       for (VirtualFile child : children) {
         newNames.remove(child.getName());
@@ -298,6 +300,10 @@ public class RefreshWorker {
     if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
+    if (!fs.isCaseSensitive()) {
+      // extra check if "suspicious name" differs from the actual name - we want actual names in the file events
+      name = fs.getCanonicallyCasedName(file);
+    }
     return new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 

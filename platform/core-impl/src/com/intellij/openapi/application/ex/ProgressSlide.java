@@ -4,19 +4,11 @@ package com.intellij.openapi.application.ex;
 import org.jetbrains.annotations.NotNull;
 
 public final class ProgressSlide {
-  private final String myUrl;
-  private final float myProgressRation;
+  public final String url;
+  public final float progressRation;
 
   public ProgressSlide(@NotNull String url, float progressRatio) {
-    myUrl = url;
-    myProgressRation = progressRatio;
-  }
-
-  public float getProgressRation() {
-    return myProgressRation;
-  }
-
-  public String getUrl() {
-    return myUrl;
+    this.url = url;
+    progressRation = progressRatio;
   }
 }

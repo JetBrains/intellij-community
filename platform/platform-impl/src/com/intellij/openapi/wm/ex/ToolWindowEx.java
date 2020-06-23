@@ -10,6 +10,8 @@ import com.intellij.openapi.wm.impl.InternalDecorator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.border.EmptyBorder;
+import java.util.Arrays;
 import java.util.List;
 
 public interface ToolWindowEx extends ToolWindow {
@@ -29,7 +31,13 @@ public interface ToolWindowEx extends ToolWindow {
 
   void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
 
-  void setTitleActions(@NotNull AnAction @NotNull ... actions);
+  /**
+   * @deprecated Use {@link #setTitleActions(List)}
+   */
+  @Deprecated
+  default void setTitleActions(@NotNull AnAction @NotNull ... actions) {
+    setTitleActions(Arrays.asList(actions));
+  }
 
   void setTabActions(@NotNull AnAction @NotNull ... actions);
 
@@ -40,5 +48,15 @@ public interface ToolWindowEx extends ToolWindow {
    */
   @Deprecated
   default void setUseLastFocusedOnActivation(@SuppressWarnings("unused") boolean focus) {
+  }
+
+  final class Border extends EmptyBorder {
+    public Border() {
+      this(true, true, true, true);
+    }
+
+    public Border(boolean top, boolean left, boolean right, boolean bottom) {
+      super(top ? 2 : 0, left ? 2 : 0, right ? 2 : 0, bottom ? 2 : 0);
+    }
   }
 }

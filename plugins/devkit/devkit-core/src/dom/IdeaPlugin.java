@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @DefinesXml
-@Presentation(icon = "AllIcons.Nodes.Plugin", typeName = "Plugin")
+@Presentation(icon = "AllIcons.Nodes.Plugin", typeName = DevkitDomPresentationConstants.PLUGIN)
 @Stubbed
 public interface IdeaPlugin extends DomElement {
   String TAG_NAME = "idea-plugin";
@@ -98,6 +98,10 @@ public interface IdeaPlugin extends DomElement {
 
   @SubTagList("depends")
   Dependency addDependency();
+
+  @NotNull
+  @SubTagList("incompatible-with")
+  List<GenericDomValue<String>> getIncompatibilities();
 
   @NotNull
   @Stubbed

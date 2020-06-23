@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
@@ -12,6 +11,7 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -37,7 +37,6 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   private UUID uuid;
   private String description;
   private String suppressId;
-  private String newSuppressId;
   private String problemDescriptor;
   private int order;
 
@@ -62,7 +61,6 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     predefined = false; // copy is never predefined
     uuid = configuration.uuid;
     description = configuration.description;
-    newSuppressId = configuration.newSuppressId;
     suppressId = configuration.suppressId;
     problemDescriptor = configuration.problemDescriptor;
     order = configuration.order;
@@ -70,21 +68,15 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
 
   public abstract Configuration copy();
 
-  public void initialize() {
-    if (!StringUtil.equals(suppressId, newSuppressId)) {
-      final String shortName = uuid.toString();
-      HighlightDisplayKey.unregister(shortName);
-      HighlightDisplayKey.register(uuid.toString(), name, newSuppressId);
-      suppressId = newSuppressId;
-    }
-  }
-
   @NotNull
   public String getName() {
     return name;
   }
 
   public void setName(@NotNull String value) {
+    if (uuid == null) {
+      uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
+    }
     name = value;
   }
 
@@ -109,17 +101,10 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
 
   @NotNull
   public UUID getUuid() {
-    if (uuid == null) {
-      return uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
-    }
-    return uuid;
+    return uuid == null ? (uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8))) : uuid;
   }
 
-  public void setUuidFromName() {
-    uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
-  }
-
-  public void setUuid(@NotNull UUID uuid) {
+  public void setUuid(@Nullable UUID uuid) {
     this.uuid = uuid;
   }
 
@@ -135,12 +120,8 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     return suppressId;
   }
 
-  public String getNewSuppressId() {
-    return newSuppressId;
-  }
-
   public void setSuppressId(String suppressId) {
-    newSuppressId = suppressId;
+    this.suppressId = suppressId;
   }
 
   public String getProblemDescriptor() {
@@ -183,7 +164,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     }
     final Attribute suppressIdAttribute = element.getAttribute(SUPPRESS_ID_ATTRIBUTE_NAME);
     if (suppressIdAttribute != null) {
-      newSuppressId = suppressId = suppressIdAttribute.getValue();
+      suppressId = suppressIdAttribute.getValue();
     }
     final Attribute problemDescriptorAttribute = element.getAttribute(PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME);
     if (problemDescriptorAttribute != null) {
@@ -210,8 +191,8 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     if (!StringUtil.isEmpty(description)) {
       element.setAttribute(DESCRIPTION_ATTRIBUTE_NAME, description);
     }
-    if (!StringUtil.isEmpty(newSuppressId)) {
-      element.setAttribute(SUPPRESS_ID_ATTRIBUTE_NAME, newSuppressId);
+    if (!StringUtil.isEmpty(suppressId)) {
+      element.setAttribute(SUPPRESS_ID_ATTRIBUTE_NAME, suppressId);
     }
     if (!StringUtil.isEmpty(problemDescriptor)) {
       element.setAttribute(PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME, problemDescriptor);

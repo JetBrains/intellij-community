@@ -3,6 +3,7 @@
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
+import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.actions.RevealFileAction;
@@ -122,7 +123,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
                              "Please attach log files from <a href=\"file\">" + logFile + "</a><br>" +
                              "to the <a href=\"url\">YouTrack issue</a>";*/
     Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                              "Local History is broken",
+                                              LocalHistoryBundle.message("notification.title.local.history.broken"),
                                               message /*+ createIssuePart*/,
                                               NotificationType.ERROR,
                                               (notification, event) -> {

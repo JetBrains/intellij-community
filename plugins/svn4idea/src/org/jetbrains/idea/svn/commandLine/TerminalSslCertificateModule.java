@@ -24,12 +24,13 @@ import java.util.regex.Pattern;
 public class TerminalSslCertificateModule extends BaseTerminalModule {
 
   private static final Pattern ERROR_VALIDATING_CERTIFICATE_MESSAGE =
-    Pattern.compile("Error validating server certificate for \\'(.*)\\':\\s?");
+    Pattern.compile("Error validating server certificate for '(.*)':\\s?");
   private static final Pattern CERTIFICATE_INFORMATION_MESSAGE = Pattern.compile("Certificate information:\\s?");
   // messages could be either "(R)eject or accept (t)emporarily?" or "(R)eject, accept (t)emporarily or accept (p)ermanently?" depending on
   // if credentials caching is allowed
   private static final Pattern ACCEPT_CERTIFICATE_PROMPT = Pattern.compile("\\(R\\)eject.*\\?\\s?");
 
+  @SuppressWarnings("MismatchedQueryAndUpdateOfStringBuilder") // TODO: display it 
   @NotNull private final StringBuilder certificateError = new StringBuilder();
   @NotNull private final StringBuilder certificateInfo = new StringBuilder();
   private boolean collectingCertificateError;

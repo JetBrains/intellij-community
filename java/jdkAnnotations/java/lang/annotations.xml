@@ -256,6 +256,12 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.Class java.lang.String getPackageName()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.lang.Class java.lang.String getSimpleName()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
@@ -1258,17 +1264,25 @@
     </annotation>
   </item>
   <item name="java.lang.String void getBytes(int, int, byte[], int) 2">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name='java.lang.String void getChars(int, int, char[], int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;param3&quot;"/>
+    </annotation>
   </item>
   <item name="java.lang.String void getChars(int, int, char[], int) 2">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.System java.lang.String getProperty(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NonNls"/>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.System java.lang.String getProperty(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name='java.lang.System java.lang.String getenv(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name="java.lang.System java.lang.String setProperty(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls"/>

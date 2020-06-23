@@ -41,6 +41,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -378,6 +379,14 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     assertNotNull(renameHandler);
 
     invokeRename(context, renameHandler);
+  }
+
+  protected void doInlineRename(final VirtualFile f, String value) {
+    final MapDataContext context = createRenameDataContext(f, value);
+    final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
+    assertNotNull(renameHandler);
+    assertInstanceOf(renameHandler, VariableInplaceRenameHandler.class);
+    CodeInsightTestUtil.doInlineRename((VariableInplaceRenameHandler)renameHandler, value, myFixture);
   }
 
   protected void assertCannotRename() {

@@ -2,7 +2,6 @@
 
 package com.jetbrains.python.console;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.ui.ConsoleView;
@@ -16,7 +15,7 @@ import java.util.ArrayList;
 
 public class PyDebugConsoleBuilder extends TextConsoleBuilder {
   private final Project myProject;
-  private final ArrayList<Filter> myFilters = Lists.newArrayList();
+  private final ArrayList<Filter> myFilters = new ArrayList<>();
   private final Sdk mySdk;
 
   public PyDebugConsoleBuilder(final Project project, @Nullable Sdk sdk) {

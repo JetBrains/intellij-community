@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.ui;
 
@@ -182,12 +182,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   @Override
-  public void beforeShown(@NotNull LightweightWindowEvent event) {
-  }
-
-  @Override
   public void onClosed(@NotNull LightweightWindowEvent event) {
-    event.asPopup().removeListener(this);
     fireEditingCanceled();
   }
 

@@ -13,8 +13,8 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -392,11 +392,10 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   @Override
-  public void setInfo(@Nullable final String s, @Nullable final String requestor) {
+  public void setInfo(@Nullable String s, @Nullable String requestor) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myInfoAndProgressPanel != null) {
-        Couple<String> pair = myInfoAndProgressPanel.setText(s, requestor);
-        myInfo = pair.first;
+        myInfo = myInfoAndProgressPanel.setText(s, requestor).first;
       }
     });
   }
@@ -442,13 +441,13 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   @Override
-  public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
+  public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull @PopupContent String htmlBody) {
     return notifyProgressByBalloon(type, htmlBody, null, null);
   }
 
   @Override
   public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type,
-                                                @NotNull String htmlBody,
+                                                @NotNull @PopupContent String htmlBody,
                                                 @Nullable Icon icon,
                                                 @Nullable HyperlinkListener listener) {
     return myInfoAndProgressPanel.notifyByBalloon(type, htmlBody, icon, listener);

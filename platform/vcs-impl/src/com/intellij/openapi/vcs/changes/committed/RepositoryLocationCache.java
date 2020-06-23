@@ -54,7 +54,8 @@ public class RepositoryLocationCache {
 
     return !silent && ApplicationManager.getApplication().isDispatchThread()
            ? ProgressManager.getInstance()
-             .runProcessWithProgressSynchronously(result, "Discovering location of " + filePath.getPresentableUrl(), true, myProject)
+             .runProcessWithProgressSynchronously(result,
+                                                  VcsBundle.message("progress.title.discovering.location", filePath.getPresentableUrl()), true, myProject)
            : result.compute();
   }
 

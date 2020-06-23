@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -125,7 +125,8 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     if (textOffset == value.getTextRange().getEndOffset()) return;
     PsiDocTagValue valueElement = tag.getValueElement();
     if (valueElement == null) return;
-    CharSequence paramName = value.getContainingFile().getViewProvider().getContents().subSequence(textOffset, value.getTextRange().getEndOffset());
+    String paramName = value.getContainingFile().getViewProvider()
+      .getContents().subSequence(textOffset, value.getTextRange().getEndOffset()).toString();
 
     String message = getResolveErrorMessage(reference, element, context, paramName);
     if (message == null) {
@@ -276,6 +277,11 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       DataManager.getInstance().getDataContextFromFocusAsync()
                  .onSuccess(dataContext -> {
@@ -320,7 +326,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       PsiJavaCodeReferenceElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
       if (element != null) {
-        Collections.sort(originalClasses, new PsiProximityComparator(element.getElement()));
+        originalClasses.sort(new PsiProximityComparator(element.getElement()));
         DataManager.getInstance()
                    .getDataContextFromFocusAsync()
                    .onSuccess(dataContext ->
@@ -345,9 +351,9 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
 
   private static class RemoveTagFix implements LocalQuickFix {
     private final String myTagName;
-    private final CharSequence myParamName;
+    private final String myParamName;
 
-    RemoveTagFix(String tagName, CharSequence paramName) {
+    RemoveTagFix(String tagName, String paramName) {
       myTagName = tagName;
       myParamName = paramName;
     }

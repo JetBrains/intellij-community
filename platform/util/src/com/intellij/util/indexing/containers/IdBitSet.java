@@ -3,6 +3,7 @@ package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.indexing.ValueContainer;
+import org.jetbrains.annotations.NotNull;
 
 class IdBitSet implements Cloneable, RandomAccessIntContainer {
   private static final int SHIFT = 6;
@@ -107,18 +108,8 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
   }
 
   @Override
-  public IntIdsIterator intIterator() {
+  public @NotNull IntIdsIterator intIterator() {
     return new Iterator();
-  }
-
-  @Override
-  public ValueContainer.IntPredicate intPredicate() {
-    return new ValueContainer.IntPredicate() {
-      @Override
-      public boolean contains(int id) {
-        return IdBitSet.this.contains(id);
-      }
-    };
   }
 
   @Override
@@ -138,7 +129,7 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
   }
 
   @Override
-  public RandomAccessIntContainer ensureContainerCapacity(int diff) {
+  public @NotNull RandomAccessIntContainer ensureContainerCapacity(int diff) {
     return this; // todo
   }
 

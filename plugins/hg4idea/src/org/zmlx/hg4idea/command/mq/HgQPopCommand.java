@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.command.mq;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsNotifier;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -39,12 +40,12 @@ public class HgQPopCommand {
       .executeInCurrentThread(myRepository.getRoot(), "qpop", Collections.singletonList("--all"));
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, "QPop command failed", "Could not make all patches unapplied");
+        .notifyError(result, HgBundle.message("action.hg4idea.QPop.error"), HgBundle.message("action.hg4idea.QPop.error.msg"));
     }
     else {
       assert result != null;
       if (!result.getErrorLines().isEmpty()) {
-        VcsNotifier.getInstance(project).notifyWarning("QPop completed with errors", result.getRawError());
+        VcsNotifier.getInstance(project).notifyWarning(HgBundle.message("action.hg4idea.QPop.error.warning"), result.getRawError());
       }
     }
     myRepository.update();

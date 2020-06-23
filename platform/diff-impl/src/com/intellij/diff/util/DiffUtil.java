@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.application.options.CodeStyle;
@@ -90,8 +90,8 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.SingleComponentCenteringLayout;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.Equality;
@@ -99,7 +99,6 @@ import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
@@ -247,7 +246,7 @@ public class DiffUtil {
 
   public static void configureEditor(@NotNull EditorEx editor, @NotNull DocumentContent content, @Nullable Project project) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(content.getDocument());
-    if (virtualFile != null && Registry.is("diff.enable.psi.highlighting")) {
+    if (virtualFile != null) {
       editor.setFile(virtualFile);
     }
 
@@ -426,8 +425,10 @@ public class DiffUtil {
     });
     label.setForeground(commentFg);
 
-    CenteredPanel panel = new CenteredPanel(label, JBUI.Borders.empty(5));
+    JPanel panel = new JPanel(new SingleComponentCenteringLayout());
+    panel.setBorder(JBUI.Borders.empty(5));
     panel.setBackground(new JBColor(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
+    panel.add(label);
     return panel;
   }
 
@@ -623,19 +624,18 @@ public class DiffUtil {
       labelWithIcon.addToLeft(new JBLabel(AllIcons.Ide.Readonly));
     }
     panel.add(labelWithIcon, BorderLayout.CENTER);
-    if (charset != null && separator != null) {
+    if (charset != null || separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
-      panel2.add(createCharsetPanel(charset, bom));
-      panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
-      panel2.add(createSeparatorPanel(separator));
+      if (charset != null) {
+        panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
+        panel2.add(createCharsetPanel(charset, bom));
+      }
+      if (separator != null) {
+        panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
+        panel2.add(createSeparatorPanel(separator));
+      }
       panel.add(panel2, BorderLayout.EAST);
-    }
-    else if (charset != null) {
-      panel.add(createCharsetPanel(charset, bom), BorderLayout.EAST);
-    }
-    else if (separator != null) {
-      panel.add(createSeparatorPanel(separator), BorderLayout.EAST);
     }
     return panel;
   }
@@ -1192,7 +1192,7 @@ public class DiffUtil {
 
   public static int bound(int value, int lowerBound, int upperBound) {
     assert lowerBound <= upperBound : String.format("%s - [%s, %s]", value, lowerBound, upperBound);
-    return Math.max(Math.min(value, upperBound), lowerBound);
+    return MathUtil.clamp(value, lowerBound, upperBound);
   }
 
   //
@@ -1771,56 +1771,6 @@ public class DiffUtil {
         height = Math.max(height, component.getPreferredSize().height);
       }
       return height;
-    }
-  }
-
-  public static class CenteredPanel extends JPanel {
-    private final JComponent myComponent;
-
-    public CenteredPanel(@NotNull JComponent component) {
-      myComponent = component;
-      add(component);
-    }
-
-    public CenteredPanel(@NotNull JComponent component, @NotNull Border border) {
-      this(component);
-      setBorder(border);
-    }
-
-    @Override
-    public void doLayout() {
-      final Dimension size = getSize();
-      final Dimension preferredSize = myComponent.getPreferredSize();
-
-      Insets insets = getInsets();
-      JBInsets.removeFrom(size, insets);
-
-      int width = Math.min(size.width, preferredSize.width);
-      int height = Math.min(size.height, preferredSize.height);
-      int x = Math.max(0, (size.width - preferredSize.width) / 2);
-      int y = Math.max(0, (size.height - preferredSize.height) / 2);
-
-      myComponent.setBounds(insets.left + x, insets.top + y, width, height);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return addInsets(myComponent.getPreferredSize());
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return addInsets(myComponent.getMinimumSize());
-    }
-
-    @Override
-    public Dimension getMaximumSize() {
-      return addInsets(myComponent.getMaximumSize());
-    }
-
-    private Dimension addInsets(Dimension dimension) {
-      JBInsets.addTo(dimension, getInsets());
-      return dimension;
     }
   }
 }

@@ -52,7 +52,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
    */
   public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine,
                                        @NotNull Charset charset,
-                                       @Nullable Set<File> filesToDelete) {
+                                       @Nullable Set<? extends File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
     setShouldKillProcessSoftly(true);
   }
@@ -69,7 +69,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
       super(commandLine);
     }
 
-    public Silent(@NotNull Process process, String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDetele) {
+    public Silent(@NotNull Process process, String commandLine, @NotNull Charset charset, @Nullable Set<? extends File> filesToDetele) {
       super(process, commandLine, charset, filesToDetele);
     }
 

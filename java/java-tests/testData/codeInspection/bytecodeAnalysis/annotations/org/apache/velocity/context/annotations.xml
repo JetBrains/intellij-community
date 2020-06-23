@@ -73,6 +73,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.context.InternalContextBase org.apache.velocity.app.event.EventCartridge attachEventCartridge(org.apache.velocity.app.event.EventCartridge)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.context.InternalContextBase org.apache.velocity.app.event.EventCartridge getEventCartridge()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -81,6 +86,16 @@
     <item name='org.apache.velocity.context.InternalContextBase org.apache.velocity.runtime.resource.Resource getCurrentResource()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.context.InternalContextBase void setCurrentResource(org.apache.velocity.runtime.resource.Resource)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.context.InternalContextBase void setMacroLibraries(java.util.List)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.context.ProxyVMContext boolean isConstant(org.apache.velocity.runtime.parser.node.Node) 0'>

@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
+import com.intellij.util.containers.toArray
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -40,14 +43,26 @@ object StatisticsTestEventValidator {
     assertTrue(isValid(json.getAsJsonObject("event").get("id").asString))
 
     val obj = json.getAsJsonObject("event").get("data").asJsonObject
+    validateJsonObject(dataOptions, obj)
+  }
+
+  private fun validateJsonObject(dataOptions: Array<out String>, obj: JsonObject) {
     for (option in dataOptions) {
       assertTrue(isValid(option))
-      when {
-        obj.get(option).isJsonPrimitive -> assertTrue(isValid(obj.get(option).asString))
-        obj.get(option).isJsonArray -> {
-          for (dataPart in obj.getAsJsonArray(option)) {
-            assertTrue(isValid(dataPart.asString))
+      when (val jsonElement = obj.get(option)) {
+        is JsonPrimitive -> assertTrue(isValid(jsonElement.asString))
+        is JsonArray -> {
+          for (dataPart in jsonElement) {
+            if (dataPart is JsonObject) {
+              validateJsonObject(dataPart.keySet().toTypedArray(), dataPart)
+            }
+            else {
+              assertTrue(isValid(dataPart.asString))
+            }
           }
+        }
+        is JsonObject -> {
+          validateJsonObject(jsonElement.keySet().toTypedArray(), jsonElement)
         }
       }
     }

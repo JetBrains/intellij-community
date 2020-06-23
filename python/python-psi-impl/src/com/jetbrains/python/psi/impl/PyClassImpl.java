@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -472,7 +471,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public PyFunction @NotNull [] getMethods() {
-    final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens();
+    final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.getInstance().getFunctionDeclarationTokens();
     return getClassChildren(functionDeclarationTokens, PyFunction.class, PyFunction.ARRAY_FACTORY);
   }
 
@@ -693,7 +692,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             final QualifiedName qname = deco.getQualifiedName();
             if (qname != null) {
               String decoName = qname.toString();
-              for (PyKnownDecoratorProvider provider : PyUtil.KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
+              for (PyKnownDecoratorProvider provider : PyKnownDecoratorProvider.EP_NAME.getExtensionList()) {
                 final String knownName = provider.toKnownDecorator(decoName);
                 if (knownName != null) {
                   decoName = knownName;
@@ -1527,7 +1526,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @NotNull
   private List<PyClassLikeType> getAllPossibleMetaClassTypes(@NotNull TypeEvalContext context) {
-    final List<PyClassLikeType> results = Lists.newArrayList();
+    final List<PyClassLikeType> results = new ArrayList<>();
     final PyClassLikeType ownMeta = getMetaClassType(false, context);
     if (ownMeta != null) {
       results.add(ownMeta);

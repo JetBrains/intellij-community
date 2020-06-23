@@ -2,10 +2,10 @@ package com.intellij.webcore.packaging;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ public class PackagesNotificationPanel {
     });
   }
 
-  public static void showError(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+  public static void showError(@NotNull @NlsContexts.DialogTitle String title,
                                @NotNull PackageManagementService.ErrorDescription description) {
     final PackagingErrorDialog dialog = new PackagingErrorDialog(title, description);
     dialog.show();
@@ -93,7 +93,7 @@ public class PackagesNotificationPanel {
   }
 
   public void showError(String text,
-                        @Nullable @Nls(capitalization = Nls.Capitalization.Title) String detailsTitle,
+                        @Nullable @NlsContexts.DialogTitle String detailsTitle,
                         PackageManagementService.ErrorDescription errorDescription) {
     showContent(text, MessageType.ERROR.getPopupBackground());
     myErrorTitle = detailsTitle;

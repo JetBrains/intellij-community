@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -46,6 +46,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 
 public class PackageChooserDialog extends PackageChooser {
   private static final Logger LOG = Logger.getInstance(PackageChooserDialog.class);
@@ -312,7 +313,7 @@ public class PackageChooserDialog extends PackageChooser {
       final DefaultMutableTreeNode child = (DefaultMutableTreeNode)rootNode.getChildAt(i);
       final PsiPackage nodePackage = (PsiPackage)child.getUserObject();
       if (nodePackage != null) {
-        if (Comparing.equal(nodePackage.getQualifiedName(), qualifiedName)) return child;
+        if (Objects.equals(nodePackage.getQualifiedName(), qualifiedName)) return child;
       }
     }
     return null;
@@ -327,7 +328,7 @@ public class PackageChooserDialog extends PackageChooser {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)o;
         PsiPackage nodePackage = (PsiPackage)node.getUserObject();
         if (nodePackage != null) {
-          if (Comparing.equal(nodePackage.getQualifiedName(), qualifiedPackageName)) return node;
+          if (Objects.equals(nodePackage.getQualifiedName(), qualifiedPackageName)) return node;
         }
       }
     }

@@ -22,13 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListAdapter;
-import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packageDependencies.ChangeListScope;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.TreeSpeedSearch;
@@ -61,7 +58,6 @@ import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY;
 import static com.intellij.util.concurrency.EdtExecutorService.getScheduledExecutorInstance;
-import static com.intellij.util.ui.UIUtil.invokeLaterIfNeeded;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public final class ScopeViewPane extends AbstractProjectViewPane {
@@ -122,28 +118,6 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
     myDependencyValidationManager.addScopeListener(scopeListener, this);
     myNamedScopeManager.addScopeListener(scopeListener, this);
-    project.getMessageBus().connect(this).subscribe(ChangeListListener.TOPIC, new ChangeListAdapter() {
-      @Override
-      public void changeListAdded(ChangeList list) {
-        invokeLaterIfNeeded(myDependencyValidationManager::fireScopeListeners);
-      }
-
-      @Override
-      public void changeListRemoved(ChangeList list) {
-        invokeLaterIfNeeded(myDependencyValidationManager::fireScopeListeners);
-      }
-
-      @Override
-      public void changeListRenamed(ChangeList list, String name) {
-        invokeLaterIfNeeded(myDependencyValidationManager::fireScopeListeners);
-      }
-
-      @Override
-      public void changeListsChanged() {
-        if (myTreeModel == null) return; // not initialized yet
-        myTreeModel.updateScopeIf(ChangeListScope.class);
-      }
-    });
     installComparator();
   }
 
@@ -217,10 +191,8 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       myTree.getEmptyText()
         .setText(IdeBundle.message("scope.view.empty.text"))
         .appendSecondaryText(IdeBundle.message("scope.view.empty.link"), LINK_PLAIN_ATTRIBUTES, event -> {
-          for (NamedScopeFilter filter : getFilters()) {
-            selectScopeView(filter.toString());
-            return;
-          }
+          ProjectView view = myProject.isDisposed() ? null : ProjectView.getInstance(myProject);
+          if (view != null) view.changeView(ProjectViewPane.ID);
         });
     }
     if (myScrollPane == null) {
@@ -315,8 +287,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Override
   protected void onSubIdChange() {
-    if (myTreeModel == null) return; // not initialized yet
-    myTreeModel.setFilter(getFilter(getSubId()));
+    updateSelectedScope();
   }
 
   @Override
@@ -364,6 +335,17 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     //TODO:myViewPanel == null ? null : myViewPanel.getData(dataId);
     if (LangDataKeys.IDE_VIEW.is(dataId)) return myIdeView;
     return null;
+  }
+
+  public void updateSelectedScope() {
+    if (myTreeModel == null) return; // not initialized yet
+    myTreeModel.setFilter(getFilter(getSubId()));
+  }
+
+  @Nullable
+  public NamedScope getSelectedScope() {
+    NamedScopeFilter filter = getFilter(getSubId());
+    return filter == null ? null : filter.getScope();
   }
 
   @NotNull

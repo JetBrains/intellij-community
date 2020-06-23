@@ -9,6 +9,8 @@
  *****************************************************************************/
 package org.picocontainer;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
@@ -41,7 +43,7 @@ public class PicoException extends RuntimeException {
    *
    * @param message the message detailing the exception.
    */
-  public PicoException(final String message) {
+  public PicoException(@NotNull String message) {
     super(message);
   }
 

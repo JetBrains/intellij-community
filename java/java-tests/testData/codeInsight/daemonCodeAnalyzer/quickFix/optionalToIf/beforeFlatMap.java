@@ -32,6 +32,35 @@ class Test {
     String out = Optional.ofNullable(in).flatMap(s1 -> Optional.of(p)).orElse("bar");
   }
 
+  void nestedFlatMap(String var0) {
+    boolean b = Optional.ofNullable(var0)
+      .flatMap(var1 ->
+                 Optional.of(var1).map(s -> s.toLowerCase())
+                   .flatMap(var2 -> Optional.ofNullable(var2)))
+      .isPresent();
+  }
+
+  void nestedFlatMapWithOuterFlatMapParam(String param0) {
+    String result = Optional.of(param0).flatMap(var0 -> Optional.of("foo").flatMap(var1 -> Optional.of(var0))).get();
+  }
+
+  void nestedOr(String param0) {
+    boolean result;
+    result = Optional.of(param0)
+      .flatMap(var0 -> Optional.<String>empty().or(() -> Optional.of(var0)))
+      .isEmpty();
+  }
+
+  void flatMapsWithSameParamName(String param0) {
+    Optional.of(param0)
+      .flatMap(var0 -> Optional.of("foo").map(s -> ("foo").toLowerCase()))
+      .flatMap(var0 -> Optional.of("bar")).<caret>get()
+  }
+
+  String flatMapWithOrInside() {
+    return Optional.<String>empty().flatMap(s1 -> Optional.empty().or(() -> Optional.empty())).get();
+  }
+
   <T> T id(T t) {
     return t;
   }

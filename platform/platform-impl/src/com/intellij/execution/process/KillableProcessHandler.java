@@ -66,7 +66,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   public KillableProcessHandler(@NotNull Process process, /*@NotNull*/
                                 String commandLine,
                                 @NotNull Charset charset,
-                                @Nullable Set<File> filesToDelete) {
+                                @Nullable Set<? extends File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
     myMediatedProcess = false;
   }

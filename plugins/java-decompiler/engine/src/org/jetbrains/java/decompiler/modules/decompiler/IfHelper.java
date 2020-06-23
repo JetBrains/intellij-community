@@ -100,7 +100,7 @@ public class IfHelper {
         break;
       }
 
-      res |= true;
+      res = true;
     }
 
     return res;

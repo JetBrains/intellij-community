@@ -10,7 +10,7 @@ class TemplateConfigurable extends BaseRCSettingsConfigurable {
   private final RunnerAndConfigurationSettings myTemplate;
 
   TemplateConfigurable(RunnerAndConfigurationSettings template) {
-    super(new ConfigurationSettingsEditorWrapper(template), template);
+    super(ConfigurationSettingsEditorWrapper.createWrapper(template), template);
     myTemplate = template;
   }
 

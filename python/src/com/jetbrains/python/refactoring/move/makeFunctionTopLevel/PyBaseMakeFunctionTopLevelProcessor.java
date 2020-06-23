@@ -40,6 +40,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
@@ -146,14 +147,14 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     }
     for (PsiFile file : usageFiles) {
       if (file != newFunction.getContainingFile()) {
-        PyClassRefactoringUtil.insertImport(file, newFunction, null, true);
+        PyPsiRefactoringUtil.insertImport(file, newFunction, null, true);
       }
     }
     // References inside the body of function 
     if (newFunction.getContainingFile() != mySourceFile) {
       for (PsiElement read : myExternalReads) {
         if (read instanceof PsiNamedElement && read.isValid()) {
-          PyClassRefactoringUtil.insertImport(newFunction, (PsiNamedElement)read, null, true);
+          PyPsiRefactoringUtil.insertImport(newFunction, (PsiNamedElement)read, null, true);
         }
       }
       PyClassRefactoringUtil.optimizeImports(mySourceFile);

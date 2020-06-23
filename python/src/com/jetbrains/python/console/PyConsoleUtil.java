@@ -67,7 +67,7 @@ public class PyConsoleUtil {
           while (string.startsWith(builder.toString())) {
             builder.append(prompt);
           }
-          final String multiPrompt = builder.toString().substring(prompt.length());
+          final String multiPrompt = builder.substring(prompt.length());
           if (prompt == INDENT_PROMPT) {
             prompt = multiPrompt;
           }

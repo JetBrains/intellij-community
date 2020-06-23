@@ -160,15 +160,15 @@ public class CustomFileTypeEditorTest extends BasePlatformTestCase {
     boolean oldValuePairQuote = settings.AUTOINSERT_PAIR_QUOTE;
     settings.AUTOINSERT_PAIR_QUOTE = false;
     try {
-      checkTyping("a.cs", "<caret><selection>\"</selection>a\"", '\'', "\'<caret>a\"");
-      checkTyping("a.cs", "<caret><selection>\"</selection>a\'", '\'', "\'<caret>a\'");
-      checkTyping("a.cs", "\"a<caret><selection>\"</selection>", '\'', "\"a\'<caret>");
-      checkTyping("a.cs", "\'a<caret><selection>\"</selection>", '\'', "\'a\'<caret>");
+      checkTyping("a.cs", "<caret><selection>\"</selection>a\"", '\'', "'<caret>a\"");
+      checkTyping("a.cs", "<caret><selection>\"</selection>a'", '\'', "'<caret>a'");
+      checkTyping("a.cs", "\"a<caret><selection>\"</selection>", '\'', "\"a'<caret>");
+      checkTyping("a.cs", "'a<caret><selection>\"</selection>", '\'', "'a'<caret>");
 
-      checkTyping("a.cs", "<caret><selection>\'</selection>a\"", '\"', "\"<caret>a\"");
-      checkTyping("a.cs", "<caret><selection>\'</selection>a\'", '\"', "\"<caret>a\'");
-      checkTyping("a.cs", "\"a<caret><selection>\'</selection>", '\"', "\"a\"<caret>");
-      checkTyping("a.cs", "\'a<caret><selection>\'</selection>", '\"', "\'a\"<caret>");
+      checkTyping("a.cs", "<caret><selection>'</selection>a\"", '\"', "\"<caret>a\"");
+      checkTyping("a.cs", "<caret><selection>'</selection>a'", '\"', "\"<caret>a'");
+      checkTyping("a.cs", "\"a<caret><selection>'</selection>", '\"', "\"a\"<caret>");
+      checkTyping("a.cs", "'a<caret><selection>'</selection>", '\"', "'a\"<caret>");
     }
     finally {
       settings.SURROUND_SELECTION_ON_QUOTE_TYPED = oldValue;
@@ -181,14 +181,14 @@ public class CustomFileTypeEditorTest extends BasePlatformTestCase {
     boolean oldValue = settings.AUTOINSERT_PAIR_QUOTE;
     settings.AUTOINSERT_PAIR_QUOTE = false;
     try {
-      checkTyping("a.cs", "<caret><selection>\"</selection>a\"", '\'', "\'<selection><caret>\"</selection>\'a\"");
-      checkTyping("a.cs", "<caret><selection>\"</selection>a\'", '\'', "\'<selection><caret>\"</selection>\'a\'");
-      checkTyping("a.cs", "\"a<caret><selection>\"</selection>", '\'', "\"a\'<selection><caret>\"</selection>\'");
-      checkTyping("a.cs", "\'a<caret><selection>\"</selection>", '\'', "\'a\'<selection><caret>\"</selection>\'");
-      checkTyping("a.cs", "<caret><selection>\'</selection>a\"", '\"', "\"<selection><caret>\'</selection>\"a\"");
-      checkTyping("a.cs", "<caret><selection>\'</selection>a\'", '\"', "\"<selection><caret>\'</selection>\"a\'");
-      checkTyping("a.cs", "\"a<caret><selection>\'</selection>", '\"', "\"a\"<selection><caret>\'</selection>\"");
-      checkTyping("a.cs", "\'a<caret><selection>\'</selection>", '\"', "\'a\"<selection><caret>\'</selection>\"");
+      checkTyping("a.cs", "<caret><selection>\"</selection>a\"", '\'', "'<selection><caret>\"</selection>'a\"");
+      checkTyping("a.cs", "<caret><selection>\"</selection>a'", '\'', "'<selection><caret>\"</selection>'a'");
+      checkTyping("a.cs", "\"a<caret><selection>\"</selection>", '\'', "\"a'<selection><caret>\"</selection>'");
+      checkTyping("a.cs", "'a<caret><selection>\"</selection>", '\'', "'a'<selection><caret>\"</selection>'");
+      checkTyping("a.cs", "<caret><selection>'</selection>a\"", '\"', "\"<selection><caret>'</selection>\"a\"");
+      checkTyping("a.cs", "<caret><selection>'</selection>a'", '\"', "\"<selection><caret>'</selection>\"a'");
+      checkTyping("a.cs", "\"a<caret><selection>'</selection>", '\"', "\"a\"<selection><caret>'</selection>\"");
+      checkTyping("a.cs", "'a<caret><selection>'</selection>", '\"', "'a\"<selection><caret>'</selection>\"");
     }
     finally {
       settings.AUTOINSERT_PAIR_QUOTE = oldValue;
@@ -197,13 +197,13 @@ public class CustomFileTypeEditorTest extends BasePlatformTestCase {
 
   public void testReplaceQuote() {
     checkTyping("a.cs", "<caret><selection>\"</selection>a\"", '\'', "'<caret>a'");
-    checkTyping("a.cs", "<caret><selection>\"</selection>a\'", '\'', "\'<selection><caret>\"</selection>\'a\'");
+    checkTyping("a.cs", "<caret><selection>\"</selection>a'", '\'', "'<selection><caret>\"</selection>'a'");
     checkTyping("a.cs", "\"a<caret><selection>\"</selection>", '\'', "'a'<caret>");
-    checkTyping("a.cs", "\'a<caret><selection>\"</selection>", '\'', "\'a\'<selection><caret>\"</selection>\'");
-    checkTyping("a.cs", "<caret><selection>\'</selection>a\"", '\"', "\"<selection><caret>\'</selection>\"a\"");
-    checkTyping("a.cs", "<caret><selection>\'</selection>a\'", '\"', "\"<caret>a\"");
-    checkTyping("a.cs", "\"a<caret><selection>\'</selection>", '\"', "\"a\"<selection><caret>\'</selection>\"");
-    checkTyping("a.cs", "\'a<caret><selection>\'</selection>", '\"', "\"a\"<caret>");
+    checkTyping("a.cs", "'a<caret><selection>\"</selection>", '\'', "'a'<selection><caret>\"</selection>'");
+    checkTyping("a.cs", "<caret><selection>'</selection>a\"", '\"', "\"<selection><caret>'</selection>\"a\"");
+    checkTyping("a.cs", "<caret><selection>'</selection>a'", '\"', "\"<caret>a\"");
+    checkTyping("a.cs", "\"a<caret><selection>'</selection>", '\"', "\"a\"<selection><caret>'</selection>\"");
+    checkTyping("a.cs", "'a<caret><selection>'</selection>", '\"', "\"a\"<caret>");
   }
 
   public void testReplacePairBrace() {

@@ -18,6 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolvingHint;
 import com.intellij.psi.xml.XmlTag;
@@ -37,6 +38,7 @@ import java.util.Set;
  */
 public abstract class ResolvingConverter<T> extends Converter<T> implements ResolvingHint {
 
+  @InspectionMessage
   @Override
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
     return AnalysisBundle.message("error.cannot.resolve.default.message", s);

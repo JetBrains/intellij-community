@@ -354,7 +354,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String getDescription() {
     return "IntelliJ Dark Look and Feel";
   }

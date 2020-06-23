@@ -110,9 +110,9 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
-    if (doSuppress(project, getContainer(element))) return;
-    // todo suppress
-    //DaemonCodeAnalyzer.getInstance(project).restart();
+    PsiJavaDocumentedElement container = getContainer(element);
+    if (container == null) return;
+    doSuppress(project, container);
     UndoUtil.markPsiFileForUndo(element.getContainingFile());
   }
 
@@ -122,8 +122,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
     return JavaAnalysisBundle.message("suppress.inspection.member");
   }
 
-  private boolean doSuppress(@NotNull Project project, PsiJavaDocumentedElement container) {
-    assert container != null;
+  private void doSuppress(@NotNull Project project, @NotNull PsiJavaDocumentedElement container) {
     if (container instanceof PsiModifierListOwner && use15Suppressions(container)) {
       final PsiModifierListOwner modifierOwner = (PsiModifierListOwner)container;
       final PsiModifierList modifierList = modifierOwner.getModifierList();
@@ -134,7 +133,6 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
     else {
       WriteCommandAction.runWriteCommandAction(project, null, null, () -> suppressByDocComment(project, container), container.getContainingFile());
     }
-    return false;
   }
 
   private void suppressByDocComment(@NotNull Project project, PsiJavaDocumentedElement container) {

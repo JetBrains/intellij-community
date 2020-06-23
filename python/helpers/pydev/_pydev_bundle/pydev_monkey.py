@@ -118,12 +118,15 @@ def is_python(path):
 
 
 def remove_quotes_from_args(args):
-    new_args = []
-    for x in args:
-        if len(x) > 1 and x.startswith('"') and x.endswith('"'):
-            x = x[1:-1]
-        new_args.append(x)
-    return new_args
+    if sys.platform == "win32":
+        new_args = []
+        for x in args:
+            if len(x) > 1 and x.startswith('"') and x.endswith('"'):
+                x = x[1:-1]
+            new_args.append(x)
+        return new_args
+    else:
+        return args
 
 
 def quote_args(args):

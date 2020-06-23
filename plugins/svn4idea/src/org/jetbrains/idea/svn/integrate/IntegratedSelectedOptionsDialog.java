@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -29,7 +29,10 @@ import org.jetbrains.idea.svn.info.Info;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
@@ -77,7 +80,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
         workingCopyInfoList.add(new WorkingCopyInfo(workingCopy, underProject(new File(workingCopy))));
       }
     }
-    Collections.sort(workingCopyInfoList, WorkingCopyInfoComparator.getInstance());
+    workingCopyInfoList.sort(WorkingCopyInfoComparator.getInstance());
 
     for (WorkingCopyInfo info : workingCopyInfoList) {
       ((DefaultListModel)myWorkingCopiesList.getModel()).addElement(info);

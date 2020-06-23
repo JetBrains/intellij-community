@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -9,6 +9,7 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -21,6 +22,7 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,8 +64,21 @@ public final class InjectorUtils {
     if (language != null) return language;
     ReferenceInjector injector = ReferenceInjector.findById(languageId);
     if (injector != null) return injector.toLanguage();
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(languageId);
-    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    FileType fileType = fileTypeManager.getFileTypeByExtension(languageId);
+    if (fileType instanceof LanguageFileType) {
+      return ((LanguageFileType)fileType).getLanguage();
+    }
+
+    LightVirtualFile lightVirtualFile = new LightVirtualFile(languageId);
+    for (FileType registeredFileType : fileTypeManager.getRegisteredFileTypes()) {
+      if (registeredFileType instanceof FileTypeIdentifiableByVirtualFile &&
+          registeredFileType instanceof LanguageFileType &&
+          ((FileTypeIdentifiableByVirtualFile)registeredFileType).isMyFileType(lightVirtualFile)) {
+        return ((LanguageFileType)registeredFileType).getLanguage();
+      }
+    }
+    return null;
   }
 
   public static boolean registerInjectionSimple(@NotNull PsiLanguageInjectionHost host,

@@ -249,7 +249,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
       myText = "";
     }
     // center text inside the component:
-    final int yOffset = (getHeight() - defFontMetrics.getMaxAscent() - defFontMetrics.getMaxDescent()) / 2 + defFontMetrics.getMaxAscent() - 1;
+    final int yOffset = (getHeight() - defFontMetrics.getMaxAscent() - defFontMetrics.getMaxDescent()) / 2 + defFontMetrics.getMaxAscent();
     if (myHighlightedRegions.size() == 0){
       g.setColor(fgColor);
       g.drawString(myText, textOffset, yOffset/*defFontMetrics.getMaxAscent()*/);

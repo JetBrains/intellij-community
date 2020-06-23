@@ -2,13 +2,14 @@
 package com.jetbrains.env;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -32,7 +33,7 @@ public class PyEnvSufficiencyTest extends PyEnvTestCase {
         tags.addAll(loadEnvTags(root));
       }
 
-      List<String> missing = Lists.newArrayList();
+      List<String> missing = new ArrayList<>();
       for (String tag : necessaryTags()) {
         if (!tags.contains(tag)) {
           missing.add(tag);
@@ -46,7 +47,7 @@ public class PyEnvSufficiencyTest extends PyEnvTestCase {
 
   private static List<String> necessaryTags() {
     if (SystemInfo.isWindows) {
-      return ImmutableList.<String>builder().addAll(BASE_TAGS).add("iron").build();
+      return Collections.emptyList();// ImmutableList.<String>builder().addAll(BASE_TAGS).add("iron").build();
     }
     else {
       return ImmutableList.<String>builder().addAll(BASE_TAGS).add("packaging").build();

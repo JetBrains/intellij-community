@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.impl;
 
@@ -18,10 +18,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *  @author dsl
- */
-class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSourceOrderEntry, WritableOrderEntry, ClonableOrderEntry {
+final class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSourceOrderEntry, WritableOrderEntry, ClonableOrderEntry {
   @NonNls static final String ENTRY_TYPE = JpsModuleRootModelSerializer.SOURCE_FOLDER_TYPE;
   @NonNls private static final String ATTRIBUTE_FOR_TESTS = "forTests";
 
@@ -31,7 +28,7 @@ class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSou
 
   ModuleSourceOrderEntryImpl(@NotNull Element element, @NotNull RootModelImpl rootModel) throws InvalidDataException {
     super(rootModel);
-    if (!element.getName().equals(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
+    if (!element.getName().equals(JpsModuleRootModelSerializer.ORDER_ENTRY_TAG)) {
       throw new InvalidDataException();
     }
   }
@@ -39,7 +36,7 @@ class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSou
   @Override
   public void writeExternal(@NotNull Element rootElement) throws WriteExternalException {
     Element element = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
-    element.setAttribute(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR, ENTRY_TYPE);
+    element.setAttribute(JpsModuleRootModelSerializer.TYPE_ATTRIBUTE, ENTRY_TYPE);
     element.setAttribute(ATTRIBUTE_FOR_TESTS, Boolean.FALSE.toString()); // compatibility with prev builds
     rootElement.addContent(element);
   }

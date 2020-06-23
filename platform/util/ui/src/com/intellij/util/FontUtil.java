@@ -1,12 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.text.AttributedCharacterIterator.Attribute;
+import java.util.Map;
+
+import static java.awt.font.TextAttribute.KERNING;
+import static java.awt.font.TextAttribute.KERNING_ON;
+import static java.util.Collections.singletonMap;
 
 public final class FontUtil {
+
+  @NotNull
+  public static String leftArrow(@NotNull Font font) {
+    return canDisplay(font, '\u2190', "<-");
+  }
+
   @NotNull
   public static String rightArrow(@NotNull Font font) {
     return canDisplay(font, '\u2192', "->");
@@ -57,5 +71,43 @@ public final class FontUtil {
   @NotNull
   public static Font minusOne(@NotNull Font font) {
     return font.deriveFont(font.getSize() - 1f);
+  }
+
+  /**
+   * @param oldFont    a base font to derive from
+   * @param attributes a map of attributes to override in the given font
+   * @return a new font that replicates the given font with the specified attributes
+   */
+  @NotNull
+  public static Font deriveFont(@NotNull Font oldFont, @NotNull Map<? extends Attribute, ?> attributes) {
+    Font newFont = oldFont.deriveFont(attributes);
+    return oldFont instanceof UIResource ? new FontUIResource(newFont) : newFont;
+  }
+
+  /**
+   * @param font a base font to derive from
+   * @return a new font that replicates the given font without a kerning attribute
+   */
+  @NotNull
+  public static Font disableKerning(@NotNull Font font) {
+    return deriveFont(font, DisableKerning.LAZY);
+  }
+
+  private static final class DisableKerning {
+    private static final Map<Attribute, Integer> LAZY = singletonMap(KERNING, null);
+  }
+
+
+  /**
+   * @param font a base font to derive from
+   * @return a new font that replicates the given font with a kerning attribute
+   */
+  @NotNull
+  public static Font enableKerning(@NotNull Font font) {
+    return deriveFont(font, EnableKerning.LAZY);
+  }
+
+  private static final class EnableKerning {
+    private static final Map<Attribute, Integer> LAZY = singletonMap(KERNING, KERNING_ON);
   }
 }

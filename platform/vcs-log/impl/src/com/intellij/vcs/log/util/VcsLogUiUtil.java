@@ -26,13 +26,14 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
+import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
+
+import static com.intellij.vcs.log.ui.AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP;
 
 public class VcsLogUiUtil {
   @NotNull
@@ -172,12 +176,27 @@ public class VcsLogUiUtil {
   }
 
   public static void appendResetFiltersActionToEmptyText(@NotNull VcsLogFilterUiEx filterUi, @Nls @NotNull StatusText emptyText) {
-    appendActionToEmptyText(emptyText, VcsLogBundle.message("vcs.log.reset.filters.status.action"),
-                            () -> filterUi.setFilters(VcsLogFilterObject.EMPTY_COLLECTION));
+    appendActionToEmptyText(emptyText, VcsLogBundle.message("vcs.log.reset.filters.status.action"), filterUi::clearFilters);
   }
 
   public static boolean isDiffPreviewInEditor() {
     return Registry.is("vcs.log.show.diff.preview.as.editor.tab");
+  }
+
+  public static void installHighlighters(@NotNull AbstractVcsLogUi logUi, @NotNull Predicate<? super VcsLogHighlighterFactory> enabled) {
+    LOG_HIGHLIGHTER_FACTORY_EP.addChangeListener(() -> {
+      updateHighlighters(logUi, enabled);
+    }, logUi);
+    updateHighlighters(logUi, enabled);
+  }
+
+  private static void updateHighlighters(@NotNull AbstractVcsLogUi logUi, @NotNull Predicate<? super VcsLogHighlighterFactory> enabled) {
+    logUi.getTable().removeAllHighlighters();
+    for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
+      if (enabled.test(factory)) {
+        logUi.getTable().addHighlighter(factory.createHighlighter(logUi.getLogData(), logUi));
+      }
+    }
   }
 
   private static class VcsLogPlaceNavigator implements Place.Navigator {

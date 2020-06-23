@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -43,7 +44,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   public static final Logger LOG = Logger.getInstance(RemoteProcessSupport.class);
 
   private final Class<EntryPoint> myValueClass;
-  private final HashMap<Pair<Target, Parameters>, Info> myProcMap = new HashMap<>();
+  private final Map<Pair<Target, Parameters>, Info> myProcMap = new HashMap<>();
+  private final Map<Pair<Target, Parameters>, InProcessInfo<EntryPoint>> myInProcMap = new HashMap<>();
 
   static {
     RemoteServer.setupRMI();
@@ -108,17 +110,36 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         }
       }
     }
+    if (RemoteObject.IN_PROCESS) {
+      synchronized (myInProcMap) {
+        for (Pair<Target, Parameters> pair : myInProcMap.keySet()) {
+          if (pair.first == target) {
+            result.add(pair.second);
+          }
+        }
+      }
+    }
     return result;
   }
 
   public Set<Pair<Target, Parameters>> getActiveConfigurations() {
+    HashSet<Pair<Target, Parameters>> configurations;
     synchronized (myProcMap) {
-      return new HashSet<>(myProcMap.keySet());
+      configurations = new HashSet<>(myProcMap.keySet());
     }
+    if (RemoteObject.IN_PROCESS) {
+      synchronized (myInProcMap) {
+        configurations.addAll(myInProcMap.keySet());
+      }
+    }
+    return configurations;
   }
 
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
     ApplicationManagerEx.getApplicationEx().assertTimeConsuming();
+
+    EntryPoint inProcess = acquireInProcess(target, configuration);
+    if (inProcess != null) return inProcess;
 
     Ref<RunningInfo> ref = Ref.create(null);
     Pair<Target, Parameters> key = Pair.create(target, configuration);
@@ -159,6 +180,16 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         if (key.first == target && (configuration == null || key.second == configuration)) {
           Info o = myProcMap.get(key);
           if (o.handler != null) infos.add(o);
+        }
+      }
+    }
+    if (RemoteObject.IN_PROCESS) {
+      synchronized (myInProcMap) {
+        for (Iterator<Pair<Target, Parameters>> it = myInProcMap.keySet().iterator(); it.hasNext(); ) {
+          Pair<Target, Parameters> key = it.next();
+          if (key.first == target && (configuration == null || key.second == configuration)) {
+            it.remove();
+          }
         }
       }
     }
@@ -375,6 +406,26 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return info != null;
   }
 
+  @Nullable
+  private EntryPoint acquireInProcess(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
+    if (!RemoteObject.IN_PROCESS) return null;
+    Pair<Target, Parameters> key = Pair.create(target, configuration);
+    InProcessInfo<EntryPoint> info;
+    synchronized (myInProcMap) {
+      info = myInProcMap.get(key);
+      if (info == null) {
+        info = new InProcessInfo<>(acquireInProcessFactory(target, configuration));
+        myInProcMap.put(key, info);
+      }
+    }
+    return info.factory.compute();
+  }
+
+  @NotNull
+  protected ThrowableComputable<@Nullable EntryPoint, Exception> acquireInProcessFactory(Target target, Parameters configuration) throws Exception {
+    return () -> null;
+  }
+
   private static class Info {
     final ProcessHandler handler;
 
@@ -431,4 +482,18 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
   }
 
+  private static class InProcessInfo<EntryPoint> extends Info {
+
+    final ThrowableComputable<EntryPoint, Exception> factory;
+
+    InProcessInfo(ThrowableComputable<EntryPoint, Exception> factory) {
+      super(null);
+      this.factory = factory;
+    }
+
+    @Override
+    public String toString() {
+      return "InProcessInfo{" + Integer.toHexString(hashCode()) + '}';
+    }
+  }
 }

@@ -33,15 +33,9 @@
     <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
 
     <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
-    <!--
-    <projectTemplatesFactory implementation="com.intellij.platform.templates.RemoteTemplatesFactory"/>
-    -->
     <applicationService serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
     <exportable serviceInterface="com.intellij.platform.templates.ProjectTemplateExportable"/>
     <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
-
-    <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.ImportPopupHectorComponentProvider"/>
-
 
     <usageFilteringRuleProvider implementation="com.intellij.usages.impl.ImportUsageFilteringRuleProvider"/>
     <applicationService serviceImplementation="com.intellij.usages.impl.ImportFilteringUsageViewSetting"/>

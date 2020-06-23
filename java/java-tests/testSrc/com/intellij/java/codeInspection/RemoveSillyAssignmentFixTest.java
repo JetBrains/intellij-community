@@ -48,7 +48,7 @@ public class RemoveSillyAssignmentFixTest extends LightJavaCodeInsightFixtureTes
     myFixture.enableInspections(SillyAssignmentInspection.class);
     final String quickfixName = JavaBundle.message("assignment.to.itself.quickfix.name");
     myFixture.configureByFile(getTestName(false) + ".java");
-    assertEmpty("Quickfix \'" + quickfixName + "\' is available unexpectedly", myFixture.filterAvailableIntentions(quickfixName));
+    assertEmpty("Quickfix '" + quickfixName + "' is available unexpectedly", myFixture.filterAvailableIntentions(quickfixName));
   }
 
   @Override

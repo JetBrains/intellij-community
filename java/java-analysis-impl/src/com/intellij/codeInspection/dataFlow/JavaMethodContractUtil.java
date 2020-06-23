@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -106,6 +107,7 @@ public class JavaMethodContractUtil {
 
   static class ContractInfo {
     static final ContractInfo EMPTY = new ContractInfo(Collections.emptyList(), false, false, MutationSignature.UNKNOWN);
+    static final ContractInfo PURE = new ContractInfo(Collections.emptyList(), true, false, MutationSignature.PURE);
 
     private final @NotNull List<StandardMethodContract> myContracts;
     private final boolean myPure;
@@ -139,6 +141,9 @@ public class JavaMethodContractUtil {
   }
 
   static @NotNull ContractInfo getContractInfo(@NotNull PsiMethod method) {
+    if (PsiUtil.isAnnotationMethod(method)) {
+      return ContractInfo.PURE;
+    }
     return CachedValuesManager.getCachedValue(method, () -> {
       final PsiAnnotation contractAnno = findContractAnnotation(method);
       ContractInfo info = ContractInfo.EMPTY;

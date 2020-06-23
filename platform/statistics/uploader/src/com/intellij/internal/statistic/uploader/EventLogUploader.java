@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.uploader;
 
-import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalApplicationInfo;
@@ -13,6 +12,8 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.intellij.internal.statistic.StatisticsStringUtil.split;
 
 public class EventLogUploader {
   private static final int WAIT_FOR_IDE_MS = 2000;
@@ -112,7 +113,7 @@ public class EventLogUploader {
     if (recorder != null) {
       String logs = options.get(EventLogUploaderOptions.LOGS_OPTION);
       if (logs != null) {
-        List<String> files = StatisticsEventLogUtil.split(logs, File.pathSeparatorChar);
+        List<String> files = split(logs, File.pathSeparatorChar);
         return new EventLogExternalRecorderConfig(recorder, files);
       }
     }

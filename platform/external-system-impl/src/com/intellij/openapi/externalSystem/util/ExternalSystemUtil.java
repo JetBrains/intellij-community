@@ -415,7 +415,7 @@ public final class ExternalSystemUtil {
           }
         };
 
-        final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
+        final ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler>
           consoleManager = getConsoleManagerFor(resolveProjectTask);
 
         final ExecutionConsole consoleView =
@@ -457,28 +457,23 @@ public final class ExternalSystemUtil {
             */
 
               if (isPreviewMode) return;
-              String message = "syncing...";
-              eventDispatcher.onEvent(id,
-                new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), message)
-                  .withProcessHandler(processHandler, null)
+              DefaultBuildDescriptor buildDescriptor = new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime)
+                .withProcessHandler(processHandler, null)
                 /* Android Studio: keep "Refresh Gradle project" out of build view; see b/76099171
-                  .withRestartAction(rerunImportAction)
+                .withRestartAction(rerunImportAction)
                 */
-                  .withContentDescriptorSupplier(() -> {
-                    if (consoleView == null) {
-                      return null;
-                    }
-                    else {
-                      boolean activateToolWindow = isNewProject(project);
-                      BuildContentDescriptor contentDescriptor = new BuildContentDescriptor(
-                        consoleView, processHandler, consoleView.getComponent(), "Sync");
-                      contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
-                      contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
-                      contentDescriptor.setAutoFocusContent(reportRefreshError);
-                      return contentDescriptor;
-                    }
-                  })
-              );
+                .withContentDescriptor(() -> {
+                  if (consoleView == null) return null;
+                  boolean activateToolWindow = isNewProject(project);
+                  BuildContentDescriptor contentDescriptor =
+                    new BuildContentDescriptor(consoleView, processHandler, consoleView.getComponent(),
+                                               ExternalSystemBundle.message("build.event.title.sync"));
+                  contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
+                  contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
+                  contentDescriptor.setAutoFocusContent(reportRefreshError);
+                  return contentDescriptor;
+                });
+              eventDispatcher.onEvent(id, new StartBuildEventImpl(buildDescriptor, BuildBundle.message("build.event.message.syncing")));
             }
 
             @Override
@@ -495,14 +490,15 @@ public final class ExternalSystemUtil {
               DataProvider dataProvider = BuildConsoleUtils.getDataProvider(id, syncViewManager);
               com.intellij.build.events.FailureResult failureResult =
                 createFailureResult(title, e, externalSystemId, project, dataProvider);
-              finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), "failed", failureResult));
+              finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
+                                                                         BuildBundle.message("build.status.failed"), failureResult));
               processHandler.notifyProcessTerminated(1);
             }
 
             @Override
             public void onSuccess(@NotNull ExternalSystemTaskId id) {
               finishSyncEventSupplier.set(
-                () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), "finished", new SuccessResultImpl()));
+                () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), BuildBundle.message("build.status.finished"), new SuccessResultImpl()));
               processHandler.notifyProcessTerminated(0);
             }
 
@@ -519,6 +515,8 @@ public final class ExternalSystemUtil {
               }
             }
           };
+
+          LOG.info("External project [" + externalProjectPath + "] resolution task started");
           final long startTS = System.currentTimeMillis();
           resolveProjectTask
             .execute(indicator, ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
@@ -597,7 +595,8 @@ public final class ExternalSystemUtil {
         }
         String message = "Sync finish event has not been received";
         LOG.warn(message, exception);
-        return new FinishBuildEventImpl(resolveProjectTask.getId(), null, System.currentTimeMillis(), "failed",
+        return new FinishBuildEventImpl(resolveProjectTask.getId(), null, System.currentTimeMillis(),
+                                        BuildBundle.message("build.status.failed"),
                                         new FailureResultImpl(new Exception(message, exception)));
       }
 
@@ -1079,7 +1078,7 @@ public final class ExternalSystemUtil {
   }
 
   @NotNull
-  public static ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
+  public static ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler>
   getConsoleManagerFor(@NotNull ExternalSystemTask task) {
     for (ExternalSystemExecutionConsoleManager executionConsoleManager : ExternalSystemExecutionConsoleManager.EP_NAME.getExtensions()) {
       if (executionConsoleManager.isApplicableFor(task)) {

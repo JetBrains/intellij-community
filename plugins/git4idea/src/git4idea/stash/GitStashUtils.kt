@@ -83,7 +83,7 @@ fun unstash(project: Project,
         return
       }
       else if (!result.success()) {
-        VcsNotifier.getInstance(project).notifyError("Unstash Failed", result.errorOutputAsHtmlString)
+        VcsNotifier.getInstance(project).notifyError("Unstash Failed", result.errorOutputAsHtmlString, true)
         return
       }
     }

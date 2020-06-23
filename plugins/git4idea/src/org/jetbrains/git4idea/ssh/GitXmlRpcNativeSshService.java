@@ -3,20 +3,15 @@ package org.jetbrains.git4idea.ssh;
 
 import git4idea.commands.GitNativeSshAuthenticator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.git4idea.GitAppUtil;
 import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassApp;
 import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
-import org.jetbrains.git4idea.util.ScriptGenerator;
 
 import java.util.UUID;
 
 public class GitXmlRpcNativeSshService extends GitXmlRpcHandlerService<GitNativeSshAuthenticator> {
   private GitXmlRpcNativeSshService() {
     super("intellij-ssh-askpass", GitNativeSshAskPassXmlRpcHandler.HANDLER_NAME, GitNativeSshAskPassApp.class);
-  }
-
-  @Override
-  protected void customizeScriptGenerator(@NotNull ScriptGenerator generator) {
   }
 
   @NotNull
@@ -29,20 +24,12 @@ public class GitXmlRpcNativeSshService extends GitXmlRpcHandlerService<GitNative
    * Internal handler implementation class, do not use it.
    */
   public class InternalRequestHandler implements GitNativeSshAskPassXmlRpcHandler {
-    @Nullable
+    @NotNull
     @Override
-    public String handleInput(String handler, @NotNull String description) {
-      return adjustNull(getHandler(UUID.fromString(handler)).handleInput(description));
-    }
-
-    /**
-     * Adjust null value ({@code "-"} if null, {@code "+"+s} if non-null)
-     *
-     * @param s a value to adjust
-     * @return adjusted string
-     */
-    private String adjustNull(final String s) {
-      return s == null ? "-" : "+" + s;
+    public String handleInput(@NotNull String handlerNo, @NotNull String description) {
+      GitNativeSshAuthenticator g = getHandler(UUID.fromString(handlerNo));
+      String answer = g.handleInput(description);
+      return GitAppUtil.adjustNullTo(answer);
     }
   }
 }

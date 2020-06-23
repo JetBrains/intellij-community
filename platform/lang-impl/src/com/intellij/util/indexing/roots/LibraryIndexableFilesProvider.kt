@@ -7,8 +7,26 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.util.containers.ConcurrentBitSet
+import com.intellij.util.indexing.IndexingBundle
 
-internal class LibraryIndexableFilesProvider(val library: Library) : IndexableFilesProvider {
+class LibraryIndexableFilesProvider(val library: Library) : IndexableFilesProvider {
+  override fun getDebugName() = library.name.takeUnless { it.isNullOrEmpty() }?.let { "Library '$it'" } ?: library.toString()
+
+  override fun getIndexingProgressText(): String? {
+    val libraryName = library.name
+    if (!libraryName.isNullOrEmpty()) {
+      return IndexingBundle.message("indexable.files.provider.indexing.library.name", libraryName)
+    }
+    return IndexingBundle.message("indexable.files.provider.indexing.additional.dependencies")
+  }
+
+  override fun getRootsScanningProgressText(): String {
+    val libraryName = library.name
+    if (!libraryName.isNullOrEmpty()) {
+      return IndexingBundle.message("indexable.files.provider.scanning.library.name", libraryName)
+    }
+    return IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")
+  }
 
   override fun iterateFiles(project: Project, fileIterator: ContentIterator, visitedFileSet: ConcurrentBitSet): Boolean {
     @Suppress("DuplicatedCode")

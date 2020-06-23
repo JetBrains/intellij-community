@@ -133,6 +133,6 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
         return true;
       }
     });
-    return "[" + s.toString() + "]";
+    return "[" + s + "]";
   }
 }

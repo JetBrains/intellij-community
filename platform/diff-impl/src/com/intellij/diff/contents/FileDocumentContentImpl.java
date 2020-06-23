@@ -23,31 +23,54 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FileDocumentContentImpl extends DocumentContentImpl implements FileContent {
+import java.nio.charset.Charset;
+
+public class FileDocumentContentImpl extends DocumentContentBase implements FileContent {
   @NotNull private final VirtualFile myFile;
+  @Nullable private final VirtualFile myHighlightFile;
 
   public FileDocumentContentImpl(@Nullable Project project,
                                  @NotNull Document document,
                                  @NotNull VirtualFile file) {
-    this(project, document, file, file);
+    this(project, document, file, null);
   }
 
   public FileDocumentContentImpl(@Nullable Project project,
                                  @NotNull Document document,
                                  @NotNull VirtualFile file,
                                  @Nullable VirtualFile highlightFile) {
-    super(project, document, null, highlightFile, getSeparator(file), file.getCharset(), file.getBOM() != null);
+    super(project, document);
     myFile = file;
+    myHighlightFile = highlightFile;
+  }
+
+  @Override
+  public @Nullable VirtualFile getHighlightFile() {
+    return ObjectUtils.chooseNotNull(myHighlightFile, myFile);
   }
 
   @Nullable
-  private static LineSeparator getSeparator(@NotNull VirtualFile file) {
-    String s = LoadTextUtil.detectLineSeparator(file, true);
+  @Override
+  public LineSeparator getLineSeparator() {
+    String s = LoadTextUtil.detectLineSeparator(myFile, true);
     if (s == null) return null;
     return LineSeparator.fromString(s);
+  }
+
+  @Nullable
+  @Override
+  public Charset getCharset() {
+    return myFile.getCharset();
+  }
+
+  @Nullable
+  @Override
+  public Boolean hasBom() {
+    return myFile.getBOM() != null;
   }
 
   @NotNull

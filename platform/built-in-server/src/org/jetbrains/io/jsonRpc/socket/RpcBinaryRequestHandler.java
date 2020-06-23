@@ -34,7 +34,6 @@ public class RpcBinaryRequestHandler extends BinaryRequestHandler implements Exc
       Disposer.register(serverDisposable, result);
 
       rpcServer = new JsonRpcServer(result);
-      JsonRpcServerKt.registerFromEp(rpcServer);
       return result;
     }
   };

@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -100,6 +101,11 @@ public class ConsoleViewContentType {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myTextAttributesKey);
     }
     return myTextAttributes;
+  }
+
+  @Nullable
+  public TextAttributesKey getAttributesKey() {
+    return myTextAttributesKey;
   }
 
   @NotNull

@@ -1,10 +1,14 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * @author peter
@@ -71,7 +75,7 @@ public abstract class PrefixMatcher {
     }
 
     ProgressManager.checkCanceled();
-    Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
+    sorted.sort(String.CASE_INSENSITIVE_ORDER);
     ProgressManager.checkCanceled();
 
     LinkedHashSet<String> result = new LinkedHashSet<>();

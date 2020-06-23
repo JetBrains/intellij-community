@@ -34,9 +34,10 @@ public class RecentProjectsGroup extends ActionGroup implements DumbAware {
       return actions.toArray(EMPTY_ARRAY);
     }
 
+    RecentProjectListActionProvider provider = RecentProjectListActionProvider.getInstance();
     List<AnAction> list = new ArrayList<>();
     for (AnAction action : actions) {
-      if (!(action instanceof ReopenProjectAction) || !StringUtil.equals(((ReopenProjectAction)action).getProjectPath(), project.getBasePath())) {
+      if (!(action instanceof ReopenProjectAction) || !provider.isCurrentProjectAction(project, (ReopenProjectAction)action)) {
         list.add(action);
       }
     }

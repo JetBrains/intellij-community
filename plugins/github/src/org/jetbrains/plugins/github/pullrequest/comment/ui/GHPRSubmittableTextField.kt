@@ -8,11 +8,13 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.Messages
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
 import com.intellij.ui.components.labels.LinkLabel
@@ -126,6 +128,7 @@ object GHPRSubmittableTextField {
       setOneLineMode(false)
       setPlaceholder(placeHolder)
       addSettingsProvider {
+        it.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
         it.colorsScheme.lineSpacing = 1f
       }
       selectAll()
@@ -138,7 +141,8 @@ object GHPRSubmittableTextField {
     }
 
   private fun createCancelButton() =
-    InlineIconButton(AllIcons.Actions.Close, AllIcons.Actions.CloseHovered, tooltip = "Cancel", shortcut = CANCEL_SHORTCUT_SET).apply {
+    InlineIconButton(AllIcons.Actions.Close, AllIcons.Actions.CloseHovered, tooltip = Messages.getCancelButton(),
+                     shortcut = CANCEL_SHORTCUT_SET).apply {
       border = JBUI.Borders.empty(getEditorTextFieldVerticalOffset(), 0)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
@@ -199,8 +203,8 @@ object GHPRSubmittableTextField {
       if (isSubmitting) return
 
       isSubmitting = true
-      submitter(document.text).handleOnEdt { _, _ ->
-        runWriteAction {
+      submitter(document.text).handleOnEdt { _, error ->
+        if (error == null) runWriteAction {
           document.setText("")
         }
         isSubmitting = false

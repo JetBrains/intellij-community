@@ -4,11 +4,12 @@ package com.intellij.execution.impl
 import com.intellij.ProjectTopics
 import com.intellij.configurationStore.*
 import com.intellij.execution.*
-import com.intellij.execution.configuration.ConfigurationFactoryEx
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -16,7 +17,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -46,6 +46,7 @@ import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -192,8 +193,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
     override fun compute(): ConcurrentMap<String, BeforeRunTaskProvider<*>> {
-      val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
-      for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensionList(project)) {
+      val result = ConcurrentHashMap<String, BeforeRunTaskProvider<*>>()
+      for (provider in BeforeRunTaskProvider.EP_NAME.getExtensions(project)) {
         result.put(provider.id.toString(), provider)
       }
       return result
@@ -204,19 +205,29 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    val messageBusConnection = project.messageBus.connect()
+    messageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
-        selectedConfiguration?.let {
-          iconCache.remove(it.uniqueID)
-        }
+        clearSelectedConfigurationIcon()
 
         deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
       }
     })
 
-    BeforeRunTaskProvider.EXTENSION_POINT_NAME.getPoint(project).addExtensionPointListener(
-      ExtensionPointChangeListener { stringIdToBeforeRunProvider.drop() },
-      true, project)
+    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        iconCache.clear()
+        reloadSchemes()
+      }
+    })
+
+    BeforeRunTaskProvider.EP_NAME.getPoint(project).addChangeListener(Runnable(stringIdToBeforeRunProvider::drop), project)
+  }
+
+  private fun clearSelectedConfigurationIcon() {
+    selectedConfiguration?.let {
+      iconCache.remove(it.uniqueID)
+    }
   }
 
   @TestOnly
@@ -227,7 +238,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   private fun buildConfigurationTypeMap(factories: List<ConfigurationType>): Map<String, ConfigurationType> {
     val types = factories.toMutableList()
     types.add(UnknownConfigurationType.getInstance())
-    val map = THashMap<String, ConfigurationType>()
+    val map = HashMap<String, ConfigurationType>()
     for (type in types) {
       map.put(type.id, type)
     }
@@ -679,6 +690,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
             settings.setConfiguration(configuration)
           }
         }
+
+        lock.write {  templateIdToConfiguration.retainEntries { _, settings -> settings.type != extension } }
       }
     }, this)
 
@@ -797,7 +810,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   private fun runConfigurationFirstLoaded() {
-    if (project.isDefault) return;
+    if (project.isDefault) {
+      return
+    }
 
     if (selectedConfiguration == null) {
       notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId
@@ -967,7 +982,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         }
       }
       else {
-        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks, true, false)
+        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks,
+                                                                     ownIsOnlyEnabled = true, isDisableTemplateTasks = false)
         return
       }
     }
@@ -1291,13 +1307,13 @@ internal fun RunConfiguration.cloneBeforeRunTasks() {
 
 fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: RunConfiguration) {
   @Suppress("UNCHECKED_CAST", "DEPRECATION")
-  (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
+  (factory as? com.intellij.execution.configuration.ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
   (configuration as? ConfigurationCreationListener)?.onNewConfigurationCreated()
 }
 
 private fun getFactoryKey(factory: ConfigurationFactory): String {
-  return when {
-    factory.type is SimpleConfigurationType -> factory.type.id
+  return when (factory.type) {
+    is SimpleConfigurationType -> factory.type.id
     else -> "${factory.type.id}.${factory.id}"
   }
 }

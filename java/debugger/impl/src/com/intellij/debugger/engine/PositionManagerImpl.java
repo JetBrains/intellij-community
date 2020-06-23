@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.MultiRequestPositionManager;
@@ -353,25 +353,26 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     // first check alternative jre if any
     Sdk alternativeJre = myDebugProcess.getSession().getAlternativeJre();
     if (alternativeJre != null) {
-      psiClass = findClass(myDebugProcess.getProject(), originalQName, AlternativeJreClassFinder.getSearchScope(alternativeJre));
+      GlobalSearchScope scope = AlternativeJreClassFinder.getSearchScope(alternativeJre);
+      psiClass = findClass(myDebugProcess.getProject(), originalQName, scope, false);
       if (psiClass instanceof ClsClassImpl && altClsProcessor != null) { //try to find sources
         altClsProcessor.accept((ClsClassImpl)psiClass);
       }
     }
 
     if (psiClass == null) {
-      psiClass = findClass(myDebugProcess.getProject(), originalQName, myDebugProcess.getSearchScope());
+      psiClass = findClass(myDebugProcess.getProject(), originalQName, myDebugProcess.getSearchScope(), true);
     }
     return psiClass;
   }
 
   @Nullable
-  public static PsiClass findClass(Project project, String originalQName, GlobalSearchScope searchScope) {
-    PsiClass psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name first
+  public static PsiClass findClass(Project project, String originalQName, GlobalSearchScope searchScope, boolean fallbackToAllScope) {
+    PsiClass psiClass = DebuggerUtils.findClass(originalQName, project, searchScope, fallbackToAllScope); // try to lookup original name first
     if (psiClass == null) {
       int dollar = originalQName.indexOf('$');
       if (dollar > 0) {
-        psiClass = DebuggerUtils.findClass(originalQName.substring(0, dollar), project, searchScope);
+        psiClass = DebuggerUtils.findClass(originalQName.substring(0, dollar), project, searchScope, fallbackToAllScope);
       }
     }
     return psiClass;

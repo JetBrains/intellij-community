@@ -58,7 +58,7 @@ void usage(int num, boolean someBoolean, List<String> args){
   }
 
   void testGroovyStatementContext() throws Exception {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("inst", "other")
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("inst", "Groovy")
     assertFalse(isApplicable("class Foo {{ if (a <caret>inst) }}", template))
     assertTrue(isApplicable("class Foo {{ <caret>inst }}", template))
     assertTrue(isApplicable("<caret>inst", template))
@@ -69,7 +69,7 @@ void usage(int num, boolean someBoolean, List<String> args){
   }
 
   void testGroovyExpressionContext() throws Exception {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("lst", "other")
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("lst", "Groovy")
     assertFalse(isApplicable("class Foo {{ if (a <caret>toar) }}", template))
     assertTrue(isApplicable("class Foo {{ <caret>xxx }}", template))
     assertTrue(isApplicable("<caret>xxx", template))
@@ -78,7 +78,7 @@ void usage(int num, boolean someBoolean, List<String> args){
   }
 
   void testGroovyDeclarationContext() throws Exception {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "other")
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Groovy")
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template))
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template))
     assertFalse(isApplicable("class Foo {{ if (a <caret>xxx) }}", template))

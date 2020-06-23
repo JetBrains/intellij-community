@@ -26,16 +26,15 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
-  private val tooltip = CheckoutProvider.EXTENSION_POINT_NAME.extensions
-    .map { it.vcsName }
-    .joinToString { it.replace("_".toRegex(), "") }
 
   override fun getIcon(): Icon = AllIcons.Welcome.FromVCS
 
   override fun getName() = VcsBundle.message("clone.dialog.repository.url.item")
 
   override fun getTooltip(): String? {
-    return tooltip
+    return CheckoutProvider.EXTENSION_POINT_NAME.extensions
+      .map { it.vcsName }
+      .joinToString { it.replace("_", "") }
   }
 
   override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {

@@ -18,5 +18,8 @@ class Test {
         Object foo = 1;
         ints[(Integer)  foo] = 0;
         ints[(<warning descr="Casting '1' to 'Integer' is redundant">Integer</warning>)  1] = 0;
+        
+        short sh = 1;
+        ints[(<warning descr="Casting 'sh' to 'int' is redundant">int</warning>)sh] = 0;
     }
 }

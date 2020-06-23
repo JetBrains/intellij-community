@@ -35,7 +35,6 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -75,7 +74,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final Stripe bottomStripe;
   private final Stripe topStripe;
 
-  private final List<Stripe> stripes = new ArrayList<>();
+  private final List<Stripe> stripes = new ArrayList<>(4);
 
   private boolean isWideScreen;
   private boolean leftHorizontalSplit;
@@ -250,30 +249,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  final void updateButtonPosition(@NotNull ToolWindowAnchor anchor) {
-    Stripe stripe;
-    if (ToolWindowAnchor.TOP == anchor) {
-      stripe = topStripe;
-    }
-    else if (ToolWindowAnchor.LEFT == anchor) {
-      stripe = leftStripe;
-    }
-    else if (ToolWindowAnchor.BOTTOM == anchor) {
-      stripe = bottomStripe;
-    }
-    else if (ToolWindowAnchor.RIGHT == anchor) {
-      stripe = rightStripe;
-    }
-    else {
-      LOG.error("unknown anchor: " + anchor);
-      return;
-    }
-
-    stripe.revalidate();
-  }
-
-  @NotNull
-  public final JComponent getLayeredPane() {
+  public final @NotNull JComponent getLayeredPane() {
     return layeredPane;
   }
 
@@ -284,6 +260,14 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     for (Stripe stripe : stripes) {
       stripe.revalidate();
       stripe.repaint();
+    }
+  }
+
+  public void revalidateNotEmptyStripes() {
+    for (Stripe stripe : stripes) {
+      if (!stripe.isEmpty()) {
+        stripe.revalidate();
+      }
     }
   }
 
@@ -428,8 +412,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     pair.first.setSize(Math.max(minValue, Math.min(maxValue, actualSize)));
   }
 
-  @Nullable
-  private Pair<Resizer, Component> findResizerAndComponent(@NotNull ToolWindow window) {
+  private @Nullable Pair<Resizer, Component> findResizerAndComponent(@NotNull ToolWindow window) {
     if (!window.isVisible()) return null;
 
     Resizer resizer = null;
@@ -568,7 +551,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         mySplitter = splitter;
       }
 
-      final static class FirstComponent extends Splitter {
+      static final class FirstComponent extends Splitter {
         FirstComponent(@NotNull ThreeComponentsSplitter splitter) {
           super(splitter);
         }
@@ -579,7 +562,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         }
       }
 
-      final static class LastComponent extends Splitter {
+      static final class LastComponent extends Splitter {
         LastComponent(@NotNull ThreeComponentsSplitter splitter) {
           super(splitter);
         }
@@ -610,7 +593,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
       abstract void _setSize(int size);
 
-      final static class Left extends LayeredPane {
+      static final class Left extends LayeredPane {
         Left(@NotNull Component component) {
           super(component);
         }
@@ -621,7 +604,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         }
       }
 
-      final static class Right extends LayeredPane {
+      static final class Right extends LayeredPane {
         Right(@NotNull Component component) {
           super(component);
         }
@@ -714,12 +697,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     // otherwise we add empty splitter
     if (c == null) {
       List<ToolWindowEx> toolWindows = manager.getToolWindowsOn(anchor, Objects.requireNonNull(info.getId()));
-      for (Iterator<ToolWindowEx> iterator = toolWindows.iterator(); iterator.hasNext(); ) {
-        ToolWindow window = iterator.next();
-        if (window == null || window.isSplitMode() == info.isSplit() || !window.isVisible()) {
-          iterator.remove();
-        }
-      }
+      toolWindows.removeIf(window -> window == null || window.isSplitMode() == info.isSplit() || !window.isVisible());
       if (!toolWindows.isEmpty()) {
         c = ((ToolWindowImpl)toolWindows.get(0)).getDecoratorComponent();
       }
@@ -826,13 +804,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  void removeStripeButton(@NotNull StripeButton button) {
-    Container parent = button.getParent();
-    if (parent != null) {
-      ((Stripe)parent).removeButton(button);
-    }
-  }
-
   private void removeSlidingComponent(@NotNull Component component, @NotNull WindowInfo info, boolean dirtyMode) {
     UISettings uiSettings = UISettings.getInstance();
     if (!dirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
@@ -840,7 +811,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       // Prepare top image. This image is scrolling over bottom image. It contains
       // picture of component is being removed.
       Image topImage = layeredPane.getTopImage();
-      useSafely(topImage.getGraphics(), topGraphics -> component.paint(topGraphics));
+      useSafely(topImage.getGraphics(), component::paint);
 
       // Prepare bottom image. This image contains picture of component that is located
       // under the component to is being removed.
@@ -876,8 +847,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private static final class ImageRef extends SoftReference<BufferedImage> {
-    @Nullable
-    private BufferedImage myStrongRef;
+    private @Nullable BufferedImage myStrongRef;
 
     ImageRef(@NotNull BufferedImage image) {
       super(image);
@@ -948,13 +918,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       }
 
       // Resize component at the DEFAULT layer. It should be only on component in that layer
-      Component[] components = getComponentsInLayer(JLayeredPane.DEFAULT_LAYER.intValue());
+      Component[] components = getComponentsInLayer(JLayeredPane.DEFAULT_LAYER);
       LOG.assertTrue(components.length <= 1);
       for (Component component : components) {
         component.setBounds(0, 0, getWidth(), getHeight());
       }
       // Resize components at the PALETTE layer
-      components = getComponentsInLayer(JLayeredPane.PALETTE_LAYER.intValue());
+      components = getComponentsInLayer(JLayeredPane.PALETTE_LAYER);
       for (Component component : components) {
         if (!(component instanceof InternalDecorator)) {
           continue;

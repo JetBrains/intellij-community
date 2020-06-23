@@ -1,24 +1,36 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang
 
+import com.intellij.codeInsight.completion.CompletionExtension
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.mock.MockLanguageFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.registerExtension
+import com.intellij.util.KeyedLazyInstance
 import java.util.*
 
 class LanguageExtensionCacheTest : LightPlatformTestCase() {
-  private val myExtensionPointName = "testLangExt"
+  private val myExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testLangExt")
+  private val myCompletionExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testCompletionExt")
   private val myExtensionPointXML = """
 <extensionPoint qualifiedName="$myExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
+  <with attribute="implementationClass" implements="java.lang.String"/>
+</extensionPoint>
+"""
+  private val myCompletionExtensionPointXML = """
+<extensionPoint qualifiedName="$myCompletionExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
   <with attribute="implementationClass" implements="java.lang.String"/>
 </extensionPoint>
 """
@@ -26,35 +38,38 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
   private val descriptor = DefaultPluginDescriptor(PluginId.getId(""), javaClass.classLoader)
   private lateinit var area: ExtensionsAreaImpl
   private lateinit var extension: LanguageExtension<String>
-  private val plainTextDialect = object : Language(PlainTextLanguage.INSTANCE, "PlainTextDialect") {
-  }
+  private lateinit var completionExtension: CompletionExtension<String>
 
 
   override fun setUp() {
     super.setUp()
     area = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
-    area.registerExtensionPoints(descriptor, Collections.singletonList(JDOMUtil.load(myExtensionPointXML)))
+    area.registerExtensionPoints(descriptor, listOf(JDOMUtil.load(myExtensionPointXML), JDOMUtil.load(myCompletionExtensionPointXML)))
     Disposer.register(testRootDisposable, Disposable {
-      area.unregisterExtensionPoint(myExtensionPointName)
+      area.unregisterExtensionPoint(myExtensionPointName.name)
+      area.unregisterExtensionPoint(myCompletionExtensionPointName.name)
     })
     extension = LanguageExtension(myExtensionPointName, null)
-
-    val plainTextDialectFileType = MockLanguageFileType(plainTextDialect, "xxxx")
-    FileTypeManager.getInstance().registerFileType(plainTextDialectFileType)
-    Disposer.register(testRootDisposable, Disposable { FileTypeManagerEx.getInstanceEx().unregisterFileType(plainTextDialectFileType) })
+    completionExtension = CompletionExtension(myCompletionExtensionPointName.name)
   }
 
-  private fun registerExtension(languageID: String, implementationFqn: String) {
-    val element = JDOMUtil.load(
-      """<extension point="$myExtensionPointName" language="$languageID" implementationClass="$implementationFqn"/>"""
-    )
-    area.registerExtension(descriptor, element, null)
+  private fun registerExtension(extensionPointName: ExtensionPointName<KeyedLazyInstance<String>>,
+                                languageID: String,
+                                implementationFqn: String
+  ): Disposable {
+    val disposable = Disposer.newDisposable(testRootDisposable, "registerExtension")
+    val languageExtensionPoint = LanguageExtensionPoint<String>(languageID, implementationFqn, PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!)
+    ApplicationManager.getApplication().registerExtension(extensionPointName, languageExtensionPoint, disposable)
+    return disposable
   }
 
   fun `test extensions are cleared when explicit extension is added`() {
     val language = PlainTextLanguage.INSTANCE
 
-    registerExtension(language.id, String::class.java.name)   // emulate registration via plugin.xml
+    val unregisterDialectDisposable = Disposer.newDisposable(testRootDisposable, getTestName(false))
+    val plainTextDialect = registerLanguageDialect(unregisterDialectDisposable)
+
+    val extensionRegistrationDisposable = registerExtension(myExtensionPointName, language.id, String::class.java.name)   // emulate registration via plugin.xml
     assertSize(1, extension.allForLanguage(language))
     assertEquals("", extension.forLanguage(language))       // empty because created with new String(); it is cached within forLanguage()
 
@@ -68,5 +83,30 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
     assertSize(1, extension.allForLanguage(language))
     assertSize(1, extension.allForLanguage(plainTextDialect))
     assertEquals("", extension.forLanguage(language))
+
+    Disposer.dispose(unregisterDialectDisposable)
+
+    Disposer.dispose(extensionRegistrationDisposable)
+  }
+
+  private fun registerLanguageDialect(parentDisposable: Disposable): Language {
+    val plainTextDialectFileType = MockLanguageFileType(object : Language(PlainTextLanguage.INSTANCE, "PlainTextDialect") {
+    }, "xxxx")
+    FileTypeManager.getInstance().registerFileType(plainTextDialectFileType)
+    Disposer.register(parentDisposable, Disposable { FileTypeManagerEx.getInstanceEx().unregisterFileType(plainTextDialectFileType) })
+    return plainTextDialectFileType.language
+  }
+
+  fun `test CompletionExtension extensions are cleared when explicit extension is added`() {
+    val unregisterDialectDisposable = Disposer.newDisposable(testRootDisposable, getTestName(false))
+    val plainTextDialect = registerLanguageDialect(unregisterDialectDisposable)
+
+    val extensionRegistrationDisposable = registerExtension(myCompletionExtensionPointName, PlainTextLanguage.INSTANCE.id, String::class.java.name)
+    assertSize(1, completionExtension.forKey(PlainTextLanguage.INSTANCE))
+    assertSize(1, completionExtension.forKey(plainTextDialect))
+
+    Disposer.dispose(unregisterDialectDisposable)
+    Disposer.dispose(extensionRegistrationDisposable)
+    assertSize(0, completionExtension.forKey(plainTextDialect))
   }
 }

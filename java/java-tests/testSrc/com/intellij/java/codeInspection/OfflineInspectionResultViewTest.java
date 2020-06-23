@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -30,14 +27,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
   private InspectionResultsView myView;
-  private InspectionToolWrapper myUnusedToolWrapper;
-  private InspectionToolWrapper myDataFlowToolWrapper;
+  private InspectionToolWrapper<?, ?> myUnusedToolWrapper;
+  private InspectionToolWrapper<?, ?> myDataFlowToolWrapper;
 
   @Override
   protected void setUp() throws Exception {
@@ -48,22 +43,21 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
 
     final InspectionProfileImpl profile = new InspectionProfileImpl("test") {
       @Override
-      public boolean isToolEnabled(@Nullable final HighlightDisplayKey key, PsiElement element) {
+      public boolean isToolEnabled(final @Nullable HighlightDisplayKey key, PsiElement element) {
         return key != null && Comparing.strEqual(key.toString(), UnusedDeclarationInspectionBase.SHORT_NAME);
       }
 
       @Override
-      public InspectionToolWrapper @NotNull [] getInspectionTools(PsiElement element) {
-        return new InspectionToolWrapper[]{myUnusedToolWrapper};
+      public @NotNull List<InspectionToolWrapper<?, ?>> getInspectionTools(PsiElement element) {
+        return Collections.singletonList(myUnusedToolWrapper);
       }
 
       @Override
-      @NotNull
-      public InspectionProfileModifiableModel getModifiableModel() {
+      public @NotNull InspectionProfileModifiableModel getModifiableModel() {
         return new InspectionProfileModifiableModel(this) {
           @Override
-          public InspectionToolWrapper @NotNull [] getInspectionTools(PsiElement element) {
-            return new InspectionToolWrapper[]{myUnusedToolWrapper};
+          public @NotNull List<InspectionToolWrapper<?, ?>> getInspectionTools(PsiElement element) {
+            return Collections.singletonList(myUnusedToolWrapper);
           }
 
           @Override
@@ -79,7 +73,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     myUnusedToolWrapper = profile.getInspectionTool("unused", myProject);
     myDataFlowToolWrapper = profile.getInspectionTool("EqualsWithItself", myProject);
 
-    for (InspectionToolWrapper tool : ContainerUtil.ar(myUnusedToolWrapper, myDataFlowToolWrapper)) {
+    for (InspectionToolWrapper<?, ?> tool : ContainerUtil.ar(myUnusedToolWrapper, myDataFlowToolWrapper)) {
       tool.initialize(myView.getGlobalInspectionContext());
     }
   }
@@ -282,9 +276,8 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     return "inspection/offline";
   }
 
-  @NotNull
   @Override
-  protected String getTestDirectoryName() {
+  protected @NotNull String getTestDirectoryName() {
     return "project";
   }
 }

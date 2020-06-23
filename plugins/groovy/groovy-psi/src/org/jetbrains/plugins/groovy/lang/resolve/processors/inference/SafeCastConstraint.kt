@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.DiamondResolveResult
 
 class SafeCastConstraint(private val leftType: PsiType, private val expression: GrSafeCastExpression) : GrConstraintFormula() {
 
-  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean {
     val result = (expression.castTypeElement as? GrClassTypeElement)?.referenceElement?.advancedResolve()
     if (result is DiamondResolveResult) {
       val clazz = result.element

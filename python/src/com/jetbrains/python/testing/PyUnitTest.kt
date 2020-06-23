@@ -24,6 +24,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
@@ -35,7 +36,11 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 class PyUnitTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
     PyTestSharedForm.create(configuration,
-                            PyTestSharedForm.CustomOption(PyUnitTestConfiguration::pattern.name, PyRunTargetVariant.PATH)
+                            PyTestSharedForm.CustomOption(
+                              PyUnitTestConfiguration::pattern.name,
+                              PyBundle.message("python.testing.nose.custom.options.additional.arguments"),
+                              PyRunTargetVariant.PATH
+                            )
     ))
 
 class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, environment: ExecutionEnvironment) :
@@ -92,7 +97,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
   override fun checkConfiguration() {
     super.checkConfiguration()
     if (target.targetType == PyRunTargetVariant.PATH && target.target.endsWith(".py") && !pattern.isNullOrEmpty()) {
-      throw RuntimeConfigurationWarning("Pattern can only be used to match files in folder. Can't use pattern for file.")
+      throw RuntimeConfigurationWarning(PyBundle.message("python.testing.pattern.can.only.be.used"))
     }
   }
 

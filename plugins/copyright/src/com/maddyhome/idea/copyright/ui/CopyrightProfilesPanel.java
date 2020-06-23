@@ -139,7 +139,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
       final String profileName = ((CopyrightConfigurable)node.getConfigurable()).getEditableObject().getName();
       if (profiles.contains(profileName)) {
         selectNodeInTree(profileName);
-        throw new ConfigurationException("Duplicate copyright profile name: \'" + profileName + "\'");
+        throw new ConfigurationException("Duplicate copyright profile name: '" + profileName + "'");
       }
       profiles.add(profileName);
     }

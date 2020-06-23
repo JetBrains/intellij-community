@@ -465,7 +465,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         try {
           int i = Integer.parseInt(line);
           if (flag) {
-            LOG.warn("Unexpected strings in output:\n" + sb.toString());
+            LOG.warn("Unexpected strings in output:\n" + sb);
           }
           return i;
         }
@@ -737,7 +737,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
           @Override
           public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
-            ((EditorWriteActionHandler)mySplitLineAction.getHandler()).executeWriteAction(editor, caret, dataContext);
+            mySplitLineAction.getHandler().execute(editor, caret, dataContext);
             editor.getCaretModel().getCurrentCaret().moveCaretRelatively(0, 1, false, true);
           }
         });

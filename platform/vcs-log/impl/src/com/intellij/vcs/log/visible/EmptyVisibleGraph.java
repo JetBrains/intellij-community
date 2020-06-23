@@ -111,6 +111,11 @@ public class EmptyVisibleGraph implements VisibleGraph<Integer> {
       public boolean doJump() {
         return false;
       }
+
+      @Override
+      public boolean isRepaintRequired() {
+        return false;
+      }
     }
   }
 

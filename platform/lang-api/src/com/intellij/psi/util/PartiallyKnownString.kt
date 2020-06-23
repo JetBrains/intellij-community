@@ -33,6 +33,17 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
       return stringBuffer.toString()
     }
 
+  val concatenationOfKnown: String
+    get() {
+      (segments.singleOrNull() as? StringEntry.Known)?.let { return it.value }
+
+      val stringBuffer = StringBuffer()
+      for (segment in segments) {
+        if (segment is StringEntry.Known) stringBuffer.append(segment.value)
+      }
+      return stringBuffer.toString()
+    }
+
   override fun toString(): String = segments.joinToString { segment ->
     when (segment) {
       is StringEntry.Known -> segment.value
@@ -44,6 +55,11 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
   constructor(string: String, sourcePsi: PsiElement?, textRange: TextRange) : this(
     StringEntry.Known(string, sourcePsi, textRange))
+
+  constructor(string: String) : this(string, null, TextRange.EMPTY_RANGE)
+
+  constructor(host: PsiLanguageInjectionHost) : this(
+    StringEntry.Known(ElementManipulators.getValueText(host), host, ElementManipulators.getValueTextRange(host)))
 
   fun findIndexOfInKnown(pattern: String): Int {
     var accumulated = 0

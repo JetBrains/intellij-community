@@ -3,6 +3,7 @@
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsTestUtil.assertEqualCollections
@@ -13,8 +14,6 @@ import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.File
 import java.util.Collections.emptyList
-
-private const val DOT_IDEA = PathMacroUtil.DIRECTORY_STORE_NAME
 
 class VcsRootDetectorTest : VcsRootBaseTest() {
 
@@ -33,8 +32,8 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
   }
 
   fun `test 3 roots under project`() {
-    val vcsRoots = createVcsRoots(listOf(DOT_IDEA, "src", "community"))
-    expect(vcsRoots)
+    val vcsRoots = createVcsRoots(listOf(PathMacroUtil.DIRECTORY_STORE_NAME, "src", "community", "test"))
+    expect(vcsRoots.subList(1, 4))
   }
 
   fun `test vcs root above project`() {
@@ -109,20 +108,62 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
   fun `test dont scan deeper than2LevelsBelowAContentRoot`() {
     Registry.get("vcs.root.detector.folder.depth").setValue(2, testRootDisposable)
 
-    val roots = createVcsRoots("community", "content_root/lev1", "content_root2/lev1/lev2/lev3")
+    val roots = createVcsRoots("community", "content_root/lev1", "content_root2/lev1/lev2/lev3", registerContentRoot = false)
+    PsiTestUtil.addContentRoot(rootModule, projectRoot.findChild("community")!!)
     PsiTestUtil.addContentRoot(rootModule, projectRoot.findChild("content_root")!!)
+    PsiTestUtil.addContentRoot(rootModule, projectRoot.findChild("content_root2")!!)
 
     expect(roots.subList(0, 2))
   }
 
-  fun `test dont scan excluded dirs`() {
-    val roots = createVcsRoots("community", "excluded/lev1")
+  fun `test dont scan excluded dirs 1`() {
+    val roots = createVcsRoots("community", "excluded/lev1", registerContentRoot = false)
+    PsiTestUtil.addContentRoot(rootModule, projectRoot)
+    expect(roots)
+  }
 
-    val excludedFolder = projectRoot.findChild("excluded")
-    assertNotNull(excludedFolder)
-    markAsExcluded(excludedFolder!!)
+  fun `test dont scan excluded dirs 2`() {
+    val roots = createVcsRoots("community", "excluded/lev1", registerContentRoot = false)
+
+    PsiTestUtil.addContentRoot(rootModule, projectRoot)
+    val excludedFolder = projectRoot.findChild("excluded")!!
+    ModuleRootModificationUtil.updateExcludedFolders(rootModule, projectRoot,
+                                                     emptyList(), listOf(excludedFolder.url))
 
     expect(roots[0])
+  }
+
+  fun `test dont scan excluded dirs 3`() {
+    val roots = createVcsRoots("community", "excluded/lev1")
+
+    PsiTestUtil.addContentRoot(rootModule, projectRoot)
+    val excludedFolder = projectRoot.findChild("excluded")!!
+    ModuleRootModificationUtil.updateExcludedFolders(rootModule, projectRoot,
+                                                     emptyList(), listOf(excludedFolder.url))
+
+    expect(roots)
+  }
+
+  fun `test scan inner content roots 1`() {
+    val roots = createVcsRoots("excluded/lev1", "excluded/lev2")
+    expect(roots)
+  }
+
+  fun `test scan inner content roots 2`() {
+    val roots = createVcsRoots("excluded/lev1", "excluded/lev2")
+    PsiTestUtil.addContentRoot(rootModule, projectRoot)
+    expect(roots)
+  }
+
+  fun `test scan inner content roots 3`() {
+    val roots = createVcsRoots("excluded/lev1", "excluded/lev2", "excluded/lev2/innter/root")
+    expect(roots)
+  }
+
+  fun `test scan inner content roots 4`() {
+    val roots = createVcsRoots("excluded/lev1", "excluded/lev2", "excluded/lev2/innter/root", registerContentRoot = false)
+    PsiTestUtil.addContentRoot(rootModule, projectRoot)
+    expect(roots)
   }
 
   fun `test dont scan inside vendor folder`() {
@@ -132,15 +173,16 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     expect(projectRoot)
   }
 
-  private fun createVcsRoots(vararg relativePaths: String) = createVcsRoots(listOf(*relativePaths))
+  private fun createVcsRoots(vararg relativePaths: String, registerContentRoot: Boolean = true) =
+    createVcsRoots(listOf(*relativePaths), registerContentRoot)
 
-  private fun createVcsRoots(relativePaths: Collection<String>): List<VirtualFile> {
+  private fun createVcsRoots(relativePaths: Collection<String>, registerContentRoot: Boolean = true): List<VirtualFile> {
     return relativePaths.map {
       val file = File(projectPath, it)
       assertTrue(file.mkdirs())
       file.initRepository()
       val vf = file.toVirtualFile()
-      PsiTestUtil.addContentRoot(rootModule, vf)
+      if (registerContentRoot) PsiTestUtil.addContentRoot(rootModule, vf)
       vf
     }
   }
@@ -167,7 +209,4 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     return this
   }
 
-  private fun markAsExcluded(dir: VirtualFile) {
-    ModuleRootModificationUtil.updateExcludedFolders(rootModule, dir, emptyList(), listOf(dir.url))
-  }
 }

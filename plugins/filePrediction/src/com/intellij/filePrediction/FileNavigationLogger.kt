@@ -1,46 +1,48 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction
 
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ThreeState
+import kotlin.math.round
 
 internal object FileNavigationLogger {
   private const val GROUP_ID = "file.prediction"
 
-  fun logEvent(project: Project, newFile: VirtualFile, prevFile: VirtualFile?, event: String, refsComputation: Long, isInRef: ThreeState) {
-    val data = FileTypeUsagesCollector.newFeatureUsageData(newFile.fileType).
-      addData("refs_computation", refsComputation).
-      addNewFileInfo(newFile, isInRef).
-      addPrevFileInfo(prevFile).
-      addFileFeatures(project, newFile, prevFile)
+  fun logEvent(project: Project,
+               event: String,
+               sessionId: Int,
+               features: FileFeaturesComputationResult,
+               filePath: String,
+               prevFilePath: String?,
+               totalDuration: Long,
+               refsComputation: Long,
+               predictionDuration: Long? = null,
+               probability: Double? = null) {
+    val data = FeatureUsageData()
+      .addData("session_id", sessionId)
+      .addAnonymizedPath(filePath)
+      .addAnonymizedValue("prev_file_path", prevFilePath)
+      .addData("total_ms", totalDuration)
+      .addData("refs_ms", refsComputation)
+      .addData("features_ms", features.duration)
 
+    if (predictionDuration != null) {
+      data.addData("predict_ms", predictionDuration)
+    }
+
+    if (probability != null) {
+      data.addData("probability", roundProbability(probability))
+    }
+
+    for (feature in features.value) {
+      feature.value.addToEventData(feature.key, data)
+    }
     FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, event, data)
   }
 
-  private fun FeatureUsageData.addNewFileInfo(newFile: VirtualFile, isInRef: ThreeState): FeatureUsageData {
-    if (isInRef != ThreeState.UNSURE) {
-      addData("in_ref", isInRef == ThreeState.YES)
-    }
-    return addAnonymizedPath(newFile.path)
-  }
-
-  private fun FeatureUsageData.addPrevFileInfo(prevFile: VirtualFile?): FeatureUsageData {
-    if (prevFile != null) {
-      return addData("prev_file_type", prevFile.fileType.name).addAnonymizedValue("prev_file_path", prevFile.path)
-    }
-    return this
-  }
-
-  private fun FeatureUsageData.addFileFeatures(project: Project, newFile: VirtualFile, prevFile: VirtualFile?): FeatureUsageData {
-    val start = System.currentTimeMillis()
-    val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, newFile, prevFile)
-    for (feature in features) {
-      feature.value.addToEventData(feature.key, this)
-    }
-    this.addData("features_computation", System.currentTimeMillis() - start)
-    return this
+  private fun roundProbability(value: Double): Double {
+    if (!value.isFinite()) return -1.0
+    return round(value * 100000) / 100000
   }
 }

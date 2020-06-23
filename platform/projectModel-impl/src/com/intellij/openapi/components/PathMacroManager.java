@@ -28,7 +28,9 @@ public class PathMacroManager implements PathMacroSubstitutor {
   }
 
   private static class Holder {
-    private static final CompositePathMacroFilter FILTER = new CompositePathMacroFilter(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getExtensionList());
+    private static @NotNull CompositePathMacroFilter createFilter() {
+      return new CompositePathMacroFilter(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getExtensionList());
+    }
   }
 
   private PathMacrosImpl myPathMacros;
@@ -42,7 +44,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
 
   @NotNull
   public PathMacroFilter getMacroFilter() {
-    return Holder.FILTER;
+    return Holder.createFilter();
   }
 
   protected static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String macroName, @SystemIndependent @Nullable String path) {
@@ -135,7 +137,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
   }
 
   public static void collapsePaths(@NotNull Element element, boolean recursively, @NotNull ReplacePathToMacroMap map) {
-    map.substitute(element, SystemInfo.isFileSystemCaseSensitive, recursively, Holder.FILTER);
+    map.substitute(element, SystemInfo.isFileSystemCaseSensitive, recursively, Holder.createFilter());
   }
 
   @NotNull

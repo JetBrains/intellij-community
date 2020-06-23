@@ -108,12 +108,12 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
             }
 
             @Override
-            public List<ParameterInfoImpl> getParameters() {
+            public @NotNull List<ParameterInfoImpl> getParameters() {
               return Arrays.asList((ParameterInfoImpl[])currentInfo.getNewParameters());
             }
 
             @Override
-            public String getVisibility() {
+            public @NotNull String getVisibility() {
               return currentInfo.getNewVisibility();
             }
 

@@ -38,7 +38,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   public JavaMethodsConflictResolver(@NotNull PsiElement argumentsList,
                                      PsiType[] actualParameterTypes,
-                                     @NotNull LanguageLevel languageLevel, @NotNull PsiFile containingFile) {
+                                     @NotNull LanguageLevel languageLevel,
+                                     @NotNull PsiFile containingFile) {
     myArgumentsList = argumentsList;
     myActualParameterTypes = actualParameterTypes;
     myLanguageLevel = languageLevel;

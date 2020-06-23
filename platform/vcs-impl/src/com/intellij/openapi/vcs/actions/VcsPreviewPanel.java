@@ -134,7 +134,7 @@ class VcsPreviewPanel implements PreviewPanel {
     RangeHighlighter highlighter = LineStatusMarkerRenderer.createTooltipRangeHighlighter(range, myEditor.getMarkupModel());
     highlighter.setLineMarkerRenderer(new ActiveGutterRenderer() {
       @Override
-      public void paint(Editor editor, Graphics g, Rectangle r) {
+      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
         LineStatusMarkerRenderer.paintRange(g, myEditor, range, 0, isIgnored);
       }
 

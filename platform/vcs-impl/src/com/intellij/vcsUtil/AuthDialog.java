@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.AuthenticationPanel;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,12 @@ public class AuthDialog extends DialogWrapper {
    * On the other hand, if password saving is disabled, the checkbox is not shown.
    * In other cases, {@code rememberByDefault} is used.
    */
-  public AuthDialog(@NotNull Project project, @NotNull String title, @Nullable String description, @Nullable String login, @Nullable String password, boolean rememberByDefault) {
+  public AuthDialog(@NotNull Project project,
+                    @NotNull @NlsContexts.DialogTitle String title,
+                    @Nullable String description,
+                    @Nullable String login,
+                    @Nullable String password,
+                    boolean rememberByDefault) {
     super(project, false);
     setTitle(title);
     Boolean rememberPassword = decideOnShowRememberPasswordOption(password, rememberByDefault);

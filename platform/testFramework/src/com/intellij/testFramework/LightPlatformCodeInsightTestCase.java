@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -19,7 +19,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -29,8 +28,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -109,6 +106,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @NotNull
+  protected String getAnswerFilePath() {
+    return getTestDataPath() + myFileSuffix + ".txt";
   }
 
   private static void checkCaseSensitiveFS(@NotNull String fullOrRelativePath, @NotNull File ioFile) throws IOException {
@@ -207,9 +209,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @NotNull
   private Document setupFileEditorAndDocument(@NotNull String relativePath, @NotNull String fileText) throws IOException {
     EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
-    if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) {
-      EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, StandardCharsets.UTF_8);
-    }
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     deleteVFile();
 
@@ -471,8 +470,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       executeAction(IdeActions.ACTION_EDITOR_ENTER, editor,project);
     }
     else {
-      EditorActionManager actionManager = EditorActionManager.getInstance();
-      final DataContext dataContext = DataManager.getInstance().getDataContext();
+      DataContext dataContext = DataManager.getInstance().getDataContext();
       TypedAction action = TypedAction.getInstance();
       action.actionPerformed(editor, c, dataContext);
     }

@@ -39,8 +39,8 @@ public interface Validator extends FileProcessingCompiler {
    * Returns unique ID which can be used in project configuration files.
    */
   default @NonNls String getId() {
-    DeprecatedMethodException.reportDefaultImplementation("getId", "The default implementation delegates to 'getDescription' which may be localized but return value of this method must not depend on current localization.",
-                                                          getClass());
+    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getId",
+                                                          "The default implementation delegates to 'getDescription' which may be localized but return value of this method must not depend on current localization.");
     return getDescription();
   }
 }

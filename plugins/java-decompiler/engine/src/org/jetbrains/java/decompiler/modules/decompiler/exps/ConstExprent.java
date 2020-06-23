@@ -28,7 +28,7 @@ public class ConstExprent extends Exprent {
     CHAR_ESCAPES.put(0xC, "\\f");   /* \u000c: form feed FF */
     CHAR_ESCAPES.put(0xD, "\\r");   /* \u000d: carriage return CR */
     //CHAR_ESCAPES.put(0x22, "\\\""); /* \u0022: double quote " */
-    CHAR_ESCAPES.put(0x27, "\\\'"); /* \u0027: single quote ' */
+    CHAR_ESCAPES.put(0x27, "\\'"); /* \u0027: single quote ' */
     CHAR_ESCAPES.put(0x5C, "\\\\"); /* \u005c: backslash \ */
   }
 

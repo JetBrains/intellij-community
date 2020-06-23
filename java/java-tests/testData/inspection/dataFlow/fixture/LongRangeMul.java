@@ -19,7 +19,7 @@ public class LongRangeMul {
   void additionAsMultiplication(int x, int y) {
     if (x == y) {
       int z = x + y;
-      if (<warning descr="Condition 'z % 2 == 1' is always 'false'">z % 2 == 1</warning>) {
+      if (<warning descr="Condition 'z % 2 == 1' is always 'false'"><warning descr="Result of 'z % 2' is always '0'">z % 2</warning> == 1</warning>) {
       }
     }
     if (x + y == 1 && <warning descr="Condition 'x != y' is always 'true' when reached">x != y</warning>) {}

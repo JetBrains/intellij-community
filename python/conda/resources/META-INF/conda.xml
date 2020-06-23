@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="Pythonid">
-    <pythonSdkTypeComparator implementation="com.jetbrains.python.sdk.PyPreferringCondaSdkTypeComparator"/>
+    <condaSdkCustomizer implementation="com.jetbrains.python.sdk.conda.PyPreferringCondaSdkCustomizer" order="first"/>
   </extensions>
 
   <actions>

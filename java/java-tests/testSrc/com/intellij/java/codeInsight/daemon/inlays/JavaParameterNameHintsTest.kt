@@ -20,7 +20,9 @@ import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Inlay
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
@@ -1150,6 +1152,29 @@ public class Test {
       new A(true, false);
     }
 }""")
+  }
+
+  fun `test undo after typing space`() {
+    check("""
+class C {
+  void m(int a, int b) {}
+  void m2() { m(<hint text="a:"/>1, <hint text="b:"/>2); }
+}
+""")
+    EditorTestUtil.testUndoInEditor(myFixture.editor) {
+      myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf(");"))
+      EditorTestUtil.executeAction(myFixture.editor, IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT)
+      myFixture.type(' ')
+      myFixture.doHighlighting()
+      EditorTestUtil.executeAction(myFixture.editor, IdeActions.ACTION_UNDO)
+      myFixture.doHighlighting()
+      myFixture.checkResultWithInlays("""
+class C {
+  void m(int a, int b) {}
+  void m2() { m(<hint text="a:"/>1, <hint text="b:"/><caret>2); }
+}
+""")
+    }
   }
 
   fun getHints(): List<String> {

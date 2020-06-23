@@ -5,7 +5,9 @@ import com.intellij.ide.lightEdit.actions.LightEditExitAction;
 import com.intellij.ide.lightEdit.actions.LightEditNewFileAction;
 import com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction;
 import com.intellij.ide.lightEdit.actions.LightEditSaveAsAction;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +17,7 @@ public final class LightEditMenuBar extends IdeMenuBar {
   @Override
   public @NotNull ActionGroup getMainMenuActionGroup() {
     return new DefaultActionGroup(
-      createActionGroup("&File",
+      createActionGroup(ActionsBundle.message("group.FileMenu.text"),
                         new LightEditOpenFileInProjectAction(),
                         Separator.create(),
                         new LightEditNewFileAction(),
@@ -28,7 +30,7 @@ public final class LightEditMenuBar extends IdeMenuBar {
                         Separator.create(),
                         new LightEditExitAction()
       ),
-      createActionGroup("&Edit",
+      createActionGroup(ActionsBundle.message("group.EditMenu.text"),
                         standardAction(IdeActions.ACTION_UNDO),
                         standardAction(IdeActions.ACTION_REDO),
                         Separator.create(),
@@ -41,11 +43,11 @@ public final class LightEditMenuBar extends IdeMenuBar {
                         standardAction("EditorUnSelectWord"),
                         standardAction(IdeActions.ACTION_SELECT_ALL)
       ),
-      createActionGroup("&View",
+      createActionGroup(ActionsBundle.message("group.ViewMenu.text"),
                         standardAction("EditorToggleShowWhitespaces"),
                         standardAction("EditorToggleShowLineNumbers")
       ),
-      createActionGroup("&Help",
+      createActionGroup(ActionsBundle.message("group.HelpMenu.text"),
                         standardAction("HelpTopics"),
                         standardAction("About"))
     );

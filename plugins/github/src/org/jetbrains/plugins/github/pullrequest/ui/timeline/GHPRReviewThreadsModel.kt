@@ -22,12 +22,7 @@ class GHPRReviewThreadsModel
       remove(model)
     }
     for (thread in threadsById.values) {
-      val model = GHPRReviewThreadModelImpl(thread).also {
-        it.addDeletionListener {
-          remove(it)
-        }
-      }
-      add(model)
+      add(GHPRReviewThreadModelImpl(thread))
     }
   }
 }

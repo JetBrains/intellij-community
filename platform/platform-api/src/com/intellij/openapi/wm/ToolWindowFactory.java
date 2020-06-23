@@ -36,7 +36,6 @@ public interface ToolWindowFactory {
 
   /**
    * @deprecated Use {@link ToolWindowEP#isDoNotActivateOnStart}
-   * @return
    */
   @Deprecated
   default boolean isDoNotActivateOnStart() {

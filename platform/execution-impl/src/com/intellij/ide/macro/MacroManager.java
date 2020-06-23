@@ -116,6 +116,9 @@ public final class MacroManager {
       return dataContext;
     }
     FileEditorManager editorManager = FileEditorManager.getInstance(project);
+    if (editorManager == null) {
+      return dataContext;
+    }
     VirtualFile[] files = editorManager.getSelectedFiles();
     if (files.length == 0) {
       return dataContext;

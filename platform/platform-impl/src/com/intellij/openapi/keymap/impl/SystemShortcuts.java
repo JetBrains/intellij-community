@@ -266,17 +266,11 @@ public final class SystemShortcuts {
     final String actText = act == null ? actionId : act.getTemplateText(); // TODO: fix action ids from services domain
     final String message;
     if (hasOtherConflicts) {
-      message = actText +
-                " and " +
-                (unmutedConflicts - 1) +
-                " more shortcut conflict with macOS shortcuts. Modify these shortcuts or change macOS system settings.";
+      message = IdeBundle.message("notification.content.more.shortcut.conflict", actText, unmutedConflicts - 1);
     }
     else {
-      message = "The " +
-                actText +
-                " shortcut conflicts with macOS shortcut" +
-                (macOsShortcutAction == null ? "" : " '" + macOsShortcutAction + "'") +
-                ". Modify this shortcut or change macOS system settings.";
+      message = IdeBundle.message("notification.content.shortcut.conflicts.with.macos.shortcut.modify", actText,
+                                  macOsShortcutAction == null ? "" : " '" + macOsShortcutAction + "'");
     }
 
     final Notification notification =
@@ -310,7 +304,7 @@ public final class SystemShortcuts {
       notification.addAction(configureShortcut);
     }
 
-    final AnAction muteAction = DumbAwareAction.create("Don't show again", e -> {
+    final AnAction muteAction = DumbAwareAction.create(IdeBundle.message("action.dont.show.again.text"), e -> {
       myMutedConflicts.addMutedAction(actionId);
       notification.expire();
     });

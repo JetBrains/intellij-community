@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 public class CmdRevertClient extends BaseSvnClient implements RevertClient {
 
   private static final String STATUS = "\\s*(.+?)\\s*";
-  private static final String PATH = "\\s*\'(.*?)\'\\s*";
+  private static final String PATH = "\\s*'(.*?)'\\s*";
   private static final String OPTIONAL_COMMENT = "(.*)";
   private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + PATH + OPTIONAL_COMMENT);
 

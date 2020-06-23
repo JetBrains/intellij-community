@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
@@ -16,7 +14,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
   private static final Logger LOG = Logger.getInstance(GlobalInspectionToolWrapper.class);
 
   public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool globalInspectionTool) {
-    super(globalInspectionTool);
+    super(globalInspectionTool, null);
   }
 
   public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool tool, @NotNull InspectionEP ep) {
@@ -24,7 +22,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
   }
 
   public GlobalInspectionToolWrapper(@NotNull InspectionEP ep) {
-    super(ep);
+    super(null, ep);
   }
 
   private GlobalInspectionToolWrapper(@NotNull GlobalInspectionToolWrapper other) {

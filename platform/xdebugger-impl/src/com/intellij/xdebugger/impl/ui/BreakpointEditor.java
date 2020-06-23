@@ -92,6 +92,8 @@ public class BreakpointEditor {
     doneAction.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.ESCAPE,
                                                                   CommonShortcuts.ENTER,
                                                                   CommonShortcuts.CTRL_ENTER), myMainPanel);
+    myMainPanel.setFocusCycleRoot(true);
+    myMainPanel.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
   }
 
   private void done() {

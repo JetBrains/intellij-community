@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.icons.AllIcons
@@ -26,13 +26,16 @@ import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
 
 open class GHOpenInBrowserActionGroup
-  : ActionGroup("Open on GitHub", "Open corresponding link in browser", AllIcons.Vcs.Vendors.Github), DumbAware {
+  : ActionGroup(GithubBundle.messagePointer("open.on.github.action"),
+                GithubBundle.messagePointer("open.on.github.action.description"),
+                AllIcons.Vcs.Vendors.Github), DumbAware {
 
   override fun update(e: AnActionEvent) {
     val repositories = getData(e.dataContext)?.first
@@ -70,7 +73,7 @@ open class GHOpenInBrowserActionGroup
 
   private fun getDataFromPullRequest(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
     val pullRequest = dataContext.getData(GHPRActionKeys.SELECTED_PULL_REQUEST) ?: return null
-    val context = dataContext.getData(GHPRActionKeys.ACTION_DATA_CONTEXT) ?: return null
+    val context = dataContext.getData(GHPRActionKeys.DATA_CONTEXT) ?: return null
 
     return setOf(context.repositoryCoordinates) to Data.URL(project, pullRequest.url)
   }
@@ -131,10 +134,8 @@ open class GHOpenInBrowserActionGroup
   }
 
   private companion object {
-    private const val CANNOT_OPEN_IN_BROWSER = "Can't open in browser"
-
     class GithubOpenInBrowserAction(private val repoPath: GHRepositoryCoordinates, val data: Data)
-      : DumbAwareAction(repoPath.toString().replace('_', ' ')) {
+      : DumbAwareAction({ repoPath.toString().replace('_', ' ') }) {
 
       override fun actionPerformed(e: AnActionEvent) {
         when (data) {
@@ -155,14 +156,16 @@ open class GHOpenInBrowserActionGroup
                                     editor: Editor?) {
         val relativePath = VfsUtilCore.getRelativePath(virtualFile, repositoryRoot)
         if (relativePath == null) {
-          GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "File is not under repository root",
+          GithubNotifications.showError(project, GithubBundle.message("cannot.open.in.browser"),
+                                        GithubBundle.message("open.on.github.file.is.not.under.repository"),
                                         "Root: " + repositoryRoot.presentableUrl + ", file: " + virtualFile.presentableUrl)
           return
         }
 
         val hash = getCurrentFileRevisionHash(project, virtualFile)
         if (hash == null) {
-          GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't get last revision.")
+          GithubNotifications.showError(project, GithubBundle.message("cannot.open.in.browser"),
+                                        GithubBundle.message("cannot.get.last.revision"))
           return
         }
 
@@ -172,7 +175,7 @@ open class GHOpenInBrowserActionGroup
 
       private fun getCurrentFileRevisionHash(project: Project, file: VirtualFile): String? {
         val ref = Ref<GitRevisionNumber>()
-        object : Task.Modal(project, "Getting Last Revision", true) {
+        object : Task.Modal(project, GithubBundle.message("open.on.github.getting.last.revision"), true) {
           override fun run(indicator: ProgressIndicator) {
             ref.set(GitHistoryUtils.getCurrentRevision(project, VcsUtil.getFilePath(file), "HEAD") as GitRevisionNumber?)
           }

@@ -121,7 +121,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
       JPanel fieldPanel = new ToolbarDecorator() {
         @Override
-        protected JComponent getComponent() {
+        protected @NotNull JComponent getComponent() {
           return field;
         }
 

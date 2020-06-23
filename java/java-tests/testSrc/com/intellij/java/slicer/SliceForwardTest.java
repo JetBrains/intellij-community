@@ -33,7 +33,7 @@ public class SliceForwardTest extends SliceTestCase {
     configureByFile("/codeInsight/slice/forward/"+getTestName(false)+".java");
     Map<String, RangeMarker> sliceUsageName2Offset = SliceTestUtil.extractSliceOffsetsFromDocument(getEditor().getDocument());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    PsiElement element = new SliceForwardHandler().getExpressionAtCaret(getEditor(), getFile());
+    PsiElement element = SliceHandler.create(false).getExpressionAtCaret(getEditor(), getFile());
     assertNotNull(element);
     SliceTestUtil.Node tree = SliceTestUtil.buildTree(element, sliceUsageName2Offset);
     Collection<HighlightInfo> errors = highlightErrors();

@@ -84,7 +84,6 @@ class Completer:
         if self.use_main_ns:
             #In pydev this option should never be used
             raise RuntimeError('Namespace must be provided!')
-            self.namespace = __main__.__dict__ #@UndefinedVariable
 
         if "." in text:
             return self.attr_matches(text)

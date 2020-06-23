@@ -137,7 +137,7 @@ public class VfsData {
     return new VirtualFileImpl(id, segment, parent);
   }
 
-  private static InvalidVirtualFileAccessException reportDeadFileAccess(VirtualFileSystemEntry file) {
+  private static @NotNull InvalidVirtualFileAccessException reportDeadFileAccess(@NotNull VirtualFileSystemEntry file) {
     return new InvalidVirtualFileAccessException("Accessing dead virtual file: " + file.getUrl());
   }
 
@@ -159,8 +159,8 @@ public class VfsData {
     return segment != null && segment.myObjectArray.get(getOffset(id)) != null;
   }
 
-  public static class FileAlreadyCreatedException extends Exception {
-    private FileAlreadyCreatedException(String message) {
+  public static class FileAlreadyCreatedException extends RuntimeException {
+    private FileAlreadyCreatedException(@NotNull String message) {
       super(message);
     }
   }
@@ -172,13 +172,7 @@ public class VfsData {
 
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
-      FSRecords.invalidateCaches();
-      int parent = FSRecords.getParent(id);
-      String msg = "File already created: " + nameId + ", data=" + existingData + "; parentId=" + parent;
-      if (parent > 0) {
-        msg += "; parent.name=" + FSRecords.getName(parent);
-        msg += "; parent.children=" + Arrays.toString(FSRecords.listAll(id));
-      }
+      String msg = FSRecords.diagnosticsForAlreadyCreatedFile(id, nameId, existingData);
       throw new FileAlreadyCreatedException(msg);
     }
     segment.myObjectArray.set(offset, data);
@@ -202,7 +196,7 @@ public class VfsData {
     return myHasChangedParents ? myChangedParents.get(id): null;
   }
 
-  void changeParent(int id, VirtualDirectoryImpl parent) {
+  void changeParent(int id, @NotNull VirtualDirectoryImpl parent) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myHasChangedParents = true;
     myChangedParents.put(id, parent);
@@ -242,7 +236,8 @@ public class VfsData {
       myObjectArray.set(getOffset(fileId), map);
     }
 
-    KeyFMap getUserMap(VirtualFileSystemEntry file, int id) {
+    @NotNull
+    KeyFMap getUserMap(@NotNull VirtualFileSystemEntry file, int id) {
       Object o = myObjectArray.get(getOffset(id));
       if (!(o instanceof KeyFMap)) {
         throw reportDeadFileAccess(file);
@@ -288,7 +283,6 @@ public class VfsData {
         }
       }
     }
-
   }
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
@@ -320,7 +314,7 @@ public class VfsData {
       return children;
     }
 
-    boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
+    boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
       return MY_USER_MAP_UPDATER.compareAndSet(this, oldMap, newMap);
     }
 
@@ -413,5 +407,4 @@ public class VfsData {
              '}';
     }
   }
-
 }

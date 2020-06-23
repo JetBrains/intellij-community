@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -190,7 +189,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
             List<FilePatch> patches = ApplyPatchSaveToFileExecutor.toOnePatchGroup(patchGroupsToApply, myBaseDir);
             new PatchApplier(requireNonNull(myProject), myBaseDir, patches, localList, null).execute(false, true);
             myThereAreCreations =
-              patches.stream().anyMatch(patch -> patch.isNewFile() || !Comparing.equal(patch.getAfterName(), patch.getBeforeName()));
+              patches.stream().anyMatch(patch -> patch.isNewFile() || !Objects.equals(patch.getAfterName(), patch.getBeforeName()));
           }
           catch (IOException e) {
             myException = new VcsException(e);
@@ -311,21 +310,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     }
     return AbstractVcsHelper.getInstance(myVcs.getProject()).selectFilePathsToProcess(
       new ArrayList<>(paths), TreeConflictRefreshablePanel.TITLE, "Select binary files to patch", TreeConflictRefreshablePanel.TITLE,
-      singleMessage, new VcsShowConfirmationOption() {
-        @Override
-        public Value getValue() {
-          return null;
-        }
-
-        @Override
-        public void setValue(Value value) {
-        }
-
-        @Override
-        public boolean isPersistent() {
-          return false;
-        }
-      });
+      singleMessage, VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);
   }
 
   @CalledInAwt

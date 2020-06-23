@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
@@ -169,7 +169,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   @TestOnly
   public Collection<VirtualFile> getRoots() {
     @SuppressWarnings("unchecked") List<VirtualFile> result = (List)ContainerUtil.newArrayList(myRoots.keys());
-    Collections.sort(result, Comparator.comparingInt(myRoots::get));
+    result.sort(Comparator.comparingInt(myRoots::get));
     return result;
   }
 

@@ -17,7 +17,7 @@ import java.util.List;
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
-public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intellij.ui.icons.RowIcon {
+public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intellij.ui.icons.RowIcon, IconWithToolTip {
   private final com.intellij.ui.icons.RowIcon.Alignment myAlignment;
 
   private int myWidth;
@@ -201,5 +201,10 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   @Override
   public String toString() {
     return "Row icon. myIcons=" + Arrays.asList(myIcons);
+  }
+
+  @Override
+  public String getToolTip(boolean composite) {
+    return LayeredIcon.combineIconTooltips(myIcons);
   }
 }

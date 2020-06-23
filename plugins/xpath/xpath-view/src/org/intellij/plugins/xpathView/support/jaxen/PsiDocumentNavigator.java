@@ -176,7 +176,8 @@ public class PsiDocumentNavigator extends DefaultNavigator {
 
         final XmlTag context = (XmlTag)element;
         final String namespaceUri = context.getNamespace();
-        if (!MyPsiUtil.isInDeclaredNamespace(context, namespaceUri, context.getNamespacePrefix())) {
+        if (context.getNamespacePrefix().isEmpty() ||
+            !MyPsiUtil.isInDeclaredNamespace(context, namespaceUri, context.getNamespacePrefix())) {
           return "";
         }
         return namespaceUri;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -54,14 +53,15 @@ import java.util.List;
 
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
-public class RecentLocationsAction extends DumbAwareAction implements LightEditCompatible {
+public final class RecentLocationsAction extends DumbAwareAction implements LightEditCompatible {
   public static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final int DEFAULT_WIDTH = JBUIScale.scale(700);
   private static final int DEFAULT_HEIGHT = JBUIScale.scale(530);
   private static final int MINIMUM_WIDTH = JBUIScale.scale(600);
   private static final int MINIMUM_HEIGHT = JBUIScale.scale(450);
-  static class Holder {
+
+  static final class Holder {
     private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
     public static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
                                                                   SHORTCUT_FOREGROUND_COLOR.getRed(),
@@ -122,18 +122,10 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
                         ? topPanel.getBackground()
                         : null;
 
-    Ref<Boolean> navigationRef = Ref.create(false);
     JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(mainPanel, list)
       .setProject(project)
       .setCancelOnClickOutside(true)
       .setRequestFocus(true)
-      .setCancelCallback(() -> {
-        if (speedSearch.isHoldingFilter() && !navigationRef.get()) {
-          speedSearch.reset();
-          return false;
-        }
-        return true;
-      })
       .setResizable(true)
       .setMovable(true)
       .setBorderColor(borderColor)
@@ -167,7 +159,7 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
           final int i = list.locationToIndex(event.getPoint());
           if (i != -1) {
             list.setSelectedIndex(i);
-            navigateToSelected(project, list, popup, navigationRef);
+            navigateToSelected(project, list, popup);
           }
         }
       }
@@ -181,7 +173,7 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
       }
     });
 
-    initSearchActions(project, model, listWithFilter, list, checkBox, popup, navigationRef);
+    initSearchActions(project, model, listWithFilter, list, checkBox, popup);
 
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
 
@@ -211,8 +203,8 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
     popup.pack(false, false);
   }
 
-  @NotNull
-  public static JBCheckBox createCheckbox(@NotNull ShortcutSet checkboxShortcutSet, boolean showChanged) {
+  private static @NotNull JBCheckBox createCheckbox(@NotNull ShortcutSet checkboxShortcutSet, boolean showChanged) {
+    //noinspection HardCodedStringLiteral
     String text = "<html>"
                   + IdeBundle.message("recent.locations.title.text")
                   + " <font color=\"" + Holder.SHORTCUT_HEX_COLOR + "\">"
@@ -258,16 +250,14 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
     listWithFilter.getSpeedSearch().reset();
   }
 
-  @NotNull
-  private static JPanel createMainPanel(@NotNull ListWithFilter listWithFilter, @NotNull JPanel topPanel) {
+  private static @NotNull JPanel createMainPanel(@NotNull ListWithFilter listWithFilter, @NotNull JPanel topPanel) {
     JPanel mainPanel = new JPanel(new BorderLayout());
     mainPanel.add(topPanel, BorderLayout.NORTH);
     mainPanel.add(listWithFilter, BorderLayout.CENTER);
     return mainPanel;
   }
 
-  @NotNull
-  private static JPanel createHeaderPanel(@NotNull JLabel title, @NotNull JComponent checkbox) {
+  private static @NotNull JPanel createHeaderPanel(@NotNull JLabel title, @NotNull JComponent checkbox) {
     JPanel topPanel = new CaptionPanel();
     topPanel.add(title, BorderLayout.WEST);
     topPanel.add(checkbox, BorderLayout.EAST);
@@ -284,8 +274,7 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
     return topPanel;
   }
 
-  @NotNull
-  private static JLabel createTitle(boolean showChanged) {
+  private static @NotNull JLabel createTitle(boolean showChanged) {
     JBLabel title = new JBLabel();
     title.setFont(title.getFont().deriveFont(Font.BOLD));
     updateTitleText(title, showChanged);
@@ -298,8 +287,7 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
                   : IdeBundle.message("recent.locations.popup.title"));
   }
 
-  @NotNull
-  private static Function<RecentLocationItem, String> getNamer(@NotNull RecentLocationsDataModel data, @NotNull JBCheckBox checkBox) {
+  private static @NotNull Function<RecentLocationItem, String> getNamer(@NotNull RecentLocationsDataModel data, @NotNull JBCheckBox checkBox) {
     return value -> {
       String breadcrumb = data.getBreadcrumbsMap(checkBox.isSelected()).get(value.getInfo());
       EditorEx editor = value.getEditor();
@@ -313,20 +301,19 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
                                         @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
                                         @NotNull JBList<RecentLocationItem> list,
                                         @NotNull JBCheckBox checkBox,
-                                        @NotNull JBPopup popup,
-                                        @NotNull Ref<? super Boolean> navigationRef) {
+                                        @NotNull JBPopup popup) {
     listWithFilter.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
         int clickCount = event.getClickCount();
         if (clickCount > 1 && clickCount % 2 == 0) {
           event.consume();
-          navigateToSelected(project, list, popup, navigationRef);
+          navigateToSelected(project, list, popup);
         }
       }
     });
 
-    DumbAwareAction.create(e -> navigateToSelected(project, list, popup, navigationRef))
+    DumbAwareAction.create(e -> navigateToSelected(project, list, popup))
       .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), listWithFilter, popup);
 
     DumbAwareAction.create(e -> removePlaces(project, listWithFilter, list, data, checkBox.isSelected()))
@@ -364,12 +351,10 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
 
   private static void navigateToSelected(@NotNull Project project,
                                          @NotNull JBList<RecentLocationItem> list,
-                                         @NotNull JBPopup popup,
-                                         @NotNull Ref<? super Boolean> navigationRef) {
+                                         @NotNull JBPopup popup) {
     ContainerUtil.reverse(list.getSelectedValuesList())
       .forEach(item -> IdeDocumentHistory.getInstance(project).gotoPlaceInfo(item.getInfo(), true));
 
-    navigationRef.set(true);
     popup.closeOk(null);
   }
 

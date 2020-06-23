@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.Disposable;
@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Author: dmitrylomov
@@ -41,7 +42,7 @@ class StubSerializationHelper {
   private final THashMap<String, Computable<ObjectStubSerializer>> myNameToLazySerializer = new THashMap<>();
 
   private final ConcurrentIntObjectMap<ObjectStubSerializer> myIdToSerializer = ContainerUtil.createConcurrentIntObjectMap();
-  private final Map<ObjectStubSerializer, Integer> mySerializerToId = ContainerUtil.newConcurrentMap();
+  private final Map<ObjectStubSerializer, Integer> mySerializerToId = new ConcurrentHashMap<>();
 
   private final boolean myUnmodifiable;
   private final RecentStringInterner myStringInterner;
@@ -156,7 +157,7 @@ class StubSerializationHelper {
     resultStream.write(out.getInternalBuffer(), 0, out.size());
   }
 
-  private int getClassId(@NotNull final ObjectStubSerializer<Stub, Stub> serializer) {
+  private int getClassId(final @NotNull ObjectStubSerializer<Stub, Stub> serializer) {
     Integer idValue = mySerializerToId.get(serializer);
     if (idValue == null) {
       String name = serializer.getExternalId();
@@ -370,8 +371,7 @@ class StubSerializationHelper {
     return serializer;
   }
 
-  @NotNull
-  private ObjectStubSerializer instantiateSerializer(int id, @Nullable Stub parentStub) throws SerializerNotFoundException {
+  private @NotNull ObjectStubSerializer instantiateSerializer(int id, @Nullable Stub parentStub) throws SerializerNotFoundException {
     String name = myIdToName.get(id);
     Computable<ObjectStubSerializer> lazy = name == null ? null : myNameToLazySerializer.get(name);
     ObjectStubSerializer serializer = lazy == null ? null : lazy.compute();

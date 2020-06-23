@@ -8,8 +8,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
@@ -36,10 +36,10 @@ public class GitStash extends GitRepositoryAction {
         try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
           GitCommandResult result = Git.getInstance().runCommand(d.handler());
           if (result.success()) {
-            VfsUtil.markDirtyAndRefresh(false, true, false, d.getGitRoot());
+            GitUtil.refreshVfsInRoot(d.getGitRoot());
           }
           else {
-            VcsNotifier.getInstance(project).notifyError("Stash Failed", result.getErrorOutputAsHtmlString());
+            VcsNotifier.getInstance(project).notifyError("Stash Failed", result.getErrorOutputAsHtmlString(), true);
           }
         }
       }

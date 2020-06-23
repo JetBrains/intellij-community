@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,8 +23,7 @@ public interface Binding {
   default void init(@NotNull Type originalType, @NotNull Serializer serializer) {
   }
 
-  @Nullable
-  static Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<? extends Element> nodes) {
+  static @Nullable Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<? extends Element> nodes) {
     if (binding instanceof MultiNodeBinding) {
       return ((MultiNodeBinding)binding).deserializeList(context, nodes);
     }
@@ -43,7 +42,7 @@ public interface Binding {
 
   Object deserializeUnsafe(Object context, @NotNull Element element);
 
-  static void addContent(@NotNull final Element targetElement, final Object node) {
+  static void addContent(final @NotNull Element targetElement, final Object node) {
     if (node instanceof Content) {
       Content content = (Content)node;
       targetElement.addContent(content);

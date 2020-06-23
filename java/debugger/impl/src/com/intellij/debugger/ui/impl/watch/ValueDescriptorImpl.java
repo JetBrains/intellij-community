@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -231,7 +231,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     throws EvaluateException {
     Method method = DebuggerUtils.findMethod(exceptionObj.referenceType(), "getStackTrace", "()[Ljava/lang/StackTraceElement;");
     if (method != null) {
-      return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
+      return evaluationContext.getDebugProcess().invokeInstanceMethod(
+        evaluationContext, exceptionObj, method, Collections.emptyList(), 0, true);
     }
     return null;
   }
@@ -292,12 +293,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myIsExpandable = (valueException == null || valueException.getExceptionFromTargetVM() != null) &&
                      getChildrenRenderer(debugProcess).isExpandable(getValue(), context, this);
 
-    try {
-      setValueIcon(renderer.calcValueIcon(this, context, labelListener));
-    }
-    catch (EvaluateException e) {
-      LOG.info(e);
-      setValueIcon(null);
+    if (!OnDemandRenderer.isOnDemandForced(debugProcess)) {
+      try {
+        setValueIcon(renderer.calcValueIcon(this, context, labelListener));
+      }
+      catch (EvaluateException e) {
+        LOG.info(e);
+        setValueIcon(null);
+      }
     }
 
     String label;

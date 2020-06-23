@@ -250,7 +250,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     if (getVariable() instanceof PsiPatternVariable) return null;
     if (myCantChangeFinalModifier && !(myCanBeVarType && getVariable() instanceof PsiLocalVariable)) return null;
     if (!myCantChangeFinalModifier) {
-      myCanBeFinalCb = new NonFocusableCheckBox("Declare final");
+      myCanBeFinalCb = new NonFocusableCheckBox(JavaRefactoringBundle.message("declare.final"));
       myCanBeFinalCb.setSelected(createFinals());
       myCanBeFinalCb.setMnemonic('f');
       final FinalListener finalListener = new FinalListener(myEditor);

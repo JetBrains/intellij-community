@@ -19,14 +19,14 @@ import org.jetbrains.annotations.ApiStatus
 // Code maybe located in a ProjectImpl, but it is not possible due to non-technical reasons to convert ProjectImpl into modern language.
 // Wrap into class as it is not possible to use internal modifier for top-level functions from Java (but we have to reduce scope).
 @ApiStatus.Internal
-internal class ProjectLoadHelper {
+class ProjectLoadHelper {
   companion object {
     @JvmStatic
     fun registerComponents(project: ProjectImpl) {
       var activity = createActivity(project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
       //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
       @Suppress("UNCHECKED_CAST")
-      project.registerComponents(PluginManagerCore.getLoadedPlugins() as List<IdeaPluginDescriptorImpl>, notifyListeners = false)
+      project.registerComponents(PluginManagerCore.getLoadedPlugins() as List<IdeaPluginDescriptorImpl>)
 
       activity = activity?.endAndStart("projectComponentRegistered")
       runHandler(ProjectServiceContainerCustomizer.getEp()) {

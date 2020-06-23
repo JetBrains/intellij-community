@@ -1,16 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.Tab;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public class RunnerLayout  {
   private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<>();
 
   protected Set<TabImpl> myTabs = new TreeSet<>(Comparator.comparingInt(TabImpl::getIndex));
-  private final Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<>();
+  private final Int2ObjectOpenHashMap<TabImpl.Default> myDefaultTabs = new Int2ObjectOpenHashMap<>();
 
   protected General myGeneral = new General();
   private final Map<String, Pair<String, LayoutAttractionPolicy>> myDefaultFocus = new HashMap<>();
@@ -222,7 +222,7 @@ public class RunnerLayout  {
   }
 
   public boolean isToFocus(final String id, @NotNull String condition) {
-    return Comparing.equal(id, getToFocus(condition));
+    return Objects.equals(id, getToFocus(condition));
   }
 
   public void setToFocus(final String id, @NotNull String condition) {

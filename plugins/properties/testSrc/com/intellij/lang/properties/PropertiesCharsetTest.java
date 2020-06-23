@@ -84,7 +84,7 @@ public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
 
   public void testCharsetOff() {
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, false);
-    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, Charset.forName("ISO-8859-1"));
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.ISO_8859_1);
 
     PlatformTestUtil.withEncoding("UTF-8", () -> {
       configureByText("\\u1234\\uxxxx\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y");

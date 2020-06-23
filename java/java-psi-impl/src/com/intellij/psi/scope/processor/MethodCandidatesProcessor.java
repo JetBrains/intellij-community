@@ -84,6 +84,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     return false;
   }
 
+  @NotNull
   protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
                                                     final boolean staticProblem, final boolean accessible, final boolean varargs) {
     return new VarargsAwareMethodCandidateInfo(method, substitutor, accessible, staticProblem, getArgumentList(), myCurrentFileContext,

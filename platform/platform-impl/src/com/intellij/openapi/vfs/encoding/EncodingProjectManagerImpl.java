@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -58,14 +57,14 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   private final EncodingManagerImpl myIdeEncodingManager;
   private boolean myNative2AsciiForPropertiesFiles;
   private Charset myDefaultCharsetForPropertiesFiles;
+  private @Nullable Charset myDefaultConsoleCharset;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
   private BOMForNewUTF8Files myBomForNewUtf8Files = BOMForNewUTF8Files.NEVER;
   private final Map<VirtualFilePointer, Charset> myMapping = ConcurrentCollectionFactory.createMap(
     new TObjectHashingStrategy<VirtualFilePointer>() {
       @Override
       public int computeHashCode(VirtualFilePointer pointer) {
-        // Hashcode is not stable, because pointer URL can change.
-        // Access keys with caution.
+        // TODO !! hashCode is unstable - VirtualFilePointer URL can change
         return FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
       }
 
@@ -123,6 +122,9 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     if (myDefaultCharsetForPropertiesFiles != null) {
       element.setAttribute("defaultCharsetForPropertiesFiles", myDefaultCharsetForPropertiesFiles.name());
     }
+    if (myDefaultConsoleCharset != null) {
+      element.setAttribute("defaultCharsetForConsole", myDefaultConsoleCharset.name());
+    }
     if (myBomForNewUtf8Files != BOMForNewUTF8Files.NEVER) {
       element.setAttribute("addBOMForNewFiles", myBomForNewUtf8Files.name);
     }
@@ -157,6 +159,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
     myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
     myDefaultCharsetForPropertiesFiles = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForPropertiesFiles"));
+    myDefaultConsoleCharset = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForConsole"));
     myBomForNewUtf8Files = BOMForNewUTF8Files.getByNameOrDefault(element.getAttributeValue("addBOMForNewFiles"));
 
     myModificationTracker.incModificationCount();
@@ -230,9 +233,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   private static void reload(@NotNull VirtualFile virtualFile, @NotNull Project project, @NotNull FileDocumentManagerImpl documentManager) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      try (AccessToken ignored = ProjectLocator.runWithPreferredProject(virtualFile, project)) {
+      ProjectLocator.computeWithPreferredProject(virtualFile, project, ()-> {
         documentManager.contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
-      }
+        return null;
+      });
     });
   }
 
@@ -483,6 +487,11 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       myDefaultCharsetForPropertiesFiles = charset;
       myIdeEncodingManager.firePropertyChange(null, PROP_PROPERTIES_FILES_ENCODING, old, charset, myProject);
     }
+  }
+
+  @Override
+  public @NotNull Charset getDefaultConsoleEncoding() {
+    return myIdeEncodingManager.getDefaultConsoleEncoding();
   }
 
   @Override

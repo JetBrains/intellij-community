@@ -7,6 +7,7 @@ import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ExportToTextFileToolbarAction;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -383,6 +384,19 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public ErrorTreeNodeDescriptor getSelectedNodeDescriptor() {
     List<ErrorTreeNodeDescriptor> descriptors = getSelectedNodeDescriptors();
     return descriptors.size() == 1 ? descriptors.get(0) : null;
+  }
+
+  @Nullable
+  public VirtualFile getSelectedFile() {
+    final ErrorTreeNodeDescriptor descriptor = getSelectedNodeDescriptor();
+    ErrorTreeElement element = descriptor != null? descriptor.getElement() : null;
+    if (element != null && !(element instanceof GroupingElement)) {
+      NodeDescriptor<?> parent = descriptor.getParentDescriptor();
+      if (parent instanceof ErrorTreeNodeDescriptor) {
+        element = ((ErrorTreeNodeDescriptor)parent).getElement();
+      }
+    }
+    return element instanceof GroupingElement? ((GroupingElement)element).getFile() : null;
   }
 
   private List<ErrorTreeNodeDescriptor> getSelectedNodeDescriptors() {

@@ -23,7 +23,6 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
-import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -80,7 +79,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     };
 
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
-    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, !VcsLogUiUtil.isDiffPreviewInEditor());
+    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, !VcsLogUiUtil.isDiffPreviewInEditor(), this);
 
     if (VcsLogUiUtil.isDiffPreviewInEditor()) {
       new FileHistoryEditorDiffPreview(logData.getProject(), myUiProperties, myFileHistoryPanel);
@@ -90,10 +89,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        ? ContainerUtil.newHashSet(MyCommitsHighlighter.Factory.ID,
                                                   CurrentBranchHighlighter.Factory.ID)
                        : Collections.singleton(MyCommitsHighlighter.Factory.ID);
-    for (VcsLogHighlighterFactory factory : ContainerUtil.filter(LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject),
-                                                                 f -> isHighlighterEnabled(f.getId()))) {
-      getTable().addHighlighter(factory.createHighlighter(logData, this));
-    }
+    VcsLogUiUtil.installHighlighters(this, f -> isHighlighterEnabled(f.getId()));
     if (myRevision != null) {
       getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, myRoot));
     }

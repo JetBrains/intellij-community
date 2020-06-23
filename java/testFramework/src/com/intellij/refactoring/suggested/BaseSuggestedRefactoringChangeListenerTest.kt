@@ -27,14 +27,16 @@ abstract class BaseSuggestedRefactoringChangeListenerTest : LightJavaCodeInsight
     append("'")
   }
 
+  private val disposable = Disposer.newDisposable()
+
   override fun setUp() {
     super.setUp()
-    changeListener = SuggestedRefactoringChangeListener(project, watcher)
-    changeListener.attach()
+
+    changeListener = SuggestedRefactoringChangeListener(project, watcher, testRootDisposable)
   }
 
   override fun tearDown() {
-    Disposer.dispose(changeListener)
+    Disposer.dispose(disposable)
     super.tearDown()
   }
 

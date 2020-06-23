@@ -18,7 +18,6 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
@@ -68,10 +67,6 @@ public class LookupItemUtil {
     }
     else if (object instanceof PresentableLookupValue) {
       s = ((PresentableLookupValue)object).getPresentation();
-    }
-
-    if (object instanceof LookupValueWithUIHint && ((LookupValueWithUIHint)object).isBold()) {
-      item.setBold();
     }
 
     if (s == null) {

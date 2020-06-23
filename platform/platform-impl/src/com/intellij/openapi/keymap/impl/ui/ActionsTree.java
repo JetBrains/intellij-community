@@ -15,7 +15,6 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
@@ -48,10 +47,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.util.ui.UIUtil.useSafely;
-import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
-
-public class ActionsTree {
+public final class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private static final Icon CLOSE_ICON = AllIcons.Nodes.Folder;
 
@@ -373,7 +369,7 @@ public class ActionsTree {
     Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-      if (Comparing.equal(getPath(node), path)) {
+      if (Objects.equals(getPath(node), path)) {
         return node;
       }
     }
@@ -577,7 +573,7 @@ public class ActionsTree {
           icon = link.getIcon();
           setIcon(getEvenIcon(link.getIcon()));
           Rectangle treeVisibleRect = tree.getVisibleRect();
-          int rowX = getNodeRowX(tree, row);
+          int rowX = TreeUtil.getNodeRowX(tree, row);
           setupLinkDimensions(treeVisibleRect, rowX);
         }
         else {
@@ -644,7 +640,7 @@ public class ActionsTree {
         super.doPaint(g);
       }
 
-      useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height),
+      UIUtil.useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height),
                        textGraphics -> super.doPaint(textGraphics));
       g.translate(myLinkOffset, 0);
       myLink.setHeight(getHeight());

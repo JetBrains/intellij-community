@@ -227,7 +227,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         navigate(true);
         return true;
       }

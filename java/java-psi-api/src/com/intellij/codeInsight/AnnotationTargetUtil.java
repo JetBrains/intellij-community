@@ -227,7 +227,7 @@ public class AnnotationTargetUtil {
 
   /**
    * @param modifierListOwner modifier list owner
-   * @param annotation annotation to add
+   * @param annotation the qualified name of the annotation to add
    * @return a target annotation owner to add the annotation (either modifier list or type element depending on the annotation target)
    * Returns null if {@code modifierListOwner.getModifierList()} is null.
    */

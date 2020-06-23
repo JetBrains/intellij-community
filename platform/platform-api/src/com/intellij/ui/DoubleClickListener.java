@@ -32,5 +32,5 @@ public abstract class DoubleClickListener extends ClickListener {
     return false;
   }
 
-  protected abstract boolean onDoubleClick(MouseEvent event);
+  protected abstract boolean onDoubleClick(@NotNull MouseEvent event);
 }

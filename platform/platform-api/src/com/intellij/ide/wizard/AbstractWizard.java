@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -55,13 +56,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   };
 
-  public AbstractWizard(final String title, final Component dialogParent) {
+  public AbstractWizard(@NlsContexts.DialogTitle String title, final Component dialogParent) {
     super(dialogParent, true);
     mySteps = new ArrayList<>();
     initWizard(title);
   }
 
-  public AbstractWizard(final String title, @Nullable final Project project) {
+  public AbstractWizard(@NlsContexts.DialogTitle String title, @Nullable final Project project) {
     super(project, true);
     mySteps = new ArrayList<>();
     initWizard(title);

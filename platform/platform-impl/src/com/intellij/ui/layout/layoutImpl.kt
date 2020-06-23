@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.migLayout.*
-import com.intellij.util.containers.MultiMap
 import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
@@ -33,9 +32,9 @@ interface LayoutBuilderImpl {
   val componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>
 
   // Validation applicants for custom validation events
-  val customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit>
+  val customValidationRequestors: Map<JComponent, List<(() -> Unit) -> Unit>>
 
-  val applyCallbacks: MultiMap<JComponent?, () -> Unit>
-  val resetCallbacks: MultiMap<JComponent?, () -> Unit>
-  val isModifiedCallbacks: MultiMap<JComponent?, () -> Boolean>
+  val applyCallbacks: Map<JComponent?, List<() -> Unit>>
+  val resetCallbacks: Map<JComponent?, List<() -> Unit>>
+  val isModifiedCallbacks: Map<JComponent?, List<() -> Boolean>>
 }

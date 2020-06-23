@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -7,8 +7,9 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.impl.ExtensionOrderConverter;
 
-@Presentation(typeName = "Extension")
+@Presentation(typeName = DevkitDomPresentationConstants.EXTENSION)
 public interface Extension extends DomElement {
 
   String ID_ATTRIBUTE = "id";
@@ -22,12 +23,12 @@ public interface Extension extends DomElement {
   XmlTag getXmlTag();
 
   @NameValue
-  @Required(value = false)
+  @Required(false)
   @Attribute(ID_ATTRIBUTE)
   GenericAttributeValue<String> getId();
 
   @Referencing(value = ExtensionOrderConverter.class, soft = true)
-  @Required(value = false)
+  @Required(false)
   @Attribute(ORDER_ATTRIBUTE)
   GenericAttributeValue<String> getOrder();
 
@@ -35,6 +36,9 @@ public interface Extension extends DomElement {
   @Attribute(OS_ATTRIBUTE)
   GenericAttributeValue<IdeaPluginDescriptorImpl.OS> getOs();
 
+  /**
+   * @return extension declaration or {@code null} if unresolved
+   */
   @Nullable
   ExtensionPoint getExtensionPoint();
 

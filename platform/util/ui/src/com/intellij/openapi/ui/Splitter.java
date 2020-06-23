@@ -4,6 +4,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
@@ -622,17 +623,15 @@ public class Splitter extends JPanel implements Splittable {
         float proportion;
         if (isVertical()) {
           if (getHeight() > 0) {
-            proportion = Math.min(1.0f, Math.max(.0f, Math
-              .min(Math.max(getMinProportion(true), (float)myPoint.y / (float)Splitter.this.getHeight()),
-                   1 - getMinProportion(false))));
+            proportion = MathUtil.clamp(MathUtil.clamp((float)myPoint.y / (float)Splitter.this.getHeight(), 
+                                                       getMinProportion(true), 1 - getMinProportion(false)), .0f, 1.0f);
             setProportion(proportion);
           }
         }
         else {
           if (getWidth() > 0) {
-            proportion = Math.min(1.0f, Math.max(.0f, Math
-              .min(Math.max(getMinProportion(true), (float)myPoint.x / (float)Splitter.this.getWidth()),
-                   1 - getMinProportion(false))));
+            proportion = MathUtil.clamp(MathUtil.clamp((float)myPoint.x / (float)Splitter.this.getWidth(), 
+                                                       getMinProportion(true), 1 - getMinProportion(false)), .0f, 1.0f);
             setProportion(proportion);
           }
         }

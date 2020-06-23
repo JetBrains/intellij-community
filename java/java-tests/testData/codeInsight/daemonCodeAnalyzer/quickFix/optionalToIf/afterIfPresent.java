@@ -10,8 +10,10 @@ class Test {
 
   void lambdaIsNotSimplified(String in, String p1, String p2) {
     if (in == null || p1 == null) throw new IllegalArgumentException();
+      /* comment1 */
+      // comment2
       String tmp = "foo";
-      tmp = "bar";
+      tmp = "bar"; // comment2
   }
 
 }

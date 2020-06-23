@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.editorActions.enter.EnterInStringLiteralHandler;
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +25,7 @@ public class JavaEnterInTextBlockHandler extends EnterInStringLiteralHandler {
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
     int offset = editor.getCaretModel().getOffset();
-    PsiLiteralExpressionImpl textBlock = getTextBlockAt(file, offset);
+    PsiLiteralExpression textBlock = getTextBlockAt(file, offset);
     if (textBlock == null) return Result.Continue;
     int textBlockOffset = textBlock.getTextOffset();
     String text = textBlock.getText();
@@ -57,11 +56,11 @@ public class JavaEnterInTextBlockHandler extends EnterInStringLiteralHandler {
   }
 
   @Contract("null, _ -> null")
-  private static PsiLiteralExpressionImpl getTextBlockAt(PsiFile file, int offset) {
+  private static PsiLiteralExpression getTextBlockAt(PsiFile file, int offset) {
     if (!(file instanceof PsiJavaFile)) return null;
     PsiJavaToken token = ObjectUtils.tryCast(file.findElementAt(offset), PsiJavaToken.class);
     if (token == null || token.getTokenType() != JavaTokenType.TEXT_BLOCK_LITERAL) return null;
-    return ObjectUtils.tryCast(token.getParent(), PsiLiteralExpressionImpl.class);
+    return ObjectUtils.tryCast(token.getParent(), PsiLiteralExpression.class);
   }
 
   private static int getIndent(@NotNull String text, int start) {

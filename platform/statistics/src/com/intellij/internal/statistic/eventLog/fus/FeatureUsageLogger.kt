@@ -1,10 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.fus
 
-import com.intellij.internal.statistic.eventLog.EmptyStatisticsEventLogger
-import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
-import com.intellij.internal.statistic.eventLog.getEventLogProvider
+import com.intellij.internal.statistic.eventLog.*
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.CompletableFuture
 
 /**
  * An entry point class to record in event log an information about feature usages.
@@ -23,7 +22,8 @@ import com.intellij.internal.statistic.eventLog.getEventLogProvider
  * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
  */
 object FeatureUsageLogger {
-  private val loggerProvider = getEventLogProvider("FUS")
+  internal var loggerProvider = getEventLogProvider("FUS")
+  @TestOnly internal set
 
   init {
     if (isEnabled()) {
@@ -35,7 +35,7 @@ object FeatureUsageLogger {
    * Records that in a group (e.g. 'dialogs', 'intentions') a new event occurred.
    */
   fun log(group: EventLogGroup, action: String) {
-    return loggerProvider.logger.log(group, action, false)
+    loggerProvider.logger.logAsync(group, action, false)
   }
 
   /**
@@ -43,22 +43,22 @@ object FeatureUsageLogger {
    * Adds context information to the event, e.g. source and shortcut for an action.
    */
   fun log(group: EventLogGroup, action: String, data: Map<String, Any>) {
-    return loggerProvider.logger.log(group, action, data, false)
+    loggerProvider.logger.logAsync(group, action, data, false)
   }
 
   /**
    * Records a new state event in a group (e.g. 'run.configuration.type').
    */
   fun logState(group: EventLogGroup, action: String) {
-    return loggerProvider.logger.log(group, action, true)
+    loggerProvider.logger.logAsync(group, action, true)
   }
 
   /**
    * Records a new state event in a group (e.g. 'run.configuration.type').
    * Adds context information to the event, e.g. if configuration is stored on project or on IDE level.
    */
-  fun logState(group: EventLogGroup, action: String, data: Map<String, Any>) {
-    return loggerProvider.logger.log(group, action, data, true)
+  fun logState(group: EventLogGroup, action: String, data: Map<String, Any>): CompletableFuture<Void> {
+    return loggerProvider.logger.logAsync(group, action, data, true)
   }
 
   /**
@@ -66,7 +66,7 @@ object FeatureUsageLogger {
    * @deprecated
    */
   fun log(groupId: String, action: String) {
-    return loggerProvider.logger.log(EventLogGroup(groupId, 1), action, true)
+    loggerProvider.logger.logAsync(EventLogGroup(groupId, 1), action, true)
   }
 
   fun cleanup() {
@@ -77,6 +77,14 @@ object FeatureUsageLogger {
     loggerProvider.logger.rollOver()
   }
 
+  fun flush() : CompletableFuture<Void> {
+    val logger = loggerProvider.logger
+    if (logger is StatisticsFileEventLogger) {
+      return logger.flush()
+    }
+    return CompletableFuture.completedFuture(null)
+  }
+
   fun getConfig() : StatisticsEventLoggerProvider {
     return loggerProvider
   }
@@ -84,4 +92,7 @@ object FeatureUsageLogger {
   fun isEnabled() : Boolean {
     return loggerProvider.logger !is EmptyStatisticsEventLogger
   }
+
+  @JvmStatic
+  val configVersion: Int get() = getConfig().version
 }

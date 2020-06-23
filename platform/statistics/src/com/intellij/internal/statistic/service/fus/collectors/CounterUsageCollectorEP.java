@@ -16,6 +16,9 @@ public class CounterUsageCollectorEP extends AbstractExtensionPointBean {
   @Attribute("version")
   public int version;
 
+  @Attribute("implementationClass")
+  public String implementationClass;
+
   @Nullable
   public String getGroupId() {
     return groupID;

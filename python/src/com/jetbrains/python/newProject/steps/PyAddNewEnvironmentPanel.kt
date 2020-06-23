@@ -9,12 +9,11 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.PySdkTypeComparator
-import com.jetbrains.python.sdk.PySdkTypeComparator.Companion.sortBySdkTypes
 import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.pipenv.PyAddPipEnvPanel
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
@@ -92,12 +91,15 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
   }
 
   private fun createPanels(existingSdks: List<Sdk>, newProjectPath: String?): List<PyAddNewEnvPanel> {
-    return mutableListOf(
-      PySdkTypeComparator.PySdkType.VirtualEnv to PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath, context),
-      PySdkTypeComparator.PySdkType.PipEnv to PyAddPipEnvPanel(null, null, existingSdks, newProjectPath, context),
-      PySdkTypeComparator.PySdkType.CondaEnv to PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath, context)
-    )
-      .sortBySdkTypes { it.first }
-      .map { it.second }
+    val condaPanel = PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath, context)
+    val venvPanel = PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath, context)
+    val pipEnvPanel = PyAddPipEnvPanel(null, null, existingSdks, newProjectPath, context)
+
+    return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
+      listOf(condaPanel, venvPanel, pipEnvPanel)
+    }
+    else {
+      listOf(venvPanel, pipEnvPanel, condaPanel)
+    }
   }
 }

@@ -16,8 +16,8 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +57,7 @@ public interface FileType extends Scheme {
    */
 
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Label
   String getDescription();
 
   /**

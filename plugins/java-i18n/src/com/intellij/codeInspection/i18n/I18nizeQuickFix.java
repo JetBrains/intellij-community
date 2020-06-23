@@ -11,6 +11,8 @@ import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
+import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
+import com.intellij.lang.properties.references.I18nizeQuickFixDialog.DialogCustomization;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,17 +27,30 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author cdr
  */
 public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
+  private static final Set<String> AUXILIARY_WORDS = ContainerUtil.immutableSet("is", "not", "the", "of", "and", "a", "an");
+  private final NlsInfo.Localized myInfo;
   private TextRange mySelectionRange;
+
+  public I18nizeQuickFix(NlsInfo.Localized info) {
+    myInfo = info;
+  }
+
+  public I18nizeQuickFix() {
+    this(NlsInfo.localized());
+  }
 
   @Override
   public final void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
@@ -147,7 +162,28 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
       TextRange intersection = literalRange.intersection(mySelectionRange);
       value = literalExpression.getText().substring(intersection.getStartOffset() - literalRange.getStartOffset(), intersection.getEndOffset() - literalRange.getStartOffset());
     }
-    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, value, null, true, true);
+    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, value, getCustomization(value), true, true);
+  }
+
+  @NotNull
+  I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
+    return new DialogCustomization(null, true, false, null, getSuggestedName(value));
+  }
+
+  private String getSuggestedName(String value) {
+    String prefix = myInfo.getPrefix();
+    String suffix = myInfo.getSuffix();
+    if (prefix.isEmpty() && suffix.isEmpty()) return null;
+    if (!prefix.isEmpty()) {
+      prefix += "."; 
+    }
+    if (!suffix.isEmpty()) {
+      suffix = "." + suffix;
+    }
+    String payload = I18nizeQuickFixDialog.generateDefaultPropertyKey(value);
+    payload = Stream.of(payload.split("\\."))
+      .filter(s -> !s.matches("\\d+") && !AUXILIARY_WORDS.contains(s)).collect(Collectors.joining("."));
+    return prefix + payload + suffix;
   }
 
   @Nullable

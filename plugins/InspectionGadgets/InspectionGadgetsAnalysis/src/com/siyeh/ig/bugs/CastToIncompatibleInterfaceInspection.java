@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.InheritanceUtil;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CastToIncompatibleInterfaceInspection extends BaseInspection {
@@ -77,6 +78,7 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
       if (InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly())) {
         return;
       }
+      if (InstanceOfUtils.findPatternCandidate(expression) != null) return;
       PsiType psiType = TypeConstraint.fromDfType(CommonDataflow.getDfType(operand)).getPsiType(operandClass.getProject());
       if (psiType != null && castClassType.isAssignableFrom(psiType)) return;
       registerError(castTypeElement);

@@ -256,18 +256,32 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
   }
 
   public void testRunSpecificDisabledIfMethod() throws Exception {
-    PsiMethod aMethod = JavaPsiFacade.getInstance(myProject)
-      .findClass("disabled.DisabledMethodIf", GlobalSearchScope.projectScope(myProject))
-      .findMethodsByName("testDisabledMethod", false)[0];
-    RunConfiguration configuration = createConfiguration(aMethod);
+    PsiClass aClass = JavaPsiFacade.getInstance(myProject)
+      .findClass("disabled.DisabledMethodIf", GlobalSearchScope.projectScope(myProject));
 
-    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    PsiMethod aMethod = aClass.findMethodsByName("testDisabledMethod", false)[0];
 
-    assertNoIgnored(processOutput);
+    RunConfiguration configurationForMethod = createConfiguration(aMethod);
+    RunConfiguration configurationForClass = createConfiguration(aClass);
+
+    ProcessOutput processOutputClass = doStartTestsProcess(configurationForClass);
+    ProcessOutput processOutputMethod = doStartTestsProcess(configurationForMethod);
+
+    List<TestIgnored> ignoredTests = processOutputClass.messages.stream()
+      .filter(TestIgnored.class::isInstance)
+      .map(TestIgnored.class::cast)
+      .collect(Collectors.toList());
+    assertSize(1, ignoredTests);
+
+    assertNoIgnored(processOutputMethod);
+
+    //assuming only suiteTreeNode/start/ignore/finish events
+    assertSize(4, ContainerUtil
+      .filter(processOutputClass.messages, m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod()")));
 
     //assuming only suiteTreeNode/start/finish events
     assertSize(3, ContainerUtil
-      .filter(processOutput.messages, m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod()")));
+      .filter(processOutputMethod.messages, m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod()")));
   }
 
   public void testRunSpecificDisabledMethodByCondition() throws Exception {

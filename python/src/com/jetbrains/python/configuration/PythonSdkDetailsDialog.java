@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -21,7 +20,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -313,7 +311,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     });
     if (dialog.showAndGet()) {
       mySdkList.repaint();
-      final boolean pathChanged = !Comparing.equal(currentSdk.getHomePath(), dialog.getHomePath());
+      final boolean pathChanged = !Objects.equals(currentSdk.getHomePath(), dialog.getHomePath());
       if (!modificator.getName().equals(dialog.getName()) || pathChanged || dialog.isAssociateChanged()) {
         myModifiedModificators.add(modificator);
         modificator.setName(dialog.getName());
@@ -465,7 +463,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     private final PyRemoteSdkAdditionalDataBase myRemoteSdkData;
     private final Sdk mySdk;
 
-    private final List<PathMappingSettings.PathMapping> myNewMappings = Lists.newArrayList();
+    private final List<PathMappingSettings.PathMapping> myNewMappings = new ArrayList<>();
 
     PyRemotePathEditor(Sdk sdk) {
       super("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor());

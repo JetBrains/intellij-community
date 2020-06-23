@@ -257,12 +257,12 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
           handleEvent(virtualFile, project)
         }
       }
-    }, ApplicationManager.getApplication())
+    }, FileTypeUtil.getInstance())
   }
 
   private fun handleEvent(virtualFile: VirtualFile, project: Project) {
     val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(virtualFile) ?: return
-    if (!FileTypeUtil.getInstance().isSupportedFile(virtualFile) || PsiManager.getInstance(project).findFile(virtualFile) == null) {
+    if (!FileTypeUtil.isSupportedFile(virtualFile) || PsiManager.getInstance(project).findFile(virtualFile) == null) {
       return
     }
 

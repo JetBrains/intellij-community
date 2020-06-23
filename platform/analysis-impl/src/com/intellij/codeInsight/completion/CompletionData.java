@@ -5,7 +5,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -208,9 +207,6 @@ public class CompletionData {
 
     LookupItem<?> item = new LookupItem<>(object, s);
 
-    if (object instanceof LookupValueWithUIHint && ((LookupValueWithUIHint) object).isBold()) {
-      item.setBold();
-    }
     item.setAttribute(LookupItem.TAIL_TYPE_ATTR, tailType);
     return item;
   }

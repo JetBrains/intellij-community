@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
@@ -39,7 +41,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   private final MergingUpdateQueue myUpdateQueue;
 
   public static MavenProjectIndicesManager getInstance(Project p) {
-    return p.getComponent(MavenProjectIndicesManager.class);
+    return p.getService(MavenProjectIndicesManager.class);
   }
 
   public MavenProjectIndicesManager(Project project) {
@@ -58,7 +60,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
       scheduleUpdateIndicesList();
     }
 
-    MavenRepositoryProvider.EP_NAME.addExtensionPointListener(this::scheduleUpdateIndicesList, myProject);
+    MavenRepositoryProvider.EP_NAME.addChangeListener(this::scheduleUpdateIndicesList, myProject);
 
     getMavenProjectManager().addManagerListener(new MavenProjectsManager.Listener() {
       @Override
@@ -210,7 +212,9 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     Set<String> result = new HashSet<>();
     myDependencySearchService.fulltextSearch(groupId + ":", new SearchParameters(true, true), it -> {
       if (it instanceof MavenRepositoryArtifactInfo) {
-        result.add(((MavenRepositoryArtifactInfo)it).getArtifactId());
+        if (StringUtil.equals(groupId, ((MavenRepositoryArtifactInfo)it).getGroupId())) {
+          result.add(((MavenRepositoryArtifactInfo)it).getArtifactId());
+        }
       }
     });
     return result;
@@ -225,7 +229,12 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     Set<String> result = new HashSet<>();
     myDependencySearchService.fulltextSearch(groupId + ":" + artifactId, new SearchParameters(true, true), it -> {
       if (it instanceof MavenRepositoryArtifactInfo) {
-        result.add(((MavenRepositoryArtifactInfo)it).getVersion());
+        if (StringUtil.equals(groupId, ((MavenRepositoryArtifactInfo)it).getGroupId()) &&
+            StringUtil.equals(groupId, ((MavenRepositoryArtifactInfo)it).getArtifactId())) {
+          for (MavenDependencyCompletionItem item : ((MavenRepositoryArtifactInfo)it).getItems()) {
+            result.add(item.getVersion());
+          }
+        }
       }
     });
     return result;

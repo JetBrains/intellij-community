@@ -2,27 +2,27 @@
 package org.jetbrains.git4idea.nativessh;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * This handler is called via XML RPC from {@link GitNativeSshAskPassApp} when ssh requests user credentials.
  */
 public interface GitNativeSshAskPassXmlRpcHandler {
-  String SSH_ASK_PASS_ENV = "SSH_ASKPASS";
-  String DISPLAY_ENV = "DISPLAY";
 
-  String IJ_HANDLER_ENV = "INTELLIJ_SSH_ASKPASS_HANDLER";
-  String IJ_PORT_ENV = "INTELLIJ_SSH_ASKPASS_PORT";
+  String IJ_SSH_ASK_PASS_HANDLER_ENV = "INTELLIJ_SSH_ASKPASS_HANDLER";
+  String IJ_SSH_ASK_PASS_PORT_ENV = "INTELLIJ_SSH_ASKPASS_PORT";
   String HANDLER_NAME = GitNativeSshAskPassXmlRpcHandler.class.getName();
+  String RPC_METHOD_NAME = HANDLER_NAME + ".handleInput";
 
   /**
-   * Get the answer for interactive input request from ssh
+   * Get the answer for interactive input request from ssh.
    *
-   * @param token       XML RPC token
-   * @param description key description specified by ssh, or empty string if description is not available
+   * @param handlerNo   Handler uuid passed via {@link #IJ_SSH_ASK_PASS_HANDLER_ENV}
+   * @param description Key description specified by ssh, or empty string if description is not available
+   * @return passphrase or null if prompt was canceled
+   * <p>
+   * Return value should be wrapped using {@link org.jetbrains.git4idea.GitAppUtil#adjustNullTo}
    */
-  // UnusedDeclaration suppressed: the method is used via XML RPC
+  @NotNull
   @SuppressWarnings("unused")
-  @Nullable
-  String handleInput(String token, @NotNull String description);
+  String handleInput(@NotNull String handlerNo, @NotNull String description);
 }

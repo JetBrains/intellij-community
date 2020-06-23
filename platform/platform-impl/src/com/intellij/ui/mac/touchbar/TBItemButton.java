@@ -1,21 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Pointer;
+import java.awt.Dimension;
+import java.util.Objects;
+import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.Objects;
 
 class TBItemButton extends TBItem {
   protected final @Nullable TouchBarStats.AnActionStats myActionStats;
@@ -81,7 +79,7 @@ class TBItemButton extends TBItem {
   }
 
   TBItemButton setText(String text) {
-    if (!Comparing.equal(text, myText)) {
+    if (!Objects.equals(text, myText)) {
       myText = text;
       myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_TEXT;
     }

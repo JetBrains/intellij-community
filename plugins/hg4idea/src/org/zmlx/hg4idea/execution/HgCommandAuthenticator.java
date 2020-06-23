@@ -93,7 +93,7 @@ class HgCommandAuthenticator {
         return;
       }
 
-      @NotNull final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
+      @NotNull final HgGlobalSettings hgGlobalSettings = HgGlobalSettings.getInstance();
       @Nullable String rememberedLoginsForUrl = null;
       String url = VirtualFileManager.extractPath(myURL);
       if (!StringUtil.isEmptyOrSpaces(myURL)) {

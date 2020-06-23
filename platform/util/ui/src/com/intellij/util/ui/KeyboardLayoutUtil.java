@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,16 +9,16 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author gregsh
  */
 public class KeyboardLayoutUtil {
 
-  private static final Map<Character, Character> ourLLtoASCII = ContainerUtil.newConcurrentMap();
+  private static final Map<Character, Character> ourLLtoASCII = new ConcurrentHashMap<>();
 
-  @Nullable
-  public static Character getAsciiForChar(char a) {
+  public static @Nullable Character getAsciiForChar(char a) {
     Character c = ourLLtoASCII.get(a);
     if (c != null) return c;
 

@@ -15,9 +15,12 @@
  */
 package com.jetbrains.python.refactoring.changeSignature;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * User : ktisha
@@ -99,5 +102,15 @@ public class PyParameterInfo implements ParameterInfo {
 
   public boolean isRenamed() {
     return !myOldName.equals(myName);
+  }
+
+  @Override
+  public String toString() {
+    final String defaultValueType = myDefaultInSignature ? "signature" : "call";
+    return "PyParameterInfo(" +
+           (isNew() ? "<new>" : "oldIndex: " + myOldIndex) + ", " +
+           "name: " + (isRenamed() ? myOldName + " -> " + myName : myName) + ", " +
+           "default: " + (StringUtil.isEmpty(myDefaultValue) ? "<empty>" : "'" + myDefaultValue + "' (" + defaultValueType + ")") +
+           ")";
   }
 }

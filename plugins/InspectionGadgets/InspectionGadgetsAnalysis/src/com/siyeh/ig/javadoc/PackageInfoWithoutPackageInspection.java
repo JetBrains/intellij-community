@@ -66,6 +66,11 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
     return new PackageInfoWithoutPackageVisitor();
   }
 
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiPackage.PACKAGE_INFO_FILE.equals(file.getName());
+  }
+
   private static class PackageInfoWithoutPackageVisitor extends BaseInspectionVisitor {
 
     @Override

@@ -165,15 +165,15 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
       String toType = myRootTypes.fun(myRoots[0]).getPresentableText();
       String text;
       text = getPresentation(myRoots[0]);
-      name = "Migrate Type of " + text + " from \'" + fromType + "\' to \'" + toType + "\'";
+      name = "Migrate Type of " + text + " from '" + fromType + "' to '" + toType + "'";
     } else {
-      final int rootsInPresentationCount = myRoots.length > MAX_ROOT_IN_PREVIEW_PRESENTATION ? MAX_ROOT_IN_PREVIEW_PRESENTATION : myRoots.length;
+      final int rootsInPresentationCount = Math.min(myRoots.length, MAX_ROOT_IN_PREVIEW_PRESENTATION);
       String[] rootsPresentation = new String[rootsInPresentationCount];
       for (int i = 0; i < rootsInPresentationCount; i++) {
         final PsiElement root = myRoots[i];
         rootsPresentation[i] = root instanceof PsiNamedElement ? ((PsiNamedElement)root).getName() : root.getText();
       }
-      rootsPresentation = StringUtil.surround(rootsPresentation, "\'", "\'");
+      rootsPresentation = StringUtil.surround(rootsPresentation, "'", "'");
       name = "Migrate Type of " + StringUtil.join(rootsPresentation, ", ");
       if (myRoots.length > MAX_ROOT_IN_PREVIEW_PRESENTATION) {
         name += "...";
@@ -187,16 +187,16 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   public static String getPresentation(PsiElement element) {
     String text;
     if (element instanceof PsiField) {
-      text = "field \'" + ((PsiField)element).getName() + "\'";
+      text = "field '" + ((PsiField)element).getName() + "'";
     }
     else if (element instanceof PsiParameter) {
-      text = "parameter \'" + ((PsiParameter)element).getName() + "\'";
+      text = "parameter '" + ((PsiParameter)element).getName() + "'";
     }
     else if (element instanceof PsiLocalVariable) {
-      text = "variable \'" + ((PsiLocalVariable)element).getName() + "\'";
+      text = "variable '" + ((PsiLocalVariable)element).getName() + "'";
     }
     else if (element instanceof PsiMethod) {
-      text = "method \'" + ((PsiMethod)element).getName() + "\' return";
+      text = "method '" + ((PsiMethod)element).getName() + "' return";
     }
     else {
       text = element.getText();

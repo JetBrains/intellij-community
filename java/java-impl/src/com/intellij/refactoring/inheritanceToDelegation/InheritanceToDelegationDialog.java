@@ -98,12 +98,12 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     final String fieldName = getFieldName();
     final PsiNameHelper helper = PsiNameHelper.getInstance(myProject);
     if (!helper.isIdentifier(fieldName)){
-      throw new ConfigurationException("\'" + fieldName + "\' is invalid field name for delegation");
+      throw new ConfigurationException("'" + fieldName + "' is invalid field name for delegation");
     }
     if (myInnerClassNameField != null) {
       final String className = myInnerClassNameField.getEnteredName();
       if (!helper.isIdentifier(className)) {
-        throw new ConfigurationException("\'" + className + "\' is invalid inner class name");
+        throw new ConfigurationException("'" + className + "' is invalid inner class name");
       }
     }
   }

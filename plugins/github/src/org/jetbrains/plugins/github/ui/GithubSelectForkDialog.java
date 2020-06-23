@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.project.Project;
@@ -8,6 +8,7 @@ import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GHRepositoryPath;
+import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ public class GithubSelectForkDialog extends DialogWrapper {
       myPanel.setUsers(ContainerUtil.map(forks, GHRepositoryPath::getOwner));
     }
 
-    setTitle("Select Base Fork Repository");
+    setTitle(GithubBundle.message("select.fork.dialog.title"));
     init();
   }
 
@@ -46,7 +47,8 @@ public class GithubSelectForkDialog extends DialogWrapper {
   protected void doOKAction() {
     ForkInfo fork = myCheckFork.convert(myPanel.getUser());
     if (fork == null) {
-      GithubNotifications.showErrorDialog(myProject, "Can't Find Repository", "Can't find fork for selected user");
+      GithubNotifications.showErrorDialog(myProject, GithubBundle.message("cannot.find.repository"),
+                                          GithubBundle.message("cannot.find.fork"));
     }
     else {
       mySelectedFork = fork;

@@ -5,7 +5,6 @@ import com.intellij.ide.FrameStateListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -32,7 +31,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
     }
   }
 
-  override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier? {
+  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
     if (!SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return null
 
     val pluginsToReload = hashSetOf<IdeaPluginDescriptorImpl>()
@@ -44,7 +43,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
     }
     val descriptorsToReload = pluginsToReload
       .filter { it.isEnabled }
-      .map { PluginEnabler.loadFullDescriptor(it) }
+      .map { PluginDescriptorLoader.loadFullDescriptor(it) }
       .filter { DynamicPlugins.allowLoadUnloadWithoutRestart(it) }
 
     if (descriptorsToReload.isEmpty()) return null
@@ -58,7 +57,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
               continue
             }
             reloaded.add(pluginDescriptor.name)
-            DynamicPlugins.loadPlugin(pluginDescriptor, false)
+            DynamicPlugins.loadPlugin(pluginDescriptor)
           }
           if (reloaded.isNotEmpty()) {
             DynamicPlugins.notify("${reloaded.joinToString()} reloaded successfully", NotificationType.INFORMATION)
@@ -69,9 +68,11 @@ class DynamicPluginVfsListener : AsyncFileListener {
   }
 
   private fun findPluginByPath(path: String): IdeaPluginDescriptorImpl? {
-    if (!FileUtil.isAncestor(PathManager.getPluginsPath(), path, false)) return null
+    if (!FileUtil.isAncestor(PathManager.getPluginsPath(), path, false)) {
+      return null
+    }
     return PluginManager.getPlugins().firstOrNull {
-      FileUtil.isAncestor(it.path.absolutePath, path, false)
+      FileUtil.isAncestor(it.pluginPath.toAbsolutePath().toString(), path, false)
     } as IdeaPluginDescriptorImpl?
   }
 }

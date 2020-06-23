@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.application.Topics;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,17 +70,19 @@ public final class PsiVFSListener implements BulkFileListener {
     @Override
     public void runActivity(@NotNull Project project) {
       MessageBusConnection connection = project.getMessageBus().connect();
-      
+
       ExtensionPoint<KeyedLazyInstance<LanguageSubstitutor>> point = LanguageSubstitutors.getInstance().getPoint();
       if (point != null) {
-        point.addExtensionPointListener(() -> {
-          if (project.isDisposed()) return;
+        point.addChangeListener(() -> {
+          if (project.isDisposed()) {
+            return;
+          }
 
           PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
           ((FileManagerImpl)(psiManager.getFileManager())).processFileTypesChanged(true);
-        }, false, project);
+        }, project);
       }
-      
+
       connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener(project));
       connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
         @Override
@@ -88,6 +92,20 @@ public final class PsiVFSListener implements BulkFileListener {
         }
       });
       connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerListener(project));
+
+      connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+          PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
+          ((FileManagerImpl)(psiManager.getFileManager())).processFileTypesChanged(true);
+        }
+
+        @Override
+        public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
+          ((FileManagerImpl)(psiManager.getFileManager())).processFileTypesChanged(true);
+        }
+      });
 
       installGlobalListener();
     }
@@ -618,7 +636,7 @@ public final class PsiVFSListener implements BulkFileListener {
           assert depthCounter >= 0 : depthCounter;
           if (depthCounter > 0) return;
 
-          DebugUtil.performPsiModification(null, () -> fileManager.possiblyInvalidatePhysicalPsi());
+          DebugUtil.performPsiModification(null, fileManager::possiblyInvalidatePhysicalPsi);
 
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(manager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);

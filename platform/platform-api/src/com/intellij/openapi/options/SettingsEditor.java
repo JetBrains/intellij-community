@@ -99,6 +99,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
 
   @Override
   public final void dispose() {
+    myListeners.clear();
   }
 
   protected void uninstallWatcher() {
@@ -131,8 +132,8 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   protected final void fireEditorStateChanged() {
-    if (myIsInUpdate || myListeners == null) return;
-    for (SettingsEditorListener listener : myListeners) {
+    if (myIsInUpdate) return;
+    for (SettingsEditorListener<Settings> listener : myListeners) {
       listener.stateChanged(this);
     }
   }

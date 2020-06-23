@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
@@ -90,7 +91,7 @@ public class JpsPathUtil {
     try (Stream<String> stream = Files.lines(projectDir.resolve(".name"))) {
       return stream.findFirst().map(String::trim).orElse(null);
     }
-    catch (IOException e) {
+    catch (IOException | UncheckedIOException e) {
       return null;
     }
   }

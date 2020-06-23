@@ -68,7 +68,7 @@ public abstract class IPPTestCase extends LightJavaCodeInsightFixtureTestCase {
     myFixture.configureByText("a.java", matcher.replaceFirst("<caret>"));
     final String group = matcher.group(1);
     final String intentionName = group.isEmpty() ? getIntentionName() : group;
-    assertEmpty("Intention \'" + intentionName + "\' is available but should not", myFixture.filterAvailableIntentions(intentionName));
+    assertEmpty("Intention '" + intentionName + "' is available but should not", myFixture.filterAvailableIntentions(intentionName));
   }
 
   protected void assertIntentionNotAvailable() {
@@ -78,7 +78,7 @@ public abstract class IPPTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected void assertIntentionNotAvailable(@NotNull final String intentionName) {
     final String testName = getTestName(false);
     myFixture.configureByFile(testName + ".java");
-    assertEmpty("Intention \'" + intentionName + "\' is available but should not", myFixture.filterAvailableIntentions(intentionName));
+    assertEmpty("Intention '" + intentionName + "' is available but should not", myFixture.filterAvailableIntentions(intentionName));
   }
 
   protected void assertIntentionNotAvailable(Class<? extends IntentionAction> intentionClass) {
@@ -89,7 +89,7 @@ public abstract class IPPTestCase extends LightJavaCodeInsightFixtureTestCase {
         result.add(intention);
       }
     }
-    assertEmpty("Intention of class \'" + intentionClass + "\' is available but should not", result);
+    assertEmpty("Intention of class '" + intentionClass + "' is available but should not", result);
   }
 
   protected String getIntentionName() {

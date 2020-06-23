@@ -43,7 +43,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
   /**
    * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
    */
-  public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDelete) {
+  public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<? extends File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
     setShouldKillProcessSoftly(false);
   }

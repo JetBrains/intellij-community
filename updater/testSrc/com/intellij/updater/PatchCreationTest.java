@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -77,56 +77,58 @@ public class PatchCreationTest extends PatchTestCase {
 
   @Test
   public void testValidation() throws Exception {
+    FileUtil.delete(new File(myNewerDir, "bin/focuskiller.dll"));
+    FileUtil.copy(new File(myOlderDir, "bin/focuskiller.dll"), new File(myNewerDir, "newDir/focuskiller.dll"));
     Patch patch = createPatch();
-    File idea = new File(myOlderDir, "bin/idea.bat");
-    FileUtil.writeToFile(idea, "changed");
+
+    FileUtil.writeToFile(new File(myOlderDir, "bin/idea.bat"), "changed");
+    FileUtil.writeToFile(new File(myOlderDir, "bin/focuskiller.dll"), "changed");
     FileUtil.createDirectory(new File(myOlderDir, "extraDir"));
     FileUtil.writeToFile(new File(myOlderDir, "extraDir/extraFile.txt"), "");
-    File newDir = new File(myOlderDir, "newDir");
-    FileUtil.createDirectory(newDir);
-    File newFile = new File(myOlderDir, "newDir/newFile.txt");
-    FileUtil.writeToFile(newFile, "");
-    File readme = new File(myOlderDir, "Readme.txt");
-    FileUtil.writeToFile(readme, "changed");
-    File annotations = new File(myOlderDir, "lib/annotations.jar");
-    FileUtil.writeToFile(annotations, "changed");
-    File bootstrap = new File(myOlderDir, "lib/bootstrap.jar");
-    FileUtil.delete(bootstrap);
+    FileUtil.createDirectory(new File(myOlderDir, "newDir"));
+    FileUtil.writeToFile(new File(myOlderDir, "newDir/newFile.txt"), "");
+    FileUtil.writeToFile(new File(myOlderDir, "Readme.txt"), "changed");
+    FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed");
+    FileUtil.delete(new File(myOlderDir, "lib/bootstrap.jar"));
 
     assertThat(sortResults(patch.validate(myOlderDir, TEST_UI))).containsExactly(
       new ValidationResult(ValidationResult.Kind.CONFLICT,
+                           "bin/focuskiller.dll",
+                           ValidationResult.Action.DELETE,
+                           ValidationResult.MODIFIED_MESSAGE,
+                           ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
+      new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "bin/idea.bat",
-                           idea,
                            ValidationResult.Action.DELETE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/",
-                           newDir,
                            ValidationResult.Action.CREATE,
                            ValidationResult.ALREADY_EXISTS_MESSAGE,
                            ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/newFile.txt",
-                           newFile,
                            ValidationResult.Action.CREATE,
                            ValidationResult.ALREADY_EXISTS_MESSAGE,
                            ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "Readme.txt",
-                           readme,
+                           ValidationResult.Action.UPDATE,
+                           ValidationResult.MODIFIED_MESSAGE,
+                           ValidationResult.Option.IGNORE),
+      new ValidationResult(ValidationResult.Kind.ERROR,
+                           "bin/focuskiller.dll",
                            ValidationResult.Action.UPDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
-                           annotations,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/bootstrap.jar",
-                           bootstrap,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.ABSENT_MESSAGE,
                            ValidationResult.Option.IGNORE));
@@ -150,7 +152,6 @@ public class PatchCreationTest extends PatchTestCase {
       assertThat(results).containsExactly(
         new ValidationResult(ValidationResult.Kind.CONFLICT,
                              "bin/IDEA.bat",
-                             new File(myOlderDir, "bin/IDEA.bat"),
                              ValidationResult.Action.CREATE,
                              ValidationResult.ALREADY_EXISTS_MESSAGE,
                              ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP));
@@ -163,12 +164,10 @@ public class PatchCreationTest extends PatchTestCase {
   @Test
   public void testValidationWithOptionalFiles() throws Exception {
     Patch patch1 = createPatch();
-    File annotations = new File(myOlderDir, "lib/annotations.jar");
-    FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), annotations);
+    FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), new File(myOlderDir, "lib/annotations.jar"));
     assertThat(patch1.validate(myOlderDir, TEST_UI)).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
-                           annotations,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.IGNORE));
@@ -196,7 +195,6 @@ public class PatchCreationTest extends PatchTestCase {
       assertThat(patch.validate(myOlderDir, TEST_UI)).containsExactly(
         new ValidationResult(ValidationResult.Kind.ERROR,
                              "Readme.txt",
-                             f,
                              ValidationResult.Action.UPDATE,
                              message,
                              option));

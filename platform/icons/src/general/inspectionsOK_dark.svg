@@ -1,3 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
-  <polygon fill="#499C54" fill-rule="evenodd" points="10.148 10.285 10.148 .285 7.42 .285 7.42 7.558 3.784 7.558 3.784 10.285" transform="rotate(45 6.966 5.285)"/>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="idea/community/platform/icons/src/general/inspectionsOK_dark">
+<path id="Path 2" fill-rule="evenodd" clip-rule="evenodd" d="M6.68011 12.0708L13.7512 4.99977L11.8227 3.0713L6.68011 8.21389L4.10881 5.64259L2.18034 7.57107L6.68011 12.0708Z" fill="#499C54"/>
+</g>
 </svg>

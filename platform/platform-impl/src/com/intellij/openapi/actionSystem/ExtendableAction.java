@@ -16,7 +16,6 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +52,7 @@ public class ExtendableAction extends AnAction {
 
   @Nullable
   private AnActionExtensionProvider getProvider(@NotNull AnActionEvent e) {
-    return ContainerUtil.find(myExtensionPoint.getExtensions(), provider -> provider.isActive(e));
+    return myExtensionPoint.findFirstSafe(provider -> provider.isActive(e));
   }
 
   protected void defaultUpdate(@NotNull AnActionEvent e) {

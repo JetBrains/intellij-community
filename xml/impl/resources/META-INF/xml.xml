@@ -1,0 +1,24 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <gotoTargetRendererProvider implementation="com.intellij.xml.impl.schema.GotoXmlSchemaTypeRendererProvider"/>
+    <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
+
+    <projectConfigurable groupId="language"
+                         groupWeight="110"
+                         instance="com.intellij.javaee.ExternalResourceConfigurable"
+                         key="display.name.edit.external.resource"
+                         bundle="messages.XmlBundle"
+                         id="preferences.externalResources">
+      <configurable instance="com.intellij.javaee.DefaultSchemasConfigurable"
+                    bundle="messages.XmlBundle"
+                    key="configurable.DefaultSchemasConfigurable.display.name"
+                    id="xml.defaultSchemas"/>
+
+      <configurable instance="com.intellij.javaee.XMLCatalogConfigurable"
+                    bundle="messages.XmlBundle"
+                    key="configurable.XMLCatalogConfigurable.display.name"
+                    id="xml.catalog"/>
+    </projectConfigurable>
+
+  </extensions>
+</idea-plugin>
