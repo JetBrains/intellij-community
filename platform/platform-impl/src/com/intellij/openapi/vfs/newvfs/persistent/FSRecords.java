@@ -1069,13 +1069,17 @@ public final class FSRecords {
       int prevId = parentId;
       for (ChildInfo childInfo : toSave.children) {
         int childId = childInfo.getId();
-        if (childId <= 0) throw new IllegalArgumentException("ids must be >0 but got: "+childId+"; list: "+toSave);
+        if (childId <= 0) {
+          throw new IllegalArgumentException("ids must be >0 but got: "+childId+"; childInfo: "+childInfo+"; list: "+toSave);
+        }
         if (childId == parentId) {
           LOG.error("Cyclic parent-child relations. parentId="+parentId+"; list: "+toSave);
         }
         else {
           int delta = childId - prevId;
-          if (prevId != parentId && delta <= 0) throw new IllegalArgumentException("The list must be sorted by (unique) id but got: " + toSave + "; delta=" + delta);
+          if (prevId != parentId && delta <= 0) {
+            throw new IllegalArgumentException("The list must be sorted by (unique) id but got parentId: " + parentId  + "; delta: " + delta+"; childInfo: "+childInfo+"; prevId: "+prevId+"; toSave: "+toSave);
+          }
           DataInputOutputUtil.writeINT(record, delta);
           prevId = childId;
         }
