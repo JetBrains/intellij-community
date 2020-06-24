@@ -457,7 +457,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
     @Override
     public void visitRegExpClass(RegExpClass regExpClass) {
-      super.visitRegExpClass(regExpClass);
       myLength++;
     }
 

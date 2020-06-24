@@ -9,3 +9,4 @@ re.compile(r"(?<!a|b<weak_warning descr="Single repetition">{1}</weak_warning>)"
 re.compile(r"(?<!abcd|(ab){2})")
 re.compile(r"(?<!abcde|x(ab){2})")
 re.compile(r"(?<!a(ab|cd)|xyz)")
+re.compile(r'(?<!aa|b[cd]|ee)str')
