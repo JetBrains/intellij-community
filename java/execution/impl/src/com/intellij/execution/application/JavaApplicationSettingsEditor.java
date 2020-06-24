@@ -77,7 +77,8 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                ExecutionBundle.message("application.configuration.shorten.command.line"),
                                                group, LabeledComponent.create(combo, ExecutionBundle.message("application.configuration.shorten.command.line.label"), BorderLayout.WEST),
                                                (configuration, c) -> c.getComponent().setItem(configuration.getShortenCommandLine()),
-                                               (configuration, c) -> configuration.setShortenCommandLine(c.getComponent().getSelectedItem()),
+                                               (configuration, c) -> configuration.setShortenCommandLine(
+                                                 c.isVisible() ? c.getComponent().getSelectedItem() : null),
                                                configuration -> configuration.getShortenCommandLine() != null));
     fragments.add(SettingsEditorFragment.createTag("formSnapshots", ExecutionBundle.message("show.swing.inspector.name"), group,
                                                    configuration -> configuration.isSwingInspectorEnabled(),
