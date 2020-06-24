@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.ex;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -39,11 +40,18 @@ public interface ToolWindowManagerListener extends EventListener {
   }
 
   /**
-   * Invoked when tool window with specified {@code id} is shown.
+   * Invoked when tool window is shown.
    *
-   * @param id {@code id} of shown tool window.
    * @param toolWindow shown tool window
    */
+  default void toolWindowShown(@NotNull ToolWindow toolWindow) {
+  }
+
+  /**
+   * @deprecated use {@link #toolWindowShown(ToolWindow)} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated
   default void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
   }
 

@@ -528,8 +528,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
-      public void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
-        if (ToolWindowId.PROJECT_VIEW.equals(id)) {
+      public void toolWindowShown(@NotNull ToolWindow toolWindow) {
+        if (ToolWindowId.PROJECT_VIEW.equals(toolWindow.getId())) {
           myCurrentSelectionObsolete = ThreeState.NO;
           AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
           if (currentProjectViewPane != null && isAutoscrollFromSource(currentProjectViewPane.getId())) {

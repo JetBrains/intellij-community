@@ -964,7 +964,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     entry.toolWindow.scheduleContentInitializationIfNeeded()
-    fireToolWindowShown(entry.id, entry.toolWindow)
+    fireToolWindowShown(entry.toolWindow)
   }
 
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow {
@@ -1491,8 +1491,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged(this)
   }
 
-  private fun fireToolWindowShown(id: String, toolWindow: ToolWindow) {
-    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowShown(id, toolWindow)
+  private fun fireToolWindowShown(toolWindow: ToolWindow) {
+    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowShown(toolWindow)
   }
 
   internal fun setToolWindowAutoHide(id: String, autoHide: Boolean) {

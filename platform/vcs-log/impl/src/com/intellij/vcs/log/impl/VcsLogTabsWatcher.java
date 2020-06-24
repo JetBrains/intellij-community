@@ -286,7 +286,7 @@ public final class VcsLogTabsWatcher implements Disposable {
     }
 
     @Override
-    public void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
+    public void toolWindowShown(@NotNull ToolWindow toolWindow) {
       if (myToolWindow == toolWindow) selectionChanged();
     }
 

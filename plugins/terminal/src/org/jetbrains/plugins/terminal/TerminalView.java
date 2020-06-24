@@ -111,8 +111,8 @@ public final class TerminalView {
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
-      public void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
-        if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(id) && myToolWindow == toolWindow &&
+      public void toolWindowShown(@NotNull ToolWindow toolWindow) {
+        if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId()) && myToolWindow == toolWindow &&
             toolWindow.isVisible() && toolWindow.getContentManager().getContentCount() == 0) {
           // open a new session if all tabs were closed manually
           createNewSession(myTerminalRunner, null, true);
