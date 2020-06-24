@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunConfigurationEditorFragment<S, JComponent> {
@@ -86,6 +88,11 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
 
   @Override
   public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
-    myComponent.apply(s);
+    if (isSelected()) {
+      myComponent.apply(s);
+    }
+    else {
+      s.getManager().setBeforeRunTasks(s.getConfiguration(), Collections.<BeforeRunTask<?>>emptyList());
+    }
   }
 }
