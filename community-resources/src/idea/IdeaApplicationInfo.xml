@@ -36,6 +36,6 @@
   <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"
               service="https://www.jetbrains.com/idea/statistics/index.jsp"
               fus-settings="https://www.jetbrains.com/idea/statistics/fus-assistant.xml"
-              event-log-settings="https://resources.jetbrains.com/storage/fus/config/v2/%s/%s.json"
+              event-log-settings="https://resources.jetbrains.com/storage/fus/config/v3/%s/%s.json"
   />
 </component>
