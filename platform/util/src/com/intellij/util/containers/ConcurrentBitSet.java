@@ -53,6 +53,10 @@ public class ConcurrentBitSet {
     shift = 31 - Integer.numberOfLeadingZeros(scale);
   }
 
+  /**
+   * store all bits here.
+   * The bit at bitIndex is stored in {@code array[arrayIndex(bitIndex)]} word.
+   */
   private volatile int[] array;
 
   private static int arrayIndex(int bitIndex) {
@@ -178,8 +182,7 @@ public class ConcurrentBitSet {
   }
 
   /**
-   * Clear method in presense of concurrency complicates everything to no end.
-   * PLEASE REWRITE EVERY OTHER METHOD IF EVER DECIDE TO IMPLEMENT THIS
+   * Set all bits to {@code false}.
    */
   public void clear() {
     long stamp = lock.writeLock();
