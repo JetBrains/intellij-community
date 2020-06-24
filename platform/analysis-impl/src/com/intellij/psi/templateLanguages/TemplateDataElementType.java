@@ -7,6 +7,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
@@ -135,7 +136,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   protected CharSequence createTemplateText(@NotNull CharSequence sourceCode,
                                             @NotNull Lexer baseLexer,
                                             @NotNull TemplateDataElementType.RangeCollector rangeCollector) {
-    if (requiresOldCreateTemplateText()) {
+    if (REQUIRES_OLD_CREATE_TEMPLATE_TEXT.getValue()) {
       return oldCreateTemplateText(sourceCode, baseLexer, rangeCollector);
     }
 
@@ -143,15 +144,21 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return ((RangeCollectorImpl)rangeCollector).applyTemplateDataModifications(sourceCode, modifications);
   }
 
-  private boolean requiresOldCreateTemplateText() {
-    try {
-      getClass().getDeclaredMethod("appendCurrentTemplateToken", StringBuilder.class, CharSequence.class, Lexer.class, RangeCollector.class);
+  private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      Class<? extends TemplateDataElementType> aClass = TemplateDataElementType.this.getClass();
+      if (TemplateDataElementType.class.equals(aClass)) return false;
+      try {
+        aClass.getDeclaredMethod("appendCurrentTemplateToken", StringBuilder.class, CharSequence.class, Lexer.class, RangeCollector.class);
+      }
+      catch (NoSuchMethodException e) {
+        return false;
+      }
+      return true;
     }
-    catch (NoSuchMethodException e) {
-      return false;
-    }
-    return true;
-  }
+  };
 
   private CharSequence oldCreateTemplateText(@NotNull CharSequence sourceCode,
                                              @NotNull Lexer baseLexer,
