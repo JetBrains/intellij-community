@@ -261,7 +261,14 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     override fun mouseMoved(e: MouseEvent?) {
       if (e == null) return
       val path = getPathIfInsideComponent(e.point)
-      hoverNode = path?.lastPathComponent as? ChangesBrowserNode<*>
+      val node = path?.lastPathComponent as? ChangesBrowserNode<*>
+      hoverNode = node
+
+      if (node != null) {
+        getFirstMatchingOperation(node)?.let {
+          toolTipText = it.actionText.get()
+        }
+      }
     }
 
     override fun mouseDragged(e: MouseEvent?) = Unit
