@@ -17,6 +17,7 @@ import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ public class BaseCompletionService extends CompletionService {
 
   @Nullable protected CompletionProcess myApiCompletionProcess;
 
+  @ApiStatus.Internal
   public static final Key<CompletionContributor> LOOKUP_ELEMENT_CONTRIBUTOR = Key.create("lookup element contributor");
 
   @Override
