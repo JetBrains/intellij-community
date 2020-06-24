@@ -141,6 +141,15 @@ object DynamicPlugins {
     if (classloadersFromUnloadedPlugins[descriptor.pluginId] != null) {
       return "Not allowing load/unload of ${descriptor.pluginId} because of incomplete previous unload operation for that plugin"
     }
+    descriptor.pluginDependencies?.let { pluginDependencies ->
+      for (pluginDependency in pluginDependencies) {
+        if (!pluginDependency.isOptional &&
+            !PluginManagerCore.isModuleDependency(pluginDependency.id) &&
+            PluginManagerCore.ourLoadedPlugins.none { it.pluginId == pluginDependency.id }) {
+          return "Required dependency ${pluginDependency.id} is not currently loaded"
+        }
+      }
+    }
 
     if (!RegistryManager.getInstance().`is`("ide.plugins.allow.unload")) {
       val canLoadSynchronously = allowLoadUnloadSynchronously(descriptor)

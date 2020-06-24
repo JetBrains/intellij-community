@@ -47,7 +47,7 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
   val pair = preparePluginDescriptor(pluginBuilder.text(), fs)
   val plugin = pair.first
   var descriptor = pair.second
-  assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue()
+  assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
   descriptor.setLoader(loader)
   try {
     loadPlugin(descriptor)
