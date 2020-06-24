@@ -153,12 +153,12 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   }
 
   @Nullable
-  protected VirtualFile findClassFile(String className) {
+  protected File findClassFile(String className) {
     return findClassFile(className, module)
   }
 
   @Nullable
-  protected VirtualFile findClassFile(String className, Module module) {
+  protected File findClassFile(String className, Module module) {
     return myCompilerTester.findClassFile(className, module)
   }
 
