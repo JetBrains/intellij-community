@@ -11,7 +11,7 @@ class EventLogConfigBuilder(private val container: ApacheContainer, private val 
   private var productVersion: String = PRODUCT_VERSION
   private var customSendHost: String? = null
   private var sendPath: String? = "dump-request.php"
-  private var whitelistPath: String = ""
+  private var metadataPath: String = ""
   private var fromBucket: Int = 0
   private var toBucket: Int = 256
 
@@ -25,8 +25,8 @@ class EventLogConfigBuilder(private val container: ApacheContainer, private val 
     return this
   }
 
-  fun withWhitelistUrlPath(path: String): EventLogConfigBuilder {
-    whitelistPath = path
+  fun withMetadataUrlPath(path: String): EventLogConfigBuilder {
+    metadataPath = path
     return this
   }
 
@@ -42,7 +42,7 @@ class EventLogConfigBuilder(private val container: ApacheContainer, private val 
 
   fun create() {
     val sendUrl = sendPath?.let { """"send": "${getSendUrl()}",""" } ?: ""
-    val whitelistUrl = container.getBaseUrl("$TEST_SERVER_ROOT/$whitelistPath").toString()
+    val metadataUrl = container.getBaseUrl("$TEST_SERVER_ROOT/$metadataPath").toString()
     val config = """
 {
   "productCode": "${PRODUCT_CODE}",
@@ -60,7 +60,7 @@ class EventLogConfigBuilder(private val container: ApacheContainer, private val 
       ],
       "endpoints": {
         $sendUrl
-        "whitelist": "$whitelistUrl"
+        "metadata": "$metadataUrl"
       }
     }
   ]

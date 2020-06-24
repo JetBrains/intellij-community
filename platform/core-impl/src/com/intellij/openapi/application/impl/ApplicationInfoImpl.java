@@ -361,7 +361,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       myEventLogSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS);
     }
     else {
-      myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/v2/%s/%s.json";
+      myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/v3/%s/%s.json";
     }
 
     Element tvElement = getChild(element, ELEMENT_JB_TV);
