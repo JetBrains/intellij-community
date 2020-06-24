@@ -101,7 +101,14 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     defaultExternalProject.sourceSets = getSourceSets(project, resolveSourceSetDependencies, sourceSetFinder)
     // Android Studio: provide the option to not build Gradle tasks list, because this triggers full task graph configuration, which is
     // very slow for large Android projects.
-    if (!Boolean.parseBoolean(String.valueOf(project.getProperties().get("idea.gradle.do.not.build.tasks")).trim())) {
+    final skipTasks;
+    try {
+      skipTasks = Boolean.parseBoolean(String.valueOf(project.getProperties().get("idea.gradle.do.not.build.tasks")).trim())
+    }
+    catch (Throwable ignored) {
+      skipTasks = false
+    }
+    if (!skipTasks) {
     defaultExternalProject.tasks = getTasks(project, tasksFactory)
     }
     defaultExternalProject.sourceCompatibility = getSourceCompatibility(project)
