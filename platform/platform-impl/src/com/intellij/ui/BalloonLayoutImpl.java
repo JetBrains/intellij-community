@@ -25,7 +25,7 @@ import java.awt.event.ComponentEvent;
 import java.util.List;
 import java.util.*;
 
-public class BalloonLayoutImpl implements BalloonLayout {
+public class BalloonLayoutImpl implements BalloonLayout, Disposable {
   private final ComponentAdapter myResizeListener = new ComponentAdapter() {
     @Override
     public void componentResized(@NotNull ComponentEvent e) {
