@@ -57,7 +57,7 @@ public final class PluginEnabler {
       Collections.reverse(sortedDescriptorsToDisable);
       boolean needRestart = false;
       for (IdeaPluginDescriptorImpl descriptor : sortedDescriptorsToDisable) {
-        if (!DynamicPlugins.unloadPluginWithProgress(project, parentComponent, descriptor, true)) {
+        if (!DynamicPlugins.unloadPluginWithProgress(project, parentComponent, descriptor, new DynamicPlugins.UnloadPluginOptions().withDisable(true))) {
           needRestart = true;
           break;
         }

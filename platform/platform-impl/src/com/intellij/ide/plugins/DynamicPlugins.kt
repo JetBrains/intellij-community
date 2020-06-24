@@ -370,8 +370,7 @@ object DynamicPlugins {
   fun unloadPluginWithProgress(project: Project? = null,
                                parentComponent: JComponent?,
                                pluginDescriptor: IdeaPluginDescriptorImpl,
-                               disable: Boolean = false,
-                               isUpdate: Boolean = false): Boolean {
+                               options: UnloadPluginOptions): Boolean {
     var result = false
     if (!allowLoadUnloadSynchronously(pluginDescriptor)) {
       runInAutoSaveDisabledMode {
@@ -384,7 +383,7 @@ object DynamicPlugins {
     }
     val indicator = PotemkinProgress("Unloading plugin ${pluginDescriptor.name}", project, parentComponent, null)
     indicator.runInSwingThread {
-      result = unloadPlugin(pluginDescriptor, UnloadPluginOptions(disable, isUpdate, save = false))
+      result = unloadPlugin(pluginDescriptor, options.withSave(false))
     }
     return result
   }
@@ -405,6 +404,7 @@ object DynamicPlugins {
     fun withWaitForClassloaderUnload(value: Boolean): UnloadPluginOptions { waitForClassloaderUnload = value; return this }
     fun withDisable(value: Boolean): UnloadPluginOptions { disable = value; return this }
     fun withRequireMemorySnapshot(value: Boolean): UnloadPluginOptions { requireMemorySnapshot = value; return this }
+    fun withSave(value: Boolean): UnloadPluginOptions { save = value; return this }
   }
 
   @JvmStatic
