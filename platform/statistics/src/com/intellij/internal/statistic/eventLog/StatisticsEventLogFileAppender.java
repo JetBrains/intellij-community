@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class StatisticsEventLogFileAppender extends FileAppender {
-  protected long maxFileAge = 14 * 24 * 60 * 60 * 1000;
+  protected long maxFileAge = 7 * 24 * 60 * 60 * 1000;
   protected long maxFileSize = 10 * 1024 * 1024;
 
   private long nextRollover = 0;
