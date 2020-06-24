@@ -193,7 +193,7 @@ public final class JsonSchemaCatalogManager {
     return contentRoot != null ? VfsUtilCore.findRelativePath(contentRoot, file, VfsUtilCore.VFS_SEPARATOR_CHAR) : null;
   }
 
-  private static class FileMatcher {
+  private static final class FileMatcher {
     private final JsonSchemaCatalogEntry myEntry;
     private PathMatcher myMatcher;
 
