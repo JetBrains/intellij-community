@@ -46,7 +46,9 @@ public final class ServiceManager {
    * @param serviceClass Service class to create key for.
    * @param <T>          Service class type.
    * @return Key instance.
+   * @deprecated Don't use this method; it has no benefit over normal ServiceManager.getService
    */
+  @Deprecated
   public static @NotNull <T> NotNullLazyKey<T, Project> createLazyKey(final @NotNull Class<? extends T> serviceClass) {
     return NotNullLazyKey.create("Service: " + serviceClass.getName(), project -> project.getService(serviceClass));
   }
