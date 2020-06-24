@@ -17,47 +17,56 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
+import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UIdentifier;
+import org.jetbrains.uast.UastCallKind;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.Set;
 
-public class FileEqualsUsageInspection extends DevKitInspectionBase {
+public class FileEqualsUsageInspection extends DevKitUastInspectionBase {
 
   static final String MESSAGE =
     "Do not use File.equals/hashCode/compareTo as they don't honor case-sensitivity on macOS. " +
-    "Please use FileUtil.filesEquals/fileHashCode/compareFiles instead";
+    "Please use FileUtil.filesEquals/fileHashCode/compareFiles instead.";
 
   private static final Set<String> METHOD_NAMES = ContainerUtil.immutableSet("equals", "compareTo", "hashCode");
 
   @Override
   @NotNull
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new JavaElementVisitor() {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
+
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        PsiElement resolved = methodExpression.resolve();
-        if (!(resolved instanceof PsiMethod)) return;
+      public boolean visitCallExpression(@NotNull UCallExpression node) {
+        inspectCallExpression(node, holder);
 
-        PsiMethod method = (PsiMethod)resolved;
-
-        PsiClass clazz = method.getContainingClass();
-        if (clazz == null) return;
-
-        if (CommonClassNames.JAVA_IO_FILE.equals(clazz.getQualifiedName()) &&
-            METHOD_NAMES.contains(method.getName())) {
-          if (JavaPsiFacade.getInstance(holder.getProject()).findClass(FileUtil.class.getName(),
-                                                                       expression.getResolveScope()) == null) {
-            return;
-          }
-          
-          holder.registerProblem(methodExpression, MESSAGE, ProblemHighlightType.LIKE_DEPRECATED);
-        }
+        return true;
       }
-    };
+    }, new Class[]{UCallExpression.class});
+  }
+
+  private static void inspectCallExpression(@NotNull UCallExpression node, @NotNull ProblemsHolder holder) {
+    if (node.getKind() != UastCallKind.METHOD_CALL) return;
+
+    final PsiMethod psiMethod = node.resolve();
+    if (psiMethod == null) return;
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    if (containingClass == null) return;
+    if (!CommonClassNames.JAVA_IO_FILE.equals(containingClass.getQualifiedName())) return;
+
+    if (!METHOD_NAMES.contains(node.getMethodName())) return;
+
+    final UIdentifier identifier = node.getMethodIdentifier();
+    if (identifier == null) return;
+    final PsiElement sourcePsi = identifier.getSourcePsi();
+    if (sourcePsi == null) return;
+
+    holder.registerProblem(sourcePsi, MESSAGE, ProblemHighlightType.LIKE_DEPRECATED);
   }
 }

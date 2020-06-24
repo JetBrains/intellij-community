@@ -147,7 +147,7 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UndesirableClassUsageInspection"/>
-    <localInspection language="JAVA" shortName="FileEqualsUsage" displayName="File.equals() usage"
+    <localInspection language="UAST" shortName="FileEqualsUsage" displayName="File.equals() usage"
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.FileEqualsUsageInspection"/>
