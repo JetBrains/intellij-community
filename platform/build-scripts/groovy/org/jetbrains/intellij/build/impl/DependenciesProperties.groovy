@@ -29,7 +29,7 @@ class DependenciesProperties {
   }()
 
   @Lazy
-  private static Properties props = {
+  private Properties props = {
     context.gradle.run('Preparing dependencies file', 'dependenciesFile')
     propertiesFile.newInputStream().withStream {
       Properties properties = new Properties()
