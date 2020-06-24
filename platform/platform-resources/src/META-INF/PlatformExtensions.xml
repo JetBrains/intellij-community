@@ -1001,9 +1001,9 @@
     <projectService serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeHintPersistentComponent" configurationSchemaKey="fileTypes"/>
     <fileTypeOverrider implementation="com.intellij.openapi.fileTypes.impl.FileTypeHintService"/>
 
-    <editorFloatingToolbarProvider implementation="com.intellij.openapi.editor.impl.ReaderModeFloatingToolbarProvider"/>
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="10000" description="HTML editor content loading timeout in ms."/>
+    <iw.actionProvider implementation="com.intellij.codeInsight.actions.ReaderModeActionProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
