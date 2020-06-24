@@ -72,7 +72,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_FILE;
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_HELP_MENU;
@@ -228,11 +227,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   private final class FlatWelcomeScreen extends AbstractWelcomeScreen implements WelcomeFrameUpdater {
     private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
     private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
-    public Consumer<List<NotificationType>> myEventListener;
     public Computable<Point> myEventLocation;
     private LinkLabel<Object> myUpdatePluginsLink;
     private boolean inDnd;
-    private BalloonLayoutImpl myBalloonLayout;
+    private WelcomeBalloonLayoutImpl myBalloonLayout;
 
     FlatWelcomeScreen() {
       mySlidingPanel.add("root", this);
@@ -390,11 +388,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         createActionLink(IdeBundle.message("action.Events"), AllIcons.Ide.Notification.NoEvents, actionLinkRef, new AnAction() {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            ((WelcomeBalloonLayoutImpl)myBalloonLayout).showPopup();
+            myBalloonLayout.showPopup();
           }
         });
       panel.setVisible(false);
-      myEventListener = types -> {
+      WelcomeBalloonLayoutImpl.BalloonNotificationListener balloonModelListener = types -> {
         NotificationType type = null;
         for (NotificationType t : types) {
           if (NotificationType.ERROR == t) {
@@ -420,7 +418,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         Point location = SwingUtilities.convertPoint(panel, 0, 0, getRootPane().getLayeredPane());
         return new Point(location.x, location.y + 5);
       };
-      myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myEventListener, myEventLocation);
+      myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myEventLocation);
+      ApplicationManager.getApplication().getMessageBus().connect(this)
+        .subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, balloonModelListener);
       return panel;
     }
 
