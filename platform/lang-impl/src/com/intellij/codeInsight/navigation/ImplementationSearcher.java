@@ -5,9 +5,12 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.SearchScope;
@@ -37,7 +40,13 @@ public class ImplementationSearcher {
   }
 
   protected static SearchScope getSearchScope(PsiElement element, Editor editor) {
-    return ReadAction.compute(() -> TargetElementUtil.getInstance().getSearchScope(editor, element));
+    try {
+      DumbService dumbService = ReadAction.compute(() -> DumbService.getInstance(element.getProject()));
+      return dumbService.runReadActionInSmartMode(() -> TargetElementUtil.getInstance().getSearchScope(editor, element));
+    }
+    catch (PsiInvalidElementAccessException e) {
+      throw new ProcessCanceledException(e);
+    }
   }
 
   protected PsiElement @Nullable("For the case the search has been cancelled") [] searchDefinitions(PsiElement element, Editor editor) {
