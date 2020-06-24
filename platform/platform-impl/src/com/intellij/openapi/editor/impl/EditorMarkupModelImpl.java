@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ex.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -268,33 +267,20 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     smallIconLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
-        if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-          myPopupManager.hidePopup();
-          if (analyzerStatus != null) {
-            analyzerStatus.getController().toggleProblemsView();
-          }
-        }
-        else {
-          AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(event, ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
-                                                                         statusAction.getTemplatePresentation(),
-                                                                         myEditor.getDataContext(), true, false);
-          ActionsCollector.getInstance().record(myEditor.getProject(), statusAction, actionEvent, null);
-          myPopupManager.showPopup(event);
+        myPopupManager.hidePopup();
+        if (analyzerStatus != null) {
+          analyzerStatus.getController().toggleProblemsView();
         }
       }
 
       @Override
       public void mouseEntered(MouseEvent event) {
-        if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-          myPopupManager.scheduleShow(event);
-        }
+        myPopupManager.scheduleShow(event);
       }
 
       @Override
       public void mouseExited(MouseEvent event) {
-        if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-          myPopupManager.scheduleHide();
-        }
+        myPopupManager.scheduleHide();
       }
 
     });
@@ -1470,14 +1456,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-        myPopupManager.hidePopup();
-        if (analyzerStatus != null) {
-          analyzerStatus.getController().toggleProblemsView();
-        }
-      }
-      else {
-        myPopupManager.showPopup(e.getInputEvent());
+      myPopupManager.hidePopup();
+      if (analyzerStatus != null) {
+        analyzerStatus.getController().toggleProblemsView();
       }
     }
 
@@ -1591,18 +1572,14 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         @Override
         public void mouseEntered(MouseEvent me) {
           mouseHover = true;
-          if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-            popupManager.scheduleShow(me);
-          }
+          popupManager.scheduleShow(me);
           repaint();
         }
 
         @Override
         public void mouseExited(MouseEvent me) {
           mouseHover = false;
-          if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-            popupManager.scheduleHide();
-          }
+          popupManager.scheduleHide();
           repaint();
         }
       };
