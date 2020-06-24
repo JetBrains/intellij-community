@@ -86,7 +86,7 @@ public class CommonJavaFragments {
     return fragment;
   }
 
-  public static <S extends ModuleBasedConfiguration> SettingsEditorFragment<S, ModuleClasspathCombo> moduleClasspath(
+  public static <S extends ModuleBasedConfiguration<?,?>> SettingsEditorFragment<S, ModuleClasspathCombo> moduleClasspath(
     ModuleClasspathCombo.Item option, Predicate<S> getter, BiConsumer<S, Boolean> setter) {
     ModuleClasspathCombo comboBox = new ModuleClasspathCombo(option);
     setMinimumWidth(comboBox, 400);
@@ -95,8 +95,17 @@ public class CommonJavaFragments {
                                         ExecutionBundle.message("group.java.options"),
                                         comboBox, 10,
                                         (s, c) -> { comboBox.reset(s); option.myOptionValue = getter.test(s); },
-                                        (s, c) -> { comboBox.applyTo(s); setter.accept(s, option.myOptionValue); },
-                                        s -> !s.isDefaultModuleSet());
+                                        (s, c) -> {
+                                          if (comboBox.isVisible()) {
+                                            comboBox.applyTo(s);
+                                            setter.accept(s, option.myOptionValue);
+                                          }
+                                          else {
+                                            s.setModule(s.getDefaultModule());
+                                            setter.accept(s, false);
+                                          }
+                                        },
+                                        s -> s.getDefaultModule() != s.getConfigurationModule().getModule());
   }
 
   @NotNull
