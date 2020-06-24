@@ -156,7 +156,7 @@ public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroup
     super.applyEditorTo(configuration);
     configuration.removeAllLogFiles();
     configuration.removeAllPredefinedLogFiles();
-
+    if (!isSelected()) return;
     for (int i = 0; i < myModel.getRowCount(); i++) {
       LogFileOptions options = myModel.getItem(i);
       if (Objects.equals(options.getPathPattern(), "")) {
