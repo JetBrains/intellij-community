@@ -102,10 +102,19 @@ public class UsageInfo {
                    @Nullable SmartPsiFileRange psiFileRange,
                    boolean dynamicUsage,
                    boolean nonCodeUsage) {
+    this(smartPointer, psiFileRange, dynamicUsage, nonCodeUsage, null);
+  }
+
+  public UsageInfo(@NotNull SmartPsiElementPointer<?> smartPointer,
+                   @Nullable SmartPsiFileRange psiFileRange,
+                   boolean dynamicUsage,
+                   boolean nonCodeUsage,
+                   @Nullable Class<? extends PsiReference> referenceClass) {
     myDynamicUsage = dynamicUsage;
     isNonCodeUsage = nonCodeUsage;
     myPsiFileRange = psiFileRange;
     mySmartPointer = smartPointer;
+    myReferenceClass = referenceClass;
   }
 
   // in case of find file by name, not by text inside. Since it can be a binary file, do not query for text offsets.
@@ -375,6 +384,6 @@ public class UsageInfo {
     TextRange range = segment == null ? null : TextRange.create(segment);
     SmartPsiFileRange psiFileRange = range == null ? null : smartPointerManager.createSmartPsiFileRangePointer(containingFile, range);
     SmartPsiElementPointer<PsiElement> pointer = element == null || !isValid() ? null : smartPointerManager.createSmartPsiElementPointer(element);
-    return pointer == null ? null : new UsageInfo(pointer, psiFileRange, isDynamicUsage(), isNonCodeUsage());
+    return pointer == null ? null : new UsageInfo(pointer, psiFileRange, isDynamicUsage(), isNonCodeUsage(), getReferenceClass());
   }
 }
