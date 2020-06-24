@@ -39,9 +39,7 @@ public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAw
       JBTerminalWidget newWidget = TerminalUtil.createTerminal(runner, tts, null);
       TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(tabInfo, newWidget, terminalFile.getSettingsProvider());
       tabInfo.setObject(newSessionVirtualFile);
-      TerminalSessionEditor editor = new TerminalSessionEditor(project, newSessionVirtualFile);
-      newWidget.moveDisposable(editor);
-      return editor;
+      return new TerminalSessionEditor(project, newSessionVirtualFile);
     }
   }
 

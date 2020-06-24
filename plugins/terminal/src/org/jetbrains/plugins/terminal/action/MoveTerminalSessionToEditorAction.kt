@@ -29,10 +29,9 @@ private class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActi
     val file = TerminalSessionVirtualFileImpl(tabInfo, terminalWidget, terminalView.terminalRunner.settingsProvider)
     tabInfo.setObject(file)
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, java.lang.Boolean.TRUE)
-    val fileEditor = FileEditorManager.getInstance(project).openFile(file, true).first()
+    FileEditorManager.getInstance(project).openFile(file, true).first()
     terminalWidget.listener = TerminalEditorWidgetListener(project, file)
 
-    terminalWidget.moveDisposable(fileEditor)
     terminalView.detachWidgetAndRemoveContent(content)
 
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null)
