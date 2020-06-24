@@ -3,10 +3,12 @@ package com.intellij.ide;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * Use to assert that no AWT events are pumped during some activity (e.g. action update, write operations, etc)
@@ -46,5 +48,16 @@ public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
         IdeEventQueue.getInstance().removePostprocessor(dispatcher);
       }
     };
+  }
+
+  public static <T> T prohibitEventsInside(@NonNls @NotNull String activityName, @NotNull Supplier<T> supplier) {
+    ProhibitAWTEvents dispatcher = new ProhibitAWTEvents(activityName);
+    IdeEventQueue.getInstance().addPostprocessor(dispatcher, null);
+    try {
+      return supplier.get();
+    }
+    finally {
+      IdeEventQueue.getInstance().removePostprocessor(dispatcher);
+    }
   }
 }
