@@ -152,7 +152,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   private static class MyUsageInfo extends UsageInfo {
     private final PsiElement myMovedElement;
     MyUsageInfo(@NotNull UsageInfo usageInfo, @NotNull PsiElement element) {
-      super(usageInfo.getSmartPointer(), usageInfo.getPsiFileRange(), usageInfo.isDynamicUsage(), usageInfo.isNonCodeUsage);
+      super(usageInfo.getSmartPointer(), usageInfo.getPsiFileRange(), usageInfo.isDynamicUsage(), usageInfo.isNonCodeUsage, usageInfo.getReferenceClass());
       myMovedElement = element;
     }
   }

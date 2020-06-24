@@ -27,6 +27,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.rules.*;
 import com.intellij.util.*;
@@ -216,6 +217,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @Override
   public void navigate(boolean focus) {
     if (canNavigate()) {
+      UsageViewStatisticsCollector.logUsageNavigate(getProject(), this);
       openTextEditor(focus);
     }
   }
