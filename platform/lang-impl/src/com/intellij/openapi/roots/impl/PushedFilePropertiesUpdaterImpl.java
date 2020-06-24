@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.MathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -311,7 +310,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<>(tasks);
     List<Future<?>> results = new ArrayList<>();
     if (tasks.size() > 1) {
-      int numThreads = MathUtil.clamp(tasks.size() - 1, 1, UnindexedFilesUpdater.getNumberOfIndexingThreads() - 1);
+      int numThreads = Math.max(Math.min(UnindexedFilesUpdater.getNumberOfIndexingThreads() - 1, tasks.size() - 1), 1);
 
       for (int i = 0; i < numThreads; ++i) {
         results.add(ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
