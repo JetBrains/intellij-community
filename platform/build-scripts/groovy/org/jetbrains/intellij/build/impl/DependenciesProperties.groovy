@@ -30,11 +30,13 @@ class DependenciesProperties {
 
   @Lazy
   private Properties props = {
-    context.gradle.run('Preparing dependencies file', 'dependenciesFile')
-    propertiesFile.newInputStream().withStream {
-      Properties properties = new Properties()
-      properties.load(it)
-      properties
+    synchronized (DependenciesProperties.class) {
+      context.gradle.run('Preparing dependencies file', 'dependenciesFile')
+      propertiesFile.newInputStream().withStream {
+        Properties properties = new Properties()
+        properties.load(it)
+        properties
+      }
     }
   }()
 
