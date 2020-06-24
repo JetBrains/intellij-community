@@ -483,19 +483,10 @@ class DistributionJARsBuilder {
 
     def resultLines = new ArrayList<String>()
     for (def line : lines) {
-      String modulePath, className;
-      if (!isWindows()) {
-        List<String> split = StringUtil.split(line, ":")
-        if (!(split.size() == 2)) continue
-        className = split.get(0)
-        modulePath = split.get(1)
-      } else {
-        // Convert "/D:/intellij-community/out/idea-ce/classes/production/XX" to "D:\intellij-community\out\idea-ce\classes\production\XX"
-        final int i = line.indexOf(':')
-        if (-1 == i) continue
-        className = line.substring(0, i);
-        modulePath = line.substring(i + 2).replace('/', '\\')
-      }
+      def i = line.indexOf(':')
+      if (-1 == i) continue
+      def className = line.substring(0, i)
+      def modulePath = line.substring(i + 1)
       if (modulePath.endsWith(".jar")) {
         String jarName = pathToToJarName.get(modulePath)
         //possible jar from a plugin
@@ -537,7 +528,7 @@ class DistributionJARsBuilder {
     for (def moduleName in allModules) {
       def module = buildContext.findModule(moduleName)
       if (module == null) continue
-      def classpath = buildContext.getModuleOutputPath(module)
+      def classpath = (isWindows()) ? '/' + buildContext.getModuleOutputPath(module).replace('\\', '/') : buildContext.getModuleOutputPath(module);
       pathToModuleName.put(classpath, moduleName)
     }
     return pathToModuleName
@@ -557,7 +548,8 @@ class DistributionJARsBuilder {
             jarName = candidate
           }
         }
-        libraryJarPathToJarName.put(libFile.getPath(), jarName)
+        def jarPath = (isWindows()) ? '/' + libFile.getPath().replace('\\', '/') : libFile.getPath();
+        libraryJarPathToJarName.put(jarPath, jarName)
       }
     }
     return libraryJarPathToJarName
@@ -579,8 +571,6 @@ class DistributionJARsBuilder {
     def jarFileNames = new LinkedHashSet()
     for (def line : lines) {
       def jarName
-      // For Windows Convert "/D:/intellij-community/out/idea-ce/classes/production/XX" to "D:\intellij-community\out\idea-ce\classes\production\XX"
-      line =  (!isWindows()) ? line : line.substring(1).replace('/', '\\')
       if (line.endsWith(".jar")) {
         jarName = pathToToJarName.get(line)
       }
