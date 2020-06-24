@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -16,9 +17,17 @@ import java.util.List;
  */
 public class TemplateDataModifications {
 
-  public static final TemplateDataModifications EMPTY = new TemplateDataModifications();
+  public static final TemplateDataModifications EMPTY = new TemplateDataModifications(Collections.emptyList());
 
-  final List<TextRange> myOuterAndRemoveRanges = new ArrayList<>();
+  final @NotNull List<TextRange> myOuterAndRemoveRanges;
+
+  public TemplateDataModifications() {
+    this(new ArrayList<>());
+  }
+
+  private TemplateDataModifications(@NotNull List<TextRange> ranges) {
+    myOuterAndRemoveRanges = ranges;
+  }
 
   /**
    * @see TemplateDataElementType.RangeCollector#addOuterRange(TextRange)
