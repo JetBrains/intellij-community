@@ -20,6 +20,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/AddFieldQuickFixTest/")
 public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
@@ -55,6 +56,11 @@ public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
 
   public void testFromUnusedParameterKeyword() {  // PY-1602
     doQuickFixTest(PyUnusedLocalInspection.class, "Add field 'foo' to class A");
+  }
+
+  // PY-21284
+  public void testAddFieldAddConstructorWithTypeAnnotation() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doQuickFixTest(PyUnresolvedReferencesInspection.class, "Add field 'param' to class DerivedClass"));
   }
 
 }
