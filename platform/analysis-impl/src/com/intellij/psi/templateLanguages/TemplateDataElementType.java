@@ -144,21 +144,19 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return ((RangeCollectorImpl)rangeCollector).applyTemplateDataModifications(sourceCode, modifications);
   }
 
-  private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = new NotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      Class<? extends TemplateDataElementType> aClass = TemplateDataElementType.this.getClass();
-      if (TemplateDataElementType.class.equals(aClass)) return false;
+  private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = NotNullLazyValue.createValue(() -> {
+    Class<?> aClass = this.getClass();
+    while (!TemplateDataElementType.class.equals(aClass)) {
       try {
         aClass.getDeclaredMethod("appendCurrentTemplateToken", StringBuilder.class, CharSequence.class, Lexer.class, RangeCollector.class);
+        return true;
       }
       catch (NoSuchMethodException e) {
-        return false;
+        aClass = aClass.getSuperclass();
       }
-      return true;
     }
-  };
+    return false;
+  });
 
   private CharSequence oldCreateTemplateText(@NotNull CharSequence sourceCode,
                                              @NotNull Lexer baseLexer,
@@ -202,7 +200,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         ": " + getRangeDump(currentRange, sourceCode) + " followed by " + getRangeDump(newRange, sourceCode);
       currentRange = newRange;
       if (baseLexer.getTokenType() == myTemplateElementType) {
-        appendCurrentTemplateToken(baseLexer, modifications);
+        TemplateDataModifications tokenModifications = appendCurrentTemplateToken(baseLexer);
+        modifications.addAll(tokenModifications);
       }
       else {
         modifications.addOuterRange(currentRange, getTemplateDataInsertionTokens().contains(baseLexer.getTokenType()));
@@ -220,7 +219,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * @deprecated Override {@link #appendCurrentTemplateToken(Lexer, TemplateDataModifications)} instead.
+   * @deprecated Override {@link #appendCurrentTemplateToken(Lexer)} instead.
    */
   @Deprecated
   protected void appendCurrentTemplateToken(@NotNull StringBuilder result,
@@ -230,7 +229,13 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     result.append(buf, lexer.getTokenStart(), lexer.getTokenEnd());
   }
 
-  protected void appendCurrentTemplateToken(@NotNull Lexer lexer, @NotNull TemplateDataModifications modifications) {
+  /**
+   * Collects modifications for the current token of the lexer. Called for each template token containing underlying language data.
+   *
+   * @return modifications need to be applied for the current token
+   */
+  protected @NotNull TemplateDataModifications appendCurrentTemplateToken(@NotNull Lexer lexer) {
+    return TemplateDataModifications.EMPTY;
   }
 
   /**

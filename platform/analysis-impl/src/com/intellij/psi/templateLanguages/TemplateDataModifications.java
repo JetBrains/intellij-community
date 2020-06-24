@@ -16,18 +16,39 @@ import java.util.List;
  */
 public class TemplateDataModifications {
 
+  public static final TemplateDataModifications EMPTY = new TemplateDataModifications();
+
   final List<TextRange> myOuterAndRemoveRanges = new ArrayList<>();
 
+  /**
+   * @see TemplateDataElementType.RangeCollector#addOuterRange(TextRange)
+   */
   public void addOuterRange(@NotNull TextRange newRange) {
     addOuterRange(newRange, false);
   }
 
+  /**
+   * @see TemplateDataElementType.RangeCollector#addOuterRange(TextRange, boolean)
+   */
   public void addOuterRange(@NotNull TextRange range, boolean isInsertion) {
     myOuterAndRemoveRanges.add(isInsertion ? new RangeCollectorImpl.InsertionRange(range.getStartOffset(), range.getEndOffset()) : range);
   }
 
+  /**
+   * @see TemplateDataElementType.RangeCollector#addRangeToRemove(TextRange)
+   */
   public void addRangeToRemove(int startOffset, @NotNull CharSequence textToInsert) {
     myOuterAndRemoveRanges.add(new RangeCollectorImpl.RangeToRemove(startOffset, textToInsert));
+  }
+
+  public static @NotNull TemplateDataModifications fromRangeToRemove(int startOffset, @NotNull CharSequence textToInsert) {
+    TemplateDataModifications modifications = new TemplateDataModifications();
+    modifications.addRangeToRemove(startOffset, textToInsert);
+    return modifications;
+  }
+
+  public boolean addAll(@NotNull TemplateDataModifications other) {
+    return myOuterAndRemoveRanges.addAll(other.myOuterAndRemoveRanges);
   }
 
   @TestOnly
