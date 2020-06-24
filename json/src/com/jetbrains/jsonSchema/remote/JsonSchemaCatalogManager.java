@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.impl.http.FileDownloadingAdapter;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileManager;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
@@ -34,7 +35,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class JsonSchemaCatalogManager {
+public final class JsonSchemaCatalogManager {
   static final String DEFAULT_CATALOG = "http://schemastore.org/api/json/catalog.json";
   static final String DEFAULT_CATALOG_HTTPS = "https://schemastore.azurewebsites.net/api/json/catalog.json";
   private final @NotNull Project myProject;
@@ -114,7 +115,7 @@ public class JsonSchemaCatalogManager {
     return ContainerUtil.emptyList();
   }
 
-  private final Map<Runnable, FileDownloadingAdapter> myDownloadingAdapters = ContainerUtil.createConcurrentWeakMap();
+  private final Map<Runnable, FileDownloadingAdapter> myDownloadingAdapters = CollectionFactory.createConcurrentWeakMap();
   public void registerCatalogUpdateCallback(Runnable callback) {
     if (myCatalog instanceof HttpVirtualFile) {
       RemoteFileInfo info = ((HttpVirtualFile)myCatalog).getFileInfo();

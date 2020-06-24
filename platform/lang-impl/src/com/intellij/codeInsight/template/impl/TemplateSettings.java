@@ -19,13 +19,13 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import kotlin.Lazy;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 
 @State(
@@ -520,15 +520,22 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
   private void readDefTemplate(@NotNull Object requestor,
                                @NotNull String defTemplate,
-                               boolean registerTemplate, ClassLoader loader, PluginInfo info) throws JDOMException, InvalidDataException, IOException {
-    InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(requestor, defTemplate);
-    if (inputStream == null) {
-      LOG.error("Unable to find template resource: " + defTemplate +
-                "; classLoader: " + loader +
-                "; plugin: " + info);
+                               boolean registerTemplate, ClassLoader loader, PluginInfo info) throws JDOMException {
+    Element element;
+
+    try {
+      URL defaults = DecodeDefaultsUtil.getDefaults(requestor, defTemplate);
+      if (defaults == null) {
+        LOG.error("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
+        return;
+      }
+      element = JDOMUtil.load(URLUtil.openStream(defaults));
+    }
+    catch (IOException e) {
+      LOG.error("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e);
       return;
     }
-    Element element = JDOMUtil.load(inputStream);
+
     TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), loader);
     if (defGroup != null) {
       for (TemplateImpl template : defGroup.getElements()) {

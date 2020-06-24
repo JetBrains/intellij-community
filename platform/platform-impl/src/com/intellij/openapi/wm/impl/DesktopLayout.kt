@@ -8,29 +8,20 @@ import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.util.xmlb.XmlSerializer
-import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
 
-class DesktopLayout {
+class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap<String, WindowInfoImpl>()) {
   companion object {
     internal const val TAG = "layout"
   }
 
-  /**
-   * Map between `id`s `WindowInfo`s.
-   */
-  private val idToInfo = THashMap<String, WindowInfoImpl>()
-
   fun copy(): DesktopLayout {
-    val result = DesktopLayout()
-    result.idToInfo.ensureCapacity(idToInfo.size)
-    idToInfo.forEachEntry { id, info ->
-      val newInfo = info.copy()
-      result.idToInfo.put(id, newInfo)
-      true
+    val map = HashMap<String, WindowInfoImpl>(idToInfo.size)
+    for (entry in idToInfo) {
+      map.put(entry.key, entry.value.copy())
     }
-    return result
+    return DesktopLayout(map)
   }
 
   /**
@@ -126,7 +117,7 @@ class DesktopLayout {
 
   val stateModificationCount: Long
     get() {
-      if (idToInfo.isEmpty) {
+      if (idToInfo.isEmpty()) {
         return 0
       }
 
@@ -138,7 +129,7 @@ class DesktopLayout {
     }
 
   fun writeExternal(tagName: String): Element? {
-    if (idToInfo.isEmpty) {
+    if (idToInfo.isEmpty()) {
       return null
     }
 

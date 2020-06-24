@@ -62,7 +62,7 @@ public final class DecodeDefaultsUtil {
 
   public static @Nullable InputStream getDefaultsInputStream(Object requestor, @NotNull String componentResourcePath) {
     try {
-      final URL defaults = getDefaults(requestor, componentResourcePath);
+      URL defaults = getDefaults(requestor, componentResourcePath);
       return defaults == null ? null : URLUtil.openStream(defaults);
     }
     catch (IOException e) {
