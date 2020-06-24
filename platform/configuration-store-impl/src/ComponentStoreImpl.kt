@@ -6,7 +6,6 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
+import java.net.URL
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -334,11 +334,8 @@ abstract class ComponentStoreImpl : IComponentStore {
       return null
     }
 
-    try {
-      getDefaultState(component, componentName, Element::class.java)?.let { component.readExternal(it) }
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
+    getDefaultState(component, componentName, Element::class.java)?.let {
+      component.readExternal(it)
     }
 
     val element = storageManager
@@ -495,9 +492,9 @@ abstract class ComponentStoreImpl : IComponentStore {
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
 
   private fun <T : Any> getDefaultState(component: Any, componentName: String, stateClass: Class<T>): T? {
-    val url = DecodeDefaultsUtil.getDefaults(component, componentName) ?: return null
+    val url = getDefaultResourceUrl(component, componentName) ?: return null
     try {
-      val element = JDOMUtil.load(url)
+      val element = JDOMUtil.load(getDefaultResourceUrl(component, componentName) ?: return null)
       getPathMacroManagerForDefaults()?.expandPaths(element)
       return deserializeState(element, stateClass, null)
     }
@@ -703,4 +700,9 @@ internal suspend inline fun <T> withEdtContext(disposable: ComponentManager?, cr
 
 private fun getComponentName(component: Any): String {
   return if (component is NamedComponent) component.componentName else component.javaClass.name
+}
+
+private fun getDefaultResourceUrl(component: Any, componentResourcePath: String): URL? {
+  return component.javaClass.getResource("/idea/$componentResourcePath")
+         ?: component.javaClass.getResource("/$componentResourcePath")
 }
