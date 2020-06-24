@@ -22,7 +22,7 @@
   <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="github.use.oauth" description="Use OAuth to log in to github.com" defaultValue="false"/>
+    <registryKey key="github.use.oauth" description="Use OAuth to log in to github.com" defaultValue="true"/>
     <httpRequestHandler implementation="org.jetbrains.plugins.github.authentication.GHOAuthCallbackHandler"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
