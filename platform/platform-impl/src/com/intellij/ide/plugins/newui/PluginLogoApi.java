@@ -26,7 +26,7 @@ import java.util.zip.ZipFile;
 /**
  * @author Alexander Lobas
  */
-public class PluginLogoApi {
+public final class PluginLogoApi {
   /**
    * Direct load image from local dir or jar based plugin without background task and caches.
    */

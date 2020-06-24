@@ -39,7 +39,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     abstract void setBeanValue(Object instance, @NotNull Object value);
   }
 
-  private static class BeanFieldAccessor extends BeanPropertyAccessor {
+  private static final class BeanFieldAccessor extends BeanPropertyAccessor {
     private final String myFieldName;
     private final Class myValueClass;
 
@@ -97,7 +97,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
   }
 
-  private static class BeanMethodAccessor<T> extends BeanPropertyAccessor {
+  private static final class BeanMethodAccessor<T> extends BeanPropertyAccessor {
     private final Getter<? extends T> myGetter;
     private final Setter<? super T> mySetter;
 
@@ -118,7 +118,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
   }
 
-  private static class BeanKPropertyAccessor<T> extends BeanPropertyAccessor {
+  private static final class BeanKPropertyAccessor<T> extends BeanPropertyAccessor {
     private final KMutableProperty0<T> myProperty;
 
     private BeanKPropertyAccessor(KMutableProperty0<T> property) {
@@ -173,7 +173,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     abstract void setComponentValue(Object value);
   }
 
-  private static class CheckboxField extends BeanField<JCheckBox> {
+  private static final class CheckboxField extends BeanField<JCheckBox> {
     private final String myTitle;
 
     private CheckboxField(final String fieldName, final String title) {

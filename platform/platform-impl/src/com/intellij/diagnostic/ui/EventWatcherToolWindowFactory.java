@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.ui;
 
 import com.intellij.diagnostic.EventWatcher;
@@ -136,7 +136,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
         .createContent(panel, tableName, false);
     }
 
-    private static class FunctionBasedColumnInfo<Item extends Comparable<? super Item>, Aspect extends Comparable<? super Aspect>>
+    private static final class FunctionBasedColumnInfo<Item extends Comparable<? super Item>, Aspect extends Comparable<? super Aspect>>
       extends ColumnInfo<Item, Aspect> {
 
       @NotNull

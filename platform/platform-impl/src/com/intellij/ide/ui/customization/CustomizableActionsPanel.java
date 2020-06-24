@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -610,7 +610,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class AddActionActionTreeSelectionAction extends TreeSelectionAction {
+  private final class AddActionActionTreeSelectionAction extends TreeSelectionAction {
     private AddActionActionTreeSelectionAction() {
       super(IdeBundle.messagePointer("button.add.action"));
     }
@@ -653,7 +653,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class AddSeparatorAction extends TreeSelectionAction {
+  private final class AddSeparatorAction extends TreeSelectionAction {
     private AddSeparatorAction() {
       super(IdeBundle.messagePointer("button.add.separator"));
     }
@@ -683,7 +683,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class RemoveAction extends TreeSelectionAction {
+  private final class RemoveAction extends TreeSelectionAction {
     private RemoveAction() {
       super(IdeBundle.messagePointer("button.remove"), Presentation.NULL_STRING, AllIcons.General.Remove);
       ShortcutSet shortcutSet = KeymapUtil.filterKeyStrokes(CommonShortcuts.getDelete(),
@@ -710,7 +710,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class EditIconAction extends TreeSelectionAction {
+  private final class EditIconAction extends TreeSelectionAction {
     private EditIconAction() {
       super(IdeBundle.messagePointer("button.edit.action.icon"), Presentation.NULL_STRING, AllIcons.Actions.Edit);
       registerCustomShortcutSet(CommonShortcuts.getEditSource(), myPanel);
@@ -748,7 +748,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class MoveUpAction extends TreeSelectionAction {
+  private final class MoveUpAction extends TreeSelectionAction {
     private MoveUpAction() {
       super(IdeBundle.messagePointer("button.move.up"), Presentation.NULL_STRING, AllIcons.Actions.MoveUp);
       registerCustomShortcutSet(CommonShortcuts.MOVE_UP, myPanel);
@@ -782,7 +782,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class MoveDownAction extends TreeSelectionAction {
+  private final class MoveDownAction extends TreeSelectionAction {
     private MoveDownAction() {
       super(IdeBundle.messagePointer("button.move.down"), Presentation.NULL_STRING, AllIcons.Actions.MoveDown);
       registerCustomShortcutSet(CommonShortcuts.MOVE_DOWN, myPanel);
@@ -817,7 +817,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class RestoreSelectionAction extends DumbAwareAction {
+  private final class RestoreSelectionAction extends DumbAwareAction {
     private RestoreSelectionAction() {
       super(IdeBundle.messagePointer("button.restore.selected.groups"));
     }
@@ -874,7 +874,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class RestoreAllAction extends DumbAwareAction {
+  private final class RestoreAllAction extends DumbAwareAction {
     private RestoreAllAction() {
       super(IdeBundle.messagePointer("button.restore.all"));
     }

@@ -159,7 +159,7 @@ public class JobLauncherImpl extends JobLauncher {
     return task;
   }
 
-  private static class VoidForkJoinTask implements Job<Void> {
+  private static final class VoidForkJoinTask implements Job<Void> {
     private final Runnable myAction;
     private final Consumer<? super Future<?>> myOnDoneCallback;
     private enum Status { STARTED, EXECUTED } // null=not yet executed, STARTED=started execution, EXECUTED=finished
@@ -260,7 +260,7 @@ public class JobLauncherImpl extends JobLauncher {
                                   @NotNull final ProgressIndicator progress,
                                   @NotNull final T tombStone,
                                   @NotNull final Processor<? super T> thingProcessor) {
-    class MyTask implements Callable<Boolean> {
+    final class MyTask implements Callable<Boolean> {
       private final int mySeq;
       private boolean result;
 

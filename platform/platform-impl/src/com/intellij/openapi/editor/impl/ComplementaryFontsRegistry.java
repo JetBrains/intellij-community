@@ -344,7 +344,7 @@ public final class ComplementaryFontsRegistry {
     }
   }
 
-  private static class FontKey implements Cloneable {
+  private static final class FontKey implements Cloneable {
     private int mySize;
     private boolean myUseLigatures;
     private FontRenderContext myContext;
@@ -388,7 +388,7 @@ public final class ComplementaryFontsRegistry {
     }
   }
 
-  private static class FallBackInfo {
+  private static final class FallBackInfo {
     private final Font myBaseFont;
     private final int myOriginalStyle;
     private final Map<FontKey, FontInfo> myFontInfoMap = new HashMap<>();

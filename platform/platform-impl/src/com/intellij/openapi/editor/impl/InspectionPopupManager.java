@@ -339,7 +339,7 @@ class InspectionPopupManager {
   }
 
 
-  private static class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
+  private static final class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     private MenuAction(@NotNull List<? extends AnAction> actions, @NotNull AnAction compactViewAction) {
       setPopup(true);
       addAll(actions);
@@ -347,7 +347,7 @@ class InspectionPopupManager {
     }
   }
 
-  private static class TrackableLinkLabel extends LinkLabel<Object> {
+  private static final class TrackableLinkLabel extends LinkLabel<Object> {
     private InputEvent myEvent;
 
     private TrackableLinkLabel(@NotNull String text, @NotNull Runnable action) {

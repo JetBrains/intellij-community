@@ -1397,7 +1397,7 @@ public class PluginManagerConfigurable
     Downloads, Name, Rating, Relevance, Updated
   }
 
-  private class MarketplaceSortByAction extends ToggleAction implements DumbAware {
+  private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
     private final SortBySearchOption myOption;
     private boolean myState;
 
@@ -1451,7 +1451,7 @@ public class PluginManagerConfigurable
     Downloaded, NeedUpdate, Enabled, Disabled, Invalid, Bundled
   }
 
-  private class InstalledSearchOptionAction extends ToggleAction implements DumbAware {
+  private final class InstalledSearchOptionAction extends ToggleAction implements DumbAware {
     private final InstalledSearchOption myOption;
     private boolean myState;
 
@@ -1508,7 +1508,7 @@ public class PluginManagerConfigurable
   private static class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
   }
 
-  private class ChangePluginStateAction extends DumbAwareAction {
+  private final class ChangePluginStateAction extends DumbAwareAction {
     private final boolean myEnable;
 
     private ChangePluginStateAction(boolean enable) {
@@ -1761,7 +1761,7 @@ public class PluginManagerConfigurable
     };
   }
 
-  private class InstallFromDiskAction extends DumbAwareAction {
+  private final class InstallFromDiskAction extends DumbAwareAction {
     private InstallFromDiskAction() {super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"));}
 
     @Override

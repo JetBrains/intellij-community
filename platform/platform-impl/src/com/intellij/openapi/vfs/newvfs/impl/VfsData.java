@@ -158,7 +158,7 @@ public class VfsData {
     return segment != null && segment.myObjectArray.get(getOffset(id)) != null;
   }
 
-  public static class FileAlreadyCreatedException extends RuntimeException {
+  public static final class FileAlreadyCreatedException extends RuntimeException {
     private FileAlreadyCreatedException(@NotNull String message) {
       super(message);
     }

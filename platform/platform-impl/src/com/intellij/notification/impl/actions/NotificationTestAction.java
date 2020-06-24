@@ -286,7 +286,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
       }
     }
 
-    private class MyAnAction extends AnAction {
+    private final class MyAnAction extends AnAction {
       private MyAnAction(@Nullable String text) {
         if (text != null) {
           if (text.endsWith(".png")) {

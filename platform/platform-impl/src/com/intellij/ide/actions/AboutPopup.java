@@ -609,7 +609,7 @@ public final class AboutPopup {
       }
     }
 
-    private static class Link implements ActionListener {
+    private static final class Link implements ActionListener {
       private final Rectangle myRectangle;
       private final ActionListener myAction;
 

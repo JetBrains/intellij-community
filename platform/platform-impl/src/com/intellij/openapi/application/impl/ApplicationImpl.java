@@ -1268,7 +1268,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private class ReadAccessToken extends AccessToken {
+  private final class ReadAccessToken extends AccessToken {
     private ReadAccessToken() {
       acquireReadLock(Runnable.class);
     }

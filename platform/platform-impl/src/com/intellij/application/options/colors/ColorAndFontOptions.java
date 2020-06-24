@@ -732,7 +732,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
   }
 
-  private static class SchemeTextAttributesDescription extends TextAttributesDescription {
+  private static final class SchemeTextAttributesDescription extends TextAttributesDescription {
     @NotNull private final TextAttributes myInitialAttributes;
     @NotNull private final TextAttributesKey key;
 
@@ -1178,7 +1178,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
   }
 
-  private static class MyTempColorScheme extends MyColorScheme {
+  private static final class MyTempColorScheme extends MyColorScheme {
     private MyTempColorScheme(@NotNull AbstractColorsScheme parentScheme) {
       super(parentScheme);
     }
@@ -1310,7 +1310,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return child == null ? null : child.createPanel();
   }
 
-  private class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll {
+  private final class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll {
     private NewColorAndFontPanel mySubPanel;
     private boolean mySubInitInvoked = false;
     @NotNull private final ColorAndFontPanelFactory myFactory;

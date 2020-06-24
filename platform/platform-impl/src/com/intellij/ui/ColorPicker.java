@@ -548,7 +548,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     return result;
   }
 
-  private static class ColorWheelPanel extends JPanel {
+  private static final class ColorWheelPanel extends JPanel {
     private final ColorWheel myColorWheel;
     private final SlideComponent myBrightnessComponent;
     private SlideComponent myOpacityComponent = null;
@@ -601,7 +601,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  private static class ColorWheel extends JComponent {
+  private static final class ColorWheel extends JComponent {
     private static final int BORDER_SIZE = 5;
     private float myBrightness = 1f;
     private float myHue = 1f;
@@ -767,7 +767,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  private static class ColorPreviewComponent extends JComponent {
+  private static final class ColorPreviewComponent extends JComponent {
     private Color myColor;
 
     private ColorPreviewComponent() {
@@ -870,7 +870,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  private static class RecentColorsComponent extends JComponent {
+  private static final class RecentColorsComponent extends JComponent {
     private static final int WIDTH = 10 * 30 + 13;
     private static final int HEIGHT = 62 + 3;
 
@@ -1161,7 +1161,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  private static class DefaultColorPipette extends ColorPipetteBase {
+  private static final class DefaultColorPipette extends ColorPipetteBase {
     private static final int SIZE = 30;
     private static final int DIALOG_SIZE = SIZE - 4;
     private static final Point HOT_SPOT = new Point(DIALOG_SIZE / 2, DIALOG_SIZE / 2);

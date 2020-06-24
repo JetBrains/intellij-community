@@ -754,7 +754,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class ClearErrorsAction extends AbstractAction {
+  private final class ClearErrorsAction extends AbstractAction {
     private ClearErrorsAction() {
       super(DiagnosticBundle.message("error.dialog.clear.all.action"));
     }
@@ -766,7 +766,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class AnalyzeAction extends AbstractAction {
+  private final class AnalyzeAction extends AbstractAction {
     private final AnAction myAnalyze;
 
     private AnalyzeAction(AnAction analyze) {

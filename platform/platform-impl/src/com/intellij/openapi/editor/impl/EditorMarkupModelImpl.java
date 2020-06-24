@@ -519,7 +519,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     ActivityTracker.getInstance().inc();
   }
 
-  private static class PositionedStripe {
+  private static final class PositionedStripe {
     private @NotNull Color color;
     private int yEnd;
     private final boolean thin;
@@ -1548,7 +1548,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private static class StatusButton extends JPanel {
+  private static final class StatusButton extends JPanel {
     private static final int LEFT_RIGHT_INDENT = 5;
     private static final int INTER_GROUP_OFFSET = 6;
 
@@ -1932,7 +1932,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private class MarkupModelDelegateAction extends DumbAwareAction implements ActionWithDelegate<AnAction> {
+  private final class MarkupModelDelegateAction extends DumbAwareAction implements ActionWithDelegate<AnAction> {
     private final AnAction myDelegate;
 
     private MarkupModelDelegateAction(AnAction delegate, @NotNull Icon icon) {

@@ -78,7 +78,7 @@ public final class DirectoryAccessChecker {
     DirectoryFilter ACCEPTING_FILTER = (dir, name) -> true;
   }
 
-  private static class LinuxDirectoryFilter implements DirectoryFilter {
+  private static final class LinuxDirectoryFilter implements DirectoryFilter {
     private static final FileSystem NFS = new NFS();
     private static final FileSystem CIFS = new CIFS();
 

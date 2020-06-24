@@ -425,7 +425,7 @@ public final class IdeMouseEventDispatcher {
     return root;
   }
 
-  private static class BlockState {
+  private static final class BlockState {
     private int currentEventId;
     private final IdeEventQueue.BlockMode blockMode;
 

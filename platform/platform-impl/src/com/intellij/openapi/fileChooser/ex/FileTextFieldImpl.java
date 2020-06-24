@@ -259,7 +259,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     public String myFieldText;
   }
 
-  private static class Separator {
+  private static final class Separator {
     private final String myText;
 
     private Separator(final String text) {
@@ -456,10 +456,10 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
     FileTextFieldUtil.processCompletion(result, myFinder, myFilter, myFileSpitRegExp, macroMap);
   }
-  
-  static void addMacroPaths(final CompletionResult result, 
-                                    final String typedText, 
-                                    @NotNull Finder finder, 
+
+  static void addMacroPaths(final CompletionResult result,
+                                    final String typedText,
+                                    @NotNull Finder finder,
                                     Map<String, String> macroMap) {
     result.myMacros = new ArrayList<>();
 

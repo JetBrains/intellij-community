@@ -130,14 +130,14 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class UiInspectorNotification extends Notification {
+  private static final class UiInspectorNotification extends Notification {
     private UiInspectorNotification() {
       super(Notifications.SYSTEM_MESSAGES_GROUP_ID, "UI Inspector", "Control-Alt-Click to view component info!",
             NotificationType.INFORMATION);
     }
   }
 
-  private static class InspectorWindow extends JDialog {
+  private static final class InspectorWindow extends JDialog {
     private InspectorTable myInspectorTable;
     @NotNull private final List<Component> myComponents = new ArrayList<>();
     private List<? extends PropertyBean> myInfo;
@@ -556,7 +556,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     public abstract void onComponentsChanged(List<Component> components);
 
-    private static class ComponentNode extends DefaultMutableTreeNode  {
+    private static final class ComponentNode extends DefaultMutableTreeNode  {
       private final Component myComponent;
       String myText;
 
@@ -634,7 +634,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class HighlightComponent extends JComponent {
+  private static final class HighlightComponent extends JComponent {
     @NotNull private final Color myColor;
     @NotNull private final Insets myInsets;
 
@@ -673,7 +673,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class InspectorTable extends JPanel {
+  private static final class InspectorTable extends JPanel {
     InspectorTableModel myModel;
     DimensionsComponent myDimensionComponent;
 
@@ -773,7 +773,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class DimensionsComponent extends JComponent {
+  private static final class DimensionsComponent extends JComponent {
     Component myComponent;
     int myWidth;
     int myHeight;

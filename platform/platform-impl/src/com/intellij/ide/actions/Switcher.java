@@ -1398,7 +1398,7 @@ public final class Switcher extends AnAction implements DumbAware {
     }
   }
 
-  private static class MyCheckBox extends JBCheckBox {
+  private static final class MyCheckBox extends JBCheckBox {
     private MyCheckBox(@NotNull String actionId, boolean selected) {
       super(layoutText(actionId), selected);
       setOpaque(false);

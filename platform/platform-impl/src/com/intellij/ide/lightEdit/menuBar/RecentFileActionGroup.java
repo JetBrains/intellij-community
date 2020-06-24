@@ -60,7 +60,7 @@ class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisi
     return new ArrayList<>(result);
   }
 
-  private static class OpenFileAction extends DumbAwareAction implements LightEditCompatible {
+  private static final class OpenFileAction extends DumbAwareAction implements LightEditCompatible {
     private final VirtualFile myFile;
 
     private OpenFileAction(@NotNull VirtualFile file) {

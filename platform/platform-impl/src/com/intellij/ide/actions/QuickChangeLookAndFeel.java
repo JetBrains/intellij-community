@@ -121,7 +121,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     return LafManager.getInstance().getInstalledLookAndFeels().length > 1;
   }
 
-  private static class LafChangeAction extends DumbAwareAction {
+  private static final class LafChangeAction extends DumbAwareAction {
     private final UIManager.LookAndFeelInfo myLookAndFeelInfo;
 
     private LafChangeAction(UIManager.LookAndFeelInfo lf, boolean currentLaf) {

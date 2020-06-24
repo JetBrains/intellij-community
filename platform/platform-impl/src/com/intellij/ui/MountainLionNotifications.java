@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -18,7 +18,7 @@ import static com.intellij.ui.mac.foundation.Foundation.nsString;
 /**
  * @author Dennis.Ushakov
  */
-class MountainLionNotifications implements SystemNotificationsImpl.Notifier {
+final class MountainLionNotifications implements SystemNotificationsImpl.Notifier {
   private static MountainLionNotifications ourInstance;
 
   public static synchronized MountainLionNotifications getInstance() {

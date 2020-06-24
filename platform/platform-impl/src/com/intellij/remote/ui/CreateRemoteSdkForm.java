@@ -484,7 +484,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     boolean isBrowsingAvailable();
   }
 
-  private static class UnsupportedCredentialsTypeHandler implements TypeHandler {
+  private static final class UnsupportedCredentialsTypeHandler implements TypeHandler {
     @NotNull private final JBRadioButton myTypeButton;
     @NotNull private final JPanel myPanel;
 

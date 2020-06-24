@@ -457,7 +457,7 @@ public class TabbedPaneWrapper  {
     TabWrapper createTabWrapper(@NotNull JComponent component);
   }
 
-  private static class JTabbedPaneFactory implements TabFactory {
+  private static final class JTabbedPaneFactory implements TabFactory {
     private final TabbedPaneWrapper myWrapper;
 
     private JTabbedPaneFactory(TabbedPaneWrapper wrapper) {
@@ -483,7 +483,7 @@ public class TabbedPaneWrapper  {
     }
   }
 
-  private static class JBTabsFactory implements TabFactory {
+  private static final class JBTabsFactory implements TabFactory {
 
     private final Project myProject;
     private final Disposable myParent;

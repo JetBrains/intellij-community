@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltip;
@@ -73,7 +73,7 @@ public class HintManagerImpl extends HintManager {
   public interface ActionToIgnore {
   }
 
-  private static class HintInfo {
+  private static final class HintInfo {
     final LightweightHint hint;
     @HideFlags final int flags;
     private final boolean reviveOnEditorChange;
@@ -1015,7 +1015,7 @@ public class HintManagerImpl extends HintManager {
     }
   }
 
-  private static class EditorHintListenerHolder {
+  private static final class EditorHintListenerHolder {
     private static final EditorHintListener ourEditorHintPublisher =
       ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorHintListener.TOPIC);
 

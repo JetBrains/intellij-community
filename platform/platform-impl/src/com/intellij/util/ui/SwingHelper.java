@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -649,7 +649,7 @@ public class SwingHelper {
     return comp;
   }
 
-  private static class CopyLinkAction extends DumbAwareAction {
+  private static final class CopyLinkAction extends DumbAwareAction {
 
     private final String myUrl;
 
@@ -670,7 +670,7 @@ public class SwingHelper {
     }
   }
 
-  private static class OpenLinkInBrowser extends DumbAwareAction {
+  private static final class OpenLinkInBrowser extends DumbAwareAction {
 
     private final String myUrl;
 

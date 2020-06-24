@@ -376,7 +376,7 @@ public final class LightToolWindow extends JPanel {
     }
   }
 
-  private class MyViewModeAction extends ToolWindowViewModeAction {
+  private final class MyViewModeAction extends ToolWindowViewModeAction {
     private MyViewModeAction(@NotNull ViewMode mode) {
       super(mode);
       ActionUtil.copyFrom(this, mode.getActionID());

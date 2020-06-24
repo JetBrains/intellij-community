@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.jdkEx.JdkEx;
@@ -74,7 +74,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   }
 
   // AWT-based decorator
-  private static class WinMainFrameDecorator extends IdeFrameDecorator {
+  private static final class WinMainFrameDecorator extends IdeFrameDecorator {
     private WinMainFrameDecorator(@NotNull JFrame frame) {
       super(frame);
     }
@@ -130,7 +130,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   }
 
   // Extended WM Hints-based decorator
-  private static class EWMHFrameDecorator extends IdeFrameDecorator {
+  private static final class EWMHFrameDecorator extends IdeFrameDecorator {
     private Boolean myRequestedState = null;
 
     private EWMHFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {

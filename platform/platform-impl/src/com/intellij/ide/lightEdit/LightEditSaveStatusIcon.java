@@ -11,7 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 
 @SuppressWarnings("SameParameterValue")
-public class LightEditSaveStatusIcon extends ColorIcon {
+public final class LightEditSaveStatusIcon extends ColorIcon {
   private final static int BASE_ICON_SIZE = 7;
 
   private LightEditSaveStatusIcon(@NotNull Color color) {

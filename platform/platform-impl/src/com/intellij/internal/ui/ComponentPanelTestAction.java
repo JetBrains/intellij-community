@@ -89,7 +89,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UseOfSystemOutOrSystemErr"})
-  private static class ComponentPanelTest extends DialogWrapper {
+  private static final class ComponentPanelTest extends DialogWrapper {
 
     private static final Set<String> ALLOWED_VALUES = ContainerUtil
       .set("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
@@ -672,7 +672,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return JBUI.Panels.simplePanel().addToTop(panel);
     }
 
-    private class ProgressTimerRequest implements Runnable {
+    private final class ProgressTimerRequest implements Runnable {
       private final JProgressBar myProgressBar;
 
       private ProgressTimerRequest(JProgressBar progressBar) {

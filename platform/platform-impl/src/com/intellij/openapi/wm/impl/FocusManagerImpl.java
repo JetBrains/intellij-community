@@ -321,7 +321,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     }
   }
 
-  private static class FurtherRequestor implements FocusRequestor {
+  private static final class FurtherRequestor implements FocusRequestor {
     private final IdeFocusManager myManager;
     private final Expirable myExpirable;
     @SuppressWarnings({"FieldCanBeLocal", "unused"})

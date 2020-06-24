@@ -1110,7 +1110,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  private static class QueuedEvent {
+  private static final class QueuedEvent {
     final int uid;
     final int eventType;
     final int rootId;

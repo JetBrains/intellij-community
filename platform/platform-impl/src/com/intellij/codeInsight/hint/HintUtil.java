@@ -244,7 +244,7 @@ public final class HintUtil {
     }
   }
 
-  private static class HintLabel extends JPanel {
+  private static final class HintLabel extends JPanel {
     private JEditorPane myPane;
     private SimpleColoredComponent myColored;
     private JLabel myIcon;

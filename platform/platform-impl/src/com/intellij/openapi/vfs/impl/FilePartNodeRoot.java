@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class FilePartNodeRoot extends FilePartNode {
+final class FilePartNodeRoot extends FilePartNode {
   private FilePartNodeRoot(@NotNull NewVirtualFileSystem fs) {
     super(fs);
   }

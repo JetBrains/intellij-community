@@ -31,7 +31,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
     void setValue(@NotNull T value);
   }
 
-  private static class CallbackAccessor<T> implements PropertyAccessor<T> {
+  private static final class CallbackAccessor<T> implements PropertyAccessor<T> {
     private final Getter<? extends T> myGetter;
     private final Setter<? super T> mySetter;
 
@@ -51,7 +51,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
     }
   }
 
-  private static class KPropertyAccessor<T> implements PropertyAccessor<T> {
+  private static final class KPropertyAccessor<T> implements PropertyAccessor<T> {
     private final KMutableProperty0<T> myProperty;
 
     private KPropertyAccessor(KMutableProperty0<T> property) {
@@ -107,7 +107,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
     protected abstract void setComponentValue(T value);
   }
 
-  private static class CheckboxField extends BeanField<JCheckBox, @NotNull Boolean> {
+  private static final class CheckboxField extends BeanField<JCheckBox, @NotNull Boolean> {
     private final String myTitle;
 
     private CheckboxField(PropertyAccessor<Boolean> accessor, @NotNull String title) {

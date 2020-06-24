@@ -685,7 +685,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
   }
 
-  private static class SavedCaretPosition {
+  private static final class SavedCaretPosition {
     private final LogicalPosition position;
     private final long docStamp;
 
@@ -699,7 +699,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
   }
 
-  private class MyMarkerTree extends HardReferencingRangeMarkerTree<FoldRegionImpl> {
+  private final class MyMarkerTree extends HardReferencingRangeMarkerTree<FoldRegionImpl> {
     private boolean inCollectCall;
 
     private MyMarkerTree(Document document) {

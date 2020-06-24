@@ -93,7 +93,7 @@ public class RemoteFile {
     return new RemoteFileBuilder(isWindows).createRemoteFile(path, script);
   }
 
-  public static class RemoteFileBuilder {
+  public static final class RemoteFileBuilder {
     private final boolean isWin;
 
     private RemoteFileBuilder(boolean win) {

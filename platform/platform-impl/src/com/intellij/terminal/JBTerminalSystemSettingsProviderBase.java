@@ -221,7 +221,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
                                           getKeyStrokesByActionId(ShowContentAction.ACTION_ID));
   }
 
-  static class MyColorsSchemeDelegate implements EditorColorsScheme {
+  static final class MyColorsSchemeDelegate implements EditorColorsScheme {
 
     private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<>();

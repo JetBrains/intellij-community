@@ -215,7 +215,7 @@ public class EditableSchemesCombo<T extends Scheme> {
     return null;
   }
 
-  private static class NameEditData {
+  private static final class NameEditData {
     private @NotNull final String initialName;
     private @NotNull final Consumer<? super String> nameConsumer;
     private final boolean isProjectScheme;

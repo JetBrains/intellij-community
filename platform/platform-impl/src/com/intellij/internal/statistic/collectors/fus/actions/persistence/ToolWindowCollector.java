@@ -175,7 +175,7 @@ public final class ToolWindowCollector {
     }
   }
 
-  private static class ToolWindowInfo {
+  private static final class ToolWindowInfo {
     private final String myRecordedId;
     private final PluginInfo myPluginInfo;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.DataManager;
@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Denis Fokin
  */
-public class MacDockDelegate implements SystemDock.Delegate {
+public final class MacDockDelegate implements SystemDock.Delegate {
   private static final Logger LOG = Logger.getInstance(MacDockDelegate.class);
 
   private static boolean initialized = false;

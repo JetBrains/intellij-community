@@ -353,7 +353,7 @@ public final class ActionMenu extends JBMenu {
       }
     }
   }
-  private static class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
+  private static final class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
 
     private Component myComponent;
     private Point myLastMousePoint;

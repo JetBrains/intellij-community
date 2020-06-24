@@ -232,7 +232,7 @@ public class JarHandler extends ZipHandler {
     return mirror;
   }
 
-  private static class CacheLibraryInfo {
+  private static final class CacheLibraryInfo {
     private final String mySnapshotPath;
     private final long myModificationTime;
     private final long myFileLength;

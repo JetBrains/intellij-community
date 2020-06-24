@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -136,7 +136,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     return e.getPlace() == ActionPlaces.WELCOME_SCREEN;
   }
 
-  private static class WelcomeScreenGroup extends DefaultActionGroup {
+  private static final class WelcomeScreenGroup extends DefaultActionGroup {
     private WelcomeScreenGroup(Icon icon, String text, AnAction... actions) {
       super(text, true);
       for (AnAction action : actions) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -40,12 +26,12 @@ import java.util.*;
  */
 public class ErrorViewStructure extends AbstractTreeStructure {
   private final ErrorTreeElement myRoot = new MyRootElement();
-  
+
   private final List<String> myGroupNames = new ArrayList<>();
   private final Map<String, GroupingElement> myGroupNameToElementMap = new HashMap<>();
   private final Map<String, List<NavigatableMessageElement>> myGroupNameToMessagesMap = new HashMap<>();
   private final Map<ErrorTreeElementKind, List<ErrorTreeElement>> mySimpleMessages = new EnumMap<>(ErrorTreeElementKind.class);
-  private final Object myLock = new Object(); 
+  private final Object myLock = new Object();
 
   private static final ErrorTreeElementKind[] ourMessagesOrder = {
     ErrorTreeElementKind.INFO,
@@ -103,7 +89,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
     return false;
   }
-  
+
   @Override
   public ErrorTreeElement @NotNull [] getChildElements(@NotNull Object element) {
     if (element == myRoot) {
@@ -129,7 +115,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       }
       return children.toArray(ErrorTreeElement.EMPTY_ARRAY);
     }
-    
+
     if (element instanceof GroupingElement) {
       synchronized (myLock) {
         final List<NavigatableMessageElement> children = myGroupNameToMessagesMap.get(((GroupingElement)element).getName());
@@ -147,7 +133,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
         }
       }
     }
-    
+
     return ErrorTreeElement.EMPTY_ARRAY;
   }
 
@@ -395,7 +381,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       return myGroupNameToElementMap.get(groupName);
     }
   }
-  
+
   public GroupingElement getGroupingElement(String groupName, Object data, VirtualFile file) {
     synchronized (myLock) {
       GroupingElement element = myGroupNameToElementMap.get(groupName);
@@ -518,7 +504,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
-  private static class MyNavigatableWithDataElement extends NavigatableMessageElement {
+  private static final class MyNavigatableWithDataElement extends NavigatableMessageElement {
     private final VirtualFile myVf;
     private final CustomizeColoredTreeCellRenderer myCustomizeColoredTreeCellRenderer;
 

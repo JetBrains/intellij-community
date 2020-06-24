@@ -253,7 +253,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
       }
     }
 
-    private class MyTabbedPaneHolder extends TabbedPaneHolder implements DataProvider {
+    private final class MyTabbedPaneHolder extends TabbedPaneHolder implements DataProvider {
 
       private MyTabbedPaneHolder(TabbedPaneWrapper wrapper) {
         super(wrapper);

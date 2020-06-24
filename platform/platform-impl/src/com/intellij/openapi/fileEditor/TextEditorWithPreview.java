@@ -277,7 +277,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return myEditor.isValid() && myPreview.isValid();
   }
 
-  private class DoublingEventListenerDelegate implements PropertyChangeListener {
+  private final class DoublingEventListenerDelegate implements PropertyChangeListener {
     @NotNull
     private final PropertyChangeListener myDelegate;
 

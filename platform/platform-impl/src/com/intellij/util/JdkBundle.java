@@ -18,7 +18,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo;
 
 import java.io.File;
 
-public class JdkBundle {
+public final class JdkBundle {
   private static final String BUNDLED_JDK_DIR_NAME = "jbr";
 
   private final File myLocation;

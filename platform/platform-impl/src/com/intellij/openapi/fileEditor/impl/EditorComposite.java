@@ -547,7 +547,7 @@ public class EditorComposite implements Disposable {
     myFocusWatcher.install(myComponent);
   }
 
-  private static class TopBottomPanel extends JBPanelWithEmptyText {
+  private static final class TopBottomPanel extends JBPanelWithEmptyText {
     private TopBottomPanel() {
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }

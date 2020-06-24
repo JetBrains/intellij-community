@@ -105,7 +105,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
       .findFirst().ifPresent(tabInfo -> select(tabInfo, true));
   }
 
-  private class CloseTabAction extends DumbAwareAction implements LightEditCompatible {
+  private final class CloseTabAction extends DumbAwareAction implements LightEditCompatible {
     private final LightEditorInfo myEditorInfo;
 
     @SuppressWarnings("UseJBColor")
@@ -247,7 +247,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     return null;
   }
 
-  private class EditorContainer extends JPanel implements DataProvider {
+  private final class EditorContainer extends JPanel implements DataProvider {
 
     private EditorContainer(@NotNull FileEditor editor) {
       super(new BorderLayout());

@@ -71,7 +71,7 @@ public final class JdkEx {
 
   // }} CUSTOM DECOR SUPPORT
 
-  private static class MyMethod {
+  private static final class MyMethod {
     private static final MyMethod EMPTY_INSTANCE = new MyMethod(null);
 
     @Nullable MethodInvocator myInvocator;

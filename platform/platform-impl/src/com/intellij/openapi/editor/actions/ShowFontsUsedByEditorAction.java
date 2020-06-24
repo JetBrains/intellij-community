@@ -130,7 +130,7 @@ public class ShowFontsUsedByEditorAction extends EditorAction {
       }
     }
 
-    private static class MyDialog extends DialogWrapper {
+    private static final class MyDialog extends DialogWrapper {
       private final JBTextArea myTextArea;
 
       private MyDialog(String text) {

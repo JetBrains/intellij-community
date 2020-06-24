@@ -1635,7 +1635,7 @@ public final class IdeEventQueue extends EventQueue {
     r.run();
   }
 
-  private static class MyLastShortcut {
+  private static final class MyLastShortcut {
     public final long when;
     public final char keyChar;
 

@@ -354,7 +354,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     }
   }
 
-  private class TreeColumnModel extends DefaultTableColumnModel {
+  private final class TreeColumnModel extends DefaultTableColumnModel {
 
     private int treeColumnIndex = -1;
 

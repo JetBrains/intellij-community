@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class PresentableId implements Cloneable {
+public final class PresentableId implements Cloneable {
   private final @Nullable String myId;
   private final @Nullable String myName;
 
