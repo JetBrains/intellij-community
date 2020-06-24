@@ -50,6 +50,11 @@ public interface ShSupport {
   String getName(@NotNull ShLiteral l);
 
   /**
+   * @return {@code true} if {@code com.intellij.sh.ShErrorFilter} should suppress errors.
+   */
+  boolean isErrorFilterEnabled();
+
+  /**
    * Retrieve the name identifier of this literal, if it's used as a variable declaration.
    *
    * @param l The literal
@@ -94,6 +99,11 @@ public interface ShSupport {
     @Override
     public @Nullable PsiElement getNameIdentifier(@NotNull ShLiteral l) {
       return null;
+    }
+
+    @Override
+    public boolean isErrorFilterEnabled() {
+      return true;
     }
   }
 }
