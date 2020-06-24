@@ -233,12 +233,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return false;
   }
 
-  public boolean isDefaultModuleSet() {
-    RunConfigurationModule configurationModule = getConfigurationModule();
-    if (configurationModule == null || configurationModule.getModule() == null) {
-      return false;
-    }
-    Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    return modules.length == 1 && configurationModule.getModule() == modules[0];
+  public Module getDefaultModule() {
+    return ArrayUtil.getFirstElement(ModuleManager.getInstance(getProject()).getModules());
   }
 }
