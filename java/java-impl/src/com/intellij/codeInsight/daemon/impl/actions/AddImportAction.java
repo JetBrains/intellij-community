@@ -73,10 +73,10 @@ public class AddImportAction implements QuestionAction {
       }
     }
 
-    if (myTargetClasses.length == 1){
+    if (myTargetClasses.length == 1) {
       addImport(myReference, myTargetClasses[0]);
     }
-    else{
+    else {
       chooseClassAndImport();
     }
     return true;
@@ -209,7 +209,7 @@ public class AddImportAction implements QuestionAction {
   }
 
   private void doAddImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
-    try{
+    try {
       bindReference(ref, targetClass);
       if (CodeInsightWorkspaceSettings.getInstance(myProject).isOptimizeImportsOnTheFly()) {
         Document document = myEditor.getDocument();
@@ -217,7 +217,7 @@ public class AddImportAction implements QuestionAction {
         new OptimizeImportsProcessor(myProject, psiFile).runWithoutProgress();
       }
     }
-    catch(IncorrectOperationException e){
+    catch (IncorrectOperationException e) {
       LOG.error(e);
     }
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

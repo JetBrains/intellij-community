@@ -604,13 +604,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createOptimizeImportsFix(final boolean onTheFly) {
-    return new OptimizeImportsAction(onTheFly);
+    return new OptimizeImportsFix(onTheFly);
   }
 
-  private static final class OptimizeImportsAction implements IntentionAction {
+  private static final class OptimizeImportsFix implements IntentionAction {
     private final boolean myOnTheFly;
 
-    private OptimizeImportsAction(boolean onTheFly) {myOnTheFly = onTheFly;}
+    private OptimizeImportsFix(boolean onTheFly) {myOnTheFly = onTheFly;}
 
     @NotNull
     @Override

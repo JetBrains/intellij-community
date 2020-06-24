@@ -59,7 +59,7 @@ public class FileInEditorProcessor {
 
   private final Editor myEditor;
 
-  private boolean myNoChangesDetected = false;
+  private boolean myNoChangesDetected;
   private final boolean myProcessChangesTextOnly;
 
   private final boolean myProcessSelectedText;
@@ -72,8 +72,7 @@ public class FileInEditorProcessor {
 
   public FileInEditorProcessor(PsiFile file,
                                Editor editor,
-                               LayoutCodeOptions runOptions)
-  {
+                               LayoutCodeOptions runOptions) {
     myFile = file;
     myProject = file.getProject();
     myEditor = editor;
@@ -230,10 +229,7 @@ public class FileInEditorProcessor {
 
   private static boolean isInHeadlessMode() {
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
-      return true;
-    }
-    return false;
+    return application.isUnitTestMode() || application.isHeadlessEnvironment();
   }
 
   private class DisabledFormattingMessageBuilder extends MessageBuilder {
@@ -249,7 +245,7 @@ public class FileInEditorProcessor {
     }
 
     @Override
-    public Runnable getHyperlinkRunnable() {
+    public @NotNull Runnable getHyperlinkRunnable() {
       return () -> ShowSettingsUtilImpl.showSettingsDialog(myProject, "preferences.sourceCode", "Do not format");
     }
   }
@@ -304,7 +300,7 @@ public class FileInEditorProcessor {
     }
 
     @Override
-    public Runnable getHyperlinkRunnable() {
+    public @NotNull Runnable getHyperlinkRunnable() {
       return () -> {
         AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
         DataManager manager = DataManager.getInstance();
@@ -319,6 +315,7 @@ public class FileInEditorProcessor {
   private abstract static class MessageBuilder {
     public abstract String getMessage();
 
+    @NotNull
     public abstract Runnable getHyperlinkRunnable();
 
     public final HyperlinkListener createHyperlinkListener() {

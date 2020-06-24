@@ -67,7 +67,7 @@ public class OptimizeImportsAction extends AnAction {
       }
       return;
     }
-    else{
+    else {
       Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
@@ -128,7 +128,7 @@ public class OptimizeImportsAction extends AnAction {
     if (processDirectory){
       new OptimizeImportsProcessor(project, dir, true, processOnlyVcsChangedFiles).run();
     }
-    else{
+    else {
       OptimizeImportsProcessor optimizer = new OptimizeImportsProcessor(project, file);
       if (editor != null && EditorSettingsExternalizable.getInstance().isShowNotificationAfterOptimizeImports()) {
         optimizer.setCollectInfo(true);
