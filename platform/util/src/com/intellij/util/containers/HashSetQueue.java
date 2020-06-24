@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractCollection;
@@ -17,8 +18,8 @@ import java.util.Queue;
  * </ul>
  * Implementation is backed by {@link gnu.trove.THashSet} containing double-linked QueueEntry nodes holding elements themselves.
  */
-public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
-  private final OpenTHashSet<QueueEntry<T>> set = new OpenTHashSet<>();
+public final class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
+  private final ObjectOpenHashSet<QueueEntry<T>> set = new ObjectOpenHashSet<>();
   // Entries in the queue are double-linked circularly, the TOMB serving as a sentinel.
   // TOMB.next is the first entry; TOMB.prev is the last entry;
   // TOMB.next == TOMB.prev == TOMB means the queue is empty

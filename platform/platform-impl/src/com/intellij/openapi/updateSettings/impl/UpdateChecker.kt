@@ -40,7 +40,6 @@ import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
-import gnu.trove.THashMap
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -77,7 +76,7 @@ object UpdateChecker {
   fun getNotificationGroup() = notificationGroupRef
 
   private var ourDisabledToUpdatePlugins: MutableSet<PluginId>? = null
-  private val ourAdditionalRequestOptions = THashMap<String, String>()
+  private val ourAdditionalRequestOptions = hashMapOf<String, String>()
   private val ourUpdatedPlugins = hashMapOf<PluginId, PluginDownloader>()
   private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
 

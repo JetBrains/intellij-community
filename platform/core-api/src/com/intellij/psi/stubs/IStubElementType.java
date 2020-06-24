@@ -10,14 +10,13 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class IStubElementType<StubT extends StubElement, PsiT extends PsiElement> extends IElementType implements StubSerializer<StubT> {
+public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extends PsiElement> extends IElementType implements StubSerializer<StubT> {
   private static volatile boolean ourInitializedStubs;
   private static volatile Set<String> ourLazyExternalIds = Collections.emptySet();
   private static final Logger LOG = Logger.getInstance(IStubElementType.class);
@@ -59,7 +58,7 @@ public abstract class IStubElementType<StubT extends StubElement, PsiT extends P
       result.addAll(bean.initializeOptimized());
     }
 
-    Set<String> lazyIds = new THashSet<>();
+    Set<String> lazyIds = new HashSet<>();
     for (StubFieldAccessor accessor : result) {
       lazyIds.add(accessor.externalId);
     }

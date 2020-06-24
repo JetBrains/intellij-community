@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.function.BiPredicate;
 
-class RemovedMappingTracker {
+final class RemovedMappingTracker {
   public static final class RemovedMapping {
     private final FileNameMatcher myFileNameMatcher;
     private final String myFileTypeName;

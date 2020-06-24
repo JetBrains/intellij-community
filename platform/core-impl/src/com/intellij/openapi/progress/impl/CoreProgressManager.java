@@ -25,7 +25,10 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
@@ -483,7 +486,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // NEW: no assert; bg or calling ...
   public boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
     final Ref<Throwable> exceptionRef = new Ref<>();
-    TaskContainer taskContainer = new TaskContainer(task) {
+    Runnable taskContainer = new TaskContainer(task) {
       @Override
       public void run() {
         try {

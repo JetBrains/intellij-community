@@ -26,17 +26,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public final class ExecutorRegistryImpl extends ExecutorRegistry {
@@ -45,9 +40,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   public static final String RUNNERS_GROUP = "RunnerActions";
   public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
 
-  private final Set<String> myContextActionIdSet = new THashSet<>();
-  private final Map<String, AnAction> myIdToAction = new THashMap<>();
-  private final Map<String, AnAction> myContextActionIdToAction = new THashMap<>();
+  private final Set<String> myContextActionIdSet = new HashSet<>();
+  private final Map<String, AnAction> myIdToAction = new HashMap<>();
+  private final Map<String, AnAction> myContextActionIdToAction = new HashMap<>();
 
   public ExecutorRegistryImpl() {
     Executor.EXECUTOR_EXTENSION_NAME.addExtensionPointListener(new ExtensionPointListener<Executor>() {

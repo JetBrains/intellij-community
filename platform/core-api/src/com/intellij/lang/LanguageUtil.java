@@ -16,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,7 +151,7 @@ public final class LanguageUtil {
       result = Collections.emptySet();
     }
     else {
-      result = new THashSet<>();
+      result = new HashSet<>();
       MetaLanguage.EP_NAME.forEachExtensionSafe(metaLanguage -> {
         if (metaLanguage.matchesLanguage(language)) {
           result.add(metaLanguage);

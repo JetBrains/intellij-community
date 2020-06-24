@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-class FileTypeDetectionService implements Disposable {
+final class FileTypeDetectionService implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileTypeDetectionService.class);
 
   // cached auto-detected file type. If the file was auto-detected as plain text or binary

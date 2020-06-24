@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashMap;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 import kotlin.jvm.functions.Function0;
@@ -19,14 +18,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class TemplateContext {
-  private final Map<String, Boolean> myContextStates = new THashMap<>();
+public final class TemplateContext {
+  private final Map<String, Boolean> myContextStates = new HashMap<>();
 
   private static final ClearableLazyValue<Map<String, String>> INTERN_MAP = new ClearableLazyValue<Map<String, String>>() {
     private final AtomicBoolean isListenerAdded = new AtomicBoolean();
@@ -93,7 +93,7 @@ public class TemplateContext {
   // used during initialization => no sync
   @VisibleForTesting
   public void setDefaultContext(@NotNull TemplateContext defContext) {
-    Map<String, Boolean> copy = new THashMap<>(myContextStates);
+    Map<String, Boolean> copy = new HashMap<>(myContextStates);
     myContextStates.clear();
     myContextStates.putAll(defContext.myContextStates);
     myContextStates.putAll(copy);
@@ -120,9 +120,11 @@ public class TemplateContext {
    */
   @NotNull
   private Map<String, Boolean> makeInheritanceExplicit() {
-    Map<String, Boolean> explicitStates = new THashMap<>();
-    for (TemplateContextType type : ContainerUtil.filter(TemplateManagerImpl.getAllContextTypes(), this::isDisabledByInheritance)) {
-      explicitStates.put(type.getContextId(), false);
+    Map<String, Boolean> explicitStates = new HashMap<>();
+    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+      if (isDisabledByInheritance(type)) {
+        explicitStates.put(type.getContextId(), false);
+      }
     }
     return explicitStates;
   }
@@ -175,7 +177,7 @@ public class TemplateContext {
     return LazyKt.lazy(new Function0<Map<String, TemplateContextType>>() {
       @Override
       public Map<String, TemplateContextType> invoke() {
-        Map<String, TemplateContextType> idToType = new THashMap<>();
+        Map<String, TemplateContextType> idToType = new HashMap<>();
         for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
           idToType.put(type.getContextId(), type);
         }

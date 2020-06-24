@@ -1,16 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 // unlike later numbers assigned to T are consequent and retained in memory / expected to be small.
 // Vfs invalidation will rebuild this mapping, also any exception with the mapping will cause rebuild of the vfs
 // stored data is VfsTimeStamp Version T*
-public class VfsDependentEnum<T> {
+public final class VfsDependentEnum<T> {
   private static final String DEPENDENT_PERSISTENT_LIST_START_PREFIX = "vfs_enum_";
   private final File myFile;
   private final DataExternalizer<T> myKeyDescriptor;
@@ -106,10 +107,10 @@ public class VfsDependentEnum<T> {
           return false;
         }
 
-        int savedVersion = DataInputOutputUtil.readINT(input);
+        int savedVersion = DataInputOutputUtilRt.readINT(input);
         if (savedVersion == myVersion) {
           List<T> elements = new ArrayList<>();
-          Map<T, Integer> elementToIdMap = new THashMap<>();
+          Map<T, Integer> elementToIdMap = new HashMap<>();
           while (input.available() > 0) {
             T instance = myKeyDescriptor.read(input);
             assert instance != null;

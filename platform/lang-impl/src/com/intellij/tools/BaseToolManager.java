@@ -8,13 +8,13 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class BaseToolManager<T extends Tool> {
   private final SchemeManager<ToolsGroup<T>> mySchemeManager;
@@ -74,7 +74,7 @@ public abstract class BaseToolManager<T extends Tool> {
 
     // register
     // to prevent exception if 2 or more targets have the same name
-    Set<String> registeredIds = new THashSet<>();
+    Set<String> registeredIds = new HashSet<>();
     for (T tool : getTools()) {
       String actionId = tool.getActionId();
       if (registeredIds.add(actionId)) {

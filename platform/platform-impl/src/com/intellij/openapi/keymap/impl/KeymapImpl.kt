@@ -80,7 +80,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   override fun getSchemeState(): SchemeState? = schemeState
 
-  private val actionIdToShortcuts = THashMap<String, MutableList<Shortcut>>()
+  private val actionIdToShortcuts = HashMap<String, MutableList<Shortcut>>()
     get() {
       val dataHolder = dataHolder
       if (dataHolder != null) {
@@ -186,12 +186,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     otherKeymap.cleanShortcutsCache()
 
     otherKeymap.actionIdToShortcuts.clear()
-    otherKeymap.actionIdToShortcuts.ensureCapacity(actionIdToShortcuts.size)
-    actionIdToShortcuts.forEachEntry { actionId, shortcuts ->
-      otherKeymap.actionIdToShortcuts.put(actionId, SmartList(shortcuts))
-      true
+    for (entry in actionIdToShortcuts.entries) {
+      otherKeymap.actionIdToShortcuts.put(entry.key, ContainerUtil.copyList(entry.value))
     }
-
     // after actionIdToShortcuts (on first access we lazily read itself)
     otherKeymap.parent = parent
     otherKeymap.name = name

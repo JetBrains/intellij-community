@@ -12,7 +12,6 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
 
@@ -21,7 +20,7 @@ private val LOG = logger<DefaultKeymap>()
 open class DefaultKeymap {
   internal val keymaps = ArrayList<Keymap>()
 
-  private val nameToScheme = THashMap<String, Keymap>()
+  private val nameToScheme = HashMap<String, Keymap>()
 
   companion object {
     @JvmStatic

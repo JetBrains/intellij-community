@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.*;
@@ -7,16 +7,11 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 
 @State(name = "NotificationConfiguration", storages = @Storage("notifications.xml"))
 public final class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>, Disposable {
@@ -27,8 +22,8 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR =
     (o1, o2) -> o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
 
-  private final Map<String, NotificationSettings> myIdToSettingsMap = new THashMap<>();
-  private final Map<String, String> myToolWindowCapable = new THashMap<>();
+  private final Map<String, NotificationSettings> myIdToSettingsMap = new HashMap<>();
+  private final Map<String, String> myToolWindowCapable = new HashMap<>();
 
   public boolean SHOW_BALLOONS = true;
   public boolean SYSTEM_NOTIFICATIONS = true;
@@ -55,7 +50,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   public synchronized NotificationSettings[] getAllSettings() {
-    Collection<NotificationSettings> settings = new THashSet<>(myIdToSettingsMap.values());
+    Collection<NotificationSettings> settings = new HashSet<>(myIdToSettingsMap.values());
     for (NotificationGroup group : NotificationGroup.getAllRegisteredGroups()) {
       if (group.getDisplayId().startsWith(LIGHTWEIGHT_PREFIX)) continue;
       settings.add(getSettings(group.getDisplayId()));

@@ -10,7 +10,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +66,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     synchronized (myLock) {
       final String stringKey = keyToString(key);
       if (myExplicitExtensions == Collections.<String, List<T>>emptyMap()) {
-        myExplicitExtensions = new THashMap<>();
+        myExplicitExtensions = new HashMap<>();
       }
       List<T> list = myExplicitExtensions.computeIfAbsent(stringKey, __ -> new SmartList<>());
       list.add(t);

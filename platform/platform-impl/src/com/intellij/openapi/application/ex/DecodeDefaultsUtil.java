@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,11 +13,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class DecodeDefaultsUtil {
   private static final Logger LOG = Logger.getInstance(DecodeDefaultsUtil.class);
-  private static final Map<String, URL> RESOURCE_CACHE = Collections.synchronizedMap(new THashMap<>());
+  private static final Map<String, URL> RESOURCE_CACHE = Collections.synchronizedMap(new HashMap<>());
 
   public static URL getDefaults(Object requestor, @NotNull String componentResourcePath) {
     URL url = RESOURCE_CACHE.get(componentResourcePath);

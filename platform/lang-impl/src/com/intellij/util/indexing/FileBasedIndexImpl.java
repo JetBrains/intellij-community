@@ -67,9 +67,7 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +105,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
            -> AsyncEventSupport.EP_NAME.findExtensionOrFail(ChangedFilesCollector.class));
 
   private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new THashMap<>();
+  private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new HashMap<>();
 
   private final SimpleMessageBusConnection myConnection;
   private final FileDocumentManager myFileDocumentManager;
@@ -375,7 +373,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     final InputFilter inputFilter = extension.getInputFilter();
     final Set<FileType> addedTypes;
     if (inputFilter instanceof FileBasedIndex.FileTypeSpecificInputFilter) {
-      addedTypes = new THashSet<>();
+      addedTypes = new HashSet<>();
       ((FileBasedIndex.FileTypeSpecificInputFilter)inputFilter).registerFileTypesUsedForIndexing(type -> {
         if (type != null) addedTypes.add(type);
       });
@@ -790,18 +788,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         long start = System.currentTimeMillis();
 
-        final TIntArrayList filesSet = new TIntArrayList();
+        IntArrayList fileSet = new IntArrayList();
         iterateIndexableFiles(fileOrDir -> {
           if (fileOrDir instanceof VirtualFileWithId) {
-            filesSet.add(((VirtualFileWithId)fileOrDir).getId());
+            fileSet.add(((VirtualFileWithId)fileOrDir).getId());
           }
           return true;
         }, project, null);
-        ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(filesSet, currentFileModCount);
+        ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(fileSet, currentFileModCount);
         project.putUserData(ourProjectFilesSetKey, new SoftReference<>(filter));
 
         long finish = System.currentTimeMillis();
-        LOG.debug(filesSet.size() + " files iterated in " + (finish - start) + " ms");
+        LOG.debug(fileSet.size() + " files iterated in " + (finish - start) + " ms");
 
         return filter;
       }
@@ -903,7 +901,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         documents = transactedDocuments;
       }
       else if (!transactedDocuments.isEmpty()) {
-        documents = new THashSet<>(documents);
+        documents = new HashSet<>(documents);
         documents.addAll(transactedDocuments);
       }
       Document[] uncommittedDocuments = project != null ? PsiDocumentManager.getInstance(project).getUncommittedDocuments() : Document.EMPTY_ARRAY;
@@ -911,7 +909,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         List<Document> uncommittedDocumentsCollection = Arrays.asList(uncommittedDocuments);
         if (documents.isEmpty()) documents = uncommittedDocumentsCollection;
         else {
-          if (!(documents instanceof THashSet)) documents = new THashSet<>(documents);
+          if (!(documents instanceof HashSet)) documents = new HashSet<>(documents);
 
           documents.addAll(uncommittedDocumentsCollection);
         }
@@ -1266,7 +1264,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       PsiFile psiFile = null;
 
       int inputId = Math.abs(getFileId(file));
-      Set<ID<?, ?>> currentIndexedStates = new THashSet<>(IndexingStamp.getNontrivialFileIndexedStates(inputId));
+      Set<ID<?, ?>> currentIndexedStates = new HashSet<>(IndexingStamp.getNontrivialFileIndexedStates(inputId));
       List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
