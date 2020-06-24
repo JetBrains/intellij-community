@@ -3,32 +3,44 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Collections;
+import java.util.Map;
 
 public final class DecodeDefaultsUtil {
   private static final Logger LOG = Logger.getInstance(DecodeDefaultsUtil.class);
+  private static final Map<String, URL> RESOURCE_CACHE = Collections.synchronizedMap(new THashMap<>());
 
   public static URL getDefaults(Object requestor, @NotNull String componentResourcePath) {
-    URL url;
-    if (componentResourcePath.charAt(0) == '/') {
-      url = getResource(appendExt(componentResourcePath), requestor);
-      if (url == null && !(requestor instanceof UrlClassLoader)) {
-        url = getResource(appendExt(componentResourcePath.substring(1)), requestor);
+    URL url = RESOURCE_CACHE.get(componentResourcePath);
+    if (url == null) {
+      if (StringUtil.startsWithChar(componentResourcePath, '/')) {
+        url = getResource(appendExt(componentResourcePath), requestor);
+        if (url == null && !(requestor instanceof UrlClassLoader)) {
+          url = getResource(appendExt(componentResourcePath.substring(1)), requestor);
+        }
       }
-    }
-    else {
-      url = getResource(appendExt("/idea/" + componentResourcePath), requestor);
-      if (url == null) {
-        String path = requestor instanceof ClassLoader ? appendExt(componentResourcePath) : appendExt('/' + componentResourcePath);
-        url = getResource(path, requestor);
+      else {
+        url = getResource(appendExt("/idea/" + componentResourcePath), requestor);
+        if (url == null) {
+          if (requestor instanceof ClassLoader) {
+            url = getResource(appendExt(componentResourcePath), requestor);
+          }
+          else {
+            url = getResource(appendExt('/' + componentResourcePath), requestor);
+          }
+        }
       }
+      RESOURCE_CACHE.put(componentResourcePath, url);
     }
     return url;
   }
@@ -41,7 +53,11 @@ public final class DecodeDefaultsUtil {
   }
 
   private static String appendExt(@NotNull String s) {
-    return s.endsWith(FileStorageCoreUtil.DEFAULT_EXT) ? s : s + FileStorageCoreUtil.DEFAULT_EXT;
+    return appendIfNeeded(s, FileStorageCoreUtil.DEFAULT_EXT);
+  }
+
+  private static String appendIfNeeded(@NotNull String head, @NotNull String tail) {
+    return head.endsWith(tail) ? head : head + tail;
   }
 
   public static @Nullable InputStream getDefaultsInputStream(Object requestor, @NotNull String componentResourcePath) {

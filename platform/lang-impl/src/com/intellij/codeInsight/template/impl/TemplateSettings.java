@@ -89,7 +89,6 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   static final String TEMPLATES_DIR_PATH = "templates";
 
   private final MultiMap<String, TemplateImpl> myTemplates = MultiMap.createLinked();
-  private final Map<String, URL> defaultResourceCache = Collections.synchronizedMap(new HashMap<>());
 
   private final Map<String, Template> myTemplatesById = new LinkedHashMap<>();
   private final Map<TemplateKey, TemplateImpl> myDefaultTemplates = new LinkedHashMap<>();
@@ -523,17 +522,12 @@ public final class TemplateSettings implements PersistentStateComponent<Template
                                @NotNull String defTemplate,
                                boolean registerTemplate, ClassLoader loader, PluginInfo info) throws JDOMException {
     Element element;
+
     try {
-      URL defaults = defaultResourceCache.get(defTemplate);
+      URL defaults = DecodeDefaultsUtil.getDefaults(requestor, defTemplate);
       if (defaults == null) {
-        defaults = DecodeDefaultsUtil.getDefaults(requestor, defTemplate);
-        if (defaults == null) {
-          LOG.error("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
-          return;
-        }
-        else {
-          defaultResourceCache.put(defTemplate, defaults);
-        }
+        LOG.error("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
+        return;
       }
       element = JDOMUtil.load(URLUtil.openStream(defaults));
     }
