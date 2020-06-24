@@ -826,7 +826,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     resetFields();
   }
 
-  private class RunAnythingShowFilterAction extends ShowFilterAction {
+  private final class RunAnythingShowFilterAction extends ShowFilterAction {
     @NotNull private final Collection<RunAnythingGroup> myTemplateGroups;
 
     private RunAnythingShowFilterAction() {

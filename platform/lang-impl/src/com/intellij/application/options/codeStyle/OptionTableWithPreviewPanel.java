@@ -413,7 +413,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
   }
 
-  private class BooleanOption extends FieldOption {
+  private final class BooleanOption extends FieldOption {
     private BooleanOption(Class<? extends CustomCodeStyleSettings> clazz,
                           @NotNull String fieldName,
                           @NotNull String title,
@@ -952,7 +952,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private class MyTitleRenderer extends ColoredTreeCellRenderer {
+  private final class MyTitleRenderer extends ColoredTreeCellRenderer {
 
     private final SpeedSearchHelper mySearchHelper;
 

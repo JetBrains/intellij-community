@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -55,7 +55,7 @@ import java.util.stream.Stream;
 /**
  * @author Dmitry Batkovich
  */
-public class InspectionsConfigTreeTable extends TreeTable {
+public final class InspectionsConfigTreeTable extends TreeTable {
   private static final Logger LOG = Logger.getInstance(InspectionsConfigTreeTable.class);
 
   private static final int TREE_COLUMN = 0;

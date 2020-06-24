@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.find.actions.ShowUsagesAction.getUsagesPageSize;
 
-class ShowUsagesParameters {
+final class ShowUsagesParameters {
 
   final @NotNull Project project;
   final @Nullable Editor editor;

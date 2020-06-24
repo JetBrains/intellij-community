@@ -506,7 +506,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull LocalInspectionToolWrapper toolWrapper,
                                              @NotNull HighlightSeverity severity,
                                              @NotNull ProblemDescriptor descriptor,
-                                             @NotNull PsiElement element, 
+                                             @NotNull PsiElement element,
                                              boolean ignoreSuppressed) {
     if (descriptor instanceof ProblemDescriptorWithReporterName) {
       String reportingToolName = ((ProblemDescriptorWithReporterName)descriptor).getReportingToolName();
@@ -802,7 +802,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return myInfos;
   }
 
-  private static class InspectionResult {
+  private static final class InspectionResult {
     private final @NotNull LocalInspectionToolWrapper tool;
     private final @NotNull List<? extends ProblemDescriptor> foundProblems;
 
@@ -812,7 +812,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private static class InspectionContext {
+  private static final class InspectionContext {
     private InspectionContext(@NotNull LocalInspectionToolWrapper tool,
                               @NotNull ProblemsHolder holder,
                               int problemsSize, // need this to diff between found problems in visible part and the rest

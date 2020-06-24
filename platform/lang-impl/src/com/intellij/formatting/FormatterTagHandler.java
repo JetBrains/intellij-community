@@ -66,7 +66,7 @@ public class FormatterTagHandler {
     return collector.getRanges();
   }
 
-  private class EnabledRangesCollector {
+  private final class EnabledRangesCollector {
     private final List<FormatterTagInfo> myTagInfoList = new ArrayList<>();
     private final TextRange myInitialRange;
 
@@ -122,7 +122,7 @@ public class FormatterTagHandler {
       return enabledRanges;
     }
 
-    private class FormatterTagInfo {
+    private final class FormatterTagInfo {
       public int offset;
       public FormatterTag tag;
 

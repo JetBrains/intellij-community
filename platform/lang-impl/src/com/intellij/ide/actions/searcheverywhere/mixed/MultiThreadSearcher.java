@@ -150,7 +150,7 @@ class MultiThreadSearcher implements SESearcher {
     });
   }
 
-  private static class ContributorSearchTask<Item> implements Runnable {
+  private static final class ContributorSearchTask<Item> implements Runnable {
 
     private final ResultsAccumulator myAccumulator;
     private final Runnable finishCallback;

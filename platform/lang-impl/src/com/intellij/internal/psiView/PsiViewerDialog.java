@@ -1064,7 +1064,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     }
   }
 
-  private static class AutoExpandFocusListener extends FocusAdapter {
+  private static final class AutoExpandFocusListener extends FocusAdapter {
     private final JComboBox myComboBox;
     private final Component myParent;
 

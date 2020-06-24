@@ -1712,7 +1712,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       .filter(c -> c instanceof JComboBox || c instanceof AbstractButton || c instanceof JTextComponent);
   }
 
-  private class MySwitchStateToggleAction extends DumbAwareToggleAction implements TooltipLinkProvider {
+  private final class MySwitchStateToggleAction extends DumbAwareToggleAction implements TooltipLinkProvider {
     private final String myOptionName;
     private final AtomicBoolean myState;
     private final Producer<Boolean> myEnableStateProvider;
@@ -1778,7 +1778,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
   }
 
-  private static class MyOpenResultsInNewTabAction extends ToggleAction {
+  private static final class MyOpenResultsInNewTabAction extends ToggleAction {
     private MyOpenResultsInNewTabAction() {
       super(FindBundle.messagePointer("find.open.in.new.tab.action"));
     }
@@ -1979,7 +1979,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
   }
 
-  private class MyPinAction extends ToggleAction {
+  private final class MyPinAction extends ToggleAction {
     private MyPinAction() {super(IdeBundle.messagePointer("action.ToggleAction.text.pin.window"),
                                  IdeBundle.messagePointer("action.ToggleAction.description.pin.window"), AllIcons.General.Pin_tab);}
 
@@ -2004,7 +2004,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
   }
 
-  private class MySkipTabWithOneUsageAction extends ToggleAction {
+  private final class MySkipTabWithOneUsageAction extends ToggleAction {
     private MySkipTabWithOneUsageAction() {
       super(FindBundle.messagePointer("find.options.skip.results.tab.with.one.usage.action"));
     }
@@ -2031,7 +2031,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
   }
 
-  private class MyEnterAction extends DumbAwareAction {
+  private final class MyEnterAction extends DumbAwareAction {
     private final boolean myEnterAsOK;
 
     private MyEnterAction(boolean enterAsOK) {

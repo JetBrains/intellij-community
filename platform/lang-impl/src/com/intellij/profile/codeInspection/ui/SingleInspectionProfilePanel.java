@@ -1186,7 +1186,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return myTreeTable;
   }
 
-  private class MyFilterComponent extends FilterComponent {
+  private final class MyFilterComponent extends FilterComponent {
     private MyFilterComponent() {
       super(INSPECTION_FILTER_HISTORY, 10);
     }

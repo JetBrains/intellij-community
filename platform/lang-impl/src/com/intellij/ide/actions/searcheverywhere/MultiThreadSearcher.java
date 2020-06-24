@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -143,7 +143,7 @@ class MultiThreadSearcher implements SESearcher {
     });
   }
 
-  private static class ContributorSearchTask<Item> implements Runnable {
+  private static final class ContributorSearchTask<Item> implements Runnable {
 
     private final ResultsAccumulator myAccumulator;
     private final Runnable finishCallback;

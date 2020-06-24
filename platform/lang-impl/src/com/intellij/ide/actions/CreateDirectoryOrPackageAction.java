@@ -309,7 +309,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     return createdDirectories;
   }
 
-  private static class CompletionItem {
+  private static final class CompletionItem {
     @NotNull final CreateDirectoryCompletionContributor contributor;
 
     @NotNull final String relativePath;

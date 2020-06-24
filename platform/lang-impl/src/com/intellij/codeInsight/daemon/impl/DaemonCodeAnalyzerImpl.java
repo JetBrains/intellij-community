@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
@@ -793,7 +793,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   // made this class static and fields clearable to avoid leaks when this object stuck in invokeLater queue
-  private static class UpdateRunnable implements Runnable {
+  private static final class UpdateRunnable implements Runnable {
     private Project myProject;
     private UpdateRunnable(@NotNull Project project) {
       myProject = project;

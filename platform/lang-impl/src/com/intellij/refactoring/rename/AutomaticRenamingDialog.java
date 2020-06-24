@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.*;
@@ -277,7 +277,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     return mySearchTextOccurrences.isSelected();
   }
 
-  private class MyTableModel extends AbstractTableModel {
+  private final class MyTableModel extends AbstractTableModel {
     private final boolean myAllowRename;
 
     private MyTableModel(boolean allowRename) {

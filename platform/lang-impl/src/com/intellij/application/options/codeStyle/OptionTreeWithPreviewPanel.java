@@ -501,7 +501,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     }
   }
 
-  private static class CustomBooleanOptionInfo {
+  private static final class CustomBooleanOptionInfo {
     @NotNull final Class<? extends CustomCodeStyleSettings> settingClass;
     @NotNull final String fieldName;
     @NotNull final String title;

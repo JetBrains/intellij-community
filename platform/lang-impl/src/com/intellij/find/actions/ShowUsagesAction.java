@@ -98,7 +98,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     setInjectedContext(true);
   }
 
-  private static class UsageNodeComparator implements Comparator<UsageNode> {
+  private static final class UsageNodeComparator implements Comparator<UsageNode> {
     private final ShowUsagesTable myTable;
 
     private UsageNodeComparator(@NotNull ShowUsagesTable table) {
@@ -1060,7 +1060,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     return newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
   }
 
-  static class StringNode extends UsageNode {
+  static final class StringNode extends UsageNode {
     @NotNull private final Object myString;
 
     private StringNode(@NotNull Object string) {

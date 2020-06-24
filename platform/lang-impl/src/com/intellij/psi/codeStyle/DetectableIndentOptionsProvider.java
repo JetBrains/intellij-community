@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -142,7 +142,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     notification.notify(project);
   }
 
-  private static class DetectionDisabledNotification extends Notification {
+  private static final class DetectionDisabledNotification extends Notification {
     private DetectionDisabledNotification(Project project) {
       super(NOTIFICATION_GROUP.getDisplayId(),
             ApplicationBundle.message("code.style.indent.detector.notification.content"), "",
@@ -152,7 +152,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     }
   }
 
-  private static class ShowIndentDetectionOptionAction extends DumbAwareAction {
+  private static final class ShowIndentDetectionOptionAction extends DumbAwareAction {
     private ShowIndentDetectionOptionAction(@Nullable String text) {
       super(text);
     }
@@ -163,7 +163,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     }
   }
 
-  private static class ReEnableDetection extends DumbAwareAction {
+  private static final class ReEnableDetection extends DumbAwareAction {
     private final Project myProject;
     private final Notification myNotification;
 
@@ -192,7 +192,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   }
 
 
-  private class MyUIContributor extends IndentStatusBarUIContributor {
+  private final class MyUIContributor extends IndentStatusBarUIContributor {
     private MyUIContributor(IndentOptions options) {
       super(options);
     }

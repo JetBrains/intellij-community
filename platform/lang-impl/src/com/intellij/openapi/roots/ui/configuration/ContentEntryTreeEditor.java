@@ -273,7 +273,7 @@ public class ContentEntryTreeEditor {
     }
   }
 
-  private static class MyNewFolderAction extends NewFolderAction implements CustomComponentAction {
+  private static final class MyNewFolderAction extends NewFolderAction implements CustomComponentAction {
     private MyNewFolderAction() {
       super(ActionsBundle.messagePointer("action.FileChooser.NewFolder.text"),
             ActionsBundle.messagePointer("action.FileChooser.NewFolder.description"),
@@ -303,7 +303,7 @@ public class ContentEntryTreeEditor {
     }
   }
 
-  private class MyPanel extends JPanel implements DataProvider {
+  private final class MyPanel extends JPanel implements DataProvider {
     private MyPanel(final LayoutManager layout) {
       super(layout);
     }

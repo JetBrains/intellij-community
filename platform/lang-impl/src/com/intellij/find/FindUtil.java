@@ -738,7 +738,7 @@ public final class FindUtil {
     return result;
   }
 
-  private static class MyListener implements CaretListener {
+  private static final class MyListener implements CaretListener {
     private final Editor myEditor;
     private final RangeHighlighter mySegmentHighlighter;
 

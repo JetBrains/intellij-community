@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -509,7 +509,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     Collections.swap(mySegments, 0, segmentNumber);
   }
 
-  private static class Segment {
+  private static final class Segment {
     @NotNull
     public final String name;
     public final int offset;

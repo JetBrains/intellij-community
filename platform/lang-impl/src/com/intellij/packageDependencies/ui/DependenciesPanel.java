@@ -752,7 +752,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private class ShowDetailedInformationAction extends AnAction {
+  private final class ShowDetailedInformationAction extends AnAction {
     private ShowDetailedInformationAction() {
       super(ActionsBundle.messagePointer("action.ShowDetailedInformationAction.text"));
     }
@@ -789,7 +789,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private class RemoveFromScopeAction extends AnAction {
+  private final class RemoveFromScopeAction extends AnAction {
     private RemoveFromScopeAction() {
       super(ActionsBundle.messagePointer("action.RemoveFromScopeAction.text"));
     }
@@ -812,7 +812,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private class AddToScopeAction extends AnAction {
+  private final class AddToScopeAction extends AnAction {
     private AddToScopeAction() {
       super(ActionsBundle.messagePointer("action.AddToScopeAction.text"));
     }

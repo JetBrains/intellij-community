@@ -357,7 +357,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       new MySpeedSearch(myFileTypesList);
     }
 
-    private class MySpeedSearch extends SpeedSearchBase<JList<FileType>> {
+    private final class MySpeedSearch extends SpeedSearchBase<JList<FileType>> {
       private final List<Condition<Pair<Object, String>>> myOrderedConverters;
       private Object myCurrentType;
       private String myExtension;

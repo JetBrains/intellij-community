@@ -226,7 +226,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  private static class MyModel<T> extends DefaultTreeModel implements TreeTableModel {
+  private static final class MyModel<T> extends DefaultTreeModel implements TreeTableModel {
     private final Map<VirtualFile, T> myCurrentMapping = new HashMap<>();
     private final Class<T> myValueClass;
     private final String myValueTitle;

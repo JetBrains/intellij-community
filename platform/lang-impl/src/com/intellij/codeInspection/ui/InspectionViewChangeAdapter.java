@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.reference.RefElement;
@@ -181,7 +179,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
     }, 200);
   }
 
-  private static class CompositeProcessor<X> implements Processor<X> {
+  private static final class CompositeProcessor<X> implements Processor<X> {
     private final Processor<? super X> myFirstProcessor;
     private boolean myFirstFinished;
     private final Processor<? super X> mySecondProcessor;

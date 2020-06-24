@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeHighlighting.*;
@@ -131,7 +131,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
     }
   }
 
-  static class Item {
+  static final class Item {
     final TextRange textRange;
     final String textToRender;
 

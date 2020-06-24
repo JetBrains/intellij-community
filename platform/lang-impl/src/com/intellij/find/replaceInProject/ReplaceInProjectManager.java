@@ -591,7 +591,7 @@ public class ReplaceInProjectManager {
     return !myIsFindInProgress && !FindInProjectManager.getInstance(myProject).isWorkInProgress();
   }
 
-  private class UsageSearcherFactory implements Factory<UsageSearcher> {
+  private final class UsageSearcherFactory implements Factory<UsageSearcher> {
     private final FindModel myFindModelCopy;
     private final FindUsagesProcessPresentation myProcessPresentation;
 

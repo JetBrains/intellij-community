@@ -157,7 +157,7 @@ public class RegistryUi implements Disposable {
     });
   }
 
-  private class RevertAction extends AnAction {
+  private final class RevertAction extends AnAction {
 
     private RevertAction() {
       new ShadowAction(this, ActionManager.getInstance().getAction("EditorDelete"), myTable, RegistryUi.this);
@@ -186,7 +186,7 @@ public class RegistryUi implements Disposable {
     }
   }
 
-  private class EditAction extends AnAction {
+  private final class EditAction extends AnAction {
     private EditAction() {
       new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE), myTable, RegistryUi.this);
     }
@@ -212,7 +212,7 @@ public class RegistryUi implements Disposable {
   }
 
 
-  private static class MyTableModel extends AbstractTableModel {
+  private static final class MyTableModel extends AbstractTableModel {
 
     private final List<RegistryValue> myAll;
 

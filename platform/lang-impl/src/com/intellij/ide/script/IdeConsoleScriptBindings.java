@@ -20,7 +20,7 @@ public final class IdeConsoleScriptBindings {
   private IdeConsoleScriptBindings() {
   }
 
-  public static class Binding<T> {
+  public static final class Binding<T> {
     private final String myName;
     private final Class<T> myClass;
 

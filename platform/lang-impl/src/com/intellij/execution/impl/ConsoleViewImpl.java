@@ -284,7 +284,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @Override
   public void scrollTo(int offset) {
     if (myEditor == null) return;
-    class ScrollRunnable extends FlushRunnable {
+    final class ScrollRunnable extends FlushRunnable {
       private ScrollRunnable() {
         super(true); // each request must be executed
       }
@@ -1193,7 +1193,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return m == null ? null : m.getUserData(CONTENT_TYPE);
   }
 
-  private static class MyTypedHandler extends TypedActionHandlerBase {
+  private static final class MyTypedHandler extends TypedActionHandlerBase {
     private MyTypedHandler(TypedActionHandler originalAction) {
       super(originalAction);
     }

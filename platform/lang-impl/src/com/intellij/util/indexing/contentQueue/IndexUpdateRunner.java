@@ -270,7 +270,7 @@ public final class IndexUpdateRunner {
     }
   }
 
-  private static class ContentLoadingResult {
+  private static final class ContentLoadingResult {
     final @NotNull CachedFileContent cachedFileContent;
     final long fileLength;
 

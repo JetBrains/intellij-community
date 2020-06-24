@@ -309,7 +309,7 @@ final class ServiceViewDragHelper {
       return new EventContext(point, cellBounds, (ServiceViewDnDDescriptor)viewDescriptor);
     }
 
-    private static class EventContext {
+    private static final class EventContext {
       final Point point;
       final Rectangle cellBounds;
       final ServiceViewDnDDescriptor descriptor;

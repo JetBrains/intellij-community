@@ -375,7 +375,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     }
   }
 
-  private static class MyActionButton extends ActionButton {
+  private static final class MyActionButton extends ActionButton {
 
     private MyActionButton(@NotNull AnAction action, boolean focusable) {
       super(action, action.getTemplatePresentation().clone(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);

@@ -915,7 +915,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  private static class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
+  private static final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
     final PsiModificationTracker modTracker;
     long prevModCount;
     final Runnable onChange;

@@ -63,7 +63,7 @@ public final class ModelDiff {
     void removeRangeFromModel(int start, int end);
   }
 
-  private static class RemoveCmd<T> implements Cmd {
+  private static final class RemoveCmd<T> implements Cmd {
     private final Model<T> myListModel;
     private final int start;
     private final int end;
@@ -92,7 +92,7 @@ public final class ModelDiff {
     }
   }
 
-  private static class InsertCmd<T> implements Cmd {
+  private static final class InsertCmd<T> implements Cmd {
     private final Model<T> myListModel;
     private final int idx;
     private final List<? extends T> elements;

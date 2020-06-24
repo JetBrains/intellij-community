@@ -1786,7 +1786,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
+  private final class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
     private MyAutoScrollFromSourceHandler() {
       super(ProjectViewImpl.this.myProject, myViewContentPanel, ProjectViewImpl.this.myProject);
     }

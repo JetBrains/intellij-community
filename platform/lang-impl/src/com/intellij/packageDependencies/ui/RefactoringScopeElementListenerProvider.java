@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -102,7 +102,7 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
     }
   }
 
-  private static class OldScopeDescriptor {
+  private static final class OldScopeDescriptor {
     private final NamedScopesHolder myHolder;
     private final int myIndex;
     private final NamedScope myOldScope;

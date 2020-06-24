@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -569,7 +569,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     }
   }
 
-  private static class Info {
+  private static final class Info {
     private final HighlightInfo highlightInfo;
     private final TooltipAction tooltipAction;
 
@@ -693,7 +693,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
         }
         return null;
       }
-      class MyDocComponent extends DocumentationComponent {
+      final class MyDocComponent extends DocumentationComponent {
         private MyDocComponent() {
           super(documentationManager, false);
           if (deEmphasize) {
@@ -789,7 +789,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     }
   }
 
-  private static class WrapperPanel extends JPanel implements WidthBasedLayout {
+  private static final class WrapperPanel extends JPanel implements WidthBasedLayout {
     private WrapperPanel(JComponent content) {
       super(new BorderLayout());
       setBorder(null);
@@ -816,7 +816,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     }
   }
 
-  private static class CombinedPopupLayout implements LayoutManager {
+  private static final class CombinedPopupLayout implements LayoutManager {
     private final JComponent highlightInfoComponent;
     private final DocumentationComponent quickDocComponent;
 

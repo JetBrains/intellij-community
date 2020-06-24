@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.CodeStyle;
@@ -97,7 +83,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
     LanguageCodeStyleSettingsProvider settingsProvider = getProviderForContext(editor, file);
     assert settingsProvider != null;
 
-    //reformat before calculating settings to show 
+    //reformat before calculating settings to show
     //to avoid considering that arbitrary first setting affects formatting for this fragment
     CodeStyleSettings settings = CodeStyle.getSettings(file);
     textFormatter.reformatSelectedText(settings);
@@ -112,7 +98,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
   public boolean startInWriteAction() {
     return false;
   }
-  
+
   static class FragmentCodeStyleSettingsDialog extends DialogWrapper {
     private final CodeFragmentCodeStyleSettingsPanel myTabbedLanguagePanel;
     private final Editor myEditor;
@@ -311,7 +297,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
       }
     }
 
-    private class ApplyToSettings extends AbstractAction implements OptionAction {
+    private final class ApplyToSettings extends AbstractAction implements OptionAction {
       private final Action[] myOptions = {
         new ApplyToSettingsAndReformat()
       };

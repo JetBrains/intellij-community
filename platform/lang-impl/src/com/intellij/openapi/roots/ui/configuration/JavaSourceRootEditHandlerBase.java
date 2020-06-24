@@ -72,7 +72,7 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     return panel;
   }
 
-  private static class SourceRootPropertiesDialog extends DialogWrapper {
+  private static final class SourceRootPropertiesDialog extends DialogWrapper {
     private final JTextField myPackagePrefixField;
     private final JCheckBox myIsGeneratedCheckBox;
     private final JPanel myMainPanel;

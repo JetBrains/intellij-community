@@ -252,7 +252,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
     }
   }
 
-  static class MyModel extends ListTableModel<UsageNode> implements ModelDiff.Model<Object> {
+  static final class MyModel extends ListTableModel<UsageNode> implements ModelDiff.Model<Object> {
     private MyModel(@NotNull List<UsageNode> data, int cols) {
       super(cols(cols), data, 0);
     }

@@ -133,7 +133,7 @@ public class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Dis
     clearCache();
   }
 
-  private static class FileData extends UserDataHolderBase {
+  private static final class FileData extends UserDataHolderBase {
     private long lastRefTimeStamp;
 
     private FileData() {

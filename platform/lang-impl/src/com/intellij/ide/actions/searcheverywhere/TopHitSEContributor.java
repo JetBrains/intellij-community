@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -188,7 +188,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Object> 
     mySearchStringSetter.accept(str);
   }
 
-  private static class TopHitRenderer extends ColoredListCellRenderer<Object> {
+  private static final class TopHitRenderer extends ColoredListCellRenderer<Object> {
 
     private final Project myProject;
 

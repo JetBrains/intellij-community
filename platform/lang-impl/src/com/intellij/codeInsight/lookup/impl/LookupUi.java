@@ -244,7 +244,7 @@ class LookupUi {
     ScreenUtil.cropRectangleToFitTheScreen(candidate);
 
     if (isPositionedAboveCaret()) {
-      // need to crop as well at bottom if lookup overlaps current line  
+      // need to crop as well at bottom if lookup overlaps current line
       Point caretLocation = editor.logicalPositionToXY(pos);
       SwingUtilities.convertPointToScreen(caretLocation, editor.getContentComponent());
       int offset = location.y + dim.height - caretLocation.y;
@@ -265,7 +265,7 @@ class LookupUi {
     return new Rectangle(location.x, location.y, dim.width, candidate.height);
   }
 
-  private class LookupLayeredPane extends JBLayeredPane {
+  private final class LookupLayeredPane extends JBLayeredPane {
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
     private LookupLayeredPane() {
@@ -313,7 +313,7 @@ class LookupUi {
     }
   }
 
-  private class HintAction extends DumbAwareAction {
+  private final class HintAction extends DumbAwareAction {
     private HintAction() {
       super(AllIcons.Actions.IntentionBulb);
 
@@ -330,13 +330,13 @@ class LookupUi {
     }
   }
 
-  private static class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
+  private static final class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     private MenuAction() {
       setPopup(true);
     }
   }
 
-  private class ChangeSortingAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
+  private final class ChangeSortingAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
     private boolean sortByName = UISettings.getInstance().getSortLookupElementsLexicographically();
     private ChangeSortingAction() {
       super(ActionsBundle.messagePointer("action.ChangeSortingAction.text"));

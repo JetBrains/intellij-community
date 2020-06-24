@@ -1490,7 +1490,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  private static class HintLabel extends JLabel {
+  private static final class HintLabel extends JLabel {
     private HintLabel(@NotNull String text) {
       super(text, RIGHT);
       setForeground(JBColor.DARK_GRAY);

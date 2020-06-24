@@ -123,7 +123,7 @@ public class ColorSelectionComponent extends JPanel {
     }
   }
 
-  private class CustomColorButton extends ColorButton {
+  private final class CustomColorButton extends ColorButton {
     private CustomColorButton() {
       super(CUSTOM_COLOR_NAME, JBColor.WHITE);
       myColor = null;

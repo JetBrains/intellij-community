@@ -97,8 +97,8 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
-import java.util.*;
 import java.util.Vector;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
@@ -1279,7 +1279,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
+  private final class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
 
     private EditDocumentationSourceAction() {
       super(true);
@@ -1312,7 +1312,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
 
-  private class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  private final class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     private ExternalDocAction() {
       super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.PreviousOccurence);
       registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), null);
@@ -1792,7 +1792,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class MyScalingImageView extends ImageView {
+  private final class MyScalingImageView extends ImageView {
     private MyScalingImageView(Element elem) {super(elem);}
 
     @Override

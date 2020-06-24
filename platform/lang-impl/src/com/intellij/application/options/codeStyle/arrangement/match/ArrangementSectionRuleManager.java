@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -33,7 +33,7 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Se
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public class ArrangementSectionRuleManager {
+public final class ArrangementSectionRuleManager {
   private static final Set<ArrangementSettingsToken> MUTEXES = ContainerUtil.newHashSet(START_SECTION, END_SECTION);
   private static final Set<ArrangementSettingsToken> TOKENS = ContainerUtil.newHashSet(START_SECTION, END_SECTION, TEXT);
 
@@ -178,7 +178,7 @@ public class ArrangementSectionRuleManager {
     return lineCommentPrefix + text;
   }
 
-  public static class ArrangementSectionRuleData {
+  public static final class ArrangementSectionRuleData {
     private final boolean myIsSectionStart;
     private final String myText;
 

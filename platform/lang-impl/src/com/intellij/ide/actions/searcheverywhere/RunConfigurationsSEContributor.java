@@ -169,7 +169,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
 
   private final Renderer renderer = new Renderer();
 
-  private class Renderer extends JPanel implements ListCellRenderer<ChooseRunConfigurationPopup.ItemWrapper> {
+  private final class Renderer extends JPanel implements ListCellRenderer<ChooseRunConfigurationPopup.ItemWrapper> {
 
     private final SimpleColoredComponent runConfigInfo = new SimpleColoredComponent();
     private final SimpleColoredComponent executorInfo = new SimpleColoredComponent();
