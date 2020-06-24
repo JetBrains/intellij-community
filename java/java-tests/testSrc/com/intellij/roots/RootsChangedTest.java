@@ -525,4 +525,29 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     assertEventsCount(1);
   }
+
+  public void testChangesInsideCompilerOutputDirectoryMustNotLeadToRootsChange() {
+    File temp = new File(FileUtil.getTempDirectory());
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    VirtualFile content = VfsTestUtil.createDir(root, "content");
+
+    Module module = createModule("a.iml");
+    ModuleRootModificationUtil.addContentRoot(module, content.getPath());
+    VirtualFile out = VfsTestUtil.createDir(root, "out");
+
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      CompilerModuleExtension moduleExtension = model.getModuleExtension(CompilerModuleExtension.class);
+      moduleExtension.inheritCompilerOutputPath(false);
+      moduleExtension.setCompilerOutputPath(out);
+      moduleExtension.setCompilerOutputPathForTests(out);
+    });
+
+    myModuleRootListener.reset();
+    VirtualFile f1 = VfsTestUtil.createFile(out, "x/x.txt");
+    VirtualFile f2 = VfsTestUtil.createFile(out, "x/x.class");
+    assertEventsCount(0);
+    VfsTestUtil.deleteFile(f1);
+    VfsTestUtil.deleteFile(f2);
+    assertEventsCount(0);
+  }
 }

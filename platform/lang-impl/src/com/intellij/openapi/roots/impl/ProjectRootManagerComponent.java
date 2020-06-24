@@ -213,7 +213,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private @NotNull Pair<Set<String>, Set<String>> collectWatchRoots(@NotNull Disposable disposable) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    Set<String> recursivePaths = CollectionFactory.createFilePathSet();
+    Set<String> recursivePathsToListen = CollectionFactory.createFilePathSet();
+    Set<String> recursivePathsToWatch = CollectionFactory.createFilePathSet();
     Set<String> flatPaths = CollectionFactory.createFilePathSet();
 
     String projectFilePath = myProject.getProjectFilePath();
@@ -228,18 +229,18 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
       Collection<VirtualFile> toWatch = extension.getRootsToWatch(myProject);
       if (!toWatch.isEmpty()) {
-        recursivePaths.addAll(ContainerUtil.map(toWatch, VirtualFile::getPath));
+        recursivePathsToWatch.addAll(ContainerUtil.map(toWatch, VirtualFile::getPath));
       }
     }
 
     for (WatchedRootsProvider extension : WatchedRootsProvider.EP_NAME.getExtensions(myProject)) {
       Set<String> toWatch = extension.getRootsToWatch();
       if (!toWatch.isEmpty()) {
-        recursivePaths.addAll(ContainerUtil.map(toWatch, FileUtil::toSystemIndependentName));
+        recursivePathsToWatch.addAll(ContainerUtil.map(toWatch, FileUtil::toSystemIndependentName));
       }
+      recursivePathsToListen.addAll(ContainerUtil.map(extension.getRecursiveRoots(), FileUtil::toSystemIndependentName));
     }
 
-    List<String> recursiveUrls = ContainerUtil.map(recursivePaths, VfsUtilCore::pathToUrl);
     Set<String> excludedUrls = CollectionFactory.createSmallMemoryFootprintSet();
     // changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
     for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
@@ -247,21 +248,23 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
 
     // avoid creating empty unnecessary container
-    if (!recursiveUrls.isEmpty() || !flatPaths.isEmpty() || !excludedUrls.isEmpty()) {
+    if (!recursivePathsToListen.isEmpty() || !flatPaths.isEmpty() || !excludedUrls.isEmpty()) {
       Disposer.register(this, disposable);
       // creating a container with these URLs with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
       VirtualFilePointerContainer container =
         VirtualFilePointerManager.getInstance().createContainer(disposable, getRootsValidityChangedListener());
 
-      ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveUrls, true);
+      List<String> recursiveUrlsToListen = ContainerUtil.map(recursivePathsToListen, VfsUtilCore::pathToUrl);
+
+      ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveUrlsToListen, true);
       flatPaths.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
       ((VirtualFilePointerContainerImpl)container).addAll(excludedUrls);
     }
 
     // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener
-    collectModuleWatchRoots(recursivePaths, flatPaths);
+    collectModuleWatchRoots(recursivePathsToWatch, flatPaths);
 
-    return Pair.create(recursivePaths, flatPaths);
+    return Pair.create(recursivePathsToWatch, flatPaths);
   }
 
   private void collectModuleWatchRoots(@NotNull Set<? super String> recursivePaths, @NotNull Set<? super String> flatPaths) {

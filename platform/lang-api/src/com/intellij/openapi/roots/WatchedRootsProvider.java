@@ -16,8 +16,10 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -26,6 +28,19 @@ import java.util.Set;
 public interface WatchedRootsProvider {
   ExtensionPointName<WatchedRootsProvider> EP_NAME = new ExtensionPointName<>("com.intellij.roots.watchedRootsProvider");
 
+  /**
+   * @return paths which should be monitored via {@link LocalFileSystem#addRootToWatch(java.lang.String, boolean)}.
+   * @see LocalFileSystem
+   */
   @NotNull
   Set<String> getRootsToWatch();
+
+  /**
+   * @return paths, changes inside which should cause "roots change" event and corresponding directories re-scan.
+   * For example, adding .jar file inside "lib" directory should cause adding .jar file into libraries.
+   */
+  @NotNull
+  default Set<String> getRecursiveRoots() {
+    return Collections.emptySet();
+  }
 }

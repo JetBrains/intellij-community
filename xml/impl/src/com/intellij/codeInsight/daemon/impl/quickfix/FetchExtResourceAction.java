@@ -118,6 +118,11 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     return Collections.singleton(file.toAbsolutePath().toString());
   }
 
+  @Override
+  public @NotNull Set<String> getRecursiveRoots() {
+    return getRootsToWatch();
+  }
+
   @NotNull
   private static Path checkExists(String dir) {
     Path path = Paths.get(dir);

@@ -77,7 +77,7 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   }
 
   @NotNull
-  private static Set<String> getRootsToWatch(Project project) {
+  private static Set<String> getRootsToWatch(@NotNull Project project) {
     Set<String> rootsToWatch = new HashSet<>();
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {
