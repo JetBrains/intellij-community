@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -20,15 +20,6 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class ExtensionPointImpl implements ExtensionPoint {
-
-  @NotNull
-  @Override
-  public String getEffectiveName() {
-    if (DomUtil.hasXml(getName())) {
-      return StringUtil.notNullize(getName().getRawText());
-    }
-    return StringUtil.notNullize(getQualifiedName().getRawText());
-  }
 
   @Nullable
   @Override
