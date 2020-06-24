@@ -1227,11 +1227,6 @@
 
     <action class="com.intellij.openapi.editor.actions.ShowFontsUsedByEditorAction" id="ShowFontsUsedByEditor"/>
     <group id="AnalyzeStacktraceToolbar"/>
-
-    <group id="ReaderModeActionGroup" class="com.intellij.codeInsight.actions.ReaderModeActionGroup">
-      <action id="ReaderModeAction" class="com.intellij.codeInsight.actions.ReaderModeAction" icon="AllIcons.Actions.Show"/>
-    </group>
-
     <group id="EditorTabActionGroup"/>
   </actions>
 </idea-plugin>
