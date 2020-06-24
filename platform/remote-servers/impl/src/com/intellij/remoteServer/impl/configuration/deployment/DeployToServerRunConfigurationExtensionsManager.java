@@ -2,7 +2,10 @@
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configuration.RunConfigurationExtensionsManager;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import org.jetbrains.annotations.NotNull;
 
 public class DeployToServerRunConfigurationExtensionsManager
   extends RunConfigurationExtensionsManager<DeployToServerRunConfiguration<?, ?>, DeployToServerRunConfigurationExtension> {
@@ -13,5 +16,16 @@ public class DeployToServerRunConfigurationExtensionsManager
 
   public static DeployToServerRunConfigurationExtensionsManager getInstance() {
     return ServiceManager.getService(DeployToServerRunConfigurationExtensionsManager.class);
+  }
+
+  public void patchDeploymentTask(@NotNull DeploymentTask<?> deploymentTask) {
+    RunProfile runProfile = deploymentTask.getExecutionEnvironment().getRunProfile();
+    if (runProfile instanceof DeployToServerRunConfiguration<?, ?>) {
+      DeployToServerRunConfiguration<?, ?> runConfiguration = (DeployToServerRunConfiguration<?, ?>)runProfile;
+      processApplicableExtensions(runConfiguration, next -> {
+        next.patchDeploymentTask(runConfiguration, deploymentTask);
+        return null;
+      });
+    }
   }
 }
