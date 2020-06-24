@@ -17,8 +17,10 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -84,8 +86,17 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   public static <S extends CommonProgramRunConfigurationParameters> SettingsEditorFragment<S, ?> createEnvParameters() {
     EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
     env.setLabelLocation(BorderLayout.WEST);
-    return SettingsEditorFragment.createFromComponent("environmentVariables",
-                                                      ExecutionBundle.message("environment.variables.fragment.name"),
-                                                      ExecutionBundle.message("group.operating.system"), env, s -> true);
+    return new SettingsEditorFragment<>("environmentVariables", ExecutionBundle.message("environment.variables.fragment.name"),
+                                        ExecutionBundle.message("group.operating.system"), (JComponent)env,
+                                        (settings, c) -> env.reset(settings),
+                                        (settings, c) -> {
+                                          if (!env.isVisible()) {
+                                            settings.setEnvs(Collections.emptyMap());
+                                            settings.setPassParentEnvs(true);
+                                          }
+                                          else
+                                            env.apply(settings);
+                                        },
+                                        s -> true);
   }
 }
