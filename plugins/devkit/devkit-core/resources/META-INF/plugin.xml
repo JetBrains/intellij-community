@@ -49,7 +49,7 @@
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
                       rootTagName="idea-plugin"
-                      stubVersion="13"/>
+                      stubVersion="14"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
