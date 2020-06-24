@@ -3,8 +3,15 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configuration.RunConfigurationExtensionBase;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class DeployToServerRunConfigurationExtension extends RunConfigurationExtensionBase<DeployToServerRunConfiguration<?, ?>> {
   public static final ExtensionPointName<DeployToServerRunConfigurationExtension> EP_NAME
     = new ExtensionPointName<>("com.intellij.remoteServer.runConfigurationExtension");
+
+  protected void patchDeploymentTask(@NotNull DeployToServerRunConfiguration<?, ?> runConfiguration,
+                                     @NotNull DeploymentTask<?> deploymentTask) {
+    //
+  }
 }
