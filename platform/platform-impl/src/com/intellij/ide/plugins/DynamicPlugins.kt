@@ -399,12 +399,14 @@ object DynamicPlugins {
     var save: Boolean = true,
     var requireMemorySnapshot: Boolean = false,
     var waitForClassloaderUnload: Boolean = false,
-    var checkImplementationDetailDependencies: Boolean = true
+    var checkImplementationDetailDependencies: Boolean = true,
+    var unloadWaitTimeout: Int? = null
   ) {
     fun withUpdate(value: Boolean): UnloadPluginOptions { isUpdate = value; return this }
     fun withWaitForClassloaderUnload(value: Boolean): UnloadPluginOptions { waitForClassloaderUnload = value; return this }
     fun withDisable(value: Boolean): UnloadPluginOptions { disable = value; return this }
     fun withRequireMemorySnapshot(value: Boolean): UnloadPluginOptions { requireMemorySnapshot = value; return this }
+    fun withUnloadWaitTimeout(value: Int): UnloadPluginOptions { unloadWaitTimeout = value; return this }
   }
 
   @JvmStatic
@@ -513,7 +515,7 @@ object DynamicPlugins {
       classloadersFromUnloadedPlugins[pluginDescriptor.pluginId] = loadedPluginDescriptor.pluginClassLoader as? PluginClassLoader
       val checkClassLoaderUnload = options.waitForClassloaderUnload || Registry.`is`("ide.plugins.snapshot.on.unload.fail") || options.requireMemorySnapshot
       val timeout = if (checkClassLoaderUnload)
-        Registry.intValue("ide.plugins.unload.timeout", 5000)
+        options.unloadWaitTimeout ?: Registry.intValue("ide.plugins.unload.timeout", 5000)
       else
         0
       var classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader(timeout)
