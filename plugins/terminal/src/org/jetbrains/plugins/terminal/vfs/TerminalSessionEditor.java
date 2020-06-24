@@ -10,10 +10,9 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.jediterm.terminal.TtyConnectorWaitFor;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionProviderBase;
+import com.jediterm.terminal.ui.TerminalWidgetListener;
 import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,7 @@ import java.util.List;
 public final class TerminalSessionEditor extends UserDataHolderBase implements FileEditor {
   private final Project myProject;
   private final TerminalSessionVirtualFileImpl myFile;
-  private final TtyConnectorWaitFor myWaitFor;
+  private final TerminalWidgetListener myListener;
 
   public TerminalSessionEditor(Project project, @NotNull TerminalSessionVirtualFileImpl terminalFile) {
     myProject = project;
@@ -47,15 +46,12 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
       }
     });
 
-    myWaitFor = new TtyConnectorWaitFor(myFile.getTerminalWidget().getTtyConnector(), SequentialTaskExecutor
-      .createSequentialApplicationPoolExecutor("Terminal session"));
-
-    myWaitFor
-      .setTerminationCallback(integer -> {
-        ApplicationManager.getApplication().invokeLater(() -> FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile));
-
-        return true;
-      });
+    myListener = widget -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile);
+      }, myProject.getDisposed());
+    };
+    myFile.getTerminalWidget().addListener(myListener);
   }
 
   private void handleCloseSession() {
@@ -129,8 +125,8 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
 
   @Override
   public void dispose() {
+    myFile.getTerminalWidget().removeListener(myListener);
     Boolean closingToReopen = myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN);
-    myWaitFor.detach();
     if (closingToReopen == null || !closingToReopen) {
       myFile.getTerminalWidget().close();
     }

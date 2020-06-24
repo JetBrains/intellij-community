@@ -450,6 +450,11 @@ public final class TerminalView {
     ContentManager contentManager = myToolWindow.getContentManager();
     LOG.assertTrue(contentManager.getIndexOfContent(content) >= 0, "Not a terminal content");
     contentManager.removeContent(content, true);
+    for (TerminalContainer container : myContainerByWidgetMap.values()) {
+      if (container.getContent().equals(content)) {
+        container.detachWidget();
+      }
+    }
     content.putUserData(TERMINAL_WIDGET_KEY, null);
   }
 
