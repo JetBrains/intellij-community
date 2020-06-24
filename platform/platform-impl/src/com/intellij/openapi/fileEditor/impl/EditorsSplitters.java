@@ -42,8 +42,10 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.Alarm;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -374,25 +376,35 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     updateFileIconLater(file);
   }
 
-  void updateFileIconImmediately(@NotNull VirtualFile file) {
+  void updateFileIconImmediately(@NotNull VirtualFile file, @NotNull Icon icon) {
     Collection<EditorWindow> windows = findWindows(file);
     for (EditorWindow window : windows) {
-      window.updateFileIcon(file);
+      window.updateFileIcon(file, icon);
     }
   }
 
   private final Set<VirtualFile> myFilesToUpdateIconsFor = new HashSet<>();
 
-  private void updateFileIconLater(@NotNull VirtualFile file) {
+  void updateFileIconLater(@NotNull VirtualFile file) {
     myFilesToUpdateIconsFor.add(file);
     myIconUpdaterAlarm.cancelAllRequests();
     myIconUpdaterAlarm.addRequest(() -> {
       if (myManager.getProject().isDisposed()) return;
       for (VirtualFile file1 : myFilesToUpdateIconsFor) {
-        updateFileIconImmediately(file1);
+        updateFileIconAsynchronously(file1);
       }
       myFilesToUpdateIconsFor.clear();
     }, 200, ModalityState.stateForComponent(this));
+  }
+
+  private void updateFileIconAsynchronously(VirtualFile file) {
+    ReadAction
+      .nonBlocking(() -> IconUtil.computeFileIcon(file, Iconable.ICON_FLAG_READ_STATUS, myManager.getProject()))
+      .coalesceBy(this, "icon", file)
+      .expireWith(parentDisposable)
+      .expireWhen(() -> !file.isValid())
+      .finishOnUiThread(ModalityState.any(), icon -> updateFileIconImmediately(file, icon))
+      .submit(NonUrgentExecutor.getInstance());
   }
 
   void updateFileColor(@NotNull VirtualFile file) {

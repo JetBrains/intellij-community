@@ -184,6 +184,10 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     myTabs.getTabAt(index).setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null);
   }
 
+  Icon getIconAt(int index) {
+    return myTabs.getTabAt(index).getIcon();
+  }
+
   void setTitleAt(int index, @NotNull String text) {
     myTabs.getTabAt(index).setText(text);
   }

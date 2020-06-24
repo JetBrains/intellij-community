@@ -143,7 +143,7 @@ public class IconUtil {
     if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
 
     Icon providersIcon = getProvidersIcon(file, flags, project);
-    Icon icon = providersIcon != null ? providersIcon : getBaseIcon(file);
+    Icon icon = providersIcon != null ? providersIcon : computeBaseFileIcon(file);
 
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     for (FileIconPatcher patcher : FileIconPatcher.EP_NAME.getExtensionList()) {
@@ -177,13 +177,29 @@ public class IconUtil {
     return flags & ~flagIgnoreMask;
   }
 
+  /**
+   * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
+   * Use {@link #computeFileIcon} where possible (e.g. in background threads) to get a non-deferred icon.
+   */
   public static Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
-    Icon base = lastIcon != null ? lastIcon : getBaseIcon(file);
+    Icon base = lastIcon != null ? lastIcon : computeBaseFileIcon(file);
     return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
   }
 
-  private static Icon getBaseIcon(@NotNull VirtualFile vFile) {
+  /**
+   * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
+   */
+  public static Icon computeFileIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
+    return ICON_NULLABLE_FUNCTION.fun(new FileIconKey(file, project, flags));
+  }
+
+  /**
+   * @return an icon for a file that's quick to calculate, most likely based on the file type
+   * @see #computeFileIcon(VirtualFile, int, Project)
+   * @see FileType#getIcon()
+   */
+  public static Icon computeBaseFileIcon(@NotNull VirtualFile vFile) {
     Icon icon = TypePresentationService.getService().getIcon(vFile);
     if (icon != null) {
       return icon;
