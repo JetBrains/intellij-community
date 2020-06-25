@@ -59,7 +59,7 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     MacrosDialog.addMacroSupport(vmOptions.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
     fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions, 15,
                                                (configuration, c) -> c.setText(configuration.getVMParameters()),
-                                               (configuration, c) -> configuration.setVMParameters(c.isVisible() ? null : c.getText()),
+                                               (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
                                                configuration -> isNotEmpty(configuration.getVMParameters())));
 
     EditorTextField mainClass = ClassEditorField.createClassField(myProject, () -> classpathCombo.getSelectedModule());
