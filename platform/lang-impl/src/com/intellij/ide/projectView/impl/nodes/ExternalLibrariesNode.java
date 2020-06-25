@@ -48,8 +48,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     Module[] modules = ModuleManager.getInstance(project).getModules();
-    // In case of a significant slowdown, should be replaced to Set with custom Hash Strategy
-    List<Library> processedLibraries = new ArrayList<>();
+    Map<String, Library> processedLibraries = new HashMap<>();
     Set<Sdk> processedSdk = new HashSet<>();
 
     for (Module module : modules) {
@@ -60,8 +59,10 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
           final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
           final Library library = libraryOrderEntry.getLibrary();
           if (library == null) continue;
-          if (processedLibraries.stream().anyMatch(processedLibrary -> processedLibrary.hasSameContent(library))) continue;
-          processedLibraries.add(library);
+          String libraryPresentableName = libraryOrderEntry.getPresentableName();
+          Library processedLibrary = processedLibraries.get(libraryPresentableName);
+          if (processedLibrary != null && processedLibrary.hasSameContent(library)) continue;
+          processedLibraries.put(libraryPresentableName, library);
 
           if (!hasExternalEntries(fileIndex, libraryOrderEntry)) continue;
 
