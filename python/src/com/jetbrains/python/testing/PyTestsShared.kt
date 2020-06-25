@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
@@ -167,7 +168,7 @@ private fun getElementByUrl(protocol: String,
                             module: Module,
                             evalContext: TypeEvalContext,
                             matcher: Matcher = PATH_URL.matcher(protocol),
-                            metainfo: String? = null): Location<out PsiElement>? {
+                            metainfo: String? = null): Location<out PsiElement>? = runReadAction {
   val folder = getFolderFromMatcher(matcher, module)?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
   val qualifiedName = QualifiedName.fromDottedString(path)
@@ -176,7 +177,7 @@ private fun getElementByUrl(protocol: String,
                                                                    evalContext = evalContext,
                                                                    folderToStart = folder,
                                                                    allowInaccurateResult = true))
-  return if (element != null) {
+  if (element != null) {
     // Path is qualified name of python test according to runners protocol
     // Parentheses are part of generators / parametrized tests
     // Until https://github.com/JetBrains/teamcity-messages/issues/121 they are disabled,
@@ -301,13 +302,13 @@ data class ConfigurationTarget(@ConfigField override var target: String,
       PyRunTargetVariant.PATH -> listOf("--path", target.trim())
     }
 
-  private fun getArgumentsForPythonTarget(configuration: PyAbstractTestConfiguration): List<String> {
+  private fun getArgumentsForPythonTarget(configuration: PyAbstractTestConfiguration): List<String> = runReadAction ra@{
     val element = asPsiElement(configuration) ?: throw ExecutionException(
       "Can't resolve $target. Try to remove configuration and generate it again")
 
     if (element is PsiDirectory) {
       // Directory is special case: we can't run it as package for now, so we run it as path
-      return listOf("--path", element.virtualFile.path)
+      return@ra listOf("--path", element.virtualFile.path)
     }
 
     val context = TypeEvalContext.userInitiated(configuration.project, null)
@@ -334,13 +335,13 @@ data class ConfigurationTarget(@ConfigField override var target: String,
       if (elementAndName != null) {
         // qNameInsideOfDirectory may contain redundant elements like subtests so we use name that was really resolved
         // element.qname can't be used because inherited test resolves to parent
-        return listOf("--target", elementAndName.name.toString())
+        return@ra listOf("--target", elementAndName.name.toString())
       }
       // Use "full" (path from closest root) otherwise
       val name = (element.containingFile as? PyFile)?.getQName()?.append(qualifiedNameParts.elementName) ?: throw ExecutionException(
         "Can't get importable name for ${element.containingFile}. Is it a python file in project?")
 
-      return listOf("--target", name.toString())
+      return@ra listOf("--target", name.toString())
     }
     else {
 
@@ -356,10 +357,10 @@ data class ConfigurationTarget(@ConfigField override var target: String,
 
       if (pyTarget.componentCount == 0) {
         // If python part is empty we are launching file. To prevent junk like "foo.py::" we run it as file instead
-        return listOf("--path", fileSystemPartOfTarget)
+        return@ra listOf("--path", fileSystemPartOfTarget)
       }
 
-      return listOf("--target", "$fileSystemPartOfTarget::$pyTarget")
+      return@ra listOf("--target", "$fileSystemPartOfTarget::$pyTarget")
 
     }
   }

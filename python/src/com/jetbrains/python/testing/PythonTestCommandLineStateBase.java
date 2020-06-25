@@ -29,7 +29,11 @@ import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -40,9 +44,12 @@ import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author yole
@@ -123,7 +130,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   @Override
   public ExecutionResult execute(Executor executor, PythonProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(processStarter, patchers);
-    final ConsoleView console = createAndAttachConsole(myConfiguration.getProject(), processHandler, executor);
+    ConsoleView console = invokeAndWait(() -> createAndAttachConsole(myConfiguration.getProject(), processHandler, executor));
 
     DefaultExecutionResult executionResult =
       new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
@@ -136,6 +143,19 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
 
     executionResult.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction());
     return executionResult;
+  }
+
+  protected static <T, E extends Throwable> @NotNull T invokeAndWait(ThrowableComputable<@NotNull T, E> computable) {
+    AsyncPromise<T> promise = new AsyncPromise<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        promise.setResult(computable.compute());
+      }
+      catch (Throwable error) {
+        promise.setError(error);
+      }
+    });
+    return Objects.requireNonNull(promise.get(), "The execution was cancelled");
   }
 
   protected void addBeforeParameters(GeneralCommandLine cmd) {}

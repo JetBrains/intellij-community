@@ -3,6 +3,7 @@
  */
 package com.jetbrains.python.run.targetBasedConfiguration
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -36,9 +37,10 @@ fun targetAsPsiElement(targetType: PyRunTargetVariant,
     val module = configuration.getModule() ?: return null
     val context = TypeEvalContext.userInitiated(configuration.getProject(), null)
 
-    val name = QualifiedName.fromDottedString(target)
-    return name.resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module), configuration.getSdk(),
-                                                     context, workingDirectory, true))
+    return runReadAction {
+      QualifiedName.fromDottedString(target)
+        .resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module), configuration.getSdk(), context, workingDirectory, true))
+    }
   }
   return null
 }
