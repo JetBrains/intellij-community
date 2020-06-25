@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
@@ -17,7 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.fileEditor.impl.tabActions.EditorTabActions;
+import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -269,7 +270,26 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       .setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
 
-    new EditorTabActions(tab, file, myProject, myWindow, parentDisposable);
+    CloseTab closeTab = new CloseTab(component, file, myProject, myWindow, parentDisposable);
+    DataContext dataContext = DataManager.getInstance().getDataContext(component);
+
+    DefaultActionGroup editorActionGroup = (DefaultActionGroup)ActionManager.getInstance().getAction(
+      "EditorTabActionGroup");
+    DefaultActionGroup group = new DefaultActionGroup();
+
+    AnActionEvent event = AnActionEvent.createFromDataContext("EditorTabActionGroup", null, dataContext);
+
+    for (AnAction action : editorActionGroup.getChildren(event)) {
+      if(action instanceof ActionGroup) {
+        group.addAll(((ActionGroup)action).getChildren(event));
+      } else {
+        group.addAction(action);
+      }
+    }
+    group.addAction(closeTab, Constraints.LAST);
+
+    tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB);
+
     myTabs.addTabSilently(tab, indexToInsert);
   }
 
