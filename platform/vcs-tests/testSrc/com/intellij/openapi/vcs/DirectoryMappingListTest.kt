@@ -38,13 +38,6 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   private lateinit var vcsCVS: MockAbstractVcs
 
   override fun setUpProject() {
-    // Disable IndexableSetContributor (ExternalResourcesRootsProvider and others) to not affect project file index.
-    // They provide files for indexing, which are irrelevant to the current test.
-    // These files are checked on "ProjectFileIndex.isExcluded" (see de4d445d7e24) and pollute the index's cache.
-    runWriteAction {
-      ExtensionTestUtil.maskExtensions(IndexableSetContributor.EP_NAME, emptyList(), testRootDisposable)
-    }
-
     TestLoggerFactory.enableDebugLogging(testRootDisposable,
                                          "#" + NewMappings::class.java.name,
                                          "#" + VcsInitialization::class.java.name)

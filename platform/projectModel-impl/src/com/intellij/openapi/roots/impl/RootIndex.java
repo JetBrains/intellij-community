@@ -46,6 +46,7 @@ class RootIndex {
 
   private final Map<VirtualFile, String> myPackagePrefixByRoot;
   private final Map<VirtualFile, DirectoryInfo> myRootInfos;
+  private final boolean myHasNonDirectoryRoots;
   private final ConcurrentBitSet myNonInterestingIds = new ConcurrentBitSet();
   @NotNull private final Project myProject;
   final PackageDirectoryCache myPackageDirectoryCache;
@@ -68,6 +69,7 @@ class RootIndex {
     Set<VirtualFile> allRoots = info.getAllRoots();
     MultiMap<String, VirtualFile> rootsByPackagePrefix = MultiMap.create(allRoots.size(), 0.75f);
     myRootInfos = new HashMap<>(allRoots.size());
+    myHasNonDirectoryRoots = ContainerUtil.exists(allRoots, r -> !r.isDirectory());
     myPackagePrefixByRoot = new HashMap<>(allRoots.size());
     List<List<VirtualFile>> hierarchies = new ArrayList<>(allRoots.size());
     for (VirtualFile root : allRoots) {
@@ -604,15 +606,32 @@ class RootIndex {
       return NonProjectDirectoryInfo.INVALID;
     }
 
+    if (!file.isDirectory()) {
+      DirectoryInfo info = getOwnFileInfo(file);
+      if (info != null) return info;
+
+      file = file.getParent();
+    }
+
     for (VirtualFile each = file; each != null; each = each.getParent()) {
-      int id = ((VirtualFileWithId)each).getId();
-      if (!myNonInterestingIds.get(id)) {
-        DirectoryInfo info = handleInterestingId(id, each);
-        if (info != null) return info;
-      }
+      DirectoryInfo info = getOwnInfo(each);
+      if (info != null) return info;
     }
 
     return NonProjectDirectoryInfo.NOT_UNDER_PROJECT_ROOTS;
+  }
+
+  @Nullable
+  private DirectoryInfo getOwnFileInfo(@NotNull VirtualFile file) {
+    return myHasNonDirectoryRoots ? getOwnInfo(file) :
+           ourFileTypes.isFileIgnored(file) ? NonProjectDirectoryInfo.IGNORED :
+           null;
+  }
+
+  @Nullable
+  private DirectoryInfo getOwnInfo(VirtualFile file) {
+    int id = ((VirtualFileWithId)file).getId();
+    return myNonInterestingIds.get(id) ? null : handleInterestingId(id, file);
   }
 
   @Nullable
