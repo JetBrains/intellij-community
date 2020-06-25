@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -57,6 +58,9 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myEditor = editor;
     myRestrictRange = restrictRange;
     myHighlightInfoProcessor = highlightInfoProcessor;
+    if (file != null && InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
+      throw new IllegalArgumentException("File must be top-level but " + file + " is an injected fragment");
+    }
   }
 
   @Override
