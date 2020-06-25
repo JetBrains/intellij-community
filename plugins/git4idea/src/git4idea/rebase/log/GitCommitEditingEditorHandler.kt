@@ -18,7 +18,7 @@ internal fun <T> List<T>.indicesByPredicate(predicate: (T) -> Boolean): List<Int
   }
 }
 
-internal abstract class GitMultipleCommitEditingEditorHandler(
+internal abstract class GitCommitEditingEditorHandler(
   protected val repository: GitRepository,
   private val commits: List<VcsShortCommitDetails>
 ) : GitInteractiveRebaseEditorHandler(repository.project, repository.root) {

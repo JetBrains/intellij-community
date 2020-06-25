@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import git4idea.i18n.GitBundle
+import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitMultipleCommitEditingAction
-import git4idea.rebase.log.GitMultipleCommitEditingOperationResult
 import git4idea.rebase.log.getOrLoadDetails
 import git4idea.rebase.log.notifySuccess
 
@@ -21,7 +21,7 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
     object : Task.Backgroundable(project, GitBundle.message("rebase.log.drop.progress.indicator.title", commitDetails.size)) {
       override fun run(indicator: ProgressIndicator) {
         val operationResult = GitDropOperation(commitEditingData.repository).execute(commitDetails)
-        if (operationResult is GitMultipleCommitEditingOperationResult.Complete) {
+        if (operationResult is GitCommitEditingOperationResult.Complete) {
           operationResult.notifySuccess(
             GitBundle.message("rebase.log.drop.success.notification.title", commitDetails.size),
             GitBundle.getString("rebase.log.drop.undo.progress.title"),
