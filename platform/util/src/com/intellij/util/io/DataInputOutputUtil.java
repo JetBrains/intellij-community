@@ -11,6 +11,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.List;
 
 public final class DataInputOutputUtil {
@@ -124,5 +125,12 @@ public final class DataInputOutputUtil {
                                     @SuppressWarnings("BoundedWildcard")
                                     @NotNull ThrowableComputable<? extends T, IOException> readElement) throws IOException {
     return DataInputOutputUtilRt.readSeq(in, readElement);
+  }
+
+  public static <T> void writeSeq(@NotNull DataOutput out,
+                                  @NotNull Collection<? extends T> collection,
+                                  @SuppressWarnings("BoundedWildcard")
+                                  @NotNull ThrowableConsumer<T, IOException> writeElement) throws IOException {
+    DataInputOutputUtilRt.writeSeq(out, collection, writeElement);
   }
 }
