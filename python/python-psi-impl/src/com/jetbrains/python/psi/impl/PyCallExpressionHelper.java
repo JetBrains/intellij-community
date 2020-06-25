@@ -138,6 +138,9 @@ public class PyCallExpressionHelper {
     TypeEvalContext context = resolveContext.getTypeEvalContext();
     if (resolveContext.allowImplicits()) {
       if (callee instanceof PyReferenceOwner && callee instanceof PyQualifiedExpression) {
+        final String referencedName = ((PyQualifiedExpression)callee).getReferencedName();
+        if (referencedName == null) return Stream.empty();
+
         final PsiPolyVariantReference reference = ((PyReferenceOwner)callee).getReference(resolveContext);
         if (reference instanceof PyQualifiedReference && reference.getElement() instanceof PyQualifiedExpression) {
           final PyQualifiedExpression referenceElement = (PyQualifiedExpression)reference.getElement();
@@ -147,8 +150,7 @@ public class PyCallExpressionHelper {
             if ((PyTypeChecker.isUnknown(qualifierType, context) ||
                  (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages())) &&
                 resolveContext.allowImplicits() && canQualifyAnImplicitName(qualifier)) {
-              PyResolveUtil
-                .addImplicitResolveResults(((PyQualifiedExpression)callee).getReferencedName(), implicitResolveResults, referenceElement);
+              PyResolveUtil.addImplicitResolveResults(referencedName, implicitResolveResults, referenceElement);
             }
           }
         }
