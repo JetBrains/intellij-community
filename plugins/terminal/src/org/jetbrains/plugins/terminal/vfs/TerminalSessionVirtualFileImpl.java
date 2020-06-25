@@ -3,42 +3,36 @@ package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.tabs.TabInfo;
 import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
   private final JBTerminalWidget myTerminal;
   private final TabbedSettingsProvider mySettingsProvider;
 
-  private final TabInfo myTabInfo;
-
-  public TerminalSessionVirtualFileImpl(@NotNull TabInfo tabInfo,
+  public TerminalSessionVirtualFileImpl(@NotNull String name,
                                         @NotNull JBTerminalWidget terminalWidget,
                                         @NotNull TabbedSettingsProvider settingsProvider) {
-    myTabInfo = tabInfo;
     myTerminal = terminalWidget;
     mySettingsProvider = settingsProvider;
     setFileType(TerminalSessionFileType.INSTANCE);
     setWritable(true);
+    try {
+      rename(null, name);
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Cannot rename");
+    }
     terminalWidget.setVirtualFile(this);
   }
 
-  public JBTerminalWidget getTerminalWidget() {
+  public @NotNull JBTerminalWidget getTerminalWidget() {
     return myTerminal;
   }
 
-  @Override
-  @NotNull
-  public String getName() {
-    return myTabInfo.getText();
-  }
-
-  public TabInfo getTabInfo() {
-    return myTabInfo;
-  }
-
-  public TabbedSettingsProvider getSettingsProvider() {
+  public @NotNull TabbedSettingsProvider getSettingsProvider() {
     return mySettingsProvider;
   }
 }

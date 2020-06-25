@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.JBTerminalWidget;
-import com.intellij.ui.tabs.TabInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
 import org.jetbrains.plugins.terminal.TerminalTabState;
@@ -32,13 +31,11 @@ public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAw
       TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)file;
       JBTerminalWidget widget = terminalFile.getTerminalWidget();
 
-      TabInfo tabInfo = new TabInfo(widget).setText(terminalFile.getName());
       TerminalTabState tts = new TerminalTabState();
       tts.myWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, file.getName());
       LocalTerminalDirectRunner runner = LocalTerminalDirectRunner.createTerminalRunner(project);
       JBTerminalWidget newWidget = TerminalUtil.createTerminal(runner, tts, null);
-      TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(tabInfo, newWidget, terminalFile.getSettingsProvider());
-      tabInfo.setObject(newSessionVirtualFile);
+      TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(terminalFile.getName(), newWidget, terminalFile.getSettingsProvider());
       return new TerminalSessionEditor(project, newSessionVirtualFile);
     }
   }
