@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
@@ -54,8 +53,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
-
-  private @Nullable VirtualFile myVirtualFile;
 
   public JBTerminalWidget(@NotNull Project project,
                           @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
@@ -279,13 +276,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   public void moveDisposable(@NotNull Disposable newParent) {
     Disposer.register(newParent, this);
-  }
-
-  public void setVirtualFile(@Nullable VirtualFile virtualFile) {
-    if (myVirtualFile != null && virtualFile != null) {
-      throw new IllegalStateException("assigning a second virtual file to a terminal widget");
-    }
-    myVirtualFile = virtualFile;
   }
 
   public void notifyStarted() {

@@ -25,7 +25,6 @@ public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
     catch (IOException e) {
       throw new RuntimeException("Cannot rename");
     }
-    terminalWidget.setVirtualFile(this);
   }
 
   public @NotNull JBTerminalWidget getTerminalWidget() {

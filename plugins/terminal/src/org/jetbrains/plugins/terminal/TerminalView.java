@@ -218,7 +218,6 @@ public final class TerminalView {
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
     else {
-      terminalWidget.setVirtualFile(null);
       terminalWidget.moveDisposable(content);
     }
     setupTerminalWidget(toolWindow, terminalWidget, tabState, content, true);
