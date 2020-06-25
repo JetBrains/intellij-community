@@ -49,7 +49,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     myProject = project;
     myTargetTableLevel = targetTableLevel;
     myCopy = copy;
-    getTemplatePresentation().setText(JavaUiBundle.message("action.text.library.0.to.1", getActionName(), targetTableName));
+    getTemplatePresentation().setText(JavaUiBundle.message(myCopy ? "action.text.library.0.to.1.copy" : "action.text.library.0.to.1.move", targetTableName));
   }
 
   protected abstract LibraryTableModifiableModelProvider getModifiableTableModelProvider();
@@ -125,10 +125,11 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
             }
           }
           catch (IOException e) {
-            final String actionName = getActionName();
-            final String message = "Cannot " + StringUtil.toLowerCase(actionName) + " file " + from.getAbsolutePath() + ": " + e.getMessage();
-            Messages.showErrorDialog(ChangeLibraryLevelActionBase.this.myProject, message, JavaUiBundle.message(
-              "dialog.title.cannot.change.library.0", actionName));
+            String message = JavaUiBundle.message(myCopy ? "dialog.message.cannot.file.copy" : "dialog.message.cannot.file.move",
+                                                  from.getAbsolutePath(), e.getMessage());
+            String title = JavaUiBundle.message(
+              myCopy ? "dialog.title.cannot.change.library.0.copy" : "dialog.title.cannot.change.library.0.move");
+            Messages.showErrorDialog(ChangeLibraryLevelActionBase.this.myProject, message, title);
             LOG.info(e);
             return;
           }
@@ -163,10 +164,6 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     final Presentation presentation = e.getPresentation();
     boolean enabled = isEnabled();
     presentation.setEnabledAndVisible(enabled);
-  }
-
-  private String getActionName() {
-    return myCopy ? "Copy" : "Move";
   }
 
   @Nullable
