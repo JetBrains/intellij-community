@@ -21,6 +21,7 @@ class GHPullRequestReviewThread(id: String,
   val originalPosition = root.originalPosition
   val createdAt = root.createdAt
   val diffHunk = root.diffHunk
+  val isOutdated = root.position == null
 
   val reviewId = root.reviewId
 }

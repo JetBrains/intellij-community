@@ -12,6 +12,7 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   val createdAt: Date
   val state: GHPullRequestReviewCommentState
   val isResolved: Boolean
+  val isOutdated: Boolean
   val commit: GHCommitHash?
   val filePath: String
   val diffHunk: String
