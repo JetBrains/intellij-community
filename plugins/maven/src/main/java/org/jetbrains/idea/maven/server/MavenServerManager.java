@@ -76,7 +76,7 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
       return false;
     }
 
-    Sdk jdk = getJdk(project);
+    Sdk jdk = getJdk(project, MavenWorkspaceSettingsComponent.getInstance(project).getSettings());
     if (!verifyMavenSdkRequirements(jdk, distribution.getVersion())) {
       console.showQuickFixJDK(distribution.getVersion());
       return false;
@@ -146,8 +146,7 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
 
   public MavenServerConnector getConnector(@NotNull Project project) {
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
-    Sdk jdk = getJdk(project);
-
+    Sdk jdk = getJdk(project, settings);
 
     synchronized (myServerConnectors) {
       MavenServerConnector connector = myServerConnectors.get(project);
@@ -184,15 +183,13 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
   }
 
   @NotNull
-  private Sdk getJdk(Project project) {
+  private Sdk getJdk(Project project, MavenWorkspaceSettings settings) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
-    Sdk jdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (jdk == null) {
-      jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    }
-    return jdk;
+    String jdkForImporterName = settings.importingSettings.getJdkForImporter();
+
+    return MavenUtil.getJdk(project, jdkForImporterName);
   }
 
   private boolean compatibleParameters(MavenServerConnector connector, Sdk jdk, MavenWorkspaceSettings settings) {
