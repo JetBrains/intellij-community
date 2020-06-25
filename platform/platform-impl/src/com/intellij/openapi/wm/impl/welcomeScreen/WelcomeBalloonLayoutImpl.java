@@ -7,7 +7,6 @@ import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
@@ -37,16 +36,14 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     Topic.create("balloon notification changed", BalloonNotificationListener.class);
   private static final String TYPE_KEY = "Type";
 
-  private final Computable<? extends Point> myButtonLocation;
+  private @Nullable Component myLayoutBaseComponent;
   private BalloonImpl myPopupBalloon;
   private final BalloonPanel myBalloonPanel = new BalloonPanel();
   private boolean myVisible;
 
   public WelcomeBalloonLayoutImpl(@NotNull JRootPane parent,
-                                  @NotNull Insets insets,
-                                  @NotNull Computable<? extends Point> buttonLocation) {
+                                  @NotNull Insets insets) {
     super(parent, insets);
-    myButtonLocation = buttonLocation;
   }
 
   @Override
@@ -149,14 +146,21 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   }
 
   private void layoutPopup() {
+    if (myLayoutBaseComponent == null) {
+      // if no component set - use default location on the LayeredPane
+      myPopupBalloon.setBounds(null);
+      return;
+    }
+
     Dimension layeredSize = myLayeredPane.getSize();
     Dimension size = new Dimension(myPopupBalloon.getPreferredSize());
-    Point location = myButtonLocation.compute();
+    Point point = SwingUtilities.convertPoint(myLayoutBaseComponent, 0, 0, myLayeredPane);
+    Point location = new Point(point.x, point.y + 5);
     int x = layeredSize.width - size.width - 5;
     int fullHeight = location.y;
 
     if (x > location.x) {
-      x = location.x - 20;
+      x = Math.max(location.x - 20, 0);
     }
     if (size.height > fullHeight) {
       size.height = fullHeight;
@@ -182,6 +186,15 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
         layoutPopup();
       }
     }
+  }
+
+  @Nullable
+  public Component getLocationComponent() {
+    return myLayoutBaseComponent;
+  }
+
+  public void setLocationComponent(@Nullable Component component) {
+    myLayoutBaseComponent = component;
   }
 
   public interface BalloonNotificationListener {

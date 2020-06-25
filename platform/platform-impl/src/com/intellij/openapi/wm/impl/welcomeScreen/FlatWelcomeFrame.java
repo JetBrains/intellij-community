@@ -227,7 +227,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   private final class FlatWelcomeScreen extends AbstractWelcomeScreen implements WelcomeFrameUpdater {
     private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
     private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
-    public Computable<Point> myEventLocation;
     private LinkLabel<Object> myUpdatePluginsLink;
     private boolean inDnd;
     private WelcomeBalloonLayoutImpl myBalloonLayout;
@@ -414,13 +413,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           panel.setVisible(true);
         }
       };
-      myEventLocation = () -> {
-        Point location = SwingUtilities.convertPoint(panel, 0, 0, getRootPane().getLayeredPane());
-        return new Point(location.x, location.y + 5);
-      };
-      myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myEventLocation);
+      myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
       ApplicationManager.getApplication().getMessageBus().connect(this)
         .subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, balloonModelListener);
+      myBalloonLayout.setLocationComponent(panel);
       return panel;
     }
 
