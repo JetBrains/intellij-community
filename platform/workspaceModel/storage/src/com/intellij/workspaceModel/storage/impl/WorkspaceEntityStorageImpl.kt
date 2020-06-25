@@ -27,6 +27,14 @@ internal class WorkspaceEntityStorageImpl constructor(
   override val refs: RefsTable,
   override val indexes: StorageIndexes
 ) : AbstractEntityStorage() {
+
+  // This cache should not be transferred to other versions of storage
+  private val persistentIdCache = HashMap<PersistentEntityId<*>, WorkspaceEntity?>()
+
+  override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
+    return persistentIdCache.getOrPut(id) { super.resolve(id) } as E?
+  }
+
   companion object {
     val EMPTY = WorkspaceEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
   }
