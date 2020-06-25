@@ -355,6 +355,9 @@ public final class IconLoader {
       return ((ImageIcon)icon).getImage();
     }
     else {
+      if (icon.getIconWidth() <= 0 || icon.getIconHeight() <= 0) {
+        return null;
+      }
       BufferedImage image;
       if (GraphicsEnvironment.isHeadless()) { // for testing purpose
         image = UIUtil.createImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, ROUND);

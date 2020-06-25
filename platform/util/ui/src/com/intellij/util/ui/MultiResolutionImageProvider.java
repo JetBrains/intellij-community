@@ -180,7 +180,10 @@ public final class MultiResolutionImageProvider {
   public static Icon convertFromJBIcon(@Nullable Icon jbIcon, @Nullable ScaleContext ctx) {
     if (jbIcon == null) return null;
 
-    Image image = Objects.requireNonNull(IconLoader.toImage(jbIcon, ctx));
+    Image image = IconLoader.toImage(jbIcon, ctx);
+    if (image == null) {
+      return jbIcon; // not convertable icon (e.g. with zero size)
+    }
     image = convertFromJBImage(image);
     if (image == null) {
       return jbIcon; // to fix NPE (IDEA-244323)
