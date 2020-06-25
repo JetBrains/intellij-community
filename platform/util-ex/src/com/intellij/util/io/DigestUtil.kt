@@ -30,8 +30,7 @@ object DigestUtil {
   fun sha256() = getMessageDigest("SHA-256")
 
   @JvmStatic
-  fun calculateContentHash(digest: MessageDigest, bytes: ByteArray): ByteArray =
-    calculateContentHash(digest, bytes, 0, bytes.size)
+  fun calculateContentHash(digest: MessageDigest, bytes: ByteArray): ByteArray = calculateContentHash(digest, bytes, 0, bytes.size)
 
   @JvmStatic
   fun calculateContentHash(digest: MessageDigest, bytes: ByteArray, offset: Int, length: Int): ByteArray {
@@ -63,13 +62,9 @@ object DigestUtil {
     return cloned.digest()
   }
 
-  private fun updateContentHash(
-    inputStream: InputStream,
-    digest: MessageDigest,
-    presentablePathForError: String
-  ) {
-    val buff = ByteArray(512 * 1024)
+  private fun updateContentHash(inputStream: InputStream, digest: MessageDigest, presentablePathForError: String) {
     try {
+      val buff = ByteArray(512 * 1024)
       inputStream.use { iz ->
         while (true) {
           val sz = iz.read(buff)
@@ -87,12 +82,14 @@ object DigestUtil {
     return MessageDigest.getInstance(algorithm, sunSecurityProvider)
   }
 
-  private fun cloneDigest(digest: MessageDigest): MessageDigest = try {
-    val clone = digest.clone() as MessageDigest
-    clone.reset()
-    clone
-  }
-  catch (e: CloneNotSupportedException) {
-    throw IllegalArgumentException("Message digest is not cloneable: $digest")
+  private fun cloneDigest(digest: MessageDigest): MessageDigest {
+    try {
+      val clone = digest.clone() as MessageDigest
+      clone.reset()
+      return clone
+    }
+    catch (e: CloneNotSupportedException) {
+      throw IllegalArgumentException("Message digest is not cloneable: $digest")
+    }
   }
 }
