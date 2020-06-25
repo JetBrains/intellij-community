@@ -677,7 +677,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   fun removeExternalMapping(identifier: String) {
-    indexes.externalMappings.remove(identifier)
+    indexes.externalMappings[identifier]?.clearMapping()
   }
 
   // modificationCount is not incremented

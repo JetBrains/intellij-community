@@ -58,6 +58,11 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     (entityStorage as WorkspaceEntityStorageBuilderImpl).incModificationCount()
   }
 
+  internal fun clearMapping() {
+    index.clear()
+    indexLog.add(IndexLogRecord.Clear)
+  }
+
   internal fun remove(id: EntityId) {
     index.remove(id)
     indexLog.add(IndexLogRecord.Remove(id))
@@ -68,6 +73,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
       when (it) {
         is IndexLogRecord.Add<*> -> add(replaceMap.getOrDefault(it.id, it.id), it.data as T)
         is IndexLogRecord.Remove -> remove(replaceMap.getOrDefault(it.id, it.id))
+        IndexLogRecord.Clear -> clearMapping()
       }
     }
   }
@@ -77,6 +83,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   private sealed class IndexLogRecord {
     data class Add<T>(val id: EntityId, val data: T) : IndexLogRecord()
     data class Remove(val id: EntityId) : IndexLogRecord()
+    object Clear : IndexLogRecord()
   }
 
   companion object {

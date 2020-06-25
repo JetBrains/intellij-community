@@ -140,7 +140,7 @@ class ExternalEntityMappingTest {
     assertEquals(1, mapping.getDataByEntity(entity))
 
     builder.addDiff(diff)
-    assertEquals(1, mapping.getDataByEntity(entity))
+    assertNull(mapping.getDataByEntity(entity))
     assertNull(builder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
 
     val storage = builder.toStorage()
@@ -264,5 +264,30 @@ class ExternalEntityMappingTest {
     val entitiesFromStorage = storage.entities(SampleEntity::class.java).sortedBy { it.stringProperty }.toList()
     assertEquals(1, builderMapping.getDataByEntity(entitiesFromStorage[0]))
     assertEquals(2, builderMapping.getDataByEntity(entitiesFromStorage[1]))
+  }
+
+  @Test
+  fun `merge mapping added after builder was created`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    initialBuilder.addSampleEntity("foo")
+    val initialStorage = initialBuilder.toStorage()
+    val diff1 = WorkspaceEntityStorageDiffBuilder.create(initialStorage)
+    diff1.addSampleEntity("bar")
+
+    val diff2 = WorkspaceEntityStorageDiffBuilder.create(initialStorage)
+    diff2.getMutableExternalMapping<Int>(INDEX_ID).addMapping(initialStorage.singleSampleEntity(), 1)
+    val updatedBuilder = WorkspaceEntityStorageBuilder.from(initialStorage)
+    updatedBuilder.addDiff(diff2)
+    val updatedStorage = updatedBuilder.toStorage()
+
+    val newBuilder = WorkspaceEntityStorageBuilder.from(updatedStorage)
+    newBuilder.addDiff(diff1)
+    val newStorage = newBuilder.toStorage()
+    val entities = newStorage.entities(SampleEntity::class.java).sortedByDescending { it.stringProperty }.toList()
+    assertEquals(2, entities.size)
+    val (foo, bar) = entities
+    assertEquals("foo", foo.stringProperty)
+    assertEquals("bar", bar.stringProperty)
+    assertEquals(1, newStorage.getExternalMapping<Int>(INDEX_ID).getDataByEntity(foo))
   }
 }
