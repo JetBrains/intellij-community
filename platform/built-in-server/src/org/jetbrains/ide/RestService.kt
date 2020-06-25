@@ -244,7 +244,7 @@ abstract class RestService : HttpRequestHandler() {
   @Throws(InterruptedException::class, InvocationTargetException::class)
   // e.g. upsource trust to configured host
   protected open fun isHostTrusted(request: FullHttpRequest): Boolean {
-    if (request.isSignedRequest()) {
+    if (request.isSignedRequest() || isOriginAllowed(request) == OriginCheckResult.ALLOW) {
       return true
     }
 

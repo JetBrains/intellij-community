@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.PlatformUtils
+import com.intellij.util.io.isLocalOrigin
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.io.origin
@@ -47,58 +48,61 @@ import java.io.OutputStream
 internal class AboutHttpService : RestService() {
   override fun getServiceName() = "about"
 
-  override fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
-    return isTrustedOrigin(request) || super.isHostTrusted(request, urlDecoder)
-  }
-
-  override fun isAccessible(request: HttpRequest): Boolean {
-    return isTrustedOrigin(request) || super.isAccessible(request)
+  override fun isOriginAllowed(request: HttpRequest): OriginCheckResult {
+    val originAllowed = super.isOriginAllowed(request)
+    if (originAllowed == OriginCheckResult.FORBID) {
+      val origin = request.origin ?: return OriginCheckResult.FORBID
+      @Suppress("SpellCheckingInspection")
+      return if (origin.matches(Regex("https://([a-z0-9-]+\\.)*hyperskill.org$"))) OriginCheckResult.ALLOW else OriginCheckResult.FORBID
+    }
+    return originAllowed
   }
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val byteOut = BufferExposingByteArrayOutputStream()
-    writeApplicationInfoJson(byteOut, urlDecoder)
+    writeApplicationInfoJson(byteOut, urlDecoder, request.isLocalOrigin())
     send(byteOut, request, context)
     return null
   }
 }
 
-private fun isTrustedOrigin(request: HttpRequest): Boolean {
-  val origin = request.origin ?: return false
-  @Suppress("SpellCheckingInspection")
-  return origin.matches("https?://([a-z0-9-]+\\.)*hyperskill.org$".toRegex())
-}
+fun writeApplicationInfoJson(out: OutputStream, urlDecoder: QueryStringDecoder?, isLocalOrigin: Boolean) {
+  JsonFactory().createGenerator(out).useDefaultPrettyPrinter().use { writer ->
+    writer.obj {
+      writeAboutJson(writer)
 
-fun writeApplicationInfoJson(out: OutputStream, urlDecoder: QueryStringDecoder?) {
-  val writer = JsonFactory().createGenerator(out).useDefaultPrettyPrinter()
-  writer.obj {
-    writeAboutJson(writer)
-    if (urlDecoder != null && getBooleanParameter("registeredFileTypes", urlDecoder)) {
-      writer.array("registeredFileTypes") {
-        for (fileType in FileTypeRegistry.getInstance().registeredFileTypes) {
-          writer.obj {
-            writer.writeStringField("name", fileType.name)
-            writer.writeStringField("description", fileType.description)
-            writer.writeBooleanField("isBinary", fileType.isBinary)
+      // registeredFileTypes and more args are supported only for explicitly trusted origins
+      if (!isLocalOrigin) {
+        return
+      }
+
+      if (urlDecoder != null && getBooleanParameter("registeredFileTypes", urlDecoder)) {
+        writer.array("registeredFileTypes") {
+          for (fileType in FileTypeRegistry.getInstance().registeredFileTypes) {
+            writer.obj {
+              writer.writeStringField("name", fileType.name)
+              writer.writeStringField("description", fileType.description)
+              writer.writeBooleanField("isBinary", fileType.isBinary)
+            }
           }
         }
       }
-    }
-    if (urlDecoder != null && getBooleanParameter("more", urlDecoder)) {
-      val appInfo = ApplicationInfoEx.getInstanceEx()
-      writer.writeStringField("vendor", appInfo.companyName)
-      writer.writeBooleanField("isEAP", appInfo.isEAP)
-      writer.writeStringField("productCode", appInfo.build.productCode)
-      writer.writeNumberField("buildDate", appInfo.buildDate.time.time)
-      writer.writeBooleanField("isSnapshot", appInfo.build.isSnapshot)
-      writer.writeStringField("configPath", PathManager.getConfigPath())
-      writer.writeStringField("systemPath", PathManager.getSystemPath())
-      writer.writeStringField("binPath", PathManager.getBinPath())
-      writer.writeStringField("logPath", PathManager.getLogPath())
-      writer.writeStringField("homePath", PathManager.getHomePath())
+
+      if (urlDecoder != null && getBooleanParameter("more", urlDecoder)) {
+        val appInfo = ApplicationInfoEx.getInstanceEx()
+        writer.writeStringField("vendor", appInfo.companyName)
+        writer.writeBooleanField("isEAP", appInfo.isEAP)
+        writer.writeStringField("productCode", appInfo.build.productCode)
+        writer.writeNumberField("buildDate", appInfo.buildDate.time.time)
+        writer.writeBooleanField("isSnapshot", appInfo.build.isSnapshot)
+        writer.writeStringField("configPath", PathManager.getConfigPath())
+        writer.writeStringField("systemPath", PathManager.getSystemPath())
+        writer.writeStringField("binPath", PathManager.getBinPath())
+        writer.writeStringField("logPath", PathManager.getLogPath())
+        writer.writeStringField("homePath", PathManager.getHomePath())
+      }
     }
   }
-  writer.close()
 }
 
 fun writeAboutJson(writer: JsonGenerator) {

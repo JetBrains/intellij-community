@@ -59,7 +59,7 @@ final class ProjectSetRequestHandler extends RestService {
   }
 
   @Override
-  public boolean isAccessible(@NotNull HttpRequest request) {
-    return true;
+  protected @NotNull OriginCheckResult isOriginAllowed(@NotNull HttpRequest request) {
+    return OriginCheckResult.ASK_CONFIRMATION;
   }
 }

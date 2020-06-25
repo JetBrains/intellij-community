@@ -18,6 +18,12 @@ import java.io.IOException
 import java.util.*
 
 abstract class HttpRequestHandler {
+  enum class OriginCheckResult {
+    ALLOW, FORBID,
+    // any origin is allowed but user confirmation is required
+    ASK_CONFIRMATION
+  }
+
   companion object {
     // Your handler will be instantiated on first user request
     val EP_NAME = ExtensionPointName<HttpRequestHandler>("com.intellij.httpRequestHandler")
@@ -45,10 +51,12 @@ abstract class HttpRequestHandler {
     val hostName = getHostName(request)
     // If attacker.com DNS rebound to 127.0.0.1 and user open site directly - no Origin or Referrer headers.
     // So we should check Host header.
-    return hostName != null && isOriginAllowed(request) && isLocalHost(hostName)
+    return hostName != null && isOriginAllowed(request) != OriginCheckResult.FORBID && isLocalHost(hostName)
   }
 
-  protected open fun isOriginAllowed(request: HttpRequest) = request.isLocalOrigin()
+  protected open fun isOriginAllowed(request: HttpRequest): OriginCheckResult {
+    return if (request.isLocalOrigin()) OriginCheckResult.ALLOW else OriginCheckResult.FORBID
+  }
 
   open fun isSupported(request: FullHttpRequest): Boolean {
     return request.method() === HttpMethod.GET || request.method() === HttpMethod.HEAD

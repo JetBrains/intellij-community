@@ -65,6 +65,8 @@ internal class OpenFileHttpService : RestService() {
 
   override fun isMethodSupported(method: HttpMethod) = method === HttpMethod.GET || method === HttpMethod.POST
 
+  override fun isOriginAllowed(request: HttpRequest) = OriginCheckResult.ASK_CONFIRMATION
+
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val keepAlive = HttpUtil.isKeepAlive(request)
     val channel = context.channel()
@@ -170,8 +172,6 @@ internal class OpenFileHttpService : RestService() {
     session.launch()
     return mainTask.promise
   }
-
-  override fun isAccessible(request: HttpRequest) = true
 }
 
 internal class OpenFileRequest {

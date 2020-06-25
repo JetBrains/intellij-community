@@ -28,7 +28,7 @@ import java.net.URISyntaxException
 internal class InstallPluginService : RestService() {
   override fun getServiceName() = "installPlugin"
 
-  override fun isAccessible(request: HttpRequest) = true
+  override fun isOriginAllowed(request: HttpRequest) = OriginCheckResult.ASK_CONFIRMATION
 
   var isAvailable = true
 
