@@ -9,6 +9,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.*;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.containers.ContainerUtil;
@@ -105,7 +106,9 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
   }
 
   private static boolean isClearedOnPluginUnload(@NotNull UserDataHolder dataHolder) {
-    return dataHolder instanceof PsiElement || dataHolder instanceof ASTNode || dataHolder instanceof FileViewProvider;
+    return (dataHolder instanceof PsiElement && !(dataHolder instanceof PsiFile)) ||
+           dataHolder instanceof ASTNode ||
+           dataHolder instanceof FileViewProvider;
   }
 
   private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
