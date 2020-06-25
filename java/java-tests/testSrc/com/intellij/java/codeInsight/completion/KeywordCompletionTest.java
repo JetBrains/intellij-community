@@ -188,6 +188,15 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testQualifiedNew() { doTest(1, "new"); }
   public void testRecord() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);  doTest(); }
   public void testRecordInFileScope() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);  doTest(1, "record"); }
+  public void testNoLocalInterfaceAt15() {
+    setLanguageLevel(LanguageLevel.JDK_15);  doTest(0);
+  }
+  public void testLocalInterface() {
+    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest();
+  }
+  public void testLocalEnum() {
+    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest();
+  }
   public void testSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed"); }
   public void testPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "permits"); }
 
