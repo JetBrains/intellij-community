@@ -119,7 +119,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
 
     String encodingText = t.displayName();
     SimpleTextAttributes attributes = result == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
-    renderer.append(encodingText + (result == null ? "" : " (" + result + ")"), attributes);
+    renderer.append(encodingText + (result == null ? "" : " (" + EncodingUtil.reasonToString(result, file) + ")"), attributes);
   }
 
   @NotNull

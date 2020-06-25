@@ -61,7 +61,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
           int res;
           byte[] bom = virtualFile.getBOM();
           String explanation = "<br><br>" +
-                               (failReason == null ? "" : "Why: " + failReason + "<br>") +
+                               (failReason == null ? "" : "Why: " + EncodingUtil.reasonToString(failReason, virtualFile) + "<br>") +
                                (current.isNull() ? "" : "Current encoding: '" + current.get().displayName() + "'");
           if (bom != null) {
             Messages.showErrorDialog(XmlStringUtil.wrapInHtml(
