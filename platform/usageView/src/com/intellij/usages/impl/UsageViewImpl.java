@@ -8,6 +8,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.lang.Language;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -165,6 +166,7 @@ public class UsageViewImpl implements UsageViewEx {
   private boolean myDisposeSmartPointersOnClose = true;
   private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("Usage View Update Requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
+  private Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses = new HashSet<>();
 
   public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -1237,7 +1239,7 @@ public class UsageViewImpl implements UsageViewEx {
     for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
       listener.beforeUsageAdded(this, usage);
     }
-    UsageViewStatisticsCollector.logUsageShown(myProject, usage);
+    reportToFUS(usage);
 
     UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtNodeInsertedUnderQueue);
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
@@ -1255,6 +1257,20 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     return child;
+  }
+
+  private void reportToFUS(@NotNull Usage usage) {
+    if (usage instanceof PsiElementUsage) {
+      PsiElementUsage elementUsage = (PsiElementUsage)usage;
+      Class<? extends PsiReference> referenceClass = elementUsage.getReferenceClass();
+      PsiElement element = elementUsage.getElement();
+      if (referenceClass != null || element != null) {
+        Pair<Class<? extends PsiReference>, Language> pair = new Pair<>(referenceClass, element != null ? element.getLanguage() : null);
+        if (myReportedReferenceClasses.add(pair)) {
+          UsageViewStatisticsCollector.logUsageShown(myProject, pair.first, pair.second);
+        }
+      }
+    }
   }
 
   @Override
