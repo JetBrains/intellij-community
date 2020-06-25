@@ -18,7 +18,7 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
 public final class ProblemsTreeModel extends BaseTreeModel<Node> implements InvokerSupplier {
-  private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
+  private final Invoker invoker = Invoker.forBackgroundThreadWithoutReadAction(this);
   private final AtomicReference<Root> root = new AtomicReference<>();
   private final AtomicReference<Comparator<Node>> comparator = new AtomicReference<>();
 
