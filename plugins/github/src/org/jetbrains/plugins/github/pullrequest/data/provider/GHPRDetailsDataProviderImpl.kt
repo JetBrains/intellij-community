@@ -51,7 +51,10 @@ class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService
     val future = detailsService.updateDetails(indicator, pullRequestId, title, description).completionOnEdt {
       messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onMetadataChanged()
     }
-    detailsRequestValue.overrideProcess(future)
+    detailsRequestValue.overrideProcess(future.successOnEdt {
+      loadedDetails = it
+      it
+    })
     return future
   }
 
