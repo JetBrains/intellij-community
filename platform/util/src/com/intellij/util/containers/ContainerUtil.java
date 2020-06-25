@@ -551,7 +551,7 @@ public class ContainerUtil {
       case 1:
         return Collections.singleton(elements[0]);
       default:
-        return Collections.unmodifiableSet(newTroveSet(elements));
+        return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(elements)));
     }
   }
 
@@ -1034,7 +1034,7 @@ public class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <K, V> Map<K, V> map2Map(@NotNull Collection<? extends Pair<? extends K, ? extends V>> collection) {
-    Map<K, V> result = new THashMap<>(collection.size());
+    Map<K, V> result = new HashMap<>(collection.size());
     for (Pair<? extends K, ? extends V> pair : collection) {
       result.put(pair.first, pair.second);
     }

@@ -75,6 +75,10 @@ public final class CollectionFactory {
     return new ObjectOpenCustomHashSet<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
   }
 
+  public static @NotNull Set<String> createCaseInsensitiveStringSet(@NotNull Set<String> items) {
+    return new ObjectOpenCustomHashSet<>(items, FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
+  }
+
   public static <V> @NotNull Map<String, V> createCaseInsensitiveStringMap() {
     return new Object2ObjectOpenCustomHashMap<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
   }

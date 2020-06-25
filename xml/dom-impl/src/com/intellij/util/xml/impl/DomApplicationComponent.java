@@ -18,6 +18,7 @@ import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.TypeChooserManager;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
@@ -131,10 +132,11 @@ public final class DomApplicationComponent {
     initDescription(description);
   }
 
-  void registerFileDescription(DomFileMetaData meta) {
+  void registerFileDescription(@NotNull DomFileMetaData meta) {
     if (StringUtil.isEmpty(meta.rootTagName)) {
       myAcceptingOtherRootTagNamesDescriptions.add(meta);
-    } else {
+    }
+    else {
       myRootTagName2FileDescription.putValue(meta.rootTagName, meta);
     }
   }

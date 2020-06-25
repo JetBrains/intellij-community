@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import java.util.*
+import java.util.HashSet
 import java.util.stream.Stream
 
 fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -8,8 +8,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SLRUMap;
-import gnu.trove.THashSet;
-import gnu.trove.TLongArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -18,6 +17,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -40,7 +40,7 @@ public class CompressedAppendableFile {
   private static final int FACTOR = 32;
   private long [] myChunkOffsetTable; // one long offset per FACTOR compressed chunks
   private static final boolean doDebug = SystemProperties.getBooleanProperty("idea.compressed.file.self.check", false);
-  private final TLongArrayList myCompressedChunksFileOffsets = doDebug ? new TLongArrayList() : null;
+  private final LongArrayList myCompressedChunksFileOffsets = doDebug ? new LongArrayList() : null;
 
   public static final int PAGE_LENGTH = SystemProperties.getIntProperty("idea.compressed.file.page.length", 32768);
   private static final int MAX_PAGE_LENGTH = 0xFFFF;
@@ -114,7 +114,9 @@ public class CompressedAppendableFile {
             chunkLengthTable = reallocShortTable(chunkLengthTable);
           }
           chunkLengthTable[chunkLengthTableLength++] = (short)chunkLength;
-          if (doDebug) myCompressedChunksFileOffsets.add(o);
+          if (doDebug) {
+            myCompressedChunksFileOffsets.add(o);
+          }
         }
         myChunkLengthTable = chunkLengthTable;
         myChunkTableLength = chunkLengthTableLength;
@@ -473,7 +475,7 @@ public class CompressedAppendableFile {
     }
 
     void clear(CompressedAppendableFile file) {
-      Set<FileChunkKey<CompressedAppendableFile>> toClean = new THashSet<>();
+      Set<FileChunkKey<CompressedAppendableFile>> toClean = new HashSet<>();
       iterateKeys(key -> {
         if (key.getOwner() == file) {
           toClean.add(key);
