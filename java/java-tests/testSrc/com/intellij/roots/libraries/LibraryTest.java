@@ -81,9 +81,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     commit(libraryModel);
 
     assertNull(table.getLibraryByName("a"));
-    assertNull(model.getLibraryByName("a"));
     assertSame(a, table.getLibraryByName("b"));
-    assertSame(a, model.getLibraryByName("b"));
     commit(model);
     assertSame(a, table.getLibraryByName("b"));
   }

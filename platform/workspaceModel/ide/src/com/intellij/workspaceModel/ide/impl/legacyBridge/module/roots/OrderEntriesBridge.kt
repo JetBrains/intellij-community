@@ -1,7 +1,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -20,7 +19,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
@@ -209,7 +208,6 @@ internal class LibraryOrderEntryBridge(
   rootModel: ModuleRootModelBridge,
   index: Int,
   internal val libraryDependencyItem: ModuleDependencyItem.Exportable.LibraryDependency,
-  private val moduleLibrary: Library?,
   itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
 ) : LibraryOrderEntryBaseBridge(rootModel, index, libraryDependencyItem, itemUpdater), LibraryOrderEntry, ClonableOrderEntry {
 
@@ -229,42 +227,19 @@ internal class LibraryOrderEntryBridge(
 
   override fun getLibrary(): Library? {
     val libraryId = libraryDependencyItem.library
-
-    val project = ownerModuleBridge.project
-
-    val library = when (val parentId = libraryId.tableId) {
-      is LibraryTableId.ProjectLibraryTableId -> {
-        LibraryTablesRegistrar.getInstance()
-          .getLibraryTableByLevel(LibraryTablesRegistrar.PROJECT_LEVEL, project)
-          ?.getLibraryByName(libraryId.name)
-      }
-      is LibraryTableId.ModuleLibraryTableId -> moduleLibrary
-      is LibraryTableId.GlobalLibraryTableId -> {
-        LibraryTablesRegistrar.getInstance()
-          ?.getLibraryTableByLevel(parentId.level, project)
-          ?.getLibraryByName(libraryId.name)
-      }
+    val tableId = libraryId.tableId
+    val library = if (tableId is LibraryTableId.GlobalLibraryTableId) {
+      LibraryTablesRegistrar.getInstance()
+        .getLibraryTableByLevel(tableId.level, ownerModuleBridge.project)
+        ?.getLibraryByName(libraryId.name)
     }
-/*
-    TODO It's better to resolve libraries via id, review it again when it'll be possible
-
-    val libraryId = libraryDependencyItem.library
-    val libraryEntity = libraryId.resolve(model.storage) ?: return null
-
-    val project = model.module.project
-
-    val library = when (val libraryLevel = libraryEntity.table.level) {
-      JpsLibraryTableSerializer.MODULE_LEVEL ->
-        moduleLibraryTable.libraries.firstOrNull { (it as LegacyBridgeLibrary).libraryId == libraryId }
-      JpsLibraryTableSerializer.PROJECT_LEVEL -> {
-        val tableImpl = LibraryTablesRegistrar.getInstance()
-          .getLibraryTableByLevel(libraryLevel, project) as LegacyBridgeProjectLibraryTableImpl
-        tableImpl.findLibraryById(libraryId)
-      }
-      else -> LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryLevel, project)?.getLibraryByName(libraryEntity.name)
+    else {
+      val storage = getRootModel().storage
+      val libraryEntity = storage.resolve(libraryId)
+      libraryEntity?.let { storage.libraryMap.getDataByEntity(libraryEntity) }
     }
-*/
-    return if (libraryId.tableId is LibraryTableId.ModuleLibraryTableId) {
+
+    return if (tableId is LibraryTableId.ModuleLibraryTableId) {
       // model.accessor.getLibrary is not applicable to module libraries
       library
     } else {
@@ -280,38 +255,10 @@ internal class LibraryOrderEntryBridge(
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
   ): OrderEntry {
-    val libraryTableId = if (libraryLevel == JpsLibraryTableSerializer.MODULE_LEVEL) {
-      LibraryTableId.ModuleLibraryTableId(ModuleId(rootModel.module.name))
-    }
-    else levelToLibraryTableId(libraryLevel)
-
-    val libraryId = LibraryId(libraryDependencyItem.library.name, libraryTableId)
-    val libraryDependencyItemCopy = libraryDependencyItem.copy(library = libraryId)
-
-    val moduleLibraryCopy = moduleLibrary?.let {
-      val libraryTable = rootModel.moduleLibraryTable as ModifiableModuleLibraryTableBridge
-      libraryTable.createLibraryCopy(it as LibraryBridgeImpl)
-    }
-    return LibraryOrderEntryBridge(rootModel as ModuleRootModelBridge, index, libraryDependencyItemCopy, moduleLibraryCopy, null)
+    return LibraryOrderEntryBridge(getRootModel(), index, libraryDependencyItem, null)
   }
 
   override fun isSynthetic(): Boolean = isModuleLevel
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is LibraryOrderEntryBridge) return false
-    if (!super.equals(other)) return false
-
-    if (moduleLibrary != other.moduleLibrary) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = super.hashCode()
-    result = 31 * result + (moduleLibrary?.hashCode() ?: 0)
-    return result
-  }
 }
 
 internal class SdkOrderEntryBridge(

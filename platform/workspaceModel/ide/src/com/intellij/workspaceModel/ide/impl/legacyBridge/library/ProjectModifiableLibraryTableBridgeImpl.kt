@@ -8,16 +8,16 @@ import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.workspaceModel.storage.CachedValueWithParameter
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
+import com.intellij.workspaceModel.storage.CachedValue
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ProjectModifiableLibraryTableBridgeImpl(
@@ -27,29 +27,16 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   diff: WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(originalStorage)
 ) : LegacyBridgeModifiableBase(diff), LibraryTable.ModifiableModel {
 
-  private val myLibrariesToAdd = mutableListOf<LibraryBridgeImpl>()
-  private val myLibrariesToRemove = mutableListOf<Library>()
+  private val myAddedLibraries = mutableListOf<LibraryBridgeImpl>()
 
-  private val librariesValue = CachedValueWithParameter { _: WorkspaceEntityStorage, (librariesToAdd, librariesToRemove): Pair<List<Library>, List<Library>> ->
-    val libs = libraryTable.libraries.toMutableList()
-    libs.removeAll(librariesToRemove)
-    libs.addAll(librariesToAdd)
-    return@CachedValueWithParameter libs.map { it.name to it }.toMap() to libs.toTypedArray()
+  private val librariesArrayValue = CachedValue<Array<Library>> { storage ->
+    storage.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }
+      .mapNotNull { storage.libraryMap.getDataByEntity(it) }
+      .toList().toTypedArray()
   }
 
-  private val libraries
-    get() = WorkspaceModel.getInstance(project).entityStorage.cachedValue(librariesValue, myLibrariesToAdd to myLibrariesToRemove)
-
-/*  private fun getLibraryModifiableModel(library: LibraryViaTypedEntity,
-                                        diff: TypedEntityStorageBuilder): LegacyBridgeLibraryModifiableModelImpl {
-
-    return LegacyBridgeLibraryModifiableModelImpl(
-      originalLibrary = library,
-      diff = diff,
-      committer = { _, diffBuilder ->
-        diff.addDiff(diffBuilder)
-      })
-  }*/
+  private val librariesArray: Array<Library>
+    get() = entityStorageOnDiff.cachedValue(librariesArrayValue)
 
   override fun createLibrary(name: String?): Library = createLibrary(name = name, type = null)
 
@@ -83,36 +70,26 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
       )
     }
 
-    return LibraryBridgeImpl(
+    val library = LibraryBridgeImpl(
       libraryTable = libraryTable,
       project = project,
       initialId = LibraryId(name, libraryTableId),
       initialEntityStorage = entityStorageOnDiff,
-      parent = libraryTable,
       targetBuilder = this.diff
-    ).also { libraryImpl ->
-      myLibrariesToAdd.add(libraryImpl)
-    }
+    )
+    myAddedLibraries.add(library)
+    diff.mutableLibraryMap.addMapping(libraryEntity, library)
+    return library
   }
 
   override fun removeLibrary(library: Library) {
     assertModelIsLive()
 
-    val currentStorage = entityStorageOnDiff.current
-
-    val entityId = when (library) {
-      is LibraryBridgeImpl -> library.entityId
-      else -> error("Unknown libraryImpl class: ${library.javaClass.simpleName}")
-    }
-
-    val libraryEntity = currentStorage.resolve(entityId)
+    val libraryEntity = entityStorageOnDiff.current.findLibraryEntity(library as LibraryBridge)
     if (libraryEntity != null) {
       diff.removeEntity(libraryEntity)
-      if (myLibrariesToAdd.remove(library)) {
+      if (myAddedLibraries.remove(library)) {
         Disposer.dispose(library)
-      }
-      else {
-        myLibrariesToRemove.add(library)
       }
     }
   }
@@ -121,25 +98,28 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
     assertModelIsLive()
     modelIsCommittedOrDisposed = true
 
-    myLibrariesToAdd.forEach { library ->
+    myAddedLibraries.forEach { library ->
       library.clearTargetBuilder()
     }
 
-    libraryTable.setNewLibraryInstances(myLibrariesToAdd)
     WorkspaceModel.getInstance(project).updateProjectModel {
       it.addDiff(diff)
     }
   }
 
-  override fun getLibraryIterator(): Iterator<Library> = libraries.second.iterator()
-  override fun getLibraryByName(name: String): Library? = libraries.first[name]
-  override fun getLibraries(): Array<Library> = libraries.second
+  override fun getLibraryIterator(): Iterator<Library> = librariesArray.iterator()
+
+  override fun getLibraryByName(name: String): Library? {
+    val libraryEntity = diff.resolve(LibraryId(name, LibraryTableId.ProjectLibraryTableId)) ?: return null
+    return diff.libraryMap.getDataByEntity(libraryEntity)
+  }
+  override fun getLibraries(): Array<Library> = librariesArray
 
   override fun dispose() {
     modelIsCommittedOrDisposed = true
 
-    myLibrariesToAdd.forEach { Disposer.dispose(it) }
-    myLibrariesToAdd.clear()
+    myAddedLibraries.forEach { Disposer.dispose(it) }
+    myAddedLibraries.clear()
   }
 
   override fun isChanged(): Boolean = !diff.isEmpty()

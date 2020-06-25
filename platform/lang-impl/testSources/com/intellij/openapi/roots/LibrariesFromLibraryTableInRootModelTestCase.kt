@@ -312,6 +312,19 @@ abstract class LibrariesFromLibraryTableInRootModelTestCase {
   }
 
   @Test
+  fun `access removed library entry`() {
+    val library = createLibrary("foo")
+    ModuleRootModificationUtil.addDependency(module, library)
+    val model = createModifiableModel(module)
+    val libraryEntry = getSingleLibraryOrderEntry(model)
+    model.removeOrderEntry(libraryEntry)
+    runWriteActionAndWait { libraryTable.removeLibrary(library) }
+    assertThat(libraryEntry.libraryName).isEqualTo("foo")
+    commitModifiableRootModel(model)
+    assertThat(libraryEntry.libraryName).isEqualTo("foo")
+  }
+
+  @Test
   fun `dispose model without committing`() {
     val a = createLibrary("a")
     val model = createModifiableModel(module)

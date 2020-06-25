@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -33,6 +34,8 @@ import com.intellij.workspaceModel.ide.impl.bracket
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -142,8 +145,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               val oldModuleNames = mutableMapOf<Module, String>()
 
               for (change in moduleLibraryChanges) when (change) {
-                is EntityChange.Removed -> processModuleLibraryChange(change)
-                is EntityChange.Replaced -> processModuleLibraryChange(change)
+                is EntityChange.Removed -> processModuleLibraryChange(change, event)
+                is EntityChange.Replaced -> processModuleLibraryChange(change, event)
                 is EntityChange.Added -> Unit
               }
 
@@ -158,7 +161,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               for (change in moduleLibraryChanges) when (change) {
                 is EntityChange.Removed -> Unit
                 is EntityChange.Replaced -> Unit
-                is EntityChange.Added -> processModuleLibraryChange(change)
+                is EntityChange.Added -> processModuleLibraryChange(change, event)
               }
 
               for (change in facetChanges) when (change) {
@@ -178,6 +181,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           rootsChangeListener.changed(event)
         }
       })
+      LibraryTablesRegistrar.getInstance().getLibraryTable(project)
     }
   }
 
@@ -253,38 +257,38 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
   }
 
-  private fun processModuleLibraryChange(change: EntityChange<LibraryEntity>) {
+  private fun processModuleLibraryChange(change: EntityChange<LibraryEntity>, event: VersionedStorageChanged) {
     when (change) {
       is EntityChange.Removed -> {
-        val moduleRootComponent = getModuleRootComponentByLibrary(change.entity)
-        val persistentId = change.entity.persistentId()
-        moduleRootComponent.moduleLibraryTable.removeLibrary(persistentId)
+        val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
+        if (library != null) {
+          Disposer.dispose(library)
+        }
       }
       is EntityChange.Replaced -> {
         val idBefore = change.oldEntity.persistentId()
         val idAfter = change.newEntity.persistentId()
 
-        if (idBefore != idAfter) {
-          if (idBefore.tableId != idAfter.tableId) {
-            throw UnsupportedOperationException(
-              "Changing library table id is not allowed by replace entity operation." +
-              "old library id: '$idBefore' new library id: '$idAfter'")
+        val newLibrary = event.storageAfter.libraryMap.getDataByEntity(change.newEntity) as LibraryBridgeImpl?
+        if (newLibrary != null) {
+          newLibrary.clearTargetBuilder()
+          if (idBefore != idAfter) {
+            newLibrary.entityId = idAfter
           }
-
-          val moduleRootComponent = getModuleRootComponentByLibrary(change.oldEntity)
-          moduleRootComponent.moduleLibraryTable.updateLibrary(idBefore, idAfter)
         }
-
-        Unit
       }
       is EntityChange.Added -> {
         val moduleRootComponent = getModuleRootComponentByLibrary(change.entity)
-
-        val addedLibraryId = change.entity.persistentId()
-        moduleRootComponent.moduleLibraryTable.addLibrary(addedLibraryId)
-        Unit
+        val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
+        if (library == null && WorkspaceModelTopics.getInstance(project).modulesAreLoaded) {
+          moduleRootComponent.moduleLibraryTable.addLibrary(change.entity, null)
+        }
+        if (library != null) {
+          (library as LibraryBridgeImpl).entityStorage = entityStore
+          library.clearTargetBuilder()
+        }
       }
-    }.let {} // exhaustive when
+    }
   }
 
   private fun getModuleRootComponentByLibrary(entity: LibraryEntity): ModuleRootComponentBridge {
@@ -356,6 +360,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             val moduleMap = builder.mutableModuleMap
             results.mapNotNull { it.get() }.forEach { (entity, module) ->
               moduleMap.addMapping(entity, module)
+              ModuleRootComponentBridge.getInstance(module).moduleLibraryTable.registerModuleLibraryInstances(builder)
             }
           }
         }

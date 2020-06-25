@@ -42,8 +42,9 @@ class InlineModuleDependencyActionTest : JavaModuleTestCase() {
   fun `test inline module with project library`() {
     val newCreatedModule = createModule("My Module")
 
-    val projectLibraryEntry = newCreatedModule.update {
-      it.addLibraryEntry(LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("My Library"))
+    val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("My Library")
+    newCreatedModule.update {
+      it.addLibraryEntry(library)
     }
 
     val newModuleOrderEntry = module.update { it.addModuleOrderEntry(newCreatedModule) }
@@ -59,7 +60,7 @@ class InlineModuleDependencyActionTest : JavaModuleTestCase() {
       orderEntries.first()
     }
 
-    TestCase.assertSame(projectLibraryEntry.library, inlinedLibrary.library)
+    TestCase.assertSame(library, inlinedLibrary.library)
   }
 
   fun `test inline module with global library`() {

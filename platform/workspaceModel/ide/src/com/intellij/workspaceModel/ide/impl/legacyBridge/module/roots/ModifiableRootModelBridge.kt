@@ -58,8 +58,7 @@ class ModifiableRootModelBridge(
   internal val moduleEntity: ModuleEntity
     get() = entityStorageOnDiff.current.findModuleEntity(module) ?: error("Cannot find module entity for '$moduleBridge'")
 
-  private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this,
-                                                                      ModuleRootComponentBridge.getInstance(module).moduleLibraryTable.moduleLibraries)
+  private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this)
 
   private val contentEntriesImplValue: CachedValue<List<ModifiableContentEntryBridge>> = CachedValue { storage ->
     val moduleEntity = storage.findModuleEntity(module) ?: return@CachedValue emptyList<ModifiableContentEntryBridge>()
@@ -132,10 +131,11 @@ class ModifiableRootModelBridge(
     when (orderEntry) {
       is LibraryOrderEntryBridge -> {
         if (orderEntry.isModuleLevel) {
-          moduleLibraryTable.addCopiedLibrary(orderEntry.library as LibraryBridgeImpl)
+          moduleLibraryTable.addLibraryCopy(orderEntry.library as LibraryBridgeImpl, orderEntry.isExported, orderEntry.libraryDependencyItem.scope)
         }
-
-        updateDependencies { it + orderEntry.libraryDependencyItem }
+        else {
+          updateDependencies { it + orderEntry.libraryDependencyItem }
+        }
       }
 
       is ModuleOrderEntry -> orderEntry.module?.let { addModuleOrderEntry(it) } ?: error("Module is empty: $orderEntry")
@@ -282,7 +282,11 @@ class ModifiableRootModelBridge(
   fun collectChangesAndDispose(): WorkspaceEntityStorageBuilder? {
     assertModelIsLive()
     Disposer.dispose(moduleLibraryTable)
-    if (!isChanged) return null
+    if (!isChanged) {
+      moduleLibraryTable.disposeLibraryCopies()
+      disposeWithoutLibraries()
+      return null
+    }
 
     if (extensionsDelegate.isInitialized() && extensions.any { it.isChanged }) {
       val element = Element("component")
@@ -334,6 +338,7 @@ class ModifiableRootModelBridge(
     }
 
     disposeWithoutLibraries()
+    moduleLibraryTable.disposeOriginalLibraries()
     return diff
   }
 
@@ -359,6 +364,7 @@ class ModifiableRootModelBridge(
 
   override fun dispose() {
     disposeWithoutLibraries()
+    moduleLibraryTable.disposeLibraryCopies()
     Disposer.dispose(moduleLibraryTable)
   }
 

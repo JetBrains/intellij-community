@@ -63,10 +63,8 @@ class CloneOrderEntriesTest : JavaModuleTestCase() {
   }
 
   fun `test copy module with project library`() {
-    val copyToModifiableModel = ModuleRootManager.getInstance(createModule("My Module")).modifiableModel
-
     val projectLibrary = LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("My Library")
-
+    val copyToModifiableModel = ModuleRootManager.getInstance(createModule("My Module")).modifiableModel
     ModuleRootModificationUtil.updateModel(module) {
       it.addLibraryEntry(projectLibrary)
     }

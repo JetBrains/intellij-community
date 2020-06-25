@@ -18,12 +18,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.CachedValue
+import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -40,13 +42,8 @@ internal class LibraryBridgeImpl(
   val project: Project,
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
-  parent: Disposable,
   private var targetBuilder: WorkspaceEntityStorageDiffBuilder?
 ) : LibraryBridge, RootProvider, TraceableDisposable(true) {
-
-  init {
-    Disposer.register(parent, this)
-  }
 
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
 
@@ -66,14 +63,14 @@ internal class LibraryBridgeImpl(
   var modifiableModelFactory: ((LibraryStateSnapshot, WorkspaceEntityStorageBuilder) -> LibraryModifiableModelBridgeImpl)? = null
 
   internal fun cleanCachedValue() {
-    entityStorage.clearCachedValue(librarySnapshotCached, entityId)
+    entityStorage.clearCachedValue(librarySnapshotCached)
   }
 
   private val dispatcher = EventDispatcher.create(RootSetChangedListener::class.java)
 
-  private val librarySnapshotCached: CachedValueWithParameter<LibraryId, LibraryStateSnapshot> = CachedValueWithParameter { storage, id: LibraryId ->
+  private val librarySnapshotCached = CachedValue { storage ->
     LibraryStateSnapshot(
-      libraryEntity = storage.resolve(id) ?: FakeLibraryEntity(id.name),
+      libraryEntity = storage.findLibraryEntity(this) ?: error("Cannot find entity for library with ID $entityId"),
       filePointerProvider = filePointerProvider,
       storage = storage,
       libraryTable = libraryTable
@@ -83,7 +80,7 @@ internal class LibraryBridgeImpl(
   internal val librarySnapshot: LibraryStateSnapshot
     get() {
       checkDisposed()
-      return entityStorage.cachedValue(librarySnapshotCached, entityId)
+      return entityStorage.cachedValue(librarySnapshotCached)
     }
 
   override val libraryId: LibraryId
@@ -193,31 +190,5 @@ internal class LibraryBridgeImpl(
         index++
       }
     }
-  }
-
-  class FakeLibraryEntity(name: String) : LibraryEntity(LibraryTableId.ProjectLibraryTableId, name, emptyList(), emptyList()) {
-    override var entitySource: EntitySource
-      get() = throw NotImplementedError()
-      set(value) {
-        throw NotImplementedError()
-      }
-
-    override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> = emptySequence()
-    override val tableId: LibraryTableId
-      get() = throw NotImplementedError()
-
-    override fun hasEqualProperties(e: WorkspaceEntity): Boolean {
-      return e is LibraryEntity && e.name == name && e.roots.isEmpty() && e.excludedRoots.isEmpty()
-    }
-
-    override fun toString(): String = "FakeLibraryEntity($name)"
-
-    override fun equals(other: Any?): Boolean {
-      if (other !is FakeLibraryEntity) return false
-
-      return this.name == other.name
-    }
-
-    override fun hashCode(): Int = name.hashCode()
   }
 }
