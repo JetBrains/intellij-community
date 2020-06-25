@@ -17,9 +17,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomService;
@@ -175,7 +173,7 @@ public class InspectionDescriptionInfo {
 
   @Nullable
   private static String getReturnedLiteral(PsiMethod method, PsiClass cls) {
-    final UExpression expression = getReturnedExpression(method);
+    final UExpression expression = PsiUtil.getReturnedExpression(method);
     if (expression == null) return null;
 
     if (expression instanceof UReferenceExpression) {
@@ -186,38 +184,5 @@ public class InspectionDescriptionInfo {
     }
 
     return UastUtils.evaluateString(expression);
-  }
-
-  @Nullable
-  private static UExpression getReturnedExpression(PsiMethod method) {
-    UMethod uMethod = UastContextKt.toUElement(method, UMethod.class);
-    if (uMethod == null) return null;
-
-    final UExpression uBody = uMethod.getUastBody();
-    if (!(uBody instanceof UBlockExpression)) return null;
-    final List<UExpression> expressions = ((UBlockExpression)uBody).getExpressions();
-    final UExpression singleExpression = ContainerUtil.getOnlyItem(expressions);
-    if (singleExpression == null) return null;
-
-    if (!(singleExpression instanceof UReturnExpression)) return null;
-    UReturnExpression uReturnExpression = (UReturnExpression)singleExpression;
-    final UExpression returnValue = uReturnExpression.getReturnExpression();
-    if (returnValue == null) return null;
-
-    if (returnValue instanceof UReferenceExpression) {
-      UReferenceExpression referenceExpression = (UReferenceExpression)returnValue;
-      final UField uField = ObjectUtils.tryCast(UResolvableKt.resolveToUElement(referenceExpression), UField.class);
-      if (uField != null && uField.isFinal()) {
-        return uField.getUastInitializer();
-      }
-    }
-    else if (returnValue instanceof UCallExpression) {
-      UCallExpression uCallExpression = (UCallExpression)returnValue;
-      final PsiMethod psiMethod = uCallExpression.resolve();
-      if (psiMethod == null) return null;
-      return getReturnedExpression(psiMethod);
-    }
-
-    return returnValue;
   }
 }

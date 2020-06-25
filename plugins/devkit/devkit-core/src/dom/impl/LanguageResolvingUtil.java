@@ -3,12 +3,10 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.completion.CompletionConfidenceEP;
 import com.intellij.codeInsight.completion.CompletionContributorEP;
-import com.intellij.codeInspection.dataFlow.StringExpressionHelper;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -29,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.*;
 
 import javax.swing.*;
@@ -133,7 +132,10 @@ final class LanguageResolvingUtil {
       return null;
     }
 
-    return getStringConstantExpression(methods[0]);
+    final UExpression expression = PsiUtil.getReturnedExpression(methods[0]);
+    if (expression == null) return null;
+    
+    return UastUtils.evaluateString(expression);
   }
 
   private static String computeConstantSuperCtorCallParameter(PsiClass languagePsiClass, int index) {
@@ -189,12 +191,6 @@ final class LanguageResolvingUtil {
       return null;
     }
     return UastUtils.evaluateString(argument);
-  }
-
-  @Nullable
-  private static String getStringConstantExpression(PsiElement psiElement) {
-    final Pair<PsiElement, String> pair = StringExpressionHelper.evaluateConstantExpression(psiElement);
-    return Pair.getSecond(pair);
   }
 
   @Nullable

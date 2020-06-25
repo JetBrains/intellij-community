@@ -16,11 +16,14 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.uast.*;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -105,6 +108,39 @@ public class PsiUtil {
     }
 
     return flag;
+  }
+
+  @Nullable
+  public static UExpression getReturnedExpression(PsiMethod method) {
+    UMethod uMethod = UastContextKt.toUElement(method, UMethod.class);
+    if (uMethod == null) return null;
+
+    final UExpression uBody = uMethod.getUastBody();
+    if (!(uBody instanceof UBlockExpression)) return null;
+    final List<UExpression> expressions = ((UBlockExpression)uBody).getExpressions();
+    final UExpression singleExpression = ContainerUtil.getOnlyItem(expressions);
+    if (singleExpression == null) return null;
+
+    if (!(singleExpression instanceof UReturnExpression)) return null;
+    UReturnExpression uReturnExpression = (UReturnExpression)singleExpression;
+    final UExpression returnValue = uReturnExpression.getReturnExpression();
+    if (returnValue == null) return null;
+
+    if (returnValue instanceof UReferenceExpression) {
+      UReferenceExpression referenceExpression = (UReferenceExpression)returnValue;
+      final UField uField = ObjectUtils.tryCast(UResolvableKt.resolveToUElement(referenceExpression), UField.class);
+      if (uField != null && uField.isFinal()) {
+        return uField.getUastInitializer();
+      }
+    }
+    else if (returnValue instanceof UCallExpression) {
+      UCallExpression uCallExpression = (UCallExpression)returnValue;
+      final PsiMethod psiMethod = uCallExpression.resolve();
+      if (psiMethod == null) return null;
+      return getReturnedExpression(psiMethod);
+    }
+
+    return returnValue;
   }
 
   public static boolean isPluginProject(@NotNull final Project project) {
