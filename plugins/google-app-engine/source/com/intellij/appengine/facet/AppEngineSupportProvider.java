@@ -16,6 +16,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.JavaModuleType;
@@ -70,6 +71,11 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
   @Override
   public List<FrameworkDependency> getDependenciesFrameworkIds() {
     return AppEngineWebIntegration.getInstance().getAppEngineFrameworkDependencies();
+  }
+
+  @Override
+  public boolean isEnabledForModuleBuilder(@NotNull ModuleBuilder builder) {
+    return "LegacyJavaEE".equals(builder.getBuilderId());
   }
 
   @Override
