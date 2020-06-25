@@ -30,6 +30,12 @@ object DigestUtil {
   fun sha256() = getMessageDigest("SHA-256")
 
   @JvmStatic
+  fun sha256Hex(input: ByteArray) = bytesToHex(sha256().digest(input))
+
+  @JvmStatic
+  fun sha1Hex(input: ByteArray) = bytesToHex(sha1().digest(input))
+
+  @JvmStatic
   fun calculateContentHash(digest: MessageDigest, bytes: ByteArray): ByteArray = calculateContentHash(digest, bytes, 0, bytes.size)
 
   @JvmStatic
@@ -93,3 +99,20 @@ object DigestUtil {
     }
   }
 }
+
+private fun bytesToHex(data: ByteArray): String {
+  val l = data.size
+  val chars = CharArray(l shl 1)
+  var i = 0
+  var j = 0
+  while (i < l) {
+    val v = data[i].toInt()
+    chars[j++] = HEX_ARRAY[0xF0 and v ushr 4]
+    chars[j++] = HEX_ARRAY[0x0F and v]
+    i++
+  }
+  return String(chars)
+}
+
+@Suppress("SpellCheckingInspection")
+private val HEX_ARRAY = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')

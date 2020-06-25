@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,12 +23,12 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -199,18 +200,19 @@ public final class CertificateManager implements PersistentStateComponent<Certif
         }
         throw e;
       }
+
       String password = System.getProperty("javax.net.ssl.keyStorePassword", "");
-      try (InputStream inputStream = new FileInputStream(keyStorePath)) {
+      try (InputStream inputStream = Files.newInputStream(Paths.get(keyStorePath))) {
         keyStore.load(inputStream, password.toCharArray());
         factory.init(keyStore, password.toCharArray());
       }
-      catch (FileNotFoundException e) {
+      catch (NoSuchFileException e) {
         LOG.error("Key store file not found: " + keyStorePath);
         return null;
       }
       catch (Exception e) {
-        if (e.getCause() instanceof BadPaddingException) {
-          LOG.error("Wrong key store password: " + password, e);
+        if (e.getCause() instanceof BadPaddingException || e.getCause() instanceof UnrecoverableKeyException) {
+          LOG.error("Wrong key store password (sha-256): " + DigestUtil.sha256Hex(password.getBytes(StandardCharsets.UTF_8)), e);
           return null;
         }
         throw e;

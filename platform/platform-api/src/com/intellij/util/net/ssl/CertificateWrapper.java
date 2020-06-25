@@ -1,22 +1,24 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net.ssl;
 
-import java.util.HashMap;
-import org.apache.commons.codec.digest.DigestUtils;
+import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.security.auth.x500.X500Principal;
+import java.security.Principal;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Mikhail Golubev
  */
 @SuppressWarnings("UnusedDeclaration")
-public class CertificateWrapper {
+public final class CertificateWrapper {
   @NonNls public static final String NOT_AVAILABLE = "N/A";
 
   private final X509Certificate myCertificate;
@@ -33,8 +35,7 @@ public class CertificateWrapper {
    * @param name - Common name of desired issuer field
    * @return field value of {@link #NOT_AVAILABLE}. if it doesn't exist
    */
-  @NotNull
-  public String getIssuerField(@NotNull CommonField name) {
+  public @NotNull String getIssuerField(@NotNull CommonField name) {
     String field = myIssuerFields.get(name.getShortName());
     return field == null ? NOT_AVAILABLE : field;
   }
@@ -43,8 +44,7 @@ public class CertificateWrapper {
    * @param name - Common name of desired subject field
    * @return field value of {@link #NOT_AVAILABLE}, if it doesn't exist
    */
-  @NotNull
-  public String getSubjectField(@NotNull CommonField name) {
+  public @NotNull String getSubjectField(@NotNull CommonField name) {
     String field = mySubjectFields.get(name.getShortName());
     return field == null ? NOT_AVAILABLE : field;
   }
@@ -54,10 +54,9 @@ public class CertificateWrapper {
    *
    * @return SHA-256 fingerprint or {@link #NOT_AVAILABLE} in case of any error
    */
-  @NotNull
-  public String getSha256Fingerprint() {
+  public @NotNull String getSha256Fingerprint() {
     try {
-      return DigestUtils.sha256Hex(myCertificate.getEncoded());
+      return DigestUtil.sha256Hex(myCertificate.getEncoded());
     }
     catch (CertificateEncodingException e) {
       return NOT_AVAILABLE;
@@ -69,9 +68,9 @@ public class CertificateWrapper {
    *
    * @return SHA-1 fingerprint or {@link #NOT_AVAILABLE} in case of any error
    */
-  public String getSha1Fingerprint() {
+  public @NotNull String getSha1Fingerprint() {
     try {
-      return DigestUtils.sha1Hex(myCertificate.getEncoded());
+      return DigestUtil.sha1Hex(myCertificate.getEncoded());
     }
     catch (Exception e) {
       return NOT_AVAILABLE;
@@ -115,8 +114,7 @@ public class CertificateWrapper {
     return myCertificate.getVersion();
   }
 
-  @NotNull
-  public String getSerialNumber() {
+  public @NotNull String getSerialNumber() {
     return myCertificate.getSerialNumber().toString();
   }
 
@@ -149,7 +147,7 @@ public class CertificateWrapper {
   }
 
   // E.g. CN=*.github.com,O=GitHub\, Inc.,L=San Francisco,ST=California,C=US
-  private static Map<String, String> extractFields(X500Principal principal) {
+  private static Map<String, String> extractFields(@NotNull Principal principal) {
     Map<String, String> fields = new HashMap<>();
     for (String field : principal.getName().split("(?<!\\\\),")) {
       String[] parts = field.trim().split("=", 2);
