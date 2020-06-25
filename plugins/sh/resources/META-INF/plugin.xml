@@ -47,8 +47,8 @@ Adds support for working with shell script files
 
     <typedHandler id="shTypedHandler" implementation="com.intellij.sh.ShTypedHandler"/>
     <completion.contributor id="shShebangCompletionContributor" language="Shell Script" implementationClass="com.intellij.sh.completion.ShShebangCompletionContributor" order="first"/>
-    <completion.contributor id="shCommandCompletionContributor" language="Shell Script" implementationClass="com.intellij.sh.completion.ShCommandCompletionContributor"/>
     <completion.contributor id="shFilePathCompletionContributor" language="Shell Script" implementationClass="com.intellij.sh.completion.ShFilePathCompletionContributor"/>
+    <completion.contributor id="shCommandCompletionContributor" language="Shell Script" implementationClass="com.intellij.sh.completion.ShCommandCompletionContributor"/>
     <completion.contributor id="shKeywordCompletionContributor" language="Shell Script" implementationClass="com.intellij.sh.completion.ShKeywordCompletionContributor" order="after shFilePathCompletionContributor"/>
     <lang.braceMatcher id="shBraceMatcher" language="Shell Script" implementationClass="com.intellij.sh.ShBraceMatcher"/>
     <lang.documentationProvider id="shDocumentationProvider" language="Shell Script" implementationClass="com.intellij.sh.ShDocumentationProvider"/>
