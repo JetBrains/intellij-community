@@ -2,23 +2,23 @@
 package org.jetbrains.ide
 
 import com.google.common.net.UrlEscapers
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.use
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.io.writeChild
 import io.netty.handler.codec.http.HttpResponseStatus
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.ClassRule
@@ -48,29 +48,27 @@ internal class BuiltInWebServerTest : BuiltInServerTestCase() {
     testIndex("foo/index.html", "foo")
   }
 
-  private fun testIndex(vararg paths: String) = runBlocking {
+  private fun testIndex(vararg paths: String) {
     val project = projectRule.project
     val newPath = tempDirManager.newPath()
     newPath.writeChild(manager.filePath!!, "hello")
-    newPath.refreshVfs()
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPath)
 
     createModule(newPath, project)
 
     for (path in paths) {
-      doTest(path) {
-        assertThat(it.inputStream.reader().readText()).isEqualTo("hello")
+      doTest(urlSuffix = "/$path") {
+        assertThat(it.body().reader().readText()).isEqualTo("hello")
       }
     }
   }
 }
 
-private suspend fun createModule(projectDir: Path, project: Project) {
+private fun createModule(projectDir: Path, project: Project) {
   val systemIndependentPath = projectDir.systemIndependentPath
-  withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
-    runWriteAction {
-      val module = ModuleManager.getInstance(project).newModule("$systemIndependentPath/test.iml", EmptyModuleType.EMPTY_MODULE)
-      ModuleRootModificationUtil.addContentRoot(module, systemIndependentPath)
-    }
+  runWriteActionAndWait {
+    val module = ModuleManager.getInstance(project).newModule("$systemIndependentPath/test.iml", EmptyModuleType.EMPTY_MODULE)
+    ModuleRootModificationUtil.addContentRoot(module, systemIndependentPath)
   }
 }
 
@@ -96,14 +94,12 @@ internal class HeavyBuiltInWebServerTest {
     val projectDir = tempDirManager.newPath()
     PlatformTestUtil.loadAndOpenProject(projectDir).use { project ->
       projectDir.createDirectories()
-      runBlocking {
-        createModule(projectDir, project)
-      }
+      createModule(projectDir, project)
 
       val path = tempDirManager.newPath("doNotExposeMe.txt").write("doNotExposeMe").systemIndependentPath
       val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
       val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath"), "%2F", "/")
-      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.NOT_FOUND)
+      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.NOT_FOUND, asSignedRequest = true)
     }
   }
 
@@ -112,19 +108,17 @@ internal class HeavyBuiltInWebServerTest {
     val projectDir = tempDirManager.newPath()
     PlatformTestUtil.loadAndOpenProject(projectDir).use { project ->
       projectDir.createDirectories()
-      runBlocking {
-        createModule(projectDir, project)
-      }
+      createModule(projectDir, project)
 
       // DefaultWebServerPathHandler uses module roots as virtual file - must be refreshed
-      projectDir.refreshVfs()
+      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
 
       val dir = projectDir.resolve(".coverage")
       dir.createDirectories()
       val path = dir.resolve("foo").write("exposeMe").systemIndependentPath
       val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
       val webPath = UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath").replace("%2F", "/")
-      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.OK)
+      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.OK, asSignedRequest = true)
     }
   }
 }

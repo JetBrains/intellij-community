@@ -5,14 +5,20 @@ import com.intellij.testFramework.DisposeModulesRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
+import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
+import org.jetbrains.builtInWebServer.acquireToken
 import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.rules.Timeout
-import java.net.HttpURLConnection
-import java.net.URL
+import java.io.InputStream
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.util.concurrent.TimeUnit
 
 internal abstract class BuiltInServerTestCase {
@@ -42,9 +48,19 @@ internal abstract class BuiltInServerTestCase {
 
   protected open val urlPathPrefix = ""
 
-  protected fun doTest(filePath: String? = manager.filePath, additionalCheck: ((connection: HttpURLConnection) -> Unit)? = null) {
+  protected fun doTest(urlSuffix: String? = null,
+                       asSignedRequest: Boolean = true, origin: String? = null,
+                       responseStatus: Int = 200,
+                       additionalCheck: ((connection: HttpResponse<InputStream>) -> Unit)? = null) {
     val serviceUrl = "http://localhost:${BuiltInServerManager.getInstance().port}$urlPathPrefix"
-    var url = "$serviceUrl${if (filePath == null) "" else ("/$filePath")}"
+    var url = serviceUrl
+    if (urlSuffix != null) {
+      url += urlSuffix
+    }
+    else if (manager.filePath != null) {
+      url += "/${manager.filePath}"
+    }
+
     val line = manager.annotation?.line ?: -1
     if (line != -1) {
       url += ":$line"
@@ -54,19 +70,29 @@ internal abstract class BuiltInServerTestCase {
       url += ":$column"
     }
 
-    val expectedStatus = HttpResponseStatus.valueOf(manager.annotation?.status ?: 200)
-    val connection = testUrl(url, expectedStatus)
-    check(serviceUrl, expectedStatus)
-    additionalCheck?.invoke(connection)
+    val expectedStatus = HttpResponseStatus.valueOf(manager.annotation?.status ?: responseStatus)
+    val response = testUrl(url, expectedStatus, asSignedRequest = asSignedRequest, origin = origin)
+    response.body().use {
+      check(serviceUrl, expectedStatus)
+      additionalCheck?.invoke(response)
+    }
   }
 
   protected open fun check(serviceUrl: String, expectedStatus: HttpResponseStatus) {
   }
 }
 
-internal fun testUrl(url: String, expectedStatus: HttpResponseStatus): HttpURLConnection {
-  val connection = URL(url).openConnection() as HttpURLConnection
-  BuiltInServerManager.getInstance().configureRequestToWebServer(connection)
-  assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
-  return connection
+internal fun testUrl(url: String, expectedStatus: HttpResponseStatus, asSignedRequest: Boolean, origin: String? = null): HttpResponse<InputStream> {
+  val builder = HttpRequest.newBuilder(URI(url))
+  origin?.let {
+    builder.header(HttpHeaderNames.ORIGIN.toString(), it)
+  }
+  if (asSignedRequest) {
+    builder.header(TOKEN_HEADER_NAME, acquireToken())
+  }
+
+  val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
+  val response = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
+  assertThat(HttpResponseStatus.valueOf(response.statusCode())).isEqualTo(expectedStatus)
+  return response
 }
