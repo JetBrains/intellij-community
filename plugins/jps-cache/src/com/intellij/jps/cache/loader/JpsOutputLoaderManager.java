@@ -83,11 +83,11 @@ public class JpsOutputLoaderManager implements Disposable {
     if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
   }
 
-  public void load(boolean isForceUpdate) {
+  public void load(boolean isForceUpdate, @NotNull String branchName) {
     Task.Backgroundable task = new Task.Backgroundable(myProject, PROGRESS_TITLE) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate);
+        Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate, branchName);
         if (commitInfo != null) {
           // Drop JPS metadata to force plugin for downloading all compilation outputs
           if (isForceUpdate) myMetadataLoader.dropCurrentProjectMetadata();
@@ -103,8 +103,8 @@ public class JpsOutputLoaderManager implements Disposable {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
   }
 
-  public void notifyAboutNearestCache() {
-    Pair<String, Integer> commitInfo = getNearestCommit(false);
+  public void notifyAboutNearestCache(@NotNull String branchName) {
+    Pair<String, Integer> commitInfo = getNearestCommit(false, branchName);
     if (commitInfo == null) return;
 
     String notificationContent = commitInfo.second == 1
@@ -118,15 +118,15 @@ public class JpsOutputLoaderManager implements Disposable {
         .addAction(NotificationAction.createSimple(JpsCacheBundle.messagePointer(
           "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
           notification.expire();
-          load(false);
+          load(false, branchName);
         }));
       Notifications.Bus.notify(notification, myProject);
     });
   }
 
   @Nullable
-  private Pair<String, Integer> getNearestCommit(boolean isForceUpdate) {
-    Set<String> allCacheKeys = myServerClient.getAllCacheKeys(myProject);
+  private Pair<String, Integer> getNearestCommit(boolean isForceUpdate, @NotNull String branchName) {
+    Set<String> allCacheKeys = myServerClient.getAllCacheKeys(myProject, branchName);
 
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
     List<Iterator<String>> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject);
