@@ -9,6 +9,7 @@ import com.esotericsoftware.kryo.serializers.DefaultSerializers
 import com.esotericsoftware.kryo.serializers.FieldSerializer
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.ImmutableIntIntUniqueBiMap
@@ -258,6 +259,9 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     try {
       val kryo = createKryo()
 
+      // Save version
+      output.writeString(serializerDataFormatVersion)
+
       // Collect all classes existing in entity data
       val simpleClasses = HashSet<TypeInfo>()
       val objectClasses = HashSet<TypeInfo>()
@@ -303,9 +307,16 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     }
   }
 
-  override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder {
+  override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder? {
     Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()
+
+      // Read version
+      val cacheVersion = input.readString()
+      if (cacheVersion != serializerDataFormatVersion) {
+        logger.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+        return null
+      }
 
       // Read and register all kotlin objects
       val objectCount = input.readVarInt(true)
@@ -353,4 +364,8 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   }
 
   private data class TypeInfo(val name: String, val pluginId: String?)
+
+  companion object {
+    val logger = logger<EntityStorageSerializerImpl>()
+  }
 }
