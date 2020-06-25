@@ -370,44 +370,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private JComponent createSettingsAndDocsPanel(JFrame frame) {
       JPanel panel = new NonOpaquePanel(new BorderLayout());
       NonOpaquePanel toolbar = new NonOpaquePanel();
-      AnAction register = ActionManager.getInstance().getAction("Register");
-      boolean registeredVisible = false;
-      if (register != null) {
-        AnActionEvent e =
-          AnActionEvent.createFromAnAction(register, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
-        register.update(e);
-        Presentation presentation = e.getPresentation();
-        if (presentation.isEnabled()) {
-          ActionLink registerLink = new ActionLink(IdeBundle.message("action.link.register"), register);
-          // Don't allow focus, as the containing panel is going to focusable.
-          registerLink.setFocusable(false);
-          registerLink.setNormalColor(getLinkNormalColor());
-          NonOpaquePanel button = new NonOpaquePanel(new BorderLayout());
-          button.setBorder(JBUI.Borders.empty(4, 10));
-          button.add(registerLink);
-          installFocusable(frame, button, register, KeyEvent.VK_RIGHT,
-                           KeyEvent.VK_UP, UIUtil.findComponentOfType(frame.getRootPane(), JList.class)
-          );
-          NonOpaquePanel wrap = new NonOpaquePanel();
-          wrap.setBorder(JBUI.Borders.emptyLeft(10));
-          wrap.add(button);
-          panel.add(wrap, BorderLayout.WEST);
-          registeredVisible = true;
-        }
-      }
 
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
       toolbar.add(createErrorsLink(this));
       toolbar.add(createEventsLink());
       toolbar.add(createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.Anonymous.text.configure"), IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
-                                   AllIcons.General.GearPlain, !registeredVisible
-                                                               ? UIUtil
-                                                                 .findComponentOfType(frame.getRootPane(), JList.class)
-                                                               : null));
+                                   AllIcons.General.GearPlain, UIUtil.findComponentOfType(frame.getRootPane(), JList.class)));
       toolbar.add(createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, null
       ));
       panel.add(toolbar, BorderLayout.EAST);
-
 
       panel.setBorder(JBUI.Borders.empty(0, 0, 8, 11));
       return panel;
