@@ -997,8 +997,6 @@
        plugins.updated.after.restart;ide.patch.download.failed;ide.update.suggest.restart;ide.update.available;plugins.update.available;
        external.components.available;no.updates.available"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeHintPersistentComponent" configurationSchemaKey="fileTypes"/>
-
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="10000" description="HTML editor content loading timeout in ms."/>
     <iw.actionProvider implementation="com.intellij.codeInsight.actions.ReaderModeActionProvider"/>
