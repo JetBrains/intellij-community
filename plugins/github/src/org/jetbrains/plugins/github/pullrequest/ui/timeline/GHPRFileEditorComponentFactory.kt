@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
@@ -216,8 +215,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     : GHPRTimelineItemComponentFactory {
 
     val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, editor.remoteUrl, detailsModel.value)
-    val diffFactory = GHPRReviewThreadDiffComponentFactory(FileTypeRegistry.getInstance(), project, EditorFactory.getInstance(),
-                                                           selectInToolWindowHelper)
+    val diffFactory = GHPRReviewThreadDiffComponentFactory(project, EditorFactory.getInstance())
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
     return GHPRTimelineItemComponentFactory(detailsDataProvider, commentsDataProvider, reviewDataProvider,
                                             avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,

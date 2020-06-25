@@ -166,7 +166,8 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
       border = JBUI.Borders.emptyTop(4)
       if (panelHandle != null) add(panelHandle.panel, VerticalLayout.FILL_HORIZONTAL)
       add(GHPRReviewThreadsPanel.create(reviewThreadsModel) {
-        GHPRReviewThreadComponent.createWithDiff(it, reviewDataProvider, reviewDiffComponentFactory, avatarIconsProvider, currentUser)
+        GHPRReviewThreadComponent.createWithDiff(it, reviewDataProvider, selectInToolWindowHelper, reviewDiffComponentFactory,
+                                                 avatarIconsProvider, currentUser)
       }, VerticalLayout.FILL_HORIZONTAL)
     }
     val actionText = when (review.state) {
