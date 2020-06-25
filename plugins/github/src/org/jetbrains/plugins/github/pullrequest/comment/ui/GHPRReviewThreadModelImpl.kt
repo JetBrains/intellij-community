@@ -16,6 +16,8 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     private set
   override var isResolved: Boolean = thread.isResolved
     private set
+  override var isOutdated: Boolean = thread.isOutdated
+    private set
   override val commit = thread.originalCommit
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
@@ -27,14 +29,20 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   }
 
   override fun update(thread: GHPullRequestReviewThread) {
+    var dataChanged = false
     if (state != thread.state) {
       state = thread.state
-      stateEventDispatcher.multicaster.eventOccurred()
+      dataChanged = true
     }
     if (isResolved != thread.isResolved) {
       isResolved = thread.isResolved
-      stateEventDispatcher.multicaster.eventOccurred()
+      dataChanged = true
     }
+    if (isOutdated != thread.isOutdated) {
+      isOutdated = thread.isOutdated
+      dataChanged = true
+    }
+    if (dataChanged) stateEventDispatcher.multicaster.eventOccurred()
 
     var removed = 0
     for (i in 0 until items.size) {

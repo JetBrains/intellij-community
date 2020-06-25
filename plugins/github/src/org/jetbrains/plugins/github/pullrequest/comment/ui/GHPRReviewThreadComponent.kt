@@ -145,6 +145,11 @@ object GHPRReviewThreadComponent {
       }.installOn(this)
     }
 
+    val outdatedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.thread.outdated")} ", UIUtil.ComponentStyle.SMALL).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      background = UIUtil.getPanelBackground()
+    }.andOpaque()
+
     val resolvedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.resolved")} ", UIUtil.ComponentStyle.SMALL).apply {
       foreground = UIUtil.getContextHelpForeground()
       background = UIUtil.getPanelBackground()
@@ -152,6 +157,7 @@ object GHPRReviewThreadComponent {
 
 
     thread.addAndInvokeStateChangeListener {
+      outdatedLabel.isVisible = thread.isOutdated
       resolvedLabel.isVisible = thread.isResolved
     }
 
@@ -162,6 +168,7 @@ object GHPRReviewThreadComponent {
         foreground = UIUtil.getContextHelpForeground()
       })
 
+      add(outdatedLabel, CC().hideMode(3))
       add(resolvedLabel, CC().hideMode(3))
 
       add(collapseButton, CC().hideMode(3))
