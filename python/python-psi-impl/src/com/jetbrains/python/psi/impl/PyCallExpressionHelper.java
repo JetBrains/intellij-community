@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,7 +14,6 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
@@ -132,32 +130,32 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static Stream<PyCallableType> getImplicitResolveResults(@NotNull PyExpression callee, int implicitOffset,
+  private static Stream<PyCallableType> getImplicitResolveResults(@NotNull PyExpression callee,
+                                                                  int implicitOffset,
                                                                   @NotNull PyResolveContext resolveContext) {
-    ResolveResultList implicitResolveResults = new ResolveResultList();
-    TypeEvalContext context = resolveContext.getTypeEvalContext();
-    if (resolveContext.allowImplicits()) {
-      if (callee instanceof PyReferenceOwner && callee instanceof PyQualifiedExpression) {
-        final String referencedName = ((PyQualifiedExpression)callee).getReferencedName();
-        if (referencedName == null) return Stream.empty();
+    if (!resolveContext.allowImplicits()) return Stream.empty();
 
-        final PsiPolyVariantReference reference = ((PyReferenceOwner)callee).getReference(resolveContext);
-        if (reference instanceof PyQualifiedReference && reference.getElement() instanceof PyQualifiedExpression) {
-          final PyQualifiedExpression referenceElement = (PyQualifiedExpression)reference.getElement();
-          final PyExpression qualifier = referenceElement.getQualifier();
-          if (qualifier != null) {
-            final PyType qualifierType = context.getType(qualifier);
-            if ((PyTypeChecker.isUnknown(qualifierType, context) ||
-                 (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages())) &&
-                resolveContext.allowImplicits() && canQualifyAnImplicitName(qualifier)) {
-              PyResolveUtil.addImplicitResolveResults(referencedName, implicitResolveResults, referenceElement);
-            }
-          }
-        }
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+    if (callee instanceof PyQualifiedExpression) {
+      final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
+      final String referencedName = qualifiedCallee.getReferencedName();
+      if (referencedName == null) return Stream.empty();
+
+      final PyExpression qualifier = qualifiedCallee.getQualifier();
+      if (qualifier == null || !canQualifyAnImplicitName(qualifier)) return Stream.empty();
+
+      final PyType qualifierType = context.getType(qualifier);
+      if (PyTypeChecker.isUnknown(qualifierType, context) ||
+          qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages()) {
+        final ResolveResultList resolveResults = new ResolveResultList();
+        PyResolveUtil.addImplicitResolveResults(referencedName, resolveResults, qualifiedCallee);
+
+        final StreamEx<PsiElement> results = StreamEx.of(resolveResults).map(ResolveResult::getElement);
+        return addImplicitOffset(selectCallableTypes(results, context), implicitOffset, context);
       }
     }
-    return addImplicitOffset(selectCallableTypes(StreamEx.of(implicitResolveResults).map(ResolveResult::getElement), context),
-                             implicitOffset, context);
+
+    return Stream.empty();
   }
 
   @NotNull
@@ -883,12 +881,12 @@ public class PyCallExpressionHelper {
 
   @Nullable
   public static PyCallableParameter getMappedPositionalContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
-    return mapping.values().stream().filter(p -> p.isPositionalContainer()).findFirst().orElse(null);
+    return ContainerUtil.find(mapping.values(), p -> p.isPositionalContainer());
   }
 
   @Nullable
   public static PyCallableParameter getMappedKeywordContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
-    return mapping.values().stream().filter(p -> p.isKeywordContainer()).findFirst().orElse(null);
+    return ContainerUtil.find(mapping.values(), p -> p.isKeywordContainer());
   }
 
   @NotNull
