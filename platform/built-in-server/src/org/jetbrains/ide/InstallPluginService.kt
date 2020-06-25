@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
@@ -27,8 +26,6 @@ import java.net.URI
 import java.net.URISyntaxException
 
 internal class InstallPluginService : RestService() {
-  private val LOG = logger<InstallPluginService>()
-
   override fun getServiceName() = "installPlugin"
 
   override fun isAccessible(request: HttpRequest) = true

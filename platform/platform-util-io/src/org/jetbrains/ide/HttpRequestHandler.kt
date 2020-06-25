@@ -45,8 +45,10 @@ abstract class HttpRequestHandler {
     val hostName = getHostName(request)
     // If attacker.com DNS rebound to 127.0.0.1 and user open site directly - no Origin or Referrer headers.
     // So we should check Host header.
-    return hostName != null && request.isLocalOrigin() && isLocalHost(hostName)
+    return hostName != null && isOriginAllowed(request) && isLocalHost(hostName)
   }
+
+  protected open fun isOriginAllowed(request: HttpRequest) = request.isLocalOrigin()
 
   open fun isSupported(request: FullHttpRequest): Boolean {
     return request.method() === HttpMethod.GET || request.method() === HttpMethod.HEAD

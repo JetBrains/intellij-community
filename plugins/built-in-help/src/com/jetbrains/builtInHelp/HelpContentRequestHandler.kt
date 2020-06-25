@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.builtInHelp
 
 import com.intellij.openapi.util.text.StringUtil
@@ -14,7 +14,6 @@ import javax.xml.bind.JAXBContext
 
 @Suppress("unused")
 class HelpContentRequestHandler : HelpRequestHandlerBase() {
-
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
 
     if (request.uri().contains("config.json")) {
@@ -38,7 +37,7 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
           if (map != null) {
             val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FOUND)
             response.addCommonHeaders()
-            response.headers().add("Location", MY_PREFIX + map.getUrlForId(name))
+            response.headers().add("Location", prefix + map.getUrlForId(name))
             context.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE)
             return true
           }
