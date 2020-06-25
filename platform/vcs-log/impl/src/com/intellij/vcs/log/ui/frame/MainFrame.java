@@ -115,9 +115,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                                                            ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
       public Dimension getMinimumSize() {
-        Dimension minimumSize = super.getMinimumSize();
-        int minSize = Math.round(myChangesBrowser.getToolbar().getComponent().getPreferredSize().height * 1.5f);
-        return new Dimension(Math.max(minimumSize.width, minSize), Math.max(minimumSize.height, minSize));
+        return VcsLogUiUtil.expandToFitToolbar(super.getMinimumSize(), myChangesBrowser.getToolbar().getComponent());
       }
     };
     changesLoadingPane.add(myChangesBrowser);

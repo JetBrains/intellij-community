@@ -118,9 +118,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     JBPanel tablePanel = new JBPanel(new BorderLayout()) {
       @Override
       public Dimension getMinimumSize() {
-        Dimension minimumSize = super.getMinimumSize();
-        int minSize = Math.round(actionsToolbar.getPreferredSize().width * 1.5f);
-        return new Dimension(Math.max(minimumSize.width, minSize), Math.max(minimumSize.height, minSize));
+        return VcsLogUiUtil.expandToFitToolbar(super.getMinimumSize(), actionsToolbar);
       }
     };
     tablePanel.add(myDetailsSplitter, BorderLayout.CENTER);
