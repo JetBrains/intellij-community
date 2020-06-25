@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net.ssl;
 
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -11,7 +13,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -201,8 +205,21 @@ public final class CertificateManager implements PersistentStateComponent<Certif
         throw e;
       }
 
+      Path keyStoreFile = Paths.get(keyStorePath);
       String password = System.getProperty("javax.net.ssl.keyStorePassword", "");
-      try (InputStream inputStream = Files.newInputStream(Paths.get(keyStorePath))) {
+      if (password.isEmpty() && SystemInfoRt.isMac) {
+        try {
+          String itemName = FileUtilRt.getNameWithoutExtension(keyStoreFile.getFileName().toString());
+          password = PasswordSafe.getInstance().getPassword(new CredentialAttributes(itemName, itemName));
+          if (password == null) {
+            password = "";
+          }
+        }
+        catch (Throwable e) {
+          LOG.error("Cannot get password for " + keyStorePath, e);
+        }
+      }
+      try (InputStream inputStream = Files.newInputStream(keyStoreFile)) {
         keyStore.load(inputStream, password.toCharArray());
         factory.init(keyStore, password.toCharArray());
       }
