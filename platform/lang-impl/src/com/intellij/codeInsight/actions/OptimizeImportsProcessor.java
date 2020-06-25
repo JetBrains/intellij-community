@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.FutureTask;
@@ -75,8 +76,8 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       return new FutureTask<>(EmptyRunnable.INSTANCE, true);
     }
 
-    final Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
-    final List<Runnable> runnables = new ArrayList<>();
+    Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
+    List<Runnable> runnables = new ArrayList<>();
     List<PsiFile> files = file.getViewProvider().getAllFiles();
     for (ImportOptimizer optimizer : optimizers) {
       for (PsiFile psiFile : files) {
@@ -86,15 +87,16 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       }
     }
 
-    List<HintAction> hints = ShowAutoImportPass.getImportHints(file);
+    List<HintAction> hints = ApplicationManager.getApplication().isDispatchThread() ?
+                             Collections.emptyList() : ShowAutoImportPass.getImportHints(file);
 
     Runnable writeTask = runnables.isEmpty() ? EmptyRunnable.getInstance() : () -> {
       ApplicationManager.getApplication().assertIsDispatchThread();
       CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
       try {
-        for (Runnable runnable1 : runnables) {
-          runnable1.run();
-          myOptimizerNotifications.add(getNotificationInfo(runnable1));
+        for (Runnable runnable : runnables) {
+          runnable.run();
+          myOptimizerNotifications.add(getNotificationInfo(runnable));
         }
         putNotificationInfoIntoCollector();
         ShowAutoImportPass.fixAllImportsSilently(file, hints);
