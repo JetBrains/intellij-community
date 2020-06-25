@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 final class LightEditTabs extends JBEditorTabs implements LightEditorListener, CloseAction.CloseTarget {
   private final LightEditorManagerImpl myEditorManager;
@@ -233,6 +234,13 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
       }
     }
     return null;
+  }
+
+  List<VirtualFile> getOpenFiles() {
+    return getTabs().stream()
+                    .filter(tab -> tab.getObject() instanceof LightEditorInfo)
+                    .map(tab -> ((LightEditorInfo)tab.getObject()).getFile())
+                    .collect(Collectors.toList());
   }
 
   @Nullable

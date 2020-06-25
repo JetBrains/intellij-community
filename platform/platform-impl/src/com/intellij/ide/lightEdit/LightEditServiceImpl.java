@@ -20,7 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
@@ -75,6 +77,7 @@ public final class LightEditServiceImpl implements LightEditService,
     if (myFrameWrapper == null) {
       myFrameWrapper = LightEditFrameWrapper.allocate(() -> closeEditorWindow());
       LOG.info("Frame created");
+      restoreSession();
     }
     if (!myFrameWrapper.getFrame().isVisible()) {
       myFrameWrapper.getFrame().setVisible(true);
@@ -211,6 +214,7 @@ public final class LightEditServiceImpl implements LightEditService,
   public boolean closeEditorWindow() {
     if (canClose()) {
       myFrameWrapper.getFrame().setVisible(false);
+      saveSession();
       myEditorManager.releaseEditors();
       LOG.info("Window closed");
       if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
@@ -394,6 +398,28 @@ public final class LightEditServiceImpl implements LightEditService,
   public void disposeCurrentSession() {
     myEditorManager.releaseEditors();
     myLightEditProjectManager.close();
+  }
+
+  private void saveSession() {
+    LightEditTabs tabs = myFrameWrapper.getLightEditPanel().getTabs();
+    List<VirtualFile> openFiles = tabs.getOpenFiles();
+    myConfiguration.sessionFiles.clear();
+    myConfiguration.sessionFiles.addAll(
+      ContainerUtil.map(openFiles,
+                        openFile -> VfsUtilCore.pathToUrl(openFile.getPath())));
+  }
+
+  private void restoreSession() {
+    myConfiguration.sessionFiles.forEach(
+      path -> {
+        VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
+        if (file != null) {
+          doWhenActionManagerInitialized(() -> {
+            doOpenFile(file);
+          });
+        }
+      }
+    );
   }
 
   @Override
