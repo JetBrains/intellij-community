@@ -4,6 +4,7 @@ package com.intellij.usages.impl
 import com.intellij.internal.statistic.eventLog.EventFields
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.Usage
@@ -20,8 +21,8 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     val usageNavigate = GROUP.registerEvent("usage.navigate", referenceClass, EventFields.Language)
 
     @JvmStatic
-    fun logUsageShown(project: Project?, usage: Usage) {
-      usageShown.log(project, (usage as? PsiElementUsage)?.referenceClass, (usage as? PsiElementUsage)?.element?.language)
+    fun logUsageShown(project: Project?, referenceClass: Class<out Any>?, language: Language?) {
+      usageShown.log(project, referenceClass, language)
     }
 
     @JvmStatic
