@@ -1,32 +1,41 @@
 package circlet.actions
 
-import circlet.client.api.*
-import circlet.components.*
-import circlet.platform.api.oauth.*
-import circlet.platform.client.*
+import circlet.client.api.Navigator
+import circlet.client.api.englishFullName
+import circlet.components.CircletUserAvatarProvider
+import circlet.components.circletWorkspace
+import circlet.platform.api.oauth.OAuthTokenResponse
+import circlet.platform.client.ConnectionStatus
 import circlet.settings.*
 import circlet.ui.*
-import circlet.ui.AccountMenuItem
-import circlet.ui.AccountMenuPopupStep
-import circlet.ui.AccountsMenuListPopup
-import circlet.vcs.*
-import circlet.vcs.clone.*
-import circlet.workspaces.*
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.project.*
-import com.intellij.openapi.ui.popup.*
-import com.intellij.openapi.wm.*
-import com.intellij.ui.*
-import com.intellij.ui.awt.*
-import com.intellij.ui.components.panels.*
-import com.intellij.util.ui.*
-import com.intellij.util.ui.cloneDialog.*
-import libraries.coroutines.extra.*
-import runtime.*
-import runtime.reactive.*
-import java.awt.*
-import java.util.concurrent.*
-import javax.swing.*
+import circlet.vcs.CircletProjectContext
+import circlet.vcs.clone.CircletCloneAction
+import circlet.workspaces.Workspace
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.ui.AppIcon
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
+import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.launch
+import libraries.coroutines.extra.usingSource
+import runtime.Ui
+import runtime.reactive.MutableProperty
+import runtime.reactive.mutableProperty
+import runtime.reactive.view
+import java.awt.Component
+import java.awt.Point
+import java.util.concurrent.CancellationException
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.SwingUtilities
 
 class CircletMainToolBarAction : DumbAwareAction()  {
     private val settings = CircletSettings.getInstance()
@@ -150,7 +159,8 @@ class CircletMainToolBarAction : DumbAwareAction()  {
                     val issuesUrl = Navigator.p.project(it.key).issues().absoluteHref(host)
                     browseAction("Open for ${it.project.name} project", issuesUrl)
                 }.toList())
-            } else {
+            }
+            else if (descriptions.size != 0) {
                 val p = Navigator.p.project(descriptions.first().key)
 
                 menuItems += browseAction("Code Reviews", p.reviews.absoluteHref(host))
