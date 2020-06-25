@@ -697,7 +697,7 @@
     <depends>-com-intellij-javaee-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.javaee.appServers.resin/META-INF/plugin.xml">
-    <id>-Resin-</id>
+    <id>-com.intellij.resin-</id>
     <name>Resin Integration</name>
     <depends>-com-intellij-javaee-</depends>
   </idea-plugin>
