@@ -673,9 +673,10 @@ public final class EditorWindow {
   }
 
   void updateFileIcon(@NotNull VirtualFile file, @NotNull Icon icon) {
-    EditorWithProviderComposite composite = Objects.requireNonNull(findFileComposite(file));
+    EditorWithProviderComposite composite = findFileComposite(file);
+    if (composite == null) return;
     int index = findEditorIndex(composite);
-    LOG.assertTrue(index != -1);
+    if (index < 0) return;
     myTabbedPane.setIconAt(index, decorateFileIcon(composite, icon));
   }
 
