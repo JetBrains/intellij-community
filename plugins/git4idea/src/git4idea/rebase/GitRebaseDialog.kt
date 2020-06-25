@@ -404,7 +404,6 @@ class GitRebaseDialog(private val project: Project,
 
   private fun createOntoField() = ComboBox<GitReference>(MutableCollectionComboBoxModel()).apply {
     setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) 220 else 310))
-    isSwingPopup = false
     isEditable = true
     isVisible = false
     editor = object : BasicComboBoxEditor() {
@@ -423,7 +422,6 @@ class GitRebaseDialog(private val project: Project,
 
   private fun createUpstreamField() = ComboBox<GitReference>(MutableCollectionComboBoxModel()).apply {
     setMinimumAndPreferredWidth(JBUI.scale(185))
-    isSwingPopup = false
     isEditable = true
     editor = object : BasicComboBoxEditor() {
       override fun createEditorComponent() = JBTextField().apply {
@@ -574,7 +572,9 @@ class GitRebaseDialog(private val project: Project,
     }
 
     if (isDirty && isAlreadyAdded(upstreamField, topPanel)) {
-      upstreamField.ui = getUpstreamFieldUi(!showBranchField)
+      (upstreamField.ui as FlatComboBoxUI).apply {
+        border = Insets(1, 1, 1, if (!showBranchField) 1 else 0)
+      }
       if (!showBranchField) {
         (topPanel.layout as MigLayout).setComponentConstraints(upstreamField, getUpstreamFieldConstraints())
       }
@@ -590,7 +590,9 @@ class GitRebaseDialog(private val project: Project,
       if (!isAlreadyAdded(upstreamField, bottomPanel)) {
         bottomPanel.add(upstreamField, 0)
       }
-      upstreamField.ui = getUpstreamFieldUi(!showBranch)
+      (upstreamField.ui as FlatComboBoxUI).apply {
+        border = Insets(1, 1, 1, if (!showBranch) 1 else 0)
+      }
     }
     if (showBranch) {
       if (!isAlreadyAdded(branchField, bottomPanel)) {
@@ -642,10 +644,6 @@ class GitRebaseDialog(private val project: Project,
     .minWidth("${JBUI.scale(if (!showRootField()) 370 else 280)}px")
     .growX()
     .pushX()
-
-  private fun getUpstreamFieldUi(singleInRow: Boolean) = FlatComboBoxUI(
-    border = Insets(1, 1, 1, if (singleInRow) 1 else 0),
-    outerInsets = Insets(BW.get(), 0, BW.get(), 0))
 
   private fun getOptionsToShowInPanel() = setOf(RebaseOption.INTERACTIVE, RebaseOption.PRESERVE_MERGES)
 
