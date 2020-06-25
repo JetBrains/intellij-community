@@ -1,7 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code;
 
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 
 public class FullInstructionSequence extends InstructionSequence {
@@ -10,7 +10,7 @@ public class FullInstructionSequence extends InstructionSequence {
   // constructors
   // *****************************************************************************
 
-  public FullInstructionSequence(VBStyleCollection<Instruction, Integer> collinstr, ExceptionTable extable) {
+  public FullInstructionSequence(KeyedList<Integer, Instruction> collinstr, ExceptionTable extable) {
     super(collinstr);
     this.exceptionTable = extable;
 

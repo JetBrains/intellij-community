@@ -1,71 +1,70 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
-import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ListIterator;
 
-public class ListStack<T> extends ArrayList<T> {
-  protected int pointer = 0;
+public class ListStack<T> implements Iterable<T> {
+  protected final LinkedList<T> list;
 
   public ListStack() {
-    super();
+    this.list = new LinkedList<>();
   }
 
-  public ListStack(ArrayList<? extends T> list) {
-    super(list);
+  public ListStack(ListStack<T> other) {
+    this.list = new LinkedList<>(other.list);
   }
 
-  @Override
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
-  public ListStack<T> clone() {
-    ListStack<T> copy = new ListStack<>(this);
-    copy.pointer = this.pointer;
-    return copy;
-  }
-
+  /** Pushes an entry on the end */
   public void push(T item) {
-    this.add(item);
-    pointer++;
+    list.addLast(item);
   }
 
+  /** Pops one entry from the end */
   public T pop() {
-    pointer--;
-    T o = this.get(pointer);
-    this.remove(pointer);
-    return o;
+    return list.removeLast();
   }
 
+  /** Pops several entries, removing the last one */
   public T pop(int count) {
     T o = null;
-    for (int i = count; i > 0; i--) {
+    for (int i = 0; i < count; i++) {
       o = this.pop();
     }
     return o;
   }
 
-  public void removeMultiple(int count) {
-    while (count > 0) {
-      pointer--;
-      this.remove(pointer);
-      count--;
-    }
+  /**
+   * Returns an element at the given offset from the end of the collection.
+   * 1 is at the very end, 2 is one from the end, etc.
+   */
+  public T peek(int offset) {
+    return list.get(list.size() - offset);
   }
 
-  public int getPointer() {
-    return pointer;
+  /**
+   * Inserts an element at the given offset from the end of the collection.
+   * 1 is at the very end, 2 is one from the end, etc.
+   */
+  public void insert(int offset, T item) {
+    list.add(list.size() - offset, item);
   }
 
-  public T getByOffset(int offset) {
-    return this.get(pointer + offset);
+  public void clear() {
+    list.clear();
   }
 
-  public void insertByOffset(int offset, T item) {
-    this.add(pointer + offset, item);
-    pointer++;
+  public int size() {
+    return list.size();
   }
 
   @Override
-  public void clear() {
-    super.clear();
-    pointer = 0;
+  public Iterator<T> iterator() {
+    return list.iterator();
+  }
+
+  public ListIterator<T> listIterator() {
+    return list.listIterator();
   }
 }

@@ -344,7 +344,7 @@ public class InstructionImpact {
           }
         }
 
-        stack.removeMultiple(depth);
+        stack.pop(depth);
       }
 
       if (write != null) {
@@ -424,19 +424,19 @@ public class InstructionImpact {
       case CodeConstants.opc_dup:
       case CodeConstants.opc_dup_x1:
       case CodeConstants.opc_dup_x2:
-        int depth1 = 88 - instr.opcode;
-        stack.insertByOffset(depth1, stack.getByOffset(-1).copy());
+        int depth1 = instr.opcode - 88;
+        stack.insert(depth1, stack.peek(1).copy());
         break;
       case CodeConstants.opc_dup2:
       case CodeConstants.opc_dup2_x1:
       case CodeConstants.opc_dup2_x2:
-        int depth2 = 90 - instr.opcode;
-        stack.insertByOffset(depth2, stack.getByOffset(-2).copy());
-        stack.insertByOffset(depth2, stack.getByOffset(-1).copy());
+        int depth2 = instr.opcode - 90;
+        stack.insert(depth2, stack.peek(2).copy());
+        stack.insert(depth2, stack.peek(1).copy());
         break;
       case CodeConstants.opc_swap:
         var1 = stack.pop();
-        stack.insertByOffset(-1, var1);
+        stack.insert(1, var1);
         break;
       case CodeConstants.opc_getfield:
         stack.pop();

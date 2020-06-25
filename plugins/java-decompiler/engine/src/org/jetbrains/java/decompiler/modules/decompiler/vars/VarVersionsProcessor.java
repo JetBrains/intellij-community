@@ -14,7 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
-import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
+import org.jetbrains.java.decompiler.util.Universe.UniversedSet;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -52,7 +52,7 @@ public class VarVersionsProcessor {
   private static void mergePhiVersions(SSAConstructorSparseEx ssa, DirectGraph graph) {
     // collect phi versions
     List<Set<VarVersionPair>> lst = new ArrayList<>();
-    for (Entry<VarVersionPair, FastSparseSet<Integer>> ent : ssa.getPhi().entrySet()) {
+    for (Entry<VarVersionPair, UniversedSet<Integer>> ent : ssa.getPhi().entrySet()) {
       Set<VarVersionPair> set = new HashSet<>();
       set.add(ent.getKey());
       for (Integer version : ent.getValue()) {

@@ -7,7 +7,7 @@ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.io.IOException;
 
@@ -42,8 +42,8 @@ public class StructClass extends StructMember {
   private final int majorVersion;
   private final int[] interfaces;
   private final String[] interfaceNames;
-  private final VBStyleCollection<StructField, String> fields;
-  private final VBStyleCollection<StructMethod, String> methods;
+  private final KeyedList<String, StructField> fields;
+  private final KeyedList<String, StructMethod> methods;
 
   private ConstantPool pool;
 
@@ -79,7 +79,7 @@ public class StructClass extends StructMember {
 
     // fields
     length = in.readUnsignedShort();
-    fields = new VBStyleCollection<>(length);
+    fields = new KeyedList<>(length);
     for (int i = 0; i < length; i++) {
       StructField field = new StructField(in, this);
       fields.addWithKey(field, InterpreterUtil.makeUniqueKey(field.getName(), field.getDescriptor()));
@@ -87,7 +87,7 @@ public class StructClass extends StructMember {
 
     // methods
     length = in.readUnsignedShort();
-    methods = new VBStyleCollection<>(length);
+    methods = new KeyedList<>(length);
     for (int i = 0; i < length; i++) {
       StructMethod method = new StructMethod(in, this);
       methods.addWithKey(method, InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor()));
@@ -140,11 +140,11 @@ public class StructClass extends StructMember {
     return interfaceNames;
   }
 
-  public VBStyleCollection<StructMethod, String> getMethods() {
+  public KeyedList<String, StructMethod> getMethods() {
     return methods;
   }
 
-  public VBStyleCollection<StructField, String> getFields() {
+  public KeyedList<String, StructField> getFields() {
     return fields;
   }
 

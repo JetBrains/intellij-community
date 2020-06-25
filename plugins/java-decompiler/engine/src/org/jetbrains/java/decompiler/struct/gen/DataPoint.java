@@ -37,7 +37,7 @@ public class DataPoint {
   public DataPoint copy() {
     DataPoint point = new DataPoint();
     point.setLocalVariables(new ArrayList<>(localVariables));
-    point.setStack(stack.clone());
+    point.setStack(new ListStack<>(stack));
     return point;
   }
 

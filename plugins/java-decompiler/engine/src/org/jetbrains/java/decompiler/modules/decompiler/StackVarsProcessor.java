@@ -13,7 +13,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
-import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
+import org.jetbrains.java.decompiler.util.Universe.UniversedSet;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
@@ -199,8 +199,8 @@ public class StackVarsProcessor {
     for (VarVersionPair varpaar : setVars) {
       VarVersionNode node = ssau.getSsuversions().nodes.getWithKey(varpaar);
 
-      for (Iterator<Entry<Integer, FastSparseSet<Integer>>> itent = node.live.entryList().iterator(); itent.hasNext(); ) {
-        Entry<Integer, FastSparseSet<Integer>> ent = itent.next();
+      for (Iterator<Entry<Integer, UniversedSet<Integer>>> itent = node.live.entryList().iterator(); itent.hasNext(); ) {
+        Entry<Integer, UniversedSet<Integer>> ent = itent.next();
 
         Integer key = ent.getKey();
 
@@ -208,7 +208,7 @@ public class StackVarsProcessor {
           itent.remove();
         }
         else {
-          FastSparseSet<Integer> set = ent.getValue();
+          UniversedSet<Integer> set = ent.getValue();
 
           set.complement(livemap.get(key));
           if (set.isEmpty()) {
@@ -590,7 +590,7 @@ public class StackVarsProcessor {
     }
 
     for (Entry<Integer, Set<VarVersionPair>> ent : mapVars.entrySet()) {
-      FastSparseSet<Integer> liveverset = mapLiveVars.get(ent.getKey());
+      UniversedSet<Integer> liveverset = mapLiveVars.get(ent.getKey());
       if (liveverset == null) {
         return false;
       }

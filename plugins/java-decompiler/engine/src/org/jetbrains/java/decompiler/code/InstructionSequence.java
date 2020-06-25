@@ -3,7 +3,7 @@ package org.jetbrains.java.decompiler.code;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.util.TextUtil;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 public abstract class InstructionSequence {
 
@@ -11,17 +11,17 @@ public abstract class InstructionSequence {
   // private fields
   // *****************************************************************************
 
-  protected final VBStyleCollection<Instruction, Integer> collinstr;
+  protected final KeyedList<Integer, Instruction> collinstr;
 
   protected int pointer = 0;
 
   protected ExceptionTable exceptionTable = ExceptionTable.EMPTY;
 
   protected InstructionSequence() {
-    this(new VBStyleCollection<>());
+    this(new KeyedList<>());
   }
 
-  protected InstructionSequence(VBStyleCollection<Instruction, Integer> collinstr) {
+  protected InstructionSequence(KeyedList<Integer, Instruction> collinstr) {
     this.collinstr = collinstr;
   }
 

@@ -17,7 +17,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.util.HashSet;
 import java.util.List;
@@ -26,9 +26,9 @@ import java.util.Set;
 public class ClassWrapper {
   private final StructClass classStruct;
   private final Set<String> hiddenMembers = new HashSet<>();
-  private final VBStyleCollection<Exprent, String> staticFieldInitializers = new VBStyleCollection<>();
-  private final VBStyleCollection<Exprent, String> dynamicFieldInitializers = new VBStyleCollection<>();
-  private final VBStyleCollection<MethodWrapper, String> methods = new VBStyleCollection<>();
+  private final KeyedList<String, Exprent> staticFieldInitializers = new KeyedList<>();
+  private final KeyedList<String, Exprent> dynamicFieldInitializers = new KeyedList<>();
+  private final KeyedList<String, MethodWrapper> methods = new KeyedList<>();
 
   public ClassWrapper(StructClass classStruct) {
     this.classStruct = classStruct;
@@ -184,7 +184,7 @@ public class ClassWrapper {
     return classStruct;
   }
 
-  public VBStyleCollection<MethodWrapper, String> getMethods() {
+  public KeyedList<String, MethodWrapper> getMethods() {
     return methods;
   }
 
@@ -192,11 +192,11 @@ public class ClassWrapper {
     return hiddenMembers;
   }
 
-  public VBStyleCollection<Exprent, String> getStaticFieldInitializers() {
+  public KeyedList<String, Exprent> getStaticFieldInitializers() {
     return staticFieldInitializers;
   }
 
-  public VBStyleCollection<Exprent, String> getDynamicFieldInitializers() {
+  public KeyedList<String, Exprent> getDynamicFieldInitializers() {
     return dynamicFieldInitializers;
   }
 

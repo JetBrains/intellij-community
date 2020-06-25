@@ -29,6 +29,7 @@ import org.jetbrains.java.decompiler.util.TextUtil;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class InvocationExprent extends Exprent {
 
@@ -151,8 +152,7 @@ public class InvocationExprent extends Exprent {
     invokeDynamicClassSuffix = expr.getInvokeDynamicClassSuffix();
     stringDescriptor = expr.getStringDescriptor();
     descriptor = expr.getDescriptor();
-    lstParameters = new ArrayList<>(expr.getLstParameters());
-    ExprProcessor.copyEntries(lstParameters);
+    lstParameters = expr.getLstParameters().stream().map(Exprent::copy).collect(Collectors.toCollection(ArrayList::new));
 
     addBytecodeOffsets(expr.bytecode);
     bootstrapArguments = expr.getBootstrapArguments();

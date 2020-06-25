@@ -3,7 +3,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,7 +13,7 @@ import java.util.List;
 
 public class DirectGraph {
 
-  public final VBStyleCollection<DirectNode, String> nodes = new VBStyleCollection<>();
+  public final KeyedList<String, DirectNode> nodes = new KeyedList<>();
 
   public DirectNode first;
 

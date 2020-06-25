@@ -2,6 +2,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.util.ListStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,26 +11,29 @@ public class PrimitiveExprsList {
 
   private final List<Exprent> lstExprents = new ArrayList<>();
 
-  private ExprentStack stack = new ExprentStack();
+  private final ListStack<Exprent> stack;
 
   public PrimitiveExprsList() {
+    this.stack = new ListStack<>();
+  }
+
+  private PrimitiveExprsList(ListStack<Exprent> stack) {
+    ListStack<Exprent> newStack = new ListStack<>();
+    for (Exprent exp : stack) {
+      newStack.push(exp.copy());
+    }
+    this.stack = newStack;
   }
 
   public PrimitiveExprsList copyStack() {
-    PrimitiveExprsList prlst = new PrimitiveExprsList();
-    prlst.setStack(stack.clone());
-    return prlst;
+    return new PrimitiveExprsList(this.stack);
   }
 
   public List<Exprent> getLstExprents() {
     return lstExprents;
   }
 
-  public ExprentStack getStack() {
+  public ListStack<Exprent> getStack() {
     return stack;
-  }
-
-  public void setStack(ExprentStack stack) {
-    this.stack = stack;
   }
 }
