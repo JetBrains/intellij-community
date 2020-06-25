@@ -15,6 +15,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -125,7 +126,14 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
     }
 
     private fun requestNewAccount() {
-      GithubAuthenticationManager.getInstance().requestNewAccount(project)
+      //TODO: parse remoteUrl
+      if (GithubServerPath.DEFAULT_SERVER.matches(remoteUrl.url)) {
+        GithubAuthenticationManager.getInstance().requestNewAccountForServer(GithubServerPath.DEFAULT_SERVER, project)
+      }
+      else {
+        //impossible scenario really
+        GithubAuthenticationManager.getInstance().requestNewAccount(project)
+      }
       update()
       GithubUIUtil.focusPanel(panel)
     }
