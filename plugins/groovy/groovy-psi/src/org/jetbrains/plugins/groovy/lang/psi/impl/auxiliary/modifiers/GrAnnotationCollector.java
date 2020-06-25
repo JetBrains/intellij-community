@@ -74,6 +74,9 @@ public final class GrAnnotationCollector {
     Set<String> allUsedAttrs = new LinkedHashSet<>();
     for (Map.Entry<String, Map<String, PsiNameValuePair>> entry : annotations.entrySet()) {
       final String qname = entry.getKey();
+      if (qname.equals(alias.getQualifiedName())) {
+        continue;
+      }
       final PsiClass resolved = JavaPsiFacade.getInstance(alias.getProject()).findClass(qname, alias.getResolveScope());
       if (resolved == null) continue;
 
