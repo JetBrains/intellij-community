@@ -15,14 +15,14 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.serialization.SerialAnnotationCouldBeSuggestedInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
@@ -43,9 +43,18 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
     final PsiField field =
       elementFactory.createFieldFromText("private static final long serialVersionUID = " + serialVersionUID + "L;", aClass);
     if (PsiUtil.isLanguageLevel14OrHigher(descriptor.getPsiElement())) {
-      new AddAnnotationFix(SerialAnnotationCouldBeSuggestedInspection.SERIAL_ANNOTATION, field, PsiNameValuePair.EMPTY_ARRAY)
-        .applyFix(project, descriptor);
+      annotateFieldWithSerial(project, field);
     }
     aClass.add(field);
+  }
+
+  private static void annotateFieldWithSerial(@NotNull Project project, @NotNull PsiField field) {
+    PsiModifierList modifierList = field.getModifierList();
+    if (modifierList == null) return;
+    PsiAnnotation annotation = AddAnnotationPsiFix
+      .addPhysicalAnnotationIfAbsent(CommonClassNames.JAVA_IO_SERIAL_ANNOTATION, PsiNameValuePair.EMPTY_ARRAY, modifierList);
+    if (annotation != null) {
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
+    }
   }
 }

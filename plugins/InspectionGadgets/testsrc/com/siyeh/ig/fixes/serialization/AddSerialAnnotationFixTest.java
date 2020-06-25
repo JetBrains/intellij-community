@@ -3,7 +3,7 @@ package com.siyeh.ig.fixes.serialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import com.siyeh.ig.serialization.SerialAnnotationCouldBeSuggestedInspection;
+import com.siyeh.ig.serialization.MissingSerialAnnotationInspection;
 import org.jetbrains.annotations.Nullable;
 
 public class AddSerialAnnotationFixTest extends LightJavaInspectionTestCase {
@@ -22,9 +22,9 @@ public class AddSerialAnnotationFixTest extends LightJavaInspectionTestCase {
   public void testAdditionToField() {
     doTest("import java.io.*;\n" +
            "class Test implements Serializable {\n" +
-           "  private static final long <warning descr=\"Field 'serialVersionUID' can be annotated with @Serial annotation\"><caret>serialVersionUID</warning> = 7874493593505141603L;\n" +
+           "  private static final long <warning descr=\"The 'serialVersionUID' can be annotated with @Serial annotation\"><caret>serialVersionUID</warning> = 7874493593505141603L;\n" +
            "}");
-    checkQuickFix("Add @Serial annotation", "import java.io.*;\n" +
+    checkQuickFix("Annotate field 'serialVersionUID' as @Serial", "import java.io.*;\n" +
                                     "class Test implements Serializable {\n" +
                                     "  @Serial\n" +
                                     "  private static final long serialVersionUID = 7874493593505141603L;\n" +
@@ -34,11 +34,11 @@ public class AddSerialAnnotationFixTest extends LightJavaInspectionTestCase {
   public void testAdditionToMethod() {
     doTest("import java.io.*;\n" +
            "class Test implements Serializable {\n" +
-           "  protected Object <warning descr=\"Method 'readResolve' can be annotated with @Serial annotation\"><caret>readResolve</warning>() throws ObjectStreamException {\n" +
+           "  protected Object <warning descr=\"The 'readResolve' can be annotated with @Serial annotation\"><caret>readResolve</warning>() throws ObjectStreamException {\n" +
            "    return 1;\n" +
            "  }\n" +
            "}");
-    checkQuickFix("Add @Serial annotation", "import java.io.*;\n" +
+    checkQuickFix("Annotate method 'readResolve' as @Serial", "import java.io.*;\n" +
                                             "class Test implements Serializable {\n" +
                                             "  @Serial\n" +
                                             "  protected Object readResolve() throws ObjectStreamException {\n" +
@@ -49,6 +49,6 @@ public class AddSerialAnnotationFixTest extends LightJavaInspectionTestCase {
 
   @Override
   protected @Nullable InspectionProfileEntry getInspection() {
-    return new SerialAnnotationCouldBeSuggestedInspection();
+    return new MissingSerialAnnotationInspection();
   }
 }

@@ -7,7 +7,7 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SerialAnnotationCouldBeSuggestedInspectionJava14Test extends LightJavaInspectionTestCase {
+public class MissingSerialAnnotationInspectionJava14Test extends LightJavaInspectionTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
@@ -32,6 +32,6 @@ public class SerialAnnotationCouldBeSuggestedInspectionJava14Test extends LightJ
 
   @Override
   protected @Nullable InspectionProfileEntry getInspection() {
-    return new SerialAnnotationCouldBeSuggestedInspection();
+    return new MissingSerialAnnotationInspection();
   }
 }

@@ -1,0 +1,25 @@
+<html>
+<body>
+Reports methods and fields in <b>Serializable</b> and <b>Externalizable</b> classes that are suitable to be annotated with the <b>java.io.Serial</b> annotation.
+<p>
+Examples:<br>
+<code><pre>
+class Test implements Serializable {
+  private static final long serialVersionUID = 7874493593505141603L;
+
+  private void writeObject(ObjectOutputStream out) throws IOException {
+  }
+}
+</pre></code>
+<code><pre>
+class Test implements Externalizable {
+  protected Object readResolve() throws ObjectStreamException {
+    return "SomeObject";
+  }
+}
+</pre></code>
+<p>To get more information about all possible cases, read the documentation for <b>java.io.Serial</b>.</p>
+<p>This inspection only applies to language level is 14 or higher.</p>
+<p><small>New in 2020.3</small></p>
+</body>
+</html>

@@ -2213,10 +2213,10 @@
                      key="readresolve.writereplace.protected.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.serialization.ReadResolveAndWriteReplaceProtectedInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SerialAnnotationCouldBeSuggested" bundle="messages.InspectionGadgetsBundle"
-                     key="serial.annotation.could.be.suggested.display.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="MissingSerialAnnotation" bundle="messages.InspectionGadgetsBundle"
+                     key="missing.serial.annotation.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.serialization.SerialAnnotationCouldBeSuggestedInspection"/>
+                     implementationClass="com.siyeh.ig.serialization.MissingSerialAnnotationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SerialPersistentFieldsWithWrongSignature" bundle="messages.InspectionGadgetsBundle"
                      key="serialpersistentfields.with.wrong.signature.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"

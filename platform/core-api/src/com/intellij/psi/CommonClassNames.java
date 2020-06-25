@@ -68,6 +68,7 @@ public interface CommonClassNames {
 
   String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
   String JAVA_IO_EXTERNALIZABLE = "java.io.Externalizable";
+  String JAVA_IO_SERIAL_ANNOTATION = "java.io.Serial";
   String JAVA_IO_FILE = "java.io.File";
 
   String JAVA_LANG_STRING = "java.lang.String";
