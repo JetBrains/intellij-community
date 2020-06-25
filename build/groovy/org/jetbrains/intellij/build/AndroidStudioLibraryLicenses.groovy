@@ -45,6 +45,9 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Bouncy Castle", libraryName: "bouncycastle", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CDT", libraryName: "org.eclipse.cdt", license: "Eclipse Public License 1.0"),
+    // for ui-animation-tooling-internal module library in intellij.android.compose-designer
+    new LibraryLicense(name: "Compose Animation Tooling", libraryName: "ui-animation-tooling-internal", version: "0.1.0-SNAPSHOT",
+                       license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "http://source.android.com/"),
     // for compose-compiler-hosted module library in intellij.android.compose-ide-plugin
     new LibraryLicense(name: "Compose Compiler Hosted", libraryName: "compose-compiler-hosted",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
