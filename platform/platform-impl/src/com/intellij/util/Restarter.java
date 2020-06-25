@@ -266,7 +266,31 @@ public final class Restarter {
     }
     restarterArgs.add(0, restarter);
     Logger.getInstance(Restarter.class).info("run restarter: " + restarterArgs);
-    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs), null, doNotLock ? tempDir.toFile() : null);
+
+    ProcessBuilder processBuilder = new ProcessBuilder(restarterArgs);
+    if (doNotLock) processBuilder.directory(tempDir.toFile());
+    if (SystemInfo.isXWindow) setDesktopStartupId(processBuilder);
+    processBuilder.start();
+  }
+
+  // this is required to support X server's focus stealing prevention mechanism, see JBR-2503
+  private static void setDesktopStartupId(ProcessBuilder processBuilder) {
+    if (!SystemInfo.isJetBrainsJvm) return;
+    try {
+      Long lastUserActionTime = ReflectionUtil.getStaticFieldValue(Class.forName("sun.awt.X11.XBaseWindow"), long.class, "globalUserTime");
+      if (lastUserActionTime == null) {
+        Logger.getInstance(Restarter.class).warn("Couldn't obtain last user action's timestamp");
+      }
+      else {
+        // this doesn't start 'proper' startup sequence (by sending 'new:' message to the root window),
+        // but passing the event timestamp to the started process should be enough to prevent focus stealing
+        processBuilder.environment().put("DESKTOP_STARTUP_ID",
+                                         ApplicationNamesInfo.getInstance().getProductName() + "-restart_TIME" + lastUserActionTime);
+      }
+    }
+    catch (Exception e) {
+      Logger.getInstance(Restarter.class).warn("Couldn't set DESKTOP_STARTUP_ID", e);
+    }
   }
 
   @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})
