@@ -21,8 +21,8 @@ internal class GHPRFilesManagerImpl(private val project: Project,
 
   private val filesEventDispatcher = EventDispatcher.create(FileListener::class.java)
 
-  private val files = ContainerUtil.createWeakMap<GHPRIdentifier, GHPRTimelineVirtualFile>()
-  private val diffFiles = ContainerUtil.createWeakMap<GHPRIdentifier, GHPRDiffVirtualFile>()
+  private val files = ContainerUtil.createWeakValueMap<GHPRIdentifier, GHPRTimelineVirtualFile>()
+  private val diffFiles = ContainerUtil.createWeakValueMap<GHPRIdentifier, GHPRDiffVirtualFile>()
 
   override fun createAndOpenTimelineFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
     files.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
@@ -49,8 +49,6 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     val file = findTimelineFile(details)
     if (file != null) {
       file.details = details
-      // TODO: clear cached icons at com.intellij.util.IconUtil.getIcon
-      // TODO: update tooltip
       FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
     }
   }
