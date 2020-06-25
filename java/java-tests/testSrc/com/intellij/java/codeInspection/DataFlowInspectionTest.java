@@ -624,6 +624,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNewBoxedNumberEquality() { doTest(); }
   public void testBoxingIncorrectLiteral() { doTest(); }
   public void testImplicitUnboxingOnCast() { doTest(); }
+  public void testImplicitUnboxingExtendsInteger() { doTest(); }
 
   public void testIncompleteArrayAccessInLoop() { doTest(); }
   public void testSameArguments() { doTest(); }
