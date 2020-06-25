@@ -195,7 +195,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   @TestOnly
-  public static RangeCollector newRangeCollector(@NotNull TemplateDataElementType elementType) {
+  public static RangeCollectorImpl newRangeCollector(@NotNull TemplateDataElementType elementType) {
     return new RangeCollectorImpl(elementType);
   }
 
