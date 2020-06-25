@@ -305,7 +305,14 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       }
       myNodeCache = newNodes;
       for (N node : oldNodes) {
-        if (node.getParent() != null) removeNodeFromParent(node);
+        //noinspection unchecked
+        List<N> children = ContainerUtil.toList(node.children());
+        node.removeAllChildren();
+        for (N child : children) {
+          if (myNodeCache.containsKey(child.getUserObject())) {
+            node.add(child);
+          }
+        }
       }
       refilter();
     }
