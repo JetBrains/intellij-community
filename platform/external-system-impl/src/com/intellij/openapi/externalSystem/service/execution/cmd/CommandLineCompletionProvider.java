@@ -11,8 +11,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 /**
  * @author Sergey Evdokimov
  */
@@ -65,14 +63,14 @@ public abstract class CommandLineCompletionProvider extends TextFieldCompletionP
       if (offset <= lexer.getTokenEnd()) {
         if (argCount == 0) {
           if (prefix.startsWith("--")) {
-            for (Option option : (Collection<Option>)myOptions.getOptions()) {
+            for (Option option : myOptions.getOptions()) {
               if (option.getLongOpt() != null) {
                 result.addElement(createLookupElement(option, "--" + option.getLongOpt()));
               }
             }
           }
           else if (prefix.startsWith("-")) {
-            for (Option option : (Collection<Option>)myOptions.getOptions()) {
+            for (Option option : myOptions.getOptions()) {
               if (option.getOpt() != null) {
                 result.addElement(createLookupElement(option, "-" + option.getOpt()));
               }
