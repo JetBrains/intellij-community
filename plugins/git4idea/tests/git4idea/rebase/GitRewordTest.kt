@@ -3,8 +3,8 @@ package git4idea.rebase
 
 import com.intellij.openapi.util.text.StringUtil
 import git4idea.config.GitVersionSpecialty
-import git4idea.rebase.log.GitMultipleCommitEditingOperationResult.Complete
-import git4idea.rebase.log.GitMultipleCommitEditingOperationResult.Complete.UndoPossibility.Possible
+import git4idea.rebase.log.GitCommitEditingOperationResult.Complete
+import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoPossibility.Possible
 import git4idea.test.*
 import org.junit.Assume.assumeTrue
 

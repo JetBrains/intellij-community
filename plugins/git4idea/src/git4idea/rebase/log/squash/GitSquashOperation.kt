@@ -4,13 +4,13 @@ package git4idea.rebase.log.squash
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.interactive.GitRebaseTodoModel
-import git4idea.rebase.log.GitMultipleCommitEditingEditorHandler
-import git4idea.rebase.log.GitMultipleCommitEditingOperation
-import git4idea.rebase.log.GitMultipleCommitEditingOperationResult
+import git4idea.rebase.log.GitCommitEditingOperation
+import git4idea.rebase.log.GitCommitEditingOperationResult
+import git4idea.rebase.log.GitCommitEditingEditorHandler
 import git4idea.repo.GitRepository
 
-internal class GitSquashOperation(repository: GitRepository) : GitMultipleCommitEditingOperation(repository) {
-  fun execute(commitsToSquash: List<VcsCommitMetadata>, newMessage: String): GitMultipleCommitEditingOperationResult {
+internal class GitSquashOperation(repository: GitRepository) : GitCommitEditingOperation(repository) {
+  fun execute(commitsToSquash: List<VcsCommitMetadata>, newMessage: String): GitCommitEditingOperationResult {
     val rebaseEditor = SquashRebaseEditorHandler(repository, commitsToSquash, newMessage)
     return rebase(commitsToSquash, rebaseEditor)
   }
@@ -19,7 +19,7 @@ internal class GitSquashOperation(repository: GitRepository) : GitMultipleCommit
     repository: GitRepository,
     val commitsToSquash: List<VcsCommitMetadata>,
     val newMessage: String
-  ) : GitMultipleCommitEditingEditorHandler(repository, commitsToSquash) {
+  ) : GitCommitEditingEditorHandler(repository, commitsToSquash) {
     override fun processModel(commitIndices: List<Int>, model: GitRebaseTodoModel<GitRebaseEntry>) {
       val uniteRoot = model.unite(commitIndices)
       model.reword(uniteRoot.index, newMessage)

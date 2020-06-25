@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.util.VcsUserUtil.getShortPresentation
 import git4idea.i18n.GitBundle
-import git4idea.rebase.log.GitMultipleCommitEditingOperationResult
+import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitNewCommitMessageActionDialog
 import git4idea.rebase.log.getOrLoadDetails
 import git4idea.rebase.log.notifySuccess
@@ -44,7 +44,7 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
     object : Task.Backgroundable(project, GitBundle.getString("rebase.log.reword.action.progress.indicator.title")) {
       override fun run(indicator: ProgressIndicator) {
         val operationResult = GitRewordOperation(repository, commit, newMessage).execute()
-        if (operationResult is GitMultipleCommitEditingOperationResult.Complete) {
+        if (operationResult is GitCommitEditingOperationResult.Complete) {
           operationResult.notifySuccess(
             GitBundle.getString("rebase.log.reword.action.notification.successful.title"),
             GitBundle.getString("rebase.log.reword.action.progress.indicator.undo.title"),

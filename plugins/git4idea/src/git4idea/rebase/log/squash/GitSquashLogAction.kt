@@ -36,7 +36,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     object : Task.Backgroundable(commitEditingData.project, GitBundle.getString("rebase.log.squash.progress.indicator.title")) {
       override fun run(indicator: ProgressIndicator) {
         val operationResult = GitSquashOperation(commitEditingData.repository).execute(selectedCommitsDetails, newMessage)
-        if (operationResult is GitMultipleCommitEditingOperationResult.Complete) {
+        if (operationResult is GitCommitEditingOperationResult.Complete) {
           operationResult.notifySuccess(
             GitBundle.getString("rebase.log.squash.success.notification.title"),
             GitBundle.getString("rebase.log.squash.undo.progress.title"),

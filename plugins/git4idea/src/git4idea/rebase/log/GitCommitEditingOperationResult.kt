@@ -8,13 +8,13 @@ import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
 import git4idea.reset.GitResetMode
 
-internal sealed class GitMultipleCommitEditingOperationResult {
+internal sealed class GitCommitEditingOperationResult {
   class Complete(
     val repository: GitRepository,
     private val base: String,
     private val oldHead: String,
     private val newHead: String
-  ) : GitMultipleCommitEditingOperationResult() {
+  ) : GitCommitEditingOperationResult() {
     private val firstChangedHash = findFirstChangedHash()
 
     private fun findFirstChangedHash(): Hash? {
@@ -65,5 +65,5 @@ internal sealed class GitMultipleCommitEditingOperationResult {
     }
   }
 
-  object Incomplete : GitMultipleCommitEditingOperationResult()
+  object Incomplete : GitCommitEditingOperationResult()
 }

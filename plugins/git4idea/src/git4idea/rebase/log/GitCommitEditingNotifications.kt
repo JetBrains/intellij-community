@@ -11,12 +11,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.i18n.GitBundle
-import git4idea.rebase.log.GitMultipleCommitEditingOperationResult.Complete.UndoPossibility
-import git4idea.rebase.log.GitMultipleCommitEditingOperationResult.Complete.UndoResult
+import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoPossibility
+import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoResult
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 
-internal fun GitMultipleCommitEditingOperationResult.Complete.notifySuccess(
+internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
   title: @NlsContexts.NotificationTitle String,
   undoProgressTitle: @NlsContexts.ProgressTitle String,
   undoImpossibleTitle: @NlsContexts.ProgressTitle String,
@@ -71,7 +71,7 @@ private fun undoInBackground(
   undoProgressTitle: @NlsContexts.ProgressTitle String,
   undoImpossibleTitle: @NlsContexts.ProgressTitle String,
   undoErrorTitle: @NlsContexts.ProgressTitle String,
-  result: GitMultipleCommitEditingOperationResult.Complete
+  result: GitCommitEditingOperationResult.Complete
 ) {
   ProgressManager.getInstance().run(object : Task.Backgroundable(project, undoProgressTitle) {
     override fun run(indicator: ProgressIndicator) {

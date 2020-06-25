@@ -12,8 +12,8 @@ import git4idea.config.GitConfigUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.rebase.GitRebaseEntry.Action.PICK
 import git4idea.rebase.GitRebaseEntry.Action.REWORD
-import git4idea.rebase.log.GitMultipleCommitEditingOperation
-import git4idea.rebase.log.GitMultipleCommitEditingOperationResult
+import git4idea.rebase.log.GitCommitEditingOperation
+import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.repo.GitRepository
 import java.io.File
 import java.io.IOException
@@ -22,7 +22,7 @@ internal class GitRewordOperation(
   repository: GitRepository,
   private val commit: VcsCommitMetadata,
   private val newMessage: String
-) : GitMultipleCommitEditingOperation(repository) {
+) : GitCommitEditingOperation(repository) {
   init {
     repository.update()
   }
@@ -31,10 +31,10 @@ internal class GitRewordOperation(
 
   private val initialHeadPosition = repository.currentRevision!!
 
-  fun execute(): GitMultipleCommitEditingOperationResult {
+  fun execute(): GitCommitEditingOperationResult {
     if (canRewordViaAmend()) {
       val operationResult = rewordViaAmend()
-      if (operationResult is GitMultipleCommitEditingOperationResult.Complete) {
+      if (operationResult is GitCommitEditingOperationResult.Complete) {
         return operationResult
       }
     }
@@ -46,7 +46,7 @@ internal class GitRewordOperation(
 
   private fun isLatestCommit() = commit.id.asString() == initialHeadPosition
 
-  private fun rewordViaRebase(): GitMultipleCommitEditingOperationResult {
+  private fun rewordViaRebase(): GitCommitEditingOperationResult {
     val rebaseEditor = GitAutomaticRebaseEditor(project, commit.root,
                                                 entriesEditor = { list -> injectRewordAction(list) },
                                                 plainTextEditor = { editorText -> supplyNewMessage(editorText) })
@@ -54,7 +54,7 @@ internal class GitRewordOperation(
     return rebase(listOf(commit), rebaseEditor)
   }
 
-  private fun rewordViaAmend(): GitMultipleCommitEditingOperationResult {
+  private fun rewordViaAmend(): GitCommitEditingOperationResult {
     val handler = GitLineHandler(project, repository.root, GitCommand.COMMIT)
     val messageFile: File
     try {
@@ -62,7 +62,7 @@ internal class GitRewordOperation(
     }
     catch (e: IOException) {
       LOG.warn("Couldn't create message file", e)
-      return GitMultipleCommitEditingOperationResult.Incomplete
+      return GitCommitEditingOperationResult.Incomplete
     }
     handler.addParameters("--amend")
     handler.addParameters("-F")
@@ -73,12 +73,12 @@ internal class GitRewordOperation(
     val result = Git.getInstance().runCommand(handler)
     repository.update()
     if (result.success()) {
-      return GitMultipleCommitEditingOperationResult.Complete(repository, commit.parents.first().asString(), initialHeadPosition,
-                                                              repository.currentRevision!!)
+      return GitCommitEditingOperationResult.Complete(repository, commit.parents.first().asString(), initialHeadPosition,
+                                                      repository.currentRevision!!)
     }
     else {
       LOG.warn("Couldn't reword via amend: " + result.errorOutputAsJoinedString)
-      return GitMultipleCommitEditingOperationResult.Incomplete
+      return GitCommitEditingOperationResult.Incomplete
     }
   }
 

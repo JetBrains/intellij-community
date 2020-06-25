@@ -10,14 +10,14 @@ import git4idea.rebase.GitRebaseProcess
 import git4idea.rebase.GitRebaseSpec
 import git4idea.repo.GitRepository
 
-internal abstract class GitMultipleCommitEditingOperation(protected val repository: GitRepository) {
+internal abstract class GitCommitEditingOperation(protected val repository: GitRepository) {
   protected val project = repository.project
 
   protected fun rebase(
     commits: List<VcsCommitMetadata>,
     rebaseEditor: GitRebaseEditorHandler,
     preserveMerges: Boolean = false
-  ): GitMultipleCommitEditingOperationResult {
+  ): GitCommitEditingOperationResult {
     val base = commits.last().parents.first().asString()
     val params = GitRebaseParams.editCommits(
       repository.vcs.version,
@@ -43,12 +43,12 @@ internal abstract class GitMultipleCommitEditingOperation(protected val reposito
     }
 
     private val initialHead = repository.currentRevision!!
-    var result: GitMultipleCommitEditingOperationResult = GitMultipleCommitEditingOperationResult.Incomplete
+    var result: GitCommitEditingOperationResult = GitCommitEditingOperationResult.Incomplete
 
     override fun notifySuccess() {
       repository.update()
       val newHead = repository.currentRevision!!
-      result = GitMultipleCommitEditingOperationResult.Complete(repository, params.upstream, initialHead, newHead)
+      result = GitCommitEditingOperationResult.Complete(repository, params.upstream, initialHead, newHead)
     }
   }
 }
