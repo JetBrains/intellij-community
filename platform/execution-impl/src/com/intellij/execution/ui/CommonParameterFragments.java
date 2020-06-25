@@ -8,14 +8,18 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,6 +32,8 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 public class CommonParameterFragments<Settings extends CommonProgramRunConfigurationParameters> {
 
   private final List<SettingsEditorFragment<Settings, ?>> myFragments = new ArrayList<>();
+  private final SettingsEditorFragment<Settings, LabeledComponent<TextFieldWithBrowseButton>>
+    myWorkingDirectory;
 
   public CommonParameterFragments(@NotNull Project project, Computable<Boolean> hasModule) {
     RawCommandLineEditor programArguments = new RawCommandLineEditor();
@@ -50,10 +56,13 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                                                                      ExecutionBundle.message(
                                                                                        "run.configuration.working.directory.label"));
     field.setLabelLocation(BorderLayout.WEST);
-    myFragments.add(new SettingsEditorFragment<>("workingDirectory", null, null, field,
-                                                 (settings, component) -> component.getComponent().setText(settings.getWorkingDirectory()),
-                                                 (settings, component) -> settings.setWorkingDirectory(component.getComponent().getText()),
-                                                 settings -> isNotEmpty(settings.getWorkingDirectory())));
+    myWorkingDirectory = new SettingsEditorFragment<>("workingDirectory", null, null, field,
+                                                      (settings, component) -> component.getComponent()
+                                                        .setText(settings.getWorkingDirectory()),
+                                                      (settings, component) -> settings
+                                                        .setWorkingDirectory(component.getComponent().getText()),
+                                                      settings -> isNotEmpty(settings.getWorkingDirectory()));
+    myFragments.add(myWorkingDirectory);
     myFragments.add(createEnvParameters());
   }
 
@@ -61,11 +70,23 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     return myFragments;
   }
 
-  public static <S extends InputRedirectAware> SettingsEditorFragment<S, ?> createRedirectFragment(Computable<Boolean> hasModule) {
+  public <S extends InputRedirectAware> SettingsEditorFragment<S, ?> createRedirectFragment(Computable<Boolean> hasModule) {
     TextFieldWithBrowseButton inputFile = new TextFieldWithBrowseButton();
-    inputFile.addBrowseFolderListener(null, null, null,
-                                      FileChooserDescriptorFactory.createSingleFileDescriptor(),
-                                      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    inputFile.addActionListener(new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(null, null, inputFile, null,
+                                                                                                     FileChooserDescriptorFactory
+                                                                                             .createSingleFileDescriptor(),
+                                                                                                     TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
+      @Override
+      protected @Nullable VirtualFile getInitialFile() {
+        VirtualFile initialFile = super.getInitialFile();
+        if (initialFile != null) {
+          return initialFile;
+        }
+        String text = myWorkingDirectory.component().getComponent().getText();
+        return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(text));
+      }
+    });
+
     MacrosDialog.addMacroSupport((ExtendableTextField)inputFile.getTextField(), MacrosDialog.Filters.ALL, hasModule);
     LabeledComponent<TextFieldWithBrowseButton> labeledComponent =
       LabeledComponent.create(inputFile, ExecutionBundle.message("redirect.input.from"));

@@ -43,9 +43,9 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     Computable<Boolean> hasModule = () -> classpathCombo.getSelectedModule() != null;
 
     fragments.add(CommonTags.parallelRun());
-    fragments.add(CommonParameterFragments.createRedirectFragment(hasModule));
 
     CommonParameterFragments<ApplicationConfiguration> commonParameterFragments = new CommonParameterFragments<>(myProject, hasModule);
+    fragments.add(commonParameterFragments.createRedirectFragment(hasModule));
     fragments.addAll(commonParameterFragments.getFragments());
     fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent));
 
