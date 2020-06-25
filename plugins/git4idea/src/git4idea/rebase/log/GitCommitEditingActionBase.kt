@@ -18,6 +18,8 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitUtil
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
+import git4idea.rebase.log.GitCommitEditingActionBase.CommitEditingDataCreationResult.Created
+import git4idea.rebase.log.GitCommitEditingActionBase.CommitEditingDataCreationResult.Prohibited
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 
@@ -52,7 +54,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
     log: VcsLog,
     logData: VcsLogData,
     logUi: VcsLogUi
-  ): T?
+  ): CommitEditingDataCreationResult<T>
 
   protected open fun update(e: AnActionEvent, commitEditingData: T) {
   }
@@ -62,7 +64,19 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
 
     e.presentation.isEnabledAndVisible = false
 
-    val commitEditingData = createCommitEditingData(e) ?: return
+    val commitEditingData = when (val commitEditingDataCreationResult = createCommitEditingData(e)) {
+      is Prohibited -> {
+        val description = commitEditingDataCreationResult.description
+        if (description != null) {
+          e.presentation.isVisible = true
+          e.presentation.description = description
+        }
+        return
+      }
+      is Created<T> -> {
+        commitEditingDataCreationResult.data
+      }
+    }
 
     e.presentation.isVisible = true
 
@@ -122,7 +136,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
   private fun VcsShortCommitDetails.isRootOrMerge() = parents.size != 1
 
   final override fun actionPerformed(e: AnActionEvent) {
-    val commitEditingRequirements = createCommitEditingData(e)!!
+    val commitEditingRequirements = (createCommitEditingData(e) as Created<T>).data
     val description = checkCommitsEditingAvailability(commitEditingRequirements)
 
     if (description != null) {
@@ -213,19 +227,27 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
     return description
   }
 
-  private fun createCommitEditingData(e: AnActionEvent): T? {
-    val project = e.project ?: return null
-    val log = e.getData(VcsLogDataKeys.VCS_LOG) ?: return null
-    val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData? ?: return null
-    val logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI) ?: return null
+  private fun createCommitEditingData(e: AnActionEvent): CommitEditingDataCreationResult<T> {
+    val project = e.project
+    val log = e.getData(VcsLogDataKeys.VCS_LOG)
+    val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData?
+    val logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI)
 
-    val commitList = log.selectedShortDetails.takeIf { it.isNotEmpty() } ?: return null
+    if (project == null || log == null || logDataProvider == null || logUi == null) {
+      return Prohibited()
+    }
+
+    val commitList = log.selectedShortDetails.takeIf { it.isNotEmpty() } ?: return Prohibited()
     val repositoryManager = GitUtil.getRepositoryManager(project)
 
-    val root = commitList.map { it.root }.distinct().singleOrNull() ?: return null
-    val repository = repositoryManager.getRepositoryForRootQuick(root) ?: return null
+    val root = commitList.map { it.root }.distinct().singleOrNull() ?: return Prohibited(
+      GitBundle.message("rebase.log.multiple.commit.editing.action.disabled.multiple.repository.description", commitList.size)
+    )
+    val repository = repositoryManager.getRepositoryForRootQuick(root) ?: return Prohibited()
     if (repositoryManager.isExternal(repository)) {
-      return null
+      return Prohibited(
+        GitBundle.message("rebase.log.multiple.commit.editing.action.disabled.external.repository.description", commitList.size)
+      )
     }
 
     return createCommitEditingData(repository, log, logDataProvider, logUi)
@@ -256,5 +278,10 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
   protected sealed class ProhibitRebaseDuringRebasePolicy {
     object Allow : ProhibitRebaseDuringRebasePolicy()
     class Prohibit(val operation: @Nls String) : ProhibitRebaseDuringRebasePolicy()
+  }
+
+  protected sealed class CommitEditingDataCreationResult<T : MultipleCommitEditingData> {
+    class Created<T : MultipleCommitEditingData>(val data: T) : CommitEditingDataCreationResult<T>()
+    class Prohibited<T : MultipleCommitEditingData>(val description: @Nls String? = null) : CommitEditingDataCreationResult<T>()
   }
 }
