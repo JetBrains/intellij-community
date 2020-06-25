@@ -82,7 +82,7 @@ open class MarketplaceRequests {
 
   private val COMPATIBLE_UPDATE_URL = "${PLUGIN_MANAGER_URL}/api/search/compatibleUpdates"
 
-  private val objectMapper = ObjectMapper()
+  private val objectMapper by lazy { ObjectMapper() }
 
   private fun getUpdatesMetadataFilesDirectory() = File(PathManager.getPluginsPath()).resolve("meta")
 
