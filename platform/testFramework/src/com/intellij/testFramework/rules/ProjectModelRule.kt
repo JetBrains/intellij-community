@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
@@ -47,6 +48,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
 
   lateinit var project: Project
   lateinit var projectRootDir: Path
+  lateinit var filePointerTracker: VirtualFilePointerTracker
 
   private val projectResource = object : ExternalResource() {
     override fun before() {
@@ -59,10 +61,12 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
       else {
         project = PlatformTestUtil.loadAndOpenProject(projectRootDir)
       }
+      filePointerTracker = VirtualFilePointerTracker()
     }
 
     override fun after() {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+      filePointerTracker.assertPointersAreDisposed()
     }
   }
 
