@@ -236,7 +236,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.ant.copy(file: iconPngPath, tofile: "${snapDir}/${customizer.snapName}.png")
 
       def snapcraftTemplate = "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap/snapcraft-template.yaml"
-      def version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}${buildContext.applicationInfo.isEAP ? buildContext.options.snapEapSuffix : ""}"
+      def version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}${buildContext.applicationInfo.isEAP ? "-EAP" : ""}"
       buildContext.ant.copy(file: snapcraftTemplate, tofile: "${snapDir}/snapcraft.yaml") {
         filterset(begintoken: '$', endtoken: '$') {
           filter(token: "NAME", value: customizer.snapName)

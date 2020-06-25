@@ -97,11 +97,6 @@ class BuildOptions {
   String snapDockerImage = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable")
 
   /**
-   * Suffix used in snap package version. Default is "-EAP", mostly done for Rider to specify the exact EAP version.
-   */
-  String snapEapSuffix = System.getProperty("intellij.build.snap.eap.suffix", "-EAP")
-
-  /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
    */
   String pathToCompiledClassesArchive = System.getProperty("intellij.build.compiled.classes.archive")
