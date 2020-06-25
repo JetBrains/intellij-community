@@ -104,6 +104,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     if (!editable) {
       myComboBoxModel.add(new AddJreItem());
     }
+    myComboBoxModel.setSelectedItem(myDefaultJreItem);
 
     ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel, 100);
     comboBox.setEditable(editable);
@@ -186,7 +187,8 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
   }
 
   private JreComboBoxItem getSelectedJre() {
-    return (JreComboBoxItem)getComponent().getEditor().getItem();
+    ComboBox<?> comboBox = getComponent();
+    return comboBox.isEditable() ? (JreComboBoxItem)comboBox.getEditor().getItem() : (JreComboBoxItem)comboBox.getSelectedItem();
   }
 
   public void setDefaultJreSelector(DefaultJreSelector defaultJreSelector) {
