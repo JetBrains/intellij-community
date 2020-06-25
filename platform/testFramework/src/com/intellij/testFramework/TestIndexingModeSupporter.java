@@ -140,7 +140,7 @@ public interface TestIndexingModeSupporter {
 
     public abstract @NotNull TestIndexingModeSupporter.IndexingMode getIndexingMode();
 
-    private static class NamedTestSuite extends TestSuite {
+    private static final class NamedTestSuite extends TestSuite {
       private final String myPrefix;
 
       private NamedTestSuite(String name, String prefix) {

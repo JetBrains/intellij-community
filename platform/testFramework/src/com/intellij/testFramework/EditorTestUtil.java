@@ -656,7 +656,7 @@ public final class EditorTestUtil {
     }
   }
 
-  private static class EmptyInlayRenderer implements EditorCustomElementRenderer {
+  private static final class EmptyInlayRenderer implements EditorCustomElementRenderer {
     private final int width;
     private final Integer height;
 

@@ -137,7 +137,6 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.testFramework.RunAll.runAll;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
-import static com.intellij.testFramework.UsefulTestCase.assertSize;
 import static org.junit.Assert.*;
 
 /**
@@ -2005,7 +2004,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return TreeNodeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation();
   }
 
-  private static class SelectionAndCaretMarkupLoader {
+  private static final class SelectionAndCaretMarkupLoader {
     private final String fileText;
     private final String filePath;
     private final String newFileText;
@@ -2045,7 +2044,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  private static class Border implements Comparable<Border> {
+  private static final class Border implements Comparable<Border> {
     private final boolean isLeftBorder;
     private final int offset;
     private final String text;
