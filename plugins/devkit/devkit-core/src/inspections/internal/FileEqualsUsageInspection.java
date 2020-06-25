@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,6 +62,10 @@ public class FileEqualsUsageInspection extends DevKitUastInspectionBase {
     if (!CommonClassNames.JAVA_IO_FILE.equals(containingClass.getQualifiedName())) return;
 
     if (!METHOD_NAMES.contains(node.getMethodName())) return;
+
+    if (JavaPsiFacade.getInstance(holder.getProject()).findClass(FileUtil.class.getName(), holder.getFile().getResolveScope()) == null) {
+      return;
+    }
 
     final UIdentifier identifier = node.getMethodIdentifier();
     if (identifier == null) return;
