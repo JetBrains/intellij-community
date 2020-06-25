@@ -1295,7 +1295,7 @@ public class MavenUtil {
   }
 
   public static @NotNull Sdk getJdk(@Nullable Project project, @NotNull String name) throws ExternalSystemJdkException {
-    if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA)) {
+    if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA) || (project != null && project.isDefault())) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
 
