@@ -74,7 +74,8 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     add(comment)
   }
 
-  override fun addStateChangeListener(listener: () -> Unit) = SimpleEventListener.addListener(stateEventDispatcher, listener)
+  override fun addAndInvokeStateChangeListener(listener: () -> Unit) =
+    SimpleEventListener.addAndInvokeListener(stateEventDispatcher, listener)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
