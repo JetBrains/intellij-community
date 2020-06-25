@@ -3,7 +3,6 @@ package git4idea.merge.dialog
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
-import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBInsets
@@ -17,7 +16,6 @@ import java.awt.geom.Line2D
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RectangularShape
 import javax.swing.JButton
-import javax.swing.JComboBox
 import javax.swing.JList
 import javax.swing.plaf.basic.ComboPopup
 
@@ -28,8 +26,8 @@ import javax.swing.plaf.basic.ComboPopup
  * @param outerInsets    component outer insets
  * @param popupEmptyText text to show when component have no options
  */
-internal class FlatComboBoxUI(private val border: Insets = Insets(1, 1, 1, 1),
-                              private val outerInsets: Insets = JBInsets.create(DarculaUIUtil.BW.get(), DarculaUIUtil.BW.get()),
+internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
+                              var outerInsets: Insets = JBInsets.create(DarculaUIUtil.BW.get(), DarculaUIUtil.BW.get()),
                               private val popupEmptyText: String = StatusText.getDefaultEmptyText())
   : DarculaComboBoxUI(0f, Insets(1, 0, 1, 0), false) {
 
@@ -71,19 +69,11 @@ internal class FlatComboBoxUI(private val border: Insets = Insets(1, 1, 1, 1),
 
   override fun getBorderInsets(c: Component?) = outerInsets
 
-  override fun createPopup(): ComboPopup {
-    return MyComboBoxPopup(comboBox) { list ->
-      (list as ComponentWithEmptyText).emptyText.text = popupEmptyText
-    }
-  }
+  override fun createPopup(): ComboPopup = super.createPopup().apply { configureList(list) }
 
-  private class MyComboBoxPopup<T>(comboBox: JComboBox<T>,
-                                   private val listConfigurer: (JList<T>) -> Unit = {}) : DarculaJBPopupComboPopup<T>(comboBox) {
-
-    override fun configureList(list: JList<T>) {
-      super.configureList(list)
-
-      listConfigurer(list)
+  private fun configureList(list: JList<*>) {
+    (list as? ComponentWithEmptyText)?.let {
+      it.emptyText.text = popupEmptyText
     }
   }
 }
