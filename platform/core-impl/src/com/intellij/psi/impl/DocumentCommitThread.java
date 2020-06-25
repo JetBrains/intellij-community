@@ -129,6 +129,9 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     } else {
       for (PsiFile file : viewProvider.getAllFiles()) {
         FileASTNode oldFileNode = file.getNode();
+        if (oldFileNode == null) {
+          throw new AssertionError("No node for " + file.getClass() + " in " + file.getViewProvider().getClass());
+        }
         ProperTextRange changedPsiRange = ChangedPsiRangeUtil
           .getChangedPsiRange(file, task.document, task.myLastCommittedText, document.getImmutableCharSequence());
         if (changedPsiRange != null) {
