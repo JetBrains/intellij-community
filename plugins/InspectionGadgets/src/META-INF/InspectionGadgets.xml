@@ -1800,7 +1800,7 @@
                      implementationClass="com.siyeh.ig.numeric.IntegerDivisionInFloatingPointContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IntegerMultiplicationImplicitCastToLong" bundle="messages.InspectionGadgetsBundle"
                      key="integer.multiplication.implicit.cast.to.long.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.IntegerMultiplicationImplicitCastToLongInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IntLiteralMayBeLongLiteral" bundle="messages.InspectionGadgetsBundle"
                      key="int.literal.may.be.long.literal.display.name" groupBundle="messages.InspectionsBundle"
