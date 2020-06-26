@@ -97,7 +97,10 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
       VirtualFilePointerManager.getInstance().createDirectoryPointer(VfsUtilCore.pathToUrl(rootPath), true, this, new VirtualFilePointerListener() {
         @Override
         public void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
-          myOrders.add(new Pair<>(myProject, SyncAction.SyncLibrariesInPluginsModule));
+          myModificationTracker.incModificationCount();
+          synchronized (myOrders) {
+            myOrders.add(new Pair<>(myProject, SyncAction.SyncLibrariesInPluginsModule));
+          }
           scheduleRunActions();
         }
       });
