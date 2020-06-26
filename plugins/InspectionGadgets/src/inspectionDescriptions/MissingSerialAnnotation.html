@@ -5,20 +5,24 @@ Reports methods and fields in <b>Serializable</b> and <b>Externalizable</b> clas
 Examples:<br>
 <code><pre>
 class Test implements Serializable {
+  // will be marked as @Serial
   private static final long serialVersionUID = 7874493593505141603L;
 
+  // will be marked as @Serial
   private void writeObject(ObjectOutputStream out) throws IOException {
   }
 }
 </pre></code>
 <code><pre>
 class Test implements Externalizable {
+  // will be marked as @Serial
   protected Object readResolve() throws ObjectStreamException {
     return "SomeObject";
   }
 }
 </pre></code>
 <p>To get more information about all possible cases, read the documentation for <b>java.io.Serial</b>.</p>
+<!-- tooltip end -->
 <p>This inspection only applies to language level is 14 or higher.</p>
 <p><small>New in 2020.3</small></p>
 </body>

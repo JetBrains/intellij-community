@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-import static com.intellij.psi.CommonClassNames.JAVA_IO_SERIAL_ANNOTATION;
+import static com.intellij.psi.CommonClassNames.JAVA_IO_SERIAL;
 import static com.intellij.psi.CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME;
 import static com.intellij.psi.PsiModifier.*;
 
@@ -43,7 +43,7 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
     @Override
     public void visitField(PsiField field) {
       super.visitField(field);
-      if (field.hasAnnotation(JAVA_IO_SERIAL_ANNOTATION) || !isConstant(field)) return;
+      if (field.hasAnnotation(JAVA_IO_SERIAL) || !isConstant(field)) return;
 
       Optional<PsiClass> pClass = getSerializablePsiClass(field);
       if (!pClass.isPresent()) return;
@@ -58,7 +58,7 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
-      if (method.hasAnnotation(JAVA_IO_SERIAL_ANNOTATION)) return;
+      if (method.hasAnnotation(JAVA_IO_SERIAL)) return;
 
       Optional<PsiClass> pClass = getSerializablePsiClass(method);
       if (!pClass.isPresent()) return;
@@ -109,8 +109,6 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
 
   @Override
   protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
-    Object psiElement = infos[0];
-    if (!(psiElement instanceof PsiModifierListOwner)) return null;
-    return new DelegatingFix(new AddAnnotationFix(JAVA_IO_SERIAL_ANNOTATION, (PsiModifierListOwner)psiElement, PsiNameValuePair.EMPTY_ARRAY));
+    return new DelegatingFix(new AddAnnotationFix(JAVA_IO_SERIAL, (PsiModifierListOwner)infos[0], PsiNameValuePair.EMPTY_ARRAY));
   }
 }

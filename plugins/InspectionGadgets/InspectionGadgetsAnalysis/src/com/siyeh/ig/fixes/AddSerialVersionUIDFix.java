@@ -52,7 +52,7 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
     PsiModifierList modifierList = field.getModifierList();
     if (modifierList == null) return;
     PsiAnnotation annotation = AddAnnotationPsiFix
-      .addPhysicalAnnotationIfAbsent(CommonClassNames.JAVA_IO_SERIAL_ANNOTATION, PsiNameValuePair.EMPTY_ARRAY, modifierList);
+      .addPhysicalAnnotationIfAbsent(CommonClassNames.JAVA_IO_SERIAL, PsiNameValuePair.EMPTY_ARRAY, modifierList);
     if (annotation != null) {
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
     }
