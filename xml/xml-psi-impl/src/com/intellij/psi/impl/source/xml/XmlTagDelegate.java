@@ -23,6 +23,7 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.xml.*;
 import com.intellij.util.*;
+import com.intellij.util.IdempotenceChecker.ResultWithLog;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -49,8 +50,8 @@ public abstract class XmlTagDelegate {
 
   private static final Logger LOG = Logger.getInstance(XmlTagDelegate.class);
   @NonNls private static final String XML_NS_PREFIX = "xml";
-  private static final Key<CachedValue<XmlTag[]>> SUBTAGS_WITH_INCLUDES_KEY = Key.create("subtags with includes");
-  private static final Key<CachedValue<XmlTag[]>> SUBTAGS_WITHOUT_INCLUDES_KEY = Key.create("subtags without includes");
+  private static final Key<CachedValue<ResultWithLog<XmlTag[]>>> SUBTAGS_WITH_INCLUDES_KEY = Key.create("subtags with includes");
+  private static final Key<CachedValue<ResultWithLog<XmlTag[]>>> SUBTAGS_WITHOUT_INCLUDES_KEY = Key.create("subtags without includes");
   private static final Comparator<TextRange> RANGE_COMPARATOR = Comparator.comparingInt(TextRange::getStartOffset);
 
   @NotNull
@@ -596,10 +597,10 @@ public abstract class XmlTagDelegate {
   }
 
   XmlTag @NotNull [] getSubTags(boolean processIncludes) {
-    Key<CachedValue<XmlTag[]>> key = processIncludes ? SUBTAGS_WITH_INCLUDES_KEY : SUBTAGS_WITHOUT_INCLUDES_KEY;
-    XmlTag[] cached = CachedValuesManager.getCachedValue(myTag, key, () ->
-      Result.create(calcSubTags(processIncludes), PsiModificationTracker.MODIFICATION_COUNT));
-    return cached.clone();
+    Key<CachedValue<ResultWithLog<XmlTag[]>>> key = processIncludes ? SUBTAGS_WITH_INCLUDES_KEY : SUBTAGS_WITHOUT_INCLUDES_KEY;
+    ResultWithLog<XmlTag[]> cached = CachedValuesManager.getCachedValue(myTag, key, () ->
+      Result.create(IdempotenceChecker.computeWithLogging(() -> calcSubTags(processIncludes)), PsiModificationTracker.MODIFICATION_COUNT));
+    return cached.getResult().clone();
   }
 
   protected XmlTag @NotNull [] calcSubTags(boolean processIncludes) {
