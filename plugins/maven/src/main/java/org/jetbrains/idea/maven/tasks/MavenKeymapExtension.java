@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.icons.AllIcons;
@@ -52,7 +52,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
 
     ActionManager actionManager = ActionManager.getInstance();
     //noinspection TestOnlyProblems
-    for (String eachId : actionManager.getActionIds(getActionPrefix(project, null))) {
+    for (String eachId : actionManager.getActionIdList(getActionPrefix(project, null))) {
       AnAction eachAction = actionManager.getAction(eachId);
 
       if (!(eachAction instanceof MavenGoalAction)) continue;
@@ -154,7 +154,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
   public static void clearActions(Project project) {
     ActionManager manager = ActionManager.getInstance();
     //noinspection TestOnlyProblems
-    for (String each : manager.getActionIds(getActionPrefix(project, null))) {
+    for (String each : manager.getActionIdList(getActionPrefix(project, null))) {
       manager.unregisterAction(each);
     }
   }
@@ -163,7 +163,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
     ActionManager manager = ActionManager.getInstance();
     for (MavenProject eachProject : mavenProjects) {
       //noinspection TestOnlyProblems
-      for (String eachAction : manager.getActionIds(getActionPrefix(project, eachProject))) {
+      for (String eachAction : manager.getActionIdList(getActionPrefix(project, eachProject))) {
         manager.unregisterAction(eachAction);
       }
     }

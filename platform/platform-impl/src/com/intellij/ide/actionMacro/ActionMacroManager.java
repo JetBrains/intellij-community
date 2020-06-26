@@ -423,7 +423,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
   public void registerActions(@NotNull ActionManager actionManager) {
     // unregister Tool actions
-    for (String oldId : actionManager.getActionIds(ActionMacro.MACRO_ACTION_PREFIX)) {
+    for (String oldId : actionManager.getActionIdList(ActionMacro.MACRO_ACTION_PREFIX)) {
       actionManager.unregisterAction(oldId);
     }
 

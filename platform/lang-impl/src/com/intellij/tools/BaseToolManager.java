@@ -95,7 +95,7 @@ public abstract class BaseToolManager<T extends Tool> {
       return;
     }
 
-    for (String oldId : actionManager.getActionIds(getActionIdPrefix())) {
+    for (String oldId : actionManager.getActionIdList(getActionIdPrefix())) {
       actionManager.unregisterAction(oldId);
     }
   }

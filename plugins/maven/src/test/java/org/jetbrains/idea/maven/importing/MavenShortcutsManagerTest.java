@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -14,7 +14,6 @@ import org.jetbrains.idea.maven.tasks.MavenKeymapExtension;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -255,6 +254,6 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
 
   private List<String> getProjectActions() {
     String prefix = MavenKeymapExtension.getActionPrefix(myProject, null);
-    return Arrays.asList(ActionManager.getInstance().getActionIds(prefix));
+    return ActionManager.getInstance().getActionIdList(prefix);
   }
 }

@@ -76,7 +76,7 @@ class QuickListsManager {
 
   private fun unregisterActions() {
     val actionManager = myActionManager
-    for (oldId in actionManager.getActionIds(QuickList.QUICK_LIST_PREFIX)) {
+    for (oldId in actionManager.getActionIdList(QuickList.QUICK_LIST_PREFIX)) {
       actionManager.unregisterAction(oldId)
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -77,7 +77,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
 
     ActionManager actionManager = ActionManager.getInstance();
     if (actionManager != null) {
-      for (String eachId : actionManager.getActionIds(getActionPrefix(project, null))) {
+      for (String eachId : actionManager.getActionIdList(getActionPrefix(project, null))) {
         AnAction eachAction = actionManager.getAction(eachId);
 
         if (!(eachAction instanceof MyExternalSystemAction)) continue;
@@ -195,7 +195,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
   static void clearActions(@NotNull ExternalSystemShortcutsManager externalSystemShortcutsManager) {
     ActionManager manager = ActionManager.getInstance();
     if (manager != null) {
-      for (String each : manager.getActionIds(getActionPrefix(externalSystemShortcutsManager, null))) {
+      for (String each : manager.getActionIdList(getActionPrefix(externalSystemShortcutsManager, null))) {
         manager.unregisterAction(each);
       }
     }
@@ -210,7 +210,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       }
 
       for (String externalProjectPath : externalProjectPaths) {
-        for (String eachAction : actionManager.getActionIds(getActionPrefix(project, externalProjectPath))) {
+        for (String eachAction : actionManager.getActionIdList(getActionPrefix(project, externalProjectPath))) {
           AnAction action = actionManager.getAction(eachAction);
           if (!(action instanceof ExternalSystemRunConfigurationAction)) {
             actionManager.unregisterAction(eachAction);
@@ -236,7 +236,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     if (configurationType == null) return;
 
     ActionManager actionManager = ActionManager.getInstance();
-    for (String eachAction : actionManager.getActionIds(getActionPrefix(project, null))) {
+    for (String eachAction : actionManager.getActionIdList(getActionPrefix(project, null))) {
       AnAction action = actionManager.getAction(eachAction);
       if (action instanceof ExternalSystemRunConfigurationAction) {
         actionManager.unregisterAction(eachAction);

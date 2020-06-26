@@ -368,8 +368,8 @@ public final class ActionsTreeUtil {
 
   private static Group createMacrosGroup(Condition<? super AnAction> filtered) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    String[] ids = actionManager.getActionIds(ActionMacro.MACRO_ACTION_PREFIX);
-    Arrays.sort(ids);
+    List<String> ids = actionManager.getActionIdList(ActionMacro.MACRO_ACTION_PREFIX);
+    ids.sort(null);
     Group group = new Group(KeyMapBundle.message("macros.group.title"), null, null);
     for (String id : ids) {
       if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) {
@@ -412,10 +412,9 @@ public final class ActionsTreeUtil {
     }
 
     // add all registered actions
-    final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
-    String[] registeredActionIds = actionManager.getActionIds("");
-    for (String id : registeredActionIds) {
-      final AnAction actionOrStub = actionManager.getActionOrStub(id);
+    KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
+    for (String id : actionManager.getActionIdList("")) {
+      AnAction actionOrStub = actionManager.getActionOrStub(id);
       if (actionOrStub instanceof ActionGroup && !((ActionGroup)actionOrStub).canBePerformed(DataManager.getInstance().getDataContext())) {
         continue;
       }

@@ -197,7 +197,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     ActionManager manager = ActionManager.getInstance();
 
     List<String> failures = new SmartList<>();
-    for (String id : manager.getActionIds("")) {
+    for (String id : manager.getActionIdList("")) {
       if (ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
         continue;
       }

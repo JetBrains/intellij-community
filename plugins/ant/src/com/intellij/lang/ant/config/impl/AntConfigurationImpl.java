@@ -673,8 +673,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     synchronized (this) {
       // unregister Ant actions
       ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-      final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(project));
-      for (String oldId : oldIds) {
+      for (String oldId : actionManager.getActionIdList(AntConfiguration.getActionIdPrefix(project))) {
         actionManager.unregisterAction(oldId);
       }
       final Set<String> registeredIds = new HashSet<>();

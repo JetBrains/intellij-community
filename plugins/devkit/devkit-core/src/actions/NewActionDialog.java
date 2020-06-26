@@ -36,7 +36,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -82,8 +81,8 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     init();
     setTitle(DevKitBundle.message("new.action.dialog.title"));
     ActionManager actionManager = ActionManager.getInstance();
-    String[] actionIds = actionManager.getActionIds("");
-    Arrays.sort(actionIds);
+    List<String> actionIds = actionManager.getActionIdList("");
+    actionIds.sort(null);
     List<ActionGroup> actionGroups = new ArrayList<>();
     for(String actionId: actionIds) {
       if (actionManager.isGroup(actionId)) {
