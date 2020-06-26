@@ -1531,14 +1531,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   public void preloadActions(@NotNull ProgressIndicator indicator) {
-    Application application = ApplicationManager.getApplication();
-
-    for (String id : getActionIds()) {
+    List<String> ids;
+    synchronized (myLock) {
+      ids = new ArrayList<>(myId2Action.keySet());
+    }
+    for (String id : ids) {
       indicator.checkCanceled();
-      if (application.isDisposed()) {
-        return;
-      }
-
       getActionImpl(id, false);
       // don't preload ActionGroup.getChildren() because that would un-stub child actions
       // and make it impossible to replace the corresponding actions later
