@@ -326,8 +326,8 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class GroupByDirectoryAction(private val tree: FilteringBranchesTree) : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY,
-                                                                                               AllIcons.Actions.GroupByPackage) {
+  class GroupBranchByDirectoryAction(private val tree: FilteringBranchesTree) : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY,
+                                                                                                     AllIcons.Actions.GroupByPackage) {
     override fun setSelected(key: GroupingKey, state: Boolean) {
       tree.toggleDirectoryGrouping(state)
     }

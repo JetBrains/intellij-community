@@ -51,7 +51,7 @@ import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
-import git4idea.ui.branch.dashboard.BranchesDashboardActions.GroupByDirectoryAction
+import git4idea.ui.branch.dashboard.BranchesDashboardActions.GroupBranchByDirectoryAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.NewBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
@@ -141,7 +141,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
     createFocusFilterFieldAction(branchesSearchField)
 
-    val groupByDirectoryAction = GroupByDirectoryAction(tree)
+    val groupByDirectoryAction = GroupBranchByDirectoryAction(tree)
     val toggleFavoriteAction = ToggleFavoriteAction()
     val fetchAction = FetchAction(this)
     val showMyBranchesAction = ShowMyBranchesAction(uiController)
