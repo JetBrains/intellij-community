@@ -378,8 +378,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       throw new AssertionError("Must be called on write thread without write action");
     }
 
-    while ((myState.get() != State.SMART ||
-            myState.get() != State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS)
+    while (!(myState.get() == State.SMART ||
+             myState.get() == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS)
            && !myProject.isDisposed()) {
       LockSupport.parkNanos(50_000_000);
       // polls next dumb mode task
