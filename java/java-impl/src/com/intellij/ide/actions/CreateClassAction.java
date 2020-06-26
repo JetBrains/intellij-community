@@ -20,8 +20,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-
 /**
  * The standard "New Class" action.
  */
@@ -110,10 +108,5 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   @Override
   protected PsiElement getNavigationElement(@NotNull PsiClass createdElement) {
     return createdElement.getLBrace();
-  }
-
-  @Override
-  protected void postProcess(PsiClass createdElement, String templateName, Map<String, String> customProperties) {
-    super.postProcess(createdElement, templateName, customProperties);
   }
 }
