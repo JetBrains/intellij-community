@@ -43,7 +43,8 @@ import java.util.List;
 import java.util.*;
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
-public final class UndoManagerImpl extends UndoManager {
+@ApiStatus.NonExtendable
+public class UndoManagerImpl extends UndoManager {
   private static final Logger LOG = Logger.getInstance(UndoManagerImpl.class);
 
   @TestOnly
