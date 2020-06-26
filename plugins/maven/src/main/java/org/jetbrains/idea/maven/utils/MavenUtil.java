@@ -25,7 +25,6 @@ import com.intellij.openapi.externalSystem.service.execution.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,7 +32,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -1294,32 +1292,16 @@ public class MavenUtil {
     return new Path(path);
   }
 
-  public static @NotNull Sdk getJdk(@Nullable Project project, @NotNull String name) throws ExternalSystemJdkException {
-    if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA) || (project != null && project.isDefault())) {
+  public static @NotNull Sdk getJdk(@NotNull Project project, @NotNull String name) throws ExternalSystemJdkException {
+    if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA) || project.isDefault()) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
 
     if (name.equals(MavenRunnerSettings.USE_PROJECT_JDK)) {
-      if (project != null) {
         Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
         if (res != null) {
           return res;
         }
-        Module[] modules = ModuleManager.getInstance(project).getModules();
-        for (Module module : modules) {
-          Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-          if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-            return sdk;
-          }
-        }
-      }
-
-      if (project == null) {
-        Sdk recent = ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance());
-        if (recent != null) return recent;
-        return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-      }
-
       throw new ProjectJdkNotFoundException();
     }
 
