@@ -647,6 +647,7 @@ public class MessageBusImpl implements MessageBus {
     for (MessageHandlerHolder holder : mySubscribers) {
       holder.disconnectIfNeeded(predicate);
     }
+    subscriberCache.clear();
   }
 
   static final class RootBus extends CompositeMessageBus {
