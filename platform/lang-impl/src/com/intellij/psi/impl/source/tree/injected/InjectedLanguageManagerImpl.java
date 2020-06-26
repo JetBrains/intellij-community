@@ -37,7 +37,6 @@ import java.util.*;
 @SuppressWarnings("deprecation")
 public final class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(InjectedLanguageManagerImpl.class);
-  @SuppressWarnings("RedundantStringConstructorCall")
   static final Object ourInjectionPsiLock = new String("injectionPsiLock");
   private final Project myProject;
   private final DumbService myDumbService;
@@ -69,6 +68,13 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   @Override
   public void dispose() {
     disposeInvalidEditors();
+  }
+
+  public static void clearInvalidInjections(@NotNull PsiFile hostFile) {
+    List<DocumentWindow> invalid = ContainerUtil.findAll(InjectedLanguageUtil.getCachedInjectedDocuments(hostFile), doc -> !doc.isValid());
+    for (DocumentWindow window : invalid) {
+      InjectedLanguageUtil.clearCaches(hostFile.getProject(), window);
+    }
   }
 
   public static void disposeInvalidEditors() {

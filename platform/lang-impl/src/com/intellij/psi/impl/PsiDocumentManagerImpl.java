@@ -121,10 +121,15 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
                                               @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
                                               boolean synchronously,
                                               boolean forceNoPsiCommit) {
+    boolean success = super.finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, synchronously, forceNoPsiCommit);
+    PsiFile file = getCachedPsiFile(document);
+    if (file != null) {
+      InjectedLanguageManagerImpl.clearInvalidInjections(file);
+    }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) { // can be false for non-physical PSI
       InjectedLanguageManagerImpl.disposeInvalidEditors();
     }
-    return super.finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, synchronously, forceNoPsiCommit);
+    return success;
   }
 
   @Override

@@ -121,7 +121,7 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
     EditorWindowImpl impl = (EditorWindowImpl)editorWindow;
     impl.dispose();
 
-    InjectedLanguageUtil.clearCaches(impl.myInjectedFile, impl.getDocument());
+    InjectedLanguageUtil.clearCaches(impl.myInjectedFile.getProject(), impl.getDocument());
   }
 
   static void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
