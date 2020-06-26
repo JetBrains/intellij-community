@@ -46,7 +46,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");
   private boolean myOverflow;
 
-  @Nullable private CompletionLocation myLocation;
+  @Nullable private volatile CompletionLocation myLocation;
   protected final CompletionProcessEx myProcess;
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
   private final Key<CompletionSorterImpl> mySorterKey = Key.create("SORTER_KEY");
@@ -54,6 +54,9 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   private int myPrefixChanges;
 
   private String myLastLookupPrefix;
+
+  private final CompletionPreselectSkipper[] mySkippers = CompletionPreselectSkipper.EP_NAME.getExtensions();
+  private final Set<LookupElement> mySkippedItems = Collections.newSetFromMap(new IdentityHashMap<>());
 
   public BaseCompletionLookupArranger(CompletionProcessEx process) {
     myProcess = process;
@@ -165,6 +168,10 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     }
     ProcessingContext context = createContext();
     classifier.addElement(element, context);
+
+    if (shouldSkip(element)) {
+      mySkippedItems.add(element);
+    }
 
     if (isInBatchUpdate) {
       batchItems.add(new Pair<>(element, presentation));
@@ -526,10 +533,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
   @Nullable
   private LookupElement findMostRelevantItem(Iterable<? extends LookupElement> sorted) {
-    final CompletionPreselectSkipper[] skippers = CompletionPreselectSkipper.EP_NAME.getExtensions();
-
     for (LookupElement element : sorted) {
-      if (!shouldSkip(skippers, element)) {
+      if (!mySkippedItems.contains(element)) {
         return element;
       }
     }
@@ -537,12 +542,12 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return null;
   }
 
-  private boolean shouldSkip(CompletionPreselectSkipper[] skippers, LookupElement element) {
+  private boolean shouldSkip(LookupElement element) {
     CompletionLocation location = myLocation;
     if (location == null) {
-      location = new CompletionLocation(Objects.requireNonNull(myProcess.getParameters()));
+      myLocation = location = new CompletionLocation(Objects.requireNonNull(myProcess.getParameters()));
     }
-    for (final CompletionPreselectSkipper skipper : skippers) {
+    for (CompletionPreselectSkipper skipper : mySkippers) {
       if (skipper.skipElement(element, location)) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Skipped element " + element + " by " + skipper);
