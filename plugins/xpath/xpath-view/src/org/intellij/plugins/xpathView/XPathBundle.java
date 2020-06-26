@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class XPathBundle extends DynamicBundle {
+public final class XPathBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.XPathBundle";
   private static final XPathBundle INSTANCE = new XPathBundle();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.swingBuilder;
 
 import com.google.common.collect.ImmutableMap;
@@ -34,7 +34,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
   private static final Object METHOD_KIND = "SwingBuilder_builder_method";
 
-  private static class MyBuilder {
+  private static final class MyBuilder {
     private final PsiManager myManager;
     private final MultiMap<String, PsiMethod> myResult = new MultiMap<>();
     private final GlobalSearchScope myResolveScope;

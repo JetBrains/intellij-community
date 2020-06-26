@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class EditorConfigNavigationActionsFactory {
+public final class EditorConfigNavigationActionsFactory {
   private static final Key<EditorConfigNavigationActionsFactory> NAVIGATION_FACTORY_KEY = Key.create("editor.config.navigation.factory");
 
   private final List<String> myEditorConfigFilePaths = new ArrayList<>();
@@ -89,7 +89,7 @@ public class EditorConfigNavigationActionsFactory {
     }
   }
 
-  private static class NavigationActionGroup extends ActionGroup {
+  private static final class NavigationActionGroup extends ActionGroup {
     private final AnAction[] myChildActions;
 
     private NavigationActionGroup(AnAction[] actions) {

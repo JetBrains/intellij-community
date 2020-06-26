@@ -131,7 +131,7 @@ public abstract class ModuleInsight {
     addModules(contentRootToModules.values());
   }
 
-  private static class ModuleCandidate {
+  private static final class ModuleCandidate {
     final List<DetectedSourceRoot> myRoots = new ArrayList<>();
     @NotNull File myFolder;
 

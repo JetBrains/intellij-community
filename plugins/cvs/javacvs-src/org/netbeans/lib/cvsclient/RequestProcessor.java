@@ -214,7 +214,7 @@ public final class RequestProcessor implements IRequestProcessor {
     }
   }
 
-  private class TimedOutProcessRequestHelper extends ProcessRequestsHelper {
+  private final class TimedOutProcessRequestHelper extends ProcessRequestsHelper {
     private final Semaphore mySemaphore;
     private Future<?> myFuture;
 

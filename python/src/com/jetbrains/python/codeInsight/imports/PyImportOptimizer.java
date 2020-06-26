@@ -77,7 +77,7 @@ public class PyImportOptimizer implements ImportOptimizer {
     };
   }
 
-  private static class ImportSorter {
+  private static final class ImportSorter {
     private final PyFile myFile;
     private final PyCodeStyleSettings myPySettings;
     private final List<PyImportStatementBase> myImportBlock;

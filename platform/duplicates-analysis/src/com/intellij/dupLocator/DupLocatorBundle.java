@@ -7,7 +7,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class DupLocatorBundle extends DynamicBundle {
+public final class DupLocatorBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.DupLocatorBundle";
 
   private static final DupLocatorBundle INSTANCE = new DupLocatorBundle();

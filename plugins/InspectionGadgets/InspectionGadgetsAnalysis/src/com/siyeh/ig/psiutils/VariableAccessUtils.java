@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class VariableAccessUtils {
+public final class VariableAccessUtils {
 
   private VariableAccessUtils() {}
 
@@ -254,7 +254,7 @@ public class VariableAccessUtils {
     });
     return result;
   }
-  
+
   @Contract("_, null -> false")
   public static boolean variableIsUsed(@NotNull PsiVariable variable,
                                        @Nullable PsiElement context) {

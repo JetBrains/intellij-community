@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInspection.*;
@@ -286,7 +286,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  private static class ReplaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+  private static final class ReplaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     private final String myText;
     private final SmartPsiElementPointer<PsiField> myConst;
 
@@ -393,7 +393,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  private static class StringLiteralSearchQuery {
+  private static final class StringLiteralSearchQuery {
     @NotNull
     private final String stringToFind;
     private final boolean ignorePropertyKeys;

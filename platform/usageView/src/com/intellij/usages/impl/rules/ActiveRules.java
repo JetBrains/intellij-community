@@ -90,7 +90,7 @@ public final class ActiveRules {
     return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }
 
-  private static class FileStructureGroupingRuleExWrapper implements UsageGroupingRuleEx {
+  private static final class FileStructureGroupingRuleExWrapper implements UsageGroupingRuleEx {
     private final UsageGroupingRule myGroupingRule;
 
     private FileStructureGroupingRuleExWrapper(@NotNull UsageGroupingRule rule) {

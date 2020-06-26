@@ -39,7 +39,7 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-public class PyNamedTupleStubImpl implements PyNamedTupleStub {
+public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
   @Nullable
   private final QualifiedName myCalleeName;

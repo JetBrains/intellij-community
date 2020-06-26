@@ -160,7 +160,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     addLine(panel);
   }
 
-  private static class ToggleFragmentAction extends ToggleAction {
+  private static final class ToggleFragmentAction extends ToggleAction {
     private final SettingsEditorFragment<?, ?> myFragment;
 
     private ToggleFragmentAction(SettingsEditorFragment<?, ?> fragment) {

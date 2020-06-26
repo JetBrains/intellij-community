@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.CommonBundle;
@@ -332,7 +332,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     return new Option[]{LAMBDA_OPTION, myOverriddenOption, myImplementedOption, myOverridingOption, myImplementingOption, mySiblingsOption, myServiceOption};
   }
 
-  private static class ArrowUpLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {
+  private static final class ArrowUpLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {
     private ArrowUpLineMarkerInfo(@NotNull PsiElement element, @NotNull Icon icon, @NotNull MarkerType markerType) {
       super(element, element.getTextRange(), icon, markerType.getTooltip(),
             markerType.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);

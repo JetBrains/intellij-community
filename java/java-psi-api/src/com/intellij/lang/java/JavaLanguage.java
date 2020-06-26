@@ -5,7 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.jvm.JvmLanguage;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaLanguage extends Language implements JvmLanguage {
+public final class JavaLanguage extends Language implements JvmLanguage {
 
   @NotNull
   public static final JavaLanguage INSTANCE = new JavaLanguage();

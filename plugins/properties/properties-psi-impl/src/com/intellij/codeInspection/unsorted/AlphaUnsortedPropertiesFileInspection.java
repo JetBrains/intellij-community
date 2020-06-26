@@ -74,7 +74,7 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
     return true;
   }
 
-  private static class PropertiesSorterQuickFix implements LocalQuickFix {
+  private static final class PropertiesSorterQuickFix implements LocalQuickFix {
     private final PropertiesFile[] myFilesToSort;
 
     private PropertiesSorterQuickFix(PropertiesFile... toSort) {

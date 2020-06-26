@@ -126,7 +126,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     return result;
   }
 
-  private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
+  private static final class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
       this(markers, markers.get(0));
     }

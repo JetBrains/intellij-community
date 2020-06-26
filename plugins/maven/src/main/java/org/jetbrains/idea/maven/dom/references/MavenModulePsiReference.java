@@ -93,7 +93,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     return new LocalQuickFix[]{new CreateModuleFix(true, myText, myPsiFile), new CreateModuleFix(false, myText, myPsiFile)};
   }
 
-  private static class CreateModuleFix extends LocalQuickFixOnPsiElement {
+  private static final class CreateModuleFix extends LocalQuickFixOnPsiElement {
 
     private final boolean myWithParent;
     private final String myModulePath;

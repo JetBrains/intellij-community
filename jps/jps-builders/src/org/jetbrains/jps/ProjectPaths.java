@@ -161,7 +161,7 @@ public final class ProjectPaths {
 
   private enum ClasspathPart {WHOLE, BEFORE_JDK, BEFORE_PLUS_JDK, AFTER_JDK}
 
-  private static class BeforeJavaSdkItemFilter implements Condition<JpsDependencyElement> {
+  private static final class BeforeJavaSdkItemFilter implements Condition<JpsDependencyElement> {
     private final JpsModule myModule;
     private boolean mySdkFound;
 
@@ -179,7 +179,7 @@ public final class ProjectPaths {
     }
   }
 
-  private static class AfterJavaSdkItemFilter implements Condition<JpsDependencyElement> {
+  private static final class AfterJavaSdkItemFilter implements Condition<JpsDependencyElement> {
     private final JpsModule myModule;
     private boolean mySdkFound;
 

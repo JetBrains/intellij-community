@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.util;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector;
@@ -28,7 +28,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.Conditions.and;
 
-public abstract class JavaPostfixTemplatesUtils {
+public final class JavaPostfixTemplatesUtils {
   private JavaPostfixTemplatesUtils() {
   }
 

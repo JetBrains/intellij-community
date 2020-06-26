@@ -549,7 +549,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
   }
 
-  private static class NamesByExprInfo {
+  private static final class NamesByExprInfo {
     static final NamesByExprInfo EMPTY = new NamesByExprInfo(null, Collections.emptyList());
 
     private final String propertyName;

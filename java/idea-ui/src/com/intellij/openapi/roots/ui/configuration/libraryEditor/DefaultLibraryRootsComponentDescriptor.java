@@ -94,7 +94,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     return new OrderRootTypePresentation(factory.getNodeText(), factory.getIcon());
   }
 
-  private static class JavadocRootDetector extends RootDetector {
+  private static final class JavadocRootDetector extends RootDetector {
     private JavadocRootDetector() {
       super(JavadocOrderRootType.getInstance(), false, "JavaDocs");
     }
@@ -124,7 +124,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
   }
 
-  private static class NativeLibraryRootFilter extends RootDetector {
+  private static final class NativeLibraryRootFilter extends RootDetector {
     private NativeLibraryRootFilter() {
       super(NativeLibraryOrderRootType.getInstance(), false, "native library location");
     }
@@ -148,7 +148,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
   }
 
-  private static class AttachUrlJavadocDescriptor extends AttachRootButtonDescriptor {
+  private static final class AttachUrlJavadocDescriptor extends AttachRootButtonDescriptor {
     private AttachUrlJavadocDescriptor() {
       super(JavadocOrderRootType.getInstance(), IconUtil.getAddLinkIcon(), ProjectBundle.message("module.libraries.javadoc.url.button"));
     }

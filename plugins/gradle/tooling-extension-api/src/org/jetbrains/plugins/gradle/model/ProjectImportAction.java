@@ -339,7 +339,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  private static class ToolingSerializerAdapter {
+  private static final class ToolingSerializerAdapter {
     private final Object mySerializer;
     private final Method mySerializerWriteMethod;
     private final ClassLoader myModelBuildersClassLoader;

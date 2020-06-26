@@ -793,7 +793,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     }
   }
 
-  private class ProblemHolderImpl implements JavadocHighlightUtil.ProblemHolder {
+  private final class ProblemHolderImpl implements JavadocHighlightUtil.ProblemHolder {
     private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -74,7 +74,7 @@ public class HighlightInfo implements Segment {
 
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
- 
+
   private final String description;
   private final String toolTip;
   @NotNull
@@ -439,7 +439,7 @@ public class HighlightInfo implements Segment {
     return true;
   }
 
-  private static class B implements Builder {
+  private static final class B implements Builder {
     private Boolean myNeedsUpdateOnTyping;
     private TextAttributes forcedTextAttributes;
     private TextAttributesKey forcedTextAttributesKey;
@@ -805,7 +805,7 @@ public class HighlightInfo implements Segment {
     boolean isError() {
       return mySeverity == null || mySeverity.compareTo(HighlightSeverity.ERROR) >= 0;
     }
-    
+
     boolean isInformation() {
       return HighlightSeverity.INFORMATION.equals(mySeverity);
     }

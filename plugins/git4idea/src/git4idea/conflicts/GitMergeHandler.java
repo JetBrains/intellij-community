@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts;
 
 import com.intellij.diff.merge.MergeCallback;
@@ -103,7 +103,7 @@ public class GitMergeHandler {
     return byRoot;
   }
 
-  public static class Resolver {
+  public static final class Resolver {
     @NotNull private final Project myProject;
     @NotNull private final GitConflict myConflict;
     private final boolean myIsReversed;

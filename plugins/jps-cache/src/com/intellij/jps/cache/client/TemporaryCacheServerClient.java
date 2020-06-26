@@ -39,7 +39,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
-public class TemporaryCacheServerClient implements JpsServerClient {
+public final class TemporaryCacheServerClient implements JpsServerClient {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.TemporaryCacheServerClient");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   static final TemporaryCacheServerClient INSTANCE = new TemporaryCacheServerClient();

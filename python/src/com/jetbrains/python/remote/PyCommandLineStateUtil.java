@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 /**
  * @author Alexander Koshevoy
  */
-public class PyCommandLineStateUtil {
+public final class PyCommandLineStateUtil {
   // the environment variable used by BDD to hold set of folder or feature files
   private static final String PY_STUFF_TO_RUN = "PY_STUFF_TO_RUN";
 

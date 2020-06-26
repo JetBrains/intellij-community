@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.*;
@@ -260,7 +260,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
   }
 
-  private static class ActionQuickFixAction implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+  private static final class ActionQuickFixAction implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
     private final VirtualFile myPropertiesFile;
 
     private ActionQuickFixAction(VirtualFile file) {

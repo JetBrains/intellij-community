@@ -302,7 +302,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return new Paths(mainPath, additionalPath);
   }
 
-  private static class Paths {
+  private static final class Paths {
     public final FilePath myMainPath;
     public final FilePath myAdditionalPath;
 
@@ -447,7 +447,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     }
   }
 
-  private static class HistoryConflictSide extends AbstractConflictSide<VcsFileRevision> {
+  private static final class HistoryConflictSide extends AbstractConflictSide<VcsFileRevision> {
     public static final int LIMIT = 10;
     private final VcsAppendableHistoryPartnerAdapter mySessionAdapter;
     private final SvnHistoryProvider myProvider;
@@ -534,7 +534,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     }
   }
 
-  private class Loader extends Task.Backgroundable {
+  private final class Loader extends Task.Backgroundable {
     private BeforeAfter<BeforeAfter<ConflictSidePresentation>> myData;
     private VcsException myException;
 

@@ -367,7 +367,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     }
   }
 
-  private static class ErrorsFoundNotification extends Notification {
+  private static final class ErrorsFoundNotification extends Notification {
 
     private static final String FIX_ACTION = "FIX";
     private static final String TITLE = "";

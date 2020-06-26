@@ -127,7 +127,7 @@ public class PyDocstringTypesInspection extends PyInspection {
   }
 
 
-  private static class ChangeTypeQuickFix implements LocalQuickFix {
+  private static final class ChangeTypeQuickFix implements LocalQuickFix {
     private final String myParamName;
     private final Substring myTypeSubstring;
     private final String myNewType;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.actions.xmlbeans;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class UIUtils {
+public final class UIUtils {
   private UIUtils() {}
 
   public static void configureBrowseButton(final Project myProject,

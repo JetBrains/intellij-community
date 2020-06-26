@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class XmlPsiBundle extends DynamicBundle {
+public final class XmlPsiBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.XmlPsiBundle";
   private static final XmlPsiBundle INSTANCE = new XmlPsiBundle();
 

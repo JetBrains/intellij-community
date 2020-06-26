@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class GenericsHighlightUtil {
+public final class GenericsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(GenericsHighlightUtil.class);
 
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -463,7 +463,7 @@ public class GenericsHighlightUtil {
                                                  defaultMethod.getSignature(PsiSubstitutor.EMPTY))) {
             continue;
           }
-          final String key = aClass instanceof PsiEnumConstantInitializer || aClass.isRecord() ? 
+          final String key = aClass instanceof PsiEnumConstantInitializer || aClass.isRecord() ?
                              "class.must.implement.method" : "class.must.be.abstract";
           final String message = JavaErrorBundle
             .message(key, HighlightUtil.formatClass(aClass, false), JavaHighlightUtil.formatMethod(abstracts.get(0)),
@@ -547,8 +547,8 @@ public class GenericsHighlightUtil {
             !foundMethod.hasModifierProperty(PsiModifier.DEFAULT) &&
             (foundMethodContainingClass = foundMethod.getContainingClass()) != null) {
           final String description =
-            JavaErrorBundle.message("two.methods.are.inherited.with.same.signature", 
-                                    JavaHighlightUtil.formatMethod(foundMethod), HighlightUtil.formatClass(foundMethodContainingClass), 
+            JavaErrorBundle.message("two.methods.are.inherited.with.same.signature",
+                                    JavaHighlightUtil.formatMethod(foundMethod), HighlightUtil.formatClass(foundMethodContainingClass),
                                     JavaHighlightUtil.formatMethod(method), HighlightUtil.formatClass(containingClass));
           final HighlightInfo info = HighlightInfo
             .newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(

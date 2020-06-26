@@ -672,7 +672,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return CacheManager.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
 
-  private static class RequestWithProcessor implements WordRequestInfo {
+  private static final class RequestWithProcessor implements WordRequestInfo {
     @NotNull private final PsiSearchRequest request;
     @NotNull private Processor<? super PsiReference> refProcessor;
 

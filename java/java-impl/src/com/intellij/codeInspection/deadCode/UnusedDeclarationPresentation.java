@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -112,7 +112,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   public RefFilter getFilter() {
     return myFilter;
   }
-  private static class WeakUnreferencedFilter extends UnreferencedFilter {
+  private static final class WeakUnreferencedFilter extends UnreferencedFilter {
     private WeakUnreferencedFilter(@NotNull UnusedDeclarationInspectionBase tool, @NotNull GlobalInspectionContextImpl context) {
       super(tool, context);
     }
@@ -335,7 +335,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
   }
 
-  private static class CommentOutFix implements QuickFix {
+  private static final class CommentOutFix implements QuickFix {
     private final RefElement myElement;
 
     private CommentOutFix(RefElement element) {
@@ -556,7 +556,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return null;
   }
 
-  private static class PermanentDeleteFix implements QuickFix {
+  private static final class PermanentDeleteFix implements QuickFix {
     private final RefElement myElement;
 
     private PermanentDeleteFix(@Nullable RefElement element) {

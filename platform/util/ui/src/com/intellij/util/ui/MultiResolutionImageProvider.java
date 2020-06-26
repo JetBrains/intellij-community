@@ -28,7 +28,7 @@ public final class MultiResolutionImageProvider {
   /**
    * An accessor to the {@code MultiResolutionImage}'s resolution variants methods.
    */
-  public static class Accessor {
+  public static final class Accessor {
     private static final Class<?> MRI_CLASS;
     private static final MethodInvocator GET_RESOLUTION_VARIANTS_METHOD;
     private static final MethodInvocator GET_RESOLUTION_VARIANT_METHOD;

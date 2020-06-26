@@ -325,7 +325,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     return rootComponent;
   }
 
-  private class CellRenderer implements ListCellRenderer<JCheckBox> {
+  private final class CellRenderer implements ListCellRenderer<JCheckBox> {
     private final Border mySelectedBorder;
     private final Border myBorder;
     private final Insets myBorderInsets;

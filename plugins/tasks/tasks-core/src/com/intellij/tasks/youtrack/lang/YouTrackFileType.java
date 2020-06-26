@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.youtrack.lang;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -10,7 +11,7 @@ import javax.swing.*;
 /**
  * @author Mikhail Golubev
  */
-public class YouTrackFileType extends LanguageFileType {
+public final class YouTrackFileType extends LanguageFileType {
   public static final YouTrackFileType INSTANCE = new YouTrackFileType();
   public static final String DEFAULT_EXTENSION = "youtrack";
 

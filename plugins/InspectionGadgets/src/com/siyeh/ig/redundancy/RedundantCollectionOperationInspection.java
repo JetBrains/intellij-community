@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -104,7 +104,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     default boolean canPreview() {
       return true;
     }
-    
+
     @NotNull
     default String getReplacement() {
       throw new UnsupportedOperationException("Either getFixName or getReplacement must be defined in subclass: " + getClass());
@@ -240,7 +240,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     }
   }
 
-  private static class AsListToArrayHandler implements RedundantCollectionOperationHandler {
+  private static final class AsListToArrayHandler implements RedundantCollectionOperationHandler {
     private final String myReplacementMethod;
     @NotNull private final SmartPsiElementPointer<PsiExpression> myArrayPtr;
     private final SmartPsiElementPointer<PsiExpression> myFromPtr;
@@ -416,7 +416,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     }
   }
 
-  private static class MapKeySetContainsHandler implements RedundantCollectionOperationHandler {
+  private static final class MapKeySetContainsHandler implements RedundantCollectionOperationHandler {
     private final String myReplacementMethod;
 
     private MapKeySetContainsHandler(String method) {
@@ -604,7 +604,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     static RedundantEmptyIteratorHandler handler(PsiMethodCallExpression call) {
       if (!PsiUtil.isLanguageLevel7OrHigher(call)) return null;
       PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
-      if (!EMPTY_COLLECTION.matches(qualifier) && !ConstructionUtils.isEmptyCollectionInitializer(qualifier)) return null; 
+      if (!EMPTY_COLLECTION.matches(qualifier) && !ConstructionUtils.isEmptyCollectionInitializer(qualifier)) return null;
       return new RedundantEmptyIteratorHandler();
     }
   }

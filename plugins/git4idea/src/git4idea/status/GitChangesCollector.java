@@ -33,7 +33,7 @@ import java.util.*;
  *
  * @author Kirill Likhodedov
  */
-class GitChangesCollector {
+final class GitChangesCollector {
   private static final Logger LOG = Logger.getInstance(GitChangesCollector.class);
 
   @NotNull private final Project myProject;

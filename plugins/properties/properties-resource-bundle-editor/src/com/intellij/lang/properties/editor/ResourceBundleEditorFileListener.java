@@ -236,7 +236,7 @@ class ResourceBundleEditorFileListener implements VirtualFileListener {
     CONTENT_CHANGED, PROPERTY_CHANGED
   }
 
-  private static class EventWithType {
+  private static final class EventWithType {
     @NotNull
     private final EventType myType;
     @NotNull

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class VcsLogBundle extends DynamicBundle {
+public final class VcsLogBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.VcsLogBundle";
   private static final VcsLogBundle INSTANCE = new VcsLogBundle();
 

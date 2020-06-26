@@ -107,7 +107,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
   }
 
   private static class ReplaceWithObjectsNonNullFix extends InspectionGadgetsFix {
-    private static class Replacer {
+    private static final class Replacer {
       private final Consumer<? super String> myReplacer;
       private final PsiExpression myNullComparedExpression;
       private final PsiExpression myMessage;

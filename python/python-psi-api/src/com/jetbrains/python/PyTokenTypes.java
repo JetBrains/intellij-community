@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.psi.TokenType;
@@ -20,7 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.psi.PyElementType;
 
-public class PyTokenTypes {
+public final class PyTokenTypes {
   private PyTokenTypes() {
   }
 
@@ -158,7 +144,7 @@ public class PyTokenTypes {
   public static final TokenSet MULTIPLICATIVE_OPERATIONS = TokenSet.create(MULT, AT, FLOORDIV, DIV, PERC);
   public static final TokenSet STAR_OPERATORS = TokenSet.create(MULT, EXP);
   public static final TokenSet UNARY_OPERATIONS = TokenSet.create(PLUS, MINUS, TILDE);
-  public static final TokenSet BITWISE_OPERATIONS = TokenSet.create(AND, OR, XOR); 
+  public static final TokenSet BITWISE_OPERATIONS = TokenSet.create(AND, OR, XOR);
   public static final TokenSet EQUALITY_OPERATIONS = TokenSet.create(EQEQ, NE, NE_OLD);
   public static final TokenSet RELATIONAL_OPERATIONS = TokenSet.create(LT, GT, LE, GE);
   public static final TokenSet END_OF_STATEMENT = TokenSet.create(STATEMENT_BREAK, SEMICOLON);
@@ -166,7 +152,7 @@ public class PyTokenTypes {
   public static final TokenSet WHITESPACE_OR_LINEBREAK = TokenSet.create(SPACE, TAB, FORMFEED, LINE_BREAK);
   public static final TokenSet OPEN_BRACES = TokenSet.create(LBRACKET, LBRACE, LPAR);
   public static final TokenSet CLOSE_BRACES = TokenSet.create(RBRACKET, RBRACE, RPAR);
-  
+
   public static final TokenSet NUMERIC_LITERALS = TokenSet.create(FLOAT_LITERAL, INTEGER_LITERAL, IMAGINARY_LITERAL);
   public static final TokenSet BOOL_LITERALS = TokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD);
   public static final TokenSet SCALAR_LITERALS = TokenSet.orSet(BOOL_LITERALS, NUMERIC_LITERALS, TokenSet.create(NONE_KEYWORD));

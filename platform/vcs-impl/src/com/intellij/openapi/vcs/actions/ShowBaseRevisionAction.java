@@ -38,7 +38,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
     ProgressManager.getInstance().run(new MyTask(file, vcs, vcsContext));
   }
 
-  private static class MyTask extends Task.Backgroundable {
+  private static final class MyTask extends Task.Backgroundable {
     private final AbstractVcs vcs;
     private final VirtualFile selectedFile;
     private VcsRevisionDescription myDescription;

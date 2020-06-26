@@ -1315,7 +1315,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
-    class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTaskTagAware {
+    final class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTaskTagAware {
 
       private final static String BYTES_ARGS_WARNING = "pydev debugger: bytes arguments were passed to a new process creation function. " +
                                                        "Breakpoints may not work correctly.\n";

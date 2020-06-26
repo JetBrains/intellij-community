@@ -73,7 +73,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-public class HighlightUtil {
+public final class HighlightUtil {
   private static final Logger LOG = Logger.getInstance(HighlightUtil.class);
 
   private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new THashMap<>(7);

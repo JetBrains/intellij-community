@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Methods to operate on Java contracts
  */
-public class JavaMethodContractUtil {
+public final class JavaMethodContractUtil {
   private JavaMethodContractUtil() {}
 
   /**
@@ -173,7 +173,7 @@ public class JavaMethodContractUtil {
   /**
    * Parse contracts for given method. Calling this method is rarely necessary in client code; it exists mainly to
    * aid the inference procedure. Use {@link #getMethodContracts(PsiMethod)} instead.
-   * 
+   *
    * @param method method to parse contracts for
    * @param contractAnno a contract annotation
    * @return a list of parsed contracts

@@ -31,7 +31,7 @@ import java.util.Objects;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 
-public class GitRebaseUtils {
+public final class GitRebaseUtils {
   private final static Logger LOG = Logger.getInstance(GitRebaseUtils.class.getName());
 
   private GitRebaseUtils() {

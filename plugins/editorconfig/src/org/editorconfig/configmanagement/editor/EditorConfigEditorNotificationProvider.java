@@ -46,7 +46,7 @@ public class EditorConfigEditorNotificationProvider extends EditorNotifications.
     return null;
   }
 
-  private class MyPanel extends EditorNotificationPanel {
+  private final class MyPanel extends EditorNotificationPanel {
     private MyPanel() {
       setText(EditorConfigBundle.message("editor.notification.disabled"));
 

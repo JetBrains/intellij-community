@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -32,7 +32,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * Represents a kind of nullability problem
  * @param <T> a type of anchor element which could be associated with given nullability problem kind
  */
-public class NullabilityProblemKind<T extends PsiElement> {
+public final class NullabilityProblemKind<T extends PsiElement> {
   private static final String NPE = JAVA_LANG_NULL_POINTER_EXCEPTION;
   private static final String RE = JAVA_LANG_RUNTIME_EXCEPTION;
 
@@ -48,7 +48,7 @@ public class NullabilityProblemKind<T extends PsiElement> {
     myNormalMessage = null;
   }
 
-  private NullabilityProblemKind(@Nullable String exception, @NotNull String name, 
+  private NullabilityProblemKind(@Nullable String exception, @NotNull String name,
                                  @NotNull @PropertyKey(resourceBundle = BUNDLE) String message) {
     this(exception, name, message, message);
   }
@@ -81,7 +81,7 @@ public class NullabilityProblemKind<T extends PsiElement> {
     new NullabilityProblemKind<>(null, "assigningToNonAnnotatedField", "dataflow.message.assigning.null.notannotated",
                                  "dataflow.message.assigning.nullable.notannotated");
   public static final NullabilityProblemKind<PsiExpression> storingToNotNullArray =
-    new NullabilityProblemKind<>(null, "storingToNotNullArray", "dataflow.message.storing.array.null", 
+    new NullabilityProblemKind<>(null, "storingToNotNullArray", "dataflow.message.storing.array.null",
                                  "dataflow.message.storing.array.nullable");
   public static final NullabilityProblemKind<PsiExpression> nullableReturn = new NullabilityProblemKind<>(null, "nullableReturn");
   public static final NullabilityProblemKind<PsiExpression> nullableFunctionReturn =
@@ -93,17 +93,17 @@ public class NullabilityProblemKind<T extends PsiElement> {
   public static final NullabilityProblemKind<PsiMethodReferenceExpression> passingToNotNullMethodRefParameter =
     new NullabilityProblemKind<>(RE, "passingToNotNullMethodRefParameter", "dataflow.message.passing.nullable.argument.methodref");
   public static final NullabilityProblemKind<PsiExpression> passingToNonAnnotatedParameter =
-    new NullabilityProblemKind<>(null, "passingToNonAnnotatedParameter", "dataflow.message.passing.null.argument.nonannotated", 
+    new NullabilityProblemKind<>(null, "passingToNonAnnotatedParameter", "dataflow.message.passing.null.argument.nonannotated",
                                  "dataflow.message.passing.nullable.argument.nonannotated");
   public static final NullabilityProblemKind<PsiMethodReferenceExpression> passingToNonAnnotatedMethodRefParameter =
-    new NullabilityProblemKind<>(null, "passingToNonAnnotatedMethodRefParameter", 
+    new NullabilityProblemKind<>(null, "passingToNonAnnotatedMethodRefParameter",
                                  "dataflow.message.passing.nullable.argument.methodref.nonannotated");
   // assumeNotNull problem is not reported, just used to force the argument to be not null
   public static final NullabilityProblemKind<PsiExpression> assumeNotNull = new NullabilityProblemKind<>(RE, "assumeNotNull");
   /**
    * noProblem is not reported and used to override another problem
-   * @see ControlFlowAnalyzer#addCustomNullabilityProblem(PsiExpression, NullabilityProblemKind) 
-   * @see CFGBuilder#pushExpression(PsiExpression, NullabilityProblemKind) 
+   * @see ControlFlowAnalyzer#addCustomNullabilityProblem(PsiExpression, NullabilityProblemKind)
+   * @see CFGBuilder#pushExpression(PsiExpression, NullabilityProblemKind)
    */
   public static final NullabilityProblemKind<PsiExpression> noProblem = new NullabilityProblemKind<>(null, "noProblem");
 
@@ -354,7 +354,7 @@ public class NullabilityProblemKind<T extends PsiElement> {
   /**
    * Looks for top expression with the same nullability as given expression. That is: skips casts or conditionals, which don't unbox;
    * goes up from switch expression breaks or expression-branches.
-   * 
+   *
    * @param expression expression to find the top expression for
    * @return the top expression
    */
@@ -409,7 +409,7 @@ public class NullabilityProblemKind<T extends PsiElement> {
         continue;
       }
       if (innerClassNPE == kind || callNPE == kind || arrayAccessNPE == kind || fieldAccessNPE == kind) {
-        // Qualifier-problems are reported on top-expression level for now as it's rare case to have 
+        // Qualifier-problems are reported on top-expression level for now as it's rare case to have
         // something complex in qualifier and we highlight not the qualifier itself, but something else (e.g. called method name)
         unchanged.add(problem.withExpression(findTopExpression(expression)));
         continue;
@@ -502,13 +502,13 @@ public class NullabilityProblemKind<T extends PsiElement> {
     }
 
     /**
-     * @return a minimal nullable expression which causes the problem  
+     * @return a minimal nullable expression which causes the problem
      */
     @Nullable
     public PsiExpression getDereferencedExpression() {
       return myDereferencedExpression;
     }
-    
+
     @NotNull
     public String getMessage(Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
       if (myKind.myAlwaysNullMessage == null || myKind.myNormalMessage == null) {

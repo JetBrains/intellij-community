@@ -28,7 +28,7 @@ import java.text.Format;
 import java.text.MessageFormat;
 import java.util.*;
 
-public class JavaI18nUtil extends I18nUtil {
+public final class JavaI18nUtil extends I18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER =
     (project, propertiesFiles, key, value, parameters) -> createProperty(project, propertiesFiles, key, value, true);
 

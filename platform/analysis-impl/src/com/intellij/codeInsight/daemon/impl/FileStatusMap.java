@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
@@ -79,7 +79,7 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  private static class FileStatus {
+  private static final class FileStatus {
     private boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
     private boolean wolfPassFinished;
     // if contains the special value "WHOLE_FILE_MARKER" then the corresponding range is (0, document length)

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class GitRepositoryUtil {
+public final class GitRepositoryUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.git.GitRepositoryUtil");
 
   private GitRepositoryUtil() {}
@@ -26,7 +26,7 @@ public class GitRepositoryUtil {
     return Collections.emptyList();
   }
 
-  private static class GitCommitsIterator implements Iterator<String> {
+  private static final class GitCommitsIterator implements Iterator<String> {
     private static final int MAX_FETCH_SIZE = 1000;
     private static final int FETCH_SIZE = 100;
     private final GitRepository myRepository;

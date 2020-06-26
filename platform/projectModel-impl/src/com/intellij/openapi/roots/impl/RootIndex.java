@@ -357,7 +357,7 @@ class RootIndex {
       }
     }
 
-    private static class Node {
+    private static final class Node {
       private final Module myKey;
       private final List<Edge> myEdges = new ArrayList<>();
       private Set<String> myUnloadedDependentModules;

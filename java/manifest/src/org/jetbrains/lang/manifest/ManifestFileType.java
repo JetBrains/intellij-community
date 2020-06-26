@@ -35,7 +35,7 @@ import javax.swing.*;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class ManifestFileType extends LanguageFileType {
+public final class ManifestFileType extends LanguageFileType {
   public static final ManifestFileType INSTANCE = new ManifestFileType();
 
   private ManifestFileType() {

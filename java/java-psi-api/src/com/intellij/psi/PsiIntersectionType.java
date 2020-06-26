@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.NullUtils;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  *
  * @author ven
  */
-public class PsiIntersectionType extends PsiType.Stub {
+public final class PsiIntersectionType extends PsiType.Stub {
   private final PsiType[] myConjuncts;
 
   private PsiIntersectionType(PsiType @NotNull [] conjuncts) {

@@ -216,7 +216,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
     }
   }
 
-  private static class DynamicLabel extends JLabel {
+  private static final class DynamicLabel extends JLabel {
     private final Supplier<String> myText;
 
     private DynamicLabel(@NotNull Supplier<String> text) {myText = text;}

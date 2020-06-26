@@ -30,7 +30,7 @@ import java.util.regex.PatternSyntaxException;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.*;
 
-public class VcsRootScanner implements AsyncVfsEventsListener {
+public final class VcsRootScanner implements AsyncVfsEventsListener {
   private static final Logger LOG = Logger.getInstance(VcsRootScanner.class);
 
   @NotNull private final VcsRootProblemNotifier myRootProblemNotifier;

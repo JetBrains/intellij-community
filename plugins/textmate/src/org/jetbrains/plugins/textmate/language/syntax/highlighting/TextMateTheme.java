@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class TextMateTheme {
+public final class TextMateTheme {
   public static final TextMateTheme INSTANCE = new TextMateTheme("IntelliJ");
 
   private static final TextMateDefaultColorsProvider DEFAULT_COLORS_PROVIDER = new TextMateDefaultColorsProvider();

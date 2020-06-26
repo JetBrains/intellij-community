@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class InspectionUtil {
+public final class InspectionUtil {
     static final Pattern SUPPRESSION_PATTERN = Pattern.compile("[ \t]*(?:noinspection|suppress)[ \t]+(\\w+(,[ \t]*\\w+)*)[ \t]*");
 
     @NonNls
@@ -75,7 +75,7 @@ public class InspectionUtil {
             if (prevSibling.getTextLength() > 0 && !"\n".equals(prevSibling.getText())) {
                 return isSuppressedAt(prevSibling.getLastChild(), tool);
             } else {
-                return isSuppressedAt(prevSibling, tool);                
+                return isSuppressedAt(prevSibling, tool);
             }
         }
         if (prevSibling instanceof XmlComment) {

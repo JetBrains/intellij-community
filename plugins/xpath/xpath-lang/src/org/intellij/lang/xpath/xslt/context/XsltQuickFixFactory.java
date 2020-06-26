@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class XsltQuickFixFactory implements XPathQuickFixFactory {
+public final class XsltQuickFixFactory implements XPathQuickFixFactory {
     public static final XsltQuickFixFactory INSTANCE = new XsltQuickFixFactory();
 
     private XsltQuickFixFactory() {

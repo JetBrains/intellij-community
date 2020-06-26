@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.upgrade;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -79,7 +79,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     }
   }
 
-  private static class UpgradeLineCommandListener extends LineCommandAdapter {
+  private static final class UpgradeLineCommandListener extends LineCommandAdapter {
 
     @NotNull private final FileStatusResultParser parser;
     @NotNull private final AtomicReference<VcsException> exception;

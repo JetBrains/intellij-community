@@ -455,7 +455,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     return "reference.settings.injection.language.injection.settings";
   }
 
-  private class InjectionsTable extends TableView<InjInfo> {
+  private final class InjectionsTable extends TableView<InjInfo> {
     private InjectionsTable(final List<InjInfo> injections) {
       super(new ListTableModel<>(createInjectionColumnInfos(), injections, 1));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
@@ -853,7 +853,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     }
   }
 
-  private static class InjInfo {
+  private static final class InjInfo {
     final BaseInjection injection;
     final CfgInfo cfgInfo;
     final boolean bundled;

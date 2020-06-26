@@ -68,7 +68,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     return infos.length == 0 ? new UnnecessaryBoxingFix() : new UnnecessaryBoxingFix((PsiType)infos[0]);
   }
 
-  private static class UnnecessaryBoxingFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryBoxingFix extends InspectionGadgetsFix {
 
     private final String name;
 

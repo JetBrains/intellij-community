@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.internal.diGraph.analyzer.GlobalAnalyzer;
@@ -68,16 +68,16 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         if (!dialog.showAndGet()) {
           return false;
         }
-  
+
         final List<PsiNamedElement> variables = variableRenamer.getElements();
         for (final PsiNamedElement namedElement : variables) {
           final PsiVariable variable = (PsiVariable)namedElement;
           final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(variable);
           myVariablesRenames.put(pointer, variableRenamer.getNewName(variable));
         }
-  
+
         Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> variableRenamer.findUsages(myVariablesUsages, false, false));
-  
+
         if (!ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {
           return false;
@@ -706,7 +706,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     }
   }
 
-  private static class Edge extends EdgeImpl {
+  private static final class Edge extends EdgeImpl {
     private Edge(Node from, Node to) {
       super(from, to);
     }

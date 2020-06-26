@@ -455,7 +455,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     }
   }
 
-  private static class MyTextFieldWithBrowseButton extends TextFieldWithBrowseButton {
+  private static final class MyTextFieldWithBrowseButton extends TextFieldWithBrowseButton {
     @NotNull private final Path myDefaultParentPath;
     private boolean myModifiedByUser = false;
 

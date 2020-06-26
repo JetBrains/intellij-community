@@ -1127,7 +1127,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private static class UncommittedInfo {
+  private static final class UncommittedInfo {
     private final FrozenDocument myFrozen;
     private final ArrayList<DocumentEvent> myEvents = new ArrayList<>();
     private final ConcurrentMap<DocumentWindow, DocumentWindow> myFrozenWindows = new ConcurrentHashMap<>();

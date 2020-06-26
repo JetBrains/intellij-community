@@ -575,7 +575,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return true;
   }
 
-  private static class EmptyClassifier extends Classifier<LookupElement> {
+  private static final class EmptyClassifier extends Classifier<LookupElement> {
 
     private EmptyClassifier() {
       super(null, "empty");

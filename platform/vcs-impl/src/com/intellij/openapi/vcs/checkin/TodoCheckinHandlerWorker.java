@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.diff.comparison.ComparisonManager;
@@ -137,7 +137,7 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  private class MyEditedFileProcessor {
+  private final class MyEditedFileProcessor {
     @NotNull private final Project myProject;
     @NotNull private final String myBeforeContent;
     @NotNull private final String myAfterContent;
@@ -273,7 +273,7 @@ public class TodoCheckinHandlerWorker {
                          (additionalRanges.isEmpty() ? textRange : additionalRanges.get(additionalRanges.size() - 1)).getEndOffset() - 1);
   };
 
-  private static class LeftLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
+  private static final class LeftLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
     private final String myContent;
 
     private LeftLineFragmentConvertor(String content) {myContent = content;}
@@ -287,7 +287,7 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  private static class RightLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
+  private static final class RightLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
     private final String myContent;
 
     private RightLineFragmentConvertor(String content) {myContent = content;}

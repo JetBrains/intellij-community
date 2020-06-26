@@ -315,7 +315,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     };
   }
 
-  private class MergeAction extends AnAction {
+  private final class MergeAction extends AnAction {
     private MergeAction() {
       super(CommonBundle.messagePointer("action.text.merge"), () -> "", AllIcons.Vcs.Merge); // todo
     }
@@ -349,7 +349,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   }
 
-  private class SplitAction extends AnAction {
+  private final class SplitAction extends AnAction {
     private SplitAction() {
       super(CommonBundle.messagePointer("action.text.split"), () -> "", AllIcons.Modules.Split); // todo
     }
@@ -386,7 +386,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     }
   }
 
-  private class RenameAction extends AnAction {
+  private final class RenameAction extends AnAction {
     private RenameAction() {
       super(CommonBundle.messagePointer("action.text.rename"), () -> "", IconUtil.getEditIcon()); // todo
     }
@@ -427,7 +427,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     }
   }
 
-  private class SplitDialog extends DialogWrapper {
+  private final class SplitDialog extends DialogWrapper {
     final JTextField myNameField;
     final ElementsChooser<File> myChooser;
 

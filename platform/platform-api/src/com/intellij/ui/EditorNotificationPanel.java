@@ -266,7 +266,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     };
   }
 
-  private static class ActionHyperlinkLabel extends HyperlinkLabel {
+  private static final class ActionHyperlinkLabel extends HyperlinkLabel {
     private final boolean myShowInIntentionMenu;
     private final ActionHandler myHandler;
 
@@ -294,7 +294,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  private class MyIntentionAction implements IntentionActionWithOptions, Iconable, PriorityAction {
+  private final class MyIntentionAction implements IntentionActionWithOptions, Iconable, PriorityAction {
     private final List<IntentionAction> myOptions = new ArrayList<>();
 
     private MyIntentionAction() {
@@ -368,7 +368,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  private static class MyLinkOption implements IntentionAction {
+  private static final class MyLinkOption implements IntentionAction {
     private final HyperlinkLabel myLabel;
 
     private MyLinkOption(HyperlinkLabel label) {
@@ -409,7 +409,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  private static class MySettingsOption implements IntentionAction, Iconable, LowPriorityAction {
+  private static final class MySettingsOption implements IntentionAction, Iconable, LowPriorityAction {
     private final JLabel myLabel;
 
     private MySettingsOption(JLabel label) {

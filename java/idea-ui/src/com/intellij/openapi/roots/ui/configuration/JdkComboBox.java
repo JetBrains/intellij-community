@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
@@ -379,7 +379,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     }
   }
 
-  private static class InnerJdkComboBoxItem extends JdkComboBoxItem implements InnerComboBoxItem {
+  private static final class InnerJdkComboBoxItem extends JdkComboBoxItem implements InnerComboBoxItem {
     private final SdkListItem myItem;
 
     private InnerJdkComboBoxItem(@NotNull SdkListItem item) {
@@ -406,7 +406,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     }
   }
 
-  private static class ActualJdkInnerItem extends ActualJdkComboBoxItem implements InnerComboBoxItem {
+  private static final class ActualJdkInnerItem extends ActualJdkComboBoxItem implements InnerComboBoxItem {
     private final SdkItem myItem;
 
     private ActualJdkInnerItem(@NotNull SdkItem item) {

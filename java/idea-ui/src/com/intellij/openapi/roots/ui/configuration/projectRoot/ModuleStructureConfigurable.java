@@ -906,7 +906,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return JavaUiBundle.message("empty.module.selection.string");
   }
 
-  private class MyCopyAction extends AnAction implements DumbAware {
+  private final class MyCopyAction extends AnAction implements DumbAware {
     private MyCopyAction() {
       super(CommonBundle.messagePointer("button.copy"), CommonBundle.messagePointer("button.copy"), COPY_ICON);
     }

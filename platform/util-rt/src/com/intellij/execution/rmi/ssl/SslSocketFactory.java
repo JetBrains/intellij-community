@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -145,7 +145,7 @@ public class SslSocketFactory extends SSLSocketFactory {
     return new PrivateKeyReader(filePath).getPrivateKey();
   }
 
-  private static class MyTrustManager implements X509TrustManager {
+  private static final class MyTrustManager implements X509TrustManager {
     private X509TrustManager trustManager;
 
     private MyTrustManager(@NotNull X509Certificate caCertPath) throws Exception {
@@ -197,7 +197,7 @@ public class SslSocketFactory extends SSLSocketFactory {
     }
   }
 
-  private static class MyKeyManager extends X509ExtendedKeyManager {
+  private static final class MyKeyManager extends X509ExtendedKeyManager {
     private final String myAlias = UUID.randomUUID().toString();
     @NotNull private final X509Certificate[] myCertificates;
     @NotNull private final PrivateKey myPrivateKey;

@@ -25,7 +25,7 @@ import org.jetbrains.java.generate.psi.PsiAdapter;
 /**
  * Inserts the method last in the javafile.
  */
-public class InsertLastStrategy implements InsertNewMethodStrategy {
+public final class InsertLastStrategy implements InsertNewMethodStrategy {
 
     private static final InsertLastStrategy instance = new InsertLastStrategy();
 

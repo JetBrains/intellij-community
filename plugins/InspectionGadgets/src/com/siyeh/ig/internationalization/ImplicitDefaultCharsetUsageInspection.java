@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -47,7 +47,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
   }
 
-  private static class CharsetOverload {
+  private static final class CharsetOverload {
     static final CharsetOverload NONE = new CharsetOverload(null, Collections.emptyList());
 
     final PsiMethod myMethod;
@@ -212,7 +212,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
   }
 
-  private static class AddUtf8CharsetFix extends InspectionGadgetsFix {
+  private static final class AddUtf8CharsetFix extends InspectionGadgetsFix {
     /**
      * Refers to the method but it is read-only
      */

@@ -95,7 +95,7 @@ public class PySignature {
   }
 
 
-  public static class NamedParameter {
+  public static final class NamedParameter {
     private final String myName;
     private final List<String> myTypes;
 

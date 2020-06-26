@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.devkit.model.impl;
 
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -58,7 +58,7 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
     }
   }
 
-  private static class JpsPluginModulePropertiesSerializer extends JpsModulePropertiesSerializer<JpsSimpleElement<JpsPluginModuleProperties>> {
+  private static final class JpsPluginModulePropertiesSerializer extends JpsModulePropertiesSerializer<JpsSimpleElement<JpsPluginModuleProperties>> {
     private static final String URL_ATTRIBUTE = "url";
     private static final String MANIFEST_ATTRIBUTE = "manifest";
 

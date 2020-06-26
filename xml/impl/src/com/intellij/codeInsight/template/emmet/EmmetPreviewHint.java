@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -34,7 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.function.Supplier;
 
-public class EmmetPreviewHint extends LightweightHint implements Disposable {
+public final class EmmetPreviewHint extends LightweightHint implements Disposable {
   private static final Key<EmmetPreviewHint> KEY = new Key<>("emmet.preview");
   @NotNull private final Editor myParentEditor;
   @NotNull private final Editor myEditor;

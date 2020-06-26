@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.codeInsight;
 
 import com.intellij.openapi.util.TextRange;
@@ -23,7 +23,7 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
     return CachedValuesManager.getCachedValue(myElement, new ShFunctionCachedValueProvider(myElement));
   }
 
-  private static class ShFunctionCachedValueProvider implements CachedValueProvider<PsiElement> {
+  private static final class ShFunctionCachedValueProvider implements CachedValueProvider<PsiElement> {
     private final PsiElement myElement;
 
     private ShFunctionCachedValueProvider(PsiElement element) {myElement = element;}

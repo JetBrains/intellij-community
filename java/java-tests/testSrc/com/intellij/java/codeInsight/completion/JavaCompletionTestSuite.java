@@ -18,7 +18,7 @@ public class JavaCompletionTestSuite extends TestSuite {
 
   private static final TestIndexingModeSupporter.IndexingModeTestHandler FULL_INDEX_TRANSFORMATION = new FullIndexSuite();
 
-  private static class FullIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
+  private static final class FullIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
     private FullIndexSuite() {
       super("Full index", "Full index: ");
     }
@@ -44,7 +44,7 @@ public class JavaCompletionTestSuite extends TestSuite {
 
   private static final TestIndexingModeSupporter.IndexingModeTestHandler RUNTIME_ONLY_INDEX_TRANSFORMATION = new RuntimeOnlyIndexSuite();
 
-  private static class RuntimeOnlyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
+  private static final class RuntimeOnlyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
 
     private RuntimeOnlyIndexSuite() {
       super("RuntimeOnlyIndex", "Runtime only index: ");
@@ -69,7 +69,7 @@ public class JavaCompletionTestSuite extends TestSuite {
 
   private static final TestIndexingModeSupporter.IndexingModeTestHandler EMPTY_INDEX_TRANSFORMATION = new EmptyIndexSuite();
 
-  private static class EmptyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
+  private static final class EmptyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
 
     private EmptyIndexSuite() {
       super("EmptyIndex", "Empty index: ");

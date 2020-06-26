@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.sdk.impl;
 
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-public class AppEngineSdkUtil {
+public final class AppEngineSdkUtil {
   private static final Logger LOG = Logger.getInstance(AppEngineSdkUtil.class);
   @NonNls public static final String APP_ENGINE_DOWNLOAD_URL = "https://code.google.com/appengine/downloads.html#Google_App_Engine_SDK_for_Java";
   private static final FacetConfigurationQuickFix DOWNLOAD_SDK_QUICK_FIX = new FacetConfigurationQuickFix("Download...") {

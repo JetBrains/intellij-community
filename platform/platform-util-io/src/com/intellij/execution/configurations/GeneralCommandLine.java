@@ -530,7 +530,7 @@ public class GeneralCommandLine implements UserDataHolder {
     myUserData.put(key, value);
   }
 
-  private static class MyTHashMap extends THashMap<String, String> {
+  private static final class MyTHashMap extends THashMap<String, String> {
     private MyTHashMap() {
       super(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.canonicalStrategy());
     }

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.javafx;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -5,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import org.intellij.plugins.markdown.ui.preview.MarkdownAccessor;
 import org.jetbrains.annotations.NotNull;
 
-class ImageRefreshFix {
+final class ImageRefreshFix {
   static {
     MarkdownAccessor.setImageRefreshFixAccessor(new MarkdownAccessor.ImageRefreshFixAccessor() {
       @Override

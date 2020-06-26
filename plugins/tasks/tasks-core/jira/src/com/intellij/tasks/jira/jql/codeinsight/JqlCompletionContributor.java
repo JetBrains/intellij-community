@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.jira.jql.codeinsight;
 
 import com.intellij.codeInsight.completion.*;
@@ -234,7 +235,7 @@ public class JqlCompletionContributor extends CompletionContributor {
            new JqlKeywordCompletionProvider("empty", "null"));
   }
 
-  private static class JqlKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
+  private static final class JqlKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
     private final String[] myKeywords;
 
     private JqlKeywordCompletionProvider(String... keywords) {
@@ -306,7 +307,7 @@ public class JqlCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static class JqlFieldCompletionProvider extends CompletionProvider<CompletionParameters> {
+  private static final class JqlFieldCompletionProvider extends CompletionProvider<CompletionParameters> {
     private final JqlFieldType myFieldType;
 
     private JqlFieldCompletionProvider(JqlFieldType fieldType) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -213,7 +213,7 @@ public class ChainCompletionContext {
     return result;
   }
 
-  private static class ContextProcessor implements PsiScopeProcessor, ElementClassHint {
+  private static final class ContextProcessor implements PsiScopeProcessor, ElementClassHint {
     private final List<PsiNamedElement> myContextElements = new SmartList<>();
     private final PsiVariable myCompletionVariable;
     private final PsiResolveHelper myResolveHelper;

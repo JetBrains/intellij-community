@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -8,14 +8,14 @@ import org.jetbrains.annotations.Nullable;
 public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
-    doTest("class /*Class 'X' with only 'private' constructors should be declared 'final'*/X/**/ {" +
+    doTest("final class /*Class 'X' with only 'private' constructors should be declared 'final'*/X/**/ {" +
            "  private X() {}" +
            "  private X(int i) {}" +
            "}");
   }
 
   public void testExtendingInnerClass() {
-    doTest("class X {\n" +
+    doTest("final class X {\n" +
            "  private X() {}\n" +
            "  class Y {\n" +
            "    class Z extends X{}\n" +
@@ -32,9 +32,9 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaIns
            "  private X() {}" +
            "}");
   }
-  
+
   public void testNoWarnOnAnonymInheritor() {
-    doTest("class X {" +
+    doTest("final class X {" +
            "  private X() {}" +
            "  static {new X() {};} " +
            "}");
@@ -57,7 +57,7 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaIns
 
   public void testSubclassInSameFile() {
     doTest("class Test {" +
-           "    private static class Inner {" +
+           "    private static final class Inner {" +
            "        private Inner() {}" +
            "    }" +
            "    private static class InnerSub extends Inner {}" +

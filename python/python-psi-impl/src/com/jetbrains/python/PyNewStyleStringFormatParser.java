@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 /**
  * @author Mikhail Golubev
  */
-public class PyNewStyleStringFormatParser {
+public final class PyNewStyleStringFormatParser {
   private int myImplicitlyNumberedFieldsCounter = 0;
   private final List<Field> myTopLevelFields = new ArrayList<>();
   private final List<Integer> mySingleRightBraces = new ArrayList<>();
@@ -157,7 +157,7 @@ public class PyNewStyleStringFormatParser {
           if (!recovering) {
             // avoid duplicate offsets in sequences like "]." or "]["
             addIfNotLastItem(attrAndLookupBounds, offset);
-            
+
             // no name in the field, increment implicitly named fields counter
             if (attrAndLookupBounds.size() == 1 && attrAndLookupBounds.get(0) == startOffset + 1) {
               myImplicitlyNumberedFieldsCounter++;
@@ -234,7 +234,7 @@ public class PyNewStyleStringFormatParser {
     return offset;
   }
 
-  public static class Field extends PyStringFormatParser.SubstitutionChunk {
+  public static final class Field extends PyStringFormatParser.SubstitutionChunk {
 
     private final String myNodeText;
     private final int myLeftBraceOffset;

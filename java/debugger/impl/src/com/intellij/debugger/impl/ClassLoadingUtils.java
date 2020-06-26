@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class ClassLoadingUtils {
+public final class ClassLoadingUtils {
   private static final int BATCH_SIZE = 4096;
   private ClassLoadingUtils() {}
 

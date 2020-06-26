@@ -43,7 +43,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public class PsiClassImplUtil {
+public final class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiClassImplUtil.class);
   private static final Key<ParameterizedCachedValue<Map<GlobalSearchScope, MembersMap>, PsiClass>> MAP_IN_CLASS_KEY = Key.create("MAP_KEY");
 
@@ -188,7 +188,7 @@ public class PsiClassImplUtil {
     return value;
   }
 
-  private static class ClassIconRequest {
+  private static final class ClassIconRequest {
     @NotNull private final PsiClass psiClass;
     private final int flags;
     private final Icon symbolIcon;

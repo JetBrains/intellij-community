@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Gregory.Shrago
  */
-public class GenericValueUtil {
+public final class GenericValueUtil {
   private GenericValueUtil() {
   }
 

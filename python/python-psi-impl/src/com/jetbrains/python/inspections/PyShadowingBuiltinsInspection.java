@@ -72,7 +72,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
     return new Visitor(holder, session, ignoredNames);
   }
 
-  private static class PyIgnoreBuiltinQuickFix implements LocalQuickFix, LowPriorityAction {
+  private static final class PyIgnoreBuiltinQuickFix implements LocalQuickFix, LowPriorityAction {
     @NotNull private final String myName;
 
     private PyIgnoreBuiltinQuickFix(@NotNull String name) {

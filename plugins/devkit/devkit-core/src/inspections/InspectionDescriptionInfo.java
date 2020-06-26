@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-public class InspectionDescriptionInfo {
+public final class InspectionDescriptionInfo {
   private static final Logger LOG = Logger.getInstance(InspectionDescriptionInfo.class);
 
   private final String myFilename;

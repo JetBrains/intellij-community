@@ -211,7 +211,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
     return index.isInContent(file);
   }
 
-  private static class ClassAndInheritorCount implements Comparable<ClassAndInheritorCount> {
+  private static final class ClassAndInheritorCount implements Comparable<ClassAndInheritorCount> {
     private final PsiClass psi;
     private final CompilerRef.CompilerClassHierarchyElementDef descriptor;
     private final int number;

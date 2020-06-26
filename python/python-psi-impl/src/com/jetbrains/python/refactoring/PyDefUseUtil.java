@@ -36,7 +36,7 @@ import java.util.*;
 /**
  * @author Dennis.Ushakov
  */
-public class PyDefUseUtil {
+public final class PyDefUseUtil {
   private PyDefUseUtil() {
   }
 

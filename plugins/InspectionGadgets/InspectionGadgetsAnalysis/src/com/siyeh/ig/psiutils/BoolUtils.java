@@ -35,7 +35,7 @@ import java.util.function.Predicate;
 import static com.intellij.codeInspection.util.OptionalUtil.*;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 
-public class BoolUtils {
+public final class BoolUtils {
 
   private BoolUtils() {}
 
@@ -101,7 +101,7 @@ public class BoolUtils {
       CallMatcher.exactInstanceCall(OPTIONAL_DOUBLE, "isEmpty").parameterCount(0)
     );
 
-  private static class PredicatedReplacement {
+  private static final class PredicatedReplacement {
     Predicate<PsiMethodCallExpression> predicate;
     String name;
 
@@ -160,7 +160,7 @@ public class BoolUtils {
         newOp = "&=";
       }
       if (newOp != null) {
-        return tracker.text(((PsiAssignmentExpression)expression).getLExpression()) + 
+        return tracker.text(((PsiAssignmentExpression)expression).getLExpression()) +
                newOp +
                getNegatedExpressionText(((PsiAssignmentExpression)expression).getRExpression());
       }

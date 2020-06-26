@@ -102,7 +102,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
   }
 
 
-  private static class MyPropertyReference extends PropertyReference {
+  private static final class MyPropertyReference extends PropertyReference {
 
     @Nullable
     private final String myBundleName;

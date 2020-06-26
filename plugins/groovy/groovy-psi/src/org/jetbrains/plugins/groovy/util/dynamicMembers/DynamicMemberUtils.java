@@ -103,7 +103,7 @@ public final class DynamicMemberUtils {
     return commentMap.get(commentTagName);
   }
 
-  public static class ClassMemberHolder {
+  public static final class ClassMemberHolder {
     private final String myClassSource;
 
     private final GrTypeDefinition myClass;
@@ -390,7 +390,7 @@ public final class DynamicMemberUtils {
     }
   }
 
-  private static class MyGrDynamicPropertyImpl extends GrDynamicPropertyImpl implements DynamicElement, OriginInfoAwareElement {
+  private static final class MyGrDynamicPropertyImpl extends GrDynamicPropertyImpl implements DynamicElement, OriginInfoAwareElement {
     private final String mySource;
     private final PsiClass myClass;
 

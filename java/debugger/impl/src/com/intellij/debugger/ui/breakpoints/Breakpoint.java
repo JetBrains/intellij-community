@@ -444,7 +444,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return true;
   }
 
-  private static class EvaluatorCache {
+  private static final class EvaluatorCache {
     private final PsiElement myContext;
     private final TextWithImports myTextWithImports;
     private final ExpressionEvaluator myEvaluator;

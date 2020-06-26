@@ -410,7 +410,7 @@ public final class CreateResourceBundleDialogComponent {
     };
   }
 
-  private class MyExistLocalesListModel extends AbstractListModel {
+  private final class MyExistLocalesListModel extends AbstractListModel {
     private final List<Locale> myLocales;
 
     private MyExistLocalesListModel() {

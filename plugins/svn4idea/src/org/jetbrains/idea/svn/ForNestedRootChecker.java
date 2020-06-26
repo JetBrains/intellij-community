@@ -54,7 +54,7 @@ public class ForNestedRootChecker {
     return result;
   }
 
-  private static class VcsFileResolver {
+  private static final class VcsFileResolver {
 
     @NotNull private final SvnVcs myVcs;
     @NotNull private final VirtualFile myFile;

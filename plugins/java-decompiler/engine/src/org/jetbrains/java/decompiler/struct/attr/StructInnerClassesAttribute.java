@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StructInnerClassesAttribute extends StructGeneralAttribute {
-  public static class Entry {
+  public static final class Entry {
     public final int outerNameIdx;
     public final int simpleNameIdx;
     public final int accessFlags;

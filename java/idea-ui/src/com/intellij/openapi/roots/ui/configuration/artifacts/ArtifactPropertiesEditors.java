@@ -109,7 +109,7 @@ public class ArtifactPropertiesEditors {
     return null;
   }
 
-  private class PropertiesEditorInfo {
+  private final class PropertiesEditorInfo {
     private final ArtifactPropertiesEditor myEditor;
     private final ArtifactProperties<?> myProperties;
     private final ArtifactPropertiesProvider myProvider;

@@ -58,7 +58,7 @@ import java.util.concurrent.FutureTask;
 
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
 
-public class GithubCreatePullRequestWorker {
+public final class GithubCreatePullRequestWorker {
   private static final Logger LOG = GithubUtil.LOG;
 
   @NotNull private final Project myProject;
@@ -732,7 +732,7 @@ public class GithubCreatePullRequestWorker {
     }
   }
 
-  public static class DiffInfo {
+  public static final class DiffInfo {
     @NotNull private final CommitCompareInfo myInfo;
     @NotNull private final String myFrom;
     @NotNull private final String myTo;

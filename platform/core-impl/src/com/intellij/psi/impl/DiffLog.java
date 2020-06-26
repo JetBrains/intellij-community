@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -75,7 +75,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     myEntries.add(new InsertEntry(oldParent, newNode, pos));
   }
 
-  private static class ReplaceEntry extends LogEntry {
+  private static final class ReplaceEntry extends LogEntry {
     private final TreeElement myOldChild;
     private final TreeElement myNewChild;
 
@@ -126,7 +126,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     }
   }
 
-  private static class DeleteEntry extends LogEntry {
+  private static final class DeleteEntry extends LogEntry {
     @NotNull private final CompositeElement myOldParent;
     @NotNull private final TreeElement myOldNode;
 
@@ -157,7 +157,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     }
   }
 
-  private static class InsertEntry extends LogEntry {
+  private static final class InsertEntry extends LogEntry {
     @NotNull private final CompositeElement myOldParent;
     @NotNull private final TreeElement myNewNode;
     private final int myPos;
@@ -216,7 +216,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     return psiChild;
   }
 
-  private static class ReplaceFileElement extends LogEntry {
+  private static final class ReplaceFileElement extends LogEntry {
     @NotNull private final FileElement myOldNode;
     @NotNull private final FileElement myNewNode;
 
@@ -240,7 +240,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     }
   }
 
-  private static class ReplaceElementWithEvents extends LogEntry {
+  private static final class ReplaceElementWithEvents extends LogEntry {
     @NotNull private final CompositeElement myOldRoot;
     @NotNull private final CompositeElement myNewRoot;
 

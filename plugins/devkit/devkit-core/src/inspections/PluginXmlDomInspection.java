@@ -1054,7 +1054,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
   }
 
-  private static class AddMissingMainTag implements LocalQuickFix {
+  private static final class AddMissingMainTag implements LocalQuickFix {
 
     @NotNull
     private final String myFamilyName;

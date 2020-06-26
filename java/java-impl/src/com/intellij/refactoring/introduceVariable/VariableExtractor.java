@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -39,7 +39,7 @@ import java.util.Set;
  * Performs actual write action (see {@link #extractVariable()}) which introduces new variable and replaces all occurrences.
  * No user interaction is performed here.
  */
-class VariableExtractor {
+final class VariableExtractor {
   private static final Logger LOG = Logger.getInstance(VariableExtractor.class);
 
   private final @NotNull Project myProject;
@@ -309,7 +309,7 @@ class VariableExtractor {
         }
       }
     }
-    if (firstOccurrence != null && CodeBlockSurrounder.canSurround(firstOccurrence) && 
+    if (firstOccurrence != null && CodeBlockSurrounder.canSurround(firstOccurrence) &&
         !PsiUtil.isAccessedForWriting(firstOccurrence)) {
       PsiExpression ancestorCandidate = ExpressionUtils.getTopLevelExpression(firstOccurrence);
       if (PsiTreeUtil.isAncestor(anchor, ancestorCandidate, false)) {

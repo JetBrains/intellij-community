@@ -156,7 +156,7 @@ final class UsageRepr {
     }
   }
 
-  public static class FieldAssignUsage extends FieldUsage {
+  public static final class FieldAssignUsage extends FieldUsage {
     private FieldAssignUsage(final DependencyContext context, final int n, final int o, final int d) {
       super(context, n, o, d);
     }
@@ -192,7 +192,7 @@ final class UsageRepr {
     }
   }
 
-  public static class MethodUsage extends FMUsage {
+  public static final class MethodUsage extends FMUsage {
     public final TypeRepr.AbstractType[] myArgumentTypes;
     public final TypeRepr.AbstractType myReturnType;
 
@@ -366,7 +366,7 @@ final class UsageRepr {
     }
   }
 
-  public static class ModuleUsage extends Usage {
+  public static final class ModuleUsage extends Usage {
     final int myModuleName;
 
     @Override
@@ -419,7 +419,7 @@ final class UsageRepr {
     }
   }
 
-  public static class ImportStaticOnDemandUsage extends Usage {
+  public static final class ImportStaticOnDemandUsage extends Usage {
     final int myOwner; // owner class
 
     @Override
@@ -589,7 +589,7 @@ final class UsageRepr {
     }
   }
 
-  public static class AnnotationUsage extends Usage {
+  public static final class AnnotationUsage extends Usage {
     public static final DataExternalizer<ElemType> elementTypeExternalizer = new DataExternalizer<ElemType>() {
       @Override
       public void save(@NotNull final DataOutput out, final ElemType value) throws IOException {

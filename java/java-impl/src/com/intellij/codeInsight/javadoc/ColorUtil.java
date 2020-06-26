@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -12,12 +12,12 @@ import java.awt.*;
 /**
  * @author spleaner
  */
-public class ColorUtil {
+public final class ColorUtil {
   private ColorUtil() {
   }
 
   public static String generatePreviewHtml(@NotNull final Color color) {
-    return DocumentationMarkup.SECTION_HEADER_START + "Preview:" + DocumentationMarkup.SECTION_SEPARATOR + "<p>" + 
+    return DocumentationMarkup.SECTION_HEADER_START + "Preview:" + DocumentationMarkup.SECTION_SEPARATOR + "<p>" +
            String.format("<div style=\"padding: 1px; width: 52px; height: 32px; background-color: #555555;\"><div style=\"width: 50px; height: 30px; background-color: #%s;\">&nbsp;</div></div>", com.intellij.ui.ColorUtil.toHex(color)) +
            DocumentationMarkup.SECTION_END;
   }

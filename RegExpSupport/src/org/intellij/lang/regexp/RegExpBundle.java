@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class RegExpBundle extends DynamicBundle {
+public final class RegExpBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.RegExpBundle";
   private static final RegExpBundle INSTANCE = new RegExpBundle();
 

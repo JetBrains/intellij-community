@@ -95,7 +95,7 @@ public class UnusedLabelInspection extends BaseInspection {
     }
   }
 
-  private static class LabelFinder extends JavaRecursiveElementWalkingVisitor {
+  private static final class LabelFinder extends JavaRecursiveElementWalkingVisitor {
 
     private boolean found;
     private final String label;

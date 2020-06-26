@@ -553,7 +553,7 @@ public final class ControlFlowUtils {
     }
   }
 
-  private static class BreakFinder extends GroovyRecursiveElementVisitor {
+  private static final class BreakFinder extends GroovyRecursiveElementVisitor {
     private boolean m_found = false;
     private final GrStatement m_target;
 
@@ -582,7 +582,7 @@ public final class ControlFlowUtils {
     }
   }
 
-  private static class ContinueFinder extends GroovyRecursiveElementVisitor {
+  private static final class ContinueFinder extends GroovyRecursiveElementVisitor {
     private boolean m_found = false;
     private final GrStatement m_target;
 

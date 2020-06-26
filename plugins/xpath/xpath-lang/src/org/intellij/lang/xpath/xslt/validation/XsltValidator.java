@@ -38,7 +38,7 @@ import com.intellij.util.Query;
 
 import java.util.Collection;
 
-public class XsltValidator {
+public final class XsltValidator {
   private XsltValidator() {
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -59,14 +59,14 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
       if (field == null) return null;
 
       PsiMethod compactConstructor = ContainerUtil.find(containingClass.getConstructors(), JavaPsiRecordUtil::isCompactConstructor);
-      PsiParameter parameter = compactConstructor != null 
-                               ? ContainerUtil.find(compactConstructor.getParameterList().getParameters(), p -> name.equals(p.getName())) 
+      PsiParameter parameter = compactConstructor != null
+                               ? ContainerUtil.find(compactConstructor.getParameterList().getParameters(), p -> name.equals(p.getName()))
                                : null;
       return new RecordNavigationInfo(methods.get(0), field, parameter, name);
     });
   }
 
-  private static class RecordNavigationInfo {
+  private static final class RecordNavigationInfo {
     @NotNull final PsiMethod myLightMethod;
     @NotNull final PsiField myLightField;
     @Nullable final PsiParameter myLightCompactConstructorParameter;

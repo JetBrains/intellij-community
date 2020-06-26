@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
  * @author peter
  * @see StandardPatterns#string()
  */
-public class StringPattern extends ObjectPattern<String, StringPattern> {
+public final class StringPattern extends ObjectPattern<String, StringPattern> {
   static final StringPattern STRING_PATTERN = new StringPattern();
 
   private StringPattern() {

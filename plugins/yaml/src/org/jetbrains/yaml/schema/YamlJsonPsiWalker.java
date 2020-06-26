@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -33,7 +33,7 @@ import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class YamlJsonPsiWalker implements JsonLikePsiWalker {
+public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
   public static final YamlJsonPsiWalker INSTANCE = new YamlJsonPsiWalker();
 
   private YamlJsonPsiWalker() {

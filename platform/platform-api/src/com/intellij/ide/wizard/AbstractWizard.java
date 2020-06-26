@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.wizard;
 
 import com.intellij.CommonBundle;
@@ -228,7 +228,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   }
 
-  public static class TallImageComponent extends OpaquePanel {
+  public static final class TallImageComponent extends OpaquePanel {
     private Icon myIcon;
 
     private TallImageComponent(Icon icon) {

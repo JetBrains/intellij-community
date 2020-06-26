@@ -27,7 +27,7 @@ public class PythonSdkEditorAdditionalOptionsProvider extends SdkEditorAdditiona
     return new PythonSdkOptionsAdditionalDataConfigurable(project);
   }
 
-  private static class PythonSdkOptionsAdditionalDataConfigurable implements AdditionalDataConfigurable {
+  private static final class PythonSdkOptionsAdditionalDataConfigurable implements AdditionalDataConfigurable {
     private final Project myProject;
 
     private Sdk mySdk;

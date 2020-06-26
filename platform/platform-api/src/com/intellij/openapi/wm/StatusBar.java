@@ -25,8 +25,8 @@ import java.awt.*;
  */
 public interface StatusBar extends StatusBarInfo, Disposable {
   @SuppressWarnings("AbstractClassNeverImplemented")
-  abstract class Info implements StatusBarInfo {
-    public static final Topic<StatusBarInfo> TOPIC = Topic.create("IdeStatusBar.Text", StatusBarInfo.class);
+  final class Info {
+    public static final Topic<StatusBarInfo> TOPIC = new Topic<>("IdeStatusBar.Text", StatusBarInfo.class);
 
     private Info() {
     }

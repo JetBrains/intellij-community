@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @NonNls
-public class StopWatch {
+public final class StopWatch {
 
   private static final Logger LOG = Logger.getInstance(StopWatch.class);
 

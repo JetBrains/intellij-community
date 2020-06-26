@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class StructureTabComponent extends AbstractTabComponent {
+public final class StructureTabComponent extends AbstractTabComponent {
   private static final Key<StructureTabComponent> KEY = Key.create("STRUCTURE");
 
   private final DefaultActionGroup myToolbarActions;

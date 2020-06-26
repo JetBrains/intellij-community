@@ -290,7 +290,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  private static class MyImplementationExtendClass extends ExtendClassImpl {
+  private static final class MyImplementationExtendClass extends ExtendClassImpl {
     private final String myInterfaceName;
 
     private MyImplementationExtendClass(String interfaceName) {

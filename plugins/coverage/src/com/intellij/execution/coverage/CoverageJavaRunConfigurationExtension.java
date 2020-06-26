@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.*;
@@ -235,7 +235,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     return CoverageEnabledConfiguration.isApplicableTo(configuration);
   }
 
-  private static class MyPackageAccessor extends MyAccessor implements RefactoringListeners.Accessor<PsiPackage> {
+  private static final class MyPackageAccessor extends MyAccessor implements RefactoringListeners.Accessor<PsiPackage> {
 
 
     private MyPackageAccessor(Project project, ClassFilter[] patterns, int idx, String[] filters) {
@@ -259,7 +259,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     }
   }
 
-  private static class MyClassAccessor extends MyAccessor implements RefactoringListeners.Accessor<PsiClass> {
+  private static final class MyClassAccessor extends MyAccessor implements RefactoringListeners.Accessor<PsiClass> {
 
     private MyClassAccessor(Project project, ClassFilter[] patterns, int idx, String[] filters) {
       super(project, patterns, idx, filters);

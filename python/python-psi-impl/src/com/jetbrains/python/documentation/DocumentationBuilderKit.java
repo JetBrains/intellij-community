@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-class DocumentationBuilderKit {
+final class DocumentationBuilderKit {
   static final TagWrapper TagBold = new TagWrapper("b");
   static final TagWrapper TagSmall = new TagWrapper("small");
   static final TagWrapper TagCode = new TagWrapper("code");

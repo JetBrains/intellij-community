@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.integration.ui.views;
 
@@ -410,7 +410,7 @@ public class RevisionsList {
       }
     }
 
-    private static class LabelsAndColor {
+    private static final class LabelsAndColor {
       final boolean isNamed;
       final String title;
       final String filesCount;
@@ -424,7 +424,7 @@ public class RevisionsList {
       }
     }
 
-    private static class MyBorder extends EmptyBorder {
+    private static final class MyBorder extends EmptyBorder {
       private boolean isLast;
 
       private MyBorder(Insets insets) {
@@ -448,7 +448,7 @@ public class RevisionsList {
       }
     }
 
-    private static class MyLabelContainer extends JPanel {
+    private static final class MyLabelContainer extends JPanel {
       private MyLabelContainer() {
         super(new BorderLayout());
       }
@@ -476,7 +476,7 @@ public class RevisionsList {
       }
     }
 
-    private static class MyCopyProvider implements CopyProvider {
+    private static final class MyCopyProvider implements CopyProvider {
       @NotNull private final JBTable myTable;
 
       private MyCopyProvider(@NotNull JBTable table) {

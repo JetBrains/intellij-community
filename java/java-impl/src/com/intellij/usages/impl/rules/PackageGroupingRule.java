@@ -51,7 +51,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     return "UsageGrouping.Package";
   }
 
-  private class PackageGroup implements UsageGroup, TypeSafeDataProvider {
+  private final class PackageGroup implements UsageGroup, TypeSafeDataProvider {
     private final PsiPackage myPackage;
     private Icon myIcon;
 

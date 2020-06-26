@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.execution;
 
 import java.io.*;
@@ -19,7 +19,7 @@ import java.util.jar.Manifest;
  * @noinspection SSBasedInspection, UseOfSystemOutOrSystemErr
  */
 public class CommandLineWrapper {
-  private static class AppData {
+  private static final class AppData {
     private final List<String> properties;
     private final Class<?> mainClass;
     private final String[] args;

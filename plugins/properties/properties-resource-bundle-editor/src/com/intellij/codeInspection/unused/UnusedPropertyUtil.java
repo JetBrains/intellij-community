@@ -40,7 +40,7 @@ public class UnusedPropertyUtil {
                                                 new RemovePropertiesFromAllLocalesFix((Property)properties[0]))} : null;
   }
 
-  private static class RemovePropertiesFromAllLocalesFix implements QuickFix<ResourceBundleEditorProblemDescriptor> {
+  private static final class RemovePropertiesFromAllLocalesFix implements QuickFix<ResourceBundleEditorProblemDescriptor> {
     private final SmartPsiElementPointer<Property> myRepresentativePointer;
 
     private RemovePropertiesFromAllLocalesFix(Property property) {

@@ -887,7 +887,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     });
   }
 
-  private class DataProviderPanel extends JPanel implements DataProvider {
+  private final class DataProviderPanel extends JPanel implements DataProvider {
     private DataProviderPanel(final JPanel panel) {
       super(new BorderLayout());
       add(panel, BorderLayout.CENTER);
@@ -900,7 +900,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     }
   }
 
-  private class MyJPanel extends JPanel implements Scrollable{
+  private final class MyJPanel extends JPanel implements Scrollable{
     private MyJPanel(LayoutManager layout) {
       super(layout);
     }

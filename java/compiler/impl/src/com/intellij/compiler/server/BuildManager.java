@@ -1724,7 +1724,7 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private static class ProjectData {
+  private static final class ProjectData {
     @NotNull
     final ExecutorService taskQueue;
     private final Set<InternedPath> myChanged = new THashSet<>();

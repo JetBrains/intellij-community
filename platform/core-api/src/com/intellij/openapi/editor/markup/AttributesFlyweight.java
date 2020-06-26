@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class AttributesFlyweight {
+public final class AttributesFlyweight {
   private static final ConcurrentMap<FlyweightKey, AttributesFlyweight> entries = new ConcurrentHashMap<>();
   private static final ThreadLocal<FlyweightKey> ourKey = new ThreadLocal<>();
 
@@ -38,7 +38,7 @@ public class AttributesFlyweight {
   private final @NotNull Map<EffectType, Color> myAdditionalEffects;
   private final Color myErrorStripeColor;
 
-  private static class FlyweightKey implements Cloneable {
+  private static final class FlyweightKey implements Cloneable {
     private Color foreground;
     private Color background;
     @JdkConstants.FontStyle

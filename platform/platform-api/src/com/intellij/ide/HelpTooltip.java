@@ -536,7 +536,7 @@ public class HelpTooltip {
     }
   }
 
-  private class Header extends BoundWidthLabel {
+  private final class Header extends BoundWidthLabel {
     private Header(boolean obeyWidth) {
       setFont(deriveHeaderFont(getFont()));
       setForeground(UIUtil.getToolTipForeground());
@@ -563,7 +563,7 @@ public class HelpTooltip {
     }
   }
 
-  private class Paragraph extends BoundWidthLabel {
+  private final class Paragraph extends BoundWidthLabel {
     private Paragraph(String text, boolean hasTitle) {
       setForeground(hasTitle ? INFO_COLOR : UIUtil.getToolTipForeground());
       setFont(deriveDescriptionFont(getFont(), hasTitle));

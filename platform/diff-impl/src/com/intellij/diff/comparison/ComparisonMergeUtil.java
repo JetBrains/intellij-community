@@ -34,7 +34,7 @@ public final class ComparisonMergeUtil {
     return new FairMergeBuilder(trueEquality).execute(fragments1, fragments2);
   }
 
-  private static class FairMergeBuilder {
+  private static final class FairMergeBuilder {
     @NotNull private final ChangeBuilder myChangesBuilder;
 
     private FairMergeBuilder() {
@@ -131,7 +131,7 @@ public final class ComparisonMergeUtil {
     }
   }
 
-  private static class IgnoringChangeBuilder extends ChangeBuilder {
+  private static final class IgnoringChangeBuilder extends ChangeBuilder {
     @NotNull private final SideEquality myTrueEquality;
 
     private IgnoringChangeBuilder(@NotNull SideEquality trueEquality) {

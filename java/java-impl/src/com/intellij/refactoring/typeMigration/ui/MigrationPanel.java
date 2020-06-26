@@ -270,7 +270,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     Disposer.register(content, this);
   }
 
-  private static class MyTree extends Tree implements DataProvider {
+  private static final class MyTree extends Tree implements DataProvider {
     private MyTree() {
       super();
     }

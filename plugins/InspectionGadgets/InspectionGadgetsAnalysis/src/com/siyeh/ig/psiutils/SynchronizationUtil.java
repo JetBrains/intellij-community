@@ -18,7 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 
-public class SynchronizationUtil {
+public final class SynchronizationUtil {
 
   private SynchronizationUtil() {}
 

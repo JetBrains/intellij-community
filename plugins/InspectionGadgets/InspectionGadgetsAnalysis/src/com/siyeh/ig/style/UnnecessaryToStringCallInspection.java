@@ -46,7 +46,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
     return new UnnecessaryToStringCallFix(text);
   }
 
-  private static class UnnecessaryToStringCallFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryToStringCallFix extends InspectionGadgetsFix {
     private final @Nullable String replacementText;
 
     private UnnecessaryToStringCallFix(@Nullable String replacementText) {
@@ -79,7 +79,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
         // Should not happen normally as toString() should always resolve to the innermost class
         // Probably may happen only if SDK is broken (e.g. no java.lang.Object found)
         return;
-      } 
+      }
       new CommentTracker().replaceAndRestoreComments(call, qualifier);
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInsight.Nullability;
@@ -16,9 +16,9 @@ import java.util.Objects;
 /**
  * Commonly used types and factory methods
  */
-public class DfTypes {
+public final class DfTypes {
   private DfTypes() {}
-  
+
   /**
    * A type that contains every possible value supported by the type system
    */
@@ -96,7 +96,7 @@ public class DfTypes {
   };
 
   /**
-   * A special value that represents a contract failure after method return (the control flow should immediately proceed 
+   * A special value that represents a contract failure after method return (the control flow should immediately proceed
    * with exception handling). This value is like a constant but it's type doesn't correspond to any JVM type.
    */
   public static final DfType FAIL = new DfConstantType<Object>(ObjectUtils.sentinel("FAIL")) {
@@ -189,8 +189,8 @@ public class DfTypes {
   public static final DfIntType INT = new DfIntRangeType(LongRangeSet.fromType(PsiType.INT));
 
   /**
-   * Creates a type that represents a subset of int values, clamping values not representable in the JVM int type. 
-   * 
+   * Creates a type that represents a subset of int values, clamping values not representable in the JVM int type.
+   *
    * @param range range of values. Values that cannot be represented in JVM int type are removed from this range upon creation.
    * @return resulting type. Might be {@link #BOTTOM} if range is empty or all its values are out of the int domain.
    */
@@ -219,7 +219,7 @@ public class DfTypes {
 
   /**
    * @param value int value
-   * @return a int constant type that contains a given value 
+   * @return a int constant type that contains a given value
    */
   @NotNull
   public static DfIntConstantType intValue(int value) {
@@ -250,7 +250,7 @@ public class DfTypes {
 
   /**
    * @param value long value
-   * @return a long constant type that contains a given value 
+   * @return a long constant type that contains a given value
    */
   @NotNull
   public static DfLongConstantType longValue(long value) {
@@ -311,7 +311,7 @@ public class DfTypes {
 
   /**
    * @param value float value
-   * @return a float constant type that contains a given value 
+   * @return a float constant type that contains a given value
    */
   public static DfFloatConstantType floatValue(float value) {
     return new DfFloatConstantType(value);
@@ -360,7 +360,7 @@ public class DfTypes {
 
   /**
    * @param value double value
-   * @return a double constant type that contains a given value 
+   * @return a double constant type that contains a given value
    */
   public static DfDoubleConstantType doubleValue(double value) {
     return new DfDoubleConstantType(value);
@@ -374,13 +374,13 @@ public class DfTypes {
   /**
    * A reference type that contains any reference except null
    */
-  public static final DfReferenceType NOT_NULL_OBJECT = 
+  public static final DfReferenceType NOT_NULL_OBJECT =
     customObject(TypeConstraints.TOP, DfaNullability.NOT_NULL, Mutability.UNKNOWN, null, BOTTOM);
 
   /**
    * A reference type that contains any reference or null
    */
-  public static final DfReferenceType OBJECT_OR_NULL = 
+  public static final DfReferenceType OBJECT_OR_NULL =
     customObject(TypeConstraints.TOP, DfaNullability.UNKNOWN, Mutability.UNKNOWN, null, BOTTOM);
 
   /**
@@ -392,7 +392,7 @@ public class DfTypes {
 
   /**
    * Returns a custom constant type
-   * 
+   *
    * @param constant constant value
    * @param type value type
    * @return a constant type that contains only given constant
@@ -451,7 +451,7 @@ public class DfTypes {
   /**
    * @param type type of the object
    * @param nullability nullability
-   * @return a type that references given objects of given type (or it subtypes) and has given nullability 
+   * @return a type that references given objects of given type (or it subtypes) and has given nullability
    */
   @NotNull
   public static DfType typedObject(@Nullable PsiType type, @NotNull Nullability nullability) {
@@ -478,15 +478,15 @@ public class DfTypes {
 
   /**
    * A low-level method to construct a custom reference type. Should not be normally used. Instead prefer construct a type
-   * using a series of {@link DfType#meet(DfType)} calls like 
+   * using a series of {@link DfType#meet(DfType)} calls like
    * <pre>{@code
    * constraint.asDfType()
    *   .meet(mutability.asDfType())
    *   .meet(LOCAL_OBJECT)
    *   .meet(specialField.asDfType(sfType))
    * }</pre>
-   * 
-   * 
+   *
+   *
    * @param constraint type constraint
    * @param nullability nullability, must not be {@link DfaNullability#NULL}
    * @param mutability mutability desired mutability

@@ -23,7 +23,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-class RemoteBreakpointImpl extends PortableRemoteObject implements RemoteBreakpoint {
+final class RemoteBreakpointImpl extends PortableRemoteObject implements RemoteBreakpoint {
   private final Breakpoint myBreakpoint;
 
   private RemoteBreakpointImpl(Breakpoint breakpoint) throws RemoteException {

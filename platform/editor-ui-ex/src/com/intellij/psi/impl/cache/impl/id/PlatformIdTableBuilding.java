@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -39,7 +39,7 @@ import static com.intellij.psi.impl.cache.impl.BaseFilterLexer.createTodoScannin
 /**
  * Author: dmitrylomov
  */
-public abstract class PlatformIdTableBuilding {
+public final class PlatformIdTableBuilding {
   public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<>("Editor");
   private static final TokenSet ABSTRACT_FILE_COMMENT_TOKENS = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
 

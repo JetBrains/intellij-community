@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaSharedImplUtil {
+public final class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance(JavaSharedImplUtil.class);
 
   private static final TokenSet BRACKETS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
@@ -192,7 +192,7 @@ public class JavaSharedImplUtil {
     variable.addAfter(initializer, eq.getPsi());
   }
 
-  private static class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
+  private static final class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
     private final PsiAnnotation[] myCandidates;
     private final TypeAnnotationProvider myOriginalProvider;
     private volatile PsiAnnotation[] myCache;

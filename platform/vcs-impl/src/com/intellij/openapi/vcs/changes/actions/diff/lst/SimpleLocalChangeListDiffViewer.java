@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.DiffContext;
@@ -102,7 +102,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     );
   }
 
-  private class MyLocalTrackerDiffHandler implements LocalTrackerDiffUtil.LocalTrackerDiffHandler {
+  private final class MyLocalTrackerDiffHandler implements LocalTrackerDiffUtil.LocalTrackerDiffHandler {
     @NotNull private final ProgressIndicator myIndicator;
 
     private MyLocalTrackerDiffHandler(@NotNull ProgressIndicator indicator) {
@@ -202,7 +202,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
   }
 
-  private static class MySimpleDiffChangeUi extends SimpleDiffChangeUi {
+  private static final class MySimpleDiffChangeUi extends SimpleDiffChangeUi {
     private MySimpleDiffChangeUi(@NotNull SimpleLocalChangeListDiffViewer viewer, @NotNull MySimpleDiffChange change) {
       super(viewer, change);
     }
@@ -247,7 +247,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   }
 
 
-  private static class MyLocalTrackerActionProvider extends LocalTrackerDiffUtil.LocalTrackerActionProvider {
+  private static final class MyLocalTrackerActionProvider extends LocalTrackerDiffUtil.LocalTrackerActionProvider {
     @NotNull private final SimpleLocalChangeListDiffViewer myViewer;
 
     private MyLocalTrackerActionProvider(@NotNull SimpleLocalChangeListDiffViewer viewer,

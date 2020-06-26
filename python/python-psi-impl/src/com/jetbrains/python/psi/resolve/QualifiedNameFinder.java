@@ -198,7 +198,7 @@ public class QualifiedNameFinder {
   /**
    * Tries to find roots that contain given vfile.
    */
-  private static class PathChoosingVisitor implements RootVisitor {
+  private static final class PathChoosingVisitor implements RootVisitor {
     @NotNull private final VirtualFile myVFile;
     @NotNull private final Set<QualifiedName> myResults = new LinkedHashSet<>();
 

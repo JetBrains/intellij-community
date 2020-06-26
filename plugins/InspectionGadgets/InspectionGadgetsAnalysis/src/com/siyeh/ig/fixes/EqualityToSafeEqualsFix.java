@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EqualityToSafeEqualsFix extends InspectionGadgetsFix {
+public final class EqualityToSafeEqualsFix extends InspectionGadgetsFix {
 
   private final boolean myNegated;
 

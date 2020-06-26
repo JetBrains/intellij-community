@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffContentFactory;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Producer {
+public final class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Producer {
   @Nullable private final Project myProject;
   @NotNull private final FilePath myPath;
 

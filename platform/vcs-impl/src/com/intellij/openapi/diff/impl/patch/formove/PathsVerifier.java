@@ -217,7 +217,7 @@ public class PathsVerifier {
     return true;
   }
 
-  private class CheckModified extends CheckDeleted {
+  private final class CheckModified extends CheckDeleted {
     private CheckModified(final FilePatch path) {
       super(path);
     }
@@ -260,7 +260,7 @@ public class PathsVerifier {
     }
   }
 
-  private class CheckAdded extends CheckPath {
+  private final class CheckAdded extends CheckPath {
     private CheckAdded(final FilePatch path) {
       super(path);
     }
@@ -314,7 +314,7 @@ public class PathsVerifier {
     }
   }
 
-  private class CheckMoved extends CheckPath {
+  private final class CheckMoved extends CheckPath {
     private CheckMoved(final FilePatch path) {
       super(path);
     }
@@ -533,7 +533,7 @@ public class PathsVerifier {
     }
   }
 
-  private static class MovedFileData {
+  private static final class MovedFileData {
     private final VirtualFile myNewParent;
     private final VirtualFile myCurrent;
     private final String myNewName;
@@ -593,7 +593,7 @@ public class PathsVerifier {
     }
   }
 
-  private static class DelayedPrecheckContext {
+  private static final class DelayedPrecheckContext {
     private final Map<FilePath, FilePatch> mySkipDeleted;
     private final Map<FilePath, FilePatch> myOverrideExisting;
     private final List<FilePath> myOverridenPaths;

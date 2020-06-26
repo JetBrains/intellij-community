@@ -459,7 +459,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private List<String> throwTypes;
   }
 
-  private static class AnnotationTextCollector extends AnnotationVisitor {
+  private static final class AnnotationTextCollector extends AnnotationVisitor {
     private final StringBuilder myBuilder = new StringBuilder();
     private final Function<String, String> myMapping;
     private final Consumer<? super String> myCallback;
@@ -527,7 +527,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
   }
 
-  private static class FieldAnnotationCollectingVisitor extends FieldVisitor {
+  private static final class FieldAnnotationCollectingVisitor extends FieldVisitor {
     private final PsiModifierListStub myModList;
     private final Function<String, String> myMapping;
     private Set<String> myFilter;
@@ -557,7 +557,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
   }
 
-  private static class MethodAnnotationCollectingVisitor extends MethodVisitor {
+  private static final class MethodAnnotationCollectingVisitor extends MethodVisitor {
     private final PsiMethodStub myOwner;
     @NotNull
     private final PsiModifierListStub myModList;

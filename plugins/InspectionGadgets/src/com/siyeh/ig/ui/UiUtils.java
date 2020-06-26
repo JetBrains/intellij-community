@@ -38,7 +38,7 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.util.Collection;
 
-public class UiUtils {
+public final class UiUtils {
 
   private UiUtils() {
   }
@@ -188,7 +188,7 @@ public class UiUtils {
     return optionsPanel;
   }
 
-  private static class SubclassFilter implements ClassFilter {
+  private static final class SubclassFilter implements ClassFilter {
 
     private final String[] ancestorClasses;
 

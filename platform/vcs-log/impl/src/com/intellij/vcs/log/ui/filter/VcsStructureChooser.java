@@ -268,7 +268,7 @@ public class VcsStructureChooser extends DialogWrapper {
     return descriptor.getElement().getFile();
   }
 
-  private static class MyCheckboxTreeCellRenderer extends JPanel implements TreeCellRenderer {
+  private static final class MyCheckboxTreeCellRenderer extends JPanel implements TreeCellRenderer {
     @NotNull private final WithModulesListCellRenderer myTextRenderer;
     @NotNull public final JCheckBox myCheckbox;
     @NotNull private final SelectionManager mySelectionManager;

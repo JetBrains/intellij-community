@@ -47,7 +47,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     <R, E extends Throwable> R compute(@NotNull ThrowableComputable<R, E> action) throws E;
   }
 
-  private static class BuilderImpl implements Builder {
+  private static final class BuilderImpl implements Builder {
     private final Project myProject;
     private final PsiFile[] myFiles;
     private String myCommandName = DEFAULT_COMMAND_NAME;

@@ -42,7 +42,7 @@ import static com.jetbrains.python.PyTokenTypes.*;
 /**
  * @author Dennis.Ushakov
  */
-public class PyReplaceExpressionUtil implements PyElementTypes {
+public final class PyReplaceExpressionUtil implements PyElementTypes {
   /**
    * This marker is added in cases where valid selection nevertheless breaks existing expression.
    * It can happen in cases like (here {@code <start> and <end>} represent selection boundaries):

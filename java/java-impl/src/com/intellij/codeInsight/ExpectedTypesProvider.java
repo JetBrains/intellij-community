@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -251,7 +251,7 @@ public class ExpectedTypesProvider {
     }
   }
 
-  private static class MyParentVisitor extends JavaElementVisitor {
+  private static final class MyParentVisitor extends JavaElementVisitor {
     private PsiExpression myExpr;
     private final boolean myForCompletion;
     private final boolean myUsedAfter;
@@ -354,7 +354,7 @@ public class ExpectedTypesProvider {
         Collections.addAll(myResult, getExpectedTypes(expression, myForCompletion));
       }
     }
-    
+
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       myExpr = (PsiExpression)myExpr.getParent();
@@ -1365,7 +1365,7 @@ public class ExpectedTypesProvider {
     return TailTypes.CALL_RPARENTH;
   }
 
-  private static class CommaTailTypeWithSyncHintUpdate extends TailType {
+  private static final class CommaTailTypeWithSyncHintUpdate extends TailType {
     private final PsiCall myOriginalCall;
 
     private CommaTailTypeWithSyncHintUpdate(@NotNull PsiCall originalCall) {myOriginalCall = originalCall;}

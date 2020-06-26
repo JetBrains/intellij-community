@@ -33,7 +33,7 @@ import static com.intellij.openapi.util.text.StringUtil.capitalize;
  * happens.
  * Displays the list of these files and proposes to make a "smart" merge or checkout.
  */
-public class GitSmartOperationDialog extends DialogWrapper {
+public final class GitSmartOperationDialog extends DialogWrapper {
 
   public enum Choice {
     SMART,

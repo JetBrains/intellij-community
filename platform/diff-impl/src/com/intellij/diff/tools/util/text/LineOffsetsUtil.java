@@ -34,7 +34,7 @@ public final class LineOffsetsUtil {
     return new LineOffsetsImpl(ends.toNativeArray(), text.length());
   }
 
-  private static class LineOffsetsImpl implements LineOffsets {
+  private static final class LineOffsetsImpl implements LineOffsets {
     private final int[] myLineEnds;
     private final int myTextLength;
 

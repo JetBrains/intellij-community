@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.util.Comparing;
@@ -21,9 +21,9 @@ import static java.util.stream.Collectors.toList;
 /**
  * @author Max Medvedev
  */
-public class DFAType {
+public final class DFAType {
 
-  private static class Mixin {
+  private static final class Mixin {
 
     private final @NotNull PsiType myType;
     private final @Nullable ConditionInstruction myCondition;

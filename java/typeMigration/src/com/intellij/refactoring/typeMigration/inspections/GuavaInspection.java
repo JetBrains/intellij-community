@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -252,7 +252,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
     };
   }
 
-  public class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<CommonProblemDescriptor> {
+  public final class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<CommonProblemDescriptor> {
     public static final String FAMILY_NAME = "Migrate Guava's type to Java";
     private final PsiType myTargetType;
 

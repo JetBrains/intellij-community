@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
@@ -43,7 +43,7 @@ public class EditorConfigTrailingSpacesOptionsProvider implements TrailingSpaces
     return null;
   }
 
-  private static class FileOptions implements TrailingSpacesOptionsProvider.Options {
+  private static final class FileOptions implements TrailingSpacesOptionsProvider.Options {
     private final @Nullable Boolean myTrimTrailingSpaces;
     private final @Nullable Boolean myInsertFinalNewLine;
 

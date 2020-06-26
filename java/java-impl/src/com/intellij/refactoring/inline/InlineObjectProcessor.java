@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -31,7 +31,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * Performs inlining of object construction together with a subsequent call.
  * E.g. {@code new Point(12, 34).getX()} could be inlined to {@code 12}.
  */
-public class InlineObjectProcessor extends BaseRefactoringProcessor {
+public final class InlineObjectProcessor extends BaseRefactoringProcessor {
   private final PsiMethod myMethod;
   private final PsiReference myReference;
   private final PsiNewExpression myNewExpression;

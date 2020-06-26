@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 
-public class ExclusiveBackgroundVcsAction {
+public final class ExclusiveBackgroundVcsAction {
   private ExclusiveBackgroundVcsAction() {
   }
 

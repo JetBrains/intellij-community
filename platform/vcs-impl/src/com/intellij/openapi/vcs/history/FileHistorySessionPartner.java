@@ -174,7 +174,7 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
   public void dispose() {
   }
 
-  private class FileHistoryContentPanel extends JBPanelWithEmptyText {
+  private final class FileHistoryContentPanel extends JBPanelWithEmptyText {
     @Nullable private FileHistoryPanelImpl myFileHistoryPanel;
 
     private FileHistoryContentPanel() {

@@ -64,7 +64,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   @SuppressWarnings("PublicField")
   public String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
 
-  
+
   {
     parseString(loggerClassName, loggerFactoryClassNames);
     parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
@@ -132,7 +132,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     });
   }
 
-  private static class LoggerInitializedWithForeignClassFix extends InspectionGadgetsFix {
+  private static final class LoggerInitializedWithForeignClassFix extends InspectionGadgetsFix {
 
     private final String newClassName;
 

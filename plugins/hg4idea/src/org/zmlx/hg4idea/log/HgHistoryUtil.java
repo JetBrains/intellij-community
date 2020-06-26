@@ -36,7 +36,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class HgHistoryUtil {
+public final class HgHistoryUtil {
 
   private static final Logger LOG = Logger.getInstance(HgHistoryUtil.class);
 

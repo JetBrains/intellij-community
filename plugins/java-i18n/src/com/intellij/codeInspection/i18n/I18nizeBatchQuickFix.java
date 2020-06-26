@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.*;
@@ -119,7 +117,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
 
       WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
         String bundleName = propertiesFile.getVirtualFile().getNameWithoutExtension();
-        PsiClass[] classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(bundleName, 
+        PsiClass[] classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(bundleName,
                                                                                             GlobalSearchScope.projectScope(project));
         if (classesByName.length == 1) {
           bundleName = classesByName[0].getQualifiedName();
@@ -242,7 +240,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     return StringUtil.join(NameUtilCore.splitNameIntoWords(name), s -> StringUtil.decapitalize(s), ".");
   }
 
-  private static class HardcodedStringContextData {
+  private static final class HardcodedStringContextData {
     private final List<UExpression> myExpressions;
     private final List<PsiElement> myPsiElements;
     private final List<UExpression> myArgs;

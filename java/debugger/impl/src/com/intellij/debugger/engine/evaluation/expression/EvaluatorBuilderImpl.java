@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class EvaluatorBuilderImpl implements EvaluatorBuilder {
+public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
   private static final EvaluatorBuilderImpl ourInstance = new EvaluatorBuilderImpl();
 
   private EvaluatorBuilderImpl() {
@@ -73,7 +73,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     return new Builder(position).buildElement(codeFragment);
   }
 
-  private static class Builder extends JavaElementVisitor {
+  private static final class Builder extends JavaElementVisitor {
     private static final Logger LOG = Logger.getInstance(EvaluatorBuilderImpl.class);
     private Evaluator myResult = null;
     private PsiClass myContextPsiClass;

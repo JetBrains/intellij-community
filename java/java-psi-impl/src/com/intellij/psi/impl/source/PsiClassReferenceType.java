@@ -121,7 +121,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     return resolveGenerics().getElement();
   }
 
-  private static class DelegatingClassResolveResult implements PsiClassType.ClassResolveResult {
+  private static final class DelegatingClassResolveResult implements PsiClassType.ClassResolveResult {
     private final JavaResolveResult myDelegate;
 
     private DelegatingClassResolveResult(@NotNull JavaResolveResult delegate) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -46,7 +46,7 @@ import java.util.stream.Stream;
 import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSuperCall;
 
 @SuppressWarnings("SuspiciousNameCombination")
-public class TrackingRunner extends DataFlowRunner {
+public final class TrackingRunner extends DataFlowRunner {
   private MemoryStateChange myHistoryForContext = null;
   private final PsiExpression myExpression;
   private final List<DfaInstructionState> afterStates = new ArrayList<>();
@@ -163,7 +163,7 @@ public class TrackingRunner extends DataFlowRunner {
   }
 
   /*
-  TODO: 1. Find causes of other warnings:  
+  TODO: 1. Find causes of other warnings:
             Cause for AIOOBE
             Cause for "modifying an immutable collection"
             Cause for "Collection is always empty" (separate inspection now)
@@ -210,7 +210,7 @@ public class TrackingRunner extends DataFlowRunner {
 
     @Nullable
     DfaProblemType tryMerge(DfaProblemType other) {
-      return this.toString().equals(other.toString()) ? this : null; 
+      return this.toString().equals(other.toString()) ? this : null;
     }
   }
 
@@ -224,7 +224,7 @@ public class TrackingRunner extends DataFlowRunner {
       myProblem = problem;
       myTarget = target;
     }
-    
+
     CauseItem(@NotNull String problem, @Nullable PsiElement target) {
       this(new CustomDfaProblemType(problem), target);
     }
@@ -297,7 +297,7 @@ public class TrackingRunner extends DataFlowRunner {
     public PsiFile getFile() {
       return myTarget != null ? myTarget.getContainingFile() : null;
     }
-    
+
     public Segment getTargetSegment() {
       return myTarget == null ? null : myTarget.getRange();
     }
@@ -318,7 +318,7 @@ public class TrackingRunner extends DataFlowRunner {
       }
       int childIndex = parent == null ? 0 : parent.myChildren.indexOf(this);
       if (childIndex > 0) {
-        title = (parent.myProblem instanceof PossibleExecutionDfaProblemType ? "or " : "and ") + title; 
+        title = (parent.myProblem instanceof PossibleExecutionDfaProblemType ? "or " : "and ") + title;
       } else {
         title = StringUtil.capitalize(title);
       }
@@ -391,7 +391,7 @@ public class TrackingRunner extends DataFlowRunner {
       myChildren.add(intermediate);
     }
   }
-  
+
   public static class CastDfaProblemType extends DfaProblemType {
     @Override
     public CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
@@ -439,7 +439,7 @@ public class TrackingRunner extends DataFlowRunner {
       return "call always fails";
     }
   }
-  
+
 
   static class PossibleExecutionDfaProblemType extends DfaProblemType {
     boolean myComplete = true;
@@ -478,7 +478,7 @@ public class TrackingRunner extends DataFlowRunner {
       return String.format(myTemplate, myRangeSet.getPresentationText(myType));
     }
   }
-  
+
 
   public static class ValueDfaProblemType extends DfaProblemType {
     final Object myValue;
@@ -653,7 +653,7 @@ public class TrackingRunner extends DataFlowRunner {
           if (leftValue != rightValue && relationType.isInequality() &&
               leftValue.getDfType() instanceof DfConstantType && rightValue.getDfType() instanceof DfConstantType) {
             CauseItem causeItem = new CauseItem("comparison arguments are different constants", binOp.getOperationSign());
-            causeItem.addChildren(constantInitializerCause(leftValue, leftChange.getExpression()), 
+            causeItem.addChildren(constantInitializerCause(leftValue, leftChange.getExpression()),
                                   constantInitializerCause(rightValue, rightChange.getExpression()));
             return new CauseItem[]{causeItem};
           }
@@ -695,7 +695,7 @@ public class TrackingRunner extends DataFlowRunner {
       if (target instanceof PsiVariable && ((PsiVariable)target).hasModifierProperty(PsiModifier.FINAL)) {
         PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiVariable)target).getInitializer());
         if (initializer != null) {
-          return new CauseItem(getElementTitle(target) + " '" + ((PsiVariable)target).getName() + "' is initialized to " + 
+          return new CauseItem(getElementTitle(target) + " '" + ((PsiVariable)target).getName() + "' is initialized to " +
                                initializer.getText(), initializer.getContainingFile() == ref.getContainingFile() ? initializer : ref);
         }
       }
@@ -999,7 +999,7 @@ public class TrackingRunner extends DataFlowRunner {
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       PsiMethod method = call.resolveMethod();
-      CauseItem causeItem = fromMemberNullability(nullability, method, JavaElementKind.METHOD, 
+      CauseItem causeItem = fromMemberNullability(nullability, method, JavaElementKind.METHOD,
                                                   call.getMethodExpression().getReferenceNameElement());
       if (causeItem == null) {
         switch (nullability) {
@@ -1139,7 +1139,7 @@ public class TrackingRunner extends DataFlowRunner {
         Pair<PsiExpression, Nullability> fieldNullability =
           NullabilityUtil.getNullabilityFromFieldInitializers((PsiField)owner, Nullability.UNKNOWN);
         if (fieldNullability.second == DfaNullability.toNullability(nullability)) {
-          PsiExpression initializer = fieldNullability.first; 
+          PsiExpression initializer = fieldNullability.first;
           if (initializer != null) {
             if (initializer.getContainingFile() == anchor.getContainingFile()) {
               anchor = initializer;
@@ -1327,7 +1327,7 @@ public class TrackingRunner extends DataFlowRunner {
             LongRangeSet result = leftRange.binOpFromToken(binOp.getOperationTokenType(), rightRange, isLong);
             if (range.equals(result)) {
               String sign = binOp.getOperationSign().getText();
-              CauseItem cause = new CauseItem(new RangeDfaProblemType("result of '" + (sign.equals("%")?"%%":sign) + "' is %s", 
+              CauseItem cause = new CauseItem(new RangeDfaProblemType("result of '" + (sign.equals("%")?"%%":sign) + "' is %s",
                                                                       range, ObjectUtils.tryCast(type, PsiPrimitiveType.class)), factUse);
               CauseItem leftCause = null, rightCause = null;
               if (!leftRange.equals(fromType)) {

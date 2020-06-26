@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyDocstringGenerator {
+public final class PyDocstringGenerator {
   public static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
   public static final String TRIPLE_SINGLE_QUOTES = "'''";
 
@@ -489,7 +489,7 @@ public class PyDocstringGenerator {
     return myDocStringOwner;
   }
 
-  public static class DocstringParam {
+  public static final class DocstringParam {
 
     private final String myName;
     private final String myType;

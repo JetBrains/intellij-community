@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -92,7 +92,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
     return null;
   }
 
-  private static class CreateFieldFromUsageQuickFix implements LocalQuickFix {
+  private static final class CreateFieldFromUsageQuickFix implements LocalQuickFix {
     private final String myCanonicalName;
 
     private CreateFieldFromUsageQuickFix(String canonicalName) {

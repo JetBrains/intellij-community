@@ -592,7 +592,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MyChangeTreeList extends ChangesTreeImpl<AbstractFilePatchInProgress.PatchChange> {
+  private final class MyChangeTreeList extends ChangesTreeImpl<AbstractFilePatchInProgress.PatchChange> {
     @Nullable private final ChangeNodeDecorator myChangeNodeDecorator;
 
     private MyChangeTreeList(Project project,
@@ -643,7 +643,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MapDirectory extends DumbAwareAction {
+  private final class MapDirectory extends DumbAwareAction {
     private final NewBaseSelector myNewBaseSelector;
 
     private MapDirectory() {
@@ -826,7 +826,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return map(selectedChanges, AbstractFilePatchInProgress.PatchChange::getPatchInProgress);
   }
 
-  private class MapPopup extends BaseListPopupStep<VirtualFile> {
+  private final class MapPopup extends BaseListPopupStep<VirtualFile> {
     private final Runnable myNewBaseSelector;
 
     private MapPopup(final @NotNull List<? extends VirtualFile> aValues, Runnable newBaseSelector) {
@@ -909,7 +909,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private static class ChangesLegendCalculator implements CommitLegendPanel.InfoCalculator {
+  private static final class ChangesLegendCalculator implements CommitLegendPanel.InfoCalculator {
     private NamedLegendStatuses myTotal;
     private NamedLegendStatuses myIncluded;
 
@@ -1095,7 +1095,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MyShowDiff extends DumbAwareAction {
+  private final class MyShowDiff extends DumbAwareAction {
     private final MyChangeComparator myMyChangeComparator;
 
     private MyShowDiff() {
@@ -1174,7 +1174,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     };
   }
 
-  private static class MyProducerWrapper implements ChangeDiffRequestChain.Producer {
+  private static final class MyProducerWrapper implements ChangeDiffRequestChain.Producer {
     private final DiffRequestProducer myProducer;
     private final Change myChange;
 

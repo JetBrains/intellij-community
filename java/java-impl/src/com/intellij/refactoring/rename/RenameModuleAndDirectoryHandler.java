@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.ide.IdeBundle;
@@ -83,7 +83,7 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
     );
   }
 
-  private static class RenameModuleAndDirectoryProcessor extends RenamePsiDirectoryProcessor {
+  private static final class RenameModuleAndDirectoryProcessor extends RenamePsiDirectoryProcessor {
 
     private final Module myModule;
 

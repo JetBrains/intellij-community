@@ -87,7 +87,7 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
     return panel;
   }
 
-  private static class ResourceRootPropertiesDialog extends DialogWrapper {
+  private static final class ResourceRootPropertiesDialog extends DialogWrapper {
     private final JTextField myRelativeOutputPathField;
     private final JCheckBox myIsGeneratedCheckBox;
     private final JPanel myMainPanel;

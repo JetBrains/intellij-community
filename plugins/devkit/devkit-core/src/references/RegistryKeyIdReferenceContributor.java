@@ -49,7 +49,7 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
   }
 
 
-  private static class RegistryKeyIdReference extends ExtensionPointReferenceBase {
+  private static final class RegistryKeyIdReference extends ExtensionPointReferenceBase {
 
     private RegistryKeyIdReference(@NotNull PsiElement element) {
       super(element);

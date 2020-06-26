@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -291,7 +291,7 @@ public abstract class YamlMetaType {
   }
 
   @ApiStatus.Internal
-  public static class ForcedCompletionPath {
+  public static final class ForcedCompletionPath {
     private static final Iteration OFF_PATH_ITERATION = new OffPathIteration();
     private static final Iteration NULL_ITERATION = new NullIteration();
     private static final ForcedCompletionPath NULL_PATH = new ForcedCompletionPath(null);
@@ -394,7 +394,7 @@ public abstract class YamlMetaType {
       }
     }
 
-    private class OnPathIteration implements Iteration {
+    private final class OnPathIteration implements Iteration {
       private final int myPosition;
 
       private OnPathIteration(int position) {

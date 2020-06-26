@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class XsltSupport {
+public final class XsltSupport {
 
   public static final String XALAN_EXTENSION_PREFIX = "http://xml.apache.org/xalan/";
   public static final String XSLT_NS = "http://www.w3.org/1999/XSL/Transform";

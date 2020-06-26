@@ -903,7 +903,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  private static class MyInspectionElementsMerger extends InspectionElementsMergerBase {
+  private static final class MyInspectionElementsMerger extends InspectionElementsMergerBase {
 
     private final String myShortName;
     private final LocalInspectionToolWrapper myWrapper;

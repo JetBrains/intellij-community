@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class PlatformEditorBundle extends DynamicBundle {
+public final class PlatformEditorBundle extends DynamicBundle {
   @NonNls public static final String BUNDLE = "messages.PlatformEditorBundle";
   private static final PlatformEditorBundle INSTANCE = new PlatformEditorBundle();
 

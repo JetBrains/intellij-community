@@ -24,7 +24,7 @@ import org.kohsuke.rngom.digested.DRefPattern;
 import java.util.ArrayList;
 import java.util.List;
 
-class ChildElementFinder extends RecursionSaveWalker {
+final class ChildElementFinder extends RecursionSaveWalker {
   private final List<DElementPattern> myRoots = new ArrayList<>();
 
   private final int myTargetDepth;

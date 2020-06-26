@@ -43,13 +43,13 @@ public class GotoSplitTerminalActionBase extends TerminalSessionContextMenuActio
     }
   }
 
-  public static class Next extends GotoSplitTerminalActionBase {
+  public static final class Next extends GotoSplitTerminalActionBase {
     private Next() {
       super(true);
     }
   }
 
-  public static class Prev extends GotoSplitTerminalActionBase {
+  public static final class Prev extends GotoSplitTerminalActionBase {
     private Prev() {
       super(false);
     }

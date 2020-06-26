@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.actions.styling;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
@@ -293,7 +293,7 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
     editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
   }
 
-  private static class DuplicatesFinder extends TemplateEditingAdapter {
+  private static final class DuplicatesFinder extends TemplateEditingAdapter {
     @NotNull private final String myUrl;
     @NotNull private final PsiFile myFile;
     @NotNull private final Editor myEditor;

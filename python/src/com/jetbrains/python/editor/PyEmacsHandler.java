@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -41,7 +27,7 @@ import java.util.List;
  * Python-specific Emacs-like processing extension.
  * <p/>
  * Thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  */
 public class PyEmacsHandler implements EmacsProcessingHandler {
@@ -55,21 +41,21 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     PyElementTypes.FUNCTION_DECLARATION, PyTokenTypes.DEF_KEYWORD,
     PyElementTypes.CLASS_DECLARATION, PyTokenTypes.CLASS_KEYWORD
   );
-  
+
   private enum ProcessingResult {
     /** Particular sub-routine did the job and no additional processing is necessary. */
     STOP_SUCCESSFUL,
 
     /** Particular sub-routine detected that the processing should be stopped. */
     STOP_UNSUCCESSFUL,
-    
+
     /** Processing should be continued */
     CONTINUE
   }
-  
+
   /**
    * Tries to make active line(s) belong to another code block by changing their indentation.
-   * 
+   *
    * @param project     current project
    * @param editor      current editor
    * @param file        current file
@@ -83,13 +69,13 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     //     1. Check if the editor has selection. Do nothing then as Emacs behaves so;
     //     2. Indent current line one level right if possible;
     //     3. Indent current line to the left-most position if possible;
-    
+
     SelectionModel selectionModel = editor.getSelectionModel();
     // Emacs Tab doesn't adjust indent in case of active selection. So do we.
     if (selectionModel.hasSelection()) {
       return Result.CONTINUE;
     }
-    
+
     // Check if current line is empty. Return eagerly then.
     Document document = editor.getDocument();
     int caretOffset = editor.getCaretModel().getOffset();
@@ -97,7 +83,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     if (DocumentUtil.isLineEmpty(document, caretLine)) {
       return Result.CONTINUE;
     }
-    
+
     ChangeIndentContext context = new ChangeIndentContext(project, file, editor, document, caretLine);
     int targetLineIndent = getLineIndent(context, context.targetLine);
     int soleLineIndent = getSoleIndent(context);
@@ -232,7 +218,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
   /**
    * Inspects lines that are located before the given target line and collects information about lines which indents are greater
    * or equal to the target line indent.
-   * 
+   *
    * @param context       current processing context
    * @param targetLine    target line
    * @return              list of lines located before the target and that start new indented blocks. Note that they are
@@ -282,7 +268,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     }
     return COMPOUND_STATEMENT_TYPES.contains(node.getElementType());
   }
-  
+
   private static int getLineIndent(@NotNull ChangeIndentContext context, int line) {
     int start = context.document.getLineStartOffset(line);
     int end = context.document.getLineEndOffset(line);
@@ -298,7 +284,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     }
     return result;
   }
-  
+
   private static class LineInfo {
 
     public final int     line;
@@ -317,13 +303,13 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     }
   }
 
-  private static class ChangeIndentContext {
+  private static final class ChangeIndentContext {
     @NotNull public final Project  project;
     @NotNull public final PsiFile  file;
     @NotNull public final Editor   editor;
     @NotNull public final Document document;
     public final          int      targetLine;
-    
+
     private CommonCodeStyleSettings.IndentOptions myIndentOptions;
 
     private ChangeIndentContext(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor,
@@ -340,7 +326,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
       if (myIndentOptions == null) {
         myIndentOptions = CodeStyle.getIndentOptions(file);
       }
-      
+
       return myIndentOptions;
     }
   }

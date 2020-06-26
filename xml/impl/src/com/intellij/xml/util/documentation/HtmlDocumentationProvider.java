@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -42,7 +42,7 @@ import static com.intellij.codeInsight.documentation.DocumentationManager.ORIGIN
 public class HtmlDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider {
   public static final ExtensionPointName<DocumentationProvider> SCRIPT_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.html.scriptDocumentationProvider");
   public static final String ATTR_PREFIX = "#attr-";
-  
+
   private final boolean myUseStyleProvider;
 
   @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
@@ -373,7 +373,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     return null;
   }
 
-  private static class DocEntity {
+  private static final class DocEntity {
     String name;
     boolean isTag;
 

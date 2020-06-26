@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiUtil {
+public final class PsiUtil {
   private static final Key<Boolean> IDEA_PROJECT = Key.create("idea.internal.inspections.enabled");
   private static final String IDE_PROJECT_MARKER_CLASS = JBList.class.getName();
   private static final String[] IDEA_PROJECT_MARKER_FILES = {

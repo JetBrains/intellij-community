@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.problems;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -264,7 +264,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     assertFalse(myWolfTheProblemSolver.isProblemFile(virtualFile));
   }
 
-  private static class MyProblemListener implements ProblemListener {
+  private static final class MyProblemListener implements ProblemListener {
     private final Set<VirtualFile> myEventAdded;
     private final Set<VirtualFile> myEventChanged;
     private final Set<VirtualFile> myEventRemoved;

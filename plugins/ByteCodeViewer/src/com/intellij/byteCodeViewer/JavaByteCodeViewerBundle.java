@@ -6,7 +6,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class JavaByteCodeViewerBundle extends DynamicBundle {
+public final class JavaByteCodeViewerBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.JavaByteCodeViewerBundle";
   private static final JavaByteCodeViewerBundle INSTANCE = new JavaByteCodeViewerBundle();
 

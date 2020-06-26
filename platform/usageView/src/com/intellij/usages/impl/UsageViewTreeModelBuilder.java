@@ -33,7 +33,7 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
     });
   }
 
-  static class TargetsRootNode extends Node {
+  static final class TargetsRootNode extends Node {
     private TargetsRootNode(String name) {
       setUserObject(name);
     }

@@ -428,7 +428,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
   }
 
-  private static class ProcessAttachDebugExecutor extends DefaultDebugExecutor {
+  private static final class ProcessAttachDebugExecutor extends DefaultDebugExecutor {
     static ProcessAttachDebugExecutor INSTANCE = new ProcessAttachDebugExecutor();
 
     private ProcessAttachDebugExecutor() {

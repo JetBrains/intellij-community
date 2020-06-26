@@ -446,7 +446,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     scrollFromSource();
   }
 
-  private class ScrollFromSourceAction extends AnAction implements DumbAware {
+  private final class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
       super("Scroll from Source", "Select the file open in the active editor", AllIcons.General.Locate);
     }
@@ -481,7 +481,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     }
   }
 
-  private class HideEmptyMiddlePackagesAction extends ToggleAction implements DumbAware {
+  private final class HideEmptyMiddlePackagesAction extends ToggleAction implements DumbAware {
     private HideEmptyMiddlePackagesAction() {
       super("Compact Empty Middle Packages", "Show/Compact Empty Middle Packages",
             AllIcons.ObjectBrowser.CompactEmptyPackages);

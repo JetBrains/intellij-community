@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.visibility;
 
@@ -47,7 +47,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private final Map<String, Boolean> myExtensions = new TreeMap<>();
   @NonNls public static final String SHORT_NAME = "WeakerAccess";
 
-  private class OptionsPanel extends JPanel {
+  private final class OptionsPanel extends JPanel {
     private final JCheckBox myPackageLocalForMembersCheckbox;
     private final JCheckBox myPrivateForInnersCheckbox;
     private final JCheckBox myPackageLocalForTopClassesCheckbox;
@@ -632,7 +632,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     myExtensions.put(entryPointId, enabled);
   }
 
-  private static class AcceptSuggestedAccess implements LocalQuickFix{
+  private static final class AcceptSuggestedAccess implements LocalQuickFix{
     private final RefManager myManager;
     @PsiModifier.ModifierConstant private final String myHint;
     private final String myName;

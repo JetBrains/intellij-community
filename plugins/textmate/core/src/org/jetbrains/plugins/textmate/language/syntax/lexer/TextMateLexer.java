@@ -290,7 +290,7 @@ public class TextMateLexer {
     }
   }
 
-  public static class Token {
+  public static final class Token {
     public final String selector;
     public final int startOffset;
     public final int endOffset;

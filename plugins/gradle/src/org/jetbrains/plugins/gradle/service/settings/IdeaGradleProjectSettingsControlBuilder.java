@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.icons.AllIcons;
@@ -1000,7 +1000,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
   }
 
-  private class BuildRunItem extends MyItem<Boolean> {
+  private final class BuildRunItem extends MyItem<Boolean> {
 
     private BuildRunItem(@Nullable Boolean value) {
       super(value);
@@ -1029,7 +1029,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
   }
 
-  private class TestRunnerItem extends MyItem<TestRunner> {
+  private final class TestRunnerItem extends MyItem<TestRunner> {
 
     private TestRunnerItem(@Nullable TestRunner value) {
       super(value);
@@ -1063,7 +1063,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
   }
 
-  private class DistributionTypeItem extends MyItem<DistributionType> {
+  private final class DistributionTypeItem extends MyItem<DistributionType> {
 
     private DistributionTypeItem(@Nullable DistributionType value) {
       super(value);

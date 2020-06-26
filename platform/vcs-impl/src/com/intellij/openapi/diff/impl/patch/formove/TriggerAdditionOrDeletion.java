@@ -181,7 +181,7 @@ public class TriggerAdditionOrDeletion {
     }
   }
 
-  private static class RecursiveCheckAdder {
+  private static final class RecursiveCheckAdder {
     private final Set<FilePath> myToBeAdded = new HashSet<>();
     private final VirtualFile myRoot;
 

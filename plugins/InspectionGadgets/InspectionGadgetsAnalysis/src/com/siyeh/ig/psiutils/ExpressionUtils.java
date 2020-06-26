@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ExpressionUtils {
+public final class ExpressionUtils {
   private static final Set<String> IMPLICIT_TO_STRING_METHOD_NAMES =
     ContainerUtil.immutableSet("append", "format", "print", "printf", "println", "valueOf");
   @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
@@ -948,7 +948,7 @@ public class ExpressionUtils {
    * e.g. creating a corresponding {@link PsiThisExpression}.
    *
    * @param ref a reference expression to get an effective qualifier for
-   * @return a qualifier or created (non-physical) {@link PsiThisExpression}. 
+   * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
    *         May return null if reference points to local or member of anonymous class referred from inner class
    */
   @Nullable
@@ -1403,7 +1403,7 @@ public class ExpressionUtils {
 
   /**
    * Flattens second+ polyadic's operand replaced with another polyadic expression of the same type to the parent's operands.
-   * 
+   *
    * Otherwise reparse would produce different expression.
    *
    * @return the updated PsiExpression (probably the parent of an expression to replace if it was necessary to update the parent);
@@ -1412,7 +1412,7 @@ public class ExpressionUtils {
    */
   @Nullable
   public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace,
-                                                        PsiExpression replacement, 
+                                                        PsiExpression replacement,
                                                         CommentTracker tracker) {
     PsiElement parent = expressionToReplace.getParent();
     if (parent instanceof PsiPolyadicExpression && replacement instanceof PsiPolyadicExpression) {
@@ -1494,7 +1494,7 @@ public class ExpressionUtils {
 
   /**
    * Returns ancestor expression for given subexpression which parent is not an expression anymore (except lambda)
-   * 
+   *
    * @param expression an expression to find its ancestor
    * @return a top-level expression for given expression (may return an expression itself)
    */
@@ -1515,7 +1515,7 @@ public class ExpressionUtils {
   public static PsiElement getPassThroughParent(@NotNull PsiExpression expression) {
     return getPassThroughExpression(expression).getParent();
   }
-  
+
   public static @NotNull PsiExpression getPassThroughExpression(@NotNull PsiExpression expression) {
     while (true) {
       final PsiElement parent = expression.getParent();

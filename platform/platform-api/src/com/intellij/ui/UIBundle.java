@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.DynamicBundle;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class UIBundle extends DynamicBundle {
+public final class UIBundle extends DynamicBundle {
   public static final String BUNDLE = "messages.UIBundle";
   private static final UIBundle INSTANCE = new UIBundle();
 

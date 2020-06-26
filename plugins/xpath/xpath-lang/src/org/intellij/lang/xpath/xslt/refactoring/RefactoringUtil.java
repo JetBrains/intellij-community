@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class RefactoringUtil {
+public final class RefactoringUtil {
     private RefactoringUtil() {
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -88,7 +88,7 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
     });
   }
 
-  private static class DelegateProcessor extends GrScopeProcessorWithHints {
+  private static final class DelegateProcessor extends GrScopeProcessorWithHints {
 
     private final TransformationContext myContext;
     private final boolean myInterfaces;

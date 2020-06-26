@@ -318,7 +318,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     return calculateAffectedModules(currentModulesState, commitModulesState, checkExistence);
   }
 
-  private static class UnzipOutputTask implements Runnable {
+  private static final class UnzipOutputTask implements Runnable {
     private final OutputLoadResult loadResult;
     private final Map<File, String> result;
     private final SegmentedProgressIndicatorManager extractIndicatorManager;

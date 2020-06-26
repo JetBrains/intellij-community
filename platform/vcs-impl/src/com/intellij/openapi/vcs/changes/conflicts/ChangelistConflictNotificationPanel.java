@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.icons.AllIcons;
@@ -18,7 +18,7 @@ import java.util.Collections;
 /**
 * @author Dmitry Avdeev
 */
-public class ChangelistConflictNotificationPanel extends EditorNotificationPanel {
+public final class ChangelistConflictNotificationPanel extends EditorNotificationPanel {
 
   private final ChangeList myChangeList;
   private final VirtualFile myFile;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -85,7 +85,7 @@ class RepositoryLoader extends Loader {
     return NodeLoadState.REFRESHED;
   }
 
-  private class LoadTask extends Task.Backgroundable {
+  private final class LoadTask extends Task.Backgroundable {
     @NotNull private final Pair<RepositoryTreeNode, Expander> myData;
     @NotNull private final List<DirectoryEntry> entries = new ArrayList<>();
     @Nullable private String error;

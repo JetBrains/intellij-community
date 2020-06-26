@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -48,7 +48,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
   private static final MyMemberInfoFilter MEMBER_INFO_FILTER = new MyMemberInfoFilter();
 
-  public static class JavaGenerateEqualsWizardBuilder extends AbstractGenerateEqualsWizard.Builder<PsiClass, PsiMember, MemberInfo> {
+  public static final class JavaGenerateEqualsWizardBuilder extends AbstractGenerateEqualsWizard.Builder<PsiClass, PsiMember, MemberInfo> {
     private final PsiClass myClass;
 
     private final MemberSelectionPanel myEqualsPanel;
@@ -335,7 +335,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
   }
 
-  private static class TemplateChooserStep extends StepAdapter {
+  private static final class TemplateChooserStep extends StepAdapter {
     private final JComponent myPanel;
 
     private TemplateChooserStep(boolean isFinal, PsiClass psiClass) {

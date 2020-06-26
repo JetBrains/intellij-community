@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.*;
 
-public class JavaSpacePropertyProcessor extends JavaElementVisitor {
+public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance(JavaSpacePropertyProcessor.class);
 
   private static final TokenSet REF_LIST_KEYWORDS = TokenSet.create(

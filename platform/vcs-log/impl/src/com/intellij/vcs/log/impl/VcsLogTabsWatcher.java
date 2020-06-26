@@ -222,7 +222,7 @@ public final class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  private class MyRefreshPostponedEventsListener extends VcsLogTabsListener {
+  private final class MyRefreshPostponedEventsListener extends VcsLogTabsListener {
     private MyRefreshPostponedEventsListener(@NotNull ToolWindow toolWindow) {
       super(myProject, toolWindow, myListenersDisposable);
     }

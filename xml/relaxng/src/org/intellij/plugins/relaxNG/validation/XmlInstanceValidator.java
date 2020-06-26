@@ -36,7 +36,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-public class XmlInstanceValidator {
+public final class XmlInstanceValidator {
   private static final Logger LOG = Logger.getInstance(XmlInstanceValidator.class);
 
   private XmlInstanceValidator() {
@@ -70,7 +70,7 @@ public class XmlInstanceValidator {
     }
   }
 
-  private static class MyErrorHandler implements ErrorHandler {
+  private static final class MyErrorHandler implements ErrorHandler {
     private final Validator.ValidationHost myHost;
     private final Document myDocument;
     private final PsiFile myFile;

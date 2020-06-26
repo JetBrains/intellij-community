@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml;
 
 import com.intellij.DynamicBundle;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class XmlBundle extends DynamicBundle {
+public final class XmlBundle extends DynamicBundle {
   @NonNls public static final String BUNDLE = "messages.XmlBundle";
   private static final XmlBundle INSTANCE = new XmlBundle();
 

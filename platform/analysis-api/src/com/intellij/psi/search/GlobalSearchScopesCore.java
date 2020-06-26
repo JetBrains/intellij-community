@@ -61,7 +61,7 @@ public class GlobalSearchScopesCore {
     return new FilterScopeAdapter(project, set);
   }
 
-  private static class FilterScopeAdapter extends GlobalSearchScope {
+  private static final class FilterScopeAdapter extends GlobalSearchScope {
     private final NamedScope mySet;
     private final PsiManager myManager;
 
@@ -138,7 +138,7 @@ public class GlobalSearchScopesCore {
     }
   }
 
-  private static class ProductionScopeFilter extends GlobalSearchScope {
+  private static final class ProductionScopeFilter extends GlobalSearchScope {
     private final ProjectFileIndex myFileIndex;
 
     private ProductionScopeFilter(@NotNull Project project) {
@@ -179,7 +179,7 @@ public class GlobalSearchScopesCore {
     }
   }
 
-  private static class TestScopeFilter extends GlobalSearchScope {
+  private static final class TestScopeFilter extends GlobalSearchScope {
     private TestScopeFilter(@NotNull Project project) {
       super(project);
     }
@@ -311,7 +311,7 @@ public class GlobalSearchScopesCore {
     }
   }
 
-  static class DirectoriesScope extends GlobalSearchScope {
+  static final class DirectoriesScope extends GlobalSearchScope {
     private final Set<? extends VirtualFile> myDirectories;
     private final Set<? extends VirtualFile> myDirectoriesWithSubdirectories;
 

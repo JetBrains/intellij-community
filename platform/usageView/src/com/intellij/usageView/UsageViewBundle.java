@@ -9,7 +9,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class UsageViewBundle extends DynamicBundle {
+public final class UsageViewBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.UsageViewBundle";
 
   private static final UsageViewBundle INSTANCE = new UsageViewBundle();

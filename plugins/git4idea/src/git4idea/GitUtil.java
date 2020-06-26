@@ -69,7 +69,7 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 /**
  * Git utility/helper methods
  */
-public class GitUtil {
+public final class GitUtil {
 
   public static final String DOT_GIT = ".git";
 
@@ -1026,7 +1026,7 @@ public class GitUtil {
     }
   }
 
-  private static class GitRepositoryNotFoundException extends VcsException {
+  private static final class GitRepositoryNotFoundException extends VcsException {
 
     private GitRepositoryNotFoundException(@NotNull VirtualFile file) {
       super(GitBundle.message("repository.not.found.error", file.getPresentableUrl()));

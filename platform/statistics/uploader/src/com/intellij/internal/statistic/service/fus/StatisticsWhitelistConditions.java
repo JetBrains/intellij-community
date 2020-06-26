@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-public class StatisticsWhitelistConditions {
+public final class StatisticsWhitelistConditions {
   private final Map<String, StatisticsWhitelistGroupConditions> myGroups;
 
   private StatisticsWhitelistConditions(@NotNull Map<String, StatisticsWhitelistGroupConditions> groups) {

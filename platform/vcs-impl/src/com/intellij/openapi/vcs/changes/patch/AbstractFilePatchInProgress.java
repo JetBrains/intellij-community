@@ -254,7 +254,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
     return myStrippable.getCurrentStrip();
   }
 
-  private static class StripCapablePath implements Strippable {
+  private static final class StripCapablePath implements Strippable {
     private final int myStripMax;
     private int myCurrentStrip;
 
@@ -342,7 +342,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
     }
   }
 
-  private static class PatchStrippable implements Strippable {
+  private static final class PatchStrippable implements Strippable {
     private final StripCapablePath[] myParts;
     private final int myBeforeIdx;
     private final int myAfterIdx;

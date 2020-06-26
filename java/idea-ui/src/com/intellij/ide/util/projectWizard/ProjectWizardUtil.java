@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class ProjectWizardUtil {
+public final class ProjectWizardUtil {
   private ProjectWizardUtil() { }
 
   public static String findNonExistingFileName(String searchDirectory, String preferredName, String extension) {

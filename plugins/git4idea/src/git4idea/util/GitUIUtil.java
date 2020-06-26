@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
 import com.intellij.openapi.project.Project;
@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Utilities for git plugin user interface
  */
-public class GitUIUtil {
+public final class GitUIUtil {
   /**
    * Text containing in the label when there is no current branch
    * @deprecated Use {@link #getNoCurrentBranch()} instead

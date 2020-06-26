@@ -265,7 +265,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) { }
 
-  private static class HardcodedStringInFormData {
+  private static final class HardcodedStringInFormData {
     private final RadComponent myComponent;
     private final String myPropertyName;
     private final PsiFile myContainingFile;
@@ -291,7 +291,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     }
   }
 
-  private static class DefaultPrefixSuggestion {
+  private static final class DefaultPrefixSuggestion {
     private final Class<?> myComponentClass;
     private final String myPropertyName;
     private final String myDefaultPrefix;

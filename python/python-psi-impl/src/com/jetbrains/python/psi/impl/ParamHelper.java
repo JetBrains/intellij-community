@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * Parameter-related things that should not belong directly to PyParameter.
  */
-public class ParamHelper {
+public final class ParamHelper {
 
   private ParamHelper() {
   }

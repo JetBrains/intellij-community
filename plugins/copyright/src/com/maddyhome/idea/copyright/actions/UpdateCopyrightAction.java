@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.maddyhome.idea.copyright.actions;
 
@@ -151,7 +151,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     ProgressManager.getInstance().run(task);
   }
 
-  private static class UpdateCopyrightSequentialTask implements SequentialTask {
+  private static final class UpdateCopyrightSequentialTask implements SequentialTask {
     private final int mySize;
     private final Iterator<Runnable> myRunnables;
     private final SequentialModalProgressTask myProgressTask;

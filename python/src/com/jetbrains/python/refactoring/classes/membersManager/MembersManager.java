@@ -320,7 +320,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   protected abstract Collection<PyElement> getDependencies(@NotNull MultiMap<PyClass, PyElement> usedElements);
 
 
-  private static class FindByElement extends NotNullPredicate<PyMemberInfo<PyElement>> {
+  private static final class FindByElement extends NotNullPredicate<PyMemberInfo<PyElement>> {
     private final PyElement myPyElement;
 
     private FindByElement(final PyElement pyElement) {

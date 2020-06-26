@@ -136,7 +136,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return true;
   }
 
-  private class MyProjectChangesLoader implements Runnable {
+  private final class MyProjectChangesLoader implements Runnable {
     private final ChangeBrowserSettings mySettings;
     private final int myMaxCount;
     private final boolean myCacheOnly;
@@ -553,7 +553,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return result;
   }
 
-  private static class IncomingListsZipper extends VcsCommittedListsZipperAdapter {
+  private static final class IncomingListsZipper extends VcsCommittedListsZipperAdapter {
     private final VcsCommittedListsZipper myVcsZipper;
 
     private IncomingListsZipper(final VcsCommittedListsZipper vcsZipper) {
@@ -948,7 +948,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     void receivedError(VcsException ex);
   }
 
-  private static class MyRefreshRunnable implements Runnable {
+  private static final class MyRefreshRunnable implements Runnable {
     private CommittedChangesCache myCache;
 
     private MyRefreshRunnable(final CommittedChangesCache cache) {

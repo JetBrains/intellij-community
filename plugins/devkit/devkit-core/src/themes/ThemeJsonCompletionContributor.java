@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.completion.*;
@@ -122,7 +122,7 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
   }
 
   //TODO insert ': ' if necessary
-  private static class MyInsertHandler implements InsertHandler<LookupElement> {
+  private static final class MyInsertHandler implements InsertHandler<LookupElement> {
 
     private static final MyInsertHandler INSTANCE = new MyInsertHandler(false);
     private static final MyInsertHandler SURROUND_WITH_QUOTES = new MyInsertHandler(true);

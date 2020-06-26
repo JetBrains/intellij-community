@@ -1094,7 +1094,7 @@ public class UsageViewImpl implements UsageViewEx {
     associatedProgress = indicator;
   }
 
-  private static class MergeDupLines extends RuleAction {
+  private static final class MergeDupLines extends RuleAction {
     private MergeDupLines() {
       super(UsageViewBundle.message("action.merge.same.line"), AllIcons.Toolbar.Filterdups);
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK)));
@@ -1111,7 +1111,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private class ShowSettings extends AnAction {
+  private final class ShowSettings extends AnAction {
     private ShowSettings() {
       super(UsageViewBundle.message("action.text.usage.view.settings"), null, AllIcons.General.GearPlain);
       final ConfigurableUsageTarget configurableUsageTarget = getConfigurableTarget(myTargets);
@@ -2072,7 +2072,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private class UsageState {
+  private final class UsageState {
     private final Usage myUsage;
     private final boolean mySelected;
 
@@ -2098,7 +2098,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private class MyPerformOperationRunnable implements Runnable {
+  private final class MyPerformOperationRunnable implements Runnable {
     private final String myCannotMakeString;
     private final Runnable myProcessRunnable;
     private final String myCommandName;

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -137,7 +137,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
           new SetInspectionOptionFix(
             myInspection, "ignoreStringConstructor",
             InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true)};
-        return myManager.createProblemDescriptor(expression, (TextRange)null, 
+        return myManager.createProblemDescriptor(expression, (TextRange)null,
                                                  InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly, fixes);
       }
@@ -198,7 +198,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                      new RemoveRedundantSubstringFix("endsWith"));
           }
         }
-      } 
+      }
       return null;
     }
 
@@ -570,18 +570,18 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
   private static class RemoveRedundantSubstringFix implements LocalQuickFix {
     private final @NotNull String myBindCallName;
-    
+
     RemoveRedundantSubstringFix(@NotNull String bindCallName) {
       myBindCallName = bindCallName;
     }
-    
+
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
       return InspectionGadgetsBundle.message("remove.redundant.substring.fix.text", myBindCallName);
     }
-    
+
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -670,7 +670,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  private static class StringConstructorFix extends InspectionGadgetsFix {
+  private static final class StringConstructorFix extends InspectionGadgetsFix {
     private final String myName;
 
     private StringConstructorFix(boolean noArguments) {

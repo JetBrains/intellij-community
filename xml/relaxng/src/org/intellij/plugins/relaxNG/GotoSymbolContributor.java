@@ -106,7 +106,7 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
     return presentation == null ? null : new MyNavigationItem((NavigationItem)item, presentation);
   }
 
-  private static class MyNavigationItem implements PsiElementNavigationItem, ItemPresentation {
+  private static final class MyNavigationItem implements PsiElementNavigationItem, ItemPresentation {
     final NavigationItem myItem;
     final ItemPresentation myPresentation;
 

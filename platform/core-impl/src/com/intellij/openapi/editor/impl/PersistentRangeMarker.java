@@ -153,7 +153,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
            (isGreedyToRight() ? "]" : ")");
   }
 
-  static class LinesCols {
+  static final class LinesCols {
     private final int myStartLine;
     private final int myStartColumn;
     private final int myEndLine;

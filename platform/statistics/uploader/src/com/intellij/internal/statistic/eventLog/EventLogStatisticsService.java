@@ -233,7 +233,7 @@ public class EventLogStatisticsService implements StatisticsService {
     }
   }
 
-  private static class EventLogCounterResultDecorator implements EventLogResultDecorator {
+  private static final class EventLogCounterResultDecorator implements EventLogResultDecorator {
     private final EventLogSendListener myListener;
 
     private int myLocalFiles = -1;

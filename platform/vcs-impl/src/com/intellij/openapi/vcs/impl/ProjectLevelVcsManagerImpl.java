@@ -865,7 +865,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     cm.setSelectedContent(consoleContent);
   }
 
-  private static class VcsConsoleContent extends ContentImpl {
+  private static final class VcsConsoleContent extends ContentImpl {
     private final @NotNull ConsoleView myConsole;
 
     private VcsConsoleContent(@NotNull Project project) {

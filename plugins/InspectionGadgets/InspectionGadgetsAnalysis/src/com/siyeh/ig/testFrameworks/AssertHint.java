@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.psi.*;
@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-public class AssertHint {
+public final class AssertHint {
   private final int myArgIndex;
   private final boolean myMessageOnFirstPosition;
   private final PsiExpression myMessage;
@@ -187,7 +187,7 @@ public class AssertHint {
       return false;
     }
     final String qualifiedName = containingClass.getQualifiedName();
-    return "org.testng.Assert".equals(qualifiedName) && !"fail".equals(method.getName()) || 
+    return "org.testng.Assert".equals(qualifiedName) && !"fail".equals(method.getName()) ||
            JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName) ||
            JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS.equals(qualifiedName);
   }

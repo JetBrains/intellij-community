@@ -1073,7 +1073,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         return new MyPass(myProject);
       }
 
-      class MyPass extends TextEditorHighlightingPass {
+      final class MyPass extends TextEditorHighlightingPass {
         private MyPass(final Project project) {
           super(project, getEditor().getDocument(), false);
           creation[0]++;

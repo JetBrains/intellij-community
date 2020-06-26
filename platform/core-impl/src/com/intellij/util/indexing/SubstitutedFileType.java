@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class SubstitutedFileType extends LanguageFileType{
+public final class SubstitutedFileType extends LanguageFileType{
   @NotNull private final FileType myOriginalFileType;
   @NotNull private final FileType myFileType;
 

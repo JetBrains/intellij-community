@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * @author peter
  */
-public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
+public final class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
   private static final InsertHandler<PsiTypeLookupItem> DEFAULT_IMPORT_FIXER = new InsertHandler<PsiTypeLookupItem>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull PsiTypeLookupItem item) {

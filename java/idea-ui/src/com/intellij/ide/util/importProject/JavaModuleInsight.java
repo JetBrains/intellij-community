@@ -253,7 +253,7 @@ public final class JavaModuleInsight extends ModuleInsight {
     return root instanceof JavaModuleSourceRoot;
   }
 
-  private static class ModuleInfo {
+  private static final class ModuleInfo {
     final String name;
     final Set<String> requiresModules = new HashSet<>();
     final Set<String> exportsPackages = new HashSet<>();

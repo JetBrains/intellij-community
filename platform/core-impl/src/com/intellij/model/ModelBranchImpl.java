@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public class ModelBranchImpl implements ModelBranch {
+public final class ModelBranchImpl implements ModelBranch {
   private final Map<VirtualFile, VirtualFile> myVFileCopies = new HashMap<>();
   private final Map<Document, List<DocumentEvent>> myDocumentChanges = new HashMap<>();
   private final List<Runnable> myAfterMerge = new ArrayList<>();

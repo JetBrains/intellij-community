@@ -38,7 +38,7 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
 /**
  * A collection of methods for retrieving history information from native Git.
  */
-public class GitHistoryUtils {
+public final class GitHistoryUtils {
   private static final Logger LOG = Logger.getInstance(GitHistoryUtils.class);
 
   private GitHistoryUtils() {

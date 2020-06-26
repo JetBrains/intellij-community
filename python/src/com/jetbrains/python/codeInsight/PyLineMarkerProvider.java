@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparatorUtil.Provider {
 
-  private static class TooltipProvider implements Function<PsiElement, String> {
+  private static final class TooltipProvider implements Function<PsiElement, String> {
     private final String myText;
 
     private TooltipProvider(String text) {

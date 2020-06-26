@@ -94,7 +94,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
     StringContentIndentUtil.updateTimestamp(myEditor);
   }
 
-  private static class StringContentIndent {
+  private static final class StringContentIndent {
 
     private final int column;
     private final int startOffset;
@@ -150,7 +150,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static class IndentCollector extends JavaRecursiveElementWalkingVisitor {
+  private static final class IndentCollector extends JavaRecursiveElementWalkingVisitor {
 
     private final Document myDocument;
     private final List<StringContentIndent> myIndents = new ArrayList<>();
@@ -185,7 +185,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       return myIndents;
     }
 
-    private static class TextBlockModel {
+    private static final class TextBlockModel {
       private final int myBaseIndent;
       private final TextRange myRange;
 

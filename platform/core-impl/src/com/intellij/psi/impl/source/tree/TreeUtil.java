@@ -288,7 +288,7 @@ public final class TreeUtil {
                                                  final IElementType searchedType,
                                                  final CommonParentState commonParent,
                                                  final boolean expandChameleons) {
-    class MyVisitor extends RecursiveTreeElementWalkingVisitor {
+    final class MyVisitor extends RecursiveTreeElementWalkingVisitor {
       private TreeElement result;
 
       private MyVisitor(boolean doTransform) {

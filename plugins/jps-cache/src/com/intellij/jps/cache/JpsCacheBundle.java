@@ -7,7 +7,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class JpsCacheBundle extends DynamicBundle {
+public final class JpsCacheBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.JpsCacheBundle";
   private static final JpsCacheBundle INSTANCE = new JpsCacheBundle();
 

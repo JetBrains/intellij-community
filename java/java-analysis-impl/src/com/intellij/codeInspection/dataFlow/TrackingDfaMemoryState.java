@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
@@ -67,7 +67,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         }
       }
     });
-    
+
     for (EqClass eqClass : getNonTrivialEqClasses()) {
       for (DfaVariableValue var : eqClass) {
         Set<Relation> set = result.computeIfAbsent(var, k -> new HashSet<>());
@@ -146,9 +146,9 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
    * Records a bridge changes. A bridge states are states which process the same input instruction,
    * but in result jump to another place in the program (other than this state target).
    * A bridge change is the difference between this state and all states which have different
-   * target instruction. Bridges allow to track what else is processed in parallel with current state, 
+   * target instruction. Bridges allow to track what else is processed in parallel with current state,
    * including states which may not arrive into target place. E.g. consider two states like this:
-   * 
+   *
    * <pre>
    *   this_state  other_state
    *       |            |
@@ -158,11 +158,11 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
    *       |
    *   always_true_condition <-- explanation is requested here
    * </pre>
-   * 
-   * Thanks to the bridge we know that {@code some_condition} could be important for 
+   *
+   * Thanks to the bridge we know that {@code some_condition} could be important for
    * {@code always_true_condition} explanation.
-   * 
-   * @param instruction instruction which 
+   *
+   * @param instruction instruction which
    * @param bridgeStates
    */
   void addBridge(Instruction instruction, List<TrackingDfaMemoryState> bridgeStates) {
@@ -214,7 +214,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     }
   }
 
-  static class Change {
+  static final class Change {
     final @NotNull Set<Relation> myRemovedRelations;
     final @NotNull Set<Relation> myAddedRelations;
     final @NotNull DfType myOldType;
@@ -281,13 +281,13 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       myTopOfStack = topOfStack;
       myBridgeChanges = bridgeChanges;
     }
-    
+
     void reset() {
       for (MemoryStateChange change = this; change != null; change = change.getPrevious()) {
         change.myCursor = 0;
       }
     }
-    
+
     boolean advance() {
       if (myCursor < myPrevious.size() && !myPrevious.get(myCursor).advance()) {
         myCursor++;
@@ -329,7 +329,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         return bridgeVarChange != null && bridgeVarChange.myAddedRelations.stream().anyMatch(relationPredicate);
       }, startFromSelf);
     }
-    
+
     @NotNull
     <T> FactDefinition<T> findFact(DfaValue value, FactExtractor<T> extractor) {
       if (value instanceof DfaVariableValue) {
@@ -481,7 +481,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       return "STATE_MERGE";
     }
   }
-  
+
   static class FactDefinition<T> {
     final @Nullable MemoryStateChange myChange;
     final @NotNull T myFact;
@@ -496,18 +496,18 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       return myFact + " @ " + myChange;
     }
   }
-  
+
   interface FactExtractor<T> {
     @NotNull T extract(DfType type);
-    
+
     static FactExtractor<DfaNullability> nullability() {
       return DfaNullability::fromDfType;
     }
-    
+
     static FactExtractor<TypeConstraint> constraint() {
       return TypeConstraint::fromDfType;
     }
-    
+
     static FactExtractor<LongRangeSet> range() {
       return DfLongType::extractRange;
     }

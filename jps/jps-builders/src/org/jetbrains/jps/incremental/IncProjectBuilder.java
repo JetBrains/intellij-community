@@ -864,7 +864,7 @@ public final class IncProjectBuilder {
     }
   }
 
-  private static class BuildChunkTask {
+  private static final class BuildChunkTask {
     private final BuildTargetChunk myChunk;
     private final Set<BuildChunkTask> myNotBuiltDependencies = new THashSet<>();
     private final List<BuildChunkTask> myTasksDependsOnThis = new ArrayList<>();
@@ -907,7 +907,7 @@ public final class IncProjectBuilder {
     }
   }
 
-  private class BuildParallelizer {
+  private final class BuildParallelizer {
     private final ExecutorService myParallelBuildExecutor = AppExecutorUtil.createCustomPriorityQueueBoundedApplicationPoolExecutor(
       "IncProjectBuilder Executor Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS, (o1, o2) -> {
       int p1 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o1).priority : 1;

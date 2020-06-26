@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Comparator;
 
-public class TreeNodeComparator implements Comparator<DefaultMutableTreeNode> {
+public final class TreeNodeComparator implements Comparator<DefaultMutableTreeNode> {
 
   public static final TreeNodeComparator INSTANCE = new TreeNodeComparator();
 

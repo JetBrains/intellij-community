@@ -132,7 +132,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           final PsiLambdaExpression lambdaExpression =
             LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)element, false, true);
           if (lambdaExpression != null) {
-            processMethodParams(((JavaChangeInfo)changeInfo), interfaceMethod, elementFactory, PsiSubstitutor.EMPTY, 
+            processMethodParams(((JavaChangeInfo)changeInfo), interfaceMethod, elementFactory, PsiSubstitutor.EMPTY,
                                 lambdaExpression.getParameterList(), lambdaExpression.getBody());
           }
         }
@@ -1088,7 +1088,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
   private static void resolveParameterVsFieldsConflicts(final PsiParameter[] newParms,
                                                         final PsiParameterList list,
-                                                        boolean[] toRemoveParm, 
+                                                        boolean[] toRemoveParm,
                                                         final PsiElement methodBody) throws IncorrectOperationException {
     List<FieldConflictsResolver> conflictResolvers = new ArrayList<>();
     for (PsiParameter parameter : newParms) {
@@ -1133,7 +1133,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
   }
 
-  public static class ConflictSearcher {
+  public static final class ConflictSearcher {
     private final JavaChangeInfo myChangeInfo;
 
     private ConflictSearcher(@NotNull JavaChangeInfo changeInfo) {

@@ -319,7 +319,7 @@ public class HotSwapUIImpl extends HotSwapUI {
     myAskBeforeHotswap = false;
   }
 
-  private static class MyCompilationStatusListener implements ProjectTaskListener {
+  private static final class MyCompilationStatusListener implements ProjectTaskListener {
 
     private final THashSet<File> myOutputRoots;
     private final Project myProject;

@@ -659,7 +659,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  private static class TargetReloader implements CopyMoveReloadHelper {
+  private static final class TargetReloader implements CopyMoveReloadHelper {
     private final RepositoryTreeNode myDialogParent;
     private final Url myDst;
     private final RepositoryTreeNode mySourceNode;
@@ -697,7 +697,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  private static class MoveSourceReloader implements CopyMoveReloadHelper {
+  private static final class MoveSourceReloader implements CopyMoveReloadHelper {
     private final RepositoryTreeNode mySource;
     private final RepositoryTreeNode myParent;
 
@@ -820,7 +820,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  private static class AfterDeletionSelectionInstaller implements Expander {
+  private static final class AfterDeletionSelectionInstaller implements Expander {
     private final RepositoryTreeNode myParentNode;
     private final String myDeletedNodeName;
     private final boolean myIsFolder;

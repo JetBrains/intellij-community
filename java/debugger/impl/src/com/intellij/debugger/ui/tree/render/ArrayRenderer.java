@@ -187,7 +187,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     }
   }
 
-  private static class ArrayValuesCache {
+  private static final class ArrayValuesCache {
     private final ArrayReference myArray;
     private List<Value> myCachedValues = Collections.emptyList();
     private int myCachedStartIndex;

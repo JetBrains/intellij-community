@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class RemoteRevisionsCache implements VcsListener {
+public final class RemoteRevisionsCache implements VcsListener {
   private static final Logger LOG = Logger.getInstance(RemoteRevisionsCache.class);
 
   public static final Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<>("REMOTE_VERSION_CHANGED", Runnable.class);

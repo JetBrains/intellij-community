@@ -63,7 +63,7 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
  * @see PyPsiUtils for utilities used in Python PSI API
  * @see PyUiUtil for UI-related utilities for Python (available in intellij.python.community.impl)
  */
-public class PyUtil {
+public final class PyUtil {
 
   private static final boolean VERBOSE_MODE = System.getenv().get("_PYCHARM_VERBOSE_MODE") != null;
 
@@ -1186,7 +1186,7 @@ public class PyUtil {
     return name != null && (name.contains("BaseException") || name.startsWith("exceptions."));
   }
 
-  public static class MethodFlags {
+  public static final class MethodFlags {
 
     private final boolean myIsStaticMethod;
     private final boolean myIsMetaclassMethod;
@@ -1783,7 +1783,7 @@ public class PyUtil {
     }
   }
 
-  public static class IterHelper {  // TODO: rename sanely
+  public static final class IterHelper {  // TODO: rename sanely
     private IterHelper() {}
 
     @Nullable

@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 
-public class WhiteListGroupRules {
+public final class WhiteListGroupRules {
   public static final WhiteListGroupRules EMPTY =
     new WhiteListGroupRules(Collections.emptySet(), Collections.emptyMap(), WhiteListGroupContextData.EMPTY);
 

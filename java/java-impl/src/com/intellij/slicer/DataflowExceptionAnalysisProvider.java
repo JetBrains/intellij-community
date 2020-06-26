@@ -91,7 +91,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     }
     return null;
   }
-  
+
   private static @Nullable PsiExpression getArgFromContract(
     PsiExpression[] args, ContractValue condition, ContractValue expectedValue, boolean equal) {
     int pos = condition.getArgumentComparedTo(expectedValue, equal).orElse(-1);
@@ -252,7 +252,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
         if (result == null) return null;
       }
     }
-    return result; 
+    return result;
   }
 
   private @Nullable AnalysisStartingPoint fromClassCastException(@NotNull PsiElement anchor, @Nullable String actualClass) {
@@ -273,7 +273,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     }
     return null;
   }
-  
+
   private @Nullable PsiType getPsiType(String classCastExceptionType) {
     int dim = 0;
     while (classCastExceptionType.startsWith("[", dim)) {
@@ -321,7 +321,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     return new DfaFromStacktraceAction(analysis, text, nextFramesSupplier);
   }
 
-  private class DfaFromStacktraceAction extends AnAction {
+  private final class DfaFromStacktraceAction extends AnAction {
     private final @NotNull AnalysisStartingPoint myAnalysis;
     private @NotNull final Supplier<List<StackLine>> myNextFramesSupplier;
 

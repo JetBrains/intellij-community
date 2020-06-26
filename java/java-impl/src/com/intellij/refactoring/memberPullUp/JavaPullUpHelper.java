@@ -328,7 +328,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     }
   }
 
-  private static class Initializer {
+  private static final class Initializer {
     public final PsiStatement initializer;
     public final Set<PsiField> movedFieldsUsed;
     public final Set<PsiParameter> usedParameters;
@@ -553,7 +553,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     SyntaxTraverser.psiTraverser(root).filter(PsiStatement.class).addAllTo(collected);
   }
 
-  private static class ParametersAndMovedFieldsUsedCollector extends JavaRecursiveElementWalkingVisitor {
+  private static final class ParametersAndMovedFieldsUsedCollector extends JavaRecursiveElementWalkingVisitor {
     private final Set<PsiField> myMovedFields;
     private final Set<PsiField> myUsedFields;
 
@@ -694,7 +694,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     }
   }
 
-  private class StaticReferencesCollector extends ClassMemberReferencesVisitor {
+  private final class StaticReferencesCollector extends ClassMemberReferencesVisitor {
     private final ArrayList<PsiJavaCodeReferenceElement> myReferences;
     private final ArrayList<PsiElement> myReferees;
     private final ArrayList<PsiClass> myRefereeClasses;

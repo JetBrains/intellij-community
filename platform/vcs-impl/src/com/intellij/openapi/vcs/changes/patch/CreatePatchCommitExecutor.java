@@ -79,7 +79,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     return new CreatePatchCommitSession(project, commitContext, patchBuilder);
   }
 
-  private static class CreatePatchCommitSession implements CommitSession {
+  private static final class CreatePatchCommitSession implements CommitSession {
     @NotNull private final Project myProject;
     @NotNull private final CommitContext myCommitContext;
     @NotNull private final PatchBuilder myPatchBuilder;

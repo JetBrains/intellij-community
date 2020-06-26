@@ -631,7 +631,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private class DiffToolToggleAction extends AnAction implements DumbAware {
+  private final class DiffToolToggleAction extends AnAction implements DumbAware {
     @NotNull private final DiffTool myDiffTool;
 
     private DiffToolToggleAction(@NotNull DiffTool tool) {

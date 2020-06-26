@@ -22,7 +22,7 @@ public final class ResolveProfiler {
   private static final ThreadLocal<ThreadInfo> threadMap = new ThreadLocal<>();
   private static volatile int fileCount;
 
-  private static class ThreadInfo {
+  private static final class ThreadInfo {
     private final String myFileName;
     private final Deque<Long> myTimeStack = new ArrayDeque<>();
 

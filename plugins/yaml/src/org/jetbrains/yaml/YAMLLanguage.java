@@ -4,7 +4,7 @@ package org.jetbrains.yaml;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
-public class YAMLLanguage extends Language {
+public final class YAMLLanguage extends Language {
   public static final YAMLLanguage INSTANCE = new YAMLLanguage();
 
   private YAMLLanguage() {

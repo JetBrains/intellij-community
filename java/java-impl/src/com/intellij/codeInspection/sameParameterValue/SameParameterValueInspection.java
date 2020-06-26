@@ -220,7 +220,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 
-  public static class InlineParameterValueFix implements LocalQuickFix {
+  public static final class InlineParameterValueFix implements LocalQuickFix {
     private final String myValue;
     private final String myParameterName;
 
@@ -357,7 +357,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     }
   }
 
-  private class LocalSameParameterValueInspection extends AbstractBaseUastLocalInspectionTool {
+  private final class LocalSameParameterValueInspection extends AbstractBaseUastLocalInspectionTool {
     private final SameParameterValueInspection myGlobal;
 
     private LocalSameParameterValueInspection(SameParameterValueInspection global) {

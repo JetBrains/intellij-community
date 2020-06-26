@@ -277,7 +277,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     profile.setModified(true);
   }
 
-  private class AddTemplateAction extends DumbAwareAction {
+  private final class AddTemplateAction extends DumbAwareAction {
 
     private final JList<Configuration> myList;
     private final boolean myReplace;

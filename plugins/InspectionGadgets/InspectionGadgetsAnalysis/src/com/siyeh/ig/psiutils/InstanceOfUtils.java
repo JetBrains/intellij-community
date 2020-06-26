@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.OptionalInt;
 
-public class InstanceOfUtils {
+public final class InstanceOfUtils {
 
   private InstanceOfUtils() {}
 
@@ -175,7 +175,7 @@ public class InstanceOfUtils {
     }
     return false;
   }
-  
+
   /**
    * @param cast a cast expression to find parent instanceof for
    * @return a traditional instanceof expression that is a candidate to introduce a pattern that covers given cast.
@@ -309,8 +309,8 @@ public class InstanceOfUtils {
   }
 
   @Contract("null, _, _ -> null")
-  private static PsiInstanceOfExpression findInstanceOf(@Nullable PsiExpression condition, 
-                                                        @NotNull PsiTypeCastExpression cast, 
+  private static PsiInstanceOfExpression findInstanceOf(@Nullable PsiExpression condition,
+                                                        @NotNull PsiTypeCastExpression cast,
                                                         boolean whenTrue) {
     if (condition == null) return null;
     if (condition instanceof PsiParenthesizedExpression) {

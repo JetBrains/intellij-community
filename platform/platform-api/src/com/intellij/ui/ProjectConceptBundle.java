@@ -10,7 +10,7 @@ import org.jetbrains.annotations.PropertyKey;
  * This message bundle contains strings which somehow mention 'project' concept. Other IDEs may use a different term for that (e.g. Rider
  * use 'solution'). Don't use this class directly, use {@link IdeUICustomization#projectMessage} instead.
  */
-class ProjectConceptBundle extends DynamicBundle {
+final class ProjectConceptBundle extends DynamicBundle {
   @NonNls public static final String BUNDLE = "messages.ProjectConceptBundle";
   private static final ProjectConceptBundle INSTANCE = new ProjectConceptBundle();
 

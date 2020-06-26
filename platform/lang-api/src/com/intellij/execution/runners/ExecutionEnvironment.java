@@ -262,7 +262,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     return myDataContext;
   }
 
-  private static class CachingDataContext implements DataContext {
+  private static final class CachingDataContext implements DataContext {
     private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE};
     private final Map<String, Object> values = new HashMap<>();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.intermediaryVariable;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -304,7 +304,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     new CommentTracker().deleteAndRestoreComments(removedElement);
   }
 
-  private static class Mover {
+  private static final class Mover {
     final ControlFlow flow;
     final PsiStatement enclosingStatement;
     final PsiVariable resultVariable;
@@ -587,7 +587,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     }
   }
 
-  private static class ReturnContext {
+  private static final class ReturnContext {
     final PsiReturnStatement returnStatement;
     final PsiCodeBlock returnScope;
     final PsiType returnType;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -127,7 +127,7 @@ public class GoToHashOrRefPopup {
     myPopup.showInCenterOf(anchor);
   }
 
-  private class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {
+  private final class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {
     @NotNull private final Project myProject;
     @NotNull private final VcsLogColorManager myColorManager;
     @NotNull private final Comparator<? super VcsRef> myReferenceComparator;

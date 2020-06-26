@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -152,7 +152,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     return new ArrayList<>(tests);
   }
 
-  private static class TestMappings {
+  private static final class TestMappings {
     private final Map<String, PsiClass> classes;
     private final Map<String, String> methods;
 

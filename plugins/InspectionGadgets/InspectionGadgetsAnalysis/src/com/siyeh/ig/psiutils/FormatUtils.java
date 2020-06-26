@@ -26,10 +26,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class FormatUtils {
+public final class FormatUtils {
   public static final CallMatcher STRING_FORMATTED = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "formatted")
     .parameterTypes("java.lang.Object...");
-  
+
 
   /**
    */

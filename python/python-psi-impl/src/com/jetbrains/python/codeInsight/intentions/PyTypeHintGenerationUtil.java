@@ -35,7 +35,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyTypeHintGenerationUtil {
+public final class PyTypeHintGenerationUtil {
 
   public static final String TYPE_COMMENT_PREFIX = "# type: ";
 

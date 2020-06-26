@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.lang.FileASTNode;
@@ -1164,7 +1164,7 @@ public class PyStubsTest extends PyTestCase {
     assertFalse(fieldsTypesIterator.hasNext());
   }
 
-  private static class DataclassFieldChecker {
+  private static final class DataclassFieldChecker {
 
     @NotNull
     private final PyClass myClass;

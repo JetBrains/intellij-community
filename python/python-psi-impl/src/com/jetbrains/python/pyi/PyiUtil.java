@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * @author vlan
  */
-public class PyiUtil {
+public final class PyiUtil {
   private PyiUtil() {}
 
   public static boolean isInsideStubAnnotation(@NotNull PsiElement element) {

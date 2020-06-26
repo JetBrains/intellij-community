@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.callMatcher;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -210,7 +210,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     return withContextFilter(element -> PsiUtil.getLanguageLevel(element).isAtLeast(level));
   }
 
-  class Simple implements CallMatcher {
+  final class Simple implements CallMatcher {
     static final Simple ENUM_VALUES = new Simple("", Collections.singleton("values"), ArrayUtilRt.EMPTY_STRING_ARRAY, CallType.ENUM_STATIC);
     static final Simple ENUM_VALUE_OF =
       new Simple("", Collections.singleton("valueOf"), new String[]{CommonClassNames.JAVA_LANG_STRING}, CallType.ENUM_STATIC);

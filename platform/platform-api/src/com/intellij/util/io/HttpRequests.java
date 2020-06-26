@@ -238,7 +238,7 @@ public final class HttpRequests {
     return builder.toString();
   }
 
-  private static class RequestBuilderImpl extends RequestBuilder {
+  private static final class RequestBuilderImpl extends RequestBuilder {
     private final String myUrl;
     private int myConnectTimeout = CONNECTION_TIMEOUT;
     private int myTimeout = READ_TIMEOUT;
@@ -351,7 +351,7 @@ public final class HttpRequests {
     }
   }
 
-  private static class RequestImpl implements Request, AutoCloseable {
+  private static final class RequestImpl implements Request, AutoCloseable {
     private final RequestBuilderImpl myBuilder;
     private String myUrl;
     private URLConnection myConnection;

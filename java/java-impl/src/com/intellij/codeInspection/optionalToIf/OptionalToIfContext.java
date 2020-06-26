@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.codeInspection.streamToLoop.ChainContext;
@@ -159,7 +159,7 @@ class OptionalToIfContext extends ChainContext {
     }
   }
 
-  private static class ChainReturn extends ChainExpressionModel {
+  private static final class ChainReturn extends ChainExpressionModel {
 
     private final PsiReturnStatement myChainReturnCopy;
     private PsiExpression myChainExpressionCopy;
@@ -203,7 +203,7 @@ class OptionalToIfContext extends ChainContext {
     }
   }
 
-  private static class ChainAssignment extends ChainExpressionModel {
+  private static final class ChainAssignment extends ChainExpressionModel {
 
     private final String myName;
 

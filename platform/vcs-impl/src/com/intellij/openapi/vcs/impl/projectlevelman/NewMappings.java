@@ -534,7 +534,7 @@ public class NewMappings implements Disposable {
     return new MyVcsActivator(toAdd, toRemove);
   }
 
-  private static class MyVcsActivator {
+  private static final class MyVcsActivator {
     @NotNull private final Collection<? extends AbstractVcs> myAddVcses;
     @NotNull private final Collection<? extends AbstractVcs> myRemoveVcses;
 
@@ -575,7 +575,7 @@ public class NewMappings implements Disposable {
     updateVcsMappings(newMappings);
   }
 
-  public static class MappedRoot {
+  public static final class MappedRoot {
     @Nullable public final AbstractVcs vcs;
     @NotNull public final VcsDirectoryMapping mapping;
     @NotNull public final VirtualFile root;
@@ -602,7 +602,7 @@ public class NewMappings implements Disposable {
     }
   }
 
-  private static class Mappings {
+  private static final class Mappings {
     @NotNull public final List<MappedRoot> mappedRoots;
     @NotNull public final Disposable filePointerDisposable;
 
@@ -612,7 +612,7 @@ public class NewMappings implements Disposable {
     }
   }
 
-  private static class RootMapping {
+  private static final class RootMapping {
     private final Map<VirtualFile, MappedRoot> myVFMap = new HashMap<>();
     private final FilePathMapping<MappedRoot> myPathMapping = new FilePathMapping<>(SystemInfo.isFileSystemCaseSensitive);
 

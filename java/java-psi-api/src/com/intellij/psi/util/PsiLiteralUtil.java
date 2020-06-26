@@ -143,7 +143,7 @@ public class PsiLiteralUtil {
   }
 
   /**
-   * Convert a string that contains a character (e.g. ""\n"" or ""\\"", etc.) 
+   * Convert a string that contains a character (e.g. ""\n"" or ""\\"", etc.)
    * to a character literal string (e.g. "'\n'" or "'\\'", etc.)
    *
    * @param text a string to convert
@@ -565,7 +565,7 @@ public class PsiLiteralUtil {
     return i;
   }
 
-  private static class TextBlockModel {
+  private static final class TextBlockModel {
 
     private final String[] lines;
     private final int indent;

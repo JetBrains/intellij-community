@@ -300,7 +300,7 @@ public class ChangesViewManager implements ChangesViewEx,
     myToolWindowPanel.openEditorPreview();
   }
 
-  public static class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
+  public static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
     @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
     @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
@@ -854,7 +854,7 @@ public class ChangesViewManager implements ChangesViewEx,
       return new ChangesViewCommitPanel(myView, changesViewToolWindowPanel);
   }
 
-  private static class MyContentDnDTarget extends VcsToolwindowDnDTarget {
+  private static final class MyContentDnDTarget extends VcsToolwindowDnDTarget {
     private MyContentDnDTarget(@NotNull Project project, @NotNull Content content) {
       super(project, content);
     }

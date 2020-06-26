@@ -160,7 +160,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     return new MyHistorySession(fileRevisionList, filePath);
   }
 
-  private static class MyHistorySession extends VcsAbstractHistorySession {
+  private static final class MyHistorySession extends VcsAbstractHistorySession {
     private final FilePath myFilePath;
 
     private MyHistorySession(List<? extends VcsFileRevision> revisions, FilePath filePath) {
@@ -329,7 +329,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
   }
 
-  private static class VcsFileRevisionComparator implements Comparator<VcsFileRevision> {
+  private static final class VcsFileRevisionComparator implements Comparator<VcsFileRevision> {
 
     public static final VcsFileRevisionComparator INSTANCE = new VcsFileRevisionComparator();
 

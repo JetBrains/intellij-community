@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.Nullability;
@@ -708,7 +708,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     FUCounterUsageLogger.getInstance().logEvent("java.extract.method","dialog.closed", featureUsageData);
   }
 
-  private static class ParameterInfo {
+  private static final class ParameterInfo {
     final int myIndex;
     final String myName;
     final PsiType myType;

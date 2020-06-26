@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -26,7 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
-public class TestDataUtil {
+public final class TestDataUtil {
   private static final String TESTDATA_FILE_AFTER_MARKER = "after";
   private static final String TESTDATA_FILE_BEFORE_MARKER = "before";
   public static final String BEFORE_AFTER_DISPLAY_NAME_PART = TESTDATA_FILE_BEFORE_MARKER + "/" + TESTDATA_FILE_AFTER_MARKER;

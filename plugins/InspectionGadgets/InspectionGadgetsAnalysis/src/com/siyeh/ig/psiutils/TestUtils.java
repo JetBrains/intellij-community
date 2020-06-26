@@ -38,7 +38,7 @@ import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
-public class TestUtils {
+public final class TestUtils {
   public static final String RUN_WITH = "org.junit.runner.RunWith";
 
   private static final CallMatcher ASSERT_THROWS =

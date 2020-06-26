@@ -22,7 +22,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListCompExpression;
 import org.jetbrains.annotations.Nullable;
 
-public class PyListCompExpressionNavigator {
+public final class PyListCompExpressionNavigator {
   private PyListCompExpressionNavigator() {
   }
 

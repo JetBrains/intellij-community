@@ -217,7 +217,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
     myTagListener = tagListener;
   }
 
-  private class TaskButton extends TagButton implements DnDSource {
+  private final class TaskButton extends TagButton implements DnDSource {
     private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
     private BeforeRunTask<?> myTask;
 

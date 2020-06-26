@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.psi.*;
@@ -16,7 +16,7 @@ import static com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces;
 /**
  * A model which represents an 'if' condition which could be replaced with '?:', '&&' or '||' expression
  */
-public class IfConditionalModel extends ConditionalModel {
+public final class IfConditionalModel extends ConditionalModel {
 
   private final @NotNull PsiStatement myThenBranch;
   private final @NotNull PsiStatement myElseBranch;
@@ -62,7 +62,7 @@ public class IfConditionalModel extends ConditionalModel {
    *   if(bar) return "foobar";
    * }
    * return "none";}</pre>
-   * The model for inner {@code if} could be extracted with {@code condition = bar; thenBranch = "foobar"; elseBranch = "none"} when 
+   * The model for inner {@code if} could be extracted with {@code condition = bar; thenBranch = "foobar"; elseBranch = "none"} when
    * this parameter is true.
    * @return null if statement can't be converted, model otherwise
    */

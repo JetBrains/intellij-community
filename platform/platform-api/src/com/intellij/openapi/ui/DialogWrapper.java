@@ -340,7 +340,7 @@ public abstract class DialogWrapper {
    * or validation description with component where problem has been found.
    *
    * @return {@code null} if everything is OK or validation descriptor
-   * 
+   *
    * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
    */
   @Nullable
@@ -357,7 +357,7 @@ public abstract class DialogWrapper {
    *
    * @return {@code List<ValidationInfo>} of invalid fields. List
    * is empty if no errors found.
-   * 
+   *
    * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
    */
   @NotNull
@@ -1885,7 +1885,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  protected class CancelAction extends DialogWrapperAction {
+  protected final class CancelAction extends DialogWrapperAction {
     private CancelAction() {
       super(CommonBundle.getCancelButtonText());
       addPropertyChangeListener(myRepaintOnNameChangeListener);
@@ -1926,7 +1926,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  private class HelpAction extends AbstractAction {
+  private final class HelpAction extends AbstractAction {
     private HelpAction() {
       super(CommonBundle.getHelpButtonText());
     }
@@ -2045,7 +2045,7 @@ public abstract class DialogWrapper {
     return findInstance(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
   }
 
-  private class ErrorText extends JPanel {
+  private final class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
     private final List<ValidationInfo> errors = new ArrayList<>();
 

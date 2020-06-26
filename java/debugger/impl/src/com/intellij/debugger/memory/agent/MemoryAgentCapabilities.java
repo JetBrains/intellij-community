@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.agent;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 import java.util.Set;
 
-public class MemoryAgentCapabilities {
+public final class MemoryAgentCapabilities {
   static final MemoryAgentCapabilities DISABLED = new MemoryAgentCapabilities(false, EnumSet.noneOf(Capability.class));
 
   private final boolean myIsLoaded;

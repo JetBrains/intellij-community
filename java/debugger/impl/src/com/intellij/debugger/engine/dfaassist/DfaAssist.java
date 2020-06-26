@@ -56,7 +56,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class DfaAssist implements DebuggerContextListener, Disposable {
+public final class DfaAssist implements DebuggerContextListener, Disposable {
   private static final int CLEANUP_DELAY_MILLIS = 300;
   private final @NotNull Project myProject;
   private InlaySet myInlays = new InlaySet(null, Collections.emptyList()); // modified from EDT only
@@ -64,14 +64,14 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
   private volatile ScheduledFuture<?> myScheduledCleanup;
   private final DebuggerStateManager myManager;
   private volatile boolean myActive;
-  
+
   private DfaAssist(@NotNull Project project, @NotNull DebuggerStateManager manager) {
     myProject = project;
     myManager = manager;
     setActive(ViewsGeneralSettings.getInstance().USE_DFA_ASSIST);
   }
 
-  private static class InlaySet implements Disposable {
+  private static final class InlaySet implements Disposable {
     private final @NotNull List<Inlay<?>> myInlays;
 
     private InlaySet(@Nullable Editor editor, @NotNull List<Inlay<?>> inlays) {
@@ -93,7 +93,7 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
       myInlays.clear();
     }
   }
-  
+
   @Override
   public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
     if (event == DebuggerSession.Event.DISPOSE) {
@@ -149,7 +149,7 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
           try {
             return createDfaRunner(proxy, pointer.getElement());
           }
-          catch (VMDisconnectedException | VMOutOfMemoryException | InternalException | 
+          catch (VMDisconnectedException | VMOutOfMemoryException | InternalException |
             EvaluateException | InconsistentDebugInfoException | InvalidStackFrameException ignore) {
             return null;
           }
@@ -318,9 +318,9 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
         if (parent instanceof PsiMethod || parent instanceof PsiLambdaExpression || parent instanceof PsiClassInitializer ||
             // We cannot properly restore context if we started from finally, so let's analyze just finally block
             parent instanceof PsiTryStatement && ((PsiTryStatement)parent).getFinallyBlock() == e ||
-            parent instanceof PsiBlockStatement && 
-            (parent.getParent() instanceof PsiLoopStatement || 
-             parent.getParent() instanceof PsiSwitchLabeledRuleStatement && 
+            parent instanceof PsiBlockStatement &&
+            (parent.getParent() instanceof PsiLoopStatement ||
+             parent.getParent() instanceof PsiSwitchLabeledRuleStatement &&
              ((PsiSwitchLabeledRuleStatement)parent.getParent()).getEnclosingSwitchBlock() instanceof PsiSwitchExpression)) {
           if (parent.getParent() instanceof PsiDoWhileStatement) {
             return parent.getParent();
@@ -335,7 +335,7 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
     return null;
   }
 
-  private class TurnOffDfaProcessorAction extends AnAction {
+  private final class TurnOffDfaProcessorAction extends AnAction {
     private TurnOffDfaProcessorAction() {
       super(JavaDebuggerBundle.message("action.TurnOffDfaAssist.text"),
             JavaDebuggerBundle.message("action.TurnOffDfaAssist.description"), AllIcons.Actions.Cancel);
@@ -345,9 +345,9 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
       Disposer.dispose(DfaAssist.this);
     }
   }
-  
+
   /**
-   * Install dataflow assistant to the specified debugging session 
+   * Install dataflow assistant to the specified debugging session
    * @param javaSession JVM debugger session to install an assistant to
    * @param session X debugger session
    */

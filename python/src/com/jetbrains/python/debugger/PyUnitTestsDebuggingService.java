@@ -139,7 +139,7 @@ final class PyUnitTestsDebuggingService {
     return false;
   }
 
-  private static class FailedTestInlayRenderer implements EditorCustomElementRenderer {
+  private static final class FailedTestInlayRenderer implements EditorCustomElementRenderer {
 
     private final static float HEIGHT_FACTOR = .5f;
     private final static short RIGHT_BAR_THICKNESS = 2;
@@ -250,7 +250,7 @@ final class PyUnitTestsDebuggingService {
     return PyBundle.messagePointer("debugger.error.in.test.setup.or.teardown.caption").get();
   }
 
-  private static class FailedTestGutterIconRenderer extends GutterIconRenderer {
+  private static final class FailedTestGutterIconRenderer extends GutterIconRenderer {
 
     private static final FailedTestGutterIconRenderer INSTANCE = new FailedTestGutterIconRenderer();
 

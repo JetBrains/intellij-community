@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -600,7 +600,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     return BuildType.BUILD;
   }
 
-  private static class EventsProcessor {
+  private static final class EventsProcessor {
     private final Semaphore myProcessingEnabled = new Semaphore();
     private final Executor myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildSession.EventsProcessor.EventsProcessor Pool", SharedThreadPool.getInstance());
 

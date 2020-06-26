@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -298,7 +298,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     protected abstract void handleSimplification(@NotNull PsiMethodCallExpression call, @NotNull OptionalSimplificationFix fix);
   }
 
-  private static class MapOrElseCase extends BasicSimplificationInspection {
+  private static final class MapOrElseCase extends BasicSimplificationInspection {
     private final OrElseType myType;
 
     private MapOrElseCase(OrElseType type) {myType = type;}
@@ -432,7 +432,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private static class RewrappingCase implements ChainSimplificationCase<RewrappingCase.Context> {
+  private static final class RewrappingCase implements ChainSimplificationCase<RewrappingCase.Context> {
     private final CallMatcher myWrapper;
     private final Type myType;
 
@@ -495,7 +495,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return OPTIONAL_OR_ELSE;
     }
 
-    private static class Context {
+    private static final class Context {
       private final PsiExpression myQualifier;
       private final PsiExpression myCallToReplace;
 
@@ -511,7 +511,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private static class OrElseReturnCase implements ChainSimplificationCase<OrElseReturnCase.Context> {
+  private static final class OrElseReturnCase implements ChainSimplificationCase<OrElseReturnCase.Context> {
     private final OrElseType myType;
 
     private OrElseReturnCase(OrElseType type) {myType = type;}
@@ -575,7 +575,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return OPTIONAL_OR_ELSE_GET;
     }
 
-    private static class Context {
+    private static final class Context {
       @NotNull private final PsiMethodCallExpression myOrElseCall;
       @NotNull private final PsiExpression myDefaultExpression;
       @NotNull private final PsiStatement myNextStatement;
@@ -592,7 +592,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private static class FlipPresentOrEmptyCase implements ChainSimplificationCase<FlipPresentOrEmptyCase.Context> {
+  private static final class FlipPresentOrEmptyCase implements ChainSimplificationCase<FlipPresentOrEmptyCase.Context> {
     // Type of the inspection (may be either present or empty)
     private final boolean myIsPresent;
 
@@ -644,14 +644,14 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return OPTIONAL_IS_EMPTY;
     }
 
-    private static class Context {
+    private static final class Context {
       private final String myReplacement;
 
       private Context(String replacement) {myReplacement = replacement;}
     }
   }
 
-  private static class OrElseNonNullCase implements ChainSimplificationCase<OrElseNonNullCase.Context> {
+  private static final class OrElseNonNullCase implements ChainSimplificationCase<OrElseNonNullCase.Context> {
     private final OrElseType myType;
 
     private OrElseNonNullCase(OrElseType type) {myType = type;}
@@ -729,7 +729,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return expressionStatement.getExpression();
     }
 
-    private static class Context {
+    private static final class Context {
       private final @NotNull PsiExpression myAction;
       private final @NotNull PsiStatement myConditionStatement;
       private final @NotNull PsiStatement myStatement;
@@ -813,7 +813,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return !SpecialField.OPTIONAL_VALUE.getFromQualifier(CommonDataflow.getDfType(optionalExpression)).isSuperType(DfTypes.NULL);
     }
 
-    private static class Context {
+    private static final class Context {
       private final PsiExpression myOptionalExpression;
       private final PsiMethodCallExpression myMapCall;
       private final PsiParameter myMapLambdaParameter;

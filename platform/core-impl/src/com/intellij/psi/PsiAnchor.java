@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi;
 
@@ -158,7 +158,7 @@ public abstract class PsiAnchor {
     return ((PsiFileImpl)psi.getContainingFile()).calcTreeElement().getStubbedSpine().getStubIndex(psi);
   }
 
-  private static class TreeRangeReference extends PsiAnchor {
+  private static final class TreeRangeReference extends PsiAnchor {
     private final VirtualFile myVirtualFile;
     private final Project myProject;
     private final Identikit myInfo;
@@ -268,7 +268,7 @@ public abstract class PsiAnchor {
     }
   }
 
-  private static class PsiFileReference extends PsiAnchor {
+  private static final class PsiFileReference extends PsiAnchor {
     private final VirtualFile myFile;
     private final Project myProject;
     @NotNull private final Language myLanguage;
@@ -331,13 +331,13 @@ public abstract class PsiAnchor {
       return 31 * myFile.hashCode() + myLanguage.hashCode();
     }
   }
-  
-  private static class PsiDirectoryReference extends PsiAnchor {
+
+  private static final class PsiDirectoryReference extends PsiAnchor {
     @NotNull
     private final VirtualFile myFile;
     @NotNull
     private final Project myProject;
-    
+
     private PsiDirectoryReference(@NotNull VirtualFile file, @NotNull Project project) {
       myFile = file;
       myProject = project;
@@ -392,9 +392,9 @@ public abstract class PsiAnchor {
       if (throwIfNull) throw new AssertionError("Null file");
       return null;
     }
-    
+
     if (index == 0) return fileImpl;
-    
+
     StubbedSpine spine = fileImpl.getStubbedSpine();
     StubBasedPsiElement psi = (StubBasedPsiElement)spine.getStubPsi(index);
     if (psi == null) {
@@ -410,7 +410,7 @@ public abstract class PsiAnchor {
     return psi;
   }
 
-  public static class StubIndexReference extends PsiAnchor {
+  public static final class StubIndexReference extends PsiAnchor {
     @NotNull
     private final VirtualFile myVirtualFile;
     @NotNull

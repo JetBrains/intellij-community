@@ -41,7 +41,7 @@ import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.finder.WindowFinder.findDialog;
 import static org.fest.swing.timing.Pause.pause;
 
-public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWizardFixture> {
+public final class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWizardFixture> {
   @NotNull
   public static NewProjectWizardFixture find(@NotNull Robot robot) {
 

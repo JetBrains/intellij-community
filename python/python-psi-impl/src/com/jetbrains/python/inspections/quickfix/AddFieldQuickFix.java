@@ -233,7 +233,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     );
   }
 
-  private static class CreateFieldCallback implements Function<String, PyStatement> {
+  private static final class CreateFieldCallback implements Function<String, PyStatement> {
     private final Project myProject;
     private final String myItemName;
     private final String myInitializer;

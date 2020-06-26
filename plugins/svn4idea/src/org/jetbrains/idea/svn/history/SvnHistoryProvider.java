@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -287,7 +287,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     protected abstract void load();
   }
 
-  private static class LocalLoader extends LogLoader {
+  private static final class LocalLoader extends LogLoader {
     private Info myInfo;
 
     private LocalLoader(SvnVcs vcs, FilePath file, Revision from, Revision to, int limit, Revision peg, boolean showMergeSources) {
@@ -312,7 +312,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     protected void load() {
       Url repoRootURL = myInfo.getRepositoryRootUrl();
       String relativeUrl = getRelativeUrl(repoRootURL, myUrl);
-      
+
       if (myPI != null) {
         myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
       }
@@ -332,7 +332,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
   }
 
-  private static class RepositoryLoader extends LogLoader {
+  private static final class RepositoryLoader extends LogLoader {
     private final boolean myForceBackwards;
 
     private RepositoryLoader(SvnVcs vcs,
@@ -594,7 +594,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
   }
 
-  private static class RevisionMergeSourceInfo {
+  private static final class RevisionMergeSourceInfo {
 
     @NotNull private final VcsFileRevision revision;
 
@@ -634,7 +634,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
   }
 
-  private class MergeSourceColumnInfo extends ColumnInfo<VcsFileRevision, RevisionMergeSourceInfo> {
+  private final class MergeSourceColumnInfo extends ColumnInfo<VcsFileRevision, RevisionMergeSourceInfo> {
     private final MergeSourceRenderer myRenderer;
 
     private MergeSourceColumnInfo(final SvnHistorySession session) {
@@ -669,7 +669,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
   private static final Object MERGE_SOURCE_DETAILS_TAG = new Object();
 
-  private class MergeSourceDetailsLinkListener extends TableLinkMouseListener {
+  private final class MergeSourceDetailsLinkListener extends TableLinkMouseListener {
     private final VirtualFile myFile;
     private final Object myTag;
 
@@ -719,7 +719,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
   }
 
-  private class MergeSourceRenderer extends ColoredTableCellRenderer {
+  private final class MergeSourceRenderer extends ColoredTableCellRenderer {
     private MergeSourceDetailsLinkListener myListener;
     private final VirtualFile myFile;
 

@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * Git utilities for working with configuration
  */
-public class GitConfigUtil {
+public final class GitConfigUtil {
 
   public static final String USER_NAME = "user.name";
   public static final String USER_EMAIL = "user.email";

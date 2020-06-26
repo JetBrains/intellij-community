@@ -41,13 +41,13 @@ public class TerminalSplitActionBase extends TerminalSessionContextMenuActionBas
     return TerminalView.getWidgetByContent(content);
   }
 
-  public static class Vertical extends TerminalSplitActionBase {
+  public static final class Vertical extends TerminalSplitActionBase {
     private Vertical() {
       super(ActionsBundle.messagePointer("action.SplitVertically.text"), AllIcons.Actions.SplitVertically, true);
     }
   }
 
-  public static class Horizontal extends TerminalSplitActionBase {
+  public static final class Horizontal extends TerminalSplitActionBase {
     private Horizontal() {
       super(ActionsBundle.messagePointer("action.SplitHorizontally.text"), AllIcons.Actions.SplitHorizontally, false);
     }

@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class MethodBytecodeUtil {
+public final class MethodBytecodeUtil {
   private MethodBytecodeUtil() { }
 
   /**

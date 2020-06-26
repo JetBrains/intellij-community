@@ -27,7 +27,7 @@ import java.util.List;
 
 import static java.util.Collections.singletonList;
 
-public class TextPatchBuilder {
+public final class TextPatchBuilder {
   private static final int CONTEXT_LINES = 3;
   /**
    * @see com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider

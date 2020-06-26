@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -318,7 +318,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     return null;
   }
 
-  public static class ParameterDescriptor {
+  public static final class ParameterDescriptor {
     public final String name;
     public final NamedArgumentDescriptor descriptor;
 

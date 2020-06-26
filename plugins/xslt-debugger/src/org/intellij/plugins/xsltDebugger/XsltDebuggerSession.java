@@ -49,7 +49,7 @@ import java.util.EventListener;
  * This is the main place that interacts with the debugged XSLT processor. Waits until the processor
  * hits a breakpoint, resumes execution, etc.
  */
-public class XsltDebuggerSession implements Disposable {
+public final class XsltDebuggerSession implements Disposable {
   private static final Key<XsltDebuggerSession> DEBUGGER_SESSION = Key.create("DEBUGGER_SESSION");
 
   private final Project myProject;

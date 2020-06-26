@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.CommonBundle;
@@ -375,7 +375,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
 
-  private class MyRefresh extends DumbAwareAction {
+  private final class MyRefresh extends DumbAwareAction {
     private MyRefresh() {
       super(message("committed.changes.action.merge.highlighting.refresh.text"),
             message("committed.changes.action.merge.highlighting.refresh.description"), AllIcons.Actions.Refresh);
@@ -401,7 +401,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
   }
 
-  private class HighlightFrom extends DumbAwareToggleAction {
+  private final class HighlightFrom extends DumbAwareToggleAction {
     private HighlightFrom() {
       super(message("committed.changes.action.enable.merge.highlighting"),
             message("committed.changes.action.enable.merge.highlighting.description.text"), null);
@@ -474,7 +474,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return ListMergeStatus.MERGED.equals(mergeStatus);
   }
 
-  private class MarkAsMerged extends AbstractIntegrateChangesAction<SelectedChangeListsChecker> {
+  private final class MarkAsMerged extends AbstractIntegrateChangesAction<SelectedChangeListsChecker> {
     private final String myText;
     private final String myDescription;
     private final boolean myMarkAsMerged;

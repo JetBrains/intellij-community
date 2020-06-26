@@ -1768,7 +1768,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private class RunToCursorCommand extends StepCommand {
+  private final class RunToCursorCommand extends StepCommand {
     private final RunToCursorBreakpoint myRunToCursorBreakpoint;
     private final boolean myIgnoreBreakpoints;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.process.ProcessOutputType;
@@ -187,7 +187,7 @@ class ProcessStreamsSynchronizer {
     }
   }
 
-  private static class Chunk {
+  private static final class Chunk {
     private final @Nullable Boolean myTextEndsWithNewline;
     private final ProcessOutputType myBaseOutputType;
     private final long myCreatedNanoTime;

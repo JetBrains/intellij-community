@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class BatchEvaluator {
+public final class BatchEvaluator {
   private static final Logger LOG = Logger.getInstance(BatchEvaluator.class);
 
   private final DebugProcess myDebugProcess;

@@ -17,7 +17,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class BuilderRegistry {
+public final class BuilderRegistry {
   private static final Logger LOG = Logger.getInstance(BuilderRegistry.class);
   private static final class Holder {
     static final BuilderRegistry ourInstance = new BuilderRegistry();

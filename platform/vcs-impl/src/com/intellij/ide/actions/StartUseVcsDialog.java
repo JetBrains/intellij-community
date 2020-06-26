@@ -107,7 +107,7 @@ class StartUseVcsDialog extends DialogWrapper {
     return map;
   }
 
-  private static class VcsCombo extends JComboBox<String> {
+  private static final class VcsCombo extends JComboBox<String> {
     private VcsCombo(String @NotNull [] items) {
       super(items);
       setSelectedIndex(0);

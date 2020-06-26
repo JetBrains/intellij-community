@@ -113,7 +113,7 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
     return states;
   }
 
-  private static class MemberState {
+  private static final class MemberState {
     private final ScopedMember prevMember;
     private final Set<Problem> relatedProblems;
 

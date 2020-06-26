@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.repo;
 
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class HgConfig {
+public final class HgConfig {
 
   @NotNull private final Map<String, Map<String, String>> myConfigMap;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -192,7 +192,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     return ExpressionUtils.isReferenceTo(((PsiReturnStatement)thenStmt).getReturnValue(), last);
   }
 
-  private static class ComparisonBlock {
+  private static final class ComparisonBlock {
     private final PsiExpression myKey; // second operand expression
     private final PsiVariable myResult;
 
@@ -477,7 +477,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, copy);
   }
 
-  private static class PrimitiveComparison {
+  private static final class PrimitiveComparison {
     private final @NotNull PsiExpression myKeyExtractor;
     private final @NotNull String myMethodName;
 

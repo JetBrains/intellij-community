@@ -541,8 +541,8 @@ class CompoundRendererConfigurable extends JPanel {
       }
     }
   }
-  
-  private static class ClassNameEditorWithBrowseButton extends ReferenceEditorWithBrowseButton {
+
+  private static final class ClassNameEditorWithBrowseButton extends ReferenceEditorWithBrowseButton {
     private ClassNameEditorWithBrowseButton(ActionListener browseActionListener, final Project project) {
       super(browseActionListener, project,
             s -> {

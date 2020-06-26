@@ -34,7 +34,7 @@ import java.util.Objects;
  *
  * @see SubstitutedExpressionEvaluationHelper
  */
-public class ContextComputationProcessor {
+public final class ContextComputationProcessor {
 
   private final SubstitutedExpressionEvaluationHelper myEvaluationHelper;
 

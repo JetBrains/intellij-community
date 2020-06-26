@@ -294,7 +294,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     return IntStreamEx.of(table.getSelectedRows()).map(table::convertRowIndexToModel).mapToObj(myTableModel::get);
   }
 
-  private static class MyTableModel extends AbstractTableModel implements ItemRemovable {
+  private static final class MyTableModel extends AbstractTableModel implements ItemRemovable {
     public static final int ENABLED_COLUMN = 0;
     public static final int CLASS_COLUMN = 1;
     public static final int METHOD_COLUMN = 2;
@@ -580,7 +580,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       .toList();
   }
 
-  private class AsyncAnnotationsDialog extends DialogWrapper {
+  private final class AsyncAnnotationsDialog extends DialogWrapper {
     private final AnnotationsPanel myAsyncSchedulePanel;
     private final AnnotationsPanel myAsyncExecutePanel;
     private final DebuggerProjectSettings mySettings;

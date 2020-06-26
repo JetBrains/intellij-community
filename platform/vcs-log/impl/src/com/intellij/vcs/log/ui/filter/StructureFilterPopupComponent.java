@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
@@ -309,7 +309,7 @@ public class StructureFilterPopupComponent
     }
   }
 
-  private class SelectVisibleRootAction extends ToggleAction implements DumbAware, KeepingPopupOpenAction {
+  private final class SelectVisibleRootAction extends ToggleAction implements DumbAware, KeepingPopupOpenAction {
     @NotNull private final CheckboxColorIcon myIcon;
     @NotNull private final VirtualFile myRoot;
 
@@ -469,7 +469,7 @@ public class StructureFilterPopupComponent
     myUiProperties.addRecentlyFilteredGroup(PATHS, VcsLogClassicFilterUi.FileFilterModel.getFilterValues(newFilter));
   }
 
-  private class SelectFromHistoryAction extends ToggleAction implements DumbAware {
+  private final class SelectFromHistoryAction extends ToggleAction implements DumbAware {
     @NotNull private final VcsLogStructureFilter myFilter;
     @NotNull private final Icon myIcon;
     @NotNull private final Icon myEmptyIcon;

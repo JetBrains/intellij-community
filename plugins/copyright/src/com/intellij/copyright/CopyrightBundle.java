@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class CopyrightBundle extends DynamicBundle {
+public final class CopyrightBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.CopyrightBundle";
   private static final CopyrightBundle INSTANCE = new CopyrightBundle();
 

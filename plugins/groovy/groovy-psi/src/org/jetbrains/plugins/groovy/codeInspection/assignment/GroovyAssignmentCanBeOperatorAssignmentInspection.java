@@ -101,7 +101,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
         (GrAssignmentExpression) location);
   }
 
-  private static class ReplaceAssignmentWithOperatorAssignmentFix
+  private static final class ReplaceAssignmentWithOperatorAssignmentFix
       extends GroovyFix {
 
     private final String m_name;

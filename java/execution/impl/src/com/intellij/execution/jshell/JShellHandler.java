@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell;
 
 import com.intellij.execution.ExecutionBundle;
@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Eugene Zhuravlev
  */
-public class JShellHandler {
+public final class JShellHandler {
   private static final Logger LOG = Logger.getInstance(JShellHandler.class);
   private static final int DEBUG_PORT = -1;
   public static final Key<JShellHandler> MARKER_KEY = Key.create("JShell console key");

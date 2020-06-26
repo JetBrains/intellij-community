@@ -428,7 +428,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return labelRenderer;
   }
 
-  private static class MapEntryLabelRenderer extends ReferenceRenderer
+  private static final class MapEntryLabelRenderer extends ReferenceRenderer
     implements ValueLabelRenderer, XValuePresentationProvider, OnDemandRenderer {
     private static final Key<ValueDescriptorImpl> KEY_DESCRIPTOR = Key.create("KEY_DESCRIPTOR");
     private static final Key<ValueDescriptorImpl> VALUE_DESCRIPTOR = Key.create("VALUE_DESCRIPTOR");

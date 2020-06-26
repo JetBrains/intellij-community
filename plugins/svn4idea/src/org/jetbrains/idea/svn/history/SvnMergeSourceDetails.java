@@ -152,7 +152,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
   }
 
-  private static class MyNamedConfigurable extends NamedConfigurable<SvnFileRevision> {
+  private static final class MyNamedConfigurable extends NamedConfigurable<SvnFileRevision> {
     private final SvnFileRevision myRevision;
     private final VirtualFile myFile;
     private final Project myProject;
@@ -230,7 +230,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
     }
   }
 
-  private static class MyDialog extends DialogWrapper {
+  private static final class MyDialog extends DialogWrapper {
     private final Project myProject;
     private final SvnFileRevision myRevision;
     private final VirtualFile myFile;

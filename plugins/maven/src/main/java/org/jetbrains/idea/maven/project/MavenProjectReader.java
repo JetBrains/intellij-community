@@ -584,7 +584,7 @@ public class MavenProjectReader {
     });
   }
 
-  private static class SettingsProfilesCache {
+  private static final class SettingsProfilesCache {
     final List<MavenProfile> profiles;
     final Set<String> alwaysOnProfiles;
     final Collection<MavenProjectProblem> problems;
@@ -596,7 +596,7 @@ public class MavenProjectReader {
     }
   }
 
-  private static class RawModelReadResult {
+  private static final class RawModelReadResult {
     public MavenModel model;
     public Collection<MavenProjectProblem> problems;
     public Set<String> alwaysOnProfiles;

@@ -36,7 +36,7 @@ import static com.intellij.util.containers.ContainerUtil.map2List;
 /**
  * Listens to VFS events (such as adding or deleting bunch of files) and performs necessary operations with the VCS.
  */
-public class HgVFSListener extends VcsVFSListener {
+public final class HgVFSListener extends VcsVFSListener {
 
   private final VcsDirtyScopeManager dirtyScopeManager;
   private static final Logger LOG = Logger.getInstance(HgVFSListener.class);

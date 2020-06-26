@@ -31,7 +31,7 @@ import java.util.stream.Stream;
  * Functions common to different implementors of PyCallExpression, with different base classes.
  * User: dcheryasov
  */
-public class PyCallExpressionHelper {
+public final class PyCallExpressionHelper {
   private PyCallExpressionHelper() {
   }
 

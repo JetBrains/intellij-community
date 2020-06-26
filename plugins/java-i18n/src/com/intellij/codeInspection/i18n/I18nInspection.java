@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.i18n;
 
@@ -513,7 +513,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     };
   }
 
-  private class StringI18nVisitor extends PsiElementVisitor {
+  private final class StringI18nVisitor extends PsiElementVisitor {
     private final List<ProblemDescriptor> myProblems = new ArrayList<>();
     private final InspectionManager myManager;
     private final boolean myOnTheFly;
@@ -633,7 +633,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (!(sourcePsi instanceof PsiLiteralExpression)) {
       return Collections.emptyList();
     }
-    
+
     while (sourcePsi.getParent() instanceof PsiPolyadicExpression || sourcePsi.getParent() instanceof PsiParenthesizedExpression) {
       sourcePsi = sourcePsi.getParent();
     }
@@ -649,8 +649,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (parent instanceof PsiLocalVariable) {
       local = (PsiLocalVariable)parent;
     }
-    else if (parent instanceof PsiAssignmentExpression && 
-             passThrough.equals(((PsiAssignmentExpression)parent).getRExpression()) && 
+    else if (parent instanceof PsiAssignmentExpression &&
+             passThrough.equals(((PsiAssignmentExpression)parent).getRExpression()) &&
              ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.EQ) {
       local = ExpressionUtils.resolveLocalVariable(((PsiAssignmentExpression)parent).getLExpression());
     }
@@ -973,7 +973,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return false;
     }
     return InheritanceUtil.isInheritor(containingClass,"org.junit.Assert") ||
-           InheritanceUtil.isInheritor(containingClass,"org.junit.jupiter.api.Assertions") || 
+           InheritanceUtil.isInheritor(containingClass,"org.junit.jupiter.api.Assertions") ||
            InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert");
   }
 
@@ -998,7 +998,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     UCallExpression parent = UastUtils.getParentOfType(expression, UCallExpression.class);
     return parent != null && "assert".equals(parent.getMethodName());
   }
-  
+
    public static boolean isExceptionArgument(@NotNull UExpression expression) {
     final UCallExpression newExpression =
       UastUtils.getParentOfType(expression, UCallExpression.class, true, UBlockExpression.class, UClass.class);

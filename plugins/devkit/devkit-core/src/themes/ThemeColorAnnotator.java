@@ -81,7 +81,7 @@ public class ThemeColorAnnotator implements Annotator {
   }
 
 
-  private static class MyRenderer extends GutterIconRenderer {
+  private static final class MyRenderer extends GutterIconRenderer {
     private static final int ICON_SIZE = 12;
 
     private final String myColorText;

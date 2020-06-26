@@ -1,5 +1,5 @@
 
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
 import com.intellij.CommonBundle;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.function.Supplier;
 
-public class InlineMethodHandler extends JavaInlineActionHandler {
+public final class InlineMethodHandler extends JavaInlineActionHandler {
 
   private InlineMethodHandler() {
   }
@@ -41,9 +41,9 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
   /**
    * Try to inline method, displaying UI or error message if necessary
    * @param project project where method is declared
-   * @param editor active editor where cursor might point to the call site 
+   * @param editor active editor where cursor might point to the call site
    * @param method method to be inlined
-   * @param allowInlineThisOnly if true, only call-site at cursor will be suggested 
+   * @param allowInlineThisOnly if true, only call-site at cursor will be suggested
    *                            (in this case caller must check that cursor points to the valid reference)
    */
   public static void performInline(Project project, Editor editor, PsiMethod method, boolean allowInlineThisOnly) {

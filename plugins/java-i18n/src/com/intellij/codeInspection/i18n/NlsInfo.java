@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
 
 /**
  * Contains information about localization status.
- * The class has three implementations {@link Localized}, {@link NonLocalized} and {@link Unspecified}, 
+ * The class has three implementations {@link Localized}, {@link NonLocalized} and {@link Unspecified},
  * which may provide additional information.
  */
 public abstract class NlsInfo {
@@ -39,7 +39,7 @@ public abstract class NlsInfo {
   /**
    * Describes a string that should be localized
    */
-  public static class Localized extends NlsInfo {
+  public static final class Localized extends NlsInfo {
     private static final Localized NLS = new Localized(Capitalization.NotSpecified, "", "");
     private static final Localized NLS_TITLE = new Localized(Capitalization.Title, "", "");
     private static final Localized NLS_SENTENCE = new Localized(Capitalization.Sentence, "", "");
@@ -58,7 +58,7 @@ public abstract class NlsInfo {
 
     /**
      * @return expected string capitalization
-     * @see Nls#capitalization() 
+     * @see Nls#capitalization()
      */
     public @NotNull Capitalization getCapitalization() {
       return myCapitalization;
@@ -66,7 +66,7 @@ public abstract class NlsInfo {
 
     /**
      * @return desired prefix for new property keys
-     * @see NlsContext#prefix() 
+     * @see NlsContext#prefix()
      */
     public @NotNull @NonNls String getPrefix() {
       return myPrefix;
@@ -91,17 +91,17 @@ public abstract class NlsInfo {
   /**
    * Describes a string that should not be localized
    */
-  public static class NonLocalized extends NlsInfo {
+  public static final class NonLocalized extends NlsInfo {
     private static final NonLocalized INSTANCE = new NonLocalized();
-    
+
     private NonLocalized() {super(ThreeState.NO);}
   }
 
   /**
-   * Describes a string, whose localization status is not explicitly specified. 
-   * Whether the string should be localized or not may depend on the user settings and various heuristics. 
+   * Describes a string, whose localization status is not explicitly specified.
+   * Whether the string should be localized or not may depend on the user settings and various heuristics.
    */
-  public static class Unspecified extends NlsInfo {
+  public static final class Unspecified extends NlsInfo {
     private static final Unspecified UNKNOWN = new Unspecified(null);
 
     private final @Nullable PsiModifierListOwner myCandidate;
@@ -118,7 +118,7 @@ public abstract class NlsInfo {
     public @Nullable PsiModifierListOwner getAnnotationCandidate() {
       return myCandidate;
     }
-  } 
+  }
 
   private final @NotNull ThreeState myNls;
 
@@ -205,7 +205,7 @@ public abstract class NlsInfo {
       UastBinaryOperator operator = binOp.getOperator();
       if ((operator == UastBinaryOperator.ASSIGN || operator == UastBinaryOperator.PLUS_ASSIGN) &&
           expression.equals(binOp.getRightOperand())) {
-        UReferenceExpression lValue = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()), 
+        UReferenceExpression lValue = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()),
                                                           UReferenceExpression.class);
         if (lValue != null) {
           var = lValue.resolve();

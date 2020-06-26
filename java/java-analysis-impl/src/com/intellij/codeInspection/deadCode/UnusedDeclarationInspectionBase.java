@@ -353,7 +353,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return findUnusedDeclarationInspection(method).isEntryPoint(method);
   }
 
-  private static class StrictUnreferencedFilter extends UnreferencedFilter {
+  private static final class StrictUnreferencedFilter extends UnreferencedFilter {
     private StrictUnreferencedFilter(@NotNull UnusedDeclarationInspectionBase tool, @NotNull GlobalInspectionContext context) {
       super(tool, context);
     }

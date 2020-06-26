@@ -31,7 +31,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  * Manager for Git remotes authentication.
  * Provides necessary handlers and watcher for http auth failure.
  */
-public class GitHandlerAuthenticationManager implements AutoCloseable {
+public final class GitHandlerAuthenticationManager implements AutoCloseable {
   private static final Logger LOG = Logger.getInstance(GitHandlerAuthenticationManager.class);
 
   @NotNull private final GitLineHandler myHandler;

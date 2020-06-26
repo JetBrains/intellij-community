@@ -136,7 +136,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
         }))));
   }
 
-  private static class MyResourceBundleReference extends ResourceBundleReference implements EmptyResolveMessageProvider {
+  private static final class MyResourceBundleReference extends ResourceBundleReference implements EmptyResolveMessageProvider {
 
     private MyResourceBundleReference(PsiElement element) {
       super(element, false);

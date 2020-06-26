@@ -2,7 +2,7 @@ package com.intellij.jps.cache.model;
 
 import java.util.Objects;
 
-public class BuildTargetState {
+public final class BuildTargetState {
   private final String hash;
   private final String relativePath;
 

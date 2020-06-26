@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.CommonBundle;
@@ -408,7 +408,7 @@ public class XFramesView extends XDebugView {
     }
   }
 
-  private class StackFramesListBuilder implements XStackFrameContainerEx {
+  private final class StackFramesListBuilder implements XStackFrameContainerEx {
     private XExecutionStack myExecutionStack;
     private final List<XStackFrame> myStackFrames;
     private String myErrorMessage;
@@ -437,7 +437,7 @@ public class XFramesView extends XDebugView {
     public void addStackFrames(@NotNull final List<? extends XStackFrame> stackFrames, final boolean last) {
       addStackFrames(stackFrames, null, last);
     }
-    
+
     @Override
     public void addStackFrames(@NotNull final List<? extends XStackFrame> stackFrames, @Nullable XStackFrame toSelect, final boolean last) {
       if (isObsolete()) return;

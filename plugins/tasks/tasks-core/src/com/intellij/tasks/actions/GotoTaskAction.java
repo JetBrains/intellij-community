@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -173,7 +173,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
    * {@link ChooseByNameBase} and {@link ChooseByNamePopup} are not disposable (why?). So to correctly dispose alarm used in
    * {@link TaskItemProvider} and don't touch existing UI classes We have to extend popup and override {@link ChooseByNamePopup#close(boolean)}.
    */
-  private static class MyChooseByNamePopup extends ChooseByNamePopup {
+  private static final class MyChooseByNamePopup extends ChooseByNamePopup {
     private MyChooseByNamePopup(@Nullable Project project,
                                 @NotNull ChooseByNameModel model,
                                 @NotNull ChooseByNameItemProvider provider,

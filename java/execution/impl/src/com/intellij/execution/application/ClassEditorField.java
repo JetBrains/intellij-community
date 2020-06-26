@@ -24,7 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-public class ClassEditorField extends EditorTextField {
+public final class ClassEditorField extends EditorTextField {
 
   public static ClassEditorField createClassField(Project project, Computable<? extends Module> moduleSelector) {
     PsiElement defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class JavaIndexingBundle extends DynamicBundle {
+public final class JavaIndexingBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.JavaIndexingBundle";
   private static final JavaIndexingBundle INSTANCE = new JavaIndexingBundle();
 

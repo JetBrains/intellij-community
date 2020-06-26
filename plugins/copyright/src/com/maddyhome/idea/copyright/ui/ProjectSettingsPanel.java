@@ -222,7 +222,7 @@ public class ProjectSettingsPanel {
     }
   }
 
-  private class SettingColumn extends MyColumnInfo<CopyrightProfile> {
+  private final class SettingColumn extends MyColumnInfo<CopyrightProfile> {
     private SettingColumn() {
       super(CopyrightBundle.message("copyright.copyright.column"));
     }
@@ -279,7 +279,7 @@ public class ProjectSettingsPanel {
     }
   }
 
-  private class ScopeColumn extends MyColumnInfo<NamedScope> {
+  private final class ScopeColumn extends MyColumnInfo<NamedScope> {
     private ScopeColumn() {
       super(CopyrightBundle.message("copyright.scope.column"));
     }

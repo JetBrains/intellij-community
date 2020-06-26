@@ -11,7 +11,7 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters> {
+public final class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<PsiMethod, OverridingMethodsSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.overridingMethodsSearch");
   public static final OverridingMethodsSearch INSTANCE = new OverridingMethodsSearch();
 

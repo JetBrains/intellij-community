@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.util;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
-public class JvmUtil {
+public final class JvmUtil {
   private static final JvmModifier[] ACCESS_MODIFIERS = {
     JvmModifier.PRIVATE, JvmModifier.PACKAGE_LOCAL, JvmModifier.PROTECTED, JvmModifier.PUBLIC
   };

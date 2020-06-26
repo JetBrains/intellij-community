@@ -7,7 +7,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class PySdkBundle extends DynamicBundle {
+public final class PySdkBundle extends DynamicBundle {
   @NonNls public static final String BUNDLE = "messages.PySdkBundle";
   public static final PySdkBundle INSTANCE = new PySdkBundle();
 

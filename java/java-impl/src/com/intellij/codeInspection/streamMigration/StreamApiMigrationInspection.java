@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -912,7 +912,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
   }
 
-  static class BufferedReaderLines extends StreamSource {
+  static final class BufferedReaderLines extends StreamSource {
     private static final CallMatcher BUFFERED_READER_READ_LINE =
       CallMatcher.instanceCall("java.io.BufferedReader", "readLine").parameterCount(0);
 
@@ -1056,7 +1056,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
   }
 
-  static class ArrayStream extends StreamSource {
+  static final class ArrayStream extends StreamSource {
     private ArrayStream(PsiLoopStatement loop, PsiVariable variable, PsiExpression expression) {
       super(loop, variable, expression);
     }
@@ -1100,7 +1100,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
   }
 
-  static class CollectionStream extends StreamSource {
+  static final class CollectionStream extends StreamSource {
 
     private CollectionStream(PsiLoopStatement loop, PsiVariable variable, PsiExpression expression) {
       super(loop, variable, expression);
@@ -1137,7 +1137,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
   }
 
-  static class CountingLoopSource extends StreamSource {
+  static final class CountingLoopSource extends StreamSource {
     final PsiExpression myBound;
     final boolean myIncluding;
 

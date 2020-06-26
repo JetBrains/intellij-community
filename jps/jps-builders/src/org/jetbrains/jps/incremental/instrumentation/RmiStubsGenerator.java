@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -326,7 +326,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
     }
   }
 
-  private static class RmicOutputParser extends LineOutputWriter {
+  private static final class RmicOutputParser extends LineOutputWriter {
     private final CompileContext myContext;
     private final String myCompilerName;
     private boolean myErrorsReported = false;

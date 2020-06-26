@@ -750,7 +750,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
   }
 
-  private class StringCellRenderer extends ColoredTableCellRenderer {
+  private final class StringCellRenderer extends ColoredTableCellRenderer {
     private StringCellRenderer() {
       setCellState(new GraphCommitCellRenderer.BorderlessTableCellState());
     }
@@ -998,7 +998,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
   }
 
-  private class MyTopBottomBorder implements Border {
+  private final class MyTopBottomBorder implements Border {
     @NotNull private final JBInsets myInsets;
 
     private MyTopBottomBorder(int top, int bottom) {

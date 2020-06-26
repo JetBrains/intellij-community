@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author Maxim.Medvedev
  */
-public class GrTypeComboBox extends ComboBox {
+public final class GrTypeComboBox extends ComboBox {
 
   private static final Logger LOG = Logger.getInstance(GrTypeComboBox.class);
 
@@ -201,7 +201,7 @@ public class GrTypeComboBox extends ComboBox {
     combo.setSelectedIndex(next);
   }
 
-  private static class PsiTypeItem {
+  private static final class PsiTypeItem {
     @Nullable
     private final PsiType myType;
 

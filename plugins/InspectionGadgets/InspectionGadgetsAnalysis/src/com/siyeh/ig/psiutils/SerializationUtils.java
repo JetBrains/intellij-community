@@ -20,7 +20,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SerializationUtils {
+public final class SerializationUtils {
 
   private SerializationUtils() {}
 

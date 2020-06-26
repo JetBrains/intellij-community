@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class RegExpUtil {
+public final class RegExpUtil {
   private RegExpUtil() {
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.CommonBundle;
@@ -627,7 +627,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return "Show all affected files for " + filePath.getPath() + " at " + revision.asString() + " failed";
   }
 
-  private static class AsynchronousListsLoader extends Task.Backgroundable {
+  private static final class AsynchronousListsLoader extends Task.Backgroundable {
     @NotNull private final CommittedChangesProvider myProvider;
     @NotNull private final RepositoryLocation myLocation;
     private final ChangeBrowserSettings mySettings;

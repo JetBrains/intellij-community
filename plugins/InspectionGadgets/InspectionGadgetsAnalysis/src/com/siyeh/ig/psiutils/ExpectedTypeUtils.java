@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ExpectedTypeUtils {
+public final class ExpectedTypeUtils {
 
   private ExpectedTypeUtils() {}
 
@@ -644,7 +644,7 @@ public class ExpectedTypeUtils {
       if (parameters.length == 0) {
         return null;
       }
-      final boolean isVarargs = result instanceof MethodCandidateInfo && 
+      final boolean isVarargs = result instanceof MethodCandidateInfo &&
                                 ((MethodCandidateInfo)result).getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
       final PsiType parameterType = PsiTypesUtil.getParameterType(parameters, parameterPosition, isVarargs);
       final PsiSubstitutor substitutor = result.getSubstitutor();

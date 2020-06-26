@@ -19,7 +19,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-public class SignatureParsing {
+public final class SignatureParsing {
   private SignatureParsing() { }
 
   @NotNull

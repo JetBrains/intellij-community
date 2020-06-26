@@ -56,7 +56,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @NotNull private volatile SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<>(null);
   @NotNull private final PsiModificationTracker myModificationTracker;
 
-  private class ExportedNameCache {
+  private final class ExportedNameCache {
     private final List<String> myNameDefinerNegativeCache = new ArrayList<>();
     private long myNameDefinerOOCBModCount = -1;
     private final long myModificationStamp;

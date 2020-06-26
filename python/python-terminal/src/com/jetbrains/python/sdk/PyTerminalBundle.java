@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class PyTerminalBundle extends DynamicBundle {
+public final class PyTerminalBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.PyTerminalBundle";
   private static final PyTerminalBundle INSTANCE = new PyTerminalBundle();
 

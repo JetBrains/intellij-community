@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization.java;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -266,7 +252,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     return JpsJavaExtensionService.getInstance();
   }
 
-  private static class JpsModuleOutputPackagingElementSerializer
+  private static final class JpsModuleOutputPackagingElementSerializer
     extends JpsPackagingElementSerializer<JpsProductionModuleOutputPackagingElement> {
     private JpsModuleOutputPackagingElementSerializer() {
       super("module-output", JpsProductionModuleOutputPackagingElement.class);
@@ -284,7 +270,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
-  private static class JpsModuleSourcePackagingElementSerializer
+  private static final class JpsModuleSourcePackagingElementSerializer
     extends JpsPackagingElementSerializer<JpsProductionModuleSourcePackagingElement> {
     private JpsModuleSourcePackagingElementSerializer() {
       super("module-source", JpsProductionModuleSourcePackagingElement.class);
@@ -302,7 +288,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
-  private static class JpsTestModuleOutputPackagingElementSerializer extends JpsPackagingElementSerializer<JpsTestModuleOutputPackagingElement> {
+  private static final class JpsTestModuleOutputPackagingElementSerializer extends JpsPackagingElementSerializer<JpsTestModuleOutputPackagingElement> {
     private JpsTestModuleOutputPackagingElementSerializer() {
       super("module-test-output", JpsTestModuleOutputPackagingElement.class);
     }
@@ -363,7 +349,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
-  private static class JavaSourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JavaSourceRootProperties> {
+  private static final class JavaSourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JavaSourceRootProperties> {
     private JavaSourceRootPropertiesSerializer(JpsModuleSourceRootType<JavaSourceRootProperties> type, String typeId) {
       super(type, typeId);
     }
@@ -389,7 +375,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
-  private static class JavaResourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JavaResourceRootProperties> {
+  private static final class JavaResourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JavaResourceRootProperties> {
     private JavaResourceRootPropertiesSerializer(JpsModuleSourceRootType<JavaResourceRootProperties> type, String typeId) {
       super(type, typeId);
     }

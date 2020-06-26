@@ -364,7 +364,7 @@ public class ChangesCacheFile {
     writeChanges(lists, present);
   }
 
-  private class BackIterator implements Iterator<ChangesBunch> {
+  private final class BackIterator implements Iterator<ChangesBunch> {
     private final int bunchSize;
     private long myOffset;
 
@@ -886,7 +886,7 @@ public class ChangesCacheFile {
       return myAnyChanges || !list.isEmpty();
     }
 
-    private static class ProcessingResult {
+    private static final class ProcessingResult {
       final boolean changeFound;
       final IncomingChangeState.State state;
       final VirtualFile file;

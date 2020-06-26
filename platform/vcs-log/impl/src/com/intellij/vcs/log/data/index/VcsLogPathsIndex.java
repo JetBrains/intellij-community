@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -147,7 +147,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     return VcsUtil.getFilePath(lightFilePath.getRoot().getPath() + "/" + lightFilePath.getRelativePath(), isDirectory);
   }
 
-  private static class PathsIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
+  private static final class PathsIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     @NotNull private final VcsLogStorage myStorage;
     @NotNull private final PersistentEnumeratorBase<LightFilePath> myPathsEnumerator;
     @NotNull private final PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> myRenamesMap;
@@ -283,7 +283,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     }
   }
 
-  private static class LightFilePath {
+  private static final class LightFilePath {
     @NotNull private final VirtualFile myRoot;
     @NotNull private final String myRelativePath;
 
@@ -321,7 +321,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     }
   }
 
-  private static class LightFilePathKeyDescriptor implements KeyDescriptor<LightFilePath> {
+  private static final class LightFilePathKeyDescriptor implements KeyDescriptor<LightFilePath> {
     @NotNull private final List<VirtualFile> myRoots;
     @NotNull private final TObjectIntHashMap<VirtualFile> myRootsReversed;
 

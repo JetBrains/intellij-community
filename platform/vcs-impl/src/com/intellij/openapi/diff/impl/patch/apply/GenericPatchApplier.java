@@ -457,7 +457,7 @@ public class GenericPatchApplier {
     return myAppliedInfo;
   }
 
-  private static class FragmentResult {
+  private static final class FragmentResult {
     private int myStart;
     private int myEnd;
     private boolean myContainAlreadyApplied;

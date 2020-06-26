@@ -214,7 +214,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     return result;
   }
 
-  private static class MyTreeModel implements TreeModel {
+  private static final class MyTreeModel implements TreeModel {
     List<? extends MavenArtifactSearchResult> myItems;
 
     private MyTreeModel(List<? extends MavenArtifactSearchResult> items) {
@@ -382,7 +382,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   }
 
 
-  private class MyClassCellRenderer extends MyArtifactCellRenderer {
+  private final class MyClassCellRenderer extends MyArtifactCellRenderer {
 
     private MyClassCellRenderer(Tree tree) {
       super(tree);

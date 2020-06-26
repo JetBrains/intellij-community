@@ -45,7 +45,7 @@ public class AlignmentProvider {
    *
    * @author Max Medvedev
    */
-  public class Aligner {
+  public final class Aligner {
 
     private final Lazy<Alignment> myAlignment;
 

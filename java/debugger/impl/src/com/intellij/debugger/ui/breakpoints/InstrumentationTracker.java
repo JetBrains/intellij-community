@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
-public class InstrumentationTracker {
+public final class InstrumentationTracker {
   private static final Logger LOG = Logger.getInstance(InstrumentationTracker.class);
 
   @SuppressWarnings("FieldCanBeLocal") private final InstrumentationMethodBreakpoint myRedefineBreakpoint;

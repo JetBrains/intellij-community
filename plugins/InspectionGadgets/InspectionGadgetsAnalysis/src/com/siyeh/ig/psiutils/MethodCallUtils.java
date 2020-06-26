@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class MethodCallUtils {
+public final class MethodCallUtils {
 
   @NonNls private static final Set<String> regexMethodNames = new HashSet<>(5);
 

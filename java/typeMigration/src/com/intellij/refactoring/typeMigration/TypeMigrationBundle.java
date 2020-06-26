@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class TypeMigrationBundle extends DynamicBundle {
+public final class TypeMigrationBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.TypeMigrationBundle";
   private static final TypeMigrationBundle INSTANCE = new TypeMigrationBundle();
 

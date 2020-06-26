@@ -35,7 +35,7 @@ import java.util.Set;
 
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.*;
 
-public class ControlFlowUtils {
+public final class ControlFlowUtils {
   private ControlFlowUtils() { }
 
   public static boolean isElseIf(PsiIfStatement ifStatement) {
@@ -435,7 +435,7 @@ public class ControlFlowUtils {
           return false;
         }
       }
-      
+
       statementToCheck = container;
       if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
         statementToCheck = PsiTreeUtil.getParentOfType(statementToCheck, PsiStatement.class);
@@ -1005,7 +1005,7 @@ public class ControlFlowUtils {
   }
 
   /**
-   * Ensures that the {@code if} statement has the {@code else} branch which is a block statement (adding it if absent) 
+   * Ensures that the {@code if} statement has the {@code else} branch which is a block statement (adding it if absent)
    * @param ifStatement an {@code if} statement to add an else branch or expand it to the block
    */
   public static void ensureElseBranch(PsiIfStatement ifStatement) {
@@ -1244,7 +1244,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class ContinueFinder extends JavaRecursiveElementWalkingVisitor {
+  private static final class ContinueFinder extends JavaRecursiveElementWalkingVisitor {
 
     private boolean m_found;
     private final PsiStatement m_target;
@@ -1294,7 +1294,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class MethodCallFinder extends JavaRecursiveElementWalkingVisitor {
+  private static final class MethodCallFinder extends JavaRecursiveElementWalkingVisitor {
 
     private final String containingClassName;
     private final PsiType returnType;
@@ -1335,7 +1335,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class ContinueToAncestorFinder extends JavaRecursiveElementWalkingVisitor {
+  private static final class ContinueToAncestorFinder extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiStatement statement;
     private boolean found;

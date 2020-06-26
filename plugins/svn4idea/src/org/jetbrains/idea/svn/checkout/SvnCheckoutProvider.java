@@ -250,7 +250,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  private static class MyFilter implements Predicate<File> {
+  private static final class MyFilter implements Predicate<File> {
     @NotNull private final LocalFileSystem myLfs = LocalFileSystem.getInstance();
     @NotNull private final SvnExcludingIgnoredOperation.Filter myFilter;
 

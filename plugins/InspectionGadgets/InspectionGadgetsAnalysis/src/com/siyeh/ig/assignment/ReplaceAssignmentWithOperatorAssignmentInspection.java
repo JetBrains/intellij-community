@@ -116,7 +116,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
     return new ReplaceAssignmentWithOperatorAssignmentFix((PsiPolyadicExpression)infos[1]);
   }
 
-  private static class ReplaceAssignmentWithOperatorAssignmentFix extends InspectionGadgetsFix {
+  private static final class ReplaceAssignmentWithOperatorAssignmentFix extends InspectionGadgetsFix {
 
     private final String m_name;
 

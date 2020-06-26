@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.*;
@@ -450,7 +450,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     markChangeResolved(change);
   }
 
-  private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
+  private final class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
     private ApplySelectedChangesAction() {
       getTemplatePresentation().setText(VcsBundle.messagePointer("action.presentation.ApplySelectedChangesAction.text"));
       getTemplatePresentation().setIcon(AllIcons.Actions.Checked);
@@ -470,7 +470,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
   }
 
-  private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
+  private final class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
     private IgnoreSelectedChangesAction() {
       getTemplatePresentation().setText(VcsBundle.messagePointer("action.presentation.IgnoreSelectedChangesAction.text"));
       getTemplatePresentation().setIcon(AllIcons.Diff.Remove);

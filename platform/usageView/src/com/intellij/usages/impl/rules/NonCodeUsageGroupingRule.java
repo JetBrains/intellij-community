@@ -23,7 +23,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
     myProject = project;
   }
 
-  private static class CodeUsageGroup extends UsageGroupBase {
+  private static final class CodeUsageGroup extends UsageGroupBase {
     private static final UsageGroup INSTANCE = new CodeUsageGroup();
 
     private CodeUsageGroup() {
@@ -41,7 +41,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
     }
   }
 
-  private static class UsageInGeneratedCodeGroup extends UsageGroupBase {
+  private static final class UsageInGeneratedCodeGroup extends UsageGroupBase {
     public static final UsageGroup INSTANCE = new UsageInGeneratedCodeGroup();
 
     private UsageInGeneratedCodeGroup() {
@@ -59,7 +59,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
     }
   }
 
-  private static class NonCodeUsageGroup extends UsageGroupBase {
+  private static final class NonCodeUsageGroup extends UsageGroupBase {
     public static final UsageGroup INSTANCE = new NonCodeUsageGroup();
 
     private NonCodeUsageGroup() {

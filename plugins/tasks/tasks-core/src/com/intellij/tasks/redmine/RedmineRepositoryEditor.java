@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.redmine;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -157,7 +158,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     }
   }
 
-  private class FetchProjectsTask extends TaskUiUtil.ComboBoxUpdater<RedmineProjectItem> {
+  private final class FetchProjectsTask extends TaskUiUtil.ComboBoxUpdater<RedmineProjectItem> {
     private FetchProjectsTask() {
       super(RedmineRepositoryEditor.this.myProject, "Downloading Redmine projects...", myProjectCombo);
     }

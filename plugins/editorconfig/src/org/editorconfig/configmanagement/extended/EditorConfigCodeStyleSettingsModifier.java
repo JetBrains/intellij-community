@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
@@ -230,7 +230,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     }
   }
 
-  private static class MyContext extends EditorConfigFilesCollector {
+  private static final class MyContext extends EditorConfigFilesCollector {
     private final @NotNull CodeStyleSettings mySettings;
     private @Nullable List<OutPair> myOptions;
     private final @NotNull PsiFile myFile;

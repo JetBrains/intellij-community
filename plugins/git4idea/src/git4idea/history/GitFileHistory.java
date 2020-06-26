@@ -57,7 +57,7 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  * <p>
  * TODO: handle multiple repositories configuration: a file can be moved from one repo to another
  */
-public class GitFileHistory {
+public final class GitFileHistory {
   private static final Logger LOG = Logger.getInstance(GitFileHistory.class);
 
   @NotNull private final Project myProject;

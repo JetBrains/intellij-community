@@ -149,7 +149,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                     InspectionGadgetsBundle.message("suspicious.comparator.compare.descriptor.non.reflexive"));
     }
 
-    private static class ComparatorVisitor extends StandardInstructionVisitor {
+    private static final class ComparatorVisitor extends StandardInstructionVisitor {
       private final PsiParameterListOwner myOwner;
       private final Set<PsiElement> myContexts = new HashSet<>();
       LongRangeSet myRange = LongRangeSet.empty();
@@ -169,7 +169,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       }
     }
 
-    private static class ParameterAccessVisitor extends JavaRecursiveElementWalkingVisitor {
+    private static final class ParameterAccessVisitor extends JavaRecursiveElementWalkingVisitor {
 
       private final Set<PsiParameter> parameters;
 

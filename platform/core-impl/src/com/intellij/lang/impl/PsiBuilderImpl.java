@@ -938,7 +938,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return myParserDefinition instanceof ASTFactory ? (ASTFactory)myParserDefinition : null;
   }
 
-  private static class ConvertFromTokensToASTBuilder implements DiffTreeChangeBuilder<ASTNode, LighterASTNode> {
+  private static final class ConvertFromTokensToASTBuilder implements DiffTreeChangeBuilder<ASTNode, LighterASTNode> {
     private final DiffTreeChangeBuilder<? super ASTNode, ? super ASTNode> myDelegate;
     private final ASTConverter myConverter;
 
@@ -1316,7 +1316,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return null;
   }
 
-  private static class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
+  private static final class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
     private final TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> myCustom;
     private final List<CustomLanguageASTComparator> myCustomLanguageASTComparators;
     private final MyTreeStructure myTreeStructure;
@@ -1650,7 +1650,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
-  private static class ASTConverter implements Function<Node, ASTNode> {
+  private static final class ASTConverter implements Function<Node, ASTNode> {
     private final StartMarker myRoot;
     private final ASTFactory myASTFactory;
 

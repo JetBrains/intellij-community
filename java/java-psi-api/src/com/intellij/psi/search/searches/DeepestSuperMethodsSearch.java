@@ -6,7 +6,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 
-public class DeepestSuperMethodsSearch extends ExtensibleQueryFactory<PsiMethod, PsiMethod> {
+public final class DeepestSuperMethodsSearch extends ExtensibleQueryFactory<PsiMethod, PsiMethod> {
   public static final ExtensionPointName<QueryExecutor<PsiMethod, PsiMethod>> EP_NAME = ExtensionPointName.create("com.intellij.deepestSuperMethodsSearch");
   public static final DeepestSuperMethodsSearch DEEPEST_SUPER_METHODS_SEARCH_INSTANCE = new DeepestSuperMethodsSearch();
 

@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.tree.ChildRoleBase;
 
-public class ChildRole {
+public final class ChildRole {
   public static final int PACKAGE_STATEMENT = 1; // in FILE
   public static final int IMPORT_LIST = 2; // in FILE
   public static final int CLASS = 3; // in FILE, CLASS

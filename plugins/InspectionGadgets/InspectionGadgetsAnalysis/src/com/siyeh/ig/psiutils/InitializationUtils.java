@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class InitializationUtils {
+public final class InitializationUtils {
 
   private InitializationUtils() {}
 

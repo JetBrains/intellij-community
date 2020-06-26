@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.CommonBundle;
@@ -42,7 +42,7 @@ import java.util.Objects;
 /**
  * @author Pavel.Dolgov
  */
-public class CreateClassInPackageInModuleFix implements IntentionAction {
+public final class CreateClassInPackageInModuleFix implements IntentionAction {
   public static final Key<Boolean> IS_INTERFACE = Key.create("CREATE_CLASS_IN_PACKAGE_IS_INTERFACE");
   public static final Key<PsiDirectory> ROOT_DIR = Key.create("CREATE_CLASS_IN_PACKAGE_ROOT_DIR");
   public static final Key<String> NAME = Key.create("CREATE_CLASS_IN_PACKAGE_NAME");

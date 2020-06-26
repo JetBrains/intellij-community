@@ -25,7 +25,7 @@ import static com.jetbrains.python.psi.PyUtil.turnConstructorIntoClass;
  *
  * @author Mikhail Golubev
  */
-public class PyKnownDecoratorUtil {
+public final class PyKnownDecoratorUtil {
 
   private PyKnownDecoratorUtil() {
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.util.resolve;
 
 import com.intellij.openapi.util.Getter;
@@ -623,7 +623,7 @@ public class DependencyResolverImpl implements DependencyResolver {
     return new ModuleComponentIdentifierImpl(group, module, version);
   }
 
-  private static class MyModuleVersionSelector {
+  private static final class MyModuleVersionSelector {
     private final String name;
     private final String group;
     private final String version;

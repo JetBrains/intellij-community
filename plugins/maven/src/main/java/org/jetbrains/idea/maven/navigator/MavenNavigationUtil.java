@@ -29,7 +29,7 @@ import java.util.Objects;
 /**
  * @author Konstantin Bulenkov
  */
-public class MavenNavigationUtil {
+public final class MavenNavigationUtil {
   private static final String ARTIFACT_ID = "artifactId";
 
   private MavenNavigationUtil() { }

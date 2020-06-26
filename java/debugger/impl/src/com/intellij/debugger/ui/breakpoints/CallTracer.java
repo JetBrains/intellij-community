@@ -184,7 +184,7 @@ public class CallTracer implements OverheadProducer {
     return tracer;
   }
 
-  private class ThreadRequest {
+  private final class ThreadRequest {
     private final List<MethodEntryRequest> myEntryRequests = new ArrayList<>(1);
     private final int myStartIndent;
 

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class PyPsiBundle extends DynamicBundle {
+public final class PyPsiBundle extends DynamicBundle {
   @NonNls public static final String BUNDLE = "messages.PyPsiBundle";
   public static final PyPsiBundle INSTANCE = new PyPsiBundle();
 

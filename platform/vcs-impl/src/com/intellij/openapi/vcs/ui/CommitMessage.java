@@ -264,7 +264,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     return myChangeLists;
   }
 
-  private static class RightMarginCustomization implements EditorCustomization {
+  private static final class RightMarginCustomization implements EditorCustomization {
     @NotNull private final Project myProject;
 
     private RightMarginCustomization(@NotNull Project project) {

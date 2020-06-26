@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class RefactoringUtil {
+public final class RefactoringUtil {
   private static final Logger LOG = Logger.getInstance(RefactoringUtil.class);
   public static final int EXPR_COPY_SAFE = 0;
   public static final int EXPR_COPY_UNSAFE = 1;
@@ -538,12 +538,12 @@ public class RefactoringUtil {
       for (PsiElement occurrence : occurrences) {
         final RangeMarker rangeMarker = occurrence.getUserData(ElementToWorkOn.TEXT_RANGE);
         if (rangeMarker != null && rangeMarker.isValid()) {
-          highlightManager.addRangeHighlight(editor, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), 
+          highlightManager.addRangeHighlight(editor, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
                                              EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
         }
         else {
           final TextRange textRange = occurrence.getTextRange();
-          highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), 
+          highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(),
                                              EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
         }
       }

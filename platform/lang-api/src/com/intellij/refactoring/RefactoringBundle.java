@@ -7,7 +7,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
-public class RefactoringBundle extends DynamicBundle {
+public final class RefactoringBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.RefactoringBundle";
   private static final RefactoringBundle INSTANCE = new RefactoringBundle();
 

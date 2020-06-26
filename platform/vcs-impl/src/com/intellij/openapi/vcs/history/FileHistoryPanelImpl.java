@@ -882,7 +882,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     }
   }
 
-  private static class LoadedContentRevision implements ByteBackedContentRevision {
+  private static final class LoadedContentRevision implements ByteBackedContentRevision {
     private final FilePath myFile;
     private final VcsFileRevision myRevision;
     private final Project myProject;

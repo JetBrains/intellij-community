@@ -147,7 +147,7 @@ public final class GitPatchParser {
     return FileStatus.MODIFIED;
   }
 
-  private static class PatchInfo {
+  private static final class PatchInfo {
     @Nullable private final String myBeforeName;
     @Nullable private final String myAfterName;
 

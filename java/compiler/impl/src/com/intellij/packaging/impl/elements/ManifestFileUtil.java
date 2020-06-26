@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.CommonBundle;
@@ -56,7 +56,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-public class ManifestFileUtil {
+public final class ManifestFileUtil {
   private static final Logger LOG = Logger.getInstance(ManifestFileUtil.class);
   public static final String MANIFEST_PATH = JarFile.MANIFEST_NAME;
   public static final String MANIFEST_FILE_NAME = PathUtil.getFileName(MANIFEST_PATH);

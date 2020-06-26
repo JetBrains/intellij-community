@@ -595,7 +595,7 @@ public final class DiffDrawUtil {
     }
   }
 
-  private static class InlineHighlighterBuilder {
+  private static final class InlineHighlighterBuilder {
     @NotNull private final Editor editor;
     @NotNull private final TextDiffType type;
     private final int start;
@@ -621,7 +621,7 @@ public final class DiffDrawUtil {
     }
   }
 
-  private static class LineMarkerBuilder {
+  private static final class LineMarkerBuilder {
     @NotNull private final Editor editor;
     @NotNull private final SeparatorPlacement placement;
 

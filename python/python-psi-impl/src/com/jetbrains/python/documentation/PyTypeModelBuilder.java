@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;  
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -61,7 +61,7 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class OneOf extends TypeModel {
+  static final class OneOf extends TypeModel {
     private final Collection<TypeModel> oneOfTypes;
 
     private OneOf(Collection<TypeModel> oneOfTypes) {
@@ -74,7 +74,7 @@ public class PyTypeModelBuilder {
     }
   }
 
-  private static class CollectionOf extends TypeModel {
+  private static final class CollectionOf extends TypeModel {
     private final TypeModel collectionType;
     private final List<TypeModel> elementTypes;
     private final boolean useTypingAlias;
@@ -91,7 +91,7 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class NamedType extends TypeModel {
+  static final class NamedType extends TypeModel {
 
     @NotNull
     private static final NamedType ANY = new NamedType(PyNames.UNKNOWN_TYPE);
@@ -114,7 +114,7 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class UnknownType extends TypeModel {
+  static final class UnknownType extends TypeModel {
     private final TypeModel type;
 
     private UnknownType(TypeModel type) {
@@ -127,7 +127,7 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class OptionalType extends TypeModel {
+  static final class OptionalType extends TypeModel {
     private final TypeModel type;
 
     private OptionalType(TypeModel type) {
@@ -157,7 +157,7 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class FunctionType extends TypeModel {
+  static final class FunctionType extends TypeModel {
     @NotNull private final TypeModel returnType;
     @Nullable private final Collection<TypeModel> parameters;
 
@@ -172,7 +172,7 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class ParamType extends TypeModel {
+  static final class ParamType extends TypeModel {
     @Nullable private final String name;
     @Nullable private final TypeModel type;
 
@@ -213,7 +213,7 @@ public class PyTypeModelBuilder {
     }
   }
 
-  private static class OneOfLiterals extends TypeModel {
+  private static final class OneOfLiterals extends TypeModel {
 
     @NotNull
     private final List<PyLiteralType> literals;

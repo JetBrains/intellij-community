@@ -5,7 +5,7 @@ import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class StreamDebuggerBundle extends DynamicBundle {
+public final class StreamDebuggerBundle extends DynamicBundle {
   private static final String BUNDLE = "messages.StreamDebuggerBundle";
   private static final StreamDebuggerBundle INSTANCE = new StreamDebuggerBundle();
 

@@ -19,7 +19,7 @@ import java.util.Objects;
 @HeavyPlatformTestCase.WrapInCommand
 public class PsiDocumentManager2Test extends LightPlatformTestCase {
   public void testUnregisteredFileType() {
-    class MyFileType extends XmlLikeFileType {
+    final class MyFileType extends XmlLikeFileType {
       private MyFileType() {
         super(XMLLanguage.INSTANCE);
       }

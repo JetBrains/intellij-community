@@ -206,7 +206,7 @@ public final class VcsLogUiUtil {
     return new Dimension(Math.max(size.width, minToolbarSize), Math.max(size.height, minToolbarSize));
   }
 
-  private static class VcsLogPlaceNavigator implements Place.Navigator {
+  private static final class VcsLogPlaceNavigator implements Place.Navigator {
     @NonNls private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
     @NotNull private final VcsLogUiEx myUi;
 

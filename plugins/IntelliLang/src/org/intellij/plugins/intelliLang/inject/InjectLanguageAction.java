@@ -289,7 +289,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return new MyFixAction(text, fix);
   }
 
-  private static class MyFixAction implements Processor<PsiLanguageInjectionHost> {
+  private static final class MyFixAction implements Processor<PsiLanguageInjectionHost> {
     private final String myText;
     private final Processor<? super PsiLanguageInjectionHost> myFix;
 

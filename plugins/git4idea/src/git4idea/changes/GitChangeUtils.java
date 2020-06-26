@@ -28,7 +28,7 @@ import java.util.*;
 /**
  * Change related utilities
  */
-public class GitChangeUtils {
+public final class GitChangeUtils {
   /**
    * the pattern for committed changelist assumed.
    */

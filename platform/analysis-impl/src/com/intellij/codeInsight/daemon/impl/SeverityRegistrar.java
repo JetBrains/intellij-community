@@ -350,7 +350,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return minSeverity != HighlightSeverity.INFORMATION;
   }
 
-  private static class OrderMap extends TObjectIntHashMap<HighlightSeverity> {
+  private static final class OrderMap extends TObjectIntHashMap<HighlightSeverity> {
     private OrderMap(@NotNull TObjectIntHashMap<? extends HighlightSeverity> map) {
       super(map.size());
       map.forEachEntry((key, value) -> {

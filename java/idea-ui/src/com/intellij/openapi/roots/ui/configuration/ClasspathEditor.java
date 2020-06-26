@@ -158,7 +158,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
   }
 
-  private static class ClasspathFormatPanel extends JPanel {
+  private static final class ClasspathFormatPanel extends JPanel {
     private final @NotNull ModuleConfigurationState myState;
     private final JComboBox<String> comboBoxClasspathFormat;
 

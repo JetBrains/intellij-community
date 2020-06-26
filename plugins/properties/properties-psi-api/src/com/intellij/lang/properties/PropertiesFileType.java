@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.nio.charset.Charset;
 
-public class PropertiesFileType extends LanguageFileType {
+public final class PropertiesFileType extends LanguageFileType {
   public static final LanguageFileType INSTANCE = new PropertiesFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "properties";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;

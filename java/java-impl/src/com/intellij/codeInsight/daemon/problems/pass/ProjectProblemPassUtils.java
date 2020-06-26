@@ -292,7 +292,7 @@ public class ProjectProblemPassUtils {
     }
   }
 
-  private static class ShowRelatedProblemsAction extends BaseElementAtCaretIntentionAction {
+  private static final class ShowRelatedProblemsAction extends BaseElementAtCaretIntentionAction {
 
     private final Set<Problem> myRelatedProblems;
 

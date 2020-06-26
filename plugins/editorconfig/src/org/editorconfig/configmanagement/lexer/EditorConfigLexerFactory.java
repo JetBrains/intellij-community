@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.lexer;
 
 import com.intellij.lexer.Lexer;
@@ -19,7 +19,7 @@ public class EditorConfigLexerFactory {
            : new MyLexerAdapter(new IntellijEditorConfigLexerAdapter());
   }
 
-  private static class MyLexerAdapter extends MergingLexerAdapter {
+  private static final class MyLexerAdapter extends MergingLexerAdapter {
     private final static TokenSet IDENTIFIER_TOKENS = TokenSet.create(
       EditorConfigElementTypes.IDENTIFIER,
       IntellijEditorConfigTokenTypes.VALUE_CHAR

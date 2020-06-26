@@ -39,7 +39,7 @@ import org.jetbrains.java.generate.template.TemplatesManager;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class GenerateMembersUtil {
+public final class GenerateMembersUtil {
   private static final Logger LOG = Logger.getInstance(GenerateMembersUtil.class);
 
   private GenerateMembersUtil() {

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GroupDisplayNameUtil {
+public final class GroupDisplayNameUtil {
   @NonNls
   private static final Map<String, String> packageGroupDisplayNameMap = new HashMap<>();
 

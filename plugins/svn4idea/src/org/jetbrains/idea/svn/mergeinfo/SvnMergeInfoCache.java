@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -26,7 +26,7 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SvnMergeInfoCache {
+public final class SvnMergeInfoCache {
 
   private final static Logger LOG = Logger.getInstance(SvnMergeInfoCache.class);
 
@@ -148,7 +148,7 @@ public class SvnMergeInfoCache {
     }
   }
 
-  private static class MyCurrentUrlData {
+  private static final class MyCurrentUrlData {
 
     // key - working copy local path
     @NotNull private final Map<String, BranchInfo> myBranchInfo = ContainerUtil.createSoftMap();

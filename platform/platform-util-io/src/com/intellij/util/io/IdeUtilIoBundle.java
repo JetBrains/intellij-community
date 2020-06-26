@@ -10,7 +10,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-public class IdeUtilIoBundle extends DynamicBundle {
+public final class IdeUtilIoBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.IdeUtilIoBundle";
   private static final IdeUtilIoBundle INSTANCE = new IdeUtilIoBundle();
 

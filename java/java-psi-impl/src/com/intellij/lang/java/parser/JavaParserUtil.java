@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
 
-public class JavaParserUtil {
+public final class JavaParserUtil {
   public static final TokenSet WS_COMMENTS = TokenSet.orSet(ElementType.JAVA_COMMENT_BIT_SET, TokenSet.WHITE_SPACE);
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
   private static final Key<Boolean> DEEP_PARSE_BLOCKS_IN_STATEMENTS = Key.create("JavaParserUtil.ParserExtender");

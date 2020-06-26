@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -26,7 +26,7 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
 
-class LineMarkerInfoHelper {
+final class LineMarkerInfoHelper {
   private static final NotNullFunction<PointableCandidate, Collection<? extends PsiElement>> CONVERTER =
     candidate -> ContainerUtil.createMaybeSingletonList(candidate.pointer.getElement());
   private static final NotNullFunction<PointableCandidate, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =

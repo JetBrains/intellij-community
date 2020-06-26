@@ -507,7 +507,7 @@ public final class JavaBuilderUtil {
     return null;
   }
 
-  private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
+  private static final class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
     private final CompileContext myContext;
     private final Set<? extends BuildTarget<?>> myChunkTargets;
     private final Map<BuildTarget<?>, Set<BuildTarget<?>>> myCache = new HashMap<>();

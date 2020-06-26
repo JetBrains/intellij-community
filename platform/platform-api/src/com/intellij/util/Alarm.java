@@ -323,7 +323,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  private class Request implements Runnable {
+  private final class Request implements Runnable {
     private Runnable myTask; // guarded by LOCK
     private final ModalityState myModalityState;
     private Future<?> myFuture; // guarded by LOCK

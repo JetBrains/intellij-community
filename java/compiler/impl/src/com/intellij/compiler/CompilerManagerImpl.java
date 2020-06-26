@@ -573,7 +573,7 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
-  private class ListenerNotificator implements CompileStatusNotification {
+  private final class ListenerNotificator implements CompileStatusNotification {
     private final @Nullable CompileStatusNotification myDelegate;
 
     private ListenerNotificator(@Nullable CompileStatusNotification delegate) {

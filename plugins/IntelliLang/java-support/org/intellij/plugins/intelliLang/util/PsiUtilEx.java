@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class PsiUtilEx {
+public final class PsiUtilEx {
 
   private PsiUtilEx() {
   }

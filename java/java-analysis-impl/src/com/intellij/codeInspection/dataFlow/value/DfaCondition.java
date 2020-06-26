@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a condition to be applied to DFA memory state. 
+ * Represents a condition to be applied to DFA memory state.
  * This interface has only two implementations: {@link Exact} and {@link DfaRelation}.
  * No other implementations allowed.
  */
@@ -51,7 +51,7 @@ public abstract class DfaCondition {
   }
 
   /**
-   * @see DfaValue#cond(RelationType, DfaValue) 
+   * @see DfaValue#cond(RelationType, DfaValue)
    */
   @NotNull
   static DfaCondition createCondition(@NotNull DfaValue left, @NotNull RelationType relationType, @NotNull DfaValue right) {
@@ -62,22 +62,22 @@ public abstract class DfaCondition {
     return Exact.UNKNOWN;
   }
 
-  static class Exact extends DfaCondition {
+  static final class Exact extends DfaCondition {
     private final String myName;
-  
+
     private Exact(String name) {
       myName = name;
     }
-  
+
     @Override
     public String toString() {
       return myName;
     }
-  
+
     static final Exact TRUE = new Exact("TRUE");
     static final Exact FALSE = new Exact("FALSE");
     static final Exact UNKNOWN = new Exact("UNKNOWN");
-  
+
     @NotNull
     @Override
     public DfaCondition negate() {
@@ -85,11 +85,11 @@ public abstract class DfaCondition {
       if (this == FALSE) return TRUE;
       return UNKNOWN;
     }
-    
+
     private static Exact fromBoolean(boolean value) {
       return value ? TRUE : FALSE;
     }
-  
+
     @Nullable
     static Exact tryEvaluate(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
       DfaValue sentinel = dfaLeft.getFactory().getSentinel();
@@ -98,7 +98,7 @@ public abstract class DfaCondition {
       }
       DfType leftType = dfaLeft.getDfType();
       DfType rightType = dfaRight.getDfType();
-      
+
       if (relationType == RelationType.EQ || relationType == RelationType.NE) {
         if (leftType instanceof DfConstantType) {
           if (rightType instanceof DfConstantType) {
@@ -138,7 +138,7 @@ public abstract class DfaCondition {
           return TRUE;
         }
       }
-  
+
       return null;
     }
   }

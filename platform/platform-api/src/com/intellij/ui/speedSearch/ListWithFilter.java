@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -26,7 +26,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 
-public class ListWithFilter<T> extends JPanel implements DataProvider {
+public final class ListWithFilter<T> extends JPanel implements DataProvider {
   private final JList<T> myList;
   private final SearchTextField mySearchField = new SearchTextField(false);
   private final NameFilteringListModel<T> myModel;
@@ -110,7 +110,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     return mySpeedSearch;
   }
 
-  private class MySpeedSearch extends SpeedSearch {
+  private final class MySpeedSearch extends SpeedSearch {
     boolean searchFieldShown;
     boolean myInUpdate;
 

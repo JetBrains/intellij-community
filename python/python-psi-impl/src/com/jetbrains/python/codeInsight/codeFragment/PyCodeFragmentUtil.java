@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyCodeFragmentUtil {
+public final class PyCodeFragmentUtil {
   private PyCodeFragmentUtil() {
   }
 

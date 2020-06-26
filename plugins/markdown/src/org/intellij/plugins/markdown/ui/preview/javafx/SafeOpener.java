@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.javafx;
 
 import com.intellij.ide.BrowserUtil;
@@ -42,7 +42,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 
-class SafeOpener {
+final class SafeOpener {
   private static final Logger LOG = Logger.getInstance(SafeOpener.class);
 
   private static final Set<String> SCHEMES = ContainerUtil.newTroveSet(

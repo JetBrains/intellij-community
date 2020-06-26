@@ -17,7 +17,7 @@ import java.util.Objects;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 
-public class PlainSimplePatchApplier {
+public final class PlainSimplePatchApplier {
   private static final Logger LOG = getInstance(PlainSimplePatchApplier.class);
 
   @NotNull private final List<? extends PatchHunk> myHunks;

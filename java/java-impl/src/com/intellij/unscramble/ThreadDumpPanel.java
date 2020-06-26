@@ -296,7 +296,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     myThreadList.setSelectedIndex(index);
   }
 
-  private class SortThreadsAction extends DumbAwareAction {
+  private final class SortThreadsAction extends DumbAwareAction {
     private final Comparator<ThreadState> BY_TYPE = (o1, o2) -> {
       int c = getThreadStateCode(o1).compareTo(getThreadStateCode(o2));
       if (c == 0) {
@@ -329,7 +329,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
       e.getPresentation().setText(COMPARATOR == BY_TYPE ? TYPE_LABEL : NAME_LABEL);
     }
   }
-  private static class CopyToClipboardAction extends DumbAwareAction {
+  private static final class CopyToClipboardAction extends DumbAwareAction {
     private static final NotificationGroup GROUP = NotificationGroup.toolWindowGroup("Analyze thread dump", ToolWindowId.RUN, false);
     private final List<? extends ThreadState> myThreadDump;
     private final Project myProject;
@@ -353,7 +353,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  private class FilterAction extends ToggleAction implements DumbAware {
+  private final class FilterAction extends ToggleAction implements DumbAware {
 
     private FilterAction() {
       super(CommonBundle.messagePointer("action.text.filter"), JavaBundle.messagePointer(
@@ -376,7 +376,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  private class MergeStacktracesAction extends ToggleAction implements DumbAware {
+  private final class MergeStacktracesAction extends ToggleAction implements DumbAware {
     private MergeStacktracesAction() {
       super(JavaBundle.messagePointer("action.text.merge.identical.stacktraces"), JavaBundle.messagePointer(
         "action.description.group.threads.with.identical.stacktraces"), AllIcons.Actions.Collapseall);
@@ -398,7 +398,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     return new MyToFileExporter(project, threadStates);
   }
 
-  private static class MyToFileExporter implements ExporterToTextFile {
+  private static final class MyToFileExporter implements ExporterToTextFile {
     private final Project myProject;
     private final List<? extends ThreadState> myThreadStates;
 

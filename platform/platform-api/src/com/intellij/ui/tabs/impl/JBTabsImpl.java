@@ -2510,7 +2510,7 @@ public class JBTabsImpl extends JComponent
       });
   }
 
-  private static class SelectPreviousAction extends BaseNavigationAction {
+  private static final class SelectPreviousAction extends BaseNavigationAction {
     private SelectPreviousAction(JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
       super(IdeActions.ACTION_PREVIOUS_TAB, tabs, parentDisposable);
     }

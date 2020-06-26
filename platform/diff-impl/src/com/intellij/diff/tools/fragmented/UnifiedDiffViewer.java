@@ -1032,7 +1032,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   // Scroll from annotate
   //
 
-  private class ChangedLinesIterator extends BufferedLineIterator {
+  private final class ChangedLinesIterator extends BufferedLineIterator {
     @NotNull private final List<? extends UnifiedDiffChange> myChanges;
 
     private int myIndex = 0;
@@ -1247,7 +1247,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       myLineNumberConvertor.dispose();
     }
 
-    private static class MyFoldingBuilder extends FoldingBuilderBase {
+    private static final class MyFoldingBuilder extends FoldingBuilderBase {
       @NotNull private final Document myDocument;
       @NotNull private final DisposableLineNumberConvertor myLineConvertor;
 
@@ -1269,7 +1269,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       }
     }
 
-    private static class DisposableLineNumberConvertor {
+    private static final class DisposableLineNumberConvertor {
       @Nullable private volatile LineNumberConvertor myConvertor;
 
       private DisposableLineNumberConvertor(@Nullable LineNumberConvertor convertor) {
@@ -1294,7 +1294,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
   }
 
-  private class MarkupUpdater implements Disposable {
+  private final class MarkupUpdater implements Disposable {
     @NotNull private final MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("UnifiedDiffViewer.MarkupUpdater", 300, true, myPanel, this);
 
@@ -1402,7 +1402,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
   }
 
-  private class UnifiedBreadcrumbsPanel extends DiffBreadcrumbsPanel {
+  private final class UnifiedBreadcrumbsPanel extends DiffBreadcrumbsPanel {
     private final VirtualFile myFile1;
     private final VirtualFile myFile2;
 
@@ -1472,7 +1472,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
 
-    private class UnifiedNavigatableCrumb implements NavigatableCrumb {
+    private final class UnifiedNavigatableCrumb implements NavigatableCrumb {
       @NotNull private final NavigatableCrumb myDelegate;
       @NotNull private final Side mySide;
 

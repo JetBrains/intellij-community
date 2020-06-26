@@ -85,7 +85,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     return new UnnecessaryTemporaryObjectFix(name);
   }
 
-  private static class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
 
     private final String m_name;
 

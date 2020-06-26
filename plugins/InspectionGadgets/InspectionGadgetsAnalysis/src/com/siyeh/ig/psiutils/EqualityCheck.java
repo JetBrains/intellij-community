@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.PsiConditionalExpression;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a model of PsiExpression which checks whether two expressions are equal (via Object.equals directly or indirectly).
  */
-public class EqualityCheck {
+public final class EqualityCheck {
   private static final CallMatcher OBJECT_EQUALS = CallMatcher.anyOf(
     CallMatcher.staticCall("java.util.Objects", "equals").parameterCount(2),
     CallMatcher.staticCall("com.google.common.base.Objects", "equal").parameterCount(2));

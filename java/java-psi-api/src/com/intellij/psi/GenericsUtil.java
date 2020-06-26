@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +18,7 @@ import java.util.*;
 /**
  * @author ven
  */
-public class GenericsUtil {
+public final class GenericsUtil {
 
   private static final Logger LOG = Logger.getInstance(GenericsUtil.class);
 
@@ -235,7 +221,7 @@ public class GenericsUtil {
       if (InheritanceUtil.isInheritorOrSelf(superClass, classToAdd, true)) return;
       if (classToAdd.isInheritor(superClass, true)) iterator.remove();
     }
-    
+
     supers.add(classToAdd);
   }
 
@@ -285,7 +271,7 @@ public class GenericsUtil {
 
     for (PsiType type : extendsTypes) {
       PsiType extendsType = substitutor.substitute(type);
-      if (extendsType != null && 
+      if (extendsType != null &&
           !TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
         return extendsType;
       }
@@ -507,7 +493,7 @@ public class GenericsUtil {
     else if (type instanceof PsiIntersectionType) {
       for (PsiType psiType : ((PsiIntersectionType)type).getConjuncts()) {
         if (!checkNotInBounds(psiType, bound, uncheckedConversionByDefault)) {
-          return false; 
+          return false;
         }
       }
       return true;

@@ -177,7 +177,7 @@ public class SafeLockInspection extends BaseInspection { // todo extend Resource
     }
   }
 
-  private static class UnlockVisitor extends JavaRecursiveElementWalkingVisitor {
+  private static final class UnlockVisitor extends JavaRecursiveElementWalkingVisitor {
     private boolean containsUnlock;
     private final PsiVariable variable;
     private final LockType type;

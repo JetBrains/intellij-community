@@ -20,7 +20,7 @@ import com.intellij.openapi.util.Key;
 
 import java.util.*;
 
-public class DependencyUtils {
+public final class DependencyUtils {
 
   private static final Key<Set<RefClass>> DEPENDENT_CLASSES_KEY =
     new Key<>("DEPENDENT_CLASSES");

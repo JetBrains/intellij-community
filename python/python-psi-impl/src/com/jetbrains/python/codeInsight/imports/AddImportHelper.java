@@ -64,7 +64,7 @@ import org.jetbrains.annotations.Nullable;
  * Does the actual job of adding an import statement into a file.
  * User: dcheryasov
  */
-public class AddImportHelper {
+public final class AddImportHelper {
   private static final Logger LOG = Logger.getInstance(AddImportHelper.class);
 
   // normal imports go first, then "from" imports

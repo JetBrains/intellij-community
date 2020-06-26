@@ -13,7 +13,7 @@ import java.util.List;
  * {@link FixingLayoutMatcher} extension that returns all matches (not just the first one)
  * from {@link MinusculeMatcher#matchingFragments(String)}.
  */
-public class AllOccurrencesMatcher extends MinusculeMatcher {
+public final class AllOccurrencesMatcher extends MinusculeMatcher {
   private final MinusculeMatcher delegate;
 
   private AllOccurrencesMatcher(@NotNull String pattern,

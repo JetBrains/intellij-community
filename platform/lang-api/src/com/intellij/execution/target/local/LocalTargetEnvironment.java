@@ -145,7 +145,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
     //
   }
 
-  private static class LocalVolume implements UploadableVolume, DownloadableVolume {
+  private static final class LocalVolume implements UploadableVolume, DownloadableVolume {
     private final Path myLocalRoot;
     private final Path myTargetRoot;
     private final boolean myReal;

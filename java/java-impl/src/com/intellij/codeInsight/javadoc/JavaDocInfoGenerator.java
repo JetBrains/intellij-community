@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -522,7 +522,7 @@ public class JavaDocInfoGenerator {
     generateAnnotations(buffer, aClass, place, true);
     generateModifiers(buffer, aClass, false);
     buffer.append(JavaBundle.message(aClass.isInterface() ? "java.terms.interface"
-                                                          : aClass.isEnum() ? "java.terms.enum" 
+                                                          : aClass.isEnum() ? "java.terms.enum"
                                                                             : aClass.isRecord() ? "java.terms.record" : "java.terms.class"));
     buffer.append(' ');
     String refText = JavaDocUtil.getReferenceText(aClass.getProject(), aClass);
@@ -920,7 +920,7 @@ public class JavaDocInfoGenerator {
       buffer.append(NBSP);
     }
   }
-  
+
   private static void generateAnnotations(StringBuilder buffer,
                                           PsiModifierListOwner owner,
                                           SignaturePlace place,
@@ -1889,7 +1889,7 @@ public class JavaDocInfoGenerator {
     }
 
     generateTypeAnnotations(buffer, type, context, false);
-    
+
     if (type instanceof PsiPrimitiveType) {
       String text = StringUtil.escapeXmlEntities(type.getCanonicalText());
       buffer.append(text);
@@ -2043,7 +2043,7 @@ public class JavaDocInfoGenerator {
 
       for (int i = 0; i < parameters.length; i++) {
         PsiTypeParameter p = parameters[i];
-        
+
         generateTypeAnnotations(buffer, p, p, false);
 
         buffer.append(p.getName());
@@ -2191,7 +2191,7 @@ public class JavaDocInfoGenerator {
     return aClass != null ? findInheritDocTagInClass(method, aClass, loc, new HashSet<>()) : null;
   }
 
-  private static class ParamInfo {
+  private static final class ParamInfo {
     private final String name;
     private final PsiDocTag docTag;
     private final InheritDocProvider<PsiDocTag> inheritDocTagProvider;

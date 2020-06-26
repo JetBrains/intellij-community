@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -41,7 +41,7 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     myOriginalFile = originalFile;
   }
 
-  private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
+  private static final class MyVirtualFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
     private static final String PROTOCOL = "mock";
 
     private MyVirtualFileSystem() {

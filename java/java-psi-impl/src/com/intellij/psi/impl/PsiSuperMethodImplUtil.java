@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public class PsiSuperMethodImplUtil {
+public final class PsiSuperMethodImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiSuperMethodImplUtil.class);
   private static final PsiCacheKey<Map<MethodSignature, HierarchicalMethodSignature>, PsiClass> SIGNATURES_FOR_CLASS_KEY = PsiCacheKey
     .create("SIGNATURES_FOR_CLASS_KEY",
@@ -257,7 +257,7 @@ public class PsiSuperMethodImplUtil {
   private static boolean isReturnTypeIsMoreSpecificThan(@NotNull HierarchicalMethodSignature thisSig, @NotNull HierarchicalMethodSignature thatSig) {
     PsiType thisRet = thisSig.getSubstitutor().substitute(thisSig.getMethod().getReturnType());
     PsiType thatRet = thatSig.getSubstitutor().substitute(thatSig.getMethod().getReturnType());
-    PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.isSubsignature(thatSig, thisSig) 
+    PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.isSubsignature(thatSig, thisSig)
                                          ? MethodSignatureUtil.getSuperMethodSignatureSubstitutor(thisSig, thatSig) : null;
     if (unifyingSubstitutor != null) {
       thisRet = unifyingSubstitutor.substitute(thisRet);

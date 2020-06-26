@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -348,7 +346,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     return JavaUiBundle.message("configurable.empty.text.select.library");
   }
 
-  private class CopyLibraryAction extends AnAction {
+  private final class CopyLibraryAction extends AnAction {
    private CopyLibraryAction() {
       super(CommonBundle.messagePointer("button.copy"), CommonBundle.messagePointer("button.copy"), COPY_ICON);
     }

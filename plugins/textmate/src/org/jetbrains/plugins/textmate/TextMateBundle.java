@@ -6,7 +6,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class TextMateBundle extends DynamicBundle {
+public final class TextMateBundle extends DynamicBundle {
   private static final String BUNDLE = "messages.TextMateBundle";
   private static final TextMateBundle INSTANCE = new TextMateBundle();
 

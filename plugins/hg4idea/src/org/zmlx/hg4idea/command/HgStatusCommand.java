@@ -34,7 +34,7 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 import java.io.File;
 import java.util.*;
 
-public class HgStatusCommand {
+public final class HgStatusCommand {
 
   private static final Logger LOG = Logger.getInstance(HgStatusCommand.class.getName());
 

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class RelaxngBundle extends DynamicBundle {
+public final class RelaxngBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.RelaxngBundle";
   private static final RelaxngBundle INSTANCE = new RelaxngBundle();
 

@@ -88,7 +88,7 @@ public class SegmentedProgressIndicatorManager {
     return myProgressIndicator;
   }
 
-  public static class SubTaskProgressIndicator extends ProgressWrapper {
+  public static final class SubTaskProgressIndicator extends ProgressWrapper {
     private final SegmentedProgressIndicatorManager myProgressManager;
     private double myFraction;
 

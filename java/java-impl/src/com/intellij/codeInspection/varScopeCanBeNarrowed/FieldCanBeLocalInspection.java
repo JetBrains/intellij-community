@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -386,7 +386,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     };
   }
 
-  private static class ConvertFieldToLocalQuickFix extends BaseConvertToLocalQuickFix<PsiField> {
+  private static final class ConvertFieldToLocalQuickFix extends BaseConvertToLocalQuickFix<PsiField> {
     private final String myName;
 
     private ConvertFieldToLocalQuickFix(@NotNull Map<PsiCodeBlock, Collection<PsiReference>> refs) {

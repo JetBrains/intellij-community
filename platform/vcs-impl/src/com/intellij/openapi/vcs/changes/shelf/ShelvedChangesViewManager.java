@@ -193,7 +193,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  private static class MyShelvedTreeModelBuilder extends TreeModelBuilder {
+  private static final class MyShelvedTreeModelBuilder extends TreeModelBuilder {
     private MyShelvedTreeModelBuilder(Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
       super(project, grouping);
     }
@@ -332,7 +332,7 @@ public class ShelvedChangesViewManager implements Disposable {
     });
   }
 
-  private static class ShelfTree extends ChangesTree {
+  private static final class ShelfTree extends ChangesTree {
     private List<ShelvedChangeList> myLoadedLists = emptyList();
     private final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider(myProject, this);
 
@@ -510,7 +510,7 @@ public class ShelvedChangesViewManager implements Disposable {
       .map(ShelvedWrapper::getPath).toList();
   }
 
-  private static class MyShelveDeleteProvider implements DeleteProvider {
+  private static final class MyShelveDeleteProvider implements DeleteProvider {
     @NotNull private final Project myProject;
     @NotNull private final ShelfTree myTree;
 
@@ -545,7 +545,7 @@ public class ShelvedChangesViewManager implements Disposable {
       VcsNotifier.getInstance(myProject).showNotificationAndHideExisting(shelfDeletionNotification, ShelfDeleteNotification.class);
     }
 
-    private static class UndoShelfDeletionAction extends NotificationAction {
+    private static final class UndoShelfDeletionAction extends NotificationAction {
       @NotNull private final Project myProject;
       @NotNull private final Map<ShelvedChangeList, Date> myListDateMap;
 

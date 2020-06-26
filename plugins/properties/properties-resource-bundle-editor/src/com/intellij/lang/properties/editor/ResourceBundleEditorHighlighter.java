@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -48,7 +46,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
     return new HighlightingPass[]{new ResourceBundleEditorHighlightingPass(myEditor)};
   }
 
-  private static class ResourceBundleEditorHighlightingPass implements HighlightingPass {
+  private static final class ResourceBundleEditorHighlightingPass implements HighlightingPass {
     private final ResourceBundleEditor myEditor;
 
     private ResourceBundleEditorHighlightingPass(ResourceBundleEditor editor) {
@@ -129,7 +127,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
     }
   }
 
-  private static class InspectionVisitorWrapper {
+  private static final class InspectionVisitorWrapper {
     private final Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> myProblemVisitor;
     private final HighlightSeverity mySeverity;
     private final HighlightDisplayKey myKey;

@@ -42,7 +42,7 @@ public class ReferenceProviderType {
     return myId;
   }
 
-  private static class CompositePsiReferenceProvider extends PsiReferenceProvider implements CustomizableReferenceProvider {
+  private static final class CompositePsiReferenceProvider extends PsiReferenceProvider implements CustomizableReferenceProvider {
     private final ReferenceProviderType myType;
 
     private CompositePsiReferenceProvider(ReferenceProviderType type) {

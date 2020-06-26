@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
 
-public class ProcessTerminatedListener extends ProcessAdapter {
+public final class ProcessTerminatedListener extends ProcessAdapter {
   protected static final String EXIT_CODE_ENTRY = "$EXIT_CODE$";
   protected static final String EXIT_CODE_REGEX = "\\$EXIT_CODE\\$";
 

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class PythonCondaBundle extends DynamicBundle {
+public final class PythonCondaBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.PythonCondaBundle";
   private static final PythonCondaBundle INSTANCE = new PythonCondaBundle();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
@@ -1162,7 +1162,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   /**
    * Imitates the normal UI contexts to the extent we use it. Collects highlighting.
    */
-  private static class Collector implements ParameterInfoUIContextEx, CreateParameterInfoContext, UpdateParameterInfoContext {
+  private static final class Collector implements ParameterInfoUIContextEx, CreateParameterInfoContext, UpdateParameterInfoContext {
 
     @NotNull
     private final PsiFile myFile;

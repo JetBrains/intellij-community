@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.util.Key;
@@ -221,7 +221,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     return type.endsWith("[]") || COLLECTIONS_TYPE_NAMES.contains(type);
   }
 
-  public static class ParameterData {
+  public static final class ParameterData {
     public final MavenDomParameter parameter;
     public @Nullable String defaultValue;
     public @Nullable String expression;

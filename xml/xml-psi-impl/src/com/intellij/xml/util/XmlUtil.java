@@ -58,7 +58,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 
-public class XmlUtil {
+public final class XmlUtil {
   @NonNls public static final String XML_SCHEMA_URI = "http://www.w3.org/2001/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI2 = "http://www.w3.org/1999/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI3 = "http://www.w3.org/2000/10/XMLSchema";

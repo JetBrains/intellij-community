@@ -159,7 +159,7 @@ public class TerminalWorkingDirectoryManager {
     content.putUserData(INITIAL_CWD_KEY, dir != null ? FileUtil.toSystemDependentName(dir.getPath()) : null);
   }
 
-  private static class Data {
+  private static final class Data {
     private final KeyListener myKeyListener;
     private final String myContentName;
     private volatile String myWorkingDirectory;

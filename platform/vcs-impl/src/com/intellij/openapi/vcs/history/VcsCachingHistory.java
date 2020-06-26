@@ -28,7 +28,7 @@ import java.util.Objects;
 
 import static com.intellij.openapi.vcs.impl.BackgroundableActionLock.getLock;
 
-public class VcsCachingHistory {
+public final class VcsCachingHistory {
   @NotNull private final Project myProject;
   @NotNull private final VcsHistoryCache myVcsHistoryCache;
   @NotNull private final VcsHistoryProvider myHistoryProvider;
@@ -259,7 +259,7 @@ public class VcsCachingHistory {
     return getLock(vcs.getProject(), actionKey, filePath.getPath());
   }
 
-  private static class CollectingHistoryPartner implements VcsHistorySessionConsumer {
+  private static final class CollectingHistoryPartner implements VcsHistorySessionConsumer {
     @NotNull private final Project myProject;
     @NotNull private final Consumer<? super VcsHistorySession> myContinuation;
     @NotNull private final LimitHistoryCheck myCheck;
@@ -300,7 +300,7 @@ public class VcsCachingHistory {
     }
   }
 
-  private static class HistoryPartnerProxy implements VcsHistorySessionConsumer {
+  private static final class HistoryPartnerProxy implements VcsHistorySessionConsumer {
     @NotNull private final VcsHistorySessionConsumer myPartner;
     @NotNull private final Consumer<? super VcsAbstractHistorySession> myFinish;
     private VcsAbstractHistorySession myCopy;

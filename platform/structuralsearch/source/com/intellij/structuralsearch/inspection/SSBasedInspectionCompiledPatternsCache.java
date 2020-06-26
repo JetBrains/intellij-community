@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * @author Eugene.Kudelevsky
  */
-class SSBasedInspectionCompiledPatternsCache {
+final class SSBasedInspectionCompiledPatternsCache {
 
   private static final Logger LOG = Logger.getInstance(SSBasedInspectionCompiledPatternsCache.class);
   private static final Key<Map<Configuration, Matcher>> COMPILED_OPTIONS_KEY = Key.create("SSR_INSPECTION_COMPILED_OPTIONS_KEY");

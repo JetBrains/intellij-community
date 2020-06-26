@@ -209,7 +209,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     return stroke;
   }
 
-  private static class MenuWrapper extends AbstractButtonWrapper {
+  private static final class MenuWrapper extends AbstractButtonWrapper {
     private KeyStroke myStrokePressed;
 
     private MenuWrapper(AbstractButton component) {
@@ -222,7 +222,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     }
   }
 
-  private static class ButtonWrapper extends AbstractButtonWrapper {
+  private static final class ButtonWrapper extends AbstractButtonWrapper {
     private KeyStroke myStrokePressed;
     private KeyStroke myStrokeReleased;
 
@@ -273,7 +273,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     }
   }
 
-  private static class LabelWrapper extends MnemonicWrapper<JLabel> {
+  private static final class LabelWrapper extends MnemonicWrapper<JLabel> {
     private KeyStroke myStrokePress;
     private KeyStroke myStrokeRelease;
 

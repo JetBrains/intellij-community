@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -57,7 +57,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class HighlightMethodUtil {
+public final class HighlightMethodUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
   private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
 
@@ -546,7 +546,7 @@ public class HighlightMethodUtil {
       String errorMessage = candidateInfo.getInferenceErrorMessage();
       String reason = errorMessage != null ? "<table><tr><td style='padding-left: 4px; padding-top: 10;'>" +
                                              "reason: " + XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>") +
-                                             "</td></tr></table>" 
+                                             "</td></tr></table>"
                                            : "";
       return HighlightUtil.createIncompatibleTypesTooltip(paramType, argType,
                                                           (lRawType, lTypeArguments, rRawType, rTypeArguments) ->
@@ -2060,7 +2060,7 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  private static class ReturnModel {
+  private static final class ReturnModel {
     final PsiReturnStatement myStatement;
     final PsiType myType;
     final PsiType myLeastType;

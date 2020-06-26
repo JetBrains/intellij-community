@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -54,7 +54,7 @@ public abstract class ProgressStripeIcon implements Icon {
     return myReferenceComponent.getWidth();
   }
 
-  private static class GradientIcon extends ProgressStripeIcon {
+  private static final class GradientIcon extends ProgressStripeIcon {
     private static final Color DARK = new ProgressStripeColor(namedColor("ProgressBar.indeterminateStartColor",
                                                                          new JBColor(new Color(0x4d9ff8),
                                                                                      new Color(0x6a6a6a))), Gray.xD4);
@@ -90,7 +90,7 @@ public abstract class ProgressStripeIcon implements Icon {
       return JBUIScale.scale(GRADIENT_HEIGHT);
     }
 
-    private static class ProgressStripeColor extends JBColor {
+    private static final class ProgressStripeColor extends JBColor {
       private ProgressStripeColor(@NotNull JBColor defaultColor, @NotNull Color graphiteColor) {
         super(() -> {
           if (UIUtil.isUnderAquaBasedLookAndFeel() && !StartupUiUtil.isUnderDarcula() && UIUtil.isGraphite()) {

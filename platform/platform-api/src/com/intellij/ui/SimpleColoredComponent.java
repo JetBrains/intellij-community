@@ -765,7 +765,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       offset += getInsets().left;
 
-      class Frag {
+      final class Frag {
         private final int index;
         private final float start;
         private final float end;
@@ -1327,7 +1327,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     void draw(Graphics2D g2, float x, float y);
   }
 
-  private static class LayoutTextRenderer implements TextRenderer {
+  private static final class LayoutTextRenderer implements TextRenderer {
     private final TextLayout myLayout;
 
     private LayoutTextRenderer(TextLayout layout) {
@@ -1345,7 +1345,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  private static class SimpleTextRenderer implements TextRenderer {
+  private static final class SimpleTextRenderer implements TextRenderer {
     private final String myText;
     private final float myWidth;
 

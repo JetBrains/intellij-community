@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.project.Project;
@@ -37,7 +23,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class PsiTypesUtil {
+public final class PsiTypesUtil {
   @NonNls private static final Map<String, String> ourUnboxedTypes = new THashMap<>();
   @NonNls private static final Map<String, String> ourBoxedTypes = new THashMap<>();
 
@@ -193,7 +179,7 @@ public class PsiTypesUtil {
     }
     return null;
   }
-  
+
   public static PsiType patchMethodGetClassReturnType(@NotNull PsiExpression call,
                                                       @NotNull PsiReferenceExpression methodExpression,
                                                       @NotNull PsiMethod method,
@@ -209,7 +195,7 @@ public class PsiTypesUtil {
       }
       else {
         PsiElement parent = call.getContext();
-        while (parent != null && condition.value(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parent).getElementType() 
+        while (parent != null && condition.value(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parent).getElementType()
                                                                                        : parent.getNode().getElementType())) {
           parent = parent.getContext();
         }
@@ -278,7 +264,7 @@ public class PsiTypesUtil {
     }
     else if (PsiUtil.isCondition(element, parent)) {
       return PsiType.BOOLEAN;
-    } 
+    }
     else if (parent instanceof PsiArrayInitializerExpression) {
       final PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiNewExpression) {
@@ -388,7 +374,7 @@ public class PsiTypesUtil {
       }
     });
   }
-  
+
   public static boolean hasUnresolvedComponents(@NotNull PsiType type) {
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @Nullable
@@ -525,7 +511,7 @@ public class PsiTypesUtil {
   }
 
   /**
-   * Checks if {@code type} mentions type parameters from the passed {@code Set} 
+   * Checks if {@code type} mentions type parameters from the passed {@code Set}
    * Implicit type arguments of types based on inner classes of generic outer classes are explicitly checked
    */
   public static boolean mentionsTypeParameters(@Nullable PsiType type, Set<PsiTypeParameter> typeParameters) {
@@ -549,7 +535,7 @@ public class PsiTypesUtil {
     }
     return false;
   }
-  
+
   private static boolean mentionsTypeParametersOrUnboundedWildcard(@Nullable PsiType type,
                                                                    Set<PsiTypeParameter> typeParameters,
                                                                    boolean acceptUnboundedWildcard) {

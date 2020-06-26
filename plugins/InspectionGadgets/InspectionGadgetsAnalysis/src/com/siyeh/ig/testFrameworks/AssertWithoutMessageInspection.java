@@ -68,11 +68,11 @@ public class AssertWithoutMessageInspection extends BaseInspection {
     return new AssertWithoutMessageFix((boolean)infos[0]);
   }
 
-  private static class AssertWithoutMessageFix extends InspectionGadgetsFix {
+  private static final class AssertWithoutMessageFix extends InspectionGadgetsFix {
     private final boolean myMessageIsOnFirstPosition;
 
     private AssertWithoutMessageFix(boolean messageIsOnFirstPosition) {myMessageIsOnFirstPosition = messageIsOnFirstPosition;}
-    
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
 

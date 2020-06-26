@@ -557,7 +557,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return mySortElements;
   }
 
-  private class SelectedElementInfo<E extends PackagingElement<?>> {
+  private final class SelectedElementInfo<E extends PackagingElement<?>> {
     private final E myElement;
     private PackagingElementPropertiesPanel myCurrentPanel;
 

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class RncFileType extends LanguageFileType {
+public final class RncFileType extends LanguageFileType {
   @SuppressWarnings("unused")
   public static final String RNC_EXT = "rnc";
 

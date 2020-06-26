@@ -144,7 +144,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
     }
   }
 
-  private static class DeclarationVisitor
+  private static final class DeclarationVisitor
     extends JavaRecursiveElementWalkingVisitor {
 
     private final Set<String> declarations;

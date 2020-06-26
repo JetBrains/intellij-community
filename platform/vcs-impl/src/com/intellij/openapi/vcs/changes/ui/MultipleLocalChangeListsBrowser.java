@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.chains.DiffRequestChain;
@@ -429,7 +429,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   }
 
 
-  private class ShowHideUnversionedFilesAction extends ToggleAction implements DumbAware {
+  private final class ShowHideUnversionedFilesAction extends ToggleAction implements DumbAware {
     private ShowHideUnversionedFilesAction() {
       super(VcsBundle.messagePointer("action.ToggleAction.text.show.unversioned.files"), Presentation.NULL_STRING,
             AllIcons.Vcs.ShowUnversionedFiles);

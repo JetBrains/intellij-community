@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.openapi.project.Project;
@@ -39,7 +39,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 /**
  * @author ven
  */
-public class TypesUtil implements TypeConstants {
+public final class TypesUtil implements TypeConstants {
 
   public static final PsiPrimitiveType[] PRIMITIVES = {
     PsiType.BYTE,
@@ -147,7 +147,7 @@ public class TypesUtil implements TypeConstants {
       }
       return min;
     }
-    
+
     if (targetType instanceof PsiIntersectionType) {
       ConversionResult max = ConversionResult.OK;
       for (PsiType child : ((PsiIntersectionType)targetType).getConjuncts()) {
@@ -533,7 +533,7 @@ public class TypesUtil implements TypeConstants {
   public static PsiType createJavaLangClassType(@Nullable PsiType type, @NotNull PsiElement context) {
     return createJavaLangClassType(type, context.getProject(), context.getResolveScope());
   }
-  
+
   @Nullable
   public static PsiType createJavaLangClassType(@Nullable PsiType type,
                                                 Project project,

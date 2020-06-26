@@ -607,7 +607,7 @@ public final class PushController implements Disposable {
     return result;
   }
 
-  private static class PushInfoImpl implements PushInfo {
+  private static final class PushInfoImpl implements PushInfo {
 
     private final Repository myRepository;
     private final PushSpec<PushSource, PushTarget> myPushSpec;

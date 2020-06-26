@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyExtractMethodUtil {
+public final class PyExtractMethodUtil {
   public static final String NAME = "extract.method.name";
 
   private PyExtractMethodUtil() {

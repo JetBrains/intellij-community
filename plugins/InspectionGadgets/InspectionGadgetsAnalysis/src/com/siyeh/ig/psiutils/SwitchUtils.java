@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SwitchUtils {
+public final class SwitchUtils {
 
   private SwitchUtils() {}
 

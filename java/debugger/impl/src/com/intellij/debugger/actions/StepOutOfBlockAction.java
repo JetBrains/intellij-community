@@ -76,7 +76,7 @@ public class StepOutOfBlockAction extends DebuggerAction implements DumbAware {
                                              !((XDebugSessionImpl)session).isReadOnly() && session.isSuspended());
   }
 
-  private static class BlockFilter implements MethodFilter {
+  private static final class BlockFilter implements MethodFilter {
     private final Range<Integer> myLines;
 
     private BlockFilter(int startLine, int endLine) {

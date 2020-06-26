@@ -1367,7 +1367,7 @@ public class MavenProjectsTree {
   public abstract static class SimpleVisitor extends Visitor<Object> {
   }
 
-  private static class MavenProjectTimestamp {
+  private static final class MavenProjectTimestamp {
     private final long myPomTimestamp;
     private final long myParentLastReadStamp;
     private final long myProfilesTimestamp;

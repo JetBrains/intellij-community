@@ -220,7 +220,7 @@ public final class VcsInitialization {
     }
   }
 
-  private static class ProxyVcsStartupActivity implements VcsStartupActivity {
+  private static final class ProxyVcsStartupActivity implements VcsStartupActivity {
     @NotNull private final Runnable myRunnable;
     private final int myOrder;
 

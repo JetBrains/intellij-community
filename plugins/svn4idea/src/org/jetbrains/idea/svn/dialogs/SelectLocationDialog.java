@@ -34,7 +34,7 @@ import static org.jetbrains.idea.svn.SvnUtil.append;
 /**
  * @author alex
  */
-public class SelectLocationDialog extends DialogWrapper {
+public final class SelectLocationDialog extends DialogWrapper {
   private final Project myProject;
   private RepositoryBrowserComponent myRepositoryBrowser;
   private final Url myURL;

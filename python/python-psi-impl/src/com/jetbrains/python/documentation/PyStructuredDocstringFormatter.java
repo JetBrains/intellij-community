@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyStructuredDocstringFormatter {
+public final class PyStructuredDocstringFormatter {
 
   private static final Logger LOG = Logger.getInstance(PyStructuredDocstringFormatter.class);
 

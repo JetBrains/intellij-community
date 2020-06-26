@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2;
 
 import com.intellij.CvsBundle;
@@ -743,7 +743,7 @@ public class CvsUtil {
     }
   }
 
-  private static class Conflict {
+  private static final class Conflict {
     private final String myName;
     private final List<String> myRevisions;
     private final long myPreviousTime;

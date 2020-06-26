@@ -75,7 +75,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     return Arrays.asList(actionGroup, new RemoveInspectionAction(panel));
   }
 
-  private static class RemoveInspectionAction extends DumbAwareAction {
+  private static final class RemoveInspectionAction extends DumbAwareAction {
 
     private final SingleInspectionProfilePanel myPanel;
 
@@ -103,7 +103,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
   }
 
-  private static class AddInspectionAction extends DumbAwareAction {
+  private static final class AddInspectionAction extends DumbAwareAction {
 
     private final SingleInspectionProfilePanel myPanel;
     private final boolean myReplace;

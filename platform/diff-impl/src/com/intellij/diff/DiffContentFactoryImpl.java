@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
@@ -655,7 +655,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
-  private static class MyLightVirtualFile extends LightVirtualFile {
+  private static final class MyLightVirtualFile extends LightVirtualFile {
     private final FilePath myPath;
 
     private MyLightVirtualFile(@NotNull FilePath path, @Nullable FileType fileType, @NotNull String content) {
@@ -685,7 +685,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
-  private static class FileReferentDocumentContent extends DocumentContentBase {
+  private static final class FileReferentDocumentContent extends DocumentContentBase {
     @NotNull private final VirtualFile myHighlightFile;
 
     private FileReferentDocumentContent(@Nullable Project project, @NotNull Document document, @NotNull VirtualFile highlightFile) {
@@ -704,7 +704,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
-  private static class ContentReferentDocumentContent extends DocumentContentBase {
+  private static final class ContentReferentDocumentContent extends DocumentContentBase {
     @NotNull private final DocumentContent myReferent;
 
     private ContentReferentDocumentContent(@Nullable Project project, @NotNull Document document, @NotNull DocumentContent referent) {
@@ -723,7 +723,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
-  private static class ContextReferentDocumentContent extends DocumentContentBase {
+  private static final class ContextReferentDocumentContent extends DocumentContentBase {
     @Nullable private final LineSeparator mySeparator;
     @Nullable private final Charset myCharset;
     @Nullable private final Boolean myBOM;

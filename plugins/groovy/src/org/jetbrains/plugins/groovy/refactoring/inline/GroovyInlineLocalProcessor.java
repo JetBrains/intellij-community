@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -93,7 +93,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
   protected UsageInfo @NotNull [] findUsages() {
     final Instruction[] controlFlow = mySettings.getFlow();
     final List<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(controlFlow, myLocal);
-    
+
     ArrayList<UsageInfo> toInline = new ArrayList<>();
     collectRefs(myLocal, controlFlow, writes, mySettings.getWriteInstructionNumber(), toInline);
 
@@ -103,12 +103,12 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
   /**
    * ClosureUsage represents usage of local var inside closure
    */
-  private static class ClosureUsage extends UsageInfo {
+  private static final class ClosureUsage extends UsageInfo {
     private ClosureUsage(@NotNull PsiReference reference) {
       super(reference);
     }
   }
-  
+
   private static void collectRefs(final GrVariable variable,
                                   Instruction[] flow,
                                   final List<BitSet> writes,

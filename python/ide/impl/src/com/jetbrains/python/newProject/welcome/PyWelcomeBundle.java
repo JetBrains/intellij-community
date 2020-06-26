@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class PyWelcomeBundle extends DynamicBundle {
+public final class PyWelcomeBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.PyWelcomeBundle";
   private static final PyWelcomeBundle INSTANCE = new PyWelcomeBundle();
 

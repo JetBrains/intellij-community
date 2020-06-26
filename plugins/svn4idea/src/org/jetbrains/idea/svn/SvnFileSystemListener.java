@@ -64,7 +64,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
   }
 
-  private static class MovedFileInfo {
+  private static final class MovedFileInfo {
     private final File mySrc;
     private final File myDst;
 

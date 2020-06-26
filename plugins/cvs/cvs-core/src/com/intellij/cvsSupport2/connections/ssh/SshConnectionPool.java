@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.connections.ssh;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +11,7 @@ import org.netbeans.lib.cvsclient.connection.IConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SshConnectionPool implements ConnectionPoolI {
+public final class SshConnectionPool implements ConnectionPoolI {
   private final static int CONTROL_INTERVAL = 610000;
   private final Map<MyKey, SshSharedConnection> myPool;
   private final Object myLock;
@@ -71,7 +71,7 @@ public class SshConnectionPool implements ConnectionPoolI {
   }
 
   // will serve only as a key, no other logic needed
-  private static class MyKey {
+  private static final class MyKey {
     private final String myRepository;
     private final String myLogin;
     private final String myHost;

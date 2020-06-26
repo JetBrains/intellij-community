@@ -59,7 +59,7 @@ public class SphinxBaseCommand {
     return true;
   }
 
-  public static class AskForWorkDir extends DialogWrapper {
+  public static final class AskForWorkDir extends DialogWrapper {
     private TextFieldWithBrowseButton myInputFile;
     private JPanel myPanel;
 

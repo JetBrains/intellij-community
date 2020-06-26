@@ -28,6 +28,7 @@ import org.intellij.lang.xpath.xslt.context.Xslt2ContextProvider;
 // TODO: more detailed error descriptions
 
 @SuppressWarnings({"SimplifiableIfStatement"})
+final
 class XsltPatternValidator {
   private XsltPatternValidator() {
   }

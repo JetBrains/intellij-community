@@ -23,7 +23,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 /**
  * @author ven
  */
-public class ClsParsingUtil {
+public final class ClsParsingUtil {
   private static final Logger LOG = Logger.getInstance(ClsParsingUtil.class);
 
   private static final JavaParserUtil.ParserWrapper ANNOTATION_VALUE =

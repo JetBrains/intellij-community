@@ -15,7 +15,7 @@
  */
 package org.netbeans.lib.cvsclient.progress;
 
-public class DummyProgressViewer implements IProgressViewer {
+public final class DummyProgressViewer implements IProgressViewer {
 
   public static final DummyProgressViewer INSTANCE = new DummyProgressViewer();
 

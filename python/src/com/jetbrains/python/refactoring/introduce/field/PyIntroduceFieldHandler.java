@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.introduce.field;
 
 import com.intellij.lang.ASTNode;
@@ -269,7 +269,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
            !isInStaticMethod(element);
   }
 
-  private static class AddFieldDeclaration implements Function<String, PyStatement> {
+  private static final class AddFieldDeclaration implements Function<String, PyStatement> {
     private final PsiElement myDeclaration;
 
     private AddFieldDeclaration(PsiElement declaration) {

@@ -32,7 +32,7 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 /**
  * @author vlan
  */
-public class PyTypeChecker {
+public final class PyTypeChecker {
   private PyTypeChecker() {
   }
 

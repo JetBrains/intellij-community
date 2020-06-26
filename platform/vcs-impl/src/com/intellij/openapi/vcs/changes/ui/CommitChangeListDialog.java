@@ -443,7 +443,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myHelpId;
   }
 
-  private class CommitAction extends AbstractAction implements OptionAction {
+  private final class CommitAction extends AbstractAction implements OptionAction {
     private Action @NotNull [] myOptions = new Action[0];
 
     private CommitAction(String okActionText) {

@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class HighlightControlFlowUtil {
+public final class HighlightControlFlowUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   private HighlightControlFlowUtil() { }

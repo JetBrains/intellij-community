@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class BuildoutCfgFileType extends LanguageFileType {
+public final class BuildoutCfgFileType extends LanguageFileType {
   public static final BuildoutCfgFileType INSTANCE = new BuildoutCfgFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "cfg";
   @NonNls private static final String NAME = "BuildoutCfg";

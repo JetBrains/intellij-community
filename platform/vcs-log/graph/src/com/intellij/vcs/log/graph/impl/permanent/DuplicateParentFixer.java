@@ -24,7 +24,7 @@ public final class DuplicateParentFixer {
     };
   }
 
-  private static class DelegateGraphCommit<CommitId> implements GraphCommit<CommitId> {
+  private static final class DelegateGraphCommit<CommitId> implements GraphCommit<CommitId> {
     @NotNull private final GraphCommit<CommitId> myDelegate;
 
     @NotNull private final List<CommitId> myParents;

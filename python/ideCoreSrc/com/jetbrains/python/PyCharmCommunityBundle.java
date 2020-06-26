@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class PyCharmCommunityBundle extends DynamicBundle {
+public final class PyCharmCommunityBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.PyCharmCommunityBundle";
   private static final PyCharmCommunityBundle INSTANCE = new PyCharmCommunityBundle();
 

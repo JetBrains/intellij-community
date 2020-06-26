@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class CloudBundle extends DynamicBundle {
+public final class CloudBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.CloudBundle";
   private static final CloudBundle INSTANCE = new CloudBundle();
 

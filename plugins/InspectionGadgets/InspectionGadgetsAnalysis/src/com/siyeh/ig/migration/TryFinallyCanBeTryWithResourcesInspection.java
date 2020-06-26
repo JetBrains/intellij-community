@@ -224,7 +224,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
   }
 
-  private static class Context {
+  private static final class Context {
     final @NotNull List<ResourceVariable> myResourceVariables;
     final @NotNull Set<PsiStatement> myStatementsToDelete;
 

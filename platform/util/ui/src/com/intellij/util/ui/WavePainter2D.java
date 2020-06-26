@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import java.awt.*;
@@ -13,7 +13,7 @@ import java.util.Map;
  * <p/>
  * This class is not thread-safe, it's supposed to be used in EDT only.
  */
-public class WavePainter2D extends WavePainter {
+public final class WavePainter2D extends WavePainter {
   private static final float STROKE_WIDTH = 0.7f;
 
   private static final Map<Color, WavePainter2D> myPainters = new HashMap<>();

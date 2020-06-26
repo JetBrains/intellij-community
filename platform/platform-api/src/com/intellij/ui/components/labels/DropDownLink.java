@@ -86,7 +86,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     return myPopupState;
   }
 
-  private static class LinkCellRenderer<T> extends JLabel implements ListCellRenderer<T> {
+  private static final class LinkCellRenderer<T> extends JLabel implements ListCellRenderer<T> {
     private final JComponent owner;
 
     private LinkCellRenderer(JComponent owner) {

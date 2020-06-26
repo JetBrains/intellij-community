@@ -19,7 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-public class MigrationUtil {
+public final class MigrationUtil {
   private static final Logger LOG = Logger.getInstance(MigrationUtil.class);
 
   private MigrationUtil() {

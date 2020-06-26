@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class LayoutElementBuildersRegistry {
+public final class LayoutElementBuildersRegistry {
   private static final Logger LOG = Logger.getInstance(LayoutElementBuildersRegistry.class);
 
   private static final class InstanceHolder {

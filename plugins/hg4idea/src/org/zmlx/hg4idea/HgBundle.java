@@ -19,7 +19,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class HgBundle extends DynamicBundle {
+public final class HgBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.HgBundle";
   private static final HgBundle INSTANCE = new HgBundle();
 

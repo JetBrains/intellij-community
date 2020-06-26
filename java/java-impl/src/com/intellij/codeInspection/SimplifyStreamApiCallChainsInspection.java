@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -420,7 +420,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     }
   }
 
-  private static class ReplaceSingletonWithStreamOfFix extends ReplaceCollectionStreamFix {
+  private static final class ReplaceSingletonWithStreamOfFix extends ReplaceCollectionStreamFix {
     private ReplaceSingletonWithStreamOfFix(String qualifierCall) {
       super(qualifierCall, JAVA_UTIL_STREAM_STREAM, OF_METHOD);
     }
@@ -634,7 +634,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     }
   }
 
-  private static class SimplifyMatchNegationFix implements CallChainSimplification {
+  private static final class SimplifyMatchNegationFix implements CallChainSimplification {
     private final String myFrom, myTo;
 
     private SimplifyMatchNegationFix(PsiMethodCallExpression call, boolean argNegated, boolean parentNegated, String to) {
@@ -1845,7 +1845,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         if (extractDelimiter(call) == null) return null;
         PsiMethodCallExpression qualifier = getQualifierMethodCall(call);
         if (qualifier == null) return null;
-        if (ARRAYS_STREAM.matches(qualifier) || 
+        if (ARRAYS_STREAM.matches(qualifier) ||
             (COLLECTION_STREAM.matches(qualifier) && ExpressionUtils.getEffectiveQualifier(qualifier.getMethodExpression()) != null)) {
           PsiType elementType = StreamApiUtil.getStreamElementType(qualifier.getType());
           if (InheritanceUtil.isInheritor(elementType, JAVA_LANG_CHAR_SEQUENCE)) {
@@ -1905,7 +1905,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       });
     }
 
-    private static class Context {
+    private static final class Context {
       final PsiMethodCallExpression myStringJoinCall;
       final PsiExpression myDelimiterExpression;
       final PsiExpression myCollectorsToListCall;
@@ -2080,10 +2080,10 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       return methodName;
     }
   }
-  
+
   static class CollectorToListSize implements CallChainSimplification {
     private final boolean mySize;
-    
+
     CollectorToListSize(boolean size) {
       mySize = size;
     }

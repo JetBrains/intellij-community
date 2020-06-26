@@ -670,7 +670,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return mySegments;
   }
 
-  public static class InvalidStateException extends RuntimeException implements ExceptionWithAttachments {
+  public static final class InvalidStateException extends RuntimeException implements ExceptionWithAttachments {
     private final Attachment[] myAttachments;
 
     private InvalidStateException(LexerEditorHighlighter highlighter, String message, Throwable cause) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -167,7 +167,7 @@ public class ImportHelper{
     }
 
 
-    class MyVisitorProcedure implements TObjectIntProcedure<String> {
+    final class MyVisitorProcedure implements TObjectIntProcedure<String> {
       private final boolean myIsVisitingPackages;
 
       private MyVisitorProcedure(boolean isVisitingPackages) {
@@ -364,8 +364,8 @@ public class ImportHelper{
           PsiElement element = reference.resolve();
           if (element instanceof PsiClass && conflicts.contains(((PsiClass)element).getName())) {
             String fqn = ((PsiClass)element).getQualifiedName();
-            if (fqn != null && 
-                !PsiTreeUtil.isAncestor(file, element, true) && 
+            if (fqn != null &&
+                !PsiTreeUtil.isAncestor(file, element, true) &&
                 !packageName.equals(StringUtil.getPackageName(fqn))) {
               outNamesToUseSingle.add(fqn);
             }
@@ -556,7 +556,7 @@ public class ImportHelper{
   private static boolean containsInCurrentPackage(@NotNull PsiJavaFile file, PsiClass curRefClass) {
     if (curRefClass != null) {
       final String curRefClassQualifiedName = curRefClass.getQualifiedName();
-      if (curRefClassQualifiedName != null && 
+      if (curRefClassQualifiedName != null &&
           ArrayUtil.find(file.getImplicitlyImportedPackages(), StringUtil.getPackageName(curRefClassQualifiedName)) < 0) {
          return true;
       }
@@ -669,7 +669,7 @@ public class ImportHelper{
     }
     return null;
   }
-  
+
   public static boolean isAlreadyImported(@NotNull PsiJavaFile file, @NotNull String fullyQualifiedName) {
     String className = extractClassName(file, fullyQualifiedName);
 

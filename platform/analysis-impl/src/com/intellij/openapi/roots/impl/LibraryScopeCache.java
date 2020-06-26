@@ -175,7 +175,7 @@ public class LibraryScopeCache {
     return GlobalSearchScope.union(united.toArray(GlobalSearchScope.EMPTY_ARRAY));
   }
 
-  private static class LibrariesOnlyScope extends DelegatingGlobalSearchScope {
+  private static final class LibrariesOnlyScope extends DelegatingGlobalSearchScope {
     private final ProjectFileIndex myIndex;
 
     private LibrariesOnlyScope(@NotNull GlobalSearchScope original, @NotNull Project project) {

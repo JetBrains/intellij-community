@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.daemon.impl.analysis.PsiMethodReferenceHighlightingUtil;
@@ -387,7 +387,7 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
     return null;
   }
 
-  public static class Options {
+  public static final class Options {
     public static final Options DEFAULT_OPTIONS = new Options(true, true, false);
     public static final Options CHECK_NOTHING = new Options(false, false, false);
     final boolean checkAccess;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.template.formatter;
 
 import com.intellij.formatting.Block;
@@ -39,10 +25,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class TemplateFormatUtil {
+public final class TemplateFormatUtil {
 
   private final static List<PsiElement> EMPTY_PSI_ELEMENT_LIST = new ArrayList<>();
-  
+
   private final static String[] IGNORABLE_ERROR_MESSAGES = {
     XmlPsiBundle.message("xml.parsing.closing.tag.matches.nothing"),
     XmlPsiBundle.message("xml.parsing.closing.tag.name.missing")
@@ -244,7 +230,7 @@ public class TemplateFormatUtil {
   /**
    * Creates a template language block for the given outer element if possible. Finds all the elements matching the current outerElement in
    * a template language PSI tree and builds a submodel for them with a composite root block.
-   * 
+   *
    * @param outerElement  The outer element for which the submodel (template language root block) is to be built.
    * @param settings      Code style settings to be used to build the submodel.
    * @param indent        The indent for the root block.

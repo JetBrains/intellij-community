@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac.ast;
 
 import com.intellij.util.Consumer;
@@ -180,12 +180,12 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
   }
 
-  class ReferenceCollector {
+  final class ReferenceCollector {
     private final JavacFileData myFileData;
     private final JavacTreeHelper myTreeHelper;
     private int myRemainDeclarations;
     private final JavacRef.JavacClass myPackageInfo;
-    
+
     private ReferenceCollector(int remainDeclarations,
                                String filePath,
                                CompilationUnitTree unitTree) {
@@ -251,7 +251,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
     private String getContainingClassName(Element containingClass) {
       return containingClass != null? myNameTableCache.parseBinaryName(containingClass) : myPackageInfo != null? myPackageInfo.getName() : null;
     }
-    
+
     Element getReferencedElement(Tree tree) {
       return myTreeHelper.getReferencedElement(tree);
     }
@@ -289,7 +289,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
     return new ArrayList<JavacDef>();
   }
 
-  private class JavacTreeHelper {
+  private final class JavacTreeHelper {
     private final TreePath myUnitPath;
     private final Trees myTreeUtil;
     private final SourcePositions myPositions;

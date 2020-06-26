@@ -70,7 +70,7 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
     return "UsageGrouping.UsageType";
   }
 
-  private static class UsageTypeGroup implements UsageGroup {
+  private static final class UsageTypeGroup implements UsageGroup {
     private final UsageType myUsageType;
 
     private UsageTypeGroup(@NotNull UsageType usageType) {

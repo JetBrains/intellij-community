@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -59,7 +57,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     return UnusedDeclarationInspectionBase.SHORT_NAME;
   }
 
-  private class MoveEntriesToSuspicious extends QuickFixAction {
+  private final class MoveEntriesToSuspicious extends QuickFixAction {
     private MoveEntriesToSuspicious(@NotNull InspectionToolWrapper toolWrapper) {
       super(AnalysisBundle.message("inspection.dead.code.remove.user.defined.entry.point.quickfix"), null, null, toolWrapper);
     }

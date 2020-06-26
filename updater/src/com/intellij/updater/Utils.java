@@ -289,7 +289,7 @@ public class Utils {
     return normalize && isZipFile(file.getName()) ? new NormalizedZipInputStream(file) : new FileInputStream(file);
   }
 
-  private static class NormalizedZipInputStream extends InputStream {
+  private static final class NormalizedZipInputStream extends InputStream {
     private final ZipFile myZip;
     private final List<? extends ZipEntry> myEntries;
     private InputStream myStream = null;

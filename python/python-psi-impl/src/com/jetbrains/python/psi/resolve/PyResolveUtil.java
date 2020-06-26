@@ -55,7 +55,7 @@ import java.util.stream.Stream;
  * <p>
  * TODO: Merge it with {@link ScopeUtil}
  */
-public class PyResolveUtil {
+public final class PyResolveUtil {
   private PyResolveUtil() {
   }
 

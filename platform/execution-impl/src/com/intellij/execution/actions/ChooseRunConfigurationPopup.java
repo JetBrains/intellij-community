@@ -674,7 +674,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static class RunListElementRenderer extends PopupListElementRenderer {
+  private static final class RunListElementRenderer extends PopupListElementRenderer {
     private JLabel myLabel;
     private final ListPopupImpl myPopup1;
     private final boolean myHasSideBar;
@@ -857,7 +857,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static class FolderWrapper extends ItemWrapper<String> {
+  private static final class FolderWrapper extends ItemWrapper<String> {
     private final Project myProject;
     private final ExecutorProvider myExecutorProvider;
     private final List<? extends RunnerAndConfigurationSettings> myConfigurations;

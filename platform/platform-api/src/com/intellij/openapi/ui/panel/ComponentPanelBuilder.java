@@ -341,7 +341,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
   }
 
-  private class ComponentPanelImpl extends ComponentPanel {
+  private final class ComponentPanelImpl extends ComponentPanel {
     private final JLabel label;
     private final JLabel comment;
     private final boolean splitColumns;

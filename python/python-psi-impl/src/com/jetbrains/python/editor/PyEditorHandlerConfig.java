@@ -4,7 +4,7 @@ package com.jetbrains.python.editor;
 import com.intellij.psi.PsiComment;
 import com.jetbrains.python.psi.*;
 
-public class PyEditorHandlerConfig {
+public final class PyEditorHandlerConfig {
   private PyEditorHandlerConfig() {
   }
 

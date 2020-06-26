@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
@@ -592,7 +592,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
 
-  private static class IgnoreRequirementFix implements LocalQuickFix {
+  private static final class IgnoreRequirementFix implements LocalQuickFix {
 
     @NotNull
     private final Set<String> myPackageNames;

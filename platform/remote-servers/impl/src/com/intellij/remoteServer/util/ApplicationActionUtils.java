@@ -59,7 +59,7 @@ public final class ApplicationActionUtils {
     return wrapper;
   }
 
-  private static class DisposableSelectLogRunnableWrapper implements Runnable, Disposable {
+  private static final class DisposableSelectLogRunnableWrapper implements Runnable, Disposable {
     private volatile Runnable mySelectLogRunnable;
 
     private DisposableSelectLogRunnableWrapper(Runnable selectLogRunnable) {

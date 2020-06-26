@@ -75,7 +75,7 @@ final class CollapsedActionManager {
     Set<GraphAction.Type> supportedActionTypes();
   }
 
-  private static class ActionContext {
+  private static final class ActionContext {
     @NotNull private final CollapsedGraph myCollapsedGraph;
     @NotNull private final LinearGraphAction myGraphAction;
     @NotNull private final FragmentGenerators myDelegatedFragmentGenerators;
@@ -131,7 +131,7 @@ final class CollapsedActionManager {
     }
   }
 
-  private static class FragmentGenerators {
+  private static final class FragmentGenerators {
     @NotNull private final FragmentGenerator fragmentGenerator;
     @NotNull private final LinearFragmentGenerator linearFragmentGenerator;
 

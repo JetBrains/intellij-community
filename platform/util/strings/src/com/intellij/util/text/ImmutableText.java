@@ -263,7 +263,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     return new IndexOutOfBoundsException("Index out of range: " + index);
   }
 
-  private static class InnerLeaf {
+  private static final class InnerLeaf {
     final LeafNode leafNode;
     final int start;
     final int end;

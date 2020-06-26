@@ -576,7 +576,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     myQualifiedName = null;
   }
 
-  private static class MultiFollowQueueNode {
+  private static final class MultiFollowQueueNode {
 
     @NotNull
     private final PyReferenceExpression myReferenceExpression;

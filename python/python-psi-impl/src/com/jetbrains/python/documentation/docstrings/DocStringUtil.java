@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DocStringUtil {
+public final class DocStringUtil {
   private DocStringUtil() {
   }
 

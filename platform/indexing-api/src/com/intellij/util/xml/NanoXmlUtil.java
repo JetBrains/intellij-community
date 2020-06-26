@@ -290,7 +290,7 @@ public final class NanoXmlUtil {
     }
   }
 
-  public static class ParserStoppedXmlException extends XMLException {
+  public static final class ParserStoppedXmlException extends XMLException {
     public static final ParserStoppedXmlException INSTANCE = new ParserStoppedXmlException();
 
     private ParserStoppedXmlException() {

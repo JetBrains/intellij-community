@@ -845,7 +845,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return null;
   }
 
-  private static class PropertyImpl extends PropertyBunch<PyCallable> implements Property {
+  private static final class PropertyImpl extends PropertyBunch<PyCallable> implements Property {
     private final String myName;
 
     private PropertyImpl(String name,

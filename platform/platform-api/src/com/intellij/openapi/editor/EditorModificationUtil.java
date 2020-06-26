@@ -423,7 +423,7 @@ public final class EditorModificationUtil {
     editor.putUserData(READ_ONLY_VIEW_HINT_KEY, message != null ? new ReadOnlyHint(message, linkListener) : null);
   }
 
-  private static class ReadOnlyHint {
+  private static final class ReadOnlyHint {
 
     @NotNull public final String message;
     @Nullable public final HyperlinkListener linkListener;

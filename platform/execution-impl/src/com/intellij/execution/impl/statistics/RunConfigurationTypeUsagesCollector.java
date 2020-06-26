@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
@@ -155,7 +155,7 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
       addData("temporary", settings.isTemporary());
   }
 
-  private static class Template {
+  private static final class Template {
     private final String myKey;
     private final FeatureUsageData myData;
 

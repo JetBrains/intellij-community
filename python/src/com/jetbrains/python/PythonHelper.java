@@ -213,7 +213,7 @@ public enum PythonHelper implements HelperPackage {
     }
   }
 
-  private static class HelperDependency {
+  private static final class HelperDependency {
     private static final String THRIFTPY = "thriftpy";
 
     @NotNull

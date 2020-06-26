@@ -117,7 +117,7 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
     edt(() -> PlatformTestUtil.waitForPromise(promise));
   }
 
-  private static class TestTaskConfigurationType extends AbstractExternalSystemTaskConfigurationType {
+  private static final class TestTaskConfigurationType extends AbstractExternalSystemTaskConfigurationType {
     private TestTaskConfigurationType() {super(TEST_EXTERNAL_SYSTEM_ID);}
 
     @Override
@@ -126,7 +126,7 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
     }
   }
 
-  private class MyTestExternalSystemManager extends TestExternalSystemManager {
+  private final class MyTestExternalSystemManager extends TestExternalSystemManager {
     private MyTestExternalSystemManager() {super(ExternalSystemTaskActivatorTest.this.myProject);}
 
     @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh;
 
 import com.intellij.icons.AllIcons;
@@ -34,7 +34,7 @@ public class ShStructureViewFactory implements PsiStructureViewFactory {
     };
   }
 
-  private static class Model extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
+  private static final class Model extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
     private Model(@NotNull PsiFile psiFile) {
       super(psiFile, new Element(psiFile));
       withSuitableClasses(ShFile.class, ShFunctionDefinition.class);
@@ -51,7 +51,7 @@ public class ShStructureViewFactory implements PsiStructureViewFactory {
     }
   }
 
-  private static class Element implements StructureViewTreeElement, ItemPresentation, NavigationItem {
+  private static final class Element implements StructureViewTreeElement, ItemPresentation, NavigationItem {
     private final PsiElement myElement;
 
     private Element(PsiElement element) {
