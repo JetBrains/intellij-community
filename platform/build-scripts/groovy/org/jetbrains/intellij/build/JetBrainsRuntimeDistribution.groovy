@@ -16,7 +16,12 @@ enum JetBrainsRuntimeDistribution {
   /**
    * JBR with JavaFX only
    */
-  JFX('jfx')
+  JFX('jfx'),
+
+  /**
+   * JBR with DCEVM and both JavaFX and JCEF
+   */
+  DCEVM('dcevm')
 
   /**
    * Distinguishes artifacts of different JBR distributions
