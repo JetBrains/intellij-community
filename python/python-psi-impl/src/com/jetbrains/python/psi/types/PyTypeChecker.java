@@ -297,13 +297,25 @@ public final class PyTypeChecker {
         }
 
         final PyType protocolElementType = context.context.getType(pair.getFirst());
+        final PyType protocolFunctionTypeNoSelf = protocolElementType instanceof PyFunctionType
+                                                  ? ((PyFunctionType)protocolElementType).dropSelf(context.context)
+                                                  : null;
 
         final boolean elementResult = StreamEx
           .of(subclassElements)
           .map(ResolveResult::getElement)
           .select(PyTypedElement.class)
           .map(context.context::getType)
-          .anyMatch(subclassElementType -> match(protocolElementType, subclassElementType, context).orElse(true));
+          .anyMatch(
+            subclassElementType -> {
+              if (subclassElementType instanceof PyFunctionType && protocolFunctionTypeNoSelf != null) {
+                final PyFunctionType subclassFunctionTypeNoSelf = ((PyFunctionType)subclassElementType).dropSelf(context.context);
+                return match(protocolFunctionTypeNoSelf, subclassFunctionTypeNoSelf, context).orElse(true);
+              }
+
+              return match(protocolElementType, subclassElementType, context).orElse(true);
+            }
+          );
 
         if (!elementResult) {
           return Optional.of(false);

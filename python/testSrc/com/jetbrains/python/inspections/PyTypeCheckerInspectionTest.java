@@ -564,6 +564,34 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-43133
+  public void testHierarchyAgainstProtocol() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText(
+        "from typing import Protocol\n" +
+        "\n" +
+        "class A:\n" +
+        "    def f1(self, x: str):\n" +
+        "        pass\n" +
+        "\n" +
+        "class B(A):\n" +
+        "    def f2(self, y: str):\n" +
+        "        pass\n" +
+        "\n" +
+        "class P(Protocol):\n" +
+        "    def f1(self, x: str): ...\n" +
+        "    def f2(self, y: str): ...\n" +
+        "\n" +
+        "def test(p: P):\n" +
+        "    pass\n" +
+        "\n" +
+        "b = B()\n" +
+        "test(b)"
+      )
+    );
+  }
+
   // PY-23161
   public void testGenericWithTypeVarBounds() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
