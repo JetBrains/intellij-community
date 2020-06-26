@@ -76,6 +76,13 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
       return@submitIOTask
     }.logError(LOG, "Error occurred while reopening PR ${pullRequestId.number}")
 
+  override fun markReadyForReview(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier) =
+    progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(it,
+                              GHGQLRequests.PullRequest.markReadyForReview(repository, pullRequestId.id))
+      return@submitIOTask
+    }.logError(LOG, "Error occurred while marking PR ${pullRequestId.number} ready fro review")
+
   override fun merge(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier,
                      commitMessage: Pair<String, String>, currentHeadRef: String) =
     progressManager.submitIOTask(progressIndicator) {

@@ -21,7 +21,6 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.*
 import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
@@ -92,7 +91,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
     class Closed(securityService: GHPRSecurityService, stateModel: GHPRStateModel) : StateUI(stateModel) {
 
       private val canReopen = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
-                              || stateModel.details.viewerDidAuthor
+                              || stateModel.viewerDidAuthor
 
       override fun createStatusComponent(): JComponent {
         val stateLabel = JLabel(GithubBundle.message("pull.request.state.closed.long"), GithubIcons.PullRequestClosed, SwingConstants.LEFT)
@@ -121,9 +120,11 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
     class Open(securityService: GHPRSecurityService, stateModel: GHPRStateModel) : StateUI(stateModel) {
 
       private val canClose =
-        securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) || stateModel.details.viewerDidAuthor
+        securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) || stateModel.viewerDidAuthor
       private val canMerge = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)
       private val mergeForbidden = securityService.isMergeForbiddenForProject()
+      private val canMarkReadyForReview =
+        securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE) || stateModel.viewerDidAuthor
 
       private val canCommitMerge = securityService.isMergeAllowed()
       private val canSquashMerge = securityService.isSquashMergeAllowed()
@@ -135,16 +136,13 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         return panel
       }
 
-      private fun createNotLoadedComponent(): JComponent {
+      private fun createNotLoadedComponent(isDraft: Boolean): JComponent {
         val stateLabel = JLabel(GithubBundle.message("pull.request.loading.status"), AllIcons.RunConfigurations.TestNotRan,
                                 SwingConstants.LEFT)
-        val accessDeniedLabel = createAccessDeniedLabel()
-        return if (accessDeniedLabel == null) stateLabel
-        else {
-          JPanel(VerticalLayout(UI.scale(STATUSES_GAP))).apply {
-            add(stateLabel, VerticalLayout.FILL_HORIZONTAL)
-            add(accessDeniedLabel, VerticalLayout.FILL_HORIZONTAL)
-          }
+        val accessDeniedLabel = createAccessDeniedLabel(isDraft)
+        return JPanel(VerticalLayout(UI.scale(STATUSES_GAP))).apply {
+          add(stateLabel)
+          add(accessDeniedLabel)
         }
       }
 
@@ -156,55 +154,95 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
                                                                      }
                                                                    }, SwingConstants.LEFT)
 
-      private fun createLoadedComponent(mergeabilityModel: SingleValueModel<GHPRMergeabilityState>): JComponent {
-        val statusChecks = GHPRStatusChecksComponent.create(mergeabilityModel)
+      private fun createLoadedComponent(mergeability: GHPRMergeabilityState, isDraft: Boolean): JComponent {
+        val statusChecks = GHPRStatusChecksComponent.create(mergeability)
 
-        val conflictsLabel = JLabel()
-        ConflictsController(mergeabilityModel, conflictsLabel)
+        val conflictsLabel = JLabel().apply {
+          when (mergeability.hasConflicts) {
+            false -> {
+              icon = AllIcons.RunConfigurations.TestPassed
+              text = GithubBundle.message("pull.request.conflicts.none")
+            }
+            true -> {
+              icon = AllIcons.RunConfigurations.TestError
+              text = GithubBundle.message("pull.request.conflicts.must.be.resolved")
+            }
+            null -> {
+              icon = AllIcons.RunConfigurations.TestNotRan
+              text = GithubBundle.message("pull.request.conflicts.checking")
+            }
+          }
+        }
 
-        val requiredReviewsLabel = JLabel()
-        RequiredReviewsController(mergeabilityModel, requiredReviewsLabel)
+        val requiredReviewsLabel = JLabel().apply {
+          val requiredApprovingReviewsCount = mergeability.requiredApprovingReviewsCount
+          isVisible = requiredApprovingReviewsCount > 0 && !isDraft
 
-        val restrictionsLabel = JLabel()
-        RestrictionsController(mergeabilityModel, restrictionsLabel)
+          icon = AllIcons.RunConfigurations.TestError
+          text = GithubBundle.message("pull.request.reviewers.required", requiredApprovingReviewsCount)
+        }
 
-        val accessDeniedLabel = createAccessDeniedLabel()
+        val restrictionsLabel = JLabel().apply {
+          isVisible = mergeability.isRestricted && !isDraft
+          icon = AllIcons.RunConfigurations.TestError
+          text = GithubBundle.message("pull.request.not.authorized.to.merge")
+        }
+
+        val accessDeniedLabel = createAccessDeniedLabel(isDraft)
+
         return JPanel(VerticalLayout(UI.scale(STATUSES_GAP))).apply {
-          add(statusChecks, VerticalLayout.FILL_HORIZONTAL)
-          add(requiredReviewsLabel, VerticalLayout.FILL_HORIZONTAL)
-          add(conflictsLabel, VerticalLayout.FILL_HORIZONTAL)
-          add(restrictionsLabel, VerticalLayout.FILL_HORIZONTAL)
-          if (accessDeniedLabel != null)
-            add(accessDeniedLabel, VerticalLayout.FILL_HORIZONTAL)
+          add(statusChecks)
+          add(requiredReviewsLabel)
+          add(conflictsLabel)
+          add(restrictionsLabel)
+          add(accessDeniedLabel)
         }
       }
 
-      private fun createAccessDeniedLabel(): JComponent? {
-        return when {
-          !canClose -> {
-            JLabel().apply {
-              icon = AllIcons.RunConfigurations.TestError
-              text = GithubBundle.message("pull.request.repo.access.required")
+      private fun createAccessDeniedLabel(isDraft: Boolean): JComponent {
+        return JLabel().apply {
+          when {
+            !canClose -> {
+              JLabel().apply {
+                icon = AllIcons.RunConfigurations.TestError
+                text = GithubBundle.message("pull.request.repo.access.required")
+              }
+            }
+            !canMarkReadyForReview && isDraft -> {
+              JLabel().apply {
+                icon = AllIcons.RunConfigurations.TestError
+                text = GithubBundle.message("pull.request.repo.write.access.required")
+              }
+            }
+            !canMerge && !isDraft -> {
+              JLabel().apply {
+                icon = AllIcons.RunConfigurations.TestError
+                text = GithubBundle.message("pull.request.repo.write.access.required")
+              }
+            }
+            mergeForbidden && !isDraft -> {
+              JLabel().apply {
+                icon = AllIcons.RunConfigurations.TestError
+                text = GithubBundle.message("pull.request.merge.disabled")
+              }
+            }
+            else -> {
+              isVisible = false
             }
           }
-          !canMerge -> {
-            JLabel().apply {
-              icon = AllIcons.RunConfigurations.TestError
-              text = GithubBundle.message("pull.request.repo.write.access.required")
-            }
-          }
-          mergeForbidden -> {
-            JLabel().apply {
-              icon = AllIcons.RunConfigurations.TestError
-              text = GithubBundle.message("pull.request.merge.disabled")
-            }
-          }
-          else -> null
         }
       }
 
       override fun createButtons(): List<JComponent> {
         val list = mutableListOf<JComponent>()
+        if (canMarkReadyForReview) {
+          val button = JButton(GHPRMarkReadyForReviewAction(stateModel))
+          list.add(button)
+          stateModel.addAndInvokeDraftStateListener {
+            button.isVisible = stateModel.isDraft
+          }
+        }
+
         if (canMerge && !mergeForbidden) {
           val allowedActions = mutableListOf<Action>()
           if (canCommitMerge)
@@ -219,102 +257,37 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
 
           val mergeButton = JBOptionButton(action, actions)
           list.add(mergeButton)
+          stateModel.addAndInvokeDraftStateListener {
+            mergeButton.isVisible = !stateModel.isDraft
+          }
         }
 
         if (canClose) {
-          val action = GHPRCloseAction(stateModel)
-          list.add(JButton(action))
+          list.add(JButton(GHPRCloseAction(stateModel)))
         }
         return list
       }
 
       private inner class LoadingController(private val panel: Wrapper) {
 
-        private var loadedMergeabilityModel: SingleValueModel<GHPRMergeabilityState>? = null
-
         init {
           stateModel.addAndInvokeMergeabilityStateLoadingResultListener(::update)
+          stateModel.addAndInvokeDraftStateListener(::update)
         }
 
         private fun update() {
           val mergeability = stateModel.mergeabilityState
           if (mergeability == null) {
             if (stateModel.mergeabilityLoadingError?.takeIf { !GithubAsyncUtil.isCancellation(it) } == null) {
-              panel.setContent(createNotLoadedComponent())
+              panel.setContent(createNotLoadedComponent(stateModel.isDraft))
             }
             else {
               panel.setContent(createErrorComponent())
             }
           }
           else {
-            var mergeabilityModel = loadedMergeabilityModel
-            if (mergeabilityModel == null) {
-              mergeabilityModel = SingleValueModel(mergeability)
-              panel.setContent(createLoadedComponent(mergeabilityModel))
-              panel.revalidate()
-              loadedMergeabilityModel = mergeabilityModel
-            }
-            else {
-              mergeabilityModel.value = mergeability
-            }
-          }
-        }
-      }
-
-      private class ConflictsController(private val mergeabilityModel: SingleValueModel<GHPRMergeabilityState>,
-                                        private val label: JLabel) {
-
-        init {
-          mergeabilityModel.addAndInvokeValueChangedListener(::update)
-        }
-
-        private fun update() {
-          when (mergeabilityModel.value.hasConflicts) {
-            false -> {
-              label.icon = AllIcons.RunConfigurations.TestPassed
-              label.text = GithubBundle.message("pull.request.conflicts.none")
-            }
-            true -> {
-              label.icon = AllIcons.RunConfigurations.TestError
-              label.text = GithubBundle.message("pull.request.conflicts.must.be.resolved")
-            }
-            null -> {
-              label.icon = AllIcons.RunConfigurations.TestNotRan
-              label.text = GithubBundle.message("pull.request.conflicts.checking")
-            }
-          }
-        }
-      }
-
-      private class RequiredReviewsController(private val mergeabilityModel: SingleValueModel<GHPRMergeabilityState>,
-                                              private val label: JLabel) {
-
-        init {
-          mergeabilityModel.addAndInvokeValueChangedListener(::update)
-        }
-
-        private fun update() {
-          val requiredApprovingReviewsCount = mergeabilityModel.value.requiredApprovingReviewsCount
-          label.isVisible = requiredApprovingReviewsCount > 0
-          with(label) {
-            icon = AllIcons.RunConfigurations.TestError
-            text = GithubBundle.message("pull.request.reviewers.required", requiredApprovingReviewsCount)
-          }
-        }
-      }
-
-      private class RestrictionsController(private val mergeabilityModel: SingleValueModel<GHPRMergeabilityState>,
-                                           private val label: JLabel) {
-
-        init {
-          mergeabilityModel.addAndInvokeValueChangedListener(::update)
-        }
-
-        private fun update() {
-          with(label) {
-            isVisible = mergeabilityModel.value.isRestricted
-            icon = AllIcons.RunConfigurations.TestError
-            text = GithubBundle.message("pull.request.not.authorized.to.merge")
+            panel.setContent(createLoadedComponent(mergeability, stateModel.isDraft))
+            panel.revalidate()
           }
         }
       }
