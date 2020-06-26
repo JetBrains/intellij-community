@@ -150,9 +150,7 @@ public final class EncodingUtil {
   static void reloadIn(@NotNull VirtualFile virtualFile,
                        @NotNull Charset charset,
                        @NotNull Project project) {
-    Consumer<VirtualFile> setEncoding = file -> {
-      EncodingProjectManager.getInstance(project).setEncoding(file, charset);
-    };
+    Consumer<VirtualFile> setEncoding = file -> EncodingProjectManager.getInstance(project).setEncoding(file, charset);
 
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     if (documentManager.getCachedDocument(virtualFile) == null) {
@@ -177,9 +175,9 @@ public final class EncodingUtil {
 
     // if file was modified, the user will be asked here
     try {
-      EncodingProjectManagerImpl.suppressReloadDuring(() -> {
-        ((FileDocumentManagerImpl)documentManager).contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
-      });
+      VFileContentChangeEvent event =
+        new VFileContentChangeEvent(null, virtualFile, 0, 0, false);
+      EncodingProjectManagerImpl.suppressReloadDuring(() -> ((FileDocumentManagerImpl)documentManager).contentsChanged(event));
     }
     finally {
       Disposer.dispose(disposable);
@@ -274,7 +272,8 @@ public final class EncodingUtil {
     return Pair.create(current.get(), errorDescription);
   }
 
-  static String reasonToString(@NotNull FailReason reason, VirtualFile file) {
+  @NotNull
+  static String reasonToString(@NotNull FailReason reason, @NotNull VirtualFile file) {
     switch (reason) {
       case IS_DIRECTORY: return "disabled for a directory";
       case IS_BINARY: return "disabled for a binary file";

@@ -66,9 +66,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
   static final class MyPostStartUpActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
-      GuiUtils.invokeLaterIfNeeded(() -> {
-        getInstance(project).projectOpened();
-      }, ModalityState.NON_MODAL, project.getDisposed());
+      GuiUtils.invokeLaterIfNeeded(() -> getInstance(project).projectOpened(), ModalityState.NON_MODAL, project.getDisposed());
     }
   }
 
@@ -85,6 +83,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
     addListeners();
   }
 
+  @NotNull
   public SimpleModificationTracker getFileAndRootsModificationTracker() {
     return myModificationTracker;
   }
@@ -123,7 +122,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
       final ProjectFileIndex myFileIndex = ProjectFileIndex.getInstance(myProject);
 
       @Override
-      public void fileCreated(@NotNull final VirtualFileEvent event) {
+      public void fileCreated(@NotNull VirtualFileEvent event) {
         VirtualFile file = event.getFile();
         if (!myFileIndex.isInContent(file)) {
           return;
@@ -142,7 +141,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
         else {
           if (!myProject.isInitialized()) return;
 
-          final Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file);
+          Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file);
 
           if (module == null) { // Maybe it is creation of a plugin in plugin directory.
             if (file.isDirectory()) {
@@ -161,7 +160,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
 
           if (!MvcConsole.isUpdatingVfsByConsoleProcess(module)) return;
 
-          final MvcFramework framework = MvcFramework.getInstance(module);
+          MvcFramework framework = MvcFramework.getInstance(module);
           if (framework == null) return;
 
           if (framework.isToReformatOnCreation(file) || file.isDirectory()) {
@@ -169,7 +168,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
               if (!file.isValid()) return;
               if (!framework.hasSupport(module)) return;
 
-              final List<VirtualFile> files = new ArrayList<>();
+              List<VirtualFile> files = new ArrayList<>();
 
               if (file.isDirectory()) {
                 ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(file, fileOrDir -> {
@@ -198,7 +197,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
 
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
-        final VirtualFile file = event.getFile();
+        VirtualFile file = event.getFile();
 
         myModificationTracker.incModificationCount();
 
@@ -209,10 +208,10 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
 
       @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
-        final VirtualFile file = event.getFile();
+        VirtualFile file = event.getFile();
         if (!myFileIndex.isInContent(file)) return;
 
-        final String fileName = event.getFileName();
+        String fileName = event.getFileName();
         if (MvcModuleStructureUtil.APPLICATION_PROPERTIES.equals(fileName)) {
           queue(SyncAction.UpdateProjectStructure, file);
         }
@@ -234,7 +233,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
     }));
   }
 
-  private static boolean isApplicationDirectoryName(String fileName) {
+  private static boolean isApplicationDirectoryName(@NotNull String fileName) {
     for (MvcFramework framework : MvcFramework.EP_NAME.getExtensions()) {
       if (framework.getApplicationDirectoryName().equals(fileName)) {
         return true;
@@ -243,7 +242,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
     return false;
   }
 
-  private static boolean isLibDirectory(@Nullable final VirtualFile file) {
+  private static boolean isLibDirectory(@Nullable VirtualFile file) {
     return file != null && "lib".equals(file.getName());
   }
 
@@ -262,27 +261,28 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
   private void scheduleRunActions() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (ourGrailsTestFlag && !myProject.isInitialized()) {
-        runActions(computeRawActions(takeOrderSnapshot()));
+        runActions(computeRawActions());
       }
       return;
     }
 
     ReadAction
-      .nonBlocking(() -> computeRawActions(takeOrderSnapshot()))
+      .nonBlocking(() -> computeRawActions())
       .expireWith(this)
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.NON_MODAL, this::runActions)
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private LinkedHashSet<Pair<Object, SyncAction>> takeOrderSnapshot() {
+  @NotNull
+  private Set<Pair<Object, SyncAction>> takeOrderSnapshot() {
     synchronized (myOrders) {
       return new LinkedHashSet<>(myOrders);
     }
   }
 
   @NotNull
-  private List<Module> determineModuleBySyncActionObject(Object o) {
+  private List<Module> determineModuleBySyncActionObject(@NotNull Object o) {
     if (o instanceof Module) {
       return Collections.singletonList((Module)o);
     }
@@ -290,9 +290,9 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
       return Arrays.asList(ModuleManager.getInstance((Project)o).getModules());
     }
     if (o instanceof VirtualFile) {
-      final VirtualFile file = (VirtualFile)o;
+      VirtualFile file = (VirtualFile)o;
       if (file.isValid()) {
-        final Module module = ModuleUtilCore.findModuleForFile(file, myProject);
+        Module module = ModuleUtilCore.findModuleForFile(file, myProject);
         if (module == null) {
           return Collections.emptyList();
         }
@@ -307,15 +307,15 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
   public static void forceUpdateProject(@NotNull Project project) {
     MvcModuleStructureSynchronizer instance = getInstance(project);
     instance.getFileAndRootsModificationTracker().incModificationCount();
-    instance.runActions(instance.computeRawActions(instance.takeOrderSnapshot()));
+    instance.runActions(instance.computeRawActions());
   }
 
-  private void runActions(Set<Trinity<Module, SyncAction, MvcFramework>> actions) {
+  private void runActions(@NotNull Set<? extends Trinity<Module, SyncAction, MvcFramework>> actions) {
     try {
       boolean isProjectStructureUpdated = false;
 
-      for (final Trinity<Module, SyncAction, MvcFramework> rawAction : actions) {
-        final Module module = rawAction.first;
+      for (Trinity<Module, SyncAction, MvcFramework> rawAction : actions) {
+        Module module = rawAction.first;
         if (module.isDisposed()) {
           continue;
         }
@@ -338,13 +338,15 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
     }
   }
 
-  private Set<Trinity<Module, SyncAction, MvcFramework>> computeRawActions(Set<Pair<Object, SyncAction>> actions) {
+  @NotNull
+  private Set<Trinity<Module, SyncAction, MvcFramework>> computeRawActions() {
+    Set<Pair<Object, SyncAction>> actions = takeOrderSnapshot();
     //get module by object and kill duplicates
-    final Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<>();
-    for (final Pair<Object, SyncAction> pair : actions) {
+    Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<>();
+    for (Pair<Object, SyncAction> pair : actions) {
       for (Module module : determineModuleBySyncActionObject(pair.first)) {
         if (!module.isDisposed()) {
-          final MvcFramework framework = (pair.second == SyncAction.CreateAppStructureIfNeeded)
+          MvcFramework framework = (pair.second == SyncAction.CreateAppStructureIfNeeded)
                                          ? MvcFramework.getInstanceBySdk(module)
                                          : MvcFramework.getInstance(module);
 
@@ -360,7 +362,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
   public enum SyncAction {
     SyncLibrariesInPluginsModule {
       @Override
-      void doAction(Module module, MvcFramework framework) {
+      void doAction(@NotNull Module module, @NotNull MvcFramework framework) {
         if (MvcModuleStructureUtil.isEnabledStructureUpdate()) {
           framework.syncSdkAndLibrariesInPluginsModule(module);
         }
@@ -369,37 +371,37 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
 
     UpgradeFramework {
       @Override
-      void doAction(Module module, MvcFramework framework) {
+      void doAction(@NotNull Module module, @NotNull MvcFramework framework) {
         framework.upgradeFramework(module);
       }
     },
 
     CreateAppStructureIfNeeded {
       @Override
-      void doAction(Module module, MvcFramework framework) {
+      void doAction(@NotNull Module module, @NotNull MvcFramework framework) {
         framework.createApplicationIfNeeded(module);
       }
     },
 
     UpdateProjectStructure {
       @Override
-      void doAction(final Module module, final MvcFramework framework) {
+      void doAction(@NotNull Module module, @NotNull MvcFramework framework) {
         framework.updateProjectStructure(module);
       }
     },
 
     EnsureRunConfigurationExists {
       @Override
-      void doAction(Module module, MvcFramework framework) {
+      void doAction(@NotNull Module module, @NotNull MvcFramework framework) {
         framework.ensureRunConfigurationExists(module);
       }
     },
 
     OutOfModuleDirectoryCreated {
       @Override
-      void doAction(Module module, MvcFramework framework) {
-        final Project project = module.getProject();
-        final MvcModuleStructureSynchronizer mvcModuleStructureSynchronizer = getInstance(project);
+      void doAction(@NotNull Module module, @NotNull MvcFramework framework) {
+        Project project = module.getProject();
+        MvcModuleStructureSynchronizer mvcModuleStructureSynchronizer = getInstance(project);
 
         if (mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded) {
           mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded = false;
@@ -418,7 +420,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
       }
     };
 
-    abstract void doAction(Module module, MvcFramework framework);
+    abstract void doAction(@NotNull Module module, @NotNull MvcFramework framework);
   }
 
   private void updateProjectViewVisibility() {
@@ -442,7 +444,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
           ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
 
           if (shouldShow && toolWindow == null) {
-            toolWindow = toolWindowManager.registerToolWindow(id, true, ToolWindowAnchor.LEFT, myProject, true);
+            toolWindow = toolWindowManager.registerToolWindow(id, true, ToolWindowAnchor.LEFT, this, true);
             toolWindow.setIcon(descriptor.getFramework().getToolWindowIcon());
             descriptor.createToolWindowContent(myProject, toolWindow);
           }
