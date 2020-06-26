@@ -69,6 +69,7 @@ CommentDeletedEvent
 
   JsonSubTypes.Type(name = "ReviewDismissedEvent", value = GHPRReviewDismissedEvent::class),
   JsonSubTypes.Type(name = "ReadyForReviewEvent", value = GHPRReadyForReviewEvent::class),
+  JsonSubTypes.Type(name = "ConvertToDraftEvent", value = GHPRConvertToDraftEvent::class),
 
   JsonSubTypes.Type(name = "RenamedTitleEvent", value = GHPRRenamedTitleEvent::class),
 
