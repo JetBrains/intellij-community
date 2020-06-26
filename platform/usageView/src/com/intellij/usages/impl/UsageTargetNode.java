@@ -12,7 +12,7 @@ class UsageTargetNode extends Node {
   }
 
   @Override
-  public String tree2string(int indent, String lineSeparator) {
+  public String tree2string(int indent, @NotNull String lineSeparator) {
     return getTarget().getName();
   }
 

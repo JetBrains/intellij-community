@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -70,11 +69,6 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
 
   protected UsageGroup getGroupForFile(@NotNull VirtualFile dir) {
     return new DirectoryGroup(dir);
-  }
-
-  @Deprecated
-  public String getActionTitle() {
-    return IdeBundle.message("action.title.group.by.directory") ;
   }
 
   @Override

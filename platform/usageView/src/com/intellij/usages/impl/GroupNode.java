@@ -17,6 +17,7 @@ import com.intellij.util.containers.ObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -237,7 +238,8 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @Override
-  public String tree2string(int indent, String lineSeparator) {
+  @TestOnly
+  public String tree2string(int indent, @NotNull String lineSeparator) {
     StringBuffer result = new StringBuffer();
     StringUtil.repeatSymbol(result, ' ', indent);
 
@@ -265,7 +267,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @Override
   protected boolean isDataReadOnly() {
-    Enumeration enumeration = children();
+    Enumeration<?> enumeration = children();
     while (enumeration.hasMoreElements()) {
       Object element = enumeration.nextElement();
       if (element instanceof Node && ((Node)element).isReadOnly()) return true;

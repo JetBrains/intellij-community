@@ -7,11 +7,12 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Vector;
 
-public abstract class Node extends DefaultMutableTreeNode {
+abstract class Node extends DefaultMutableTreeNode {
   private int myCachedTextHash;
 
   private byte myCachedFlags; // guarded by this; bit packed flags below:
@@ -42,7 +43,8 @@ public abstract class Node extends DefaultMutableTreeNode {
   /**
    * debug method for producing string tree presentation
    */
-  public abstract String tree2string(int indent, String lineSeparator);
+  @TestOnly
+  abstract String tree2string(int indent, @NotNull String lineSeparator);
 
   /**
    * isDataXXX methods perform actual (expensive) data computation.
@@ -58,11 +60,11 @@ public abstract class Node extends DefaultMutableTreeNode {
   @NotNull
   protected abstract String getText(@NotNull UsageView view);
 
-  public final boolean isValid() {
+  final boolean isValid() {
     return !isFlagSet(CACHED_INVALID_MASK);
   }
 
-  public final boolean isReadOnly() {
+  final boolean isReadOnly() {
     boolean result;
     boolean computed = isFlagSet(READ_ONLY_COMPUTED_MASK);
     if (computed) {
@@ -76,7 +78,7 @@ public abstract class Node extends DefaultMutableTreeNode {
     return result;
   }
 
-  public final boolean isExcluded() {
+  final boolean isExcluded() {
     return isFlagSet(EXCLUDED_MASK);
   }
 

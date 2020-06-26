@@ -34,12 +34,12 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   static final class TargetsRootNode extends Node {
-    private TargetsRootNode(String name) {
+    private TargetsRootNode(@NotNull String name) {
       setUserObject(name);
     }
 
     @Override
-    public String tree2string(int indent, String lineSeparator) {
+    public String tree2string(int indent, @NotNull String lineSeparator) {
       return null;
     }
 
@@ -86,14 +86,14 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
     return (UsageNode)getFirstChildOfType(myRootNode, UsageNode.class);
   }
 
-  private static TreeNode getFirstChildOfType(TreeNode parent, final Class<?> type) {
-    final int childCount = parent.getChildCount();
+  private static TreeNode getFirstChildOfType(@NotNull TreeNode parent, @NotNull Class<?> type) {
+    int childCount = parent.getChildCount();
     for (int idx = 0; idx < childCount; idx++) {
-      final TreeNode child = parent.getChildAt(idx);
+      TreeNode child = parent.getChildAt(idx);
       if (type.isAssignableFrom(child.getClass())) {
         return child;
       }
-      final TreeNode firstChildOfType = getFirstChildOfType(child, type);
+      TreeNode firstChildOfType = getFirstChildOfType(child, type);
       if (firstChildOfType != null) {
         return firstChildOfType;
       }
@@ -116,6 +116,7 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   @Override
+  @NotNull
   public Object getRoot() {
     return myRootNode;
   }

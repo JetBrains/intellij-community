@@ -32,7 +32,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
   }
 
   @Override
-  public String tree2string(int indent, String lineSeparator) {
+  public String tree2string(int indent, @NotNull String lineSeparator) {
     StringBuffer result = new StringBuffer();
     StringUtil.repeatSymbol(result, ' ', indent);
     result.append(getUsage());
