@@ -132,7 +132,7 @@ public final class VfsTestUtil {
   @NotNull
   public static VirtualFile findFileByCaseSensitivePath(@NotNull String absolutePath) {
     String vfsPath = FileUtil.toSystemIndependentName(absolutePath);
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(vfsPath);
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(vfsPath);
     Assert.assertNotNull("file " + absolutePath + " not found", vFile);
     String realVfsPath = vFile.getPath();
     if (!SystemInfo.isFileSystemCaseSensitive && !vfsPath.equals(realVfsPath) &&
