@@ -32,6 +32,13 @@ fragment readyForReviewEvent on ReadyForReviewEvent {
     createdAt
 }
 
+fragment convertToDraftEvent on ConvertToDraftEvent {
+    actor {
+        ...actorInfo
+    }
+    createdAt
+}
+
 fragment renamedEvent on RenamedTitleEvent {
     actor {
         ...actorInfo
@@ -258,6 +265,7 @@ query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 1
                     ...reviewDismissedEvent
 
                     ...readyForReviewEvent
+                    ...convertToDraftEvent
 
                     ...baseRefChangedEvent
                     ...baseRefForcePushedEvent

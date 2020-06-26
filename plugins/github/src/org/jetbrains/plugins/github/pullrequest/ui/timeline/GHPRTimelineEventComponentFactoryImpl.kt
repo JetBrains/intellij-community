@@ -225,8 +225,15 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
         is GHPRReadyForReviewEvent ->
           Item(GithubIcons.Review,
                GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
-                                                            GithubBundle.message("pull.request.timeline.ready.for.review"),
+                                                            GithubBundle.message("pull.request.timeline.marked.as.ready"),
                                                             event.createdAt))
+
+        is GHPRConvertToDraftEvent ->
+          Item(GithubIcons.Review,
+               GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
+                                                            GithubBundle.message("pull.request.timeline.marked.as.draft"),
+                                                            event.createdAt))
+
         is GHPRCrossReferencedEvent -> {
           Item(GithubIcons.Timeline,
                GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
