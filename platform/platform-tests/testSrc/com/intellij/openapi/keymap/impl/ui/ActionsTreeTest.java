@@ -273,7 +273,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
                missing.isEmpty() && present.isEmpty());
   }
 
-  private static class MyAction extends AnAction {
+  private static final class MyAction extends AnAction {
     private MyAction(@Nullable String text, @Nullable String description) {
       super(text, description, null);
     }

@@ -109,7 +109,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
   }
 
-  private static class LoggingListener implements VirtualFilePointerListener {
+  private static final class LoggingListener implements VirtualFilePointerListener {
     private final boolean myVerbose;
 
     private LoggingListener(boolean verbose) {
@@ -619,7 +619,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertNull(p1.getFile());
     assertEquals(dir2, p2.getFile());
     myVirtualFilePointerManager.assertConsistency();
-    
+
     WriteAction.runAndWait(() -> dir2.rename(this, "dir1"));
     assertEquals(dir2, p1.getFile());
     assertEquals(dir2, p2.getFile());

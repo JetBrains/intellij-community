@@ -524,7 +524,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     void onElementAction(String action, Object element);
   }
 
-  private class ElementEntry {
+  private final class ElementEntry {
     NodeElement myElement;
 
     int myUpdateCount;

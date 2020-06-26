@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.whitelist.validator;
 
 import com.intellij.facet.Facet;
@@ -61,7 +61,7 @@ public class TestUsageStatisticsFacetType extends FacetType {
     return false;
   }
 
-  private static class TestUsageStatisticsFacet extends Facet {
+  private static final class TestUsageStatisticsFacet extends Facet {
 
     private TestUsageStatisticsFacet(@NotNull FacetType facetType,
                                      @NotNull Module module,

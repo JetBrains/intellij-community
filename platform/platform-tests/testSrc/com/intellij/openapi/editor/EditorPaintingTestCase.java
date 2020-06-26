@@ -320,7 +320,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   // font which, once created, should be rendered identically on all platforms
-  protected static class BitmapFont {
+  protected static final class BitmapFont {
     private static final float FONT_SIZE = 12;
     private static final int CHAR_WIDTH = 10;
     private static final int CHAR_HEIGHT = 12;
@@ -376,7 +376,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     }
   }
 
-  private static class UniformHighlighter implements EditorHighlighter {
+  private static final class UniformHighlighter implements EditorHighlighter {
     @NotNull
     private final TextAttributes myAttributes;
     private Document myDocument;

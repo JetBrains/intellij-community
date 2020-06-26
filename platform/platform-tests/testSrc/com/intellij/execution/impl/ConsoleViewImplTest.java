@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.concurrency.JobScheduler;
@@ -683,7 +683,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals(expected.myContentType.getAttributesKey(), actual.getTextAttributesKey());
   }
 
-  private static class ExpectedHighlighter {
+  private static final class ExpectedHighlighter {
     private final int myStartOffset;
     private final int myEndOffset;
     private final ConsoleViewContentType myContentType;

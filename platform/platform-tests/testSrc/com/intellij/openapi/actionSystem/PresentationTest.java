@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.ui.UISettings;
@@ -25,7 +25,7 @@ public class PresentationTest extends LightPlatformTestCase {
     new Data("R_un 'test_1'", "R&un 'test_1'", "Run 'test_1'", "R_un 'test_1'", 'U', 1),
   };
 
-  private static class Data {
+  private static final class Data {
     public final String inputTextsUnderscore;
     public final String inputTextsAmpersand;
     public final String menuText;

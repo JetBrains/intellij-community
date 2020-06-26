@@ -563,7 +563,7 @@ public final class AsyncTreeModelTest {
     }
   }
 
-  private static class AsyncTest extends ModelTest {
+  private static final class AsyncTest extends ModelTest {
     private final boolean showLoadingNode;
 
     private AsyncTest(boolean showLoadingNode, TreeModel model) {
@@ -689,7 +689,7 @@ public final class AsyncTreeModelTest {
     }
   }
 
-  private static class Node extends DefaultMutableTreeNode {
+  private static final class Node extends DefaultMutableTreeNode {
     private final boolean mutable;
 
     private Node(String content, boolean mutable) {

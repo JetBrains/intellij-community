@@ -188,7 +188,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
     myFilter.update(text, selection);
   }
 
-  private static class Node extends CachingSimpleNode {
+  private static final class Node extends CachingSimpleNode {
 
     private final LinkedHashMap<String, Node> myKids = new LinkedHashMap<>();
 

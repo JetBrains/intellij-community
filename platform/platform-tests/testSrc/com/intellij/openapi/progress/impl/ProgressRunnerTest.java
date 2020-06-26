@@ -410,7 +410,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     }
   }
 
-  private static class TestTask implements Runnable {
+  private static final class TestTask implements Runnable {
 
     private final Semaphore mySemaphore;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
 import com.intellij.testFramework.PlatformTestUtil;
@@ -35,7 +35,7 @@ public class UrlFilterTest extends BasePlatformTestCase {
 
   public void testPerformanceSimple() {
     UrlFilter filter = new UrlFilter(getProject());
-    List<LinkInfo> expected = Arrays.asList(new LinkInfo(7, 30, true), new LinkInfo(34, 62, true)); 
+    List<LinkInfo> expected = Arrays.asList(new LinkInfo(7, 30, true), new LinkInfo(34, 62, true));
     PlatformTestUtil.startPerformanceTest("Find file hyperlinks", 3000, () -> {
       for (int i = 0; i < 100_000; i++) {
         Filter.Result result = applyFilter(filter, "before file:///home/file.txt:3 -> file:///home/result.txt:3:30 after");
@@ -75,7 +75,7 @@ public class UrlFilterTest extends BasePlatformTestCase {
     }
   }
 
-  private static class LinkInfo {
+  private static final class LinkInfo {
     private final int myHighlightStartOffset;
     private final int myHighlightEndOffset;
     private final boolean myIsFileHyperLink;

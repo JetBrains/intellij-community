@@ -504,7 +504,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
     return new Node(id, children);
   }
 
-  private static class Node {
+  private static final class Node {
     private final String myId;
     private final List<Node> myChildren;
 
