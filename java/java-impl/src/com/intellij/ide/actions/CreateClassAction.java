@@ -107,6 +107,12 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
 
   @Override
   protected PsiElement getNavigationElement(@NotNull PsiClass createdElement) {
+    if (createdElement.isRecord()) {
+      PsiRecordHeader header = createdElement.getRecordHeader();
+      if (header != null) {
+        return header.getLastChild();
+      }
+    }
     return createdElement.getLBrace();
   }
 }
