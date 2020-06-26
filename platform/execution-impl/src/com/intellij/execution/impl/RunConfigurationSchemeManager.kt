@@ -136,10 +136,10 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
 }
 
 internal class TemplateDifferenceHelper(private val manager: RunManagerImpl) {
-  private val cachedSerializedTemplateIdToData = THashMap<ConfigurationFactory, Element>()
+  private val cachedSerializedTemplateIdToData = THashMap<String, Element>()
 
   fun isTemplateModified(serialized: Element, factory: ConfigurationFactory): Boolean {
-    val originalTemplate = cachedSerializedTemplateIdToData.getOrPut(factory) {
+    val originalTemplate = cachedSerializedTemplateIdToData.getOrPut(factory.id) {
       JDOMUtil.internElement(manager.createTemplateSettings(factory).writeScheme())
     }
     return !JDOMUtil.areElementsEqual(serialized, originalTemplate)
