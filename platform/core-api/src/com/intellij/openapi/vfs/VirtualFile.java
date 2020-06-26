@@ -294,17 +294,19 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract VirtualFile getParent();
 
   /**
-   * Gets the child files.
+   * Gets the child files. The returned files are guaranteed to be valid, if the method is called in a read action.
    *
    * @return array of the child files or {@code null} if this file is not a directory
+   * @throws InvalidVirtualFileAccessException if this method is called inside read actin on an invalid file
    */
   public abstract VirtualFile[] getChildren();
 
   /**
-   * Finds child of this file with the given name.
+   * Finds child of this file with the given name. The returned file is guaranteed to be valid, if the method is called in a read action.
    *
    * @param name the file name to search by
    * @return the file if found any, {@code null} otherwise
+   * @throws InvalidVirtualFileAccessException if this method is called inside read actin on an invalid file
    */
   public @Nullable VirtualFile findChild(@NotNull @NonNls String name) {
     VirtualFile[] children = getChildren();
