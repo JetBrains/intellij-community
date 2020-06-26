@@ -393,8 +393,10 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     /* PythonSdkUpdater.update invalidates the modificator so we need to create a new
       one for further changes
      */
-    if (PythonSdkUpdater.update(currentSdk, myModificators.get(currentSdk), myProject, null)) {
-      myModifiedModificators.remove(myModificators.get(currentSdk));
+    SdkModificator modificator = myModificators.get(currentSdk);
+    assert modificator != null : "Modificator cannot be null here";
+    if (PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(currentSdk, modificator, myProject)){
+      myModifiedModificators.remove(modificator);
       myModificators.put(currentSdk, currentSdk.getSdkModificator());
     }
   }

@@ -368,6 +368,7 @@
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser" serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
 
     <registryKey key="python.relative.import.depth" defaultValue="3" description="Specifies default acceptable number of dots in a relative import statement"/>
+    <registryKey key="python.use.new.sdk.updater" defaultValue="true" description="Use experimental PyUpdateSdkTask"/>
 
     <!-- flake8 -->
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.flake8.Flake8InspectionSuppressor"/>
@@ -625,6 +626,14 @@
       <add-to-group group-id="DebugMainMenu" relative-to-action="ForceRunToCursor" anchor="after"/>
       <add-to-group group-id="EditorPopupMenuDebug" relative-to-action="ForceRunToCursor" anchor="after"/>
     </action>
+
+    <!--suppress PluginXmlI18n -->
+    <group id="Internal.Python" internal="true" popup="true" text="Python">
+      <!--suppress PluginXmlI18n -->
+      <action id="PyUpdateProjectSdk" internal="true" class="com.jetbrains.python.sdk.PyUpdateProjectSdkAction"
+              text="Update Python SDK" description="Forcibly update all configured Python SDKs in the project"/>
+      <add-to-group group-id="Internal"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
