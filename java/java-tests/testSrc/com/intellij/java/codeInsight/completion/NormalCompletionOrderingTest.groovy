@@ -69,9 +69,9 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for html")
   void testShorterPrefixesGoFirst() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".html")
+    invokeCompletion(getTestName(false) + ".html")
     assertPreferredItems(0, "p", "param", "pre")
-    incUseCount(lookup, 2)
+    incUseCount(2)
     assertPreferredItems(0, "p", "pre", "param")
   }
 
@@ -175,7 +175,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
     invokeCompletion(getTestName(false) + ".java")
     configureSecondCompletion()
-    incUseCount(getLookup(), 1)
+    incUseCount(1)
     assertPreferredItems(0, "FooBee", "FooBar")
   }
 
@@ -216,11 +216,10 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
     configureSecondCompletion()
 
-    final LookupImpl lookup = getLookup()
     assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[0]).qualifiedName)
     assertEquals("boo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[1]).qualifiedName)
     assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[2]).qualifiedName)
-    incUseCount(lookup, 2)
+    incUseCount(2)
 
     assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[0]).qualifiedName) // same package
     assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[1]).qualifiedName)
@@ -304,7 +303,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   void testPreferExpectedEnumConstantsInComparison() {
     checkPreferredItems 0, 'MyEnum.const1', 'MyEnum', 'MyEnum.const2'
-    incUseCount(lookup, myFixture.lookupElementStrings.indexOf('String')) // select some unrelated class
+    incUseCount(myFixture.lookupElementStrings.indexOf('String')) // select some unrelated class
     assertPreferredItems 0, 'MyEnum.const1', 'MyEnum', 'MyEnum.const2'
   }
 
@@ -429,9 +428,9 @@ interface TxANotAnno {}
 
   @NeedsIndex.ForStandardLibrary
   void testJComponentAddNewWithStats() throws Throwable {
-    final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java")
+    invokeCompletion("/../smartTypeSorting/JComponentAddNew.java")
     assertPreferredItems(0, "FooBean3", "JComponent", "Component")
-    incUseCount(lookup, 2) //Component
+    incUseCount(2) //Component
     assertPreferredItems(0, "Component", "FooBean3", "JComponent")
   }
 
@@ -459,18 +458,18 @@ interface TxANotAnno {}
   @NeedsIndex.ForStandardLibrary
   void testDoNotPreferGetClass() {
     checkPreferredItems 0, 'get', 'getClass'
-    incUseCount(lookup, 1)
+    incUseCount(1)
     assertPreferredItems 0, 'getClass', 'get'
-    incUseCount(lookup, 1)
+    incUseCount(1)
     assertPreferredItems 0, 'get', 'getClass'
   }
 
   @NeedsIndex.ForStandardLibrary
   void testEqualsStats() {
     checkPreferredItems 0, 'equals', 'equalsIgnoreCase'
-    incUseCount(lookup, 1)
+    incUseCount(1)
     assertPreferredItems 0, 'equalsIgnoreCase', 'equals'
-    incUseCount(lookup, 1)
+    incUseCount(1)
     checkPreferredItems 0, 'equals', 'equalsIgnoreCase'
   }
 
@@ -525,10 +524,10 @@ interface TxANotAnno {}
   void testPreselectLastChosen() {
     checkPreferredItems(0, 'add', 'addAll')
     for (i in 0..10) {
-      incUseCount(lookup, 1)
+      incUseCount(1)
     }
     assertPreferredItems 0, 'addAll', 'add'
-    incUseCount(lookup, 1)
+    incUseCount(1)
     assertPreferredItems 0, 'add', 'addAll'
   }
 
@@ -589,7 +588,7 @@ interface TxANotAnno {}
   void testLocalVarsOverStats() {
     CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.NONE)
     checkPreferredItems 0, 'psiElement', 'PsiElement'
-    incUseCount lookup, 1
+    incUseCount 1
     assertPreferredItems 0, 'psiElement', 'PsiElement'
   }
 
@@ -652,7 +651,8 @@ interface TxANotAnno {}
     configureNoCompletion(getTestName(false) + ".java")
     myFixture.complete(CompletionType.BASIC, 2)
     assertPreferredItems 0, 'newLinkedSet0', 'newLinkedSet1', 'newLinkedSet2'
-    incUseCount lookup, 1
+    imitateItemSelection(lookup, 1)
+    myFixture.complete(CompletionType.BASIC, 2)
     assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
   }
 
@@ -855,7 +855,7 @@ class ContainerUtil extends ContainerUtilRt {
   void testPreferExpectedEnumConstantInAnnotationAttribute() {
     checkPreferredItems 0, 'MyEnum.bar', 'MyEnum', 'MyEnum.foo'
     def unrelatedItem = myFixture.lookupElementStrings.findIndexOf { it.contains('Throwable') }
-    incUseCount(lookup, unrelatedItem)
+    incUseCount(unrelatedItem)
     //nothing should change
     assertPreferredItems 0, 'MyEnum.bar', 'MyEnum', 'MyEnum.foo'
   }

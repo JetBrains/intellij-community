@@ -34,6 +34,11 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     super(CompletionType.SMART)
   }
 
+  @Override
+  protected void complete() {
+    myItems = myFixture.complete(CompletionType.SMART);
+  }
+
   @NeedsIndex.ForStandardLibrary
   void testJComponentAdd() throws Throwable {
     checkPreferredItems(0, "name", "b", "fooBean239", "foo")
@@ -48,9 +53,9 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testJComponentAddNewWithStats() throws Throwable {
     //there's no PopupMenu in mock jdk
-    final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java")
+    invokeCompletion("/JComponentAddNew.java")
     assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container")
-    incUseCount(lookup, 4) //Container
+    incUseCount(4) //Container
     assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent")
     imitateItemSelection(lookup, 3) //FooBean3
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
@@ -84,9 +89,8 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testMethodStats() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java")
-    assertPreferredItems(0, "bar", "foo", "goo")
-    incUseCount(lookup, 2)
+    checkPreferredItems(0, "bar", "foo", "goo")
+    incUseCount(2)
     assertPreferredItems(0, "goo", "bar", "foo")
   }
 
@@ -203,11 +207,10 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testStatisticsAffectsNonPreferableExpectedItems() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java")
+    checkPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList")
+    incUseCount(0)
     assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList")
-    incUseCount(lookup, 0)
-    assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList")
-    incUseCount(lookup, 0)
+    incUseCount(0)
     assertPreferredItems(0, "List", "ArrayList", "AbstractList", "AbstractSequentialList")
   }
 
@@ -218,9 +221,8 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   void testPreferDelegatingMethodParams() throws Throwable {
     //there's no PopupMenu in mock jdk
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java")
-    assertPreferredItems(0, "xyz", "abc")
-    incUseCount(lookup, 1)
+    checkPreferredItems(0, "xyz", "abc")
+    incUseCount(1)
     assertPreferredItems(0, "xyz", "abc")
   }
 
@@ -278,9 +280,8 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testLocalVariablesOutweighStats() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java")
-    assertPreferredItems(0, "foo", "param", "this", "bar", "goo")
-    incUseCount(lookup, 4)
+    checkPreferredItems(0, "foo", "param", "this", "bar", "goo")
+    incUseCount(4)
     assertPreferredItems(0, "foo", "param", "this", "goo", "bar")
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
       imitateItemSelection(lookup, 3) //goo
@@ -294,14 +295,13 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     invokeCompletion(getTestName(false) + ".java")
     assertPreferredItems(0, "foo", "false")
     myFixture.type(',')
-    myFixture.complete(CompletionType.SMART)
+    complete()
     assertPreferredItems(0, "bar", "foo", "equals", "false", "true")
   }
 
   void testExpectedNameDependentStats() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java")
-    assertPreferredItems(0, "myFoo", "myBar")
-    incUseCount(lookup, 1) //myBar
+    checkPreferredItems(0, "myFoo", "myBar")
+    incUseCount(1) //myBar
     assertPreferredItems(0, "myBar", "myFoo")
   }
 
@@ -395,7 +395,8 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     configureNoCompletion(getTestName(false) + ".java")
     myFixture.complete(CompletionType.SMART, 2)
     assertPreferredItems 0, 'newLinkedSet0', 'newLinkedSet1', 'newLinkedSet2'
-    incUseCount lookup, 1
+    imitateItemSelection(lookup, 1)
+    myFixture.complete(CompletionType.SMART, 2)
     assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
   }
 
