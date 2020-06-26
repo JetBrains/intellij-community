@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -213,7 +212,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private @NotNull Pair<Set<String>, Set<String>> collectWatchRoots(@NotNull Disposable disposable) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    Set<String> recursivePathsToListen = CollectionFactory.createFilePathSet();
     Set<String> recursivePathsToWatch = CollectionFactory.createFilePathSet();
     Set<String> flatPaths = CollectionFactory.createFilePathSet();
 
@@ -238,7 +236,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       if (!toWatch.isEmpty()) {
         recursivePathsToWatch.addAll(ContainerUtil.map(toWatch, FileUtil::toSystemIndependentName));
       }
-      recursivePathsToListen.addAll(ContainerUtil.map(extension.getRecursiveRoots(), FileUtil::toSystemIndependentName));
     }
 
     Set<String> excludedUrls = CollectionFactory.createSmallMemoryFootprintSet();
@@ -248,15 +245,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
 
     // avoid creating empty unnecessary container
-    if (!recursivePathsToListen.isEmpty() || !flatPaths.isEmpty() || !excludedUrls.isEmpty()) {
+    if (!flatPaths.isEmpty() || !excludedUrls.isEmpty()) {
       Disposer.register(this, disposable);
       // creating a container with these URLs with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
       VirtualFilePointerContainer container =
         VirtualFilePointerManager.getInstance().createContainer(disposable, getRootsValidityChangedListener());
 
-      List<String> recursiveUrlsToListen = ContainerUtil.map(recursivePathsToListen, VfsUtilCore::pathToUrl);
-
-      ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveUrlsToListen, true);
       flatPaths.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
       ((VirtualFilePointerContainerImpl)container).addAll(excludedUrls);
     }

@@ -42,11 +42,6 @@ public class MvcWatchedRootProvider implements WatchedRootsProvider {
     return getRootsToWatch(myProject);
   }
 
-  @Override
-  public @NotNull Set<String> getRecursiveRoots() {
-    return getRootsToWatch();
-  }
-
   @NotNull
   public static Set<String> getRootsToWatch(Project project) {
     if (!project.isInitialized()) return Collections.emptySet();

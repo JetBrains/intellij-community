@@ -22,6 +22,9 @@ import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.wm.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -90,13 +93,22 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
 
   private void addListeners() {
     MessageBusConnection connection = myProject.getMessageBus().connect();
+    for (String rootPath : MvcWatchedRootProvider.getRootsToWatch(myProject)) {
+      VirtualFilePointerManager.getInstance().createDirectoryPointer(VfsUtilCore.pathToUrl(rootPath), true, this, new VirtualFilePointerListener() {
+        @Override
+        public void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
+          myOrders.add(new Pair<>(myProject, SyncAction.SyncLibrariesInPluginsModule));
+          scheduleRunActions();
+        }
+      });
+    }
+
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         myModificationTracker.incModificationCount();
         synchronized (myOrders) {
           Project project = myProject;
-          myOrders.add(new Pair<>(project, SyncAction.SyncLibrariesInPluginsModule));
           myOrders.add(new Pair<>(project, SyncAction.UpgradeFramework));
           myOrders.add(new Pair<>(project, SyncAction.CreateAppStructureIfNeeded));
           myOrders.add(new Pair<>(project, SyncAction.UpdateProjectStructure));
