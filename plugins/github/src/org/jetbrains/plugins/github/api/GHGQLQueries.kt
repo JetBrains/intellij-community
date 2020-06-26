@@ -10,6 +10,7 @@ object GHGQLQueries {
   const val issueSearch = "issueSearch"
   const val findPullRequest = "findPullRequest"
   const val updatePullRequest = "updatePullRequest"
+  const val markPullRequestReadyForReview = "markPullRequestReadyForReview"
   const val pullRequestTimeline = "pullRequestTimeline"
   const val pullRequestReviewThreads = "pullRequestReviewThreads"
   const val pullRequestCommits = "pullRequestCommits"

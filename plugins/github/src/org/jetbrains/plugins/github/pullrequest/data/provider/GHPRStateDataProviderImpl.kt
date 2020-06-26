@@ -73,6 +73,9 @@ class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
   override fun reopen(progressIndicator: ProgressIndicator): CompletableFuture<Unit> =
     stateService.reopen(progressIndicator, pullRequestId).notifyState()
 
+  override fun markReadyForReview(progressIndicator: ProgressIndicator): CompletableFuture<Unit> =
+    stateService.markReadyForReview(progressIndicator, pullRequestId).notifyState()
+
   override fun merge(progressIndicator: ProgressIndicator, commitMessage: Pair<String, String>, currentHeadRef: String)
     : CompletableFuture<Unit> = stateService.merge(progressIndicator, pullRequestId, commitMessage, currentHeadRef).notifyState()
 

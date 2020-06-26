@@ -29,6 +29,9 @@ interface GHPRStateService {
   fun reopen(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier): CompletableFuture<Unit>
 
   @CalledInAny
+  fun markReadyForReview(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier): CompletableFuture<Unit>
+
+  @CalledInAny
   fun merge(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier,
             commitMessage: Pair<String, String>, currentHeadRef: String): CompletableFuture<Unit>
 

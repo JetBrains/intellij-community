@@ -36,8 +36,22 @@ class GHPRStateModelImpl(private val project: Project,
     reloadMergeabilityState()
   }
 
-  override val details: GHPullRequestShort
+  private val details: GHPullRequestShort
     get() = detailsModel.value
+
+  override val viewerDidAuthor = details.viewerDidAuthor
+  override val isDraft: Boolean
+    get() = details.isDraft
+
+  override fun addAndInvokeDraftStateListener(listener: () -> Unit) {
+    var lastIsDraft = isDraft
+    detailsModel.addValueChangedListener {
+      if (lastIsDraft != isDraft) listener()
+      lastIsDraft = isDraft
+    }
+    listener()
+  }
+
   override var mergeabilityState: GHPRMergeabilityState? = null
     private set
   override var mergeabilityLoadingError: Throwable? = null
@@ -71,6 +85,10 @@ class GHPRStateModelImpl(private val project: Project,
 
   override fun submitReopenTask() = submitTask {
     stateData.reopen(EmptyProgressIndicator())
+  }
+
+  override fun submitMarkReadyForReviewTask() {
+    stateData.markReadyForReview(EmptyProgressIndicator())
   }
 
   override fun submitMergeTask() = submitTask {
