@@ -55,6 +55,11 @@ public class HeadlessLafManagerImpl extends LafManager {
   public void repaintUI() { }
 
   @Override
+  public boolean isAutoDetect() {
+    return false;
+  }
+
+  @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener) { }
 
   @Override

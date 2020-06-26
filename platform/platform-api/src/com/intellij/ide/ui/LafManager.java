@@ -40,6 +40,8 @@ public abstract class LafManager {
 
   public abstract void repaintUI();
 
+  public abstract boolean isAutoDetect();
+
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */

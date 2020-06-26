@@ -16,6 +16,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -34,7 +35,10 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.DefaultLinkButtonUI;
@@ -46,7 +50,9 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.*;
+import kotlin.Unit;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -128,6 +134,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private boolean myFirstSetup = true;
   private boolean myUpdatingPlugin = false;
   private final Set<String> myThemesInUpdatedPlugin = new HashSet<>();
+  private boolean autodetect = Registry.is("ide.laf.autodetect");
 
   private static UIManager.LookAndFeelInfo getDefaultLightTheme() {
     for(UIThemeProvider provider: UIThemeProvider.EP_NAME.getExtensionList()) {
@@ -210,6 +217,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void initializeComponent() {
+    Registry.get("ide.laf.autodetect").addListener(new RegistryValueListener() {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        autodetect = value.asBoolean();
+        syncLaf();
+      }
+    }, this);
+
     if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
@@ -228,7 +243,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     UIThemeProvider.EP_NAME.addExtensionPointListener(new UIThemeEPListener(), this);
 //    LafProvider.EP_NAME.addExtensionPointListener(new LafProviderEPListener(), this);
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+    MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+    bus.connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         myUpdatingPlugin = isUpdate;
@@ -239,6 +255,27 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         myThemesInUpdatedPlugin.clear();
       }
     });
+
+    bus.connect(this).subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+      @Override
+      public void applicationActivated(@NotNull IdeFrame ideFrame) {
+        syncLaf();
+      }
+    });
+  }
+
+  private void syncLaf() {
+    if (autodetect) {
+      boolean currentDark = myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().isDark() ||
+                           UIUtil.isUnderDarcula();
+
+      SystemDarkThemeDetector.getInstance().check(systemDark -> {
+        if (currentDark != systemDark) {
+          setCurrentLookAndFeel(systemDark ? myDefaultDarkTheme : myDefaultLightTheme);
+        }
+        return Unit.INSTANCE;
+      });
+    }
   }
 
   public void updateWizardLAF(boolean wasUnderDarcula) {
@@ -881,6 +918,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     for (Frame frame : frames) {
       repaintUI(frame);
     }
+  }
+
+  @Override
+  public boolean isAutoDetect() {
+    return autodetect;
   }
 
   private static void repaintUI(Window window) {
