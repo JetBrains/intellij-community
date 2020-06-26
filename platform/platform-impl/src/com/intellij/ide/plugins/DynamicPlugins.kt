@@ -6,6 +6,7 @@ import com.intellij.application.options.RegistryManager
 import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProjectsAndApp
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.diagnostic.MessagePool
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.ProjectUtil
@@ -485,6 +486,7 @@ object DynamicPlugins {
           PresentationFactory.clearPresentationCaches()
           ActionToolbarImpl.updateAllToolbarsImmediately()
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
+          MessagePool.getInstance().clearErrors()
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
           val projectManager = ProjectManagerEx.getInstanceExIfCreated()
