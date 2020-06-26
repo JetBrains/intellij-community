@@ -40,6 +40,8 @@ class GHPRDetailsModelImpl(private val valueModel: SingleValueModel<GHPullReques
     }
   override val state: GHPullRequestState
     get() = valueModel.value.state
+  override val isDraft: Boolean
+    get() = valueModel.value.isDraft
   override val assignees: List<GHUser>
     get() = valueModel.value.assignees
   override val reviewers: List<GHPullRequestRequestedReviewer>

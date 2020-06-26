@@ -16,6 +16,7 @@ interface GHPRDetailsModel {
   val baseBranch: String
   val headBranch: String
   val state: GHPullRequestState
+  val isDraft: Boolean
 
   val assignees: List<GHUser>
   val reviewers: List<GHPullRequestRequestedReviewer>

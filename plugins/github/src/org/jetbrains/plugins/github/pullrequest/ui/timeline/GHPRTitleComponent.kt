@@ -6,18 +6,17 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
-import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -32,7 +31,7 @@ internal object GHPRTitleComponent {
     }
 
     model.addAndInvokeValueChangedListener {
-      icon.icon = getStateIcon(model.value.state)
+      icon.icon = GithubUIUtil.getPullRequestStateIcon(model.value.state, model.value.isDraft)
       title.setBody(getTitleBody(model.value.title, model.value.number.toString()))
     }
 
@@ -65,17 +64,11 @@ internal object GHPRTitleComponent {
     }
 
     detailsModel.addAndInvokeDetailsChangedListener {
-      icon.icon = getStateIcon(detailsModel.state)
+      icon.icon = GithubUIUtil.getPullRequestStateIcon(detailsModel.state, detailsModel.isDraft)
       title.setBody(getTitleBody(detailsModel.title, detailsModel.number))
     }
 
     return layout(icon, title)
-  }
-
-  private fun getStateIcon(state: GHPullRequestState) = when (state) {
-    GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
-    GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
-    GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
   }
 
   private fun getTitleBody(title: String, number: String): String {

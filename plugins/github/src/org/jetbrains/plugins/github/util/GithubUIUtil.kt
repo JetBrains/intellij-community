@@ -19,9 +19,11 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
+import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import java.awt.Color
 import java.awt.Component
@@ -35,6 +37,14 @@ import javax.swing.event.DocumentEvent
 
 object GithubUIUtil {
   val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
+
+  fun getPullRequestStateIcon(state: GHPullRequestState, isDraft: Boolean): Icon =
+    if (isDraft) GithubIcons.PullRequestDrafted
+    else when (state) {
+      GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
+      GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
+      GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
+    }
 
   fun <T : JComponent> overrideUIDependentProperty(component: T, listener: T.() -> Unit) {
     component.addPropertyChangeListener("UI", PropertyChangeListener {
