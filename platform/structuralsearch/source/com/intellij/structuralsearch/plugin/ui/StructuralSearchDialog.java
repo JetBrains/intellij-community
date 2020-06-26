@@ -92,10 +92,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.openapi.util.text.StringUtil.trimEnd;
@@ -1112,7 +1110,12 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   public void loadConfiguration(Configuration configuration) {
-    myConfiguration = createConfiguration(configuration);
+    final Configuration newConfiguration = createConfiguration(configuration);
+    if (myUseLastConfiguration) {
+      final UUID uuid = myConfiguration.getUuid();
+      newConfiguration.setUuid(uuid);
+    }
+    myConfiguration = newConfiguration;
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     setSearchTargets(matchOptions);
     if (!myEditConfigOnly) {
