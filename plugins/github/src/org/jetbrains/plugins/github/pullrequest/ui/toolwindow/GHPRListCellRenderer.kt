@@ -7,7 +7,6 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
-import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -93,12 +92,9 @@ class GHPRListCellRenderer(private val avatarIconsProvider: CachingGithubAvatarI
     val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
 
     stateIcon.apply {
-      icon = when (value.state) {
-        GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
-        GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
-        GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
-      }
-      toolTipText = when (value.state) {
+      icon = GithubUIUtil.getPullRequestStateIcon(value.state, value.isDraft)
+      toolTipText = if (value.isDraft) GithubBundle.message("pull.request.state.draft")
+      else when (value.state) {
         GHPullRequestState.CLOSED -> GithubBundle.message("pull.request.state.closed")
         GHPullRequestState.MERGED -> GithubBundle.message("pull.request.state.merged")
         GHPullRequestState.OPEN -> GithubBundle.message("pull.request.state.open")

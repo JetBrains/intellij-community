@@ -5,6 +5,7 @@ fragment pullRequestInfoShort on PullRequest {
 
   title
   state
+  isDraft
 
   author {
     ...actorInfo

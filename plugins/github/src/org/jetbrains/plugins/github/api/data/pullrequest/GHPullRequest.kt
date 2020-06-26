@@ -14,6 +14,7 @@ class GHPullRequest(id: String,
                     number: Long,
                     title: String,
                     state: GHPullRequestState,
+                    isDraft: Boolean,
                     author: GHActor?,
                     createdAt: Date,
                     @JsonProperty("assignees") assignees: GHNodes<GHUser>,
@@ -28,7 +29,7 @@ class GHPullRequest(id: String,
                     val headRefName: String,
                     val headRefOid: String,
                     val headRepository: HeadRepository?)
-  : GHPullRequestShort(id, url, number, title, state, author, createdAt, assignees, labels, viewerCanUpdate, viewerDidAuthor) {
+  : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, assignees, labels, viewerCanUpdate, viewerDidAuthor) {
 
   @JsonIgnore
   val reviewRequests = reviewRequests.nodes
