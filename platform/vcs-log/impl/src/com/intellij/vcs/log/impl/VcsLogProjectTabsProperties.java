@@ -18,7 +18,7 @@ import java.util.*;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map2List;
 
-@State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "Vcs.Log.Tabs.Properties", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>,
                                                           VcsLogTabsProperties {
   @NonNls public static final String MAIN_LOG_ID = "MAIN";

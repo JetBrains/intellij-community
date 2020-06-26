@@ -15,7 +15,7 @@ import java.util.*;
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 
-@State(name = "Vcs.Log.App.Settings", storages = {@Storage("vcs.xml")})
+@State(name = "Vcs.Log.App.Settings", storages = @Storage("vcs.xml"))
 public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
   @NotNull private final Set<VcsLogUiProperties.PropertiesChangeListener> myListeners = new LinkedHashSet<>();
   private State myState = new State();
