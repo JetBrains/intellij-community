@@ -8,48 +8,48 @@ com.intellij.plugins.html.instantEditing 162.5 0.4.1 0.4 0.3.9 0.3.8 0.3.7 0.3.6
 com.jetbrains.php.behat 145.970.40 145.258.2 144.3168 143.381.48 142.5282 141.388 141.2325 139.789 138.2502 138.1281
 com.jetbrains.php.blade 145.970.40 145.258.2 143.381.48 142.5282 141.582 141.2325 139.732 138.2502
 com.jetbrains.php.drupal 145.258.2 143.381.48 142.5282 141.660 141.2325 139.732 138.2001.2328 134.1456 133.51
-com.jetbrains.php.framework    145.258.2 143.381.48 142.5282 141.660 141.2325 139.732 138.826 138.2502 136.1382 133.51 131.98 131.374 130.1481 129.672 127.67 123.66 121.62 121.390 121.215 121.12 117.746 117.694 117.501 117.257 117.222 117.132 114.282 114.158
+com.jetbrains.php.framework 145.258.2 143.381.48 142.5282 141.660 141.2325 139.732 138.826 138.2502 136.1382 133.51 131.98 131.374 130.1481 129.672 127.67 123.66 121.62 121.390 121.215 121.12 117.746 117.694 117.501 117.257 117.222 117.132 114.282 114.158
 com.jetbrains.php.gae 145.258.2 143.381.48 142.5282 141.582 141.2402 141.2325 139.732 130.1481 129.487
-com.jetbrains.php.wordPress   145.258.2 143.381.48 142.5282 141.660 141.2325 139.732 138.1901 138.1505 136.1382
+com.jetbrains.php.wordPress 145.258.2 143.381.48 142.5282 141.660 141.2325 139.732 138.1901 138.1505 136.1382
 org.jetbrains.plugins.phpstorm-remote-interpreter 145.970.40 145.258.2 144.4199.11 144.3168 143.434 143.381.48 142.3969 142.2716 141.690 141.388 139.789 138.2502 138.1281
-com.jetbrains.lang.ejs 163.3512.13 163.5644.1 131.17 131.12
-com.jetbrains.twig  133.737 133.51 130.1639
-com.jetbrains.upsource 2017.2.2362.5 2017.2.2367.5 2017.2.2370.5 2017.2.2394.5 2017.2.2398.5 2017.2.2441.5 2017.2.2492.5 2017.2.2514.5 2017.3.2598.5 2017.3.2627.6 2017.3.2634.6 2017.3.2706.6 2017.3.2720.6 2017.3.2759.6 2017.3.2774.6 2017.3.2804.6 2017.3.2850.6 2017.3.2855.6 2017.3.2862.6 2017.3.2888.6 2017.3.2905.6 2018.1.189.6 2018.1.235.6 2018.1.308.6 2018.1.357.6 2018.1.368.6 2018.1.369.6 2018.1.383.6 2018.1.419.6 2018.1.445.6 2018.1.446.6 2018.1.476.6 2018.1.539.6 2018.1.548.6 2018.1.567.6 2018.1.576.6 2018.1.584.6 2018.1.588.6 2018.1.601.7 2018.1.603.7 2018.1.605.7 2018.1.616.7 2018.1.622.7 2018.1.629.7 2018.1.630.7 2018.1.653.7 2018.1.690.7 2018.1.701.7 2018.1.727.7 2018.1.730.7 2018.2.776.7 2018.2.783.7 2018.2.817.7 2018.2.871.7 2018.2.984.7 2018.2.1145.7 2018.2.1164.8 2019.1.1182.8 2019.1.1194.8 2019.1.1226.8 2019.1.1238.8
+com.jetbrains.lang.ejs 163.3512.13 163.5644.1 131.17 131.12 133.745
+com.jetbrains.twig 133.737 133.51 130.1639 136.1770 138.1505 139.58 141.2325 142.5282 143.381.48 145.258.2
+com.jetbrains.upsource 2017.2.2362.5 2017.2.2367.5 2017.2.2370.5 2017.2.2394.5 2017.2.2398.5 2017.2.2441.5 2017.2.2492.5 2017.2.2514.5 2017.3.2598.5 2017.3.2627.6 2017.3.2634.6 2017.3.2706.6 2017.3.2720.6 2017.3.2759.6 2017.3.2774.6 2017.3.2804.6 2017.3.2850.6 2017.3.2855.6 2017.3.2862.6 2017.3.2888.6 2017.3.2905.6 2018.1.189.6 2018.1.235.6 2018.1.308.6 2018.1.357.6 2018.1.368.6 2018.1.369.6 2018.1.383.6 2018.1.419.6 2018.1.445.6 2018.1.446.6 2018.1.476.6 2018.1.539.6 2018.1.548.6 2018.1.567.6 2018.1.576.6 2018.1.584.6 2018.1.588.6 2018.1.601.7 2018.1.603.7 2018.1.605.7 2018.1.616.7 2018.1.622.7 2018.1.629.7 2018.1.630.7 2018.1.653.7 2018.1.690.7 2018.1.701.7 2018.1.727.7 2018.1.730.7 2018.2.776.7 2018.2.783.7 2018.2.817.7 2018.2.871.7 2018.2.984.7 2018.2.1145.7 2018.2.1164.8 2019.1.1182.8 2019.1.1194.8 2019.1.1226.8 2019.1.1238.8 2019.1.1362.9 2019.1.1386.9 2019.1.1423.9 2019.1.1432.9 2019.1.1437.9 2019.1.1467.9 2019.1.1473.9
 org.jetbrains.plugins.ruby 2018.2.20180515 2017.1.20161201 8.0.0.20151005 8.0.0.20180821 8.0.0.20150708 8.0.0.20150624 8.0.0.20150616 7.0.0.20150216 7.0.0.20150204 7.0.0.20141010 7.0.0.20140915 7.0.0.20140901 7.0.0.20140807 6.0.0.20140207 6.5.2.20140512 7.0.0.20140704 7.0.0.20140707 7.0.0.20140724
 org.jetbrains.plugins.ruby-chef 182.2371 182.3458.5
 Pythonid 2017.1.171.4 2016.3.163.125 2016.2.162.37 2016.1.145.234 2016.1.145.266 2016.1.145.86 2016.2.162.43 2016.3.163.80 5.1.145.45 5.1.144.1661 5.0.144.1645 5.0.144.1598 5.0.142.1557 5.0.2.143.121 5.0.142.1177 5.0.143.116 5.0.143.100 5.0.143.103 5.0.143.95 5.0.142.1060 5.0.143.53 5.0.142.2 "142.176 v4.5" 4.1 "4.1 141.4 EAP" 3.1 4.0.25 4.0.26 2019.1.191.4738.6
 PythonCore 5.0.143.103 2016.2.162.37 2016.2.162.43 2016.3.163.125 2017.1.171.4 5.0.142.1060 5.0.142.1177 5.0.142.1557 5.0.142.2 5.0.143.100 5.0.143.116 5.0.143.53 5.0.143.61 5.0.143.95 5.0.144.1598 5.0.144.1645 5.0.2.143.121 5.1.144.1661 5.1.145.45
 Karma 173.1310 173.622
 org.intellij.scala 2018.2.11 3.0.425 3.0.422 3.0.420 3.0.419 3.0.413 3.0.412 3.0.410 3.0.409 3.0.407 3.0.406 3.0.405 3.0.402 3.0.400 3.0.399 3.0.398 3.0.396 3.0.3.25 3.0.3.22 3.0.3 3.0.2.20 3.0.2.18 1.9.133 1.9.140 1.9.147 1.9.151 1.9.2.2 1.9.4 1.9.4.1 1.9.2 1.8.5 1.8.0 1.8.2 1.8.4 1.7.4 1.7.2 1.6.2 1.6.1 1.6.0 1.2.67.3.EAP 1.3.2-14.1 1.3.3-14.1 1.0.93.10.EAP 1.0.93.4.EAP 1.0.93.9.EAP 1.0.58 1.0.16 1.0.14 1.0.13 0.42.28 0.42.23 0.40.20 0.40.18 0.40.16 0.32.593 0.32.562 0.32.558 0.32.550 0.32.520 0.32.512
-org.jetbrains.kannotator  0.2.420
-org.jetbrains.kotlin 1.0.5-eap-66-IJ2016.3-1 1.0.6-eap-112-IJ2016.3-1 1.0.6-eap-123-IJ2016.3-1 1.0.6-eap-60-IJ2016.3-1 1.0.6-eap-77-IJ2016.3-1  0.10.555 0.10.4 0.8.1615 0.7.1360 0.7.1376 0.8.7 1.0.0-rc-1007-IJ143-11 1.0.0-beta-4589-IJ143-16 1.0.0-beta-4584-IJ143-12 1.0.0-beta-4583-IJ143-11 1.3.21-release-IJ2019.1-1 1.3.21-release-IJ2019.1-2 1.3.21-release-IJ2019.1-3 1.3.30-dev-1827-IJ2019.1-1 1.3.30-eap-11-IJ2019.1-1 1.3.30-eap-125-IJ2019.1-1 1.3.30-eap-164-IJ2019.1-1 1.3.30-eap-45-IJ2019.1-1 1.3.30-eap-96-IJ2019.1-1 1.3.30-release-IJ2019.1-1 1.3.31-release-IJ2019.1-1 1.3.31-release-IJ2019.2-1 1.3.40-eap-105-IJ2019.2-1 1.3.40-eap-21-IJ2019.1-1 1.3.40-eap-32-IJ2019.1-1 1.3.40-eap-67-IJ2019.2-1
-SBT   1.0.0  1.1.0  1.2.0  1.3.0  1.3.1  1.4.0  1.5.0 1.5.1 1.6.0 1.6.1 1.7.0
+org.jetbrains.kannotator 0.2.420
+org.jetbrains.kotlin 1.0.5-eap-66-IJ2016.3-1 1.0.6-eap-112-IJ2016.3-1 1.0.6-eap-123-IJ2016.3-1 1.0.6-eap-60-IJ2016.3-1 1.0.6-eap-77-IJ2016.3-1 0.10.555 0.10.4 0.8.1615 0.7.1360 0.7.1376 0.8.7 1.0.0-rc-1007-IJ143-11 1.0.0-beta-4589-IJ143-16 1.0.0-beta-4584-IJ143-12 1.0.0-beta-4583-IJ143-11 1.3.21-release-IJ2019.1-1 1.3.21-release-IJ2019.1-2 1.3.21-release-IJ2019.1-3 1.3.30-dev-1827-IJ2019.1-1 1.3.30-eap-11-IJ2019.1-1 1.3.30-eap-125-IJ2019.1-1 1.3.30-eap-164-IJ2019.1-1 1.3.30-eap-45-IJ2019.1-1 1.3.30-eap-96-IJ2019.1-1 1.3.30-release-IJ2019.1-1 1.3.31-release-IJ2019.1-1 1.3.31-release-IJ2019.2-1 1.3.40-eap-105-IJ2019.2-1 1.3.40-eap-21-IJ2019.1-1 1.3.40-eap-32-IJ2019.1-1 1.3.40-eap-67-IJ2019.2-1
+SBT 1.0.0 1.1.0 1.2.0 1.3.0 1.3.1 1.4.0 1.5.0 1.5.1 1.6.0 1.6.1 1.7.0 1.8.0
 "JSTestDriver Plugin" 192.2 192.1 191.5849.16
 AngularJS 0.1.8 0.1.9 134.1094 134.1243 134.1341 134.1444 135.565 135.831 135.937 135.1063 138.1242 138.1988 139.12 139.1112 140.1968 141.2 141.991 141.1237 142.1935 142.2481 142.4081 142.4651 142.5028 143.110 143.379.19 144.2925.4 173.1310 173.2099.6 173.2463.22 182.2371.6 182.2757.12
-com.jetbrains.plugins.ini4idea  0.3 0.2 0.4 0.5 0.6 0.7 0.8 0.8.1 0.9 0.9.1 1.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6 130.1176
+com.jetbrains.plugins.ini4idea 0.3 0.2 0.4 0.5 0.6 0.7 0.8 0.8.1 0.9 0.9.1 1.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6 130.1176
 org.jetbrains.plugins.vagrant 0.6.143.80 0.6.143.71 0.6.143.1 0.1 0.2 0.3 0.4 0.5 0.6.143.3 0.6.144.1701
 com.intellij.apacheConfig 144.3713 143.2287.2 143.381.48 142.5266 141.388 139.789 138.2502
 org.intellij.clojure 0.2.1.178
 net.nicoulaj.idea.markdown 0.9.7 0.9.6 0.9.5 0.9.4 0.9.3 0.9.2 0.9.1 0.8.3 0.8.2 0.8.1 0.8 0.7 0.6.1 0.6 0.5.1 0.5 0.4 0.3 0.2 0.1
 zielu.gittoolbox 13.1.0 13.5.2
-mobi.hsz.idea.gitignore 1.2 1.3 1.3.3 1.4.1 1.5 1.6 1.7.5 1.7.6 2.0.4 2.1.1 2.2.0 2.2.1 2.2.2 2.3.0 2.3.1 2.3.2 2.4.0 2.5.0
-com.vladsch.idea.multimarkdown 1.4.2 1.4.7 2.9.5
-com.jetbrains.chronon 134.1221 134.1414 134.1618 135.1291 135.476 135.666
-ArgoUML.Integration 0.1.1 0.1.2
+mobi.hsz.idea.gitignore 1.2 1.3 1.3.3 1.4.1 1.5 1.6 1.7.5 1.7.6 2.0.4 2.1.1 2.2.0 2.2.1 2.2.2 2.3.0 2.3.1 2.3.2 2.4.0 2.5.0 2.6.1 2.6.2
+com.vladsch.idea.multimarkdown 1.4.2 1.4.7 2.9.5 1.2.2 1.8.1 2.4.0 2.8.4 2.9.7
+com.jetbrains.chronon 134.1221 134.1414 134.1618 135.1291 135.476 135.666 139.1220 182.3684.101 191.4212.41
+ArgoUML.Integration 0.1.1 0.1.2 0.1
 IdeaServerPlugin 1.0 1.0.2 1.0.3 1.0.4 1.0.7 1.0.8
 copy.on.steroids 3.1
 "AWS Elastic Beanstalk" 0.7.7 0.7.6 0.7.5 0.7.4 0.7.3 0.7.2 0.7.1 0.7.0 0.6.1 0.6.0 0.5.5 0.5.4 0.5.3 0.5.2 0.5.1 0.5.0
 AWSCloudFormation 0.3.9
 com.jetbrains.typoscript 0.1.1 0.1.0
-Dart 143.379.14 143.147 143.294 133.239 133.432 133.726 130.1494 130.549 131.17 132.1045 132.207 132.835 130.1494 131.17 0.5.1
+Dart 143.379.14 143.147 143.294 133.239 133.432 133.726 130.1494 130.549 131.17 132.1045 132.207 132.835 0.5.1
 IdeaVIM 0.53.1 0.53 0.52.1 0.52 0.51.5 0.51.4 0.51.2 0.51.1 0.51 0.50.2 0.50.1 0.50 0.49.8 0.49.7 0.49.6 0.49.5 0.49.4 0.49.3 0.49.2 0.49.1 0.49 0.48.6 0.48.5 0.48.4 0.48 0.47.3 0.47.2 0.47.1 0.47 0.46.5 0.46.1 0.46 0.45-eap-327 0.45-eap-326 0.45-eap-325 0.45-eap-324 0.45-eap-323 0.45-eap-321 0.44 0.43 0.42 0.41 0.40 0.15.59 0.16.60 0.20.75 0.20.80 0.21.86 0.22.90 0.23.111 0.23.115 0.23.93 0.24-148 0.25 0.26 0.27 0.28 0.29 0.30 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39
 IDETalk 0.5 0.5.1 0.5.2 0.5.3 0.5.5 0.5.6 0.5.6.1 0.5.6.2 0.5.4 0.1.2 0.1.1 141.177.4 145.258.11
 com.jetbrains.plugins.meteor 143.1183 143.1088 143.379 143.360 143.88 142.2481 173.1310 173.2099.6 173.2941.6 173.3188.31
 org.bitbucket.connector 1.1.10 1.1.12 1.2 1.2.1
 ro.redeul.google.go 0.5.0 0.5.1 0.9.1 0.9.10 0.9.11 0.9.12 0.9.13 0.9.2 0.9.3 0.9.4 0.9.5 0.9.6 0.9.9 0.9.15 0.9.15.1 0.9.15.2 0.9.15.3 0.9.220 0.9.221 0.9.201 0.9.223 0.9.230 0.9.231 0.9.234 0.9.238 0.9.241 0.9.242 0.9.244 0.9.249 0.9.250 0.9.251
-TFS 133.1378 138.1183 121.185 121.390 124.218 124.297 124.344 124.533 126.254 126.309 127.14 129.105
+TFS 133.1378 138.1183 121.185 121.390 124.218 124.297 124.344 124.533 126.254 126.309 127.14 129.105 163.5644.1 163.6110.28 163.6512.13 163.6957.3 163.7342.11 163.7743.13 163.7743.25 163.9166.8 163.10154.19 171.1834.8 171.2014.24 171.2272.15 171.2455.4 163.12024.7 171.2613.14 171.2822.13 171.3019.10 171.3224.7 171.3566.29 171.3691.10 171.3780.21 171.3780.63 171.3780.79 171.4073.15 171.4073.31 171.4073.40 171.4249.16 171.4424.10 171.4424.20 172.1909.7 172.2103.10 171.4424.63 172.2273.2 172.2465.2 172.2656.13 172.2827.22 171.4694.29 172.2953.12 172.3095.13 172.3198.20 172.3317.8 172.3317.48 172.3544.10 172.3544.34 173.1310 172.3757.32 172.3757.55 172.3968.20 172.3968.27 172.4155.10 173.2099.6 172.4155.35 173.2463.22 173.2696.21 173.2941.6 172.4343.25 173.3415.27 181.2784.29 181.3007.17 181.3263.21 181.3741.1 182.2371.6 183.2153.10 183.2407.4 183.2635.17 183.3283.3 183.3647.1 183.3795.1 183.4139.22 183.4139.35 183.4284.36 191.4212.41
 com.intellij.plugins.haxe "0.9.7 for IDEA 14.1.4"
-com.sencha.idea.IdeaPlugin 6.0.6.456 6.0.4.438 6.0.3.430 6.0.2.414 6.0.1.396 6.0.0.390 "0.4.325 (SenchaCon 2015 EA)" "0.3.323 (SenchaCon 2015 EA)" "0.3.312 (SenchaCon 2015 EA)" "0.2.251 (SenchaCon 2015 EA)" "0.1.211 (SenchaCon 2015 EA)" "0.1.210.1 (SenchaCon 2015 EA)" "0.1.210 (SenchaCon 2015 EA)"
+com.sencha.idea.IdeaPlugin 6.0.6.456 6.0.4.438 6.0.3.430 6.0.2.414 6.0.1.396 6.0.0.390 "0.4.325 (SenchaCon 2015 EA)" "0.3.323 (SenchaCon 2015 EA)" "0.3.312 (SenchaCon 2015 EA)" "0.2.251 (SenchaCon 2015 EA)" "0.1.211 (SenchaCon 2015 EA)" "0.1.210.1 (SenchaCon 2015 EA)" "0.1.210 (SenchaCon 2015 EA)" 6.0.8.477 6.0.9.517 6.0.11.531 6.0.12.563
 "Sencha Ext JS" 6.0.12.563
 com.intellij.swift 144.SNAPSHOT
 SpellChecker 1.0
@@ -57,37 +57,37 @@ com.fedot.idea.requirejs 0.24
 com.widerwille.quicklook 0.8 0.9
 com.phpuaca 1.3.1 1.2.1
 coffeescript-idea 0.1-1-gae5a
-RESTClient 1.2
+RESTClient 1.2 1.0 1.1
 krasa.nonProjectFilesUnlocker 1.0 1.1
-com.chrisrm.idea.MaterialThemeUI 0.2.0 0.1.9
+com.chrisrm.idea.MaterialThemeUI 0.2.0 0.1.9 0.1.8 0.2.2
 com.hasintech.intellij.angularTemplates 1.0.2 1.1.2
 com.jetbrains.plugins.jade 144.2931 142.4651 141.506 140.2144 140.1212 140.216 138.1744 133.74 130.1520 121.390 122.668 121.185
-com.jetbrains.ec2manager 1.0.5 1.0.4 1.0.3 1.0.2 1.0.1 1.0 0.3.4 0.3.4 0.3.2 0.3.1 0.3.0 0.2.0 0.1.2 0.1.1 0.1.0
+com.jetbrains.ec2manager 1.0.5 1.0.4 1.0.3 1.0.2 1.0.1 1.0 0.3.4 0.3.2 0.3.1 0.3.0 0.2.0 0.1.2 0.1.1 0.1.0
 AAHack 0.1
-QAPlug 1.3.11 1.3.10 1.3.9 1.3.8 1.3.7 1.3.8 1.3.9 1.3.10 1.3.11 1.3.12 1.3.13 1.3.14 1.3.15 1.3.16 1.3.17 1.3.18 1.3.19
+QAPlug 1.3.11 1.3.10 1.3.9 1.3.8 1.3.7 1.3.12 1.3.13 1.3.14 1.3.15 1.3.16 1.3.17 1.3.18 1.3.19
 org.jetbrains.memory.view 0.0.2 0.0.3 0.0.4 0.0.5 0.0.6 0.0.7 0.0.8 0.0.9 0.0.10 0.9 0.91 0.91.145 0.91.162 0.92.145 0.92.162 0.93.145 0.93.162 0.93.171
-com.jetbrains.intellij.api.watcher 5.0.0 5.1.0 5.2.0 5.3.0 5.4.0
+com.jetbrains.intellij.api.watcher 5.0.0 5.1.0 5.2.0 5.3.0 5.4.0 2.9 3.0.0 3.1.0 3.2.0 3.3.0 3.4.0 3.5.0 3.6.0 3.7.0 4.1.0 4.2.0 4.3.0 4.4.0 5.5.0 5.6.0 5.7.0 5.8.0 5.11.0 5.13.0
 com.jetbrains.performancePlugin 1.1 1.3 1.3.1 1.3.2
 org.vuejs 1.1.0 1.0.1 1.0.0
 Vue.js 1.1.0 1.0.1 1.0.0
-com.intellij.resharper.unity 1.5.0.0 1.5.0.1
-"Error-prone plugin" 171.4342
-com.nmatveev.idea-plugin-protobuf 0.5.9
+com.intellij.resharper.unity 1.5.0.0 1.5.0.1 1.4.0.1 1.4.0.2 1.4.0.3 1.5.1.0 1.6.0.0 1.6.1.0
+"Error-prone plugin" 171.4342 1.0.8 1.0.8b 136.1285 139.887 162.1120 173.4031 181.3986.9 181.4488 182.3911.36 183.3647.12 183.3795.13 183.4139.22 191.4212.41
+com.nmatveev.idea-plugin-protobuf 0.5.9 0.3 0.4 0.4.1 0.5.1 0.5.2 0.5.3 0.5.4 0.5.5 0.5.6 0.5.7 0.5.8
 Haskell 0.5.2
 cco.atoth.intellij.plugin.chucknorris 1.0 1.1
-de.halirutan.mathematica 2.0.24
-com.intellij.plugin.applescript 0.115
+de.halirutan.mathematica 2.0.24 0.1.8 0.1.8.1 0.2 0.2.4 0.3.2 0.3.3 0.3.4 0.3.6 0.3.7 1.0 1.2.1 1.2.2 1.2.3 1.3 1.3.2 1.3.4 2.0.10 2.0.11 2.0.20 2.0.22 2.1.1 2.4.1 2.4.2 2.4.4
+com.intellij.plugin.applescript 0.115 0.116 0.117 0.118
 org.argus.cit.intellij 1.0.2 1.0.3 1.0.4
 com.intellij.appcode-ui-designer 1.0 1.1
-io.t28.json2java 0.1.0 0.2.0 0.2.1
+io.t28.json2java 0.1.0 0.2.0 0.2.1 0.2.2
 "Code Search" 0.99
 TabFolder 1.0 1.0.1
 ssh 1.0 1.0.1
-"Log4j Plugin" 1.1.2 1.1.1  1.1.0 1.0.1 1.0
-nix-idea 0.2.0.1
+"Log4j Plugin" 1.1.2 1.1.1 1.1.0 1.0.1 1.0
+nix-idea 0.2.0.1 0.2 0.2.1.0
 com.basisjs 0.1.3 0.1.4.1 0.1.5
 io.github.sirlantis.rubymine.rubocop 0.0.2 1.0.0 2.0.0 3.0.0 3.0.1 3.1.0
-"Beaker Test Runner" 0.1.0 0.1.1 0.1.2
+"Beaker Test Runner" 0.1.0 0.1.1 0.1.2 0.1.3
 "Railways for IDEA" 0.7.0 0.7.1 0.8.0 0.8.1 0.8.2 0.8.3 0.8.4 0.8.5 0.8.6 0.8.7
 Railways 0.7.0 0.7.1 0.8.0 0.8.1 0.8.2 0.8.3 0.8.4 0.8.5 0.8.6 0.8.7
 "Randori Compiler" 0.2.0 0.2.1 0.2.3 0.2.4 0.3.0
@@ -99,16 +99,16 @@ com.javils.ThemeSwitcher 1.0 1.1 1.2
 org.ziglang 0.0.3
 com.intellij.aspectj 0.7
 TRTIdea 1.0
-com.intellij.stats.completion 0.0.41 0.0.42 0.0.49 0.0.519 0.0.536 0.0.537 0.0.538 0.1.0 0.1.1 0.1.2
+com.intellij.stats.completion 0.0.41 0.0.42 0.0.49 0.0.519 0.0.536 0.0.537 0.0.538 0.1.0 0.1.1 0.1.2 0.1.3
 com.huawei.ide 1.0
 Retrotranslator 0.2.5
 phplint 1.0
 jenv-idea-plugin 0.0.1 0.0.2 0.0.3
-bzr4intellij 2.6.1 2.6.0 2.4.3 2.4.2 2.4.3 2.4.1 2.4.0 2.3.1 2.3.0 2.1.1 2.1.0
-com.codeOrchestra.colt.js.webStormPlugin 1.1.15 1.1.14 1.1.13 1.1.12 1.1.11 1.1.0 1.1.9 1.1.8 1.1.7
+bzr4intellij 2.6.1 2.6.0 2.4.3 2.4.2 2.4.1 2.4.0 2.3.1 2.3.0 2.1.1 2.1.0
+com.codeOrchestra.colt.js.webStormPlugin 1.1.15 1.1.14 1.1.13 1.1.12 1.1.11 1.1.0 1.1.9 1.1.8 1.1.7 1.0.1 1.1.1 1.1.2 1.1.3 1.1.4 1.1.5 1.1.6 1.1.10
 "Redline Smalltalk" 1.0.1 1.0
 org.amdatu.idea 1.0.1 1.0.2
-manifold.ij 0.24-alpha 0.25.2-alpha
+manifold.ij 0.24-alpha 0.25.2-alpha 2019.1.14
 org.jetbrains.settingsRepositoryPlus 0.1.0
 com.alicannklc.codeigniter.snippets 1.0 1.1
 PerforceIC 0.10.0 0.9.6 0.9.5 0.9.4 0.9.3 0.9.2 0.9.1 0.9.0 0.8.7
@@ -116,12 +116,10 @@ com.compilerexplorer.compilerexplorer 1.13 1.12 1.11 1.10 1.9 1.8 1.7 1.6 1.5 1.
 Bazel 2018.12.03.0.2 2018.11.12.0.4
 ru.makkarpov.ucl 0.1 0.1.1 0.1.2
 com.undo_software.clion.reverse 2.0.0
-"Randori Compiler" 0.2.0 0.2.1 0.2.3 0.2.4 0.3.0
 Docker 173.2605 191.4212.41 191.4738.6
 "Log Support" 1.0.11-11_and_newer
 "Changes Bar" 1.1 1.2.2 1.2.3 1.3 1.3.1 1.4 1.5 1.6 1.6.1 1.6.2 1.6.3
 uk.co.reecedunn.intellij.plugin.xquery 1.4 1.4.1
-bzr4intellij 2.6.1 2.6.0 2.4.3 2.4.2 2.4.1 2.4.0 2.3.1 2.3.0
 com.intellij.largeFilesEditor 1.1 1.0.1 1.0
 "AEM Support" 0.7
 com.jetbrains.edu 2.7-2019.2-2140
@@ -137,10 +135,10 @@ com.perl5.transport.wsl 193.4099.13-EAP-SNAPSHOT 193.3793.14-EAP-SNAPSHOT 193.35
 iTest 1.0.0 1.0.1
 fireworks 1.40 1.30 1.22 1.21 1.20 1.19 1.18 1.17 1.16 1.15 1.14 1.13 1.12 1.11
 org.mule.tooling.intellij.dataweave 0.13 0.12 0.11 0.10 0.9 0.8 0.7 0.6
-"who did it" 2018.2_20181029 2018.2_20181029
+"who did it" 2018.2_20181029
 com.webstorm.symbols 2.3
-YiiStorm 0.9.16.3
-DeltaShareXP 1.0.1
+YiiStorm 0.9.16.3 0.9.16.1 0.9.16.2
+DeltaShareXP 1.0.1 1.0
 net.jangaroo.idea.0.9 0.36
 net.jangaroo.idea.4 4.2018.19
 Magicento 2.4.0
@@ -157,11 +155,11 @@ ru.investflow.mql 171.1.15
 extended-code-sense 1.3 1.2 1.1 1.0 0.7 0.4
 IdeaAmp 1.3.2 2.0 2.1
 de.wieselbau.clion.clangtidy 1.2.2
-eu.broth.intellilab 0.5
-edu.vub.ideAT 2.0.5
+eu.broth.intellilab 0.5 1.0
+edu.vub.ideAT 2.0.5 1.0 1 2 2.0.1 2.0.2 2.0.3 2.0.4
 PairHero 1.0
 org.intellij.gitee 2019.2.4_1
-FindBugs-IDEA 1.0.1 1.0.0 0.9.999 0.9.998 0.9.997 0.9.996 0.9.995 0.9.994 0.9.993 0.9.992 0.9.99 0.9.991 0.9.98 0.9.97 0.9.96 0.9.95 0.9.9 0.9.93 0.9.92 0.9.91 0.9.84-dev 0.9.83-dev 0.9.82-dev 0.9.81-dev 0.9.31-dev 0.9.30-dev 0.9.21-dev 0.9.2-dev 0.9.1-dev
+FindBugs-IDEA 1.0.1 1.0.0 0.9.999 0.9.998 0.9.997 0.9.996 0.9.995 0.9.994 0.9.993 0.9.992 0.9.99 0.9.991 0.9.98 0.9.97 0.9.96 0.9.95 0.9.9 0.9.93 0.9.92 0.9.91 0.9.84-dev 0.9.83-dev 0.9.82-dev 0.9.81-dev 0.9.31-dev 0.9.30-dev 0.9.21-dev 0.9.2-dev 0.9.1-dev 0.9.94
 CodeHistoryMining "0.1 beta" "0.1.1 beta" "0.1.2 beta" "0.1.3 beta" "0.1.4 beta" "0.1.5 beta" "0.1.7 beta" "0.1.9 beta" "0.2.1 beta" "0.2.2 beta" "0.2.3 beta" "0.2.4 beta" "0.2.8 beta" "0.2.9 beta" "0.3.0 beta" "0.3.1 beta"
 ru.crazycoder.plugins.tabdir 1.6.6 1.6.1 1.6
 com.jetbrains.php.composer.resolve 1.0
@@ -170,3 +168,1133 @@ javaFMI 1.0.0
 fistache.framework.id 1.1.3
 dev.blachut.svelte.lang 0.12.1
 com.intellij.ideolog 201.0.22.0 201.0.21.0 201.0.20.0 201.0.19.0
+ColourChooser 0.1 0.3 0.4 0.4b 0.4d
+SvgViewer 2.2.1 2.2.3 2.2.4 2.2.7 2.2.8
+ImageView 0.1
+ChatPlugin 1.6 1.6.1 1.6.2 1.6.3 2.0 1.6.4 2.0.1
+HexView 1.0 1.1 1.2
+JarSpyPlugin 1.0
+Log4JPlugin 0.9.3 0.9.4 1.0 1.01 1.02 1.03 1.04
+"Macros Manager" 1.0
+PooCookie 1.0
+PreconditionPlugin 1.0
+RegexPlugin 0.5.7 0.5.8 0.5.9 0.5.10 0.5.11 0.6.0 0.6.1 0.6.2 0.6.3 0.7.1 0.7.2
+SamePlugin 1.0
+SequencePlugin 0.5.3
+IdeProcessPriority 1.2 1.3 1.3.1
+ShowEncodingPlugin 1.1
+SwitchFile 1.0
+com.nicity.plugins.idea.TimePlugin 0.2
+"Time Convertor Plugin" 1.0.0 1.0.1 1.0.2
+RSSPlugin 1.0 1.0.1 1.1 1.1.1
+CompileWithoutDependencies 1.0
+"Module Dependency Graph" 0.1 0.1.1 0.1.2
+"Open containing folder in a File Explorer" 1.0 1.0.1 1.0.2 1.0.3
+XFiles 0.1
+"RSS/Atom feed reader" 0.1 0.15 0.16 0.17 0.2 0.21
+ProjectTitlePlugin 1.0
+DocTree 0.1 0.11 0.2 0.22 0.23 0.24 0.25
+"Time Tracker Plugin" 0.1 0.2 0.3 0.5
+VMOptions 1.0 1.0.1
+PrivateWriteInspection 0.1
+"Inspection-JS for Demetra" 1.0.0 1.0.1
+AutoBoxing 0.8.6
+CamouflagePlugin 0.10b
+"SVN Report for IntelliJ IDEA" 1.0.0 1.0.1 1.0.2 1.0.3 1.0.4
+"CVS Report for IntelliJ IDEA" 1.0.0 1.1.0 1.1.1 1.1.2 1.1.3 1.1.4
+"CM Synergy Integration" 1.0
+MKS 0.2 0.2.1 0.3 0.3.1 0.3.2 0.3.4 0.5 0.6 0.7 0.7_Diana 0.7.4-Diana 0.8 0.8.1 0.9.1-X 0.10 0.10.1 0.10.2 0.11 0.11.1 0.12
+SkinLFPlugin 1.0
+IdeaMouseGestures 1.5 1.6 1.7 1.9 1.10
+"API Comparator" 0.2.1.2 0.2.1.3 0.3 0.4
+ContextViewer 0.7.4
+CopyFQNPlugin 1.0.5 1.0.6
+Ideascript 0.5.6 2.0.0 2.0.1 2.0.2 2.0.3 2.0.4 2.0.5 2.0.6 2.0.7
+scrappy 1.0.3 1.0.4 1.0.5
+ToggleKeyword 1.2
+KiwiScrap 1.0 1.1 1.2 1.3
+"ProGuard Unscramble Plugin" 1.0 1.2
+"Emma Code Coverage" 2.0.4217/1 "plugin 0.1 / emma 2.0.4217"
+IdeaSpring 1.0-beta1 1.0-beta2 1.0-beta3 1.0 1.2.1 1.2.3 1.2.4
+"Struts Navigator Plugin" 1.0 1.0.1 1.1 1.1.1 1.2 1.2.1 1.2.2 1.2.3 1.3 1.3.1 1.3.2 1.3.3 1.3.4
+DeclarationsTools 0.5
+Connect4 1.0
+Tetris 1.0
+DERViewer 1.0 1.1
+dashboard 1.0.2
+DevPartner 3.0.1
+IdeaJad 2111 2169.1
+MavenPlugin 0.1.3 0.1.4 0.1.5.8 0.1.5 0.1.5.1 0.1.5.2 0.1.5.3 0.1.5.4 0.1.5.5 0.1.5.6 0.1.5.7 0.1.5.9 0.1.5.10 0.1.5.11 0.1.5.12 0.1.5.13 0.1.5.14 0.1.5.15
+"OptimizeIt 5 Plugin" 0.1.3
+Xp4IdeaProjectPlugin 1.0
+"XPlanner plugin" 0.5 0.6.3 0.6.4 0.6.4a 0.6.4b 0.6.6 0.6.5 0.6.5a 0.7 0.7b4 0.7b5 0.8 0.8.1 0.9.1
+TrackLink 0.1 0.2 1.1.85 1.1.91 1.1.121 2.0.211 2.1.221
+"Retrotranslator Integration" 0.1.1 0.1.2 0.2.0 0.2.1 0.2.2 0.2.3 0.2.4 0.2.5
+unitTest 0.25 0.27 0.27.1 0.27.1a 0.27.1b 0.27.1c 0.27.1d 0.27e 0.27.1f "0.29 build 10" 0.29a 0.29b 0.29c 0.301 0.302 0.303 1.0283 1.0294 1.03 1.04
+JUnitGenerator 1.1.4 1.1.2 1.1.3 1.1.5 1.1.6 1.1.7
+Raven 1.0.1 1.0.2 1.0.3 1.0.4 1.1.0 1.2 1.2.1
+FaTPlug 0.1
+"Axis TCP Monitor Plugin" 1.0.2 1.0.8 1.0.4 1.0.5 1.0.6 1.0.7
+"Inca X" 3.9.3 4.2.1
+"Auto-Format Text" 1.4.3 1.4.5
+"Code Outline" 0.0.1 0.0.2 0.0.3 0.0.4 0.0.5
+LineMover 0.4b "0.4b Pallada" 1.0 0.4f 0.4g 1.1 1.1b
+"Modifier Modifier Plugin" 0.1 0.1.1 0.1.2 0.9
+MoveElement 0.2
+Reformat 0.7.1
+SelectWord 0.2
+Stringify 1.0
+Tagify 1.0
+GenerateToString 2.20 3.27 4.0.2 4.0.4 4.0.5 4.0.6 4.0.7
+"File status bar" 0.1
+TabReorder 1.1 1.2 1.2.1 1.2.2 1.2.3 1.3 1.4
+UndoCloseFile 1.0 1.0.1
+MiniWiki 0.1 0.2 0.3 0.4
+StringEditor 1.0 1.1
+"File Info" 1.0 0.99 1.0.1 1.0.2 1.1 1.1.1 1.1.2 1.2 1.3 1.4 1.4.1 1.4.2 1.4.3 1.4.4
+"Toggle Camel-humps" 1.0
+MyCamelHumps 1.0 1.1 1.2 1.3 1.4
+"Less Hungry Backspace" 0.1 0.2
+OpenExplorer 1.0 1.0.1 1.0.2
+"Locale Utility" 1.0.0
+OrdbogenSearch 1.0
+FunkySearch 2.3 2.4 2.5
+IgnoreFilesFolders 1.0
+AndyTesters 1.0
+"Code queries" 1.0
+PsiViewer "2.20 build 4 20031021" 2.21.1 2.22.1 2.23.16 2.25.4 2.24.1 2.25.1 2.25.2 2.25.3 2.27.0 2.27.25 2.27.34 3.27.52 3.27.55 3.27.56 3.27.57 3.27.63 3.28.65 3.28.72 3.28.73 3.28.76 3.28.77 3.28.79 3.28.85 3.28.88 3.28.89 3.28.93
+MailPlugin 0.0.3
+"Net client" 1.1101
+TMatePlugin 1.5.2 1.5.1 1.5.3 1.5.4 1.5.5 1.5.6 1.5.7 1.5.8 1.6.0 2.0.0
+"Rob Keyboard" -0.1 -0.1.1
+"XMLBean Generator" 0.0.1 0.0.2 0.0.3 0.0.4
+simpleUML 0.28a 0.29b 0.29c 0.29d 0.29e 0.31 0.32 0.33
+DiamondSpin 1.6
+"ReferenceScanner Plugin" 1.0.2 2.7 5.2
+"ZipTo(G)mail Backup" 0.1 0.1a
+"yGuard Unscramble plugin" 0.1
+"Jar Manifest" 0.1 0.1.1 0.1.2 0.2 0.3 0.4
+"SQL script editor" 1.0 1.01 1.02 1.03
+"Batch Scripts Support" 1.0 1.0.1 1.0.4 1.0.6 1.0.7
+"Javascript Compressor" 0.9 0.9.1 0.9.2 1.0 1.0.1 1.1.0
+LYCAY 0.5 0.51 0.512
+"GWT Studio" 0.1.2
+DragNDrop 1.0 1.1
+"Yahoo Search" 1.0
+"yWorks Ant Explorer" 1.0.2
+"Jsp Internationalizer" 1.3
+"JAXB 2.0 XJC generator" 1.0
+reportmill 9.0.5
+"JavaDoc Browser" 0.2.2
+"Eclipse Dependency Sync" 0.9 0.9.1
+"IDEA Doc" 1.0RC1 1.0RC2
+ScratchPad 0.11 0.12 0.13 0.14 0.15
+"Key promoter_obsolete" 0.5 0.6 0.7 0.8 0.9 1.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6
+HotPlugin 0.1
+CCMonitor 0.8 0.9 0.91 1.0
+IntelliLang 0.8 0.9 1.0 1.1 1.2 1.2.1 1.2.2
+CodeDependency 1.1 1.2 1.3 1.3.1 1.4 1.4.1 1.4.2
+MiscCommand 1.0
+"Refactor-J for IDEA 6.0" 2.0 2.01 2.02 2.03 2.04 2.05 2.06 2.07
+"Refactor-X for IDEA 6.0" 2.01
+EasyPluginInstaller 0.5 0.6 1.0
+"Harvest Integration" 1.0
+NaviActionPad 0.3 0.4 0.5 0.6 0.7
+"Image Design Editor" 1.0
+"FQN Improved" 1.0
+"Class Hunter" 0.1 0.1.1 0.1.2 0.1.3
+AutoConstructor 0.1 0.2
+iSnippet 1.0
+"Kiwi Generator" 1.0 1.0.1 1.0.2 1.1
+"Maven1.x Repository Updater" 1.1 1.0
+Puzzle 1.0
+MidStream 1.0
+"Switch Structure" 1.0
+SVNbar 1.0 1.1 1.2 1.0.1 1.2.1 1.2.2 1.2.3 2.0
+FileAttribChanger 0.9
+"Event Sounds" 1.00
+Voorkantifyer 1.0
+"QuickBuild Monitor" 1.0
+org.intellij.jibx 1.1.3 1.1.4 1.1.5 1.1.6 2.0.1 2.0.2 3.1
+ToggleTest 0.81 0.9
+CruiseWatcher 0.6 0.10
+LockSmith 1.1 1.2
+LJFriendListReader 1.2.5 1.2.6
+AlphaTab 1.0 1.1 1.2 1.2.1
+"Bindows Plugin" 1.0b 1.0b2 1.0b3rev1 1.0b4 1.0b5 1.0b5rev1 1.0b6
+SmartCopy 1.0 0.9
+FileBrowser 1.0 1.0.1 1.0.2 1.1.0 1.2.0 1.2.1 1.3.0 1.4.0 1.5.0
+"CVS - Multi-Project updater" 1.0.0 1.0.1 1.0.2 1.0.3
+InspectorGeneral 1.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6 1.0.7
+SerializeMe 0.1 0.2 0.3 0.4
+"Instant Calculator" 1.0
+"Telelogic Synergy" 0.9.2
+"Final modifier" 1.1
+XMLNavigate 1.0.6 1.0.7 1.0.8 1.0.10 1.0.11 1.0.12 1.0.13 1.0.14
+EncodingPlugin 1.0
+IntelliStripes 0.1.0.097 0.1.1.111 0.1.3.241 0.3.1.294 0.4.1.294 0.4.3.364 0.4.4.364 0.6.2.364 0.7.1.576 0.7.5.584
+"Berkeley DB Java Edition" 1.0 1.1
+JDocs 0.4 0.4.1
+"Winstone Integration Plugin" 1.0 1.01 1.02 1.10
+"JS Debugger" 1.0
+"Build Feedback Plugin" 1.0
+BuildFeedback.FreeTTS 1.0
+BuildFeedback.JavaxSound 1.0
+MavenProjectHelper 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+"Refactor-J for IDEA 7.0" 2.08
+"Maven Repo Search" 1.0 1.01 1.02
+"CVS Revision Graph" 1.0 1.1 1.3 1.4 1.41 1.50 1.60 1.70 1.80 2.00 2.10 2.11 2.20 2.30
+DefinitionEqualizer 1.0
+InspectorGroovy 0.1 1.0
+"Excelsior JET" 1.0.1
+"Carret Inspector" 1.0
+ANTLRWorks 1.1.5 1.1.6 1.1.7 1.2 1.2.2 1.2.3 1.3 1.3.1
+"Vcs Revision Graph" 1.00 1.01 1.10
+IntelliPort 1.0
+IntelliBrowser 1.1
+Grok 1.0 1.0.1 1.0.2 1.0.3 1.0.4
+"Seam Maven 2 Studio for IDEA" 1.0 "1.0.1 Alpha" "1.0.1 Beta" "1.0.1 Beta 0.1"
+Rio 0.5 0.6 0.7 0.8
+Prefontaine 0.5
+IntelliPROF 1.0
+"Best Web Search" 1.0
+"GWT ImageBundle" 0.1 0.2 0.3
+JumpToCode 0.1 0.2 0.3 0.4 0.5 0.7
+QuickPathManager 1.0.0.2 1.0.0.4 1.0.1.0
+Base64 1.0 1.1
+Buildr 0.1 0.1.5 0.1.6 0.2 8.11.22 9.0.0 9.0.0-2010.05.07 9.0.4-2010.11.16 10.0.0-2010.12.10 10.5.4-2011.12.05 11.0-2011.12.20
+"Snipplr API" 1.0 2.0
+"Search YouTube Plugin" 1.0
+Arc 0.1 0.3 0.4
+com.jalapeno.idea 1.3.17 1.3.18 1.3.19 1.3.21 1.3.22 1.4.3 1.4.5 1.5.1 1.5.3 1.5.4 8.5.3.beta 1.5.9 8.5.4.beta 9.0.1 9.0.4 10.0.0 10.5.0 11.0.0
+Translator 0.1 0.9 1.0 1.1 1.4.1
+Lilith 0.0.1 0.0.2 0.0.4
+"Amazon EC2" 0.6 0.7 0.8 1.0 1.0.1 1.0.2
+"Shortcut Keys List" 1.001
+JarDoc 1.0 1.0.1
+ResourcePlugin 1.0
+EasyPatch 2.2.2 2.2.3
+"Poison Inspection" 0.1
+CheckThread "1.0.7 (Beta), Requires Intellij 7" "1.0.7.1 (Beta), Requires Intellij 7" "1.0.8 (Beta), Requires Intellij 7" "1.0.9, Requires Intellij 7 with JRE 1.6 or greater" "1.0.9.1, Tested on Intellij 7,8 running with JRE 1.6 or greater"
+"Code Consultant" 1.1 1.2 1.3
+RevealInFinder 1.0
+"Equals/hashCode field inspection" 1.0 1.01
+"Message key usage plugin" 1.0
+salve-idea 0.10.0 0.10.1 0.10.2 0.10.3 0.10.4 1.0 1.0.1 1.0.2 1.0.3 1.0.4
+"Idea file rename" 1.0 1.1
+SendTo 1.2
+"Unvoid Methods 7" 1.0
+"Unvoid Methods 8" 1.0 1.1
+Reformat++ 1.1 1.2
+"Gismeteo Plugin" 1.0
+"IntelliJ IDEA Mark Plugin" 0.1-alpha 0.2-alpha
+"Class Names in Comments" 1.0
+FIT-ifier 0.2
+"Code snippets" 1.0 1.0.1
+"Fantom Support" 0.0.2 0.0.3 0.0.4 0.0.5 0.0.6
+"SourceViewerService Plugin" 1.0
+"Intellij BashOrg" 0.1 0.2 0.2.1 0.3.0
+"Buffer It" 1.0 1.1
+"Bulk Load Modules" 1.00 1.01
+"Run Emulator plugin" 1.0
+salve2-idea 2.0.0 2.0.1 2.0.2 2.0.3 2.0.4 2.0.5 2.0.7
+"Identifier Highlighter" 3.61 3.62
+"Dto-Wrapper-Builder Generator" 0.1 0.2 0.3
+"Bindows Tools" 1.0b
+"Simple Helpers" 1.0 1.1
+com.atlassian.clover idea7-2.6.3-v20091123140000 idea7-2.6.3.2-v20100205120000 idea7-3.0.2-v20101207100000 idea7-3.1.0.v20110531000000 idea7-3.1.1.v20111104130900 idea7-3.1.2.v20111107000000 idea7-3.1.3.v20120117000000 idea7-3.1.4.v20120227000000 idea7-3.1.5.v20120425000000 idea7-3.1.6.v20120619000000 idea7-3.1.7.v20120831000000 idea7-3.1.8.v20121113000000 idea7-3.1.10.v20130108000000 idea-3.1.11.v20130325000000 idea-3.1.12.v20130627000000 idea-3.2.0.v20131021000000 idea-3.2.1.v20140110000000 idea-3.2.2.v20140207000000 idea-3.3.0.v20140331000000 idea-4.0.0.v20140711000000 idea-4.0.1.v20140901000000 idea-4.0.2.v20141013000000 idea-4.0.3.v20150129000000 idea-4.0.4.v20150416000000 idea-4.0.5.v20150720000000 idea-4.0.6.v20150918000000 idea-4.1.1.v20151207000000 idea-4.1.2
+"Winstone Integration Plugin(CE)" 1.11 1.2 1.3
+"JBoss jBPM" 1.0.0 1.0.10
+"IntelliJ Open Files Copier" 1.0
+RelaxNG-Support 1.5.4 1.5.5
+simpleUMLCE 0.01
+LogSupport 1.0 1.0.1 1.0.2 1.0.3 1.0.5 1.0.6 1.0.7 1.0.8 1.0.9 1.0.10 1.0.11-11_and_newer
+com.intellij.dmserver 0.6.7 0.8.0 0.8.1 0.8.2 0.9.0 0.9.1 0.9.2 0.9.3
+TJSCompressor 1.0
+com.jalapeno.idea.javaee 1.0
+"Non-Dairy Soy Plugin" "0.1 (alpha)" "0.1.1 (alpha)" "0.2 (alpha)" "0.3 (alpha)" "0.3.1 (alpha)" "0.3.2 (alpha)" "0.4.0 (beta)" "0.4.1 (beta)" "0.4.2 (beta)" "0.5.0 (beta)" "0.6.0 (beta)" "0.6.1 (beta)" 0.7.0 0.7.1
+"UDDI Tools" 1.0 1.0.1
+DataNucleusIntegration 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6 1.0.7 1.0.8 1.1.0-beta1
+"Copy Src" 1.0
+"File Listener Server" 1.0
+"Google Closure Soy Templates" 0.1 0.2 0.2.1 0.2.2
+"My Runner" 0.9
+JBehaveBddPlugin 0.2.1 0.2.2
+XmlSearchAndReplace 0.0.3 0.0.4 0.0.6 0.0.7
+Libretto 0.1-5734 0.1-6000
+com.kalistick.client.idea 1.0 1.0.1 2.0-RC1 2.0.2
+schemely 0.0.1 0.0.2 0.0.3 0.1.0
+"AribaWeb Plugin" 5.0GA
+tea 0.5 0.6
+"Jalopy Plugin for Idea 10" 1.0
+"Install Plugin Locally" 1.0
+"Javascript Uploader" 2.0
+"Runtime java completion" 0.1 0.2
+BuildWatcher 1.2 1.2.2 1.2.3 1.2.4
+"GrepCode.com Code Search" 1.0 2.0
+"SVN Revision Graph" 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.6.1 1.6.2 1.6.3 1.6.4 1.6.5 1.7
+ideah 0.1 0.2.11
+"BEM Support" 1.0.8 1.0.9 1.0.10 1.0.11 1.0.12 1.0.13
+pl.project13.intellij.kanbanery 1.0
+IntelliJBehave 0.9.0 1.0 1.1 1.2
+R4Intellij 0.1 0.2 0.3 0.4 0.5 0.6 0.6.1 0.8 0.8.1 0.8.2 0.8.3 0.8.4 0.9 0.9.1 0.10 0.11 0.11.1 1.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6 1.0.7 1.0.8 1.0.9 1.0.10 1.0.11 1.1
+OpenJpaIntegration 1.0.0 1.1.0
+"Vaadin Support" 1.0.0 1.0.1 1.0.1.1 1.2.0
+"Assets Compressor" 1.1 1.2 1.2.1
+"Compare Tab With Editor" 0.1
+FestSupport 1.1 1.3 1.3.1 1.3.2 1.3.3
+EDTOnlyInspection 1.0
+"Pull up method refactoring extension" 0.1 0.2 0.2a 0.3a 0.3b 0.3c 0.3e
+"Finder Restarter" 1.0
+Pomodoro-tm-cd 2.0
+SortSelection 1.0
+ColorTree 1.0
+"LESS CSS Compiler" 1.8.2 1.8.3 1.8.4 1.9.0 1.9.5 2.0.0 2.1.0 2.1.1 2.1.2 2.2.0 2.3.0 2.3.1 2.3.2 2.3.3 2.4.0 2.4.1 2.5.1 2.5.4 2.5.5 2.6.0 2.6.1 2.6.2 2.6.3 2.6.4 2.6.5 2.6.6 2.6.7 2.6.8 2.6.9
+gen-javadoc 1.0
+PatchIde 1.0 1.1 1.2 1.3 1.3.1
+"Plugin name here" 1.0
+RTC4Idea 2.0.0_09 3.0.0_01 4.0.0_02 4.0.0_03
+MoreUnit 1.0 0.0.4 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6
+JaggeryEditorSupport 1.0 2.0
+Aquarium 1.0
+net.org.selector.idea.plugins.LTFunctions 1.0
+"iceScrum for Intellij" 1.0 1.0.1 1.1 1.2 1.3 1.3.1 1.3.2
+DeltaTabs 1.0 1.1 1.2 1.3 1.3.1 1.4 1.5
+DeltaUtils 1.0 1.1 1.1.1 1.2 1.2.1 1.3 1.4 1.4.1 1.5.0 1.5.1 1.5.2 1.6.0
+MyTranslator 1.0
+MySearch 1.0 1.50
+im.jeanfrancois.ideaplugins.ideafullscreen 0.1
+"Mongo Plugin" 0.1.0 0.1.1 0.1.2 0.2.0 0.2.1 0.3.0 0.4.0 0.4.1 0.4.2 0.4.3 0.5.1 0.6.0 0.6.1 0.7.0 0.7.3 0.7.6 0.8.1 0.9.2016 0.11.0 0.12.0
+com.squareup.ideaplugin 1.0 1.0.1
+"Compare Directories" 1.0.5 1.0.6 1.0.7 1.1.0 1.1.1 1.1.2 1.1.3 1.1.4
+Java2SQL 0.3.1 0.4
+com.alexeyhanin.intellij.jalopyplugin 1.0.0 1.0.1 1.0.2
+com.kukido.eclipser 0.1 0.2 0.3 0.4 0.4.1 0.4.2 0.5.0 0.6.0 0.6.1 0.6.2 0.6.3 0.7.0 0.7.1
+gw.vark 0.5-alpha08 0.5
+be.mavicon.intellij.ppimport 0.1
+com.taobao.wuzheng 1.0 1.1
+com.webfont.ideaplugin 1.0 2.0
+"WFA console" 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.2
+np.intellij.epochconverter 1.0
+com.jetbrains.php.framework.structure 123.66 124.295 133.326
+BuildrPlugin 12.0-2013.02.14 12.0.1 13.0.0
+com.injectionforxcode.injection.plugin.id 3.2 3.5 3.6
+com.idamobile.android.toolbox 1.0 1.1 1.1.1 1.1.2 1.1.3 1.1.4 1.1.5 1.1.6 1.1.7
+com.linkedin.intellij.dust 0.1 0.1.1 0.1.2 0.2 0.3 0.3.1 0.3.2 0.3.3 0.3.4 0.3.5 0.3.6 0.3.7 0.3.8
+"Nette framework helpers" 0.1 0.2.0 0.2.1 0.3.0 0.3.1 0.4.0 0.4.1 0.4.2 0.4.3
+com.kodokux.github 1.0.1.3 1.0.1.4 1.0.1.5 1.0.1.6 1.0.1.7 1.0.1.8 1.0.1.9
+org.mayevskiy.intellij.sonar 1.0 1.1 1.2 1.3 1.3.1 1.3.2 1.3.3 1.4.0 1.4.1 2.0.0 2.0.1 2.0.2 2.0.3 2.0.4 2.0.5 2.0.6 2.0.7 2.0.8 2.0.9 2.0.10 2.0.11 2.0.12 2.1.0
+com.jacksingleton.tabtonextsplitter 0.1 0.2 0.3
+dcevm 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8
+com.khmelyuk.multirun 0.1 0.2 0.3 0.4 0.5 0.6 0.6.1 0.7 0.7.1 0.8 1.9
+com.squareup.intellij.plugin.copy-as-github-path 1.0 1.1 2.0 2.1
+net.eunjae.plugins.androidhelper 0.1
+org.livescriptidea 0.1.2 0.1.3 0.1.4 0.1.5 0.1.6 0.1.7
+com.genymotion.idea 1.0 1.0.1 1.0.2 1.0.3 1.0.5 1.0.6 1.0.7
+inc.chaos.mps.tool.maven.run 1.0
+com.bulenkov.idea.Idea11IconPack 1.1
+com.dooapp.codesearch 1.1 1.2
+com.duncanjauncey.autosysplugin 1.0 1.1
+org.editorconfig.editorconfigjetbrains 0.1.3 0.2.0 0.2.1 0.4.0 0.4.1 142.1464
+pl.projectspace.idea.plugins.php.behat 0.3.1 0.3.2 0.4
+com.github.dgt79.plugin.eclipseactions 1.0
+com.svdb.idea.whitespace.plugin.id 1.0 1.1
+com.intellij.plugins.webcomponents 131.105 138.937 139.1 141.15 141.2 141.991 141.1237 141.1518 142.4081 143.88 144.2925.4 163.5644.1 163.6957.3 171.1834.8 171.3566.29 172.1909.7 172.2273.2 172.2465.2 173.1310 173.2941.6 173.3622.29 181.3007.17 181.3741.1 182.2371.6 183.2153.10 183.2407.4 183.3283.3 183.3795.1 191.4212.41
+fr.azelart.intellij.plugin.cnf 1.1
+ua.com.web100.tools.gxt.idea.plugin 0.03
+org.dylanfoundry.deft 0.1 0.1.1 0.2 0.3 0.4 0.4.1 0.4.2
+com.hartmanster.compareToGenerator 1.0
+pl.charmas.parcelablegenerator 0.3 0.5 0.6 0.6.1 0.6.2 0.6.3 0.7.0
+"TFSTask integration" 1.0 1.0.1
+com.siberika.idea.pascal 0.5 0.6 0.7 0.7.1 0.8 0.81 0.82 0.85 0.9 0.91 0.92 0.95 0.96 0.97 0.98 0.992 0.993 1.0 1.01 1.02 1.05 1.06 1.07 1.08 1.09 1.10 1.12 1.14 1.16 1.2 1.22 1.24 1.26 1.30 1.40 1.50 1.52 1.80 1.90 1.95 1.951 1.980 2.0 2.10 2.20 2.31
+de.sandstormmedia.flowstorm 0.1
+org.jetbrains.testnames 1.0 1.0.1 1.1
+com.hoho.conkitty 0.0.1 0.0.2 0.0.3 0.5.0
+com.scalaImportsOrganizer 0.1.2 0.1.3 0.1.4 0.1.5
+SmoothScroll 1.0
+com.makeapp.cocos2dx 1.0-alpha1 1.0-alpha2 1.0-beta
+org.intellij.featureSuggester 0.2.2 0.2.3 0.2.4
+"Code Review" 1.3.6
+com.amigold.auto.parcel 1.0
+fr.vdl.android.holocolors 1.0
+OracleCloud 0.5
+jp.funnything.offing_harbor 1.0 1.1 1.2 1.3 1.4 1.5 1.6
+ch.mjava.intellij.tapestry.4 0.1.0 0.1.1 0.1.2
+io.nlopez.androidannotations.viewbyid 1.0 1.1
+com.codexplo.intellij.android 1.0 1.01 1.2
+com.junbo.idea.codenarc 0.0.1-SNAPSHOT
+com.jasonnz.bootstrap 0.1.1
+"JCR Content Editor" 1.1.2 1.1.3 1.1.4 1.1.5
+jp.tomorrowkey.intellij.injectlogtag 1.0.0 1.0.1 1.0.2
+cucumber 134.1007 139.69 139.225 141.178 143.381 143.382 145.258
+com.dirzys.phpstormzf1 1.0.3 1.0.4
+com.mextor.intellij.plugin.search 1.2 1.3.4
+com.hoho.coocoo 0.0.1 0.0.2 0.0.3 0.0.4 0.0.5
+com.denimgroup.threadfix.plugins.intellij 1.0
+org.root.GoogleIt 0.1 0.11
+de.espend.idea.android 0.1 0.2 0.2.1 0.3 0.3.1
+org.vayafulano.relativeLineNumbers 1.0 1.0.1
+amailp.intellij.robot 0.6 0.7 0.7.1 0.8 0.8.1 0.9 0.9.1 0.9.2 0.10 0.10.1 0.13
+info.darbha.plugins 1.0 1.1 2.0 3.0 3.1
+com.bsb.intellij.plugins.xmlbeans 2.1.1
+com.ueqt.idea.plugin.GeneratePropAction 1.0
+"QAPlug - Hammurapi" 1.3.3 1.3.4
+de.hypoport.plugins.DozerPlugin 2.0 2.0.1
+actiBPM 1.E-10 1.E-9 1.E-8 2.E-8 3.E-8
+org.verily.intellij.plugin 1.0
+fr.assoba.open.sel.plugin 1.0
+edu.gmu.cs.plugin.aeon 1.0 1.14.1.3.7 1.14.2
+com.neon.intellij.plugins.gitlab 1.0 1.0.1 1.0.3 1.0.4 1.0.5 1.0.6
+"Ebean enhancer" 1.0 1.1
+org.bigtesting.jbehave.buddy 0.1
+ru.hyoo.jin.tree 1.0 1.1 1.2 1.3
+com.aspose.intellijplugin.id 1.0 1.1 1.2 1.3 1.3.1 1.4 1.4.0
+intellij.frontendalignment 1.0 1.1
+collabs 1.0 1.0.1 2.0 2.0.1 2.1
+com.mistraltech.smogen 0.1 0.2 0.3 0.4 0.5
+fossil4idea 0.1 0.1.1 0.1.2 0.1.3 0.1.4 0.1.5 0.1.6
+com.github.nrudenko.plugin.ormgenerator 1.3.4
+com.smartbear.soapui.idea.plugin 5.0-beta1
+CssAlphabeticalRearranger 0.2 0.3 0.4 0.5 0.6
+com.wix.eslint 1.0.1 1.0.2 1.0.3 1.0.6 1.0.7 1.0.8 1.0.9 1.0.10 1.0.11 1.0.12 1.0.13 1.0.14 1.0.15 1.0.16 1.0.17 1.0.19 1.0.20 1.0.21 1.0.22 1.0.23 1.0.25 1.0.26 1.0.27 1.0.28 1.0.29 1.0.30 1.0.31 1.0.32 1.0.33 1.0.34 1.0.35 1.0.36
+com.civ.androidStringsTools 1.0
+com.hal.phpmetrics.id 0.1
+com.alibaba.intl.urp 1.0
+org.weebly.generator 1.0 2.0.2 2.1.0 2.1.1 2.1.2
+org.jetbrains.code-golf 0.2.2 0.2.3 0.3 0.3.1
+jballant.CommonJSAutoComplete 0.0.0 0.0.1 0.0.2 0.1.0 0.1.1 0.1.3 0.1.5 0.2.1 0.2.2
+com.robotium.recorder.intellij 0.8 0.81 0.82 0.83 0.84 0.85 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0.0-beta-1 1.0.0-beta-2 1.0.0-beta-3 1.0.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6 1.0.7 1.0.8 1.0.9 1.0.10 1.0.11 1.0.12 1.0.13 1.0.14 1.0.15 1.0.16 1.0.17 1.0.18 1.0.19 1.0.20 1.0.21 1.0.22 1.0.23 1.0.24 1.0.25 1.0.26 1.0.27 1.0.28 1.0.29 1.0.30 1.0.31 2.0.0 2.0.1 2.0.2 2.0.3 2.0.4 2.1.0 2.1.1 2.1.2 2.1.3 2.1.4 2.1.5 2.1.6 2.1.7 2.1.8 2.1.9 2.1.10 2.1.11 2.2.0 2.2.1 2.2.2 2.2.3 2.2.4 2.2.5 2.2.6 2.2.7 2.2.8 2.2.9 2.3.0 2.3.1 2.3.2 2.3.3 2.3.4 2.3.5 2.3.6 2.4.0 2.4.1 2.4.2 2.4.4 2.4.5 2.5.0
+com.jimulabs.mirror.plugin 2.0.5 2.0.6 2.0.7 2.0.8 2.1 2.1.1 2.1.2 2.1.3 2.1.4 2.2 2.2.1 2.3 2.3.1 2.3.2 2.3.3 2.5 2.5.1 2.5.2 2.5.3 2.5.4 2.5.5 2.5.6 2.5.7 2.5.8 2.5.9 2.6
+assert-deluxe 1.0 1.1 1.2 1.3
+ru.spb.kupchinolabs.drozd.idea.plugin 0.1
+"Twelf Plugin" 1.1 1.1.1
+com.arasthel.swissknife.plugin 1.0 1.0.1
+builder-deluxe 1.0 1.1
+anton_dev_ua.PipeTableFormatter 0.2.1 0.2.2 0.2.3 0.3 0.3.1 0.4 0.4.1 0.4.2 0.5.0
+pl.cmil.wuff.plugin 0.1.0 0.2.0.alpha 0.2.0
+com.intellij.checker-framework 1.0
+com.magnet.r2m 0.9.0 0.9.1 1.0.0 1.1.0 1.1.4 1.1.7 1.1.12
+com.squareup.intellij.plugins.builder 1.0
+com.idea.plugin.builder 1.0
+com.arasthel.groovy.override-completion 1.0.0 1.0.1
+de.balpha.varsity 0.3.5
+org.jetbrains.settingsRepository 2.0-beta1 2.0-beta2 2.0.0.140 2.0.2.140
+com.checkmarx.intellij 7.1.3.7 8.90.0
+com.morcinek.android.codegenerator.plugin.intellij 1.2 1.3 1.4 1.5
+com.solveforall.clients.IdeaPlugin 1.0 1.0.2 1.0.3 1.0.4
+luonq.ScrollFromSource 1.0.0 1.0.1 1.1.0 1.1.1 1.1.2 1.1.3
+com.oneskyapp.intellij 1.0 1.1 1.1.1 1.1.2 1.1.4 1.1.5 1.2.0 1.2.4 1.2.5 1.2.6 1.2.7 1.2.9 1.3.0 1.3.1 1.3.2 1.3.3 1.3.5
+com.AbsolCharles.plugin.id 1.0
+"Wrap in StringBuilder" 1.0
+com.appstrakt.syncTranslation 1.3.0 1.4.0 1.5.0 1.6.0 1.7.1
+com.aspose.maven.intellijplugin.id 1.0 1.1
+ExploreTrace 0.1 0.1.1
+com.farbluer.intellij.plugin.p4Intellij 0.1.0 0.1.1 0.1.2 0.2.0 0.2.1 0.2.2 0.3.0 0.3.1 0.3.2 0.3.3 0.3.4 0.3.5 0.3.6 0.4.0 0.5.0 0.5.1 0.5.2 0.5.3 1.0.0 1.1.0
+com.emblem.unique.plugin.idid234234 0.1 0.1.1 0.1.2 0.1.3
+com.hashmem.idea 1.0 1.1.133 1.1.139 1.2.133 1.2.139 1.3.133 1.3.139
+com.transround.nativeradmin 1.0.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.1.0 1.2.0 1.3.0 1.3.1
+org.startica.meeniex.intellij.plugin.eclipseLikeEnterInStringLiteralHandler 1.0
+fir.im.plug.idea 0.2 1.0 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3
+com.intellij.lang.javascript.es67 1.0 1.0.1 1.1.0 1.2.0
+com.konifar.material_icon_generator 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9
+com.thanosp.phpstorm.inheritdoc 1.1 1.2 1.2.1 1.2.2 1.3 1.3.1 1.4.0 1.5.0 1.5.1
+GsonFormat 1.0 1.1.0 1.1.1 1.1.2 1.1.3 1.2.0 1.2.1 1.2.2 1.2.3 1.3.0 1.5.0
+de.mprengemann.intellij.plugin.androidicons 0.1 0.2 0.2.1 0.3.1 0.3.2 0.3.3 0.4-37.1 0.4-39.1 0.4-54 0.4-56 0.4-58 0.5-60 0.5-63 0.5-65 0.5-68 0.5-69 0.5-71 0.5-73 0.5-76 0.5-78 0.5-79 0.5-81
+ro.bogdananton.testNameGenerator 1.0 1.3.3
+com.manolenso.intellij.foundation5 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4
+io.dwak.reactor.intellij.plugin 0.2 0.4
+com.davidmis.elmplugin 0.1 0.2 0.2.1 0.2.2
+org.kitdroid.jnihelper 1.0 1.0.1
+com.rwteam.gscrum 1.0
+com.monkeyscriptplugin 1.0
+pl.klamborowski.plugin.jacksongenerator 1.0.1 1.1 1.2 1.2.2 1.2.5
+fr.javatronic.damapping.intellij.plugin.integration 14-0.1.0 14-0.1.1
+com.eunut.android.plugin.selectors.generate 1.0.4
+com.sherchen.idea.plugin.injectcomment 1.0
+com.github.masahirosuzuka.PhoneGapIntelliJPlugin 140.2167
+net.yeahlol 1.0
+com.pulyaevskiy.phpstorm.phpdi 1.0 1.1 1.2
+com.aconex.codelitter 1.0 1.1 1.2 1.4 1.5
+com.unvired.sdk.plugin 1.0 1.1
+com.brainwy.pyvmmonitor 1.0 1.0.1 1.0.2
+com.ftinc.plugin.generator.sectionblock 1.0.0
+eu.meshuga.pudelek 1.0 1.0.1 1.1
+com.bpellint.idea 0.1-alpha 0.2-alpha
+blue.stack.j2Smali 2.0
+com.apiary.abm 2.0.0 2.0.1 2.0.2 2.0.3 2.0.4 2.1.0 2.1.1
+blue.stack.SerializableParcelableGenerator 1.0 1.2
+se.trifork.intellij.whitey 1.0
+pl.cmil.buildFinishedNotifier 0.1
+com.lxl.unique.plugin.id 1.0 1.2 1.3
+com.saffrontech.idea.thop 1.1 1.2.2 1.3.0
+com.fuxy.android.ide.plugin 1.0
+org.dlangplugin 0.0.8
+com.contentful.ideagenerator 1.0 1.1.0
+org.macchiatow.plugin.tomato 1.0.3
+com.boniatillo.phaserchains 1.0
+com.armandakopian.lifecyclesorter 1.0 1.1
+org.anathan.zf2modulecreator 0.1 0.2 0.2.1
+com.roomj.simpletitles 1.0
+net.andrevus.jetbrains.tasks.targetprocess 1.0 1.0.1
+nl.mmeiboom.fitnesseplugin 1.0.3
+me.ele.napos.miracle.plugin.executor.ExecutorGen 1.0
+com.bft.control.idea 1.0 1.1
+com.ws.unique.plugin.id 0.1 0.11 0.12 0.13 0.15 0.16
+jVb_Designer 0.11
+cat.kanbanapps.gradlekiller 1.0 1.1 1.2
+com.ylt.appcan.plugin 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5
+com.pandawarrior.androidXMLConverter 1.0 1.1 1.1.1 1.2.0 1.2.1 2.0.0
+org.foxsly.idea.extended.generate.actions 0.2 0.3
+com.busybusy.Taiga.io.Task 1.0.0 1.1.0 1.1.1 1.1.2 1.1.3 1.1.4 1.1.5 1.1.6 1.1.7
+JsonFormat 1.0.0
+com.kgmyshin.ideaplugin.eventbus 1.0 1.1 1.2 1.3
+com.kgmyshin.ideaplugin.eventbus3 1.0
+pl.lksztmczk.openinterminal 1.0 1.5 1.5.1
+FrozenIdea 0.0.2.5
+org.perfcake.pc4idea 4.1
+net.nerrd.intellij.plugin.dpicalculator 1.0 1.1 1.2
+allotria/removeusage 0.9 1.0
+NRGvlanghelPlugin 1.0
+Shuffler 1.0 1.1 1.2 1.3 1.4 1.5 1.6
+find.me.tagged 1.0
+SpellChecker-Dict-Spanish 1.0
+com.floobits.unique.plugin.id 1.5.9 1.5.10 1.5.11 1.5.12 1.6.1 1.6.2 1.6.3 1.6.5 1.6.6 1.6.7
+com.layernet.plugin.adbwifi 1.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5
+kodebeagleidea 0.1.1 0.1.2-bug-fix 0.1.3 0.1.4 0.1.5
+ThinkStorm 0.0.2 0.0.3 0.0.4
+com.apibility.voicerecognition 0.2Beta
+com.androhi.androiddrawableviewer 1.0 1.1 1.2 1.3 2.0 3.0
+com.onkiup.minedroid 1.0.3 1.3.2 1.3.2.1
+com.jotc.nsis.plugin.nsis 1.0
+org.typowriter.intellij.plugins.backgroundchibichara 1.0.6
+org.siprop.android.opencl.OpenCLCLGenerator 1.0 1.01 1.02 1.03
+io.github.francoiscambell.clionarduinoplugin 1.0 1.0.1 1.0.2 1.1.0 1.2.0 1.2.1 1.2.2
+com.github.mmin18.layoutcast.ide 1.0 1.1.0 1.1.1 1.1.2 1.1.3
+com.roomj.simpletitlesprojectonly 1.0
+com.przemyslawj.mockito.generator 1.0 1.1 1.2 1.3
+io.codecook 0.1
+com.mulgasoft.emacsplus 0.1.057 0.1.065 0.2.002 0.3.000 0.3.100 0.3.110 0.3.200
+org.sssta.androidtools 1.0 1.1 1.2
+InnerBuilder 1.1.2 1.1.5
+com.aspose.words.java.intellij.maven 1.0.0.0
+ua.pp.madcap.codingame.plugin 0.1 0.1.1 0.2 0.2.1 0.2.2
+me.guichaguri.additionaltools 1.0.0 1.0.1 1.0.2
+com.vuonghv2.vpmt.plugin.yumeplugin 1.0 2.0 3.0 4.0 5.0
+com.aspose.Cells.java.intellij.maven 1.0.0.0
+com.alaster.soa.requests 1.03
+com.perl5 1.004 1.110 1.111 1.112 1.218 1.328 1.331 1.333 1.340 1.341 1.342 1.401 1.402 1.500 1.505 2.0 2.001 2.005 2.100 2.111 2.117 2.200
+org.root.HoogleIt 0.1 0.2 0.3
+com.tapper.splittingup 1.0
+com.aspose.slides.java.intellij.maven 1.0.0.0 1.0.0.1
+com.d0as8.perlrun 0.1
+com.baidu.penny 1.0
+com.hewy.esnippets 0.0.2. 0.0.3. 0.0.5.
+com.eltonkola.androidsnippets 1.0
+il.co.falk.buildAndLint 1.0
+com.michaelbulava.TFSVCS 0.1.3.5 0.1.3.7 0.1.3.8 0.2.0.150 0.2.1.200 0.2.2.250 0.3.0.300 0.3.0.301 0.3.0.302
+com.aspose.barcode.java.intellij.maven 1.0.0.0
+com.directfn.unique.plugin.logmanger 1.0 1.1 1.2
+com.vpedak.testsrecorder.plugin.id "0.3 beta" 0.4beta "0.5 beta" "0.7 beta" "0.8 beta" "0.8.3 beta" 0.8.4 0.8.5 0.8.6 0.9 0.9.1 0.9.2 0.9.3 0.9.4 0.9.5
+pl.maja.nativetounicode 1.0
+pro.alex_zaitsev.androidstyler 1.0 1.0.1
+com.aspose.pdf.java.intellij.maven 1.0.0.0
+co.leantechniques.idea-js-test-finder 0.2
+com.dmitz.intellij.plugin.websocket.client 0.1
+com.aspose.email.java.intellij.maven 1.0.0.0
+com.github.pedrovgs.androidwifiadb 1.0 1.1 1.2 2.0 2.1 2.2 2.3
+com.sap.hcp.WebStormPlugin 1.0 1.1 1.2
+com.raj.unique.plugin.id 1.0 1.0.0.1
+com.spicedroid.xmltrans 1.1 1.2 1.3
+mopedjc 0.1
+com.aspose.tasks.java.intellij.maven 1.0.0.0
+com.bryansharpe.slackstorm 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8
+com.fir.im.android.plugin.id 1.0
+com.davy307.androidassetimporter 1.0 1.01 1.02 1.03 1.031 1.032 2.0.0 2.0.1 2.0.2 2.0.3
+com.jawspeak.joined-tab-scrolling 0.1-alpha 0.3-alpha
+com.aspose.diagram.java.intellij.maven 1.0.0.0
+com.aspose.ocr.java.intellij.maven 1.0.0.0
+jbehave-support-plugin-extension 1.00 1.01 1.02
+jp.codic.plugins.intellij 1.0 1.01 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6 1.0.8 1.0.9 1.0.10 1.0.11
+org.antlr.jetbrains.st4plugin 0.1 0.2 0.3 0.4 0.5
+HybrisPlugin 1.2.0 1.2.1 1.2.2 1.2.3 1.2.4
+com.aspose.imaging.java.intellij.maven 1.0.0.0
+com.coursehero.helper 1.0 2.0 2.01 2.10 3.0.0 3.0.1
+com.microsoft.tooling.msservices.intellij.azure 1.0 1.1 1.2 1.3 1.4 1.4.1 1.5 1.5.1 1.5.2 1.5.3 1.5.4 1.5.5
+com.github.mohamedkomalo.envVarsInPathVars 1.0
+com.softdream.intellij.plugin 1.0 1.1 1.2 1.3
+io.imdone.imdone-plugin 1.0
+org.eclipse.xtend.idea 2.9.0 2.9.1 2.9.2 2.10.0
+35e38c06-9762-11e5-8dd3-54a050ace290 1.1
+com.chairbender.object_calisthenics_analyzer 0.8 0.82 0.9 0.91 0.92 0.95
+com.bobz.OpenTerminalHere 1.0 1.1
+cn.nekocode.plugin.parcelablegenerator 0.1 0.11 0.12 0.20 0.21 0.3.11 0.4.0 0.4.2 0.4.3 0.4.4 0.4.5 0.4.6 0.4.7 0.5.0 0.5.1 0.6.0 0.6.1 0.6.2 0.7.0 0.7.1 0.7.2
+com.line.plugin.auto.align 1.0 1.1 1.2 1.3 1.4
+com.bugvm.intellij 1.0.7 1.0.9 1.1.0 1.1.4
+com.coolsharp.codesection 1.1 1.2 1.3
+com.boredream.plugin.espressocreator 1.0
+com.boredream.plugin.layoutcreator 1.0 1.2 1.3 1.4
+com.heaven7.plugin.android.databinding 1.0
+com.bmesta.powermode 0.9 0.9.1
+com.fatfractal.plugins.idea.ffdl 1.0 1.1
+com.doglandia.GpsEmulator 1.0 1.1 1.2
+com.navmine.classdiagrams 1.0
+com.jintin.droidlane 1.2.0 2.0.0 2.0.1
+com.lopesdasilva.wcs.plugin 0.1 0.2 0.3.1 0.3.2 0.3.2.1-alpha 0.3.2.2-alpha
+com.breeze.plugin.reprotoc 1.0
+io.github.takuaraki.dvc 1.0 1.1 1.2
+org.jetbrains.comparisonChainwootool 1.0
+com.zf.androidplugin.selectdrawable_generator 1.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6 1.0.7
+com.zf.androidplugin.shapedrawable_template 1.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6 1.0.7
+dbgsprw.apm 1.0 1.1 1.1.1 1.1.2 1.2.0 1.3.0 1.3.1
+com.shandiangou.plugin.csveditor V0.1
+com.rd.app.plugin. 1.0
+me.zheteng.idea.reverse 1.0 1.0.1
+com.xgheaven.splitString 0.1.0 0.1.1
+com.thoughtworks.tools.idea.templatenav 1.1
+com.manolenso.intellij.foundation6 1.0 1.1 1.2 1.3 1.5 1.5.1 1.6.0 1.6.1 1.7.0 1.7.1 1.8.0
+OptimizeImportsForScope 1.0
+com.minutephp.framework 1.0
+com.zenefits.hopefully 1.0 1.0.1 1.0.2 1.0.3
+com.gmail.kakikubo.hello.id 1.0
+com.develmagic.spoj.submitter 1.8
+com.idea.android.superplugins.plugins 1.0.0
+tirke.cupPlugin 0.1 0.2 0.3 0.4 0.5 1.0 1.1 1.2
+ca.rightsomegoodgames.mayacharm 2.1 2.1.1 2.1.2 2.1.3 2.1.4 2.1.5 2.1.6 3.0.0 3.0.1 3.0.2
+com.footprint.asplugin.plugin.viewgenerator 1.0 1.1 1.1.1 1.2 1.2.1
+VectorDrawableImporter 0.1 0.2
+com.nes.intellij.plugin.id 1.3 1.4 1.5 1.6 1.7
+org.intellij.plugins.translate 1.0
+pl.jgorowski.transplug 0.2.0 0.3.0 0.3.1 0.4.0 0.5.0
+com.sbmpost 0.1 0.2
+com.philipleder.plugin.painpoint 1.1 1.2 1.3 1.17.1 1.17.2 1.17.3 1.17.5 1.17.6 1.17.8 1.17.9
+uk.ac.glasgow.scclippy 1.0
+ru.mipt.acsl.decode.idea.plugin 0.3.0-SNAPSHOT 0.4.0 0.4.1 0.4.2 0.4.4 0.4.5 0.4.6 0.4.7 0.5.0.SNAPSHOT
+ch.uzh.ifi.batteryAwareTransformations 1.0
+edu.ua.highbay.binderplugin 0.5.2
+com.aqqxa.plugin.aligner 1.0
+com.aspose.Note.java.intellij.maven 1.0 1.0.1 1.0.2 1.0.3
+org.sylfra.idea.plugins.revu 2.7.3
+pl.psi.jls.wuff.plugin 0.3.2 0.3.3 0.3.4 0.3.5 0.3.6
+com.billguard.appcodeplusplus 1.0 1.1 1.2
+eu.inmite.android.plugin.preioc 1.0.0
+RunTaskAction 1.0 1.1 1.2 1.3 1.4
+online.devliving.stepbuilder.generator 1.0 1.0.1 1.0.2
+org.typowriter.intellij.plugins.wallpaper 0.0.2
+com.dim.plugin.adbduang 0.1 0.2 0.3 0.4
+org.buffagon.intellij.catberry 0.4.1 0.4.2
+com.infoedge.plugins.gcmtester 1.0
+com.fuzz.internal.hooks 1.0
+gt.tool.plugins.org.json.gen 1.0
+me.drakeet.layoutformatter 1.0 1.0.1 1.0.2 1.0.4 1.1.0 1.1.1 1.1.2 1.1.3 1.1.4 1.1.5 1.2.0
+lu.uni.clion.cproject 1.0
+com.philipleder.plugin.marks 1.0 1.2.1 1.3 1.3.1 1.4 1.4.0
+com.pguardiola.androidresresizer 0.0.1
+com.codemind.wordcount 1.0
+fr.idapps.intellij.plugin.android.gotolayout 1.0
+"Jetbrains TeamCity Plugin" 8.1.30331 9.1.37645 9.0.32570 8.1.30332 2019.1.65998
+com.shahab.rewatch 1.0 1.1 1.2
+yan.intellij.plugin.grailsTools 0.1
+com.jiyuanime.ActivatePowerModeApplicationPlugin 0.0.8 0.1.1 0.1.2 0.1.3 0.1.4 0.1.5 0.1.6 0.1.7
+io.github.jhsx.GoJetPlugin 0.0 0.2
+com.msiddeek.webpstinks 1.0 1.1 1.1.1 1.1.2 "1.1.3git a" 1.1.3
+com.fueled.mvp 0.1.3 0.1.4 0.1.5
+com.jmg.codecomment 1.0 1.1 2.0 2.1
+com.sked.yorklogcat 3.0 3.1
+com.sked.soft.crater 1.0 1.0.10
+com.csky.manifestmodify 2.0 3.0
+com.iTimeTrack.intellij.plugin 7.0.5
+com.sjtu.chenzhongpu.sparkexamplexmvn 1.0 1.1 1.2.1
+ru.hungrymole.kotlin 1.0 1.0.1
+com.lichfaker.plugin.id 1.0.1
+com.mglaman.drupal_run_tests 1.0-alpha1 1.0-alpha2 1.0-alpha3 1.0-beta1 1.0-beta2 1.0-rc1 1.0-rc2 1.0-rc3
+com.pengli 1.0
+jss.JumpSourceSpec 1.0 1.0.1 1.0.2
+com.jetbrains.php.joomla 162.646.18
+com.denis.zaichenko.angular.2.ws.live.templates 1.0 1.0.1 1.0.2 1.0.3 2.0.0
+org.jspresso.plugin.ijds 0.5.0 0.8.0 1.0.0 1.1.1 1.9.7 1.11.3 2.6.2 2.21.1 2.24.9 2.28.3 2.29.2 2.31.1 2.35.4 2.44.6 2.50.13 2.61.2 2.62.0 2.62.2 2.62.5 2.62.6 2.63.1 2.64.0 2.70.6 2.81.1 2.81.2 2.82.0
+io.halik.intellij-plugin 0.0.5.2 0.0.5.3 0.0.5.4 0.0.5.5 0.0.5.6 0.0.5.7 0.0.5.8 0.0.5.10 0.0.5.11 0.0.6.1 0.0.6.2 0.2.0 0.2.1 0.2.2 0.2.3 0.2.4
+org.jetbrains.corrector 1.2.1 1.2.2
+software.amazon.ion.intellj 1.0
+com.universityandroid.tutorial 1.0 1.0.1 1.1.1 1.1.2
+com.samsonova.scala.sd.id 1.0 1.1
+com.strv.linecounter 1.2 1.3
+com.octogog.idea.bazel-build-formatter 0.1 0.1.1 0.1.2 0.1.3 0.1.3.1 0.1.3.2 0.1.3.3 0.1.3.4
+com.rbf.unique.plugin.id 1.0
+com.codewaves.intellij.plugin.iconcreator 0.9 0.9.1 0.9.2
+GsonOrXmlFormat 1.0
+com.droidtestlab.espressoblackbox.id "1.0 beta" 1.0
+LogSupportLite 0.4 0.4.2
+com.kotcrab.quicklaunch 1.0
+com.writeoncereadmany.semantichighlighting 1.0 0.1.0 0.1.1
+com.boohee.plugin.translation 1.3 1.5
+com.sum.qiu 1.0
+Royll.ID 1.0
+com.ykfs.plugin.generate 1.0
+com.getsensibill.stylecreator 1.0
+com.gutils.android.autocode.plugin.intellij 1.5
+cn.magicwindow.sdk 1.0 1.1.1 1.1.2 1.1.3 1.1.4 1.1.5 1.1.6
+bigfootindie.log_generator 0.3 0.31
+com.umu.langtip 1.0
+com.github.alvaromarco.CleanArchitecturePlugin 1.0 1.0.1 1.0.2 1.0.3
+com.ivoryartwork.plugin.folivora 1.0 1.1 1.2
+com.thbs.materialdesign 1.0 1.0.1 1.2 1.3
+net.kotek.multidpi 1.0
+com.github.aayvazyan 1.0 1.1 1.2
+com.necisstudio.adbwifiandroid 1.0
+com.necisstudio.logisys 1.0
+com.dynatrace.integration.idea 2.0.1 2.0.2 2.0.3
+tw.yalan.android.plugin.findviewbyidtobindview 1.0 1.1 1.2
+com.konifar.stringssearch 1.0
+com.gogh.android.plugin.translation 1.04.06 1.04.07
+blast.browser 1.0
+com.gogh.android.plugin.easytranslation 1.04.06 1.04.07
+org.jetbrains.plugins.sample.ToolWindow 10-1
+com.davidgjm.idea.plugins 1.0.1 1.1
+com.shang.android.layoutformat 1.0 1.1 1.2 1.2.2
+JSSorter 1.0 1.1
+org.moe 1.1.0 1.1.1 1.2.0 1.2.1 1.3.0-beta-1 1.3.0-beta-2 1.3.0 1.3.1 2.0.0-alpha-1 1.3.2 1.4.0 1.4.1 1.4.2 1.4.3
+com.juanfelippo.translator 1.0
+com.pdehaan.idea-plugin-flatbuffers 0.0.1
+me.pkhope.plugin.library_manager 1.0
+de.caluga.intellij.plugin.gpe 1.0
+com.roysom.closeallprocesses 0.1.0
+com.alexanderpa.flyway.migration.creator 1.0 1.1 2.0
+cn.pinmix.shaohui.ACNPlugin 0.1 0.2 0.3 0.4
+com.exynap.plugin "1.0.0 beta" "1.0.1 beta" "1.1.0 beta" "1.1.1 beta" "1.1.2 beta" 1.2
+com.ryan.MvpClassesGenerator 1.0 1.1
+net.petitviolet.idea.scala.minimal-cake-pattern-generator 1.0 1.1
+com.thea.plugin.imagecompression 1.0
+AtlasTool 2.0 2.1 2.2 2.2.1 2.3 2.3.2 2.3.2.1 2.3.2.2 2.3.2.3 2.3.2.4
+cn.leeii.plugin.annotation 1.0 1.6.0-SNAPSHOT 1.0.1 1.1.0 1.1.1
+co.lujun.plugin.betranslate 0.9.0 1.0.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5
+gradle_cleaner_intellij_plugin 1.0
+com.tencent.bugly.plugin.idea 1.0
+com.apkfuns.plugin.freeline 1.0.0 1.0.3 1.0.4 1.0.5 1.0.5.1 1.0.6 1.0.6.2 1.0.6.3 1.0.7 1.0.8 1.0.9 1.0.9.1 1.1.2 1.1.2.1 1.1.3 1.1.4
+com.ioncodes.pasta 0.9 0.9.5
+com.ankama.intellij.uuidmaker 1.0
+com.service-now.plugin.idea 0.1 0.1.1
+ai.deckard.intellij.plugin 0.2.1 0.2.2 0.2.11 0.2.12 0.2.13 0.2.14
+io.nativetap.plugin 1.2.3 1.2.4 1.2.5 1.2.6 1.2.7 1.2.7.1 1.2.8 1.2.8.1
+com.growingio.sdkHelper 0.8.1 0.8.12 0.8.13 0.8.14 0.8.15
+IntelliJ-Shortcuts-For-AEM 1.0 1.0.1
+com.yellow5a5 1.0 1.1
+com.lypeer.matchmaker 1.0 1.1
+com.rybkin.jbehave.example-table-formatter 1.0
+tu.wenbo.easyliteral 0.1 0.2 0.3
+com.stylint 0.1.0 0.2.0
+gherkin 163.5644 163.7743.44 173.3302 181.3870.7 181.5540.1 182.3933 183.3647.12 183.4139.22 183.4284.148 183.5429.1 191.4212.41
+com.thomas.needham.neurophidea 1.0.0 1.0.1 1.1.0
+haxe.checkstyle 1.1
+co.lujun.plugin.colorpanelhelper 1.0.0
+com.alibaba.baichuan 1.0 1.1
+me.aheadlcx.dimenhelper 1.0 1.1 1.2 1.3
+>me.drakeet.plugin.multitype 1.0.0 1.0.1 1.1.0 1.2.0 1.3.0 1.4.0
+codes.ai.java.intellij 0.4 0.4.1 0.4.2
+adb.wifi.woaiwhz 1.0-SNAPSHOT 1.1 1.5
+me.aleph0.androidexporter 0.0.1
+com.xdandroid.scaterknife 1.0.0
+org.hexu.getcode 1.0 1.1 1.2
+com.cnfol.mrz 1.0
+com.itheima.sz.plugin.commoncode 1.0 1.1
+com.siimkinks.sqlitemagic 0.5.0
+org.openmastery.ideaflow 0.4 0.5 0.6 0.7 0.8 0.9 0.10 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.19
+com.phonegap.tools.plugin 1.0 1.1 1.2 1.3
+com.e16din.incl 0.1.2
+com.rd.filtertranslate 1.0 1.1
+de.monticore.lang.montisecarc.MontiSecArcLanguagePlugin 0.7.8.SNAPSHOT 0.8.9.SNAPSHOT 0.8.10.SNAPSHOT 0.8.12 0.8.13
+com.jamhub.appaie.plugin.dbot 2.1
+com.znshadow.viewbinder 1.0 1.1 1.2
+loopeer 0.1 0.2
+info.bem.bemmet 0.1.0 0.1.1 0.1.2 0.1.3
+io.hansel.androidstudioplugin 1.0.0
+me.chunsheng.plugin.shortcut 1.0 1.0.1 1.0.2 1.0.3
+com.github.jpmossin 1.1 1.1.1 1.1.2 1.2.0 1.3.0
+com.jokerzoid.intellij.plugin.stylelint 1.1 1.2 1.3
+com.upsolver.PreCommitHook 0.1 0.2 0.3 0.3.1 0.4.1
+com.bpleslie.idea.BradsTheme 0.2.2
+io.alef.vypa 0.0.1-alpha 0.0.2-alpha
+tiny.unique.plugin.id 1.0
+com.xingren.fc.rangers-logging-intellij-plugin 1.0.0 1.0.1 1.0.2
+com.yuyh.reactnative.tools 1.0 1.1
+com.wangzai.plugin.findViewById 1.0 1.1 1.1.1 1.1.2 1.2 1.2.1 1.2.2 1.3 1.4 1.4.1 1.4.2 1.4.3
+lx 1.0 1.0.2
+com.dachmx.android.checkcite.file 1.0
+com.xujiaji.plugin.MVPManager 1.0 1.1 1.1.1 1.5.0 2.0.0
+moe.studio.formatter 0.1.0
+com.zx.mvphelper.unique.plugin.id 1.0
+Royll.SimpleXmlFormat.ID 1.01
+com.ferrius.phpStorm.phpattention 1.0
+org.a8sport.translate.unique.a8translate 1.2 1.3 1.4
+com.lany.plugin 1.0.1
+com.github.tinselspoon.intellij.kubernetes 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+kim.uno.templates 1.0
+com.thibaulthelsmoortel.pastebin 0.1 0.1.1
+com.observly.recorderplugin 1.0
+life.iuni.android.plugin.butterknife 1.0.0-SNAPSHOT
+com.liu.lang 1.0 1.1
+com.github.nukc.plugin.apkmultichannel 1.0 1.1 1.2
+com.youmeek.plugin.chinesetypography 1.0 1.1 1.2
+com.lozi.android.plugin.search_resource 1.0 1.1
+me.leefeng.mvphelper 1.0 1.1 1.2
+xyz.belvi.kingsmentor.resourceType.plugin.organiser 1.0
+com.NASMSupport 0.1.13
+com.worldline.vbu.testrecorder.intellij 1.0
+com.ironman.me 1.1.5
+com.yii2support 0.2.2 0.2.7 0.2.7.2 0.2.9.7 0.2.10.9 0.2.10.11 0.3.17.0 0.3.17.2 0.3.17.5 0.3.17.9 0.4.28.1 0.4.30.3 0.4.30.4 0.5.32.1 0.5.32.2 0.5.32.4 0.5.32.5 0.5.32.6 0.5.33.7 0.5.33.8 0.5.33.10 0.5.33.11 0.5.33.12 0.6.34.12 0.6.34.13 0.6.34.16 0.6.34.18 0.6.34.19 0.7.35.1 0.7.35.2 0.8 0.8.38 0.8.38.1 0.8.42 0.8.42.3 0.8.42.5 0.8.42.6 0.9.50 0.9.54.5 0.9.54.9 0.10.56.13 0.10.56.15 0.10.56.18 0.10.56.22 0.10.57.23
+com.sanyinchen 1.0
+com.nevaryyy.fvg 1.2
+wangyi.plugin.singleton 1.0
+com.naughtyserver 1.0 1.0.1 1.1.0 1.1.1 1.1.2 1.1.3 1.1.4
+ImportPlugin 0.1 0.1.1 0.1.2 0.1.3
+io.harply.plugin 1.0 1.1
+ThreadDumpVisualizer 0.1.1 0.1.2
+com.scireum.rythmengine.detector 1.0
+com.andyken.ormlite.rawsqlgenerator 1.0 1.1 1.2 1.3
+core.plugin.monkey 1.0
+com.bmesta.mvntoolkit 0.1.0-SNAPSHOT 0.1.1 0.1.2 0.1.3-SNAPSHOT 0.1.3
+com.vladsch.MissingInActions 1.0.0 1.7.0 1.7.2 1.7.4
+com.reverie.revlocalization 0.2 1.0
+com.wjs.shortcut 1.0
+com.poratu.idea.plugins.tomcat 1.0 1.5 1.6 1.7 1.9 2.0 2.5 2.6
+com.appcloud.test 1.0
+com.cainiao.scriptGenerator.plugin.20170220 1.0
+com.cedricziel.idea.typo3 0.1.0 0.1.1 0.1.2 0.1.3
+com.cainiao.fktools 1.0.4 1.0.7
+com.loren.generater 1.0.0
+com.vimtools.ideaexactionbar 0.0.1 0.0.2 0.0.3
+com.miui.gallery.dao.generator 1.0
+com.chakki_works.watchme 1.0 1.1 1.2
+com.shenjiajun.TinyPic 1.0 1.0.1 1.0.2 1.0.3
+com.hxsmart.zhangbh.JNIVAR2C.id 1.0 1.1 1.2
+com.your.ELICE.eliceplugin 0.1(beta) 0.2.0(beta) 0.3.2(beta) 0.3.6(beta) 0.3.8(beta) 0.5.0(beta) 0.5.2
+com.baijiahulian.tianxiao.action 1.0 1.0.1 1.0.2 1.0.3
+com.coursehero.hodor 1.0.0
+com.ledongli.GGTemplate.TemplateCreator 1.1 1.2 1.2.1 1.2.2 1.2.3 1.2.4
+com.dianping.unique.plugin.id 1.5 1.6
+com.ayvytr.easyimportandroidproject 1.0
+com.netease.hearttouch.as_nei_plugin 1.0 1.1 1.2
+com.github.beansoftapp.reatnative.idea 1.0.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.4.1 1.0.5 1.0.6 1.0.6.1 1.0.7 1.0.8 1.0.9 1.1.0 1.1.1 1.1.2 1.1.3 1.1.4 1.1.5 1.1.6 1.1.7 1.1.8 1.1.9
+wuhaowen.mvpkillerID 1.1 1.2
+com.senthil.codesearch 1.0
+jbehave-syntax-support 1.6 1.61-b 1.62
+uk.ac.glasgow.microissues 1.0
+com.neueda4j.intellij.plugin.cypher 2.5.0 2.5.1 2.5.2 2.5.5 2.5.6
+com.perfectomobile.intellijidea.androidstudio 10.0.0.0 10.1.0.0 10.2.0.0 10.3.0.0 10.4.0.0 10.4.0.1 10.5.0.0 10.6.0.0 10.7.0.0 10.8.0.0 10.9.0.0 10.10.0.0 10.11.0.0 10.12.0.0 10.13.0.0 18.1.0.0 18.2.0.0 18.3.0.0 18.6.0.0
+com.canoo.dolphinplattform.intellij 1.0 1.1
+cn.isaac.codelines 1.2 1.3
+it.droidcon.androidstudioplugin 1.0.1
+com.keshasosiska.easymock-expect-builder 1.0.0 1.0.1 1.0.2
+com.dragon.mvphelp 1.0
+com.eflabs.plugin.efcommon 3.0 3.1
+com.canking.coderhealth 1.0
+com.maihaoche.mazda 1.0 2.0
+jp.co.future.ideausqlfmt 0.1 0.1.1 0.2.0
+com.bubiu.plugin.uniqueres 1.0.4.7 1.1.4.7 1.4.17 1.4.28 1.5.16
+org.jetbrains.plugin.lightbulbtoggle 1.0 1.0.1
+org.diydyq.miapp 1.0
+com.perfectomobile.intellijidea 10.1.0.0 10.2.0.0 10.3.0.0 10.4.0.0 10.4.0.1 10.5.0.0 10.6.0.0 10.7.0.0 10.8.0.0 10.9.0.0 10.10.0.0 10.11.0.0 10.12.0.0 10.13.0.0 18.1.0.0 18.2.0.0 18.3.0.0 18.6.0.0
+io.github.vcuswimlab.stackintheflow 0.0.1 0.2.2
+br.com.br.com.breakpoint.breakpoint.toogleAll 1.0 1.1 1.1.2 1.1.3
+cz.k2.eshop 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1
+com.meizu.flyme.mall.XmlToJson 1.0 1.1 1.2
+com.github.lwfwind.automation.plugin.aping 3.0 4.0 5.0
+cyningxu.findviewbyx 1.0 1.1
+de.espend.idea.php.phpunit 2.0 2.1 2.2 2.2.1 2.3 2.4 2.5 2.6 2.7
+com.potterhsu.jsonviewer 0.1 0.2 0.3
+com.apksecure.plug1234.plugin.id 1.0 1.1
+com.dafa.plugin.easyperfs 1.0 1.1 1.2 1.3 1.4
+com.automation.mtop.plugin.mtop-ng 5.0
+org.jetbrains.debugger.streams 0.1.0 0.1.1 0.1.2 0.1.3 0.1.4
+org.jetbrains.fortran 1.0 1.0.1 1.1 1.1.1 1.2.0 1.3.0 1.3.1 1.5.0 1.5.1
+com.kesselring.valuegenerator 1.1
+com.zen.idea.plugin.adt 0.1 0.1.1-rc1 0.1.1 0.1.2 0.1.3 0.1.4
+ch.dasoft.iconviewer 1.0 1.1 1.11 1.12 1.13
+ru.scratty.generatetomap 0.1
+com.gheorman.radu.connascence.detection 0.1 0.1.3.1 0.1.3.3 0.1.4.4 0.1.4.5
+com.maihaoche.cx5 1.0 1.1 1.2
+com.packer.as.plugin 1.0.0
+org.intellij.flashcards 0.0.1-alpha
+awesome.aurora.borealis.zupersearch.plugin.intellij 1.0 1.1
+com.stfalcon.mvpgenerator 0.1.0 0.2.0 0.2.1
+com.sunary.options-completion-phpstorm-plugin 1.0.0 1.0.1
+net.rentalhost.idea.laravelInsight 0.2.0 0.3.0 0.3.1 0.3.2
+edu.jetbrains.plugin.lt 1.0 1.01
+com.tang 1.1.5 1.1.6
+fr.ensimag.deca.intellijplugin.id 0.1
+org.tinygroup.studio.template 20170614.2.0 20170621.2.0
+br.com.matheusfm.jsonutils 1.0 1.1
+ru.itis.androidplugin 1.0
+brown.bat 1.3.0.1 1.3.0.2 1.3.0.4 1.3.0.5 1.3.4 1.3.5
+com.leeiidesu.gen.GenerateMVP 2.0 2.1
+com.taobao.atlas 1.0 1.05 1.06 1.13.1 2.0.0 2.0.1 2.0.3 2.0.5
+com.testvagrant.optimus.elements 1.0 1.1 1.2
+com.smartbit8.laravelStorm.intellij 0.9 1.1
+cn.windfantasy.plugin.parcelablegenerator 0.0.1
+com.qiaoshouliang 1.0 1.1 1.2
+org.yxdroid.plugin.yxdroidtools 1.0.0 1.0.1
+com.morphling.builder.plugin 3.0.0-1.0.0
+com.aandk.plugin.log 1.0
+com.ztf.talk 1.0
+com.endoidou.copy_current_activity 1.0 1.0.1
+com.me.speachme.intelliSpeach 0.7 0.9.6
+com.djk.yyy.kotterknife 1.0 1.1 1.2
+com.nd.sdp.common.CustomUIToolWindow 1.0 1.0.1 1.0.4 1.0.5 1.0.7 1.0.8 1.1.0
+com.beame.io.insta.ssl 1.0.0
+com.therdnotes 1.0 1.1 1.2 1.4 1.3
+org.leblanc.CodeNarcNG 3.1
+ru.hiq.butterknifesharper 1.0 1.0.1
+"CodeWithMe plugin" 1.0
+de.endrullis.idea.postfixtemplates 0.9 0.9.1 0.9.2 0.9.3 0.9.4 1.0.0 1.0.1 1.0.2 1.1.0 1.1.1 1.2.0 1.2.1 1.2.2 1.2.3 1.3.0 1.4.0 1.4.1 1.5.0 1.5.1 1.6.0 1.6.1 1.6.2 1.6.3 1.6.4 1.6.5 1.6.6 1.7.0 1.8.0 1.8.1 1.8.2 1.8.3 1.8.4 1.8.5 1.8.6 1.8.7 1.8.8 2.0.2 2.0.3 2.0.4 2.0.5 2.0.6 2.0.7 2.1.0 2.2.0 2.3.0 2.3.1 2.4.0 2.5.0 2.6.0.183 2.6.1.183 2.6.2.183 2.6.3.183 2.7.0.183 2.8.0.183 2.8.1.183 2.8.2.183
+ren.helloworld.mvp.plugin 1.0
+com.qiaoshouliang.mvpPlugin 1.0 2.0 2.1
+com.glagol 1.0 1.1 1.2
+com.retryu 1.0 1.1 1.11 1.12 1.13
+com.qiaoshouliang.CreateAdapter 1.0
+com.bmapleaf.mvvm 1.2 1.3 1.3.1 1.3.2 1.3.3 1.3.4 1.3.5 1.3.6 1.3.7 1.3.8 1.3.9 1.4.0 1.4.2 1.4.4 1.4.5 1.4.6 1.4.7 1.4.8 1.4.9
+com.inflectra.SpiraTeam 1.0 1.1 1.2 1.3
+org.bitvault.plugin.dpkplugin 1.0 1.1
+org.tsxuehu.gen-api-doc 1.0
+com.asif.gsonpojogenerator 1.0 1.1 1.2
+top.jsmzr.cipher.component.CipherTools 1.1 1.2 1.3
+com.zcolin.zplug 1.0
+de.misi.idea.plugins.junit5helper 0.1 0.2 0.3 0.4
+com.harmonycloud.mars.unique.plugin.id 1.0
+com.liyijiang.androidpx2dp 1.0
+Appetizer.io 1.1.1 1.1.2
+com.applariat.idea.plugin.id 1.0
+cn.yzl.activityintentcreater 1.4 1.5 1.6 1.7
+com.ydzy.test 1.0
+com.ydzy.tangchaoSqlToJava 1.0
+com.ydzy.tangchaoGui 1.1
+com.dingxiang.plugin.StringEncryptor 1.0
+com.luciozhang.plugin.id 1.0
+com.github.nuclearg.smartgs 1.1
+com.yang.dialog 1.0 2.0
+com.samsung.srr.dex.adb_tool 1.1 1.2 1.3 1.4
+com.stoneplugin.unique.plugin.id 1.0 2.0
+com.xu 1.2
+MyPlugin.CreateDialog 1.0
+com.github.kamikx.adbdatetime 1.0
+org.bitvault.plugin.bvkplugin 1.2 1.1
+com.bolex.recitewords 1.2
+io.github.francoiscambell.clionarduinoplugin2017 1.2.3
+gw.in.ij 1.0.0 1.0.1 1.0.2 1.0.3
+krasa.translatorGenerator 0.3
+com.musical.ly.plugin.muse-mvp-plugin 1.1
+edu.umd.cs.cpm 1.0.0 1.0.1
+com.ctrip.wireless.android.build 1.0 1.0.1 1.0.3 1.0.4
+com.cxp.plugin 1.0 1.1 1.2
+com.github.typ0520.plugin.fastdex 1.0.0 1.0.1 1.0.2 1.0.3 1.0.4
+com.peng.myproguard 1.0 1.1
+si.deno.converter.cyrillic 1.1
+zhushou 1.0
+com.panshen.me.QuickSearch 1.0
+org.reneYang.texas.encrypt 1.5
+com.yuyashuai.plugin.dictionary 1.0
+cn.bestwu.gdph 0.1.0 0.1.1 0.1.2 0.1.4
+com.fooock.experimental.and.beta.icons 1.0.0 1.0.1 1.1.2
+com.ls.translate 1.0
+com.aconex.test.namer 1.0
+de.dieploegers.develop.idea.shellfilter 1.0.0 1.0.1 2.0.0 2.1.0
+com.qianniu.plugin 1.0
+io.g13.ideaplugins.time 1.0
+de.escalon.idea.plugin.svelte 0.0.4
+net.askarin.mpbots.idea.mpbotsideplugin 1.0
+io.github.xusida.idea.plugins.formatyaml 1.0
+com.zhaoyanjun.AndroidTranslate 1.0.0 1.0.1 1.2
+com.ppolivka.plugin.gitcleaner 1.0.0
+com.zhuomeng.unique.plugin.id 1.0.1 1.0.2 1.0.3
+com.amintado.bootstrap 0.1.1
+com.asta.mobi.generate.ca.code 1.0
+com.senthil 0.1
+io.github.donkirkby.livepycharm 2.18.0
+com.mingyuanyun.appcloud.jetbrains.plugin.buildtool 1.0 1.1
+com.huangyuanlove.transform.VariableNameStyleTransfer 1.0
+com.fashare.smallhelper 1.0-SNAPSHOT 1.0.1
+com.yx.plugin 1.0
+com.simon.plus.NotesTranslation.Translation 1.0
+imp.ffs.mde.helper 0.0.1
+com.xiuyukeji.plugin.translation 1.0 1.0.1 1.0.2
+com.zq.plugin 1.0
+com.guohe.selector 1.0.1 1.0.2
+cat.helm.clean 0.1.0-SNAPSHOT 0.1.1-SNAPSHOT
+com.bianxiaoyan.selector 1.0.0
+com.fanhl.intellij.postfix 0.1 0.1.1 0.1.2 0.1.3
+com.pokkt.management.tool 1.0
+net.codeweavers.rider.autoattach 1.0
+org.tboox.xmake 1.0 1.0.1 1.0.2 1.0.2.1 1.0.3 1.0.4 1.0.5
+com.yinjin.intellij.translation 1.0 1.0.1
+ExceptionCatcher 1.0 1.1 1.2
+artsiomch.cmake 0.0.2 0.1.0 0.2.1 0.2.2 0.2.4
+com.yyx.kotlinmvp 1.0 1.0.1 1.0.2
+tushar.checkForPull 1.0
+com.agilezhu.bundledatabuilder 1.1
+intellij-scheme 0.1.1 0.1.2 0.1.3 0.1.4 0.1.5 0.1.6
+WS.CI.plugin 1.0 1.1
+es.n10.clean.plugin.id 1.0 1.1
+idrabenia.solidity-solhint 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 1.10
+eu.gillissen.rider.usersecrets 0.0.1 0.1.0 0.2.0 0.2.1
+com.tencent.qgame.lintsample 1.0
+coral.plugins 0.1
+com.gopkgm.plugin 0.1
+xyz.belvi.droid_snippet 1.0.0-alpha 1.0.0-beta 1.0.1 1.0.2
+com.yangsimin.android.lifecycle.plugin.id 1.0
+com.abby.plugin.gradledependencyhelper 1.0
+com.br.quicksloth 1.0-beta.1 1.0-beta.2
+com.yangsm.android.lifecycle.plugin.id 1.0 1.1
+java.com.lz.autogs 1.0
+io.github.kongeor.p4n 1.0 1.0.2
+com.zzy.plugin.MvpFileCreator 1.0
+com.uddernetworks.codehelp 1.0 1.1
+com.fqxyi.plugin.butter.knife.code 1.0.0
+com.nengjun.geek 0.1 0.2
+com.semihunaldi.intellij.ideacurrency.plugin 0.1.0 0.1.1 0.1.2 0.1.3
+qdrzwd@sina.com 1.0 1.1
+"ASM Bytecode Outline 2017" 0.3.5.2017.12.10
+com.hikesoft.idea.plugin.microservice.matrix 2.0
+com.daylerees.rainglow 1.0.0 1.1.0 1.2.0 1.3.0 1.3.1 1.3.2 1.3.3 1.4.0 1.5.0 1.5.1 1.5.2
+com.yangding 1.0 1.0.1 1.0.2
+nosi.xmlpojo_plugin 1.0 1.1 1.2 1.3
+de.arktis.breeze-connector 0.1
+cn.yzl.kotlin.ex.click 1.2 1.3
+com.github.wxisme.unique.plugin.id 1.0 1.1 1.2 1.3
+org.jetbrains.debugger.streams.kotlin 0.0.1 0.0.2 0.0.3
+com.xin.update.bmob 1.1.1
+com.strixsoftware.intellij.format 1.0 1.1
+org.ngs.adapter.plugin 0.001
+com.github.bassaer.kotlin_variable_completion_plugin 0.0.1
+com.linsir 1.0
+"Properties Compare" 1.0 1.1 1.2
+suphuyquansu.plugin.translation.GoogleTranslation 1.0.2 1.0.3
+cz.malevic.plugins.characterposition 1.1
+com.erstens.gaosi.unique.plugin.id 1.0
+com.ng-zorro.live-templates.plugin 0.0.1 0.0.2 0.0.3
+com.hpe.mc.androidhelper 1.3 1.4
+c0nstantx.phpstorm.silex.plugin.id 1.0.0 1.0.1
+com.github.fartherp.plugin 1.0 1.0.1
+ThinkTank 1.3.2 1.3.2.1 1.3.3
+com.lsjwzh.plugin.tinypng 1.1 1.2
+com.lomoye.plugin.codeGenerator 1.0.1 1.0.2 1.0.3 1.0.4
+com.gem.gdis.disl-run 1.0.0
+io.solo.squash.intellij 1.0
+brown.bat.redisCli 1.0.0 1.0.1 1.0.2
+com.haku.less.Babylon 1.0 1.01
+com.aswitcher 1.0 2.0 3.0 3.1 3.1.1
+io.scheinecker.intellij.coco 1.0.0
+com.taobao.idlefish.alleria 0.0.3 0.0.4
+cn.yan.android.devkit 1.0
+com.vivalab.create.module 1.0
+com.github.keraton.jumblej 1.0
+com.zhishan.java.zhishanMvc 1.0 1.1 1.2 1.3
+com.ctrip.zt.gaok.plugin.generateModelPlugin 1.0
+com.kengajs.winnie.actions 0.1
+com.axellience.vuegwt 0.0.1 0.1.0
+com.jetbrains.plugin.idea.nonsource.comments 1.0
+ch.ricardo.plugins.intellij.mockery 1.0 1.0.1 1.1.0
+cucumber-java 181.3870.7
+cucumber-groovy 181.3870.7
+me.kingtux.motivation 1.0
+com.mrz.showversion 1.0 1.1 1.2
+com.neo.test.plugin.Translate 1.0
+pkunk.hoi4 1.0
+com.ctrip.zt.gaok.plugin.easyJavaBeanPlugins 1.0
+com.boredream.plugin.androidcodegenerator 1.0
+com.bulletjet.StartupTimer 1.0
+plugintest 0.1
+com.person.controlFlowGraph 1.0 1.1
+com.xzdz.codereview 1.0.4
+com.savion.hello.plugin 1.0
+com.meicloud.plugin.setting 2.7 2.8
+WindowPlugin 1.0
+com.djordjem.idea.plugin.cirilizator 1.0 1.1 1.2
+com.thinkwide.plugin.wizard 1.0 1.1
+mohammad.src 1.0
+com.sollyu.java.idea.touchbar.support 1.0.0
+com.tukeping.dt.vars.plugin 0.0.1
+cn.levey.binding_layout 1.0.1
+us.egek.searchstackoverflow 1.0.3 1.0.4
+com.pablogsal.black 1.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6
+li.niwato.motivational.gif 1.0
+com.redefiningproductions.com.api-key-watcher 1.0
+io.ghostbuster91.nspek-intellij-plugin 0.0.21 0.2.1 0.5.0
+me.codeboy.plugin.reverse-lines 1.0.0 1.0.1
+jenkis.build.with.retry 1.0
+com.amadeus.SearchBySegmentfault 1.0
+com.amadeus.SearchByBaidu 1.0
+org.gdlplugin 0.1 0.2.0
+net.ruixin.rx-plugin 1.0
+dongfg.coolhub 1.0
+sk.stuba.fiit.mock_manager 0.1 0.2 0.3 0.4
+de.hszemi.rmsplugin 0.1
+com.ebay.sd.jbehave 2.0-SNAPSHOT 1.0 2.0
+hongSir.plugin 2.0 2.1 2.2 2.3
+color.scheme.Tempo-theme 0.1
+com.elmottaki 0.0.1-SNAPSHOT
+org.jetbrains.plugins.iasemenov.idea-git-extensions 1.0
+cc.duduhuo.git-conflict 0.0.1-rc 0.0.1 1.0.0
+sk.zlatohlavek.iway.project_switcher 1.3
+br.com.diegomelodev 1.0
+com.wuhao.code.check 1.0 1.2.6.001 1.3.0.001 1.3.1 1.3.2 1.3.3.1 1.3.3.2 1.3.3.8 1.3.5 1.3.6.3 1.3.8.1 1.4.2 1.4.5
+ria-intellij-plugin 0.7.0
+color.scheme.Defcula 0.1.1 0.1.2
+com.ruin.lsp 0.3.0
+com.intellij.plugin.adernov.powershell 1.1.0 1.1.1 2.0.0 2.0.1
+com.yhuang.code-smell-detector 1.0
+xyz.ihac.derrick 0.2.0-alpha 0.2.1-beta 0.2.2-beta 0.3.0-beta
+com.github.ArtsiomCh.JDCleanRead 0.1.0 0.2.0 0.2.1 0.2.2 0.3.0 0.3.1
+za.co.sfy.angular.imports-sorter 1.0
+org.jspresso.plugin.i18n 1.0.0 1.0.1
+com.sjhy.plugin 1.0
+me.chaerim.yapf 0.1 0.2
+com.ysnows.wxapp 1.0
+com.alvincezy.TinyPic2 1.1.0 1.1.1 1.1.2 1.1.3
+com.xinv.release.json2go 1.2
+com.zhishui.skydragon.snippet 1.0.1
+org.intellij.RegexpTester 1.0.6
+swingexplorer-plugin-v2 182.4505.22-1.6.0
+com.jetbrains.gitalso 0.1.0 0.1.01 0.2.0 0.3.0
+training 0.8.67 191.6183.3 191.6183.4 191.6183.5 191.6183.6 192.5728.3
+PojoToJson 1.0.0 1.0.1 1.0.2 1.0.3
+synergix.plugin.intellj 1.0 1.1 1.2
+com.ruiyu.ruiyu 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4
+com.luojilab.dedao.DDProjectWatcher 1.0 1.1
+python-flake8 0.1.0 0.1.1
+com.suiyiwen.plugin.idea.apidoc 1.3 1.4 1.5 1.6 1.7
+JFormDesigner 6.0.6 6.0.6.4
+de.achimonline.kickassembler-acbg 1.0 1.0.1
+com.bettercloud.intellij.plugin.kafkatool 1.0.0
+com.intellij.plugins.vscodekeymap 1.0 1.0.1 1.0.2
+com.demisto.demisto-plugin 0.9 0.9.1 0.9.2 0.9.3 0.9.4 0.9.5 0.9.6
+color.scheme.Smooth_Minimal 1.2
+com.hiberbee.intellij.hiberbee-theme 1.0 1.0.3
+ru.vsu.apakhomov.experimental.plugin.Experimental 0.1
+DeepBugsPython 0.1
+DeepBugsJavaScript 0.1
+edu.umontreal.hatchery 0.3 0.3.1 0.3.2
+com.codemr.analyzer 2019.1.1
+com.suiyiwen.plugin.idea.servicedoc 1.4 1.5
+tanvd.grazi 2019.1-2.alpha 2019.1-2.stable 2019.2-2.stable 2019.1-3.dev 2019.2-3.dev 2019.1-3.1.dev 2019.2-3.1.dev 2019.1-3.2.dev 2019.2-3.2.dev 2019.1-3.3.dev 2019.2-3.3.dev 2019.2-3.4.dev 2019.2-3.5.dev 2019.2-3.6.dev 2019.2-3.7.dev 2019.2-3.stable 2019.2-4.1.dev 2019.2-4.2.dev 2019.2-4.stable 2019.2-5.1.dev
+"Lombook Plugin" 0.25-2019.1 0.25-EAP
+"Struts Assistant" 192.5 192.6 192.7 192.8
+"color.scheme.Sunset Vibes Theme" 1.0
+ir.intellij.idea.plugin "0.0.1 release"
+com.apkfuns.swan.plugin 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6
+io.github.QCute.CodeCase 1.0.0 1.0.1 1.0.2
+io.github.likeanowl.topias 1.0.3 1.0.3b 1.0.4
+MyBatisLogPlugin 2.0.8 2.0.9 2.1.0
+JFormDesigner-Marketplace-Edition 7.0.0.1 7.0.0.2 7.0.0.3 7.0.0.4 7.0.0.5 7.0.1 7.0.2
+com.vultix.intellij-ron 2019.01.01 2019.01.02 2019.01.03 2019.01.04 2019.01.05 2019.02.01
+com.intellij.patch 1.3.1
+io.github.QCute.RecordCompletion 1.0.0
+tech.lnkd.LNKD-tech-Editor 0.5-EARLY_ACCESS
+de.lukweb.discordbeam 1.01
+com.antoshk.jsf-el-extension-plugin 0.1
+com.gentrio.runscriptplugin 1.1
+org.semonte.intellij.swagger 1.0.0 1.0.1
+signal9.icon-java-plugin 1.1-SNAPSHOT
+com.github.mustfun.plugin.mybatis 1.0.12
+MIFCMNotification.MIFCMNotification 0.1
+com.zxy.ijplugin.wechat-miniprogram IU-LATEST-EAP-SNAPSHOT 1.0.0 1.1 1.2 1.3 1.3.1 1.4 1.4.1 1.8.1
+com.decentralized.internet.id 1.0
+ch.raffael.idea.plugins.runpopup 1.1.0
+com.shizhuang.duapp.ideaplugin 0.9.1-SNAPSHOT
