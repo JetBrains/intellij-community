@@ -26,11 +26,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
@@ -44,6 +46,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspection {
+  private static final CallMatcher JUNIT4_ASSERT_EQUALS =
+    CallMatcher.anyOf(
+      CallMatcher.staticCall("org.junit.Assert", "assertEquals").parameterTypes("long", "long"),
+      CallMatcher.staticCall("org.junit.Assert", "assertEquals").parameterTypes(CommonClassNames.JAVA_LANG_STRING, "long", "long")
+    );
 
   /**
    */
@@ -214,12 +221,14 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       if (hasInnerMultiplication(expression)) {
         return;
       }
+      if (insideAssertEquals(expression)) {
+        return;
+      }
       PsiExpression[] operands = expression.getOperands();
       if (operands.length < 2 || expression.getLastChild() instanceof PsiErrorElement) {
         return;
       }
       PsiExpression context = getContainingExpression(expression);
-      if (context == null) return;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
       if (parent instanceof PsiTypeCastExpression) {
         PsiType castType = ((PsiTypeCastExpression)parent).getType();
@@ -243,6 +252,18 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
         }
       }
       registerError(expression, tokenType);
+    }
+
+    private boolean insideAssertEquals(PsiExpression expression) {
+      PsiElement parent = ExpressionUtils.getPassThroughParent(expression);
+      if (parent instanceof PsiExpressionList) {
+        PsiMethodCallExpression call = ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);
+        // JUnit4 has assertEquals(long, long) but no assertEquals(int, int)
+        // so int-assertions will be wired to assertEquals(long, long), which could be annoying false-positive.
+        // If the multiplication unexpectedly overflows then assertion will fail anyway, so the problem will manifest itself.
+        return JUNIT4_ASSERT_EQUALS.matches(call);
+      }
+      return false;
     }
 
     private boolean cannotOverflow(@NotNull PsiPolyadicExpression expression, PsiExpression[] operands, boolean shift) {
