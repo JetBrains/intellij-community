@@ -77,14 +77,9 @@ public class GitPull extends GitMergeAction {
   }
 
   @Override
-  protected void perform(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
-    DialogState dialogState = displayDialog(project, gitRoots, defaultRoot);
-    if (dialogState == null) {
-      return;
-    }
-
+  protected void perform(@NotNull DialogState dialogState, @NotNull Project project) {
     if (!dialogState.selectedOptions.contains(PullOption.REBASE.getOption())) {
-      super.perform(project, gitRoots, defaultRoot);
+      super.perform(dialogState, project);
     }
     else {
       performRebase(project, dialogState);
