@@ -36,6 +36,14 @@ public final class JBCefJSQuery implements JBCefDisposable {
   }
 
   /**
+   * @return name of the global function JS must call to send query to Java
+   */
+  @NotNull
+  public final String getFuncName() {
+    return myFunc.myFuncName;
+  }
+
+  /**
    * Creates a unique JS query.
    *
    * @see JBCefClient#JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP
