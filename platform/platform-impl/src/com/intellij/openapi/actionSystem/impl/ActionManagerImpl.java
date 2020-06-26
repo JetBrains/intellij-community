@@ -577,7 +577,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @Override
   public String @NotNull [] getActionIds(@NotNull String idPrefix) {
     synchronized (myLock) {
-      ArrayList<String> idList = new ArrayList<>();
+      List<String> idList = new ArrayList<>();
       for (String id : myId2Action.keySet()) {
         if (id.startsWith(idPrefix)) {
           idList.add(id);
@@ -1534,10 +1534,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         return;
       }
 
-      AnAction action = getAction(id);
-      if (action instanceof PreloadableAction) {
-        ((PreloadableAction)action).preload();
-      }
+      getActionImpl(id, false);
       // don't preload ActionGroup.getChildren() because that would un-stub child actions
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
