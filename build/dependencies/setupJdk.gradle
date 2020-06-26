@@ -48,7 +48,7 @@ static def splitJbrBuild(String jreBuild, String version) {
   def isModular = jbrVersion > 8
   def jbrBuild = isModular ? jdkBuild : secondJreBuild
   def setupJbrSdk = System.getProperty('intellij.build.jbr.setupSdk', 'false').toBoolean()
-  def jbrArtifactPrefix = isModular && !setupJbrSdk ? 'jbr_jcef-' : 'jbrsdk-'
+  def jbrArtifactPrefix = isModular && !setupJbrSdk ? 'jbr-' : 'jbrsdk-'
 
   def jbrOutputDir = System.getProperty("intellij.jdk.output.dir", "$jdkDir/${!isModular ? "1.$jbrVersion" : jbrVersion}")
 
