@@ -131,6 +131,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myHomeComponent = createHomeComponent();
     myHomeComponent.getTextField().setEditable(false);
     myHomeFieldLabel = new JLabel(getHomeFieldLabelValue());
+    myHomeFieldLabel.setLabelFor(myHomeComponent.getTextField());
     myMainPanel.add(myHomeFieldLabel, new GridBagConstraints(
       0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(2, 10, 2, 2), 0, 0));
     myMainPanel.add(myHomeComponent, new GridBagConstraints(
