@@ -264,7 +264,7 @@ public class EditorTestFixture {
     }
     if (selected != list.getSelectedIndex()) {
       //noinspection UseOfSystemOutOrSystemErr
-      System.out.println(DumpLookupElementWeights.getLookupElementWeights(lookup, false));
+      DumpLookupElementWeights.getLookupElementWeights(lookup, false).forEach(System.out::println);
     }
     assertEquals(selected, list.getSelectedIndex());
   }
