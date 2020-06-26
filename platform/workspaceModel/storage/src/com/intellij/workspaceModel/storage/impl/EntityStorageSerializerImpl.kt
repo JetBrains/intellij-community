@@ -20,6 +20,7 @@ import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalInd
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import org.jetbrains.annotations.TestOnly
 import org.objenesis.instantiator.ObjectInstantiator
 import org.objenesis.strategy.StdInstantiatorStrategy
 import java.io.InputStream
@@ -34,7 +35,9 @@ import kotlin.reflect.jvm.jvmName
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
                                   private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   private val KRYO_BUFFER_SIZE = 64 * 1024
-  override val serializerDataFormatVersion: String = "v1"
+
+  @set:TestOnly
+  override var serializerDataFormatVersion: String = "v1"
 
   private fun createKryo(): Kryo {
     val kryo = Kryo()
