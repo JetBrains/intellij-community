@@ -248,21 +248,23 @@ public final class PyTypeChecker {
   }
 
   @NotNull
-  private static Optional<Boolean> match(@NotNull PyClassType expected, @NotNull PyClassType actual, @NotNull MatchContext context) {
+  private static Optional<Boolean> match(@NotNull PyClassType expected, @NotNull PyClassType actual, @NotNull MatchContext matchContext) {
     if (expected.equals(actual)) {
       return Optional.of(true);
     }
 
+    final TypeEvalContext context = matchContext.context;
+
     if (expected.isDefinition() ^ actual.isDefinition()) {
       if (!expected.isDefinition() && actual.isDefinition()) {
-        final PyClassLikeType metaClass = actual.getMetaClassType(context.context, true);
-        return Optional.of(metaClass != null && match((PyType)expected, metaClass.toInstance(), context).orElse(true));
+        final PyClassLikeType metaClass = actual.getMetaClassType(context, true);
+        return Optional.of(metaClass != null && match((PyType)expected, metaClass.toInstance(), matchContext).orElse(true));
       }
       return Optional.of(false);
     }
 
     if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
-      return match((PyTupleType)expected, (PyTupleType)actual, context);
+      return match((PyTupleType)expected, (PyTupleType)actual, matchContext);
     }
 
     if (expected instanceof PyLiteralType) {
@@ -271,49 +273,49 @@ public final class PyTypeChecker {
 
     if (actual instanceof PyTypedDictType) {
       if (!((PyTypedDictType)actual).isInferred()) {
-        Optional<Boolean> match = PyTypedDictType.Companion.checkStructuralCompatibility(expected, (PyTypedDictType)actual, context.context);
+        final Optional<Boolean> match = PyTypedDictType.Companion.checkStructuralCompatibility(expected, (PyTypedDictType)actual, context);
         if (match.isPresent()) {
           return match;
         }
       }
       if (expected instanceof PyTypedDictType) {
-        return Optional.of(PyTypedDictType.Companion.match((PyTypedDictType)expected, (PyTypedDictType)actual, context.context));
+        return Optional.of(PyTypedDictType.Companion.match((PyTypedDictType)expected, (PyTypedDictType)actual, context));
       }
     }
 
     final PyClass superClass = expected.getPyClass();
     final PyClass subClass = actual.getPyClass();
-    final boolean matchClasses = matchClasses(superClass, subClass, context.context);
+    final boolean matchClasses = matchClasses(superClass, subClass, context);
 
-    if (PyProtocolsKt.isProtocol(expected, context.context) && !matchClasses) {
-      if (expected instanceof PyCollectionType && !matchGenerics((PyCollectionType)expected, actual, context)) {
+    if (PyProtocolsKt.isProtocol(expected, context) && !matchClasses) {
+      if (expected instanceof PyCollectionType && !matchGenerics((PyCollectionType)expected, actual, matchContext)) {
         return Optional.of(false);
       }
 
-      for (kotlin.Pair<PyTypedElement, List<RatedResolveResult>> pair : PyProtocolsKt.inspectProtocolSubclass(expected, actual, context.context)) {
+      for (kotlin.Pair<PyTypedElement, List<RatedResolveResult>> pair : PyProtocolsKt.inspectProtocolSubclass(expected, actual, context)) {
         final List<RatedResolveResult> subclassElements = pair.getSecond();
         if (ContainerUtil.isEmpty(subclassElements)) {
           return Optional.of(false);
         }
 
-        final PyType protocolElementType = context.context.getType(pair.getFirst());
+        final PyType protocolElementType = context.getType(pair.getFirst());
         final PyType protocolFunctionTypeNoSelf = protocolElementType instanceof PyFunctionType
-                                                  ? ((PyFunctionType)protocolElementType).dropSelf(context.context)
+                                                  ? ((PyFunctionType)protocolElementType).dropSelf(context)
                                                   : null;
 
         final boolean elementResult = StreamEx
           .of(subclassElements)
           .map(ResolveResult::getElement)
           .select(PyTypedElement.class)
-          .map(context.context::getType)
+          .map(context::getType)
           .anyMatch(
             subclassElementType -> {
               if (subclassElementType instanceof PyFunctionType && protocolFunctionTypeNoSelf != null) {
-                final PyFunctionType subclassFunctionTypeNoSelf = ((PyFunctionType)subclassElementType).dropSelf(context.context);
-                return match(protocolFunctionTypeNoSelf, subclassFunctionTypeNoSelf, context).orElse(true);
+                final PyFunctionType subclassFunctionTypeNoSelf = ((PyFunctionType)subclassElementType).dropSelf(context);
+                return match(protocolFunctionTypeNoSelf, subclassFunctionTypeNoSelf, matchContext).orElse(true);
               }
 
-              return match(protocolElementType, subclassElementType, context).orElse(true);
+              return match(protocolElementType, subclassElementType, matchContext).orElse(true);
             }
           );
 
@@ -324,24 +326,24 @@ public final class PyTypeChecker {
 
       final PyType originalProtocolGenericType = StreamEx
         .of(PyTypeProvider.EP_NAME.getExtensionList())
-        .map(provider -> provider.getGenericType(superClass, context.context))
+        .map(provider -> provider.getGenericType(superClass, context))
         .findFirst(Objects::nonNull)
         .orElse(null);
 
       // actual was matched against protocol definition above
       // and here protocol usage is matched against its definition to update substitutions
-      match(expected, originalProtocolGenericType, context);
+      match(expected, originalProtocolGenericType, matchContext);
 
       return Optional.of(true);
     }
 
     if (expected instanceof PyCollectionType) {
-      return Optional.of(match((PyCollectionType)expected, actual, context));
+      return Optional.of(match((PyCollectionType)expected, actual, matchContext));
     }
 
     if (matchClasses) {
       if (expected instanceof PyTypingNewType && !expected.equals(actual) && superClass.equals(subClass)) {
-        return Optional.of(actual.getAncestorTypes(context.context).contains(expected));
+        return Optional.of(actual.getAncestorTypes(context).contains(expected));
       }
       return Optional.of(true);
     }
