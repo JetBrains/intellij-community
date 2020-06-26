@@ -3,7 +3,6 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.WeakInterner;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
