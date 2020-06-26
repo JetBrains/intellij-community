@@ -206,14 +206,14 @@ internal class PrintElementGeneratorImpl @TestOnly constructor(private val linea
     if (edgeSize >= longEdgeSize) {
       if (upOffset == visiblePartSize) {
         LOG.assertTrue(downOffset != visiblePartSize,
-                       "Both up and down arrow at row " + rowIndex) // this can not happen due to how constants are picked out, but just in case
+                       "Both up and down arrow at row $rowIndex") // this can not happen due to how constants are picked out, but just in case
         return EdgePrintElement.Type.DOWN
       }
       if (downOffset == visiblePartSize) return EdgePrintElement.Type.UP
     }
     if (edgeSize >= edgeWithArrowSize) {
       if (upOffset == 1) {
-        LOG.assertTrue(downOffset != 1, "Both up and down arrow at row " + rowIndex)
+        LOG.assertTrue(downOffset != 1, "Both up and down arrow at row $rowIndex")
         return EdgePrintElement.Type.DOWN
       }
       if (downOffset == 1) return EdgePrintElement.Type.UP
