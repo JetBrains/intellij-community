@@ -116,6 +116,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
   @Nullable
   @Override
   public M getCombinedModel(@Nullable S s) {
+    if (s == null) return null;
     final List<M> models = getAllModels(s);
     switch (models.size()) {
       case 0:
