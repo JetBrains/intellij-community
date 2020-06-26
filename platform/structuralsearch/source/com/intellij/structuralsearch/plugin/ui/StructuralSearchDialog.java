@@ -1112,8 +1112,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   public void loadConfiguration(Configuration configuration) {
     final Configuration newConfiguration = createConfiguration(configuration);
     if (myUseLastConfiguration) {
-      final UUID uuid = myConfiguration.getUuid();
-      newConfiguration.setUuid(uuid);
+      newConfiguration.setUuid(myConfiguration.getUuid());
+      newConfiguration.setName(myConfiguration.getName());
+      newConfiguration.setDescription(myConfiguration.getDescription());
+      newConfiguration.setSuppressId(myConfiguration.getSuppressId());
+      newConfiguration.setProblemDescriptor(myConfiguration.getProblemDescriptor());
     }
     myConfiguration = newConfiguration;
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
