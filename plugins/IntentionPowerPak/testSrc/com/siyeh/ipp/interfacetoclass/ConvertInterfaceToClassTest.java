@@ -13,6 +13,7 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
   public void testInnerInterface() { doTest(); }
   public void testStaticMethods() { doTest(); }
   public void testInterfaceExtendsClass() { doTest(); }
+  public void testLocalInterface() { doTest(); }
 
   public void testFunctionalExpressions() {
     try {
@@ -54,6 +55,6 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_15;
   }
 }
