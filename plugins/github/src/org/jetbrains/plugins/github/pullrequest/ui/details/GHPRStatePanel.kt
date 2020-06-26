@@ -83,7 +83,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
 
     class Merged(stateModel: GHPRStateModel) : StateUI(stateModel) {
 
-      override fun createStatusComponent() = JLabel(GithubBundle.message("pull.request.state.merged"), GithubIcons.PullRequestMerged,
+      override fun createStatusComponent() = JLabel(GithubBundle.message("pull.request.state.merged.long"), GithubIcons.PullRequestMerged,
                                                     SwingConstants.LEFT)
 
       override fun createButtons() = emptyList<JComponent>()
@@ -95,7 +95,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
                               || stateModel.details.viewerDidAuthor
 
       override fun createStatusComponent(): JComponent {
-        val stateLabel = JLabel(GithubBundle.message("pull.request.state.closed"), GithubIcons.PullRequestClosed, SwingConstants.LEFT)
+        val stateLabel = JLabel(GithubBundle.message("pull.request.state.closed.long"), GithubIcons.PullRequestClosed, SwingConstants.LEFT)
         return if (canReopen) stateLabel
         else {
           val accessDeniedLabel = JLabel().apply {

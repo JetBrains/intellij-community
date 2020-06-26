@@ -98,7 +98,11 @@ class GHPRListCellRenderer(private val avatarIconsProvider: CachingGithubAvatarI
         GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
         GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
       }
-      toolTipText = value.state.toString().toLowerCase().capitalize()
+      toolTipText = when (value.state) {
+        GHPullRequestState.CLOSED -> GithubBundle.message("pull.request.state.closed")
+        GHPullRequestState.MERGED -> GithubBundle.message("pull.request.state.merged")
+        GHPullRequestState.OPEN -> GithubBundle.message("pull.request.state.open")
+      }
     }
     title.apply {
       text = value.title
