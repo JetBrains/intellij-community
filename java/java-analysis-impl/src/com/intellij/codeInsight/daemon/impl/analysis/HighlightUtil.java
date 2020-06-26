@@ -1619,7 +1619,7 @@ public final class HighlightUtil {
 
   @Nullable
   @Contract(value = "null -> null", pure = true)
-  private static PsiAnnotation getPreviewFeatureAnnotation(@Nullable final PsiModifierListOwner owner) {
+  public static PsiAnnotation getPreviewFeatureAnnotation(@Nullable final PsiModifierListOwner owner) {
     if (owner == null) return null;
 
     final PsiAnnotation annotation = owner.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
@@ -1627,7 +1627,14 @@ public final class HighlightUtil {
 
     final PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(owner);
     if (psiPackage  == null) return null;
-    return psiPackage.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
+
+    final PsiAnnotation packageAnnotation = psiPackage.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
+    if (packageAnnotation != null) return packageAnnotation;
+
+    final PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(owner);
+    if (module == null) return null;
+
+    return module.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
   }
 
   private enum SelectorKind { INT, ENUM, STRING }

@@ -78,6 +78,10 @@ public enum HighlightingFeature {
     this.key = key;
   }
 
+  public LanguageLevel getLevel() {
+    return level;
+  }
+
   /**
    * @param element a valid PsiElement to check (it's better to supply PsiFile if already known; any element is accepted for convenience)
    * @return true if this feature is available in the PsiFile the supplied element belongs to
@@ -99,7 +103,7 @@ public enum HighlightingFeature {
 
   @Nullable
   @Contract(value = "null -> null", pure = true)
-  static HighlightingFeature fromPreviewFeatureAnnotation(@Nullable final PsiAnnotation annotation) {
+  public static HighlightingFeature fromPreviewFeatureAnnotation(@Nullable final PsiAnnotation annotation) {
     if (annotation == null) return null;
     if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE)) return null;
 
