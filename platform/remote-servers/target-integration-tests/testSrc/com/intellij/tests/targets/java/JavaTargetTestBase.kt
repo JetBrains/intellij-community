@@ -200,9 +200,9 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
       handler()
     }
     finally {
-      for (editor in editorFactory.allEditors) {
-        if (editor.project === project && editor !in editorsBefore) {
-          withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        for (editor in editorFactory.allEditors) {
+          if (editor.project === project && editor !in editorsBefore) {
             editorFactory.releaseEditor(editor)
           }
         }
