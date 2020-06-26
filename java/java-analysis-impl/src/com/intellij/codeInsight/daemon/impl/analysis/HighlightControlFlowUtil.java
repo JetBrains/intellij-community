@@ -74,12 +74,12 @@ public final class HighlightControlFlowUtil {
 
   public static @NotNull ControlFlow getControlFlowNoConstantEvaluate(@NotNull PsiElement body) throws AnalysisCanceledException {
     LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
-    return ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, policy, false, false);
+    return ControlFlowFactory.getControlFlow(body, policy, ControlFlowOptions.NO_CONST_EVALUATE);
   }
 
   private static @NotNull ControlFlow getControlFlow(@NotNull PsiElement context) throws AnalysisCanceledException {
     LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
-    return ControlFlowFactory.getInstance(context.getProject()).getControlFlow(context, policy);
+    return ControlFlowFactory.getControlFlow(context, policy, new ControlFlowOptions(true, true));
   }
 
   static HighlightInfo checkUnreachableStatement(@Nullable PsiCodeBlock codeBlock) {
@@ -88,7 +88,7 @@ public final class HighlightControlFlowUtil {
     // see JLS 14.20 Unreachable Statements
     try {
       AllVariablesControlFlowPolicy policy = AllVariablesControlFlowPolicy.getInstance();
-      final ControlFlow controlFlow = ControlFlowFactory.getInstance(codeBlock.getProject()).getControlFlow(codeBlock, policy, false, false);
+      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeBlock, policy, ControlFlowOptions.NO_CONST_EVALUATE);
       final PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
       if (unreachableStatement != null) {
         String description = JavaErrorBundle.message("unreachable.statement");

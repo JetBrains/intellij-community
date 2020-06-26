@@ -96,8 +96,8 @@ final class ReusedLocalVariablesFinder {
     PsiElement codeFragment = ControlFlowUtil.findCodeFragment(nextStatement);
     ControlFlow controlFlow;
     try {
-      controlFlow = ControlFlowFactory.getInstance(codeFragment.getProject()).getControlFlow(
-        codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
+      controlFlow = ControlFlowFactory.getControlFlow(
+        codeFragment, new LocalsControlFlowPolicy(codeFragment), ControlFlowOptions.NO_CONST_EVALUATE);
     }
     catch (AnalysisCanceledException e) {
       return null;

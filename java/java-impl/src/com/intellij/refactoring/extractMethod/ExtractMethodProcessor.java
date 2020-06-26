@@ -248,7 +248,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       throw new PrepareFailedException("Unable to extract method from annotation value", myElements[0]);
     }
 
-    myControlFlowWrapper = new ControlFlowWrapper(myProject, codeFragment, myElements);
+    myControlFlowWrapper = new ControlFlowWrapper(codeFragment, myElements);
 
     try {
       myExitStatements = myControlFlowWrapper.prepareExitStatements(myElements, codeFragment);
@@ -1207,7 +1207,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     try {
       PsiCodeBlock block = JavaPsiFacade.getElementFactory(myProject).createCodeBlock();
       block.addRange(myElements[0], myElements[myElements.length - 1]);
-      ControlFlow flow = ControlFlowFactory.getInstance(myProject).getControlFlow(block, new LocalsControlFlowPolicy(block), false, false);
+      ControlFlow flow = ControlFlowFactory.getControlFlow(block, new LocalsControlFlowPolicy(block),
+                                                           ControlFlowOptions.NO_CONST_EVALUATE);
       return ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize());
     }
     catch (AnalysisCanceledException e) {

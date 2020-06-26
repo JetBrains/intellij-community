@@ -28,15 +28,14 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   }
 
   private val codeFragment = ControlFlowUtil.findCodeFragment(elements.first())
-  private val flow: ControlFlow = createControlFlow(elements)
+  private val flow: ControlFlow = createControlFlow()
   private val flowRange = findFlowRange(flow, elements)
 
-  private fun createControlFlow(elements: List<PsiElement>): ControlFlow {
+  private fun createControlFlow(): ControlFlow {
     try {
       val fragmentToAnalyze: PsiElement = codeFragment
       val flowPolicy = LocalsControlFlowPolicy(fragmentToAnalyze)
-      val factory: ControlFlowFactory = ControlFlowFactory.getInstance(elements.first().project)
-      return factory.getControlFlow(fragmentToAnalyze, flowPolicy, false, false)
+      return ControlFlowFactory.getControlFlow(fragmentToAnalyze, flowPolicy, ControlFlowOptions.NO_CONST_EVALUATE)
     } catch (e: AnalysisCanceledException) {
       throw ExtractException(JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.errorElement)
     }

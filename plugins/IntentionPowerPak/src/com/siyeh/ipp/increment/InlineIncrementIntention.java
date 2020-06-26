@@ -116,7 +116,7 @@ public class InlineIncrementIntention extends MutablyNamedIntention {
   public static ControlFlow getControlFlow(@NotNull PsiElement body) {
     try {
       final LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
-      return ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, policy, false, false);
+      return ControlFlowFactory.getControlFlow(body, policy, ControlFlowOptions.NO_CONST_EVALUATE);
     }
     catch (AnalysisCanceledException e) {
       return ControlFlow.EMPTY;

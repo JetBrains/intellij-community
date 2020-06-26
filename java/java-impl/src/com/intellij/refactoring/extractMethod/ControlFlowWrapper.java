@@ -4,7 +4,6 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -29,10 +28,10 @@ public final class ControlFlowWrapper {
   private PsiStatement myFirstExitStatementCopy;
   private IntArrayList myExitPoints;
 
-  public ControlFlowWrapper(Project project, PsiElement codeFragment, PsiElement[] elements) throws PrepareFailedException {
+  public ControlFlowWrapper(PsiElement codeFragment, PsiElement[] elements) throws PrepareFailedException {
     try {
-      myControlFlow =
-        ControlFlowFactory.getInstance(project).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
+      myControlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment),
+                                          ControlFlowOptions.NO_CONST_EVALUATE);
     }
     catch (AnalysisCanceledException e) {
       throw new PrepareFailedException(JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.getErrorElement());

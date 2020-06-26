@@ -28,7 +28,7 @@ class TypeConversionRuleUtil {
   static List<PsiVariable> getVariablesToMakeFinal(@NotNull PsiExpression expression) {
     final ControlFlow controlFlow;
     try {
-      controlFlow = ControlFlowFactory.getInstance(expression.getProject()).getControlFlow(expression, new MyControlFlowPolicy(expression), false, false);
+      controlFlow = ControlFlowFactory.getControlFlow(expression, new MyControlFlowPolicy(expression), ControlFlowOptions.NO_CONST_EVALUATE);
     }
     catch (AnalysisCanceledException e) {
       return null;

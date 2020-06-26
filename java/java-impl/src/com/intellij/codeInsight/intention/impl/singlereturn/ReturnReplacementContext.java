@@ -209,7 +209,7 @@ final class ReturnReplacementContext {
     if (!locals.isEmpty()) {
       ControlFlow flow;
       try {
-        flow = ControlFlowFactory.getInstance(myProject).getControlFlow(myBlock, new LocalsControlFlowPolicy(myBlock), false, false);
+        flow = ControlFlowFactory.getControlFlow(myBlock, new LocalsControlFlowPolicy(myBlock), ControlFlowOptions.NO_CONST_EVALUATE);
       }
       catch (AnalysisCanceledException ignored) {
         return;

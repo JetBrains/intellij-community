@@ -297,8 +297,8 @@ public final class InstanceOfUtils {
     if (statement == null) return true;
     ControlFlow flow;
     try {
-      flow = ControlFlowFactory.getInstance(statement.getProject()).getControlFlow(
-        parent, new LocalsControlFlowPolicy(parent), false, false);
+      flow = ControlFlowFactory.getControlFlow(parent, new LocalsControlFlowPolicy(parent), 
+                                               ControlFlowOptions.NO_CONST_EVALUATE);
     }
     catch (AnalysisCanceledException e) {
       return true;

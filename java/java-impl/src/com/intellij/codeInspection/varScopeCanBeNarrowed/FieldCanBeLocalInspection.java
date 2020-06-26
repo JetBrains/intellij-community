@@ -232,8 +232,8 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
                                      Set<? super PsiField> ignored) {
     try {
       final Ref<Collection<PsiVariable>> writtenVariables = new Ref<>();
-      final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject())
-          .getControlFlow(body, AllVariablesControlFlowPolicy.getInstance(), false, false);
+      final ControlFlow controlFlow = ControlFlowFactory
+          .getControlFlow(body, AllVariablesControlFlowPolicy.getInstance(), ControlFlowOptions.NO_CONST_EVALUATE);
       final List<PsiVariable> usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());
       for (PsiVariable usedVariable : usedVars) {
         if (usedVariable instanceof PsiField) {
