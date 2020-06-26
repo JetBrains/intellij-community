@@ -141,9 +141,6 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
     checkAvailability();
     dispatchPendingEvents();
-
-    if (!(file instanceof VirtualFileWithId)) return NonProjectDirectoryInfo.NOT_SUPPORTED_VIRTUAL_FILE_IMPLEMENTATION;
-
     return getRootIndex().getInfoForFile(file);
   }
 

@@ -309,10 +309,6 @@ class RootIndex {
   }
 
   private static boolean ensureValid(@NotNull VirtualFile file, @NotNull Object container, @Nullable Object containerProvider) {
-    if (!(file instanceof VirtualFileWithId)) {
-      //skip roots from unsupported file systems (e.g. http)
-      return false;
-    }
     if (!file.isValid()) {
       if (containerProvider != null) {
         LOG.error("Invalid root " + file + " in " + container + " provided by " + containerProvider.getClass());
@@ -602,7 +598,7 @@ class RootIndex {
 
   @NotNull
   DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
-    if (!file.isValid() || !(file instanceof VirtualFileWithId)) {
+    if (!file.isValid()) {
       return NonProjectDirectoryInfo.INVALID;
     }
 
@@ -630,12 +626,15 @@ class RootIndex {
 
   @Nullable
   private DirectoryInfo getOwnInfo(VirtualFile file) {
+    if (!(file instanceof VirtualFileWithId)) {
+      return doGetFileInfo(file);
+    }
     int id = ((VirtualFileWithId)file).getId();
     return myNonInterestingIds.get(id) ? null : handleInterestingId(id, file);
   }
 
   @Nullable
-  private DirectoryInfo handleInterestingId(int id, @NotNull VirtualFile file) {
+  private DirectoryInfo doGetFileInfo(@NotNull VirtualFile file) {
     DirectoryInfo info = myRootInfos.get(file);
     if (info != null) {
       return info;
@@ -645,12 +644,20 @@ class RootIndex {
       return NonProjectDirectoryInfo.IGNORED;
     }
 
-    if ((id > 500_000_000 || id < 0) && LOG.isDebugEnabled()) {
-      LOG.error("Invalid id: " + id + " for " + file + " of " + file.getClass());
-    }
-
-    myNonInterestingIds.set(id);
     return null;
+  }
+
+  @Nullable
+  private DirectoryInfo handleInterestingId(int id, @NotNull VirtualFile file) {
+    DirectoryInfo info = doGetFileInfo(file);
+    if (info == null) {
+      if ((id > 500_000_000 || id < 0) && LOG.isDebugEnabled()) {
+        LOG.error("Invalid id: " + id + " for " + file + " of " + file.getClass());
+      }
+
+      myNonInterestingIds.set(id);
+    }
+    return info;
   }
 
   @NotNull
