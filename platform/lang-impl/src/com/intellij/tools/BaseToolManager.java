@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tools;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.options.SchemeManager;
@@ -16,10 +17,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class BaseToolManager<T extends Tool> {
+public abstract class BaseToolManager<T extends Tool> implements Disposable {
+  private final SchemeManagerFactory myFactory;
   private final SchemeManager<ToolsGroup<T>> mySchemeManager;
 
   public BaseToolManager(@NotNull SchemeManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
+    myFactory = factory;
     //noinspection AbstractMethodCallInConstructor
     mySchemeManager = factory.create(schemePath, createProcessor(), presentableName);
     mySchemeManager.loadSchemes();
@@ -98,5 +101,10 @@ public abstract class BaseToolManager<T extends Tool> {
     for (String oldId : actionManager.getActionIdList(getActionIdPrefix())) {
       actionManager.unregisterAction(oldId);
     }
+  }
+
+  @Override
+  public void dispose() {
+    myFactory.dispose(mySchemeManager);
   }
 }
