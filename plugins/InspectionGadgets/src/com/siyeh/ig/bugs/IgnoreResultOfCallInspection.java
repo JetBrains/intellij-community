@@ -357,15 +357,14 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         }
         if (element instanceof PsiModifierListOwner) {
           final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
-          final PsiAnnotation annotation;
-          if (m_reportClassAndPackageShortNameAnnotated) {
+          PsiAnnotation annotation =
+            AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
+
+          if (m_reportClassAndPackageShortNameAnnotated && annotation == null) {
             annotation =
               findAnnotationByShortNameCheckReturnValue(modifierListOwner, shortAnnotationName);
           }
-          else {
-            annotation =
-              AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
-          }
+
           if (annotation != null) {
             return annotation;
           }
