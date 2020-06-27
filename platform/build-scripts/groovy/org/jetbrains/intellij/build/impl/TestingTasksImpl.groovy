@@ -559,8 +559,8 @@ class TestingTasksImpl extends TestingTasks {
     def files = context.ant.fileset(dir: "${context.paths.buildOutputRoot}", includes: "**/plugin.xml")
       .findAll { it.getFile().readLines().collect { it.trim() }.contains("<!-- DELETE FOR ANT TESTS -->") }
 
-    context.ant.delete(failonerror: true) {
-      files.each { fileset(file: it) }
+    if (!files.isEmpty()) {
+      throw new IllegalStateException("Plugins with <!-- DELETE FOR ANT TESTS --> should not be among UI test dependencies.")
     }
   }
 }

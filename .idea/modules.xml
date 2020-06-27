@@ -357,6 +357,7 @@
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/shared/analytics-shared.iml" filepath="$PROJECT_DIR$/../analytics-library/shared/analytics-shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/tracker/analytics-tracker.iml" filepath="$PROJECT_DIR$/../analytics-library/tracker/analytics-tracker.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-apk/android-apk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-apk/android-apk.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-apk/android-apk.tests.iml" filepath="$PROJECT_DIR$/../vendor/google/android-apk/android-apk.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-layout-inspector/android-layout-inspector.iml" filepath="$PROJECT_DIR$/../adt/idea/android-layout-inspector/android-layout-inspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-layout-inspector/android-layout-inspector-test.iml" filepath="$PROJECT_DIR$/../adt/idea/android-layout-inspector/android-layout-inspector-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" />
