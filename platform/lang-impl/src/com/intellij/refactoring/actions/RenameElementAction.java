@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.actions;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -42,9 +43,12 @@ public class RenameElementAction extends AnAction implements UpdateInBackground 
     if (project == null) {
       return;
     }
+
+    int eventCount = IdeEventQueue.getInstance().getEventCount();
     if (!PsiDocumentManager.getInstance(project).commitAllDocumentsUnderProgress()) {
       return;
     }
+    IdeEventQueue.getInstance().setEventCount(eventCount);
 
     List<Renamer> renamers = getAvailableRenamers(dataContext).collect(Collectors.toList());
     if (renamers.isEmpty()) {
