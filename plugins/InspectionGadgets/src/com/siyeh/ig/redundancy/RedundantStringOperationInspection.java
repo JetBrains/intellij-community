@@ -59,6 +59,10 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher STRING_IS_EMPTY = exactInstanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0);
   private static final CallMatcher CASE_CHANGE = exactInstanceCall(JAVA_LANG_STRING, "toUpperCase", "toLowerCase");
   private static final CallMatcher STRING_EQUALS = exactInstanceCall(JAVA_LANG_STRING, "equals").parameterTypes(JAVA_LANG_OBJECT);
+  private static final CallMatcher STRING_EQUALS_IGNORE_CASE =
+    exactInstanceCall(JAVA_LANG_STRING, "equalsIgnoreCase").parameterTypes(JAVA_LANG_STRING);
+  private static final CallMatcher STRING_LOWER_CASE = exactInstanceCall(JAVA_LANG_STRING, "toLowerCase").parameterCount(0);
+  private static final CallMatcher STRING_UPPER_CASE = exactInstanceCall(JAVA_LANG_STRING, "toUpperCase").parameterCount(0);
 
   public boolean ignoreStringConstructor = false;
 
@@ -93,7 +97,9 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       .register(METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER, this::getRedundantZeroAsSecondParameterProblem)
       .register(STRING_LAST_INDEX_OF, this::getLastIndexOfProblem)
       .register(STRING_IS_EMPTY, this::getRedundantCaseChangeProblem)
-      .register(STRING_EQUALS, this::getRedundantSubstringEqualsProblem);
+      .register(STRING_EQUALS, this::getRedundantSubstringEqualsProblem)
+      .register(STRING_EQUALS, this::getRedundantCaseEqualsProblem)
+      .register(STRING_EQUALS_IGNORE_CASE, this::getRedundantCaseEqualsProblem);
     private final InspectionManager myManager;
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
@@ -159,6 +165,80 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       return null;
     }
 
+    private ProblemDescriptor getRedundantCaseEqualsProblem(PsiMethodCallExpression call) {
+
+      PsiExpression equalTo = call.getArgumentList().getExpressions()[0];
+
+      //case: "foo".equals(s.toLowerCase())
+      if (equalTo instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression equalsToCallExpression = (PsiMethodCallExpression)equalTo;
+        if (isChangeCaseCall(equalsToCallExpression) &&
+            ExpressionUtils.computeConstantExpression(call.getMethodExpression().getQualifierExpression()) instanceof String) {
+          PsiElement anchor = equalsToCallExpression.getMethodExpression().getReferenceNameElement();
+          if (anchor == null) {
+            return null;
+          }
+          return createProblem(equalsToCallExpression, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.RIGHT);
+        }
+      }
+
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      if (qualifierCall == null) return null;
+      PsiExpression receiver = qualifierCall.getMethodExpression().getQualifierExpression();
+      if (receiver == null) return null;
+
+      //cases:
+      //- text1.toLowerCase().equals("test2")
+      //- text1.toLowerCase().equals(text2.toLowerCase())
+      if (
+        isChangeCaseCall(qualifierCall)) {
+        PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
+        if (anchor == null) {
+          return null;
+        }
+        //case: text1.toLowerCase().equals("test2")
+        if (ExpressionUtils.computeConstantExpression(equalTo) instanceof String) {
+          return createProblem(qualifierCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.LEFT);
+        }
+
+        //case: text1.toLowerCase().equals(text2.toLowerCase())
+        if (equalTo instanceof PsiMethodCallExpression) {
+          PsiMethodCallExpression secondCall = (PsiMethodCallExpression)equalTo;
+          if (isEqualChangeCaseCall(qualifierCall, secondCall)) {
+            return createProblem(secondCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.BOTH);
+          }
+        }
+      }
+
+      return null;
+    }
+
+    @NotNull
+    private ProblemDescriptor createProblem(PsiMethodCallExpression equalsToCallExpression,
+                                            PsiElement anchor,
+                                            RemoveRedundantChangeCaseFix.PlaceCaseEqualType type) {
+      return myManager.createProblemDescriptor(anchor, (TextRange)null,
+                                               InspectionGadgetsBundle.message("inspection.redundant.string.call.may.be.message"),
+                                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+                                               new RemoveRedundantChangeCaseFix(getChangeCaseType(equalsToCallExpression), type));
+    }
+
+
+    private static boolean isChangeCaseCall(@NotNull PsiMethodCallExpression qualifierCall) {
+      return (STRING_UPPER_CASE.test(qualifierCall) || STRING_LOWER_CASE.test(qualifierCall));
+    }
+
+    private static boolean isEqualChangeCaseCall(@NotNull PsiMethodCallExpression qualifierCall,
+                                                 @NotNull PsiMethodCallExpression secondCall) {
+      return (STRING_UPPER_CASE.test(secondCall) && STRING_UPPER_CASE.test(qualifierCall)) ||
+             (STRING_LOWER_CASE.test(secondCall) && STRING_LOWER_CASE.test(qualifierCall));
+    }
+
+    @NotNull
+    private static String getChangeCaseType(@NotNull PsiMethodCallExpression call) {
+      return STRING_UPPER_CASE.test(call) ? "toUpperCase()" : "toLowerCase()";
+    }
+
     private ProblemDescriptor getRedundantSubstringEqualsProblem(PsiMethodCallExpression call) {
       PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
       if (qualifierCall == null) return null;
@@ -198,7 +278,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                      new RemoveRedundantSubstringFix("endsWith"));
           }
         }
-      } 
+      }
       return null;
     }
 
@@ -410,6 +490,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
      * and if so it checks if the expression should be converted to string according to its surroundings.
      * If the expression is not required to be converted to string explicitly then the expression is a good candidate
      * to be converted with {@link String#charAt(int)}
+     *
      * @param call an expression to examine
      * @return true if the expression is a good candidate to to be converted with {@link String#charAt(int)}, otherwise - false
      */
@@ -428,7 +509,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       PsiMethodCallExpression argCall = tryCast(PsiUtil.skipParenthesizedExprDown(stringLengthCandidate), PsiMethodCallExpression.class);
       return STRING_LENGTH.test(argCall) &&
              EquivalenceChecker.getCanonicalPsiEquivalence()
-                               .expressionsAreEquivalent(stringExpression, argCall.getMethodExpression().getQualifierExpression());
+               .expressionsAreEquivalent(stringExpression, argCall.getMethodExpression().getQualifierExpression());
     }
 
     @NotNull
@@ -565,7 +646,78 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         );
       }
     }
+  }
 
+
+  private static class RemoveRedundantChangeCaseFix implements LocalQuickFix {
+    private final @NotNull String caseRedundant;
+    private final @NotNull PlaceCaseEqualType myPlaceCaseEqualType;
+    private final static String equalsIgnoreCase = "equalsIgnoreCase";
+
+    private enum PlaceCaseEqualType {
+      LEFT, RIGHT, BOTH
+    }
+
+    RemoveRedundantChangeCaseFix(@NotNull String caseRedundant, @NotNull PlaceCaseEqualType placeCaseEqualType) {
+      this.caseRedundant = caseRedundant;
+      this.myPlaceCaseEqualType = placeCaseEqualType;
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("remove.redundant.change.case.fix.text", caseRedundant);
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("inspection.redundant.string.fix.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+
+      PsiMethodCallExpression changeCaseCall = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      if (changeCaseCall == null) return;
+
+      if (myPlaceCaseEqualType == PlaceCaseEqualType.RIGHT) {
+        fixRightChangeCase(changeCaseCall);
+        return;
+      }
+
+      fixLeftAndBothChangeCase(changeCaseCall);
+    }
+
+    private static void fixRightChangeCase(PsiMethodCallExpression changeCaseCall) {
+      PsiMethodCallExpression equalsCall = PsiTreeUtil.getParentOfType(changeCaseCall, PsiMethodCallExpression.class);
+      if (equalsCall == null) return ;
+      PsiExpression qualifierBeforeChangeCase = ExpressionUtils.getEffectiveQualifier(changeCaseCall.getMethodExpression());
+      if (qualifierBeforeChangeCase == null) return ;
+      CommentTracker ct = new CommentTracker();
+      ct.replaceAndRestoreComments(changeCaseCall, qualifierBeforeChangeCase);
+      ExpressionUtils.bindCallTo(equalsCall, equalsIgnoreCase);
+    }
+
+    private void fixLeftAndBothChangeCase(PsiMethodCallExpression changeCaseCall) {
+      PsiExpression qualifierBeforeChangeCase = changeCaseCall.getMethodExpression().getQualifierExpression();
+      if (qualifierBeforeChangeCase == null) return;
+      PsiMethodCallExpression equalsCall = ExpressionUtils.getCallForQualifier(changeCaseCall);
+      if (equalsCall == null) return;
+      if (myPlaceCaseEqualType == PlaceCaseEqualType.BOTH) {
+        PsiExpression secondChangeCaseCall = equalsCall.getArgumentList().getExpressions()[0];
+        if (secondChangeCaseCall == null) return;
+        PsiExpression secondQualifierBeforeChangeCase = ExpressionUtils.getEffectiveQualifier(((PsiMethodCallExpression)secondChangeCaseCall).getMethodExpression());
+        if (secondQualifierBeforeChangeCase == null) return;
+        CommentTracker ct = new CommentTracker();
+        ct.replaceAndRestoreComments(secondChangeCaseCall, secondQualifierBeforeChangeCase);
+      }
+      ExpressionUtils.bindCallTo(equalsCall, equalsIgnoreCase);
+      CommentTracker ct = new CommentTracker();
+      ct.replaceAndRestoreComments(changeCaseCall, qualifierBeforeChangeCase);
+    }
   }
 
   private static class RemoveRedundantSubstringFix implements LocalQuickFix {
