@@ -779,8 +779,10 @@
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>
       <reference ref="$Paste"/>
-      <reference ref="PasteMultiple"/>
-      <reference ref="EditorPasteSimple"/>
+      <group id="Copy.Paste.Special" popup="true">
+        <reference ref="EditorPasteSimple"/>
+        <reference ref="PasteMultiple"/>
+      </group>
       <reference ref="EditorToggleColumnMode"/>
       <separator/>
       <group id="EditorPopupMenu1"/>
