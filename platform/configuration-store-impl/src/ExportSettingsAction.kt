@@ -235,15 +235,8 @@ private inline fun getAdditionalExportFile(stateAnnotation: State, storageManage
     return null
   }
 
-  val additionalExportFile: Path?
-  // backward compatibility - path can contain macro
-  if (additionalExportPath[0] == '$') {
-    additionalExportFile = storageManager.expandMacro(additionalExportPath)
-  }
-  else {
-    @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-    additionalExportFile = storageManager.expandMacro(ROOT_CONFIG).resolve(additionalExportPath)!!
-  }
+  @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
+  val additionalExportFile = storageManager.expandMacro(ROOT_CONFIG).resolve(additionalExportPath)!!
   return if (isSkipFile(additionalExportFile)) null else additionalExportFile
 }
 
