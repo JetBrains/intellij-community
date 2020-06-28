@@ -31,6 +31,9 @@ Includes the following features:</p>
     <extensionPoint qualifiedName="org.intellij.markdown.codeFencePluginGeneratingProvider"
                     interface="org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.previewStylesProvider"
+                    interface="org.intellij.plugins.markdown.ui.preview.MarkdownPreviewStylesProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
