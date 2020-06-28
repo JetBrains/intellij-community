@@ -51,7 +51,7 @@ class CompilationOutputsUploader {
     this.uploadCompilationOutputsOnly = uploadCompilationOutputsOnly
   }
 
-  def upload(Boolean publishTeamCityArtifacts) {
+  def upload() {
     if (!sourcesStateProcessor.sourceStateFile.exists()) {
       context.messages.warning("Compilation outputs doesn't contain source state file, please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag")
       return
@@ -62,16 +62,16 @@ class CompilationOutputsUploader {
     executor.prestartAllCoreThreads()
     try {
       def start = System.nanoTime()
-      Map<String, Map<String, BuildTargetState>> currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
       // No need to upload JPS caches archive if only hot compile outputs are required
       // without any incremental compilation (for tests execution as an example)
       if (!uploadCompilationOutputsOnly) {
         executor.submit {
           // Upload jps caches started first because of the significant size of the output
-          uploadCompilationCache(publishTeamCityArtifacts)
+          uploadCompilationCache()
         }
       }
 
+      def currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
       uploadCompilationOutputs(currentSourcesState, uploader, executor)
 
       executor.waitForAllComplete(messages)
@@ -88,21 +88,21 @@ class CompilationOutputsUploader {
     }
   }
 
-  private void uploadCompilationCache(Boolean publishTeamCityArtifacts) {
-    String cachePath = "caches/$commitHash"
-    def exists = uploader.isExist(cachePath)
-
+  File buildCompilationCacheZip() {
     File dataStorageRoot = context.compilationData.dataStorageRoot
     File zipFile = new File(dataStorageRoot.parent, commitHash)
     zipBinaryData(zipFile, dataStorageRoot)
-    if (!exists) {
+    return zipFile
+  }
+
+  private void uploadCompilationCache() {
+    File zipFile = buildCompilationCacheZip()
+    String cachePath = "caches/$commitHash"
+    if (!uploader.isExist(cachePath)) {
       uploader.upload(cachePath, zipFile)
     }
-
     File zipCopy = new File(tmpDir, cachePath)
     move(zipFile, zipCopy)
-    // Publish artifact for dependent configuration
-    if (publishTeamCityArtifacts) context.messages.artifactBuilt(zipCopy.absolutePath)
   }
 
   private void uploadMetadata() {

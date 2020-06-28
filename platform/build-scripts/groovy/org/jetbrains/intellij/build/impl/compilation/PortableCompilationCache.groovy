@@ -121,12 +121,12 @@ class PortableCompilationCache {
   /**
    * Upload local compilation cache to remote cache
    */
-  def upload(Boolean publishTeamCityArtifacts) {
+  def upload() {
     if (!forceRebuild && downloader.availableForHeadCommit) {
       context.messages.info('Nothing new to upload')
     }
     else {
-      uploader.upload(publishTeamCityArtifacts)
+      uploader.upload()
     }
   }
 
@@ -135,5 +135,9 @@ class PortableCompilationCache {
    */
   def publish() {
     uploader.updateCommitHistory()
+  }
+
+  def buildCompilationCacheZip() {
+    uploader.buildCompilationCacheZip()
   }
 }
