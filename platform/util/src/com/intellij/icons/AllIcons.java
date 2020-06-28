@@ -455,6 +455,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ProjectStructure = load("/general/projectStructure.svg");
     /** 16x16 */ public static final @NotNull Icon ProjectTab = load("/general/projectTab.svg");
     /** 32x32 */ public static final @NotNull Icon QuestionDialog = load("/general/questionDialog.svg");
+    /** 16x16 */ public static final @NotNull Icon ReaderMode = load("/general/readerMode.svg");
     /** 16x16 */ public static final @NotNull Icon Remove = load("/general/remove.svg");
     /** 16x16 */ public static final @NotNull Icon Reset = load("/general/reset.svg");
     /** 16x16 */ public static final @NotNull Icon RunWithCoverage = load("/general/runWithCoverage.svg");
