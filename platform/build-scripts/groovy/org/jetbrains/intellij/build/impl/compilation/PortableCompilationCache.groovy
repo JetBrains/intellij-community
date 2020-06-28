@@ -23,7 +23,12 @@ class PortableCompilationCache {
     ProjectStamps.PORTABLE_CACHES_PROPERTY
   ]
   @Lazy
-  private String remoteGitUrl = { require(GIT_REPOSITORY_URL_PROPERTY, "Repository url") }()
+  private String remoteGitUrl = {
+    require(GIT_REPOSITORY_URL_PROPERTY, "Repository url").with {
+      context.messages.info("Git remote url $it")
+      it
+    }
+  }()
   @Lazy
   private String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }()
   /**
@@ -34,6 +39,17 @@ class PortableCompilationCache {
   private CompilationOutputsDownloader downloader = {
     def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
     new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
+  }()
+  @Lazy
+  private CompilationOutputsUploader uploader = {
+    def remoteCacheUploadUrl = require('intellij.jps.remote.cache.upload.url', "JPS remote cache upload url")
+    def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
+    def uploadCompilationOutputsOnly = bool('intellij.jps.remote.cache.compilationOutputsOnly', false)
+    def commitHash = require("build.vcs.number", "Repository commit")
+    context.messages.buildStatus(commitHash)
+    new CompilationOutputsUploader(
+      context, remoteCacheUploadUrl, remoteGitUrl, commitHash, syncFolder, uploadCompilationOutputsOnly
+    )
   }()
   private File cacheDir = context.compilationData.dataStorageRoot
   private boolean forceRebuild = bool('intellij.jps.cache.rebuild.force', false)
@@ -70,7 +86,8 @@ class PortableCompilationCache {
       // For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
       context.options.incrementalCompilation = !forceRebuild
       CompilationTasks.create(context).resolveProjectDependenciesAndCompileAll()
-    } else if (downloader.availableForHeadCommit) {
+    }
+    else if (downloader.availableForHeadCommit) {
       CompilationTasks.create(context).resolveProjectDependencies()
     }
     context.options.incrementalCompilation = false
@@ -109,15 +126,14 @@ class PortableCompilationCache {
       context.messages.info('Nothing new to upload')
     }
     else {
-      def remoteCacheUrl = require('intellij.jps.remote.cache.upload.url', "JPS remote cache upload url")
-      def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
-      def commitHash = require("build.vcs.number", "Repository commit")
-      context.messages.buildStatus(commitHash)
-      def updateCommitHistory = bool('intellij.jps.remote.cache.updateHistory', true)
-      context.messages.info("Git remote url $remoteGitUrl")
-      new CompilationOutputsUploader(
-        context, remoteCacheUrl, remoteGitUrl, commitHash, syncFolder, updateCommitHistory
-      ).upload(publishTeamCityArtifacts)
+      uploader.upload(publishTeamCityArtifacts)
     }
+  }
+
+  /**
+   * Publish already uploaded compilation cache to remote cache
+   */
+  def publish() {
+    uploader.updateCommitHistory()
   }
 }
