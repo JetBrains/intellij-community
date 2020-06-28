@@ -20,8 +20,8 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     if (e.getProject() == null || text == null) {
       BrowserUtil.browse(whatsNewUrl);
     } else {
-      HTMLEditorProvider.Companion.openEditor(e.getProject(), text, whatsNewUrl + getEmbeddedSuffix(), null,
-                                              () -> "<a href=\"" + whatsNewUrl + "\">What's new page.</a>");
+      String url = whatsNewUrl + getEmbeddedSuffix();
+      HTMLEditorProvider.Companion.openEditor(e.getProject(), text, url, null, "<a href=\"" + url + "\">What's new page.</a>");
     }
   }
 

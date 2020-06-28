@@ -19,10 +19,9 @@ import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.network.CefRequest
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
-import java.util.function.Supplier
 
 class HTMLFileEditor(url: String? = null, html: String? = null,
-                     var timeoutCallback: Supplier<String>? = Supplier { EditorBundle.message("message.html.editor.timeout") }) : FileEditor {
+                     var timeoutCallback: String? = EditorBundle.message("message.html.editor.timeout") ) : FileEditor {
   private val htmlPanelComponent = JCEFHtmlPanel(null)
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this).apply { setLoadingText(CommonBundle.getLoadingTreeNodeText()) }
   private val alarm = AlarmFactory.getInstance().create()
@@ -44,7 +43,7 @@ class HTMLFileEditor(url: String? = null, html: String? = null,
   init {
     htmlPanelComponent.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
       override fun onLoadStart(browser: CefBrowser?, frame: CefFrame?, transitionType: CefRequest.TransitionType?) {
-        alarm.addRequest({ htmlPanelComponent.setHtml(timeoutCallback!!.get()) }, Registry.intValue("html.editor.timeout", 10000))
+        alarm.addRequest({ htmlPanelComponent.setHtml(timeoutCallback!!) }, Registry.intValue("html.editor.timeout", 10000))
       }
 
       override fun onLoadEnd(browser: CefBrowser?, frame: CefFrame?, httpStatusCode: Int) {
