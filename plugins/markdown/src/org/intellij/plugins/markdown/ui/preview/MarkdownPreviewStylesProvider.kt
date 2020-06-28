@@ -3,10 +3,12 @@ package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Enables plugins to provide custom CSS styles for markdown preview. Overrides user settings.
  */
+@ApiStatus.Internal
 interface MarkdownPreviewStylesProvider {
   fun getStyles(file: VirtualFile): String?
 
