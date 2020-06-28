@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
@@ -328,6 +329,12 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
         final String currentHtml = "<html><head></head>" + SANITIZER_VALUE.getValue().sanitize(html) + "</html>";
         if (!currentHtml.equals(myLastRenderedHtml)) {
           myLastRenderedHtml = currentHtml;
+          ExtensionPointName<MarkdownPreviewStylesProvider> epName = MarkdownPreviewStylesProvider.Companion.getExtensionPointName();
+          String styles = epName.computeSafeIfAny(provider -> provider.getStyles(myFile));
+          if (styles != null) {
+            myPanel.setCSS(styles);
+          }
+
           myPanel.setHtml(myLastRenderedHtml);
 
           if (preserveScrollOffset) {
