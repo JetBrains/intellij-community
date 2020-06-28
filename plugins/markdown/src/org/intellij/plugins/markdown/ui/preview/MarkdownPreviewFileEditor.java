@@ -378,7 +378,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     String styles = getCustomStyles();
 
     if (styles != null) {
-      panel.setCSS(styles);
+      panel.setCSS(styles, MarkdownCssSettings.getDefaultCssSettings(StartupUiUtil.isUnderDarcula()).getStylesheetUri());
     }
     else {
       String inlineCss = cssSettings.isTextEnabled() ? cssSettings.getStylesheetText() : null;
