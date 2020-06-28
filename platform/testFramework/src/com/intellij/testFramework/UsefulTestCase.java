@@ -81,12 +81,10 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
-  @NotNull
-  private final Disposable myTestRootDisposable = new TestDisposable();
+  private @Nullable Disposable myTestRootDisposable;
 
-  private final List<Path> myPathsToKeep = new ArrayList<>();
-
-  private Path myTempDir;
+  private @Nullable List<Path> myPathsToKeep;
+  private @Nullable Path myTempDir;
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
@@ -194,9 +192,9 @@ public abstract class UsefulTestCase extends TestCase {
       () -> cleanupDeleteOnExitHookList(),
       () -> Disposer.setDebugMode(true),
       () -> {
-        if (shouldContainTempFiles()) {
+        if (myTempDir != null) {
           FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-          if (myPathsToKeep.isEmpty()) {
+          if (myPathsToKeep == null || myPathsToKeep.isEmpty()) {
             PathKt.delete(myTempDir);
           }
           else {
@@ -222,10 +220,16 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void addTmpFileToKeep(@NotNull Path file) {
+    if (myPathsToKeep == null) {
+      myPathsToKeep = new ArrayList<>();
+    }
     myPathsToKeep.add(file.toAbsolutePath());
   }
 
   private boolean shouldKeepTmpFile(@NotNull Path file) {
+    if (myPathsToKeep == null || myPathsToKeep.isEmpty()) {
+      return false;
+    }
     for (Path pathToKeep : myPathsToKeep) {
       if (file.equals(pathToKeep)) {
         return true;
@@ -318,6 +322,9 @@ public abstract class UsefulTestCase extends TestCase {
    */
   @NotNull
   public Disposable getTestRootDisposable() {
+    if (myTestRootDisposable == null) {
+      myTestRootDisposable = new TestDisposable();
+    }
     return myTestRootDisposable;
   }
 
@@ -919,7 +926,8 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static void checkCodeInsightSettingsEqual(@NotNull CodeInsightSettings oldSettings, @NotNull CodeInsightSettings settings) {
+  private static void checkCodeInsightSettingsEqual(@SuppressWarnings("SameParameterValue") @NotNull CodeInsightSettings oldSettings,
+                                                    @NotNull CodeInsightSettings settings) {
     if (!oldSettings.equals(settings)) {
       Element newS = new Element("temp");
       settings.writeExternal(newS);
