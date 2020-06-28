@@ -20,19 +20,6 @@ class Git {
     return execute("git log -$commitsCount --pretty=tformat:%H")
   }
 
-  String currentBranch(boolean allowDetachedHead) {
-    try {
-      // Command will fail in case of detached HEAD (e.g. during Safe Push)
-      return execute('git symbolic-ref --short HEAD').first()
-    } catch(IllegalStateException e) {
-      if (allowDetachedHead) {
-        return null
-      }
-
-      throw e
-    }
-  }
-
   private List<String> execute(String command) {
     def process = command.execute((List)null, dir)
     def output = new BufferedReader(new InputStreamReader(process.inputStream, StandardCharsets.UTF_8)).withCloseable {

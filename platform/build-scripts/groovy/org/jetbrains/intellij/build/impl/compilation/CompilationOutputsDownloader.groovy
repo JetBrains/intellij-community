@@ -2,9 +2,7 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
@@ -30,7 +28,6 @@ import java.lang.reflect.Type
 
 @CompileStatic
 class CompilationOutputsDownloader implements AutoCloseable {
-  private static final Type COMMITS_HISTORY_TYPE = new TypeToken<Map<String, Set<String>>>() {}.getType()
   private static final int COMMITS_COUNT = 1_000
 
   private final GetClient getClient = new GetClient(context.messages)
@@ -61,33 +58,17 @@ class CompilationOutputsDownloader implements AutoCloseable {
     }
   }()
 
-  private String defaultBranch
   @Lazy
-  private Set<String> availableCachesKeys = {
-    CommitsHistory commitsHistory = new CommitsHistory(git.currentBranch(true), defaultBranch)
-
-    def masterCommitsHistory = getClient.doGet("$remoteCacheUrl/${commitsHistory.defaultBranchPath}", COMMITS_HISTORY_TYPE)
-    Set<String> branchCommits = Collections.emptySet()
-    if (!commitsHistory.isDefaultBranch) {
-      context.messages.info("Using ${commitsHistory.path} to get additional cache keys.")
-
-      String branchCommitHistoryUrl = "$remoteCacheUrl/${commitsHistory.path}"
-      if (getClient.exists(branchCommitHistoryUrl)) {
-        def branchCommitsHistory = getClient.doGet(branchCommitHistoryUrl, COMMITS_HISTORY_TYPE)
-        branchCommits = branchCommitsHistory[gitUrl] as Set<String>
-      }
-    }
-
-    return (masterCommitsHistory[gitUrl] as Set<String>) + branchCommits
+  private Collection<String> availableCachesKeys = {
+    def json = getClient.doGet("$remoteCacheUrl/$CommitsHistory.JSON_FILE")
+    new CommitsHistory(json).commitsForRemote(gitUrl)
   }()
 
-  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl,
-                               boolean availableForHeadCommit, String defaultBranch) {
+  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
     this.availableForHeadCommitForced = availableForHeadCommit
-    this.defaultBranch = defaultBranch
 
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
@@ -209,30 +190,35 @@ class GetClient {
     }
   }
 
-  def doGet(String url, Type responseType) {
-    CloseableHttpResponse response = null
-    return getWithRetry(url, { HttpGet request ->
-      response = httpClient.execute(request)
-      def responseString = EntityUtils.toString(response.entity, ContentType.APPLICATION_JSON.charset)
-      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-        DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, responseString)
-        throwDownloadException(response, downloadException)
+  String doGet(String url) {
+    getWithRetry(url, { HttpGet request ->
+      httpClient.execute(request).withCloseable { response ->
+        def responseString = EntityUtils.toString(response.entity, ContentType.APPLICATION_JSON.charset)
+        if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+          DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, responseString)
+          throwDownloadException(response, downloadException)
+        }
+        responseString
       }
-      return gson.fromJson(responseString, responseType)
-    }, { StreamUtil.closeStream(response) })
+    })
+  }
+
+  def doGet(String url, Type responseType) {
+    gson.fromJson(doGet(url), responseType)
   }
 
   void doGet(String url, File file) {
-    CloseableHttpResponse response = null
     getWithRetry(url, { HttpGet request ->
-      response = httpClient.execute(request)
-      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-        DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
-        throwDownloadException(response, downloadException)
+      httpClient.execute(request).withCloseable { response ->
+        if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+          DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
+          throwDownloadException(response, downloadException)
+        }
+        file << response.entity.content
       }
-      file << response.entity.content
-      return
-    }, { StreamUtil.closeStream(response) })
+    })
+
+    return
   }
 
   private static void throwDownloadException(CloseableHttpResponse response, DownloadException downloadException) {
@@ -244,7 +230,7 @@ class GetClient {
     }
   }
 
-  private <T> T getWithRetry(String url, Closure<T> operation, Closure<T> finalizer = {}) {
+  private <T> T getWithRetry(String url, Closure<T> operation) {
     return new Retry(buildMessages).call {
       try {
         operation(new HttpGet(url))
@@ -254,9 +240,6 @@ class GetClient {
       }
       catch (Exception ex) {
         throw new DownloadException(url, ex)
-      }
-      finally {
-        finalizer()
       }
     }
   }

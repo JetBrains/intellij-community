@@ -52,8 +52,8 @@ public class TemporaryCacheServerClient implements JpsServerClient {
 
   @NotNull
   @Override
-  public Set<String> getAllCacheKeys(@NotNull Project project, @NotNull String branchName) {
-    Map<String, List<String>> response = doGetRequest(project, branchName, getRequestHeaders());
+  public Set<String> getAllCacheKeys(@NotNull Project project) {
+    Map<String, List<String>> response = doGetRequest(project, getRequestHeaders());
     if (response == null) return Collections.emptySet();
     return response.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
   }
@@ -154,10 +154,9 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     }
   }
 
-  private Map<String, List<String>> doGetRequest(@NotNull Project project, @NotNull String branchName, @NotNull Map<String, String> headers) {
+  private Map<String, List<String>> doGetRequest(@NotNull Project project, @NotNull Map<String, String> headers) {
     try {
-      String urlPrefix = !branchName.equals("master") ? "/" + branchName : "";
-      return HttpRequests.request(stringThree + urlPrefix  + "/commit_history.json")
+      return HttpRequests.request(stringThree + "/commit_history.json")
         .tuner(tuner -> headers.forEach((k, v) -> tuner.addRequestProperty(k, v)))
         .connect(it -> {
           URLConnection connection = it.getConnection();
