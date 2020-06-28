@@ -30,11 +30,10 @@ class PortableCompilationCache {
    * If true then current execution is expected to perform only warm up and upload of new commits caches, nothing else like tests execution
    */
   private boolean uploadOnly = bool('intellij.jps.cache.uploadOnly', false)
-  private String defaultBranch = System.getProperty('intellij.jps.cache.defaultBranch', 'master')
   @Lazy
   private CompilationOutputsDownloader downloader = {
     def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
-    new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit, defaultBranch)
+    new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
   }()
   private File cacheDir = context.compilationData.dataStorageRoot
   private boolean forceRebuild = bool('intellij.jps.cache.rebuild.force', false)
@@ -116,10 +115,8 @@ class PortableCompilationCache {
       context.messages.buildStatus(commitHash)
       def updateCommitHistory = bool('intellij.jps.remote.cache.updateHistory', true)
       context.messages.info("Git remote url $remoteGitUrl")
-      Map<String, String> remotePerCommitHash = [:]
-      remotePerCommitHash[remoteGitUrl] = commitHash
       new CompilationOutputsUploader(
-        context, remoteCacheUrl, remotePerCommitHash, syncFolder, updateCommitHistory
+        context, remoteCacheUrl, remoteGitUrl, commitHash, syncFolder, updateCommitHistory
       ).upload(publishTeamCityArtifacts)
     }
   }

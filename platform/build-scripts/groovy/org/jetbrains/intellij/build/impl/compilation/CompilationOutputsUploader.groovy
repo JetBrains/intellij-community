@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -21,19 +20,15 @@ import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 
-import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 @CompileStatic
 class CompilationOutputsUploader {
-  private static final int COMMITS_LIMIT = 200
-
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
   private final String tmpDir
-  private final Map<String, String> remotePerCommitHash
   private final boolean updateCommitHistory
 
   private final AtomicInteger uploadedOutputsCount = new AtomicInteger()
@@ -41,29 +36,17 @@ class CompilationOutputsUploader {
   private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
   private final JpsCompilationPartsUploader uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
 
-  @Lazy
-  private String commitsHistoryPath = {
-    Git git = new Git(context.paths.projectHome.trim())
-    return CommitsHistory.pathForBranch(git.currentBranch(false))
-  }()
+  private final String remoteGitUrl
+  private final String commitHash
 
-  @Lazy
-  private String commitHash = {
-    if (remotePerCommitHash.size() == 1) return remotePerCommitHash.values().first()
-    StringBuilder commitHashBuilder = new StringBuilder()
-    int hashLength = (remotePerCommitHash.values().first().length() / remotePerCommitHash.size()) as int
-    remotePerCommitHash.each { key, value ->
-      commitHashBuilder.append(value.substring(0, hashLength))
-    }
-    return commitHashBuilder.toString()
-  }()
-
-  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash, String tmpDir,
-                             boolean updateCommitHistory) {
+  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl,
+                             String remoteGitUrl, String commitHash,
+                             String tmpDir, boolean updateCommitHistory) {
     this.tmpDir = tmpDir
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
-    this.remotePerCommitHash = remotePerCommitHash
+    this.remoteGitUrl = remoteGitUrl
+    this.commitHash = commitHash
     this.context = context
     this.updateCommitHistory = updateCommitHistory
   }
@@ -170,35 +153,16 @@ class CompilationOutputsUploader {
   }
 
   private void updateCommitHistory(JpsCompilationPartsUploader uploader) {
-    Map<String, List<String>> commitHistory = new HashMap<>()
-    if (uploader.isExist(commitsHistoryPath, false)) {
-      def content = uploader.getAsString(commitsHistoryPath)
-      if (!content.isEmpty()) {
-        Type type = new TypeToken<Map<String, List<String>>>() {}.getType()
-        commitHistory = new Gson().fromJson(content, type) as Map<String, List<String>>
-      }
+    def commitsHistory = new CommitsHistory([(remoteGitUrl): [commitHash].toSet()])
+    if (uploader.isExist(CommitsHistory.JSON_FILE, false)) {
+      def json = uploader.getAsString(CommitsHistory.JSON_FILE)
+      commitsHistory += new CommitsHistory(json)
     }
-
-    remotePerCommitHash.each { key, value ->
-      def listOfCommits = commitHistory.get(key)
-      if (listOfCommits == null) {
-        def newList = new ArrayList()
-        newList.add(value)
-        commitHistory.put(key, newList)
-      }
-      else {
-        listOfCommits.add(value)
-        if (listOfCommits.size() > COMMITS_LIMIT) commitHistory.put(key, listOfCommits.takeRight(COMMITS_LIMIT))
-      }
-    }
-
     // Upload and publish file with commits history
-    def jsonAsString = new Gson().toJson(commitHistory)
-    File commitHistoryFile = new File(tmpDir, commitsHistoryPath)
+    File commitHistoryFile = new File(tmpDir, CommitsHistory.JSON_FILE)
     commitHistoryFile.parentFile.mkdirs()
-    commitHistoryFile.write(jsonAsString)
-
-    uploader.upload(commitsHistoryPath, commitHistoryFile)
+    commitHistoryFile.write(commitsHistory.toJson())
+    uploader.upload(CommitsHistory.JSON_FILE, commitHistoryFile)
   }
 
   private static move(File src, File dst) {
