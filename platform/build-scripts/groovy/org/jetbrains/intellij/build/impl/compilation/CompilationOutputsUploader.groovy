@@ -29,7 +29,7 @@ class CompilationOutputsUploader {
   private final BuildMessages messages
   private final String remoteCacheUrl
   private final String tmpDir
-  private final boolean updateCommitHistory
+  private final boolean uploadCompilationOutputsOnly
 
   private final AtomicInteger uploadedOutputsCount = new AtomicInteger()
 
@@ -41,14 +41,14 @@ class CompilationOutputsUploader {
 
   CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl,
                              String remoteGitUrl, String commitHash,
-                             String tmpDir, boolean updateCommitHistory) {
+                             String tmpDir, boolean uploadCompilationOutputsOnly) {
     this.tmpDir = tmpDir
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
     this.remoteGitUrl = remoteGitUrl
     this.commitHash = commitHash
     this.context = context
-    this.updateCommitHistory = updateCommitHistory
+    this.uploadCompilationOutputsOnly = uploadCompilationOutputsOnly
   }
 
   def upload(Boolean publishTeamCityArtifacts) {
@@ -63,10 +63,9 @@ class CompilationOutputsUploader {
     try {
       def start = System.nanoTime()
       Map<String, Map<String, BuildTargetState>> currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
-      // In case if commits history is not updated it makes no sense to upload
-      // JPS caches archive as we're going to use hot compile outputs only and
-      // not to perform any further compilations.
-      if (updateCommitHistory) {
+      // No need to upload JPS caches archive if only hot compile outputs are required
+      // without any incremental compilation (for tests execution as an example)
+      if (!uploadCompilationOutputsOnly) {
         executor.submit {
           // Upload jps caches started first because of the significant size of the output
           uploadCompilationCache(publishTeamCityArtifacts)
@@ -82,9 +81,6 @@ class CompilationOutputsUploader {
       messages.reportStatisticValue("Uploaded outputs", String.valueOf(uploadedOutputsCount.get()))
 
       uploadMetadata()
-      if (updateCommitHistory) {
-        updateCommitHistory(uploader)
-      }
     }
     finally {
       executor.close()
@@ -152,7 +148,7 @@ class CompilationOutputsUploader {
     }
   }
 
-  private void updateCommitHistory(JpsCompilationPartsUploader uploader) {
+  void updateCommitHistory() {
     def commitsHistory = new CommitsHistory([(remoteGitUrl): [commitHash].toSet()])
     if (uploader.isExist(CommitsHistory.JSON_FILE, false)) {
       def json = uploader.getAsString(CommitsHistory.JSON_FILE)
