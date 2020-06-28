@@ -24,6 +24,23 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
                  "}", text);
   }
 
+  public void testStaticImportsIntentionPreview() {
+    configureFromFileText("Test.java",
+                          "class Computer {\n" +
+                          "    void f() {\n" +
+                          "      double pi = Ma<caret>th.PI;\n" +
+                          "    }\n" +
+                          "  }");
+    IntentionAction action = findActionWithText("Add on-demand static import for 'java.lang.Math'");
+    assertNotNull(action);
+    String text = IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), action, getFile(), getEditor());
+    assertEquals("import static java.lang.Math.*;class Computer {\n" +
+                 "    void f() {\n" +
+                 "      double pi = PI;\n" +
+                 "    }\n" +
+                 "  }", text);
+  }
+
   public void testIntentionPreviewInjection() {
     configureFromFileText("Test.java",
                           "import java.util.regex.Pattern;\n" +
