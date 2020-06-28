@@ -12,6 +12,7 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.TerminalDebugSmartCommandAction;
@@ -100,7 +101,9 @@ public final class TerminalShellCommandHandlerHelper {
       String title = TerminalBundle.message("smart_command_execution.notification.title");
       String content = TerminalBundle.message("smart_command_execution.notification.text",
                                               KeymapUtil.getFirstKeyboardShortcutText(getRunAction()),
-                                              KeymapUtil.getFirstKeyboardShortcutText(getDebugAction()), GOT_IT);
+                                              KeymapUtil.getFirstKeyboardShortcutText(getDebugAction()),
+                                              ShowSettingsUtil.getSettingsMenuName(),
+                                              GOT_IT);
       NotificationListener.Adapter listener = new NotificationListener.Adapter() {
         @Override
         protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
