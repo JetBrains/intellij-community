@@ -17,9 +17,4 @@ public interface BuildOutputInstantReader {
   void pushBack();
 
   void pushBack(int numberOfLines);
-
-  // FIXME-ank: this method should be removed
-  default String getCurrentLine(){
-    return null;
-  }
 }

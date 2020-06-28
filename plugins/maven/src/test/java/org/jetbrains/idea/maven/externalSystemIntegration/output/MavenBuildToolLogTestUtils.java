@@ -357,7 +357,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
       throw new UnsupportedOperationException();
     }
 
-    public String getCurrentLine() { // FIXME-ank: made public (should be private)
+    private String getCurrentLine() {
       if (myPosition >= myLines.size() || myPosition < 0) {
         return null;
       }
