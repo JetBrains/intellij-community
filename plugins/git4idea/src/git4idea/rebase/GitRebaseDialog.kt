@@ -2,6 +2,7 @@
 package git4idea.rebase
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -25,7 +26,9 @@ import git4idea.*
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.config.GitConfigUtil
+import git4idea.config.GitRebaseSettings
 import git4idea.i18n.GitBundle
+import git4idea.log.GitRefManager.ORIGIN_MASTER_REF
 import git4idea.merge.dialog.*
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitUIUtil
@@ -51,7 +54,9 @@ class GitRebaseDialog(private val project: Project,
 
   private val repositoryManager: GitRepositoryManager = GitUtil.getRepositoryManager(project)
 
-  private val selectedOptions = mutableSetOf(RebaseOption.INTERACTIVE)
+  private val rebaseSettings = project.service<GitRebaseSettings>()
+
+  private val selectedOptions = mutableSetOf<RebaseOption>()
   private val optionInfos = mutableMapOf<RebaseOption, OptionInfo<RebaseOption>>()
 
   private val localBranches = mutableListOf<GitBranch>()
@@ -80,7 +85,7 @@ class GitRebaseDialog(private val project: Project,
 
     loadRefs()
     updateBranches()
-    originalNewBase = upstreamField.item.fullName
+    loadSettings()
 
     updateUi()
     init()
@@ -115,6 +120,15 @@ class GitRebaseDialog(private val project: Project,
 
   override fun getPreferredFocusedComponent() = upstreamField
 
+  override fun doOKAction() {
+    try {
+      saveSettings()
+    }
+    finally {
+      super.doOKAction()
+    }
+  }
+
   fun gitRoot(): VirtualFile = rootField.item
 
   fun getSelectedParams(): GitRebaseParams {
@@ -129,6 +143,22 @@ class GitRebaseDialog(private val project: Project,
     return GitRebaseParams(GitVcs.getInstance(project).version, branch, newBase, upstream,
                            RebaseOption.INTERACTIVE in selectedOptions,
                            RebaseOption.PRESERVE_MERGES in selectedOptions)
+  }
+
+  private fun saveSettings() {
+    rebaseSettings.options = selectedOptions
+    rebaseSettings.newBase = if (RebaseOption.ONTO in selectedOptions)
+      getTextField(ontoField).text
+    else
+      getTextField(upstreamField).text
+  }
+
+  private fun loadSettings() {
+    rebaseSettings.options.forEach { option -> selectedOptions += option }
+    val newBase = rebaseSettings.newBase
+    if (!newBase.isNullOrEmpty() && isValidRevision(newBase)) {
+      upstreamField.selectedItem = newBase
+    }
   }
 
   private fun validateNewBase(): ValidationInfo? {
@@ -284,8 +314,8 @@ class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateBaseFields() {
-    val upstream = getTextField(upstreamField).text
-    val onto = getTextField(ontoField).text
+    val upstream = upstreamField.item
+    val onto = ontoField.item
 
     upstreamField.removeAllItems()
     ontoField.removeAllItems()
@@ -294,8 +324,8 @@ class GitRebaseDialog(private val project: Project,
     addRefsToOntoAndFrom(remoteBranches)
     addRefsToOntoAndFrom(tags)
 
-    getTextField(upstreamField).text = upstream
-    getTextField(ontoField).text = onto
+    upstreamField.item = remoteBranches.find { branch -> branch.fullName == ORIGIN_MASTER_REF } ?: upstream
+    ontoField.item = onto
   }
 
   private fun addRefsToOntoAndFrom(refs: Collection<GitReference>) = refs.forEach { ref ->
