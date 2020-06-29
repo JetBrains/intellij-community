@@ -7,7 +7,7 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       PsiElement(word)('f')
       PsiWhiteSpace(' ')
-      PsiElement(word)('in')
+      PsiElement(in)('in')
       PsiWhiteSpace(' ')
       PsiElement(word)('a')
       LIST_TERMINATOR
@@ -26,7 +26,7 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       PsiElement(word)('FILENAME')
       PsiWhiteSpace(' ')
-      PsiElement(word)('in')
+      PsiElement(in)('in')
       PsiWhiteSpace(' ')
       PsiElement(word)('*')
       LIST_TERMINATOR
@@ -113,7 +113,7 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       PsiElement(word)('a')
       PsiWhiteSpace(' ')
-      PsiElement(word)('in')
+      PsiElement(in)('in')
       PsiErrorElement:'!', $, <number>, <string>, ARITH_SQUARE_LEFT, OPEN_BACKQUOTE, file descriptor, var, word or '{' expected, got ';'
         <empty list>
       LIST_TERMINATOR

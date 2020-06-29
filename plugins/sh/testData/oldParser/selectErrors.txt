@@ -5,7 +5,7 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       PsiElement(word)('f')
       PsiWhiteSpace(' ')
-      PsiElement(word)('in')
+      PsiElement(in)('in')
       PsiWhiteSpace(' ')
       NUMBER
         PsiElement(int)('1')
@@ -44,7 +44,7 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       PsiElement(word)('f')
       PsiWhiteSpace(' ')
-      PsiElement(word)('in')
+      PsiElement(in)('in')
       PsiWhiteSpace(' ')
       NUMBER
         PsiElement(int)('1')

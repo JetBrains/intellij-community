@@ -2112,7 +2112,7 @@ SHELL_SCRIPT
                   FOR_CLAUSE
                     PsiElement(word)('D1')
                     PsiWhiteSpace(' ')
-                    PsiElement(word)('in')
+                    PsiElement(in)('in')
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
@@ -2145,7 +2145,7 @@ SHELL_SCRIPT
                         FOR_CLAUSE
                           PsiElement(word)('D2')
                           PsiWhiteSpace(' ')
-                          PsiElement(word)('in')
+                          PsiElement(in)('in')
                           PsiWhiteSpace(' ')
                           STRING
                             PsiElement(OPEN_QUOTE)('"')
@@ -2561,7 +2561,7 @@ SHELL_SCRIPT
                   FOR_CLAUSE
                     PsiElement(word)('D')
                     PsiWhiteSpace(' ')
-                    PsiElement(word)('in')
+                    PsiElement(in)('in')
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')

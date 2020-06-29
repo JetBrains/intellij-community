@@ -91,4 +91,10 @@ public class ShForClauseImpl extends ShCompositeElementImpl implements ShForClau
     return findChildByType(RIGHT_DOUBLE_PAREN);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getIn() {
+    return findChildByType(IN);
+  }
+
 }

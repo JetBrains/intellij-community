@@ -1381,12 +1381,13 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // "in" w+ list_terminator newlines
+  // in w+ list_terminator newlines
   static boolean in_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "in_clause")) return false;
+    if (!nextTokenIs(b, IN)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, "in");
+    r = consumeToken(b, IN);
     p = r; // pin = 1
     r = r && report_error_(b, in_clause_1(b, l + 1));
     r = p && report_error_(b, list_terminator(b, l + 1)) && r;

@@ -86,6 +86,12 @@ public class ShSelectCommandImpl extends ShCommandImpl implements ShSelectComman
   }
 
   @Override
+  @Nullable
+  public PsiElement getIn() {
+    return findChildByType(IN);
+  }
+
+  @Override
   @NotNull
   public PsiElement getSelect() {
     return findNotNullChildByType(SELECT);

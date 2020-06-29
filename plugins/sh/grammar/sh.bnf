@@ -184,7 +184,7 @@ private in_for_clause ::= w (';' newlines | newlines in_clause?)
 select_command ::= select w select_expression newlines any_block
 private select_expression ::=  in_clause | list_terminator?
 
-private in_clause ::= "in" w+ list_terminator newlines
+private in_clause ::= in w+ list_terminator newlines
 list_terminator ::= '\n' | ';' {recoverWhile = list_terminator_recover}
 private list_terminator_recover ::= !(do | '{' | '\n')
 

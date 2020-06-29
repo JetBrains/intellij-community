@@ -9,7 +9,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('i')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiWhiteSpace(' ')
         NUMBER
           PsiElement(int)('1')
@@ -109,7 +109,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('file')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiWhiteSpace(' ')
         PsiElement($)('$')
         SUBSHELL_COMMAND
@@ -324,7 +324,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('name')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiWhiteSpace(' ')
         PsiElement(word)('idea-ultimate')
         PsiWhiteSpace(' ')
@@ -409,7 +409,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('i')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiWhiteSpace(' ')
         BRACE_EXPANSION
           PsiElement({)('{')
@@ -462,7 +462,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('i')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiWhiteSpace(' ')
         BRACE_EXPANSION
           PsiElement({)('{')
@@ -498,7 +498,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('i')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiWhiteSpace(' ')
         PsiElement($)('$')
         SUBSHELL_COMMAND

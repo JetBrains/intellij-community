@@ -80,7 +80,7 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       PsiElement(word)('FILENAME')
       PsiWhiteSpace(' ')
-      PsiElement(word)('in')
+      PsiElement(in)('in')
       PsiWhiteSpace(' ')
       PsiElement(word)('*')
       LIST_TERMINATOR

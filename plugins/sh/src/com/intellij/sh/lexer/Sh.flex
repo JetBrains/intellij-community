@@ -369,6 +369,7 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
     "else"                        { return ELSE; }
     "fi"                          { if (yystate() == IF_CONDITION) popState(); return FI; }
     "for"                         { pushState(OTHER_CONDITIONS); return FOR; }
+    "in"                          { return IN; }
     "function"                    { return FUNCTION; }
     "if"                          { pushState(IF_CONDITION); return IF; }
     "select"                      { pushState(OTHER_CONDITIONS); return SELECT; }

@@ -9,7 +9,7 @@ SHELL_SCRIPT
             LITERAL
               PsiElement(word)('a')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('then')
           PsiWhiteSpace(' ')
           LITERAL

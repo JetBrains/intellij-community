@@ -69,7 +69,7 @@ public class ShParserUtil extends GeneratedParserUtilBase {
       PsiBuilder.Marker mark = b.mark();
       b.remapCurrentToken(ShTypes.WORD);
       b.advanceLexer();
-      mark.done(ShTypes.SIMPLE_COMMAND_ELEMENT);
+      mark.done(ShTypes.LITERAL);
       return true;
     }
     return false;
