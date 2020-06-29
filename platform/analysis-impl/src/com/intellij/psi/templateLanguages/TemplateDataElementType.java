@@ -9,6 +9,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -144,7 +145,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return ((RangeCollectorImpl)rangeCollector).applyTemplateDataModifications(sourceCode, modifications);
   }
 
-  private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = NotNullLazyValue.createValue(() -> {
+  private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = VolatileNotNullLazyValue.createValue(() -> {
     Class<?> aClass = this.getClass();
     while (!TemplateDataElementType.class.equals(aClass)) {
       try {
@@ -200,7 +201,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         ": " + getRangeDump(currentRange, sourceCode) + " followed by " + getRangeDump(newRange, sourceCode);
       currentRange = newRange;
       if (baseLexer.getTokenType() == myTemplateElementType) {
-        TemplateDataModifications tokenModifications = appendCurrentTemplateToken(baseLexer);
+        TemplateDataModifications tokenModifications = appendCurrentTemplateToken(baseLexer.getTokenEnd(), baseLexer.getTokenSequence());
         modifications.addAll(tokenModifications);
       }
       else {
@@ -219,7 +220,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * @deprecated Override {@link #appendCurrentTemplateToken(Lexer)} instead.
+   * @deprecated Override {@link #appendCurrentTemplateToken(int, CharSequence)} instead.
    */
   @Deprecated
   protected void appendCurrentTemplateToken(@NotNull StringBuilder result,
@@ -230,11 +231,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * Collects modifications for the current token of the lexer. Called for each template token containing underlying language data.
+   * Collects modifications for tokens having {@link #myTemplateElementType} type.
    *
    * @return modifications need to be applied for the current token
    */
-  protected @NotNull TemplateDataModifications appendCurrentTemplateToken(@NotNull Lexer lexer) {
+  protected @NotNull TemplateDataModifications appendCurrentTemplateToken(int tokenEndOffset, @NotNull CharSequence tokenText) {
     return TemplateDataModifications.EMPTY;
   }
 
