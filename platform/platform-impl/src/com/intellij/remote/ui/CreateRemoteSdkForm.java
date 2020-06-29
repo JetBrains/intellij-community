@@ -4,6 +4,7 @@ package com.intellij.remote.ui;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,6 +27,7 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -117,7 +119,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     myTypesPanel.setLayout(new ResizingCardLayout());
 
-    myCredentialsType2Handler = new HashMap<>();
+    myCredentialsType2Handler = new LinkedHashMap<>();
 
     installExtendedTypes(project);
     installRadioListeners(myCredentialsType2Handler.values());
@@ -133,10 +135,9 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       myRunAsRootViaSudoPanel.setVisible(false);
     }
 
-    // select the first credentials type for the start
-    Iterator<TypeHandler> iterator = myCredentialsType2Handler.values().iterator();
-    if (iterator.hasNext()) {
-      iterator.next().getRadioButton().setSelected(true);
+    TypeHandler handlerToSelect = getCredentialsTypeHandlerToSelect();
+    if (handlerToSelect != null) {
+      handlerToSelect.getRadioButton().setSelected(true);
     }
 
     radioSelected(true);
@@ -219,6 +220,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
   private void radioSelected(boolean propagateEvent) {
     CredentialsType selectedType = getSelectedType();
+    saveSelectedRadio(selectedType);
 
     CardLayout layout = (CardLayout)myTypesPanel.getLayout();
     layout.show(myTypesPanel, selectedType.getName());
@@ -847,5 +849,34 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
   @TestOnly
   public void setInterpreterPath(@NotNull String interpreterPath) {
     myInterpreterPathField.setText(interpreterPath);
+  }
+
+  private void saveSelectedRadio(@NotNull CredentialsType<?> credentialsType) {
+    getPropertiesComponent().setValue(getCredentialsTypePersistenceKey(), credentialsType.getName());
+  }
+
+  private @NotNull PropertiesComponent getPropertiesComponent() {
+    return myProject == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(myProject);
+  }
+
+  private @Nullable TypeHandler getCredentialsTypeHandlerToSelect() {
+    String credentialsTypeName = getPropertiesComponent().getValue(getCredentialsTypePersistenceKey());
+    if (credentialsTypeName != null) {
+      for (Map.Entry<CredentialsType, TypeHandler> entry : myCredentialsType2Handler.entrySet()) {
+        if (entry.getKey().getName().equals(credentialsTypeName)) {
+          return entry.getValue();
+        }
+      }
+    }
+    Iterator<TypeHandler> iterator = myCredentialsType2Handler.values().iterator();
+    if (iterator.hasNext()) {
+      return iterator.next();
+    }
+    return null;
+  }
+
+  @NonNls
+  private @NotNull String getCredentialsTypePersistenceKey() {
+    return "credentialsType " + getClass().getName();
   }
 }
