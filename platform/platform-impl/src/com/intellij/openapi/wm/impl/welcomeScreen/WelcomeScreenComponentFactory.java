@@ -1,11 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.application.Topics;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -42,6 +45,7 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Collections;
 import java.util.Objects;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
@@ -249,6 +253,33 @@ public class WelcomeScreenComponentFactory {
     panel.setBorder(JBUI.Borders.emptyRight(13));
     panel.setOpaque(false);
     Disposer.register(parent, panel);
+    return panel;
+  }
+
+  @NotNull
+  static Component createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
+    final Ref<ActionLink> actionLinkRef = new Ref<>();
+    final JComponent panel = createActionLink(linkText, AllIcons.Ide.Notification.NoEvents, actionLinkRef, new AnAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
+        if (balloonLayout instanceof WelcomeBalloonLayoutImpl) {
+          WelcomeBalloonLayoutImpl welcomeBalloonLayout = (WelcomeBalloonLayoutImpl)balloonLayout;
+          if (welcomeBalloonLayout.getLocationComponent() == null && e.getInputEvent() != null) {
+            welcomeBalloonLayout.setLocationComponent(e.getInputEvent().getComponent());
+          }
+          welcomeBalloonLayout.showPopup();
+        }
+      }
+    });
+    panel.setVisible(false);
+    Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
+      if (!types.isEmpty()) {
+        NotificationType type = Collections.max(types);
+        actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size(), false));
+      }
+      panel.setVisible(!types.isEmpty());
+    });
     return panel;
   }
 

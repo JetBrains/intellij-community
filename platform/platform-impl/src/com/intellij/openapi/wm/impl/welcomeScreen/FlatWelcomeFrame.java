@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.CommonBundle;
-import com.intellij.application.Topics;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
@@ -14,8 +13,6 @@ import com.intellij.ide.plugins.PluginDropHandler;
 import com.intellij.ide.plugins.newui.VerticalLayout;
 import com.intellij.idea.SplashManager;
 import com.intellij.jdkEx.JdkEx;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -69,8 +66,10 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_FILE;
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_HELP_MENU;
@@ -386,30 +385,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
 
     private Component createEventsLink() {
-      final Ref<ActionLink> actionLinkRef = new Ref<>();
-      final JComponent panel =
-        createActionLink(IdeBundle.message("action.Events"), AllIcons.Ide.Notification.NoEvents, actionLinkRef, new AnAction() {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
-            if (balloonLayout instanceof WelcomeBalloonLayoutImpl) {
-              WelcomeBalloonLayoutImpl welcomeBalloonLayout = (WelcomeBalloonLayoutImpl)balloonLayout;
-              if (welcomeBalloonLayout.getLocationComponent() == null && e.getInputEvent() != null) {
-                welcomeBalloonLayout.setLocationComponent(e.getInputEvent().getComponent());
-              }
-              welcomeBalloonLayout.showPopup();
-            }
-          }
-        });
-      panel.setVisible(false);
-      Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, this, types -> {
-        if (!types.isEmpty()) {
-          NotificationType type = Collections.max(types);
-          actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size(), false));
-        }
-        panel.setVisible(!types.isEmpty());
-      });
-      return panel;
+      return createEventLink(IdeBundle.message("action.Events"), FlatWelcomeFrame.this);
     }
 
     @NotNull
