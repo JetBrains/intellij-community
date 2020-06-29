@@ -36,7 +36,6 @@ import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.io.PathKt;
-import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -390,38 +389,34 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  /**
+   * This reflects the way the default {@link TestCase#runBare} works, with few notable exceptions:
+   * <ul>
+   *   <li/> {@link #tearDown} is called even if {@link #setUp} has failed;
+   *   <li/> exceptions from tearDown() don't shadow those from the main test method, but are rather linked as suppressed;
+   *   <li/> it allows to customise the way the methods are invoked through {@link #invokeTestRunnable},
+   *         {@link #invokeSetUp} and {@link #invokeTearDown}, for example, to make them execute on a different thread.
+   * </ul>
+   */
   protected void defaultRunBare() throws Throwable {
-    Throwable exception = null;
-    try {
-      long setupStart = System.nanoTime();
-      setUp();
-      long setupCost = (System.nanoTime() - setupStart) / 1000000;
-      logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS);
-
+    try (AutoCloseable ignored = this::invokeTearDown) {
+      invokeSetUp();
       runTest();
     }
-    catch (Throwable running) {
-      exception = running;
-    }
-    finally {
-      try {
-        long teardownStart = System.nanoTime();
-        tearDown();
-        long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
-        logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
-      }
-      catch (Throwable tearingDown) {
-        if (exception == null) {
-          exception = tearingDown;
-        }
-        else {
-          exception = new CompoundRuntimeException(Arrays.asList(exception, tearingDown));
-        }
-      }
-    }
-    if (exception != null) {
-      throw exception;
-    }
+  }
+
+  protected void invokeSetUp() throws Exception {
+    long setupStart = System.nanoTime();
+    setUp();
+    long setupCost = (System.nanoTime() - setupStart) / 1000000;
+    logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS);
+  }
+
+  protected void invokeTearDown() throws Exception {
+    long teardownStart = System.nanoTime();
+    tearDown();
+    long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
+    logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
   }
 
   /**
