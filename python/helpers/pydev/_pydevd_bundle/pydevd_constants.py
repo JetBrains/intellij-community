@@ -76,7 +76,7 @@ elif IS_IRONPYTHON:
 
 IS_64BIT_PROCESS = sys.maxsize > (2 ** 32)
 
-IS_LINUX = sys.platform in ('linux', 'linux2')
+IS_LINUX = sys.platform.startswith('linux')
 IS_MACOS = sys.platform == 'darwin'
 
 IS_PYTHON_STACKLESS = "stackless" in sys.version.lower()
