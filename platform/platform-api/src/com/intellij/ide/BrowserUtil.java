@@ -20,6 +20,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -59,6 +60,10 @@ public final class BrowserUtil {
   }
 
   public static void browse(@NotNull File file) {
+    getBrowserLauncher().browse(file);
+  }
+
+  public static void browse(@NotNull Path file) {
     getBrowserLauncher().browse(file);
   }
 
