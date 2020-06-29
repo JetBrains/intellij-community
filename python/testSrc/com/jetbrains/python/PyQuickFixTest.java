@@ -166,6 +166,12 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyDictCreationInspection.class, PyPsiBundle.message("QFIX.dict.creation"), true, true);
   }
 
+  // PY-40177
+  public void testDictCreationWithDoubleStars() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doInspectionTest(PyDictCreationInspection.class, PyPsiBundle.message("QFIX.dict.creation"), true, true));
+  }
+
   public void testTransformClassicClass() {
     doInspectionTest(PyClassicStyleClassInspection.class, PyPsiBundle.message("QFIX.classic.class.transform"), true, true);
   }
