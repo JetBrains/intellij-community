@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.FilePatch;
@@ -68,7 +68,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
   }
 
 
-  public static void applyAdditionalInfoBefore(final Project project,
+  public static void applyAdditionalInfoBefore(@NotNull Project project,
                                                @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, ? extends PatchSyntaxException> additionalInfo,
                                                @Nullable CommitContext commitContext) {
     final List<PatchEP> extensions = PatchEP.EP_NAME.getExtensions(project);

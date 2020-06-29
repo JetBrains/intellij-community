@@ -2,7 +2,6 @@
 package com.intellij.util.ref;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public final class DebugReflectionUtil {
   private static final Map<Class<?>, Field[]> allFields = new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<Class<?>>() {
@@ -108,9 +108,9 @@ public final class DebugReflectionUtil {
 
   public static boolean walkObjects(int maxDepth,
                                     @NotNull Map<Object, String> startRoots,
-                                    @NotNull final Class<?> lookFor,
-                                    @NotNull Condition<Object> shouldExamineValue,
-                                    @NotNull final PairProcessor<Object, ? super BackLink> leakProcessor) {
+                                    @NotNull Class<?> lookFor,
+                                    @NotNull Predicate<Object> shouldExamineValue,
+                                    @NotNull PairProcessor<Object, ? super BackLink> leakProcessor) {
     IntSet visited = new IntOpenHashSet(100);
     Queue<BackLink> toVisit = new Queue<>(100);
 
@@ -147,7 +147,7 @@ public final class DebugReflectionUtil {
 
   private static void queueStronglyReferencedValues(@NotNull Queue<? super BackLink> queue,
                                                     @NotNull Object root,
-                                                    @NotNull Condition<Object> shouldExamineValue,
+                                                    @NotNull Predicate<Object> shouldExamineValue,
                                                     @NotNull BackLink backLink) {
     Class<?> rootClass = root.getClass();
     for (Field field : getAllFields(rootClass)) {
@@ -187,9 +187,11 @@ public final class DebugReflectionUtil {
   }
 
   private static void queue(Object value, Field field, @NotNull BackLink backLink, @NotNull Queue<? super BackLink> queue,
-                            @NotNull Condition<Object> shouldExamineValue) {
-    if (value == null || isTrivial(value.getClass())) return;
-    if (shouldExamineValue.value(value)) {
+                            @NotNull Predicate<Object> shouldExamineValue) {
+    if (value == null || isTrivial(value.getClass())) {
+      return;
+    }
+    if (shouldExamineValue.test(value)) {
       BackLink newBackLink = new BackLink(value, field, backLink);
       queue.addLast(newBackLink);
     }

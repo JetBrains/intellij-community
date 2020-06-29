@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CharsetEP implements PatchEP {
+public final class CharsetEP implements PatchEP {
   private final static Key<Map<String, String>> ourName = Key.create("Charset");
 
   private final String myBaseDir;
@@ -54,7 +54,7 @@ public class CharsetEP implements PatchEP {
     final File file = new File(myBaseDir, path);
     map.put(FilePathsHelper.convertPath(file.getPath()), content.toString());
   }
-  
+
   public static String getCharset(final String path, final CommitContext commitContext) {
     if (commitContext == null) return null;
     final Map<String, String> userData = commitContext.getUserData(ourName);

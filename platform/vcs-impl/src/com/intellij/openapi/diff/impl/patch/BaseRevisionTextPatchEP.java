@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BaseRevisionTextPatchEP implements PatchEP {
+public final class BaseRevisionTextPatchEP implements PatchEP {
   public final static Key<Boolean> ourPutBaseRevisionTextKey = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey");
   public static final Key<Map<FilePath, ContentRevision>>
     ourBaseRevisions = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourBaseRevisionPaths");

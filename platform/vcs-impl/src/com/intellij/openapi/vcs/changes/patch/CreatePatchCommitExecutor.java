@@ -182,15 +182,13 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       return myPanel.validateFields();
     }
 
-    @Nullable
     @Override
-    public String getHelpId() {
+    public @NotNull String getHelpId() {
       return "reference.dialogs.PatchFileSettings"; //NON-NLS
     }
   }
 
   public interface PatchBuilder {
-
     default boolean isReverseSupported() {return true;}
 
     List<FilePatch> buildPatches(String baseDir,
@@ -198,7 +196,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
                                  boolean reversePatch, boolean honorExcludedFromCommit) throws VcsException;
   }
 
-  public static class DefaultPatchBuilder implements PatchBuilder {
+  public static final class DefaultPatchBuilder implements PatchBuilder {
     private final Project myProject;
 
     public DefaultPatchBuilder(@NotNull Project project) {
@@ -213,7 +211,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     }
   }
 
-  public static class ShelfPatchBuilder implements PatchBuilder {
+  public static final class ShelfPatchBuilder implements PatchBuilder {
     @NotNull private final Project myProject;
     @NotNull private final ShelvedChangeList myShelvedChangeList;
     @NotNull private final List<String> mySelectedPaths;
