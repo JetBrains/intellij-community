@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Collects modifications to apply to template text for later parsing by template data language parser.
  *
- * @see com.intellij.psi.templateLanguages.TemplateDataElementType.RangeCollector
+ * @see TemplateDataElementType.RangeCollector
  */
 public class TemplateDataModifications {
 
