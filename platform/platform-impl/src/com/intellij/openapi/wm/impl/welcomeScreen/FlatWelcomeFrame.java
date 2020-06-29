@@ -68,10 +68,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_FILE;
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_HELP_MENU;
@@ -397,26 +395,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         });
       panel.setVisible(false);
       WelcomeBalloonLayoutImpl.BalloonNotificationListener balloonModelListener = types -> {
-        NotificationType type = null;
-        for (NotificationType t : types) {
-          if (NotificationType.ERROR == t) {
-            type = NotificationType.ERROR;
-            break;
-          }
-          if (NotificationType.WARNING == t) {
-            type = NotificationType.WARNING;
-          }
-          else if (type == null && NotificationType.INFORMATION == t) {
-            type = NotificationType.INFORMATION;
-          }
-        }
-        if (types.isEmpty()) {
-          panel.setVisible(false);
-        }
-        else {
+        if (!types.isEmpty()) {
+          NotificationType type = Collections.max(types);
           actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size(), false));
-          panel.setVisible(true);
         }
+        panel.setVisible(!types.isEmpty());
       };
       ApplicationManager.getApplication().getMessageBus().connect(this)
         .subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, balloonModelListener);
