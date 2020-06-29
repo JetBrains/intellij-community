@@ -34,12 +34,16 @@ public final class IndexedHashesSupport {
     return hash;
   }
 
+  public static byte @NotNull [] getBinaryContentHash(byte @NotNull [] content) {
+    return DigestUtil.calculateContentHash(FSRecords.CONTENT_HASH_DIGEST, content);
+  }
+
   private static byte @NotNull [] calculateIndexedHashForFileContent(@NotNull FileContentImpl content) {
     Hasher hasher = INDEXED_FILE_CONTENT_HASHER.newHasher();
 
     byte[] contentHash = PersistentFSImpl.getContentHashIfStored(content.getFile());
     if (contentHash == null) {
-      contentHash = DigestUtil.calculateContentHash(FSRecords.CONTENT_HASH_DIGEST, ((FileContent)content).getContent());
+      contentHash = getBinaryContentHash(((FileContent)content).getContent());
       // todo store content hash in FS
     }
     hasher.putBytes(contentHash);
