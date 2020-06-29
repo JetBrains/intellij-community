@@ -62,10 +62,16 @@ public final class TerminalShellCommandHandlerHelper {
   public void processKeyPressed() {
     if (isFeatureEnabled()) {
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(() -> {
-        highlightMatchedCommand(myWidget.getProject());
-      }, 50);
+      scheduleCommandHighlighting();
+
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(
+        TerminalCommandHandlerCustomizer.Companion.getTERMINAL_COMMAND_HANDLER_TOPIC(),
+        () -> myAlarm.addRequest(() -> { scheduleCommandHighlighting(); }, 50));
     }
+  }
+
+  private void scheduleCommandHighlighting() {
+    myAlarm.addRequest(() -> { highlightMatchedCommand(myWidget.getProject()); }, 50);
   }
 
   public static boolean isFeatureEnabled() {
