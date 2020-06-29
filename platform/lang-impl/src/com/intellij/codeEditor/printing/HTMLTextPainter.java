@@ -22,7 +22,7 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
-public class HTMLTextPainter {
+public final class HTMLTextPainter {
   private static final Logger LOG = Logger.getInstance(HTMLTextPainter.class);
 
   private int myOffset;
@@ -111,7 +111,7 @@ public class HTMLTextPainter {
     myFirstLineNumber = firstLineNumber;
   }
 
-  public void paint(@Nullable Int2ObjectRBTreeMap<PsiReference> refMap, @NotNull Writer writer, boolean isStandalone) throws IOException {
+  public void paint(@Nullable Int2ObjectSortedMap<PsiReference> refMap, @NotNull Writer writer, boolean isStandalone) throws IOException {
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
     if (hIterator.atEnd()) {
       return;
@@ -335,7 +335,7 @@ public class HTMLTextPainter {
     if (myPrintLineNumbers) {
       writer.write("<a name=\"l" + lineCount + "\">");
 
-//      String numberCloseTag = writeFontTag(writer, ourLineNumberAttributes);
+      //String numberCloseTag = writeFontTag(writer, ourLineNumberAttributes);
 
       writer.write("<span class=\"ln\">");
       String s = Integer.toString(lineCount);
@@ -369,19 +369,19 @@ public class HTMLTextPainter {
     if (attributes2 == null) {
       return attributes1 == null;
     }
-    if(attributes1 == null) {
+    if (attributes1 == null) {
       return false;
     }
-    if(!Comparing.equal(attributes1.getForegroundColor(), attributes2.getForegroundColor())) {
+    if (!Comparing.equal(attributes1.getForegroundColor(), attributes2.getForegroundColor())) {
       return false;
     }
-    if(attributes1.getFontType() != attributes2.getFontType()) {
+    if (attributes1.getFontType() != attributes2.getFontType()) {
       return false;
     }
-    if(!Comparing.equal(attributes1.getBackgroundColor(), attributes2.getBackgroundColor())) {
+    if (!Comparing.equal(attributes1.getBackgroundColor(), attributes2.getBackgroundColor())) {
       return false;
     }
-    if(!Comparing.equal(attributes1.getEffectColor(), attributes2.getEffectColor())) {
+    if (!Comparing.equal(attributes1.getEffectColor(), attributes2.getEffectColor())) {
       return false;
     }
     return true;
