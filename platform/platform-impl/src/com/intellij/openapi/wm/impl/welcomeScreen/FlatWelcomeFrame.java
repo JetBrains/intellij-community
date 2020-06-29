@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.Topics;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
@@ -384,26 +385,30 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return panel;
     }
 
-    private JComponent createEventsLink() {
+    private Component createEventsLink() {
       final Ref<ActionLink> actionLinkRef = new Ref<>();
       final JComponent panel =
         createActionLink(IdeBundle.message("action.Events"), AllIcons.Ide.Notification.NoEvents, actionLinkRef, new AnAction() {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            myBalloonLayout.showPopup();
+            BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
+            if (balloonLayout instanceof WelcomeBalloonLayoutImpl) {
+              WelcomeBalloonLayoutImpl welcomeBalloonLayout = (WelcomeBalloonLayoutImpl)balloonLayout;
+              if (welcomeBalloonLayout.getLocationComponent() == null && e.getInputEvent() != null) {
+                welcomeBalloonLayout.setLocationComponent(e.getInputEvent().getComponent());
+              }
+              welcomeBalloonLayout.showPopup();
+            }
           }
         });
       panel.setVisible(false);
-      WelcomeBalloonLayoutImpl.BalloonNotificationListener balloonModelListener = types -> {
+      Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, this, types -> {
         if (!types.isEmpty()) {
           NotificationType type = Collections.max(types);
           actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size(), false));
         }
         panel.setVisible(!types.isEmpty());
-      };
-      ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, balloonModelListener);
-      myBalloonLayout.setLocationComponent(panel);
+      });
       return panel;
     }
 
