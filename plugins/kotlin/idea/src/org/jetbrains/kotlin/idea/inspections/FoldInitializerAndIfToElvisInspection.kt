@@ -79,7 +79,7 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
 
         fun applyTo(element: KtIfExpression): KtBinaryExpression {
             val data = calcData(element)!!
-            val (initializer, declaration, _, typeReference) = data
+            val (initializer, declaration, _, _) = data
             val factory = KtPsiFactory(element)
 
             val explicitTypeToSet = when {
@@ -100,9 +100,6 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
             val elvis = createElvisExpression(element, data, factory)
 
             return runWriteAction {
-                if (typeReference != null) {
-                    elvis.left!!.replace(factory.createExpressionByPattern("$0 as? $1", initializer, typeReference))
-                }
                 val newElvis = initializer.replaced(elvis)
                 element.delete()
 
@@ -115,12 +112,28 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
             }
         }
 
-        private fun createElvisExpression(element: KtIfExpression, data: Data, factory: KtPsiFactory): KtBinaryExpression {
-            val (initializer, declaration, ifNullExpr, _) = data
+        private fun createElvisExpression(
+            element: KtIfExpression,
+            data: Data,
+            factory: KtPsiFactory
+        ): KtBinaryExpression {
+            val (initializer, declaration, ifNullExpr, typeReference) = data
             val margin = element.containingKtFile.rightMarginOrDefault
             val declarationTextLength = declaration.text.split("\n").lastOrNull()?.trim()?.length ?: 0
             val pattern = elvisPattern(declarationTextLength + ifNullExpr.textLength + 5 >= margin || element.then?.hasComments() == true)
-            return factory.createExpressionByPattern(pattern, initializer, ifNullExpr) as KtBinaryExpression
+            val newInitializer = if (initializer is KtBinaryExpression &&
+                initializer.operationToken == KtTokens.ELVIS &&
+                initializer.right?.text == ifNullExpr.text
+            ) {
+                initializer.left ?: initializer
+            } else {
+                initializer
+            }
+            val elvis = factory.createExpressionByPattern(pattern, newInitializer, ifNullExpr) as KtBinaryExpression
+            if (typeReference != null) {
+                elvis.left!!.replace(factory.createExpressionByPattern("$0 as? $1", newInitializer, typeReference))
+            }
+            return elvis
         }
 
         private fun calcData(ifExpression: KtIfExpression): Data? {

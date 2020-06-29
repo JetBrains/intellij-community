@@ -4531,6 +4531,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/ifStatementPriority.kt");
         }
 
+        @TestMetadata("InitializerWithElvis.kt")
+        public void testInitializerWithElvis() throws Exception {
+            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/InitializerWithElvis.kt");
+        }
+
+        @TestMetadata("InitializerWithElvis2.kt")
+        public void testInitializerWithElvis2() throws Exception {
+            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/InitializerWithElvis2.kt");
+        }
+
         @TestMetadata("IsSameType.kt")
         public void testIsSameType() throws Exception {
             runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/IsSameType.kt");
