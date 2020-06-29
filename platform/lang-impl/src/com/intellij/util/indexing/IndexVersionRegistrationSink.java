@@ -3,11 +3,11 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public final class IndexVersionRegistrationSink {
@@ -34,11 +34,11 @@ public final class IndexVersionRegistrationSink {
     }
   }
 
-  private @NotNull String buildString(@NotNull Predicate<IndexingStamp.IndexVersionDiff> condition) {
+  private @NotNull String buildString(@NotNull Predicate<? super IndexingStamp.IndexVersionDiff> condition) {
     return indexVersionDiffs
       .entrySet()
       .stream()
-      .filter(e -> condition.apply(e.getValue()))
+      .filter(e -> condition.test(e.getValue()))
       .map(e -> e.getKey().getName() + e.getValue().getLogText())
       .collect(Collectors.joining(","));
   }

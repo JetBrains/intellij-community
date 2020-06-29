@@ -35,7 +35,6 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +46,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class TouchBarsManager {
   private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
@@ -499,7 +499,7 @@ public final class TouchBarsManager {
                                                      Collection<? extends BarContainer> candidates,
                                                      Predicate<? super BarContainer> filter) {
     for (BarContainer bc : candidates) {
-      if (filter != null && !filter.apply(bc)) {
+      if (filter != null && !filter.test(bc)) {
         continue;
       }
       if (bc.getParentComponent() == null) {

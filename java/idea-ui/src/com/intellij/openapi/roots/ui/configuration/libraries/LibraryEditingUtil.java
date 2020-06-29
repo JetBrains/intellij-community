@@ -24,12 +24,12 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class LibraryEditingUtil {
   private static final Logger LOG = Logger.getInstance(LibraryEditingUtil.class);
@@ -186,7 +186,7 @@ public final class LibraryEditingUtil {
 
       if (library != null) {
         final ModuleRootModel rootModel = rootConfigurable.getContext().getModulesConfigurator().getRootModel(module);
-        if (!getNotAddedSuitableLibrariesCondition(rootModel, rootConfigurable.getFacetConfigurator()).apply(library)) {
+        if (!getNotAddedSuitableLibrariesCondition(rootModel, rootConfigurable.getFacetConfigurator()).test(library)) {
           continue;
         }
       }

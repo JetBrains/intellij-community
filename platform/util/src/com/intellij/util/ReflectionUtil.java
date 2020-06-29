@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance(ReflectionUtil.class);
@@ -163,7 +163,7 @@ public final class ReflectionUtil {
 
   @Nullable
   private static Field processInterfaces(Class<?> @NotNull [] interfaces,
-                                         @NotNull Set<Class<?>> visited,
+                                         @NotNull Set<? super Class<?>> visited,
                                          @NotNull java.util.function.Predicate<? super Field> checker) {
     for (Class<?> anInterface : interfaces) {
       if (!visited.add(anInterface)) {
@@ -582,7 +582,7 @@ public final class ReflectionUtil {
       fields = ArrayUtil.mergeArrays(fields, newSettings.getClass().getDeclaredFields());
     }
     for (Field field : fields) {
-      if (!useField.apply(field)) continue;
+      if (!useField.test(field)) continue;
       field.setAccessible(true);
       try {
         if (!Comparing.equal(field.get(newSettings), field.get(defaultSettings))) {

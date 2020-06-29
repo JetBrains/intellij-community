@@ -19,10 +19,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSetQueue;
-import com.intellij.util.containers.Predicate;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +28,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Collection of elements of type V which is
@@ -111,7 +111,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
         synchronized (lock) {
           next = subClassIterator.next();
         }
-        return myAnchorToValueConvertor.fun(next);
+        return myAnchorToValueConvertor.apply(next);
       }
     };
   }
@@ -239,8 +239,8 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
       ProgressManager.checkCanceled();
       T anchor = position.peek();
       if (!classesProcessed.contains(anchor) && !classesBeingProcessed.contains(anchor)) {
-        V value = myAnchorToValueConvertor.fun(anchor);
-        boolean isAccepted = value != null && myApplicableForGenerationFilter.apply(value);
+        V value = myAnchorToValueConvertor.apply(anchor);
+        boolean isAccepted = value != null && myApplicableForGenerationFilter.test(value);
         if (isAccepted) {
           return Pair.createNonNull(anchor, value);
         }

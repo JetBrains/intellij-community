@@ -27,7 +27,6 @@ import com.intellij.ui.layout.migLayout.patched.MigLayout;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
-import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LocationOnDragTracker;
 import com.intellij.util.ui.UIUtil;
@@ -42,6 +41,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
+import java.util.function.Predicate;
 
 public final class ToolWindowContentUi implements ContentUI, DataProvider {
   // when client property is put in toolwindow component, hides toolwindow label
@@ -68,7 +68,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   private ToolWindowContentUiType type;
 
-  public Predicate<Point> isResizableArea = p -> true;
+  public Predicate<Point> isResizableArea = __ -> true;
 
   private final JPanel tabComponent = new TabPanel();
 
@@ -163,7 +163,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   private boolean isResizeable(@NotNull Point point) {
-    return isResizableArea.apply(point);
+    return isResizableArea.test(point);
   }
 
   public void setType(@NotNull ToolWindowContentUiType type) {

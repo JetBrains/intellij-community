@@ -14,7 +14,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,17 +25,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {
   private final ClasspathPanel myClasspathPanel;
   private final StructureConfigurableContext myContext;
-  private final Predicate<? super Library> myAcceptedLibraries;
+  private final Predicate<Library> myAcceptedLibraries;
   private final List<Library> myCreatedModuleLibraries = new ArrayList<>();
   private JButton myCreateLibraryButton;
 
   public ProjectStructureChooseLibrariesDialog(ClasspathPanel classpathPanel,
                                                StructureConfigurableContext context,
-                                               Predicate<? super Library> acceptedLibraries) {
+                                               java.util.function.Predicate<Library> acceptedLibraries) {
     super(classpathPanel.getComponent(), "Choose Libraries", classpathPanel.getProject(), true);
     myClasspathPanel = classpathPanel;
     myContext = context;
@@ -92,7 +92,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   protected boolean acceptsElement(Object element) {
     if (element instanceof Library) {
       final Library library = (Library)element;
-      return myAcceptedLibraries.apply(library);
+      return myAcceptedLibraries.test(library);
     }
     return true;
   }

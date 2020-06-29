@@ -29,12 +29,12 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   private final StructureConfigurableContext myContext;
@@ -72,7 +72,7 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
       final LibrariesModifiableModel model = myContext.myLevel2Providers.get(table.getTableLevel());
       if (model != null) {
         for (Library library : model.getLibraries()) {
-          if (condition.apply(library)) {
+          if (condition.test(library)) {
             return true;
           }
         }
@@ -81,7 +81,7 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
     return false;
   }
 
-  private Predicate<Library> getNotAddedSuitableLibrariesCondition() {
+  private java.util.function.Predicate<Library> getNotAddedSuitableLibrariesCondition() {
     ProjectFacetsConfigurator facetsConfigurator = myContext.getModulesConfigurator().getFacetsConfigurator();
     return LibraryEditingUtil.getNotAddedSuitableLibrariesCondition(myClasspathPanel.getRootModel(), facetsConfigurator);
   }
