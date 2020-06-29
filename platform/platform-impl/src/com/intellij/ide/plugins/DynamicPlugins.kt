@@ -211,6 +211,13 @@ object DynamicPlugins {
           continue
         }
 
+        val pluginEP = findPluginExtensionPoint(descriptor, epName)
+        if (pluginEP != null) {
+          if (!pluginEP.isDynamic) {
+            return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it"
+          }
+          continue
+        }
         if (baseDescriptor != null) {
           val baseEP = findPluginExtensionPoint(baseDescriptor, epName)
           if (baseEP != null) {
@@ -223,12 +230,12 @@ object DynamicPlugins {
         val contextEP = context.asSequence().mapNotNull { contextPlugin -> findPluginExtensionPoint(contextPlugin, epName) }.firstOrNull()
         if (contextEP != null) {
           if (!contextEP.isDynamic) {
-            return "Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
+            return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
           }
           continue
         }
 
-        return "Plugin ${descriptor.pluginId} is not unload-safe because of unresolved extension $epName"
+        return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of unresolved extension $epName"
       }
     }
 

@@ -340,6 +340,25 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun loadOptionalDependencyEP() {
+    val pluginTwoBuilder = PluginBuilder().randomId("optionalDependencyListener-two")
+    val pluginTwoDisposable = loadPluginWithText(pluginTwoBuilder)
+    try {
+      val pluginOneDisposable = loadPluginWithOptionalDependency(
+        PluginBuilder().randomId("optionalDependencyListener-one"),
+        PluginBuilder()
+          .extensionPoints("""<extensionPoint qualifiedName="one.foo" interface="java.lang.Runnable" dynamic="true"/>""")
+          .extensions("""<foo implementation="${MyRunnable::class.java.name}"/>""", "one"),
+        pluginTwoBuilder
+      )
+      Disposer.dispose(pluginOneDisposable)
+    }
+    finally {
+      pluginTwoDisposable.dispose()
+    }
+  }
+
+  @Test
   fun testProjectService() {
     val project = projectRule.project
     val disposable = loadExtensionWithText("""
@@ -474,7 +493,7 @@ class DynamicPluginsTest {
 
     val descriptor = loadDescriptorInTest(plugin.parent.parent)
     descriptor.setLoader(DynamicPluginsTest::class.java.classLoader)
-    assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue()
+    assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
 
     DynamicPlugins.loadPlugin(descriptor)
 
@@ -561,5 +580,10 @@ private class MyIntentionAction : IntentionAction {
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = false
   override fun getText(): String = "foo"
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  }
+}
+
+private class MyRunnable : Runnable {
+  override fun run() {
   }
 }
