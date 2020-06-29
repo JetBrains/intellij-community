@@ -1834,6 +1834,13 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitRecordComponent(PsiRecordComponent recordComponent) {
+    if (myType1 == JavaElementType.TYPE && myType2 == JavaTokenType.IDENTIFIER) {
+      createSpaceInCode(true);
+    }
+  }
+
   public static Spacing getSpacing(Block node, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     return new JavaSpacePropertyProcessor(node, settings, javaSettings).myResult;
   }
