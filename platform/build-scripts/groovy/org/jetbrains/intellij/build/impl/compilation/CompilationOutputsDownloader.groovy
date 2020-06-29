@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.google.gson.Gson
+
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Decompressor
@@ -24,8 +24,6 @@ import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.impl.retry.Retry
 import org.jetbrains.intellij.build.impl.retry.StopTrying
 
-import java.lang.reflect.Type
-
 @CompileStatic
 class CompilationOutputsDownloader implements AutoCloseable {
   private static final int COMMITS_COUNT = 1_000
@@ -39,7 +37,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
 
   private final NamedThreadPoolExecutor executor
 
-  private final SourcesStateProcessor sourcesStateProcessor
+  private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
 
   private boolean availableForHeadCommitForced = false
   /**
@@ -72,8 +70,6 @@ class CompilationOutputsDownloader implements AutoCloseable {
 
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
-
-    sourcesStateProcessor = new SourcesStateProcessor(context)
   }
 
   @Override
@@ -114,8 +110,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
   }
 
   private Map<String, Map<String, BuildTargetState>> getSourcesState(String commitHash) {
-    return getClient.
-      doGet("$remoteCacheUrl/metadata/$commitHash", SourcesStateProcessor.SOURCES_STATE_TYPE) as Map<String, Map<String, BuildTargetState>>
+    sourcesStateProcessor.parseSourcesStateFile(getClient.doGet("$remoteCacheUrl/metadata/$commitHash"))
   }
 
   private void saveCache(String commitHash) {
@@ -161,7 +156,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
     def outputArchive = new File(compilationOutput.path, 'tmp-output.zip')
     FileUtil.createParentDirs(outputArchive)
 
-    getClient.doGet("$remoteCacheUrl/${compilationOutput.type}/${compilationOutput.name}/${compilationOutput.hash}", outputArchive)
+    getClient.doGet("$remoteCacheUrl/${compilationOutput.sourcePath}", outputArchive)
 
     return outputArchive
   }
@@ -174,7 +169,6 @@ class GetClient {
     .setMaxConnTotal(10)
     .setMaxConnPerRoute(10)
     .build()
-  private final Gson gson = new Gson()
 
   private final BuildMessages buildMessages
 
@@ -201,10 +195,6 @@ class GetClient {
         responseString
       }
     })
-  }
-
-  def doGet(String url, Type responseType) {
-    gson.fromJson(doGet(url), responseType)
   }
 
   void doGet(String url, File file) {

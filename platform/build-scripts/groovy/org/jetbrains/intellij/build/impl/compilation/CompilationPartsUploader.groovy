@@ -151,6 +151,22 @@ class CompilationPartsUploader implements Closeable {
   }
 
   @NotNull
+  protected void doDelete(String path) throws UploadException {
+    CloseableHttpResponse response = null
+    try {
+      String url = myServerUrl + StringUtil.trimStart(path, '/')
+      debug("DELETE " + url)
+      executeWithRetry(new HttpDelete(url))
+    }
+    catch (Exception e) {
+      throw new UploadException("Failed to DELETE $path: " + e.getMessage(), e)
+    }
+    finally {
+      StreamUtil.closeStream(response)
+    }
+  }
+
+  @NotNull
   private String doPut(String path, File file) throws UploadException {
     CloseableHttpResponse response = null
     try {

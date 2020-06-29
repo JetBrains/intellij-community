@@ -127,7 +127,7 @@ class CompilationOutputsUploader {
                                        JpsCompilationPartsUploader uploader,
                                        NamedThreadPoolExecutor executor) {
     executor.submit {
-      def sourcePath = "${compilationOutput.type}/${compilationOutput.name}/${compilationOutput.hash}"
+      def sourcePath = compilationOutput.sourcePath
       def outputFolder = new File(compilationOutput.path)
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
@@ -196,6 +196,18 @@ class CompilationOutputsUploader {
     if (!dst.exists()) throw new IllegalStateException("File $dst doesn't exist.")
   }
 
+  void delete(CommitsHistory commitsHistory) {
+    commitsHistory.commitsForRemote(remoteGitUrl).each { commitHash ->
+      uploader.delete("caches/$commitHash")
+      def metadataJson = uploader.getAsString("metadata/$commitHash")
+      def metadata = sourcesStateProcessor.parseSourcesStateFile(metadataJson)
+      sourcesStateProcessor.getAllCompilationOutputs(metadata).each {
+        uploader.delete(it.sourcePath)
+      }
+      uploader.delete("metadata/$commitHash")
+    }
+  }
+
   @CompileStatic
   private static class JpsCompilationPartsUploader extends CompilationPartsUploader {
     private JpsCompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
@@ -238,6 +250,11 @@ class CompilationOutputsUploader {
     boolean upload(@NotNull final String path, @NotNull final File file) {
       log("Uploading '$path'.")
       return super.upload(path, file, false)
+    }
+
+    void delete(@NotNull String path) {
+      log("Deleting '$path'.")
+      super.doDelete(path)
     }
   }
 }
