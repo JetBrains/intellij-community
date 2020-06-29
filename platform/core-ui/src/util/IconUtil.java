@@ -135,12 +135,19 @@ public class IconUtil {
     };
   }
 
-  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> {
-    VirtualFile file = key.getFile();
-    int flags = filterFileIconFlags(file, key.getFlags());
-    Project project = key.getProject();
+  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key ->
+    computeFileIcon(key.getFile(), key.getFlags(), key.getProject());
 
-    if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
+  /**
+   * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
+   */
+  @NotNull
+  public static Icon computeFileIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
+    if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) {
+      return AllIcons.FileTypes.Unknown;
+    }
+
+    flags = filterFileIconFlags(file, flags);
 
     Icon providersIcon = getProvidersIcon(file, flags, project);
     Icon icon = providersIcon != null ? providersIcon : computeBaseFileIcon(file);
@@ -166,7 +173,7 @@ public class IconUtil {
     Iconable.LastComputedIcon.put(file, icon, flags);
 
     return icon;
-  };
+  }
 
   @Iconable.IconFlags
   private static int filterFileIconFlags(@NotNull VirtualFile file, @Iconable.IconFlags int flags) {
@@ -185,13 +192,6 @@ public class IconUtil {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
     Icon base = lastIcon != null ? lastIcon : computeBaseFileIcon(file);
     return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
-  }
-
-  /**
-   * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
-   */
-  public static Icon computeFileIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
-    return ICON_NULLABLE_FUNCTION.fun(new FileIconKey(file, project, flags));
   }
 
   /**
