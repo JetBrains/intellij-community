@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package hg4idea.test.annotation;
 
 import com.intellij.openapi.util.Clock;
@@ -20,7 +21,6 @@ import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 
 public class HgAnnotationTest extends HgPlatformTest {
-
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
   private static final String firstCreatedFile = "file.txt";
   private static final String author1 = "a.bacaba@jetbrains.com";
@@ -45,7 +45,7 @@ public class HgAnnotationTest extends HgPlatformTest {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     try {
       Clock.reset();
     }

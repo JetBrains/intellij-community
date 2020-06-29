@@ -33,7 +33,6 @@ import static hg4idea.test.HgExecutor.hg;
  * </ul>
  */
 public abstract class HgPlatformTest extends VcsPlatformTest {
-
   protected VirtualFile myRepository;
   protected VirtualFile myChildRepo;
   protected HgVcs myVcs;
@@ -60,7 +59,7 @@ public abstract class HgPlatformTest extends VcsPlatformTest {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     try {
       HgGlobalSettings.getInstance().setHgExecutable(null);
     }
@@ -111,7 +110,7 @@ public abstract class HgPlatformTest extends VcsPlatformTest {
     hg("commit -m initial -u asd");
   }
 
-  public void prepareSecondRepository() throws IOException {
+  protected void prepareSecondRepository() throws IOException {
     cd(myRepository);
     hg("clone " + myRepository.getCanonicalPath() + " childRepo");
     myRepository.refresh(false, true);

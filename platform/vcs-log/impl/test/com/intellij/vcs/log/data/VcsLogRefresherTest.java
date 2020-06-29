@@ -61,7 +61,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     try {
       assertNoMoreResultsArrive();
       myDataWaiter.tearDown();
