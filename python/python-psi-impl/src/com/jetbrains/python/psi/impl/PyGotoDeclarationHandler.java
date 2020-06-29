@@ -64,7 +64,7 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
         final PsiElement original = PyiUtil.getOriginalElement(((PyElement)resolved));
         return ObjectUtils.chooseNotNull(original, resolved);
       }
-      return resolved;
+      return resolved != referenceOwner ? resolved : null;
     }
     // If element is not ref owner, it still may have provided references, lets find some
     final PsiElement element = findProvidedReferenceAndResolve(sourceElement);
@@ -82,7 +82,7 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
     for (final PsiReference reference : sourceElement.getReferences()) {
       if (reference instanceof PyUserInitiatedResolvableReference) {
         final PsiElement element = ((PyUserInitiatedResolvableReference)reference).userInitiatedResolve();
-        if (element != null) {
+        if (element != null && element != sourceElement) {
           return element;
         }
       }
