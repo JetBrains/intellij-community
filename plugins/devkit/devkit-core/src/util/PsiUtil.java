@@ -128,10 +128,13 @@ public final class PsiUtil {
 
     if (returnValue instanceof UReferenceExpression) {
       UReferenceExpression referenceExpression = (UReferenceExpression)returnValue;
-      final UField uField = ObjectUtils.tryCast(UResolvableKt.resolveToUElement(referenceExpression), UField.class);
+      final UElement uElement = UResolvableKt.resolveToUElement(referenceExpression);
+      final UField uField = ObjectUtils.tryCast(uElement, UField.class);
       if (uField != null && uField.isFinal()) {
         return uField.getUastInitializer();
       }
+
+      return ObjectUtils.tryCast(uElement, UExpression.class);
     }
     else if (returnValue instanceof UCallExpression) {
       UCallExpression uCallExpression = (UCallExpression)returnValue;

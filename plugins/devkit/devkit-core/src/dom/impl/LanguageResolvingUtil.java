@@ -6,20 +6,25 @@ import com.intellij.codeInsight.completion.CompletionContributorEP;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.search.PsiSearchScopeUtil;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomJavaUtil;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -32,6 +37,8 @@ import org.jetbrains.uast.*;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 final class LanguageResolvingUtil {
   private static final String ANY_LANGUAGE_DEFAULT_ID = Language.ANY.getID();
@@ -88,9 +95,11 @@ final class LanguageResolvingUtil {
       if (psiClass == null || !allLanguages.contains(psiClass)) {
         return null;
       }
-      final LanguageFileType type = language.getAssociatedFileType();
-      final Icon icon = type != null ? type.getIcon() : null;
-      return new LanguageDefinition(language.getID(), psiClass, icon, language.getDisplayName());
+
+      return new LanguageDefinition(language.getID(), psiClass, () -> {
+        final LanguageFileType type = language.getAssociatedFileType();
+        return type == null ? null : type.getIcon();
+      }, () -> language.getDisplayName());
     });
   }
 
@@ -117,25 +126,91 @@ final class LanguageResolvingUtil {
           return Result.create(null, language);
         }
 
-        String displayName = computeConstantReturnValue(language, "getDisplayName");
+        final LanguageDefinition definition =
+          new LanguageDefinition(languageId, language,
+                                 () -> computeIconForProjectLanguage(language),
+                                 () -> computeConstantReturnValue(language, "getDisplayName"));
 
-        return Result.createSingleDependency(new LanguageDefinition(languageId, language, null, displayName), language);
+        return Result.createSingleDependency(definition, language);
       });
     });
   }
 
   @Nullable
-  private static String computeConstantReturnValue(PsiClass languagePsiClass,
+  private static Icon computeIconForProjectLanguage(PsiClass language) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(language);
+    if (module == null) return null;
+
+    Project project = language.getProject();
+    final PsiClass languageFileType = JavaPsiFacade.getInstance(project).findClass(LanguageFileType.class.getName(),
+                                                                                   language.getResolveScope());
+    if (languageFileType == null) return null;
+
+    PsiClass fileType = findLanguageFileType(language, module, languageFileType);
+    if (fileType == null) return null;
+
+    final ProjectIconsAccessor iconsAccessor = ProjectIconsAccessor.getInstance(project);
+    final UExpression icon = getReturnExpression(fileType, "getIcon");
+    final VirtualFile iconFile = iconsAccessor.resolveIconFile(icon);
+    return iconFile == null ? null : iconsAccessor.getIcon(iconFile);
+  }
+
+  /**
+   * Order:
+   * - overridden Language.getAssociatedFileType()
+   * - matching LFT in current module
+   * - matching LFT in resolve scope
+   */
+  @Nullable
+  private static PsiClass findLanguageFileType(PsiClass language, Module module, PsiClass languageFileType) {
+    final UExpression associatedFileTypeExpression = getReturnExpression(language, "getAssociatedFileType");
+    if (associatedFileTypeExpression != null) {
+      return PsiTypesUtil.getPsiClass(associatedFileTypeExpression.getExpressionType());
+    }
+
+    final GlobalSearchScope currentModuleScope = GlobalSearchScope.moduleWithDependenciesScope(module);
+    PsiClass matchingFileType = findMatchingFileType(languageFileType, language, currentModuleScope);
+    if (matchingFileType != null) return matchingFileType;
+
+    return findMatchingFileType(languageFileType, language, language.getUseScope());
+  }
+
+  @Nullable
+  private static PsiClass findMatchingFileType(PsiClass languageFileType,
+                                               PsiClass language,
+                                               SearchScope scope) {
+    return ClassInheritorsSearch.search(languageFileType, scope, true).filtering(psiClass -> {
+      UClass uClass = UastContextKt.toUElement(psiClass, UClass.class);
+      if (uClass == null) return false;
+
+      final UCallExpression expression = getSuperConstructorParameterExpression(uClass);
+      if (expression == null) return false;
+
+      final UExpression languageParam = expression.getArgumentForParameter(0);
+      if (languageParam == null) return false;
+
+      final PsiClass paramPsiClass = PsiTypesUtil.getPsiClass(languageParam.getExpressionType());
+      return language.getManager().areElementsEquivalent(language, paramPsiClass);
+    }).findFirst();
+  }
+
+  @Nullable
+  private static String computeConstantReturnValue(PsiClass psiClass,
                                                    String methodName) {
-    final PsiMethod[] methods = languagePsiClass.findMethodsByName(methodName, false);
+    final UExpression expression = getReturnExpression(psiClass, methodName);
+    if (expression == null) return null;
+
+    return UastUtils.evaluateString(expression);
+  }
+
+  @Nullable
+  private static UExpression getReturnExpression(PsiClass psiClass, String methodName) {
+    final PsiMethod[] methods = psiClass.findMethodsByName(methodName, false);
     if (methods.length != 1) {
       return null;
     }
 
-    final UExpression expression = PsiUtil.getReturnedExpression(methods[0]);
-    if (expression == null) return null;
-    
-    return UastUtils.evaluateString(expression);
+    return PsiUtil.getReturnedExpression(methods[0]);
   }
 
   private static String computeConstantSuperCtorCallParameter(PsiClass languagePsiClass, int index) {
@@ -145,13 +220,14 @@ final class LanguageResolvingUtil {
       return getStringConstantExpression(UastUtils.findContaining(languageClass.getSourcePsi(), UObjectLiteralExpression.class), index);
     }
 
-    UMethod defaultConstructor = null;
-    for (UMethod method : languageClass.getMethods()) {
-      if (method.isConstructor() && method.getUastParameters().isEmpty()) {
-        defaultConstructor = method;
-        break;
-      }
-    }
+    UCallExpression methodCallExpression = getSuperConstructorParameterExpression(languageClass);
+    return getStringConstantExpression(methodCallExpression, index);
+  }
+
+  @Nullable
+  private static UCallExpression getSuperConstructorParameterExpression(UClass languageClass) {
+    UMethod defaultConstructor = ContainerUtil.find(languageClass.getMethods(),
+                                                    method -> method.isConstructor() && method.getUastParameters().isEmpty());
     if (defaultConstructor == null) {
       return null;
     }
@@ -164,21 +240,7 @@ final class LanguageResolvingUtil {
 
     // super() must be first
     UExpression expression = ContainerUtil.getFirstItem(expressions);
-
-    if (!(expression instanceof UCallExpression)) {
-      return null;
-    }
-    UCallExpression methodCallExpression = (UCallExpression)expression;
-
-    if (!isSuperConstructorCall(methodCallExpression)) {
-      return null;
-    }
-    return getStringConstantExpression(methodCallExpression, index);
-  }
-
-  private static boolean isSuperConstructorCall(@Nullable UCallExpression callExpression) {
-    if (callExpression == null) return false;
-    return callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL;
+    return ObjectUtils.tryCast(expression, UCallExpression.class);
   }
 
   @Nullable
@@ -199,10 +261,11 @@ final class LanguageResolvingUtil {
     if (languageClass == null) return null;
 
     String anyLanguageId = calculateAnyLanguageId(context);
-    return new LanguageDefinition(anyLanguageId, languageClass, AllIcons.FileTypes.Any_type, "<any language>");
+    return new LanguageDefinition(anyLanguageId, languageClass, () -> AllIcons.FileTypes.Any_type, () -> "<any language>");
   }
 
-  private static final Set<String> EP_WITH_ANY_LANGUAGE_ID = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(CompletionContributorEP.class.getName(), CompletionConfidenceEP.class.getName())));
+  private static final Set<String> EP_WITH_ANY_LANGUAGE_ID = Collections
+    .unmodifiableSet(new HashSet<>(Arrays.asList(CompletionContributorEP.class.getName(), CompletionConfidenceEP.class.getName())));
 
   private static String calculateAnyLanguageId(@NotNull ConvertContext context) {
     final Extension extension = context.getInvocationElement().getParentOfType(Extension.class, true);
@@ -226,16 +289,19 @@ final class LanguageResolvingUtil {
     final String id;
     final PsiClass clazz;
     final Icon icon;
-    final String displayName;
+    final Supplier<String> displayName;
     final String type;
 
-    LanguageDefinition(@NotNull String id, @NotNull PsiClass clazz, @Nullable Icon icon, @Nullable String displayName) {
+    LanguageDefinition(@NotNull String id, @NotNull PsiClass clazz,
+                       @NotNull Supplier<? extends @Nullable Icon> iconSupplier,
+                       Supplier<String> displayName) {
       this.id = id;
       this.clazz = clazz;
       this.type = clazz instanceof PsiAnonymousClass
                   ? ((PsiAnonymousClass)clazz).getBaseClassReference().getQualifiedName()
                   : clazz.getQualifiedName();
-      this.icon = icon;
+      this.icon = IconManager.getInstance().createDeferredIcon(EmptyIcon.ICON_16, iconSupplier,
+                                                               (Function<Supplier<? extends Icon>, Icon>)supplier -> supplier.get());
       this.displayName = displayName;
     }
 
