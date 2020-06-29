@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -24,8 +24,7 @@ import java.util.function.Supplier;
 /**
  * @author Konstantin Bulenkov
  */
-public class ContentUtilEx extends ContentsUtil {
-
+public final class ContentUtilEx extends ContentsUtil {
   public static void addTabbedContent(@NotNull ContentManager manager,
                                       @NotNull JComponent contentComponent,
                                       @NotNull @NonNls String groupPrefix,

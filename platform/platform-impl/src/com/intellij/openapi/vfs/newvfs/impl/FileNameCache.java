@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 public final class FileNameCache {
-
   @SuppressWarnings("unchecked") private static final IntSLRUCache<CharSequence>[] ourNameCache = new IntSLRUCache[16];
 
   static {
