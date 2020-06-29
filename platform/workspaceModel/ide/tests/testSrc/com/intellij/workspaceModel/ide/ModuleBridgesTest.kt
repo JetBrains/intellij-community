@@ -231,6 +231,51 @@ class ModuleBridgesTest {
     }
 
   @Test
+  fun `test twice module rename`() =
+    WriteCommandAction.runWriteCommandAction(project) {
+      val antModuleName = "ant"
+      val mavenModuleName = "maven"
+      val gradleModuleName = "gradle"
+      val moduleManager = ModuleManager.getInstance(project)
+
+      val iprFile = File(project.projectFilePath!!)
+      val antModuleFile = File(project.basePath, "$antModuleName.iml")
+      val mavenModuleFile = File(project.basePath, "$mavenModuleName.iml")
+      val gradleModuleFile = File(project.basePath, "$gradleModuleName.iml")
+
+      val antModule = moduleManager.modifiableModel.let { model ->
+        val antModule = model.newModule(antModuleFile.path, ModuleType.EMPTY.id)
+        model.commit()
+        antModule
+      }
+
+      StoreUtil.saveDocumentsAndProjectSettings(project)
+      var fileText = iprFile.readText()
+      assertTrue(fileText.contains(antModuleName))
+      assertFalse(fileText.contains(mavenModuleName))
+      assertFalse(fileText.contains(gradleModuleName))
+
+      assertTrue(antModuleFile.exists())
+
+      moduleManager.modifiableModel.let { model ->
+        model.renameModule(antModule, mavenModuleName)
+        model.renameModule(antModule, gradleModuleName)
+        model.commit()
+      }
+      assertEquals(gradleModuleName, antModule.name)
+
+      StoreUtil.saveDocumentsAndProjectSettings(project)
+      fileText = iprFile.readText()
+      assertTrue(fileText.contains(gradleModuleName))
+      assertFalse(fileText.contains(mavenModuleName))
+      assertFalse(fileText.contains(antModuleName))
+
+      assertFalse(antModuleFile.exists())
+      assertFalse(mavenModuleFile.exists())
+      assertTrue(gradleModuleFile.exists())
+    }
+
+  @Test
   fun `test remove and add module with the same name`() =
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)

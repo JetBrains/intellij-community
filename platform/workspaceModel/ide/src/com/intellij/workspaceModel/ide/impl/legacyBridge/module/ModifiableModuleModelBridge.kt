@@ -216,12 +216,12 @@ internal class ModifiableModuleModelBridge(
 
     val oldModule = findModuleByName(newName)
 
-    myNewNameToModule.inverse().remove(module)
+    val uncommittedOldName = myNewNameToModule.inverse().remove(module)
     myNewNameToModule.remove(newName)
 
     removeUnloadedModule(newName)
-    val oldName = module.name
-    val oldId = module.moduleEntityId
+    val oldName = uncommittedOldName ?: module.name
+    val oldId = if (uncommittedOldName != null) ModuleId(uncommittedOldName) else module.moduleEntityId
     if (oldName != newName) { // if renaming to itself, forget it altogether
       val moduleToAdd = myModulesToAdd.remove(oldName)
       if (moduleToAdd != null) {
