@@ -16,6 +16,6 @@ public class LightEditNewFileAction extends DumbAwareAction implements LightEdit
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    LightEditService.getInstance().createNewFile();
+    LightEditService.getInstance().createNewFile(null);
   }
 }

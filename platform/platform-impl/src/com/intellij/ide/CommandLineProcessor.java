@@ -28,7 +28,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -71,7 +70,14 @@ public final class CommandLineProcessor {
     }
 
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
-    assert file != null;
+    if (file == null) {
+      if (LightEditUtil.openFile(ioFile)) {
+        return new CommandLineProcessorResult(LightEditUtil.getProject(), OK_FUTURE);
+      }
+      else {
+        return CommandLineProcessorResult.createError("Can not open file " + ioFile.toString());
+      }
+    }
 
     if (projects.length == 0) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(ioFile, line, column, tempProject);
@@ -216,8 +222,8 @@ public final class CommandLineProcessor {
       catch (InvalidPathException e) {
         LOG.warn(e);
       }
-      if (file == null || !Files.exists(file)) {
-        return CommandLineProcessorResult.createError("Cannot find file '" + arg + "'");
+      if (file == null) {
+        return CommandLineProcessorResult.createError("Invalid path '" + arg + "'");
       }
 
       if (line != -1 || tempProject) {

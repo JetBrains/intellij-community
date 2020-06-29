@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,6 +52,27 @@ public final class LightEditUtil {
         LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
         return true;
       }
+    }
+    else {
+      return handleNonExisting(path);
+    }
+    return false;
+  }
+
+  private static boolean handleNonExisting(@NotNull Path path) {
+    if (path.getNameCount() > 0) {
+      String fileName = path.getFileName().toString();
+      if (path.getNameCount() > 1) {
+        File newFile = path.toFile();
+        if (FileUtil.createIfDoesntExist(newFile)) {
+          VirtualFile newVFile = VfsUtil.findFileByIoFile(newFile, true);
+          if (newVFile != null) {
+            return LightEditService.getInstance().openFile(newVFile);
+          }
+        }
+      }
+      LightEditService.getInstance().createNewFile(fileName);
+      return true;
     }
     return false;
   }
