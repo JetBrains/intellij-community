@@ -579,10 +579,13 @@ public final class PatternCompiler {
     final String scriptCodeConstraint = constraint.getScriptCodeConstraint();
     if (scriptCodeConstraint.length() > 2) {
       final String script = StringUtil.unquoteString(scriptCodeConstraint);
-      if (checkForErrors) {
-        final String problem = ScriptSupport.checkValidScript(script, matchOptions);
-        if (problem != null) {
+      final String problem = ScriptSupport.checkValidScript(script, matchOptions);
+      if (problem != null) {
+        if (checkForErrors) {
           throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem " + problem);
+        }
+        else {
+          return;
         }
       }
       addPredicate(handler, new ScriptPredicate(project, name, script, variableNames, matchOptions));
