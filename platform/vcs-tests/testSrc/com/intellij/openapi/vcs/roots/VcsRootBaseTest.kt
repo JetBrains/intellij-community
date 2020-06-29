@@ -13,9 +13,8 @@ import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.vcs.test.VcsPlatformTest
 import java.io.File
 
@@ -66,14 +65,14 @@ abstract class VcsRootBaseTest : VcsPlatformTest() {
     val contentRoots = vcsRootConfiguration.contentRoots
     createProjectStructure(myProject, contentRoots)
     if (!contentRoots.isEmpty()) {
-      EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+      runInEdtAndWait {
         for (root in contentRoots) {
           val f = projectRoot.findFileByRelativePath(root)
           if (f != null) {
             PsiTestUtil.addContentRoot(rootModule, f)
           }
         }
-      })
+      }
     }
   }
 

@@ -21,11 +21,10 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.psi.stubs.StubUpdatingIndex
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.env.PyEnvTaskRunner
 import com.jetbrains.env.PyEnvTestCase
@@ -66,30 +65,30 @@ abstract class PyTypeShedTestCase(protected val path: String, protected val sdkP
     if (skeletonsDir == null || skeletonsDir.children?.isEmpty() ?: true) {
       PySdkTools.generateTempSkeletonsOrPackages(sdk, true, module)
     }
-    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+    runInEdtAndWait {
       SdkConfigurationUtil.addSdk(sdk)
       project.pythonSdk = sdk
       module.pythonSdk = sdk
-    })
+    }
   }
 
   private fun createSdk(sdkPath: String, project: Project): Sdk? {
     val sdkFile = StandardFileSystems.local().findFileByPath(sdkPath) ?: return null
     var sdkVar: Sdk? = null
-    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+    runInEdtAndWait {
       sdkVar = SdkConfigurationUtil.setupSdk(emptyArray(), sdkFile, PythonSdkType.getInstance(), true, null, null)
-    })
+    }
     val sdk = sdkVar ?: return null
     val modificator = sdk.sdkModificator
     val paths = PythonSdkType.getSysPathsFromScript(sdk)
     PythonSdkUpdater.filterRootPaths(sdk, paths, project).forEach {
       modificator.addRoot(it, OrderRootType.CLASSES)
     }
-    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+    runInEdtAndWait {
       modificator.commitChanges()
       val index = FileBasedIndex.getInstance()
       index.requestRebuild(StubUpdatingIndex.INDEX_ID)
-    })
+    }
     return sdk
   }
 

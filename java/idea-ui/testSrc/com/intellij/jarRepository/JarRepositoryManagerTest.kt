@@ -4,13 +4,12 @@ package com.intellij.jarRepository
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.aether.ArtifactKind
@@ -33,9 +32,9 @@ class JarRepositoryManagerTest : UsefulTestCase() {
   @Before
   override fun setUp() {
     super.setUp()
-    myFixture = EdtTestUtil.runInEdtAndGet(ThrowableComputable {
+    myFixture = runInEdtAndGet {
       IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().fixture.apply { setUp() }
-    })
+    }
     myProject = myFixture.project
     myMavenRepo = FileUtil.createTempDirectory("maven", "repo")
     myTestLocalMvnCache = FileUtil.createTempDirectory("maven", "cache")
@@ -46,9 +45,9 @@ class JarRepositoryManagerTest : UsefulTestCase() {
   @After
   override fun tearDown() {
     try {
-      EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+      runInEdtAndWait {
         myFixture.tearDown()
-      })
+      }
     } finally {
       super.tearDown()
     }
