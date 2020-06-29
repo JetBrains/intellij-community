@@ -3,8 +3,6 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.wm.WelcomeScreen;
-import com.intellij.ui.BalloonLayout;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,6 +12,7 @@ public abstract class AbstractWelcomeScreen extends JPanel implements WelcomeScr
     super(new BorderLayout());
   }
 
-  @Nullable
-  public abstract BalloonLayout getBalloonLayout();
+  @Override
+  public void dispose() {
+  }
 }

@@ -89,6 +89,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   public static final int DEFAULT_HEIGHT = Registry.is("use.tabbed.welcome.screen") ? 600 : 460 ;
   public static final int MAX_DEFAULT_WIDTH = 800;
   private final AbstractWelcomeScreen myScreen;
+  private WelcomeBalloonLayoutImpl myBalloonLayout;
   private boolean myDisposed;
 
   public FlatWelcomeFrame() {
@@ -96,6 +97,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     JRootPane rootPane = getRootPane();
     boolean useTabWelcomeScreen = Registry.is("use.tabbed.welcome.screen");
+    myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
     myScreen = useTabWelcomeScreen ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
 
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane) {
@@ -189,6 +191,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
     myDisposed = true;
     super.dispose();
+    if (myBalloonLayout != null) {
+      Disposer.dispose((myBalloonLayout));
+      myBalloonLayout = null;
+    }
     Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
   }
@@ -229,7 +235,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
     private LinkLabel<Object> myUpdatePluginsLink;
     private boolean inDnd;
-    private WelcomeBalloonLayoutImpl myBalloonLayout;
 
     FlatWelcomeScreen() {
       mySlidingPanel.add("root", this);
@@ -413,16 +418,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           panel.setVisible(true);
         }
       };
-      myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
       ApplicationManager.getApplication().getMessageBus().connect(this)
         .subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, balloonModelListener);
       myBalloonLayout.setLocationComponent(panel);
       return panel;
-    }
-
-    @Override
-    public @Nullable BalloonLayout getBalloonLayout() {
-      return myBalloonLayout;
     }
 
     @NotNull
@@ -550,14 +549,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     }
 
-    @Override
-    public void dispose() {
-      if (myBalloonLayout != null) {
-        myBalloonLayout.dispose();
-        myBalloonLayout = null;
-      }
-    }
-
     private JComponent createUpdatePluginsLink() {
       myUpdatePluginsLink = new LinkLabel<>(IdeBundle.message("updates.plugins.welcome.screen.link.message"), null);
       myUpdatePluginsLink.setVisible(false);
@@ -601,7 +592,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   @Nullable
   @Override
   public BalloonLayout getBalloonLayout() {
-    return myScreen.getBalloonLayout();
+    return myBalloonLayout;
   }
 
   @NotNull

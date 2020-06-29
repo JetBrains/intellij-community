@@ -5,7 +5,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBSlidingPanel;
@@ -63,11 +62,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     }
   }
 
-  @Override
-  public @Nullable BalloonLayout getBalloonLayout() {
-    return null;
-  }
-
   @NotNull
   private static CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> createCardPanel() {
     return new CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel>() {
@@ -95,11 +89,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   @Override
   public void setupFrame(JFrame frame) {
-  }
-
-  @Override
-  public void dispose() {
-
   }
 
   private static class MyCellRenderer extends CellRendererPane implements ListCellRenderer<WelcomeScreenTab> {
