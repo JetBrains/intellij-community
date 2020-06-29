@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
@@ -15,9 +16,9 @@ public class ProjectTreeStateTest extends BaseProjectViewTestCase {
   public void testUpdateProjectView() {
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject), new FormMergerTreeStructureProvider(myProject));
 
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    AbstractProjectViewPSIPane pane = myStructure.createPane();
 
-    final JTree tree = pane.getTree();
+    JTree tree = pane.getTree();
     tree.expandRow(1);
     tree.expandRow(5);
     tree.expandRow(6);
@@ -25,22 +26,19 @@ public class ProjectTreeStateTest extends BaseProjectViewTestCase {
     tree.expandRow(11);
     PlatformTestUtil.assertTreeEqual(pane.getTree(), myExpectedTree, true);
 
-    final TreeState treeState = TreeState.createOn(tree);
+    TreeState treeState = TreeState.createOn(tree);
 
     doTestState(treeState);
 
-    final Element stored = new Element("Root");
+    Element stored = new Element("Root");
     treeState.writeExternal(stored);
 
     TreeState readState = TreeState.createFrom(stored);
     doTestState(readState);
-
   }
 
-  private void doTestState(final TreeState treeState) {
-    final JTree tree2 = myStructure.createPane().getTree();
-
-
+  private void doTestState(TreeState treeState) {
+    JTree tree2 = myStructure.createPane().getTree();
     treeState.applyTo(tree2);
 
     PlatformTestUtil.waitWhileBusy(tree2);

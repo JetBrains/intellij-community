@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -152,9 +151,14 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
 
   @NotNull
   @Override
-  protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
-    FileUtil.ensureExists(projectFile.getParent().resolve(Project.DIRECTORY_STORE_FOLDER).toFile());
-    return ProjectManagerEx.getInstanceEx().newProject(projectFile.getParent(), FixtureRuleKt.createTestOpenProjectOptions());
+  protected Project doCreateAndOpenProject(@NotNull Path projectFile) {
+    try {
+      Files.createDirectories(projectFile.getParent().resolve(Project.DIRECTORY_STORE_FOLDER));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return ProjectManagerEx.getInstanceEx().openProject(projectFile.getParent(), FixtureRuleKt.createTestOpenProjectOptions());
   }
 
   @NotNull

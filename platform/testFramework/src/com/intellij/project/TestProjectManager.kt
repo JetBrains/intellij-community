@@ -14,14 +14,19 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectExImpl
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerExImpl
-import com.intellij.openapi.project.impl.TooManyProjectLeakedException
+import com.intellij.project.TestProjectManager.Companion.getCreationPlace
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.LeakHunter
+import com.intellij.util.PairProcessor
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.function.Predicate
 
 private const val MAX_LEAKY_PROJECTS = 5
 private val LEAK_CHECK_INTERVAL = TimeUnit.MINUTES.toMillis(30)
@@ -158,7 +163,7 @@ internal class TestProjectManager : ProjectManagerExImpl() {
 
   private fun getLeakedProjectCount() = getLeakedProjects().count()
 
-  private fun getLeakedProjects(): Sequence<Project?> {
+  private fun getLeakedProjects(): Sequence<Project> {
     // process queue
     projects.remove(DummyProject.getInstance())
     return projects.keys.asSequence()
@@ -187,8 +192,33 @@ internal class TestProjectManager : ProjectManagerExImpl() {
       val copy = getLeakedProjects().toCollection(UnsafeWeakList())
       projects.clear()
       if (copy.iterator().asSequence().count() >= MAX_LEAKY_PROJECTS) {
-        throw TooManyProjectLeakedException(copy)
+        reportLeakedProjects(copy)
+        throw AssertionError("Too many projects leaked, again.")
       }
     }
   }
+}
+
+private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
+  val hashCodes = IntOpenHashSet()
+  for (project in leakedProjects) {
+    hashCodes.add(System.identityHashCode(project))
+  }
+  val dumpPath = HeavyPlatformTestCase.publishHeapDump("leakedProjects")
+  val leakers = StringBuilder()
+  leakers.append("Too many projects leaked: \n")
+  LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl::class.java,
+                          Predicate { hashCodes.contains(System.identityHashCode(it)) },
+                          PairProcessor { leaked: ProjectImpl?, backLink: Any? ->
+                            val hashCode = System.identityHashCode(leaked)
+                            leakers.append("Leaked project found:").append(leaked)
+                              .append("; hash: ").append(hashCode)
+                              .append("; place: ").append(getCreationPlace(leaked!!)).append("\n")
+                              .append(backLink).append("\n")
+                              .append(";-----\n")
+                            hashCodes.remove(hashCode)
+                            !hashCodes.isEmpty()
+                          })
+  leakers.append("\nPlease see '$dumpPath' for a memory dump")
+  throw AssertionError(leakers.toString())
 }

@@ -32,7 +32,6 @@ import java.util.Map;
 
 @RunWith(Parameterized.class)
 public class GitRepositoryReaderTest extends GitPlatformTest {
-
   @NotNull private final File myTestCaseDir;
 
   private File myTempDir;
@@ -53,7 +52,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
   }
 
   @Before
-  public void before() throws Exception {
+  public void before() throws IOException {
     myTempDir = new File(projectRoot.getPath(), "test");
     prepareTest(myTestCaseDir);
   }
@@ -80,7 +79,6 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     VirtualFile gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myGitDir);
     myRepositoryReader = new GitRepositoryReader(GitRepositoryFiles.getInstance(gitDir));
   }
-
 
   @NotNull
   private static String readHead(@NotNull File dir) throws IOException {

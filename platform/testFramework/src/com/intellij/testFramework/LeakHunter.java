@@ -9,8 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.project.TestProjectManager;
 import com.intellij.util.PairProcessor;
@@ -27,8 +25,10 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class LeakHunter {
   @TestOnly
   public static void checkProjectLeak() {
@@ -51,7 +51,7 @@ public final class LeakHunter {
   @TestOnly
   public static <T> void checkLeak(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
                                    @NotNull Class<T> suspectClass,
-                                   @Nullable final Condition<? super T> isReallyLeak) throws AssertionError {
+                                   @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
     processLeaks(rootsSupplier, suspectClass, isReallyLeak, (leaked, backLink)->{
       String place = leaked instanceof Project ? TestProjectManager.getCreationPlace((Project)leaked) : "";
       String message ="Found leaked "+leaked.getClass() + ": "+leaked +
@@ -69,10 +69,10 @@ public final class LeakHunter {
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
    */
   @TestOnly
-  static <T> void processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
-                               @NotNull Class<T> suspectClass,
-                               @Nullable final Condition<? super T> isReallyLeak,
-                               @NotNull final PairProcessor<? super T, Object> processor) throws AssertionError {
+  public static <T> void processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
+                                      @NotNull Class<T> suspectClass,
+                                      @Nullable Predicate<? super T> isReallyLeak,
+                                      @NotNull PairProcessor<? super T, Object> processor) throws AssertionError {
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -82,10 +82,10 @@ public final class LeakHunter {
     PersistentEnumeratorBase.clearCacheForTests();
     Runnable runnable = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
-        DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, Conditions.alwaysTrue(), (value, backLink) -> {
+        DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, o -> true, (value, backLink) -> {
           @SuppressWarnings("unchecked")
           T leaked = (T)value;
-          if (isReallyLeak == null || isReallyLeak.value(leaked)) {
+          if (isReallyLeak == null || isReallyLeak.test(leaked)) {
             return processor.process(leaked, backLink);
           }
           return true;
@@ -105,7 +105,7 @@ public final class LeakHunter {
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
    */
   @TestOnly
-  public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable final Condition<? super T> isReallyLeak) throws AssertionError {
+  public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
     checkLeak(() -> Collections.singletonMap(root, "Root object"), suspectClass, isReallyLeak);
   }
 
@@ -114,6 +114,7 @@ public final class LeakHunter {
     return () -> {
       ClassLoader classLoader = LeakHunter.class.getClassLoader();
       // inspect static fields of all loaded classes
+      @SuppressWarnings("UseOfObsoleteCollectionType")
       Vector<?> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
 
       // Remove expired invocations, so they are not used as object roots.

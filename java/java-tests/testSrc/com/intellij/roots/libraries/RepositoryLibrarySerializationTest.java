@@ -19,13 +19,14 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class RepositoryLibrarySerializationTest extends ModuleRootManagerTestCase {
-  @NotNull
   @Override
-  protected Path getProjectDirOrFile() {
-    return getProjectDirOrFile(true);
+  protected boolean isCreateDirectoryBasedProject() {
+    return true;
   }
 
   public void testPlain() throws IOException {
@@ -56,7 +57,9 @@ public class RepositoryLibrarySerializationTest extends ModuleRootManagerTestCas
     File librarySource = PathManagerEx.findFileUnderCommunityHome(libraryPath);
 
     WriteAction.runAndWait(() -> {
-      VirtualFile librariesVirtualFile = VfsUtil.createDirectoryIfMissing(myProject.getBaseDir(), ".idea/libraries");
+      Path dir = Paths.get(myProject.getBasePath(), ".idea/libraries");
+      Files.createDirectories(dir);
+      VirtualFile librariesVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir);
       VfsUtil.copy(this, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(librarySource), librariesVirtualFile);
     });
     StoreReloadManager.getInstance().flushChangedProjectFileAlarm();
@@ -72,8 +75,8 @@ public class RepositoryLibrarySerializationTest extends ModuleRootManagerTestCas
 
   @NotNull
   @Override
-  protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
-    Project project = super.doCreateProject(projectFile);
+  protected Project doCreateAndOpenProject(@NotNull Path projectFile) {
+    Project project = super.doCreateAndOpenProject(projectFile);
     // Force loading libraries from disk
     ProjectKt.getStateStore(project).setOptimiseTestLoadSpeed(false);
     return project;

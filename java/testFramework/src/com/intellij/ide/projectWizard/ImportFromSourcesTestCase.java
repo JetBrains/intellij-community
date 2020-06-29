@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.importProject.DetectedRootData;
@@ -43,7 +43,7 @@ public abstract class ImportFromSourcesTestCase extends HeavyPlatformTestCase {
   protected void setUpProject() {
   }
 
-  protected Module assertOneModule(@NotNull ModuleType moduleType) {
+  protected Module assertOneModule(@NotNull ModuleType<?> moduleType) {
     Module module = assertOneElement(ModuleManager.getInstance(myProject).getModules());
     assertEquals(moduleType, ModuleType.get(module));
     return module;
@@ -58,32 +58,27 @@ public abstract class ImportFromSourcesTestCase extends HeavyPlatformTestCase {
 
   protected void importFromSources(File dir) {
     myRootDir = dir;
-    try {
-      myProject = doCreateProject(getProjectDirOrFile());
-      myBuilder.setBaseProjectPath(dir.getAbsolutePath());
-      List<DetectedRootData> list = RootDetectionProcessor.detectRoots(dir);
-      MultiMap<ProjectStructureDetector,DetectedProjectRoot> map = RootDetectionProcessor.createRootsMap(list);
-      myBuilder.setupProjectStructure(map);
-      for (ProjectStructureDetector detector : map.keySet()) {
-        List<ModuleWizardStep> steps = detector.createWizardSteps(myBuilder, myBuilder.getProjectDescriptor(detector), EmptyIcon.ICON_16);
-        try {
-          for (ModuleWizardStep step : steps) {
-            if (step instanceof AbstractStepWithProgress<?>) {
-              performStep((AbstractStepWithProgress<?>)step);
-            }
-          }
-        }
-        finally {
-          for (ModuleWizardStep step : steps) {
-            step.disposeUIResources();
+    myProject = doCreateAndOpenProject(getProjectDirOrFile());
+    myBuilder.setBaseProjectPath(dir.getAbsolutePath());
+    List<DetectedRootData> list = RootDetectionProcessor.detectRoots(dir);
+    MultiMap<ProjectStructureDetector, DetectedProjectRoot> map = RootDetectionProcessor.createRootsMap(list);
+    myBuilder.setupProjectStructure(map);
+    for (ProjectStructureDetector detector : map.keySet()) {
+      List<ModuleWizardStep> steps = detector.createWizardSteps(myBuilder, myBuilder.getProjectDescriptor(detector), EmptyIcon.ICON_16);
+      try {
+        for (ModuleWizardStep step : steps) {
+          if (step instanceof AbstractStepWithProgress<?>) {
+            performStep((AbstractStepWithProgress<?>)step);
           }
         }
       }
-      myBuilder.commit(myProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
+      finally {
+        for (ModuleWizardStep step : steps) {
+          step.disposeUIResources();
+        }
+      }
     }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    myBuilder.commit(myProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
   }
 
   private static <Result> void performStep(AbstractStepWithProgress<Result> step) {

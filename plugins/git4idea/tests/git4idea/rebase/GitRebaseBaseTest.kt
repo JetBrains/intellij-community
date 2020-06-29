@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
@@ -6,14 +6,23 @@ import com.intellij.notification.Notification
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor
 import git4idea.GitUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.config.GitVersion
 import git4idea.repo.GitRepository
 import git4idea.test.*
+import java.nio.file.Path
+import java.nio.file.Paths
 
 abstract class GitRebaseBaseTest : GitPlatformTest() {
+  override fun isCreateProjectFileExplicitly() = false
+
+  // on rebase shelf file is created in .idea/shelf/Uncommitted_changes_before_rebase_[Default_Changelist] and it leads to test failures because of assertNoLocalChanges
+  override fun getProjectDirOrFile(): Path {
+    return Paths.get(FileUtil.getTempDirectory(), "p.ipr")
+  }
 
   private val saved = getDefaultSaveChangesPolicy().name.toLowerCase().let { save ->
     if (save.endsWith("e")) "${save}d" else "${save}ed"

@@ -39,7 +39,6 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -401,11 +400,10 @@ public class RootsChangedTest extends JavaModuleTestCase {
     }).assertTiming();
   }
 
-  @NotNull
+  // create ".idea" - based project because it's 1) needed for testShelveChangesMustNotLeadToRootsChangedEvent and 2) is more common
   @Override
-  protected Path getProjectDirOrFile() {
-    // create ".idea" - based project because it's 1) needed for testShelveChangesMustNotLeadToRootsChangedEvent and 2) is more common
-    return getProjectDirOrFile(true);
+  protected boolean isCreateDirectoryBasedProject() {
+    return true;
   }
 
   public void testShelveChangesMustNotLeadToRootsChangedEvent() {

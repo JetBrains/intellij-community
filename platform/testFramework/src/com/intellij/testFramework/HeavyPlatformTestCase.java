@@ -30,8 +30,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -65,10 +63,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.ui.UIUtil;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +103,6 @@ import static com.intellij.testFramework.RunAll.runAll;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class HeavyPlatformTestCase extends UsefulTestCase implements DataProvider {
-  private static boolean ourReportedLeakedProjects;
   protected Project myProject;
   protected Module myModule;
 
@@ -252,9 +246,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected void setUpProject() throws Exception {
-    myProject = doCreateProject(getProjectDirOrFile());
+    myProject = doCreateAndOpenProject(getProjectDirOrFile());
     LocalFileSystem.getInstance().refreshNioFiles(myFilesToDelete);
-    PlatformTestUtil.openProject(myProject);
 
     WriteAction.run(() ->
       ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
@@ -268,29 +261,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
-  protected @NotNull Project doCreateProject(@NotNull Path projectFile) throws Exception {
+  protected @NotNull Project doCreateAndOpenProject(@NotNull Path projectFile) {
     // doCreateRealModule uses myProject.getName() as module name - use constant project name because projectFile here unique temp file
-    return createProject(projectFile, getProjectFilename());
-  }
-
-  public static @NotNull Project createProject(@NotNull Path file) {
-    return createProject(file, null);
-  }
-
-  private static @NotNull Project createProject(@NotNull Path file, @Nullable String projectName) {
-    try {
-      return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(file, FixtureRuleKt.createTestOpenProjectOptions().withProjectName(projectName)));
-    }
-    catch (TooManyProjectLeakedException e) {
-      if (ourReportedLeakedProjects) {
-        fail("Too many projects leaked, again.");
-        return null;
-      }
-      ourReportedLeakedProjects = true;
-
-      reportLeakedProjects(e);
-      return null;
-    }
+    return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(projectFile, FixtureRuleKt.createTestOpenProjectOptions().withProjectName(getProjectFilename())));
   }
 
   public static @NotNull String publishHeapDump(@NotNull String fileNamePrefix) {
@@ -308,34 +281,12 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return dumpPath;
   }
 
-  @Contract("_ -> fail")
-  public static void reportLeakedProjects(@NotNull TooManyProjectLeakedException e) {
-    IntSet hashCodes = new IntOpenHashSet();
-    for (Project project : e.getLeakedProjects()) {
-      hashCodes.add(System.identityHashCode(project));
-    }
-
-    String dumpPath = publishHeapDump("leakedProjects");
-
-    StringBuilder leakers = new StringBuilder();
-    leakers.append("Too many projects leaked: \n");
-    LeakHunter
-      .processLeaks(LeakHunter.allRoots(), ProjectImpl.class, p -> hashCodes.contains(System.identityHashCode(p)), (leaked, backLink) -> {
-        int hashCode = System.identityHashCode(leaked);
-        leakers.append("Leaked project found:").append(leaked).append("; hash: ").append(hashCode).append("; place: ")
-          .append(TestProjectManager.getCreationPlace(leaked)).append("\n");
-        leakers.append(backLink).append("\n");
-        leakers.append(";-----\n");
-
-        hashCodes.remove(hashCode);
-        return !hashCodes.isEmpty();
-      });
-
-    fail(leakers + "\nPlease see '" + dumpPath + "' for a memory dump");
+  protected boolean isCreateDirectoryBasedProject() {
+    return false;
   }
 
   protected @NotNull Path getProjectDirOrFile() {
-    return getProjectDirOrFile(false);
+    return getProjectDirOrFile(isCreateDirectoryBasedProject());
   }
 
   protected boolean isCreateProjectFileExplicitly() {

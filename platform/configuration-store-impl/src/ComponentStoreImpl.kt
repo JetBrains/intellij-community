@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
@@ -93,16 +92,33 @@ abstract class ComponentStoreImpl : IComponentStore {
       @Suppress("DEPRECATION")
       if (component is PersistentStateComponent<*>) {
         val stateSpec = getStateSpec(component.javaClass)
+
+        val forceLoad = stateSpec?.allowLoadInTests ?: false
+        if (!forceLoad && !(loadPolicy == StateLoadPolicy.LOAD || (loadPolicy == StateLoadPolicy.LOAD_ONLY_DEFAULT && stateSpec != null && stateSpec.defaultStateAsResource))) {
+          component.noStateLoaded()
+          return
+        }
+
         if (stateSpec == null) {
           val info = createComponentInfo(component, stateSpec, serviceDescriptor)
           initComponent(info, null, ThreeState.NO)
         }
         else {
-          componentName = initPersistenceStateComponent(component, stateSpec, serviceDescriptor)
+          componentName = stateSpec.name
+          val info = doAddComponent(componentName, component, stateSpec, serviceDescriptor)
+          if (initComponent(info, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
+            // if not service, so, component manager will check it later for all components
+            project?.let {
+              val app = ApplicationManager.getApplication()
+              if (!app.isHeadlessEnvironment && !app.isUnitTestMode && it.isInitialized) {
+                notifyUnknownMacros(this, it, componentName)
+              }
+            }
+          }
         }
         component.initializeComponent()
       }
-      else if (component is com.intellij.openapi.util.JDOMExternalizable) {
+      else if (loadPolicy == StateLoadPolicy.LOAD && component is com.intellij.openapi.util.JDOMExternalizable) {
         componentName = getComponentName(component)
         initJdomExternalizable(component, componentName)
       }
@@ -126,24 +142,8 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   final override fun initPersistencePlainComponent(component: Any, key: String) {
-    initPersistenceStateComponent(PersistenceStateAdapter(component),
-                                  StateAnnotation(key, FileStorageAnnotation(StoragePathMacros.WORKSPACE_FILE, false)),
-                                  serviceDescriptor = null)
-  }
-
-  private fun initPersistenceStateComponent(component: PersistentStateComponent<*>, stateSpec: State, serviceDescriptor: ServiceDescriptor?): String {
-    val componentName = stateSpec.name
-    val info = doAddComponent(componentName, component, stateSpec, serviceDescriptor)
-    if (initComponent(info, null, ThreeState.NO) && serviceDescriptor != null) {
-      // if not service, so, component manager will check it later for all components
-      project?.let {
-        val app = ApplicationManager.getApplication()
-        if (!app.isHeadlessEnvironment && !app.isUnitTestMode && it.isInitialized) {
-          notifyUnknownMacros(this, it, componentName)
-        }
-      }
-    }
-    return componentName
+    val stateSpec = StateAnnotation(key, FileStorageAnnotation(StoragePathMacros.WORKSPACE_FILE, false))
+    doAddComponent(stateSpec.name, PersistenceStateAdapter(component), stateSpec, serviceDescriptor = null)
   }
 
   override suspend fun save(forceSavingAllSettings: Boolean) {
@@ -327,32 +327,16 @@ abstract class ComponentStoreImpl : IComponentStore {
     sessionProducer.setState(info.component, effectiveComponentName, state)
   }
 
-  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: com.intellij.openapi.util.JDOMExternalizable, componentName: String): String? {
+  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: com.intellij.openapi.util.JDOMExternalizable, componentName: String) {
     doAddComponent(componentName, component, stateSpec = null, serviceDescriptor = null)
-
-    if (loadPolicy != StateLoadPolicy.LOAD) {
-      return null
+    if (DecodeDefaultsUtil.getDefaults(component, componentName) != null) {
+      LOG.error("Default state is not supported for JDOMExternalizable")
     }
 
-    try {
-      getDefaultState(component, componentName, Element::class.java)?.let { component.readExternal(it) }
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
-
-    val element = storageManager
-                    .getOldStorage(component, componentName, StateStorageOperation.READ)
+    val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)
                     ?.getState(component, componentName, Element::class.java, null, false)
-                  ?: return null
-    try {
-      component.readExternal(element)
-    }
-    catch (e: InvalidDataException) {
-      LOG.error(e)
-      return null
-    }
-    return componentName
+                    ?: return
+    component.readExternal(element)
   }
 
   private fun doAddComponent(name: String, component: Any, stateSpec: State?, serviceDescriptor: ServiceDescriptor?): ComponentInfo {
@@ -369,30 +353,19 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun initComponent(info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: ThreeState): Boolean {
     @Suppress("UNCHECKED_CAST")
     val component = info.component as PersistentStateComponent<Any>
-    if (loadPolicy == StateLoadPolicy.NOT_LOAD && (info.stateSpec?.allowLoadInTests == false)) {
-      @Suppress("UNCHECKED_CAST")
-      component.noStateLoaded()
-      return false
-    }
-
     if (info.stateSpec == null) {
       val configurationSchemaKey = info.configurationSchemaKey
                                    ?: throw UnsupportedOperationException("configurationSchemaKey must be specified for ${component.javaClass.name}")
       return initComponentWithoutStateSpec(component, configurationSchemaKey)
     }
-
-    return doInitComponent(info, component, changedStorages, reloadData)
+    else {
+      return doInitComponent(info, component, changedStorages, reloadData)
+    }
   }
 
   protected fun initComponentWithoutStateSpec(component: PersistentStateComponent<Any>, configurationSchemaKey: String): Boolean {
-    // default state not supported for read-only components
-    if (loadPolicy != StateLoadPolicy.LOAD) {
-      component.noStateLoaded()
-      return false
-    }
-
     @Suppress("UNCHECKED_CAST")
-    val stateClass: Class<Any> = ComponentSerializationUtil.getStateClass(component.javaClass)
+    val stateClass = ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
     val storage = getReadOnlyStorage(component.javaClass, stateClass, configurationSchemaKey)
     val state = storage?.getState(component, "", stateClass, null, reload = false)
     if (state == null) {

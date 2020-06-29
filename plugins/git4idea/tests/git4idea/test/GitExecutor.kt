@@ -1,6 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GitExecutor")
-
 package git4idea.test
 
 import com.intellij.openapi.project.Project
@@ -23,7 +22,9 @@ fun gitExecutable() = GitExecutorHolder.PathHolder.GIT_EXECUTABLE
 
 @JvmOverloads
 fun GitRepository.git(command: String, ignoreNonZeroExitCode: Boolean = false) = cd { git(project, command, ignoreNonZeroExitCode) }
+
 fun GitPlatformTest.git(command: String, ignoreNonZeroExitCode: Boolean = false) = git(project, command, ignoreNonZeroExitCode)
+
 @JvmOverloads
 fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = false): String {
   val workingDir = ourCurrentDir()

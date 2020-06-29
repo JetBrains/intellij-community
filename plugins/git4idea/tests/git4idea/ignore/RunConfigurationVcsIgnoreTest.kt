@@ -10,13 +10,12 @@ import git4idea.test.GitSingleRepoTest
 import java.io.File
 
 class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
-
   private lateinit var vcsIgnoreManager: VcsIgnoreManager
   private lateinit var gitIgnore: File
 
   private val configurationName = "Unnamed"
 
-  override fun getProjectDirOrFile() = getProjectDirOrFile(true)
+  override fun isCreateDirectoryBasedProject() = true
 
   override fun setUp() {
     super.setUp()

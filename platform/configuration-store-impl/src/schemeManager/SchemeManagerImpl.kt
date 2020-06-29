@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.util.*
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.catch
 import com.intellij.util.containers.mapSmart
@@ -38,6 +37,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 import java.util.function.Predicate
+import kotlin.collections.HashSet
 
 class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                      processor: SchemeProcessor<T, MUTABLE_SCHEME>,
@@ -162,7 +162,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
   }
 
   internal fun createSchemeLoader(isDuringLoad: Boolean = false): SchemeLoader<T, MUTABLE_SCHEME> {
-    val filesToDelete = CollectionFactory.createSmallMemoryFootprintSet(filesToDelete)
+    val filesToDelete = HashSet(filesToDelete)
     // caller must call SchemeLoader.apply to bring back scheduled for delete files
     this.filesToDelete.removeAll(filesToDelete)
     // SchemeLoader can use retain list to bring back previously  scheduled for delete file,
@@ -308,7 +308,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
     }
 
-    val filesToDelete = CollectionFactory.createSmallMemoryFootprintSet(filesToDelete)
+    val filesToDelete = HashSet(filesToDelete)
     for (scheme in changedSchemes) {
       try {
         saveScheme(scheme, nameGenerator, filesToDelete)

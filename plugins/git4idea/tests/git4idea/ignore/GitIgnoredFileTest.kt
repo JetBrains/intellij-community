@@ -38,7 +38,7 @@ const val SHELF = "shelf"
 
 class GitIgnoredFileTest : GitSingleRepoTest() {
 
-  override fun getProjectDirOrFile() = getProjectDirOrFile(true)
+  override fun isCreateDirectoryBasedProject() = true
 
   override fun setUp() {
     super.setUp()

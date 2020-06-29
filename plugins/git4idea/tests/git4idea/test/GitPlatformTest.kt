@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.test
 
 import com.intellij.openapi.application.ApplicationManager
@@ -25,9 +25,9 @@ import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitHandler
 import git4idea.config.GitExecutableManager
+import git4idea.config.GitSaveChangesPolicy
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
-import git4idea.config.GitSaveChangesPolicy
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -36,7 +36,6 @@ import git4idea.test.GitPlatformTest.ConfigScope.SYSTEM
 import java.io.File
 
 abstract class GitPlatformTest : VcsPlatformTest() {
-
   protected lateinit var repositoryManager: GitRepositoryManager
   protected lateinit var settings: GitVcsSettings
   protected lateinit var appSettings: GitVcsApplicationSettings
@@ -81,7 +80,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     globalSslVerify = if (hasRemoteGitOperation()) readAndDisableSslVerifyGlobally() else null
   }
 
-  @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
       .append(ThrowableRunnable { restoreCredentialHelpers() })
@@ -255,7 +253,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected data class ReposTrinity(val projectRepo: GitRepository, val parent: File, val bro: File)
-
 
   private enum class ConfigScope {
     SYSTEM,

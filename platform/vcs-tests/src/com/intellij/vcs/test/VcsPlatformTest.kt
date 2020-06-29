@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.test
 
-import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -9,6 +8,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -25,9 +25,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.io.createDirectories
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import java.io.File
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -47,16 +49,21 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    testRoot = createTempDir("root-${Integer.toHexString(Random().nextInt())}", false)
-    checkTestRootIsEmpty(testRoot)
+    runInEdtAndWait {
+      super.setUp()
+    }
 
-    runInEdtAndWait { super@VcsPlatformTest.setUp() }
+    // HeavyPlatformTestCase creates dir for each test
+    testRoot = Paths.get(FileUtilRt.getTempDirectory()).toFile()
+
     testRootFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testRoot)!!
     refresh()
 
     testStartedIndicator = enableDebugLogging()
 
-    projectRoot = project.baseDir
+    val baseDir = Paths.get(project.basePath!!)
+    baseDir.createDirectories()
+    projectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir)!!
     projectPath = projectRoot.path
 
     changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
@@ -68,14 +75,12 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     cd(testRoot)
   }
 
-  @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
       .append(ThrowableRunnable { selfTearDownRunnable() })
       .append(ThrowableRunnable { clearFields(this) })
       .append(ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } })
       .run()
-
   }
 
   private fun selfTearDownRunnable() {
@@ -111,9 +116,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     "#" + VcsInitialization::class.java.name)
 
   override fun getProjectDirOrFile(): Path {
-    val projectRoot = File(testRoot, "project")
-    val file: File = FileUtil.createTempFile(projectRoot, name + "_", ProjectFileType.DOT_DEFAULT_EXTENSION)
-    return file.toPath()
+    return Paths.get(FileUtil.getTempDirectory(), "project")
   }
 
   override fun setUpModule() {
