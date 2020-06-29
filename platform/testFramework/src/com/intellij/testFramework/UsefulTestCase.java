@@ -105,6 +105,8 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  private final @NotNull ThrowableRunnable<Throwable> myDefaultTestRunnable = super::runTest;
+
   /**
    * Pass here the exception you want to be thrown first
    * E.g.<pre>
@@ -329,12 +331,16 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   protected void runTest() throws Throwable {
+    runTestRunnable(myDefaultTestRunnable);
+  }
+
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     final Throwable[] throwables = new Throwable[1];
 
     Runnable runnable = () -> {
       try {
         TestLoggerFactory.onTestStarted();
-        super.runTest();
+        testRunnable.run();
         TestLoggerFactory.onTestFinished(true);
       }
       catch (InvocationTargetException e) {
@@ -398,10 +404,16 @@ public abstract class UsefulTestCase extends TestCase {
    *         {@link #invokeSetUp} and {@link #invokeTearDown}, for example, to make them execute on a different thread.
    * </ul>
    */
-  protected void defaultRunBare() throws Throwable {
+  protected void defaultRunBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try (AutoCloseable ignored = this::invokeTearDown) {
       invokeSetUp();
-      runTest();
+
+      if (testRunnable == myDefaultTestRunnable) {
+        runTest();  // indirection to handle legacy overloads
+      }
+      else {
+        runTestRunnable(testRunnable);
+      }
     }
   }
 
@@ -449,15 +461,19 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   public void runBare() throws Throwable {
+    runBare(myDefaultTestRunnable);
+  }
+
+  protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (!shouldRunTest()) {
       return;
     }
     if (runInDispatchThread()) {
       TestApplicationManagerKt.replaceIdeEventQueueSafely();
-      EdtTestUtil.runInEdtAndWait(this::defaultRunBare);
+      EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(testRunnable));
     }
     else {
-      defaultRunBare();
+      defaultRunBare(testRunnable);
     }
   }
 
