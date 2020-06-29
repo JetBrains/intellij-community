@@ -78,6 +78,12 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
                       LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
                     }
                     shouldIndexFile.set(true);
+                    for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
+                      if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
+                        shouldIndexFile.set(false);
+                        break;
+                      }
+                    }
                     break;
                   }
                 }
