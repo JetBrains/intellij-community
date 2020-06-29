@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -244,7 +245,9 @@ public class WelcomeScreenComponentFactory {
     link.setNormalColor(getLinkNormalColor());
     JActionLinkPanel panel = new JActionLinkPanel(link);
     panel.setBorder(JBUI.Borders.empty(4, 6));
-    panel.add(createArrow(link), BorderLayout.EAST);
+    if (!StringUtil.isEmptyOrSpaces(text)) {
+      panel.add(createArrow(link), BorderLayout.EAST);
+    }
     return panel;
   }
 

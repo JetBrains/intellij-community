@@ -32,6 +32,7 @@ import java.awt.*;
 
 import static com.intellij.openapi.actionSystem.impl.ActionButton.HIDE_DROPDOWN_ICON;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainAssociatedComponentBackground;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
 public class ProjectsTabFactory implements WelcomeTabFactory {
@@ -45,7 +46,9 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
       @Override
       protected JComponent buildComponent() {
         if (RecentProjectListActionProvider.getInstance().getActions(false, true).isEmpty()) {
-          return new EmptyStateProjectsPanel();
+          return JBUI.Panels.simplePanel(new EmptyStateProjectsPanel())
+            .addToBottom(createNotificationsPanel(parentDisposable))
+            .withBackground(getMainAssociatedComponentBackground());
         }
         JPanel mainPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(13, 12)).withBackground(getProjectsBackground());
         final SearchTextField projectSearch = createSearchProjectsField();
@@ -152,7 +155,9 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
       private JPanel createNotificationsPanel(@NotNull Disposable parentDisposable) {
         JPanel notificationsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
         notificationsPanel.setBorder(JBUI.Borders.emptyTop(10));
+        Component eventLink = createEventLink("", parentDisposable);
         notificationsPanel.add(createErrorsLink(parentDisposable));
+        notificationsPanel.add(eventLink);
         return notificationsPanel;
       }
     };
