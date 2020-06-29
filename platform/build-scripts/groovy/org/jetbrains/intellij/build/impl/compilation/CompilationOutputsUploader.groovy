@@ -38,6 +38,7 @@ class CompilationOutputsUploader {
 
   private final String remoteGitUrl
   private final String commitHash
+  private final CommitsHistory commitsHistory = new CommitsHistory([(remoteGitUrl): [commitHash].toSet()])
 
   CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl,
                              String remoteGitUrl, String commitHash,
@@ -53,7 +54,8 @@ class CompilationOutputsUploader {
 
   def upload() {
     if (!sourcesStateProcessor.sourceStateFile.exists()) {
-      context.messages.warning("Compilation outputs doesn't contain source state file, please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag")
+      context.messages.warning("Compilation outputs doesn't contain source state file, " +
+                               "please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag")
       return
     }
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
@@ -77,7 +79,8 @@ class CompilationOutputsUploader {
       executor.waitForAllComplete(messages)
       executor.reportErrors(messages)
       messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)))
-      messages.reportStatisticValue("Total outputs", String.valueOf(sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size()))
+      def totalOutputs = String.valueOf(sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size())
+      messages.reportStatisticValue("Total outputs", totalOutputs)
       messages.reportStatisticValue("Uploaded outputs", String.valueOf(uploadedOutputsCount.get()))
 
       uploadMetadata()
@@ -151,26 +154,40 @@ class CompilationOutputsUploader {
   /**
    * Upload and publish file with commits history
    */
-  void updateCommitHistory() {
-    def cacheUploaded = uploader.isExist("caches/$commitHash")
-    def metadataUploaded = uploader.isExist("metadata/$commitHash")
-    if (!cacheUploaded && !metadataUploaded) {
-      context.messages.warning("Unable to publish $commitHash due to missing caches/$commitHash and metadata/$commitHash. " +
-                               "Probably caused by previous cleanup build.")
-      return
+  void updateCommitHistory(CommitsHistory commitsHistory = this.commitsHistory,
+                           boolean overrideRemoteHistory = false) {
+    for (commitHash in commitsHistory.commitsForRemote(remoteGitUrl)) {
+      def cacheUploaded = uploader.isExist("caches/$commitHash")
+      def metadataUploaded = uploader.isExist("metadata/$commitHash")
+      if (!cacheUploaded && !metadataUploaded) {
+        def msg = "Unable to publish $commitHash due to missing caches/$commitHash and metadata/$commitHash. " +
+                  "Probably caused by previous cleanup build."
+        overrideRemoteHistory ? context.messages.error(msg) : context.messages.warning(msg)
+        return
+      }
+      if (cacheUploaded != metadataUploaded) {
+        context.messages.error("JPS cache is uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded")
+      }
     }
-    if (cacheUploaded != metadataUploaded) {
-      context.messages.error("Unexpected state: JPS cache is uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded")
-    }
-    def commitsHistory = new CommitsHistory([(remoteGitUrl): [commitHash].toSet()])
+    if (!overrideRemoteHistory) commitsHistory += remoteCommitHistory()
+    uploader.upload(CommitsHistory.JSON_FILE, writeCommitHistory(commitsHistory))
+  }
+
+  CommitsHistory remoteCommitHistory() {
     if (uploader.isExist(CommitsHistory.JSON_FILE, false)) {
       def json = uploader.getAsString(CommitsHistory.JSON_FILE)
-      commitsHistory += new CommitsHistory(json)
+      new CommitsHistory(json)
     }
+    else {
+      new CommitsHistory([:])
+    }
+  }
+
+  private File writeCommitHistory(CommitsHistory commitsHistory) {
     File commitHistoryFile = new File(tmpDir, CommitsHistory.JSON_FILE)
     commitHistoryFile.parentFile.mkdirs()
     commitHistoryFile.write(commitsHistory.toJson())
-    uploader.upload(CommitsHistory.JSON_FILE, commitHistoryFile)
+    return commitHistoryFile
   }
 
   private static move(File src, File dst) {

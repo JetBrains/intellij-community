@@ -34,6 +34,8 @@ class CommitsHistory {
   }
 
   private Map<String, Set<String>> union(Map<String, Set<String>> map) {
+    if (map.isEmpty()) return commitsPerRemote
+    if (commitsPerRemote.isEmpty()) return map
     Map<String, Set<String>> union = [:]
     [commitsPerRemote, map].each {
       it.entrySet().each {
@@ -42,6 +44,6 @@ class CommitsHistory {
         union[it.key as String] = commitSet
       }
     }
-    union
+    return union
   }
 }
