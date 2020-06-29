@@ -2,8 +2,4 @@
   <extensions defaultExtensionNs="com.intellij">
     <referencesSearch implementation="org.jetbrains.plugins.gradle.findUsages.GradlePropertyReferencesSearcher"/>
   </extensions>
-  <extensions defaultExtensionNs="com.intellij.properties">
-    <implicitPropertyUsageProvider
-      implementation="org.jetbrains.plugins.gradle.findUsages.GradleWrapperImplicitPropertyUsageProvider"/>
-  </extensions>
 </idea-plugin>
