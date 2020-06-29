@@ -35,6 +35,10 @@ class PortableCompilationCache {
    * If true then current execution is expected to perform only warm up and upload of new commits caches, nothing else like tests execution
    */
   private boolean uploadOnly = bool('intellij.jps.cache.uploadOnly', false)
+  /**
+   * Download JPS remote caches even if there are caches available locally
+   */
+  private boolean forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
   @Lazy
   private CompilationOutputsDownloader downloader = {
     def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
@@ -79,16 +83,30 @@ class PortableCompilationCache {
   }
 
   private def compileProject() {
+    def tasks = CompilationTasks.create(context)
     if (forceRebuild || !downloader.availableForHeadCommit) {
       // When force rebuilding incrementalCompilation has to be set to false otherwise backward-refs won't be created.
       // During rebuild JPS checks {@code CompilerReferenceIndex.exists(buildDir) || isRebuild} and if
       // incremental compilation enabled JPS won't create {@link JavaBackwardReferenceIndexWriter}.
       // For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
       context.options.incrementalCompilation = !forceRebuild
-      CompilationTasks.create(context).resolveProjectDependenciesAndCompileAll()
+      try {
+        tasks.resolveProjectDependenciesAndCompileAll()
+      }
+      catch (Exception e) {
+        if (context.options.incrementalCompilation && !forceDownload) {
+          context.messages.warning('Incremental compilation using locally available caches failed. ' +
+                                   'Re-trying using JPS remote caches.')
+          downloadCachesAndOutput()
+          tasks.resolveProjectDependenciesAndCompileAll()
+        }
+        else {
+          throw e
+        }
+      }
     }
     else if (downloader.availableForHeadCommit) {
-      CompilationTasks.create(context).resolveProjectDependencies()
+      tasks.resolveProjectDependencies()
     }
     context.options.incrementalCompilation = false
     context.options.useCompiledClassesFromProjectOutput = true
@@ -98,7 +116,6 @@ class PortableCompilationCache {
    * Download latest available compilation cache from remote cache and perform compilation if necessary
    */
   def warmUp() {
-    def forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
     if (forceRebuild) {
       clearJpsOutputs()
     }
@@ -108,14 +125,18 @@ class PortableCompilationCache {
                             '(current execution is expected to perform only upload of new commits caches)')
     }
     else if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
-      try {
-        downloader.downloadCachesAndOutput()
-      }
-      finally {
-        downloader.close()
-      }
+      downloadCachesAndOutput()
     }
     compileProject()
+  }
+
+  private def downloadCachesAndOutput() {
+    try {
+      downloader.downloadCachesAndOutput()
+    }
+    finally {
+      downloader.close()
+    }
   }
 
   /**
