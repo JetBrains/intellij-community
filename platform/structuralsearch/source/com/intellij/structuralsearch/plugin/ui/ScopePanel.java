@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -28,7 +29,6 @@ import com.intellij.structuralsearch.Scopes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -231,14 +231,13 @@ public class ScopePanel extends JPanel {
     if (myConsumer != null) myConsumer.consume(myScope);
   }
 
-  class ScopeToggleAction extends ToggleAction {
+  class ScopeToggleAction extends DumbAwareToggleAction {
 
     private final Scopes.Type myScopeType;
 
     ScopeToggleAction(@NotNull String text, @NotNull Scopes.Type scopeType) {
-      super(text, null, EmptyIcon.ICON_0);
+      super(text);
       myScopeType = scopeType;
-      getTemplatePresentation().setDisabledIcon(EmptyIcon.ICON_0);
     }
 
     @Override
