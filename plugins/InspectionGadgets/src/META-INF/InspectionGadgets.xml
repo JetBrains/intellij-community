@@ -2217,6 +2217,10 @@
                      key="missing.serial.annotation.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.serialization.MissingSerialAnnotationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantSerialAnnotation" bundle="messages.InspectionGadgetsBundle"
+                     key="redundant.serial.annotation.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.serialization.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.serialization.RedundantSerialAnnotationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SerialPersistentFieldsWithWrongSignature" bundle="messages.InspectionGadgetsBundle"
                      key="serialpersistentfields.with.wrong.signature.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"

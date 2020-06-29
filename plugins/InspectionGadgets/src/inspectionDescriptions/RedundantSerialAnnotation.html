@@ -1,0 +1,28 @@
+<html>
+<body>
+Reports methods and fields in <b>Serializable</b> and <b>Externalizable</b> classes that are not suitable to be annotated with the <b>java.io.Serial</b> annotation.
+<p>
+Examples:<br>
+<code><pre>
+class Test implements Serializable {
+  @Serial // will be marked as redundant
+  private static long serialVersionUID = 7874493593505141603L;
+
+  @Serial // will be marked as redundant
+  void writeObject(ObjectOutputStream out) throws IOException {
+  }
+}
+</pre></code>
+<code><pre>
+class Test implements Externalizable {
+  @Serial // will be marked as redundant
+  private void writeObject(ObjectOutputStream out) throws IOException {
+  }
+}
+</pre></code>
+<p>To get more information about all valid cases, refer the documentation for <b>java.io.Serial</b>.</p>
+<!-- tooltip end -->
+<p>This inspection only applies to language level 14 or higher.</p>
+<p><small>New in 2020.3</small></p>
+</body>
+</html>
