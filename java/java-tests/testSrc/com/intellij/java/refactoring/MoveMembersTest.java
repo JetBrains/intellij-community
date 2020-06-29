@@ -17,7 +17,6 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -32,7 +31,7 @@ import com.intellij.util.VisibilityUtil;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
-public abstract class MoveMembersTest extends LightMultiFileTestCase {
+public class MoveMembersTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveMembers/";
@@ -273,13 +272,4 @@ public abstract class MoveMembersTest extends LightMultiFileTestCase {
     new MoveMembersProcessor(getProject(), null, options).run();
   }
 
-  public static class SyncTest extends MoveMembersTest { }
-
-  public static class BranchTest extends MoveMembersTest {
-    @Override
-    protected void setUp() throws Exception {
-      super.setUp();
-      Registry.get("run.refactorings.in.model.branch").setValue(true, getTestRootDisposable());
-    }
-  }
 }
