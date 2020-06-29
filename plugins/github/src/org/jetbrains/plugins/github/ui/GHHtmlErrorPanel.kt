@@ -98,12 +98,13 @@ object GHHtmlErrorPanel {
   }
 
   private fun getLoadingErrorText(error: Throwable, newLineSeparator: String = "\n"): String {
-    if (error is GithubStatusCodeException && error.error != null) {
+    if (error is GithubStatusCodeException && error.error != null && error.error!!.message != null) {
       val githubError = error.error!!
       val builder = StringBuilder(githubError.message)
-      if (githubError.errors.isNotEmpty()) {
+      val errors = githubError.errors
+      if (!errors.isNullOrEmpty()) {
         builder.append(": ").append(newLineSeparator)
-        for (e in githubError.errors) {
+        for (e in errors) {
 
           builder.append(e.message ?: GithubBundle.message("gql.error.in.field", e.code, e.resource, e.field.orEmpty()))
             .append(newLineSeparator)
