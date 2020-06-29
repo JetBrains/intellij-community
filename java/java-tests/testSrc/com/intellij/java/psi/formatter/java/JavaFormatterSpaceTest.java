@@ -791,6 +791,13 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "}");
   }
 
+  public void testSpaceWithinRecordHeader() {
+    getJavaSettings().SPACE_WITHIN_RECORD_HEADER = true;
+    doTextTest("record A(String string){}",
+               "record A( String string ) {\n" +
+               "}");
+  }
+
   public void testSpacesAroundRelationalOperators() {
     getSettings().SPACE_AROUND_RELATIONAL_OPERATORS = true;
     doMethodTest(

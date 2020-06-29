@@ -91,6 +91,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     if (settingsType == SettingsType.SPACING_SETTINGS) {
       consumer.showAllStandardOptions();
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_WITHIN_ANGLE_BRACKETS", "Angle brackets",CodeStyleSettingsCustomizable.SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_RECORD_HEADER",
+                                JavaBundle.message("checkbox.spaces.record.header"),CodeStyleSettingsCustomizable.SPACES_WITHIN);
 
       String groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_ARGUMENTS;
       consumer.moveStandardOption("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", groupName);
