@@ -8,19 +8,14 @@ import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -89,8 +84,10 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     if (type.equals(PsiType.NULL)) return null;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(original.getProject());
     if (expression instanceof PsiLiteralExpression) {
-      PsiExpression newLiteral = tryConvertLiteral((PsiLiteralExpression)expression, factory, type);
-      if (newLiteral != null) return newLiteral;
+      String newLiteral = PsiLiteralUtil.tryConvertNumericLiteral((PsiLiteralExpression)expression, type);
+      if (newLiteral != null) {
+        return factory.createExpressionFromText(newLiteral, null);
+      }
     }
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     String text = "(" + type.getCanonicalText(false) + ")value";
@@ -125,53 +122,6 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     Objects.requireNonNull(typeCast.getOperand()).replace(expression);
 
     return typeCast;
-  }
-
-  @Nullable
-  private static PsiExpression tryConvertLiteral(@NotNull PsiLiteralExpression literal,
-                                                 @NotNull PsiElementFactory factory,
-                                                 PsiType wantedType) {
-    String newLiteral = null;
-    PsiType exprType = literal.getType();
-    if (PsiType.INT.equals(exprType)) {
-      if (PsiType.LONG.equals(wantedType)) {
-        newLiteral = literal.getText() + "L";
-      }
-      else if (PsiType.FLOAT.equals(wantedType)) {
-        String text = literal.getText();
-        if (!text.startsWith("0")) {
-          newLiteral = text + "F";
-        }
-      }
-      else if (PsiType.DOUBLE.equals(wantedType)) {
-        String text = literal.getText();
-        if (!text.startsWith("0")) {
-          newLiteral = text + ".0";
-        }
-      }
-    }
-    if (PsiType.LONG.equals(exprType) && PsiType.INT.equals(wantedType)) {
-      Object value = literal.getValue();
-      if (value instanceof Long && Objects.requireNonNull(LongRangeSet.fromType(PsiType.INT)).contains((Long)value)) {
-        String text = literal.getText();
-        if (text.endsWith("L") || text.endsWith("l")) {
-          newLiteral = text.substring(0, text.length() - 1);
-        }
-      }
-    }
-    if (PsiType.FLOAT.equals(exprType) && PsiType.DOUBLE.equals(wantedType)) {
-      String text = literal.getText();
-      if (text.endsWith("F") || text.endsWith("f")) {
-        newLiteral = text.substring(0, text.length() - 1);
-        if (!StringUtil.containsAnyChar(newLiteral, ".eEpP")) {
-          newLiteral += ".0";
-        }
-      }
-    }
-    if (newLiteral != null) {
-      return factory.createExpressionFromText(newLiteral, literal);
-    }
-    return null;
   }
 
   public static void registerFix(QuickFixActionRegistrar registrar,

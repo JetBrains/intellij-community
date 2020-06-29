@@ -3,11 +3,9 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -563,6 +561,64 @@ public class PsiLiteralUtil {
       }
     }
     return i;
+  }
+
+  /**
+   * @param literal numeric literal to convert
+   * @param wantedType wanted type
+   * @return textual representation of converted numeric literal; null if not supported 
+   * or conversion overflows, or supplied literal is not a numeric literal, 
+   * or wanted type is not a numeric type. 
+   */
+  public static @Nullable String tryConvertNumericLiteral(@NotNull PsiLiteralExpression literal, PsiType wantedType) {
+    PsiType exprType = literal.getType();
+    if (PsiType.INT.equals(exprType)) {
+      if (PsiType.LONG.equals(wantedType)) {
+        return literal.getText() + "L";
+      }
+      if (PsiType.FLOAT.equals(wantedType)) {
+        String text = literal.getText();
+        if (!text.startsWith("0")) {
+          return text + "F";
+        }
+      }
+      if (PsiType.DOUBLE.equals(wantedType)) {
+        String text = literal.getText();
+        if (!text.startsWith("0")) {
+          return text + ".0";
+        }
+      }
+    }
+    if (PsiType.LONG.equals(exprType) && PsiType.INT.equals(wantedType)) {
+      Long value = ObjectUtils.tryCast(literal.getValue(), Long.class);
+      if (value != null && value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
+        String text = literal.getText();
+        if (StringUtil.endsWithIgnoreCase(text, "L")) {
+          return text.substring(0, text.length() - 1);
+        }
+      }
+    }
+    if (PsiType.DOUBLE.equals(exprType) && PsiType.FLOAT.equals(wantedType)) {
+      Double value = ObjectUtils.tryCast(literal.getValue(), Double.class);
+      if (value != null && (double)(float)(double)value == value) {
+        String text = literal.getText();
+        if (StringUtil.endsWithIgnoreCase(text, "D")) {
+          text = text.substring(0, text.length() - 1);
+        }
+        return text + "F";
+      }
+    }
+    if (PsiType.FLOAT.equals(exprType) && PsiType.DOUBLE.equals(wantedType)) {
+      String text = literal.getText();
+      if (StringUtil.endsWithIgnoreCase(text, "D")) {
+        String newLiteral = text.substring(0, text.length() - 1);
+        if (!StringUtil.containsAnyChar(newLiteral, ".eEpP")) {
+          newLiteral += ".0";
+        }
+        return newLiteral;
+      }
+    }
+    return null;
   }
 
   private static final class TextBlockModel {
