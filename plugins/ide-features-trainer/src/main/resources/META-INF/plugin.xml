@@ -22,6 +22,7 @@
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.IntroduceVariableSuggester"/>
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SecondToArrayCompletionSuggester"/>
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SuppressWarningSuggester"/>
+        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.AutoIndentLinesSuggester"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
