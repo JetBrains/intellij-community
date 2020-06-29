@@ -19,6 +19,7 @@ import com.google.common.primitives.Chars;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -90,6 +91,7 @@ class MultilinePopupBuilder {
       }
     };
     okAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, popup.getContent());
+    AutoPopupSupportingListener.installOn(popup);
     return popup;
   }
 

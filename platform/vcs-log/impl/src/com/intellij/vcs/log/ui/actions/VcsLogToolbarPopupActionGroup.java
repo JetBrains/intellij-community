@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.openapi.actionSystem.ActionButtonComponent;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -37,6 +35,7 @@ public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup {
                                                                           JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
                                                                           VcsLogActionPlaces.VCS_LOG_TOOLBAR_POPUP_PLACE);
     popup.addListener(myPopupState);
+    AutoPopupSupportingListener.installOn(popup);
     InputEvent inputEvent = e.getInputEvent();
     if (inputEvent == null) {
       popup.showInFocusCenter();
