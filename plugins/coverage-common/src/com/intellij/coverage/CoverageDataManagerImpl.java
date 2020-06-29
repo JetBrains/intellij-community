@@ -662,8 +662,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     return suite;
   }
 
+  private Alarm myRequestsAlarm = null;
   public static class CoverageEditorFactoryListener implements EditorFactoryListener {
-    private Alarm myAlarm = null;
     private final Map<Editor, Runnable> myCurrentEditors = new HashMap<>();
 
     @Override
@@ -736,10 +736,10 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     }
 
     @CalledInAwt
-    private Alarm getRequestsAlarm(@Nullable CoverageDataManagerImpl manager) {
-      Alarm alarm = myAlarm;
+    private static Alarm getRequestsAlarm(@NotNull CoverageDataManagerImpl manager) {
+      Alarm alarm = manager.myRequestsAlarm;
       if (alarm == null) {
-        myAlarm = alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, manager);
+        manager.myRequestsAlarm = alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, manager);
       }
       return alarm;
     }
