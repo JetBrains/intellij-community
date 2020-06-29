@@ -17,6 +17,10 @@ Adds support for working with shell script files
 <li>Integration with external tools (<a href="https://github.com/koalaman/shellcheck">ShellCheck</a>, <a href="https://github.com/mvdan/sh">Shfmt</a>, <a href="https://explainshell.com/">Explainshell</a>)
 </li></ul>]]></description>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.sh.shSupport" interface="com.intellij.sh.ShSupport" dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileType language="Shell Script" extensions="sh;bash;zsh" hashBangs="sh" fieldName="INSTANCE" name="Shell Script" implementationClass="com.intellij.sh.ShFileType"/>
     <lang.syntaxHighlighter language="Shell Script" implementationClass="com.intellij.sh.highlighter.ShSyntaxHighlighter"/>
