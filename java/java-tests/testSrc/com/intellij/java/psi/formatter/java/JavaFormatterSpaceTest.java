@@ -799,7 +799,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpaceBetweenAnnotationAndType() {
-    doTextTest("record A(@Foo() String string) {}",
+    doTextTest("record A(@Foo()String string) {}",
                "record A(@Foo() String string) {\n" +
                "}");
   }
