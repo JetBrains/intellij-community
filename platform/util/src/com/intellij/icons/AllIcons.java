@@ -123,6 +123,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon PreserveCase = load("/actions/preserveCase.svg");
     /** 16x16 */ public static final @NotNull Icon PreserveCaseHover = load("/actions/preserveCaseHover.svg");
     /** 16x16 */ public static final @NotNull Icon PreserveCaseSelected = load("/actions/preserveCaseSelected.svg");
+    /** 16x16 */ public static final @NotNull Icon PrettyPrint = load("/actions/prettyPrint.svg");
     /** 16x16 */ public static final @NotNull Icon Preview = load("/actions/preview.svg");
     /** 16x16 */ public static final @NotNull Icon PreviewDetails = load("/actions/previewDetails.svg");
     /** 16x16 */ public static final @NotNull Icon PreviewDetailsVertically = load("/actions/previewDetailsVertically.svg");
