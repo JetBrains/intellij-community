@@ -63,7 +63,6 @@ class GitRebaseDialog(private val project: Project,
   private val remoteBranches = mutableListOf<GitBranch>()
   private val tags = mutableListOf<GitTag>()
 
-  private var originalNewBase = ""
   private var currentBranch: GitBranch? = null
 
   private val rootField = createRootField()
@@ -78,6 +77,8 @@ class GitRebaseDialog(private val project: Project,
   private val optionsPanel: JPanel = createOptionsPanel()
 
   private val panel = createPanel()
+
+  private var updatingFields = false
 
   init {
     title = GitBundle.message("rebase.dialog.title")
@@ -170,7 +171,7 @@ class GitRebaseDialog(private val project: Project,
   }
 
   private fun validateUpstream(): ValidationInfo? {
-    if (!validateRevision(getTextField(upstreamField).text)) {
+    if (!isValidRevision(getTextField(upstreamField).text)) {
       return ValidationInfo(GitBundle.message("rebase.dialog.error.invalid.from"), upstreamField)
     }
     return null
@@ -178,13 +179,13 @@ class GitRebaseDialog(private val project: Project,
 
   private fun validateOnto(): ValidationInfo? {
     if (RebaseOption.ONTO in selectedOptions
-        && !validateRevision(getTextField(ontoField).text)) {
+        && !isValidRevision(getTextField(ontoField).text)) {
       return ValidationInfo(GitBundle.message("rebase.dialog.error.invalid.onto"), ontoField)
     }
     return null
   }
 
-  private fun validateRevision(revision: String): Boolean {
+  private fun isValidRevision(revision: String): Boolean {
     var result = false
     try {
       val task = ThrowableComputable<GitRevisionNumber, VcsException> { GitRevisionNumber.resolve(project, gitRoot(), revision) }
@@ -245,6 +246,8 @@ class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateBranches() {
+    updatingFields = true
+
     branchField.removeAllItems()
     for (b in localBranches) {
       branchField.addItem(b.name)
@@ -257,6 +260,8 @@ class GitRebaseDialog(private val project: Project,
     }
     updateBaseFields()
     updateTrackedBranch()
+
+    updatingFields = false
   }
 
   private fun loadBranchConfig(root: VirtualFile): Pair<String?, String?> {
@@ -466,7 +471,7 @@ class GitRebaseDialog(private val project: Project,
       popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
 
     addItemListener { e ->
-      if (e.stateChange == ItemEvent.SELECTED) {
+      if (!updatingFields && e.stateChange == ItemEvent.SELECTED) {
         updateTrackedBranch()
       }
     }
