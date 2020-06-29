@@ -54,6 +54,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
@@ -451,8 +452,8 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private File getDefaultPatchFile() {
-    return FileUtil.findSequentNonexistentFile(new File(myProject.getBasePath()), "local_history", "patch");
+  private @NotNull Path getDefaultPatchFile() {
+    return FileUtil.findSequentNonexistentFile(new File(myProject.getBasePath()), "local_history", "patch").toPath();
   }
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {

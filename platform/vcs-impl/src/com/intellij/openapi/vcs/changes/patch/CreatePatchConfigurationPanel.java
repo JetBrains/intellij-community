@@ -33,6 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Objects;
 
 public class CreatePatchConfigurationPanel {
@@ -148,8 +149,8 @@ public class CreatePatchConfigurationPanel {
     return FileUtil.expandUserHome(myBasePathField.getText().trim());
   }
 
-  public void setFileName(final File file) {
-    myFileNameField.setText(file.getPath());
+  public void setFileName(@NotNull Path file) {
+    myFileNameField.setText(file.toString());
   }
 
   public boolean isReversePatch() {

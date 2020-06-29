@@ -102,7 +102,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
           patchPath = getDefaultPatchPath(myProject);
         }
       }
-      myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(patchPath), null));
+      myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(patchPath), null).toPath());
       myPanel.setToClipboard(PropertiesComponent.getInstance(myProject).getBoolean(VCS_PATCH_TO_CLIPBOARD, false));
       File commonAncestor = ChangesUtil.findCommonAncestor(changes);
       myPanel.setCommonParentPath(commonAncestor);
