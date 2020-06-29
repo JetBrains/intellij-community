@@ -23,21 +23,20 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
       for (PyClass superClass : containingClass.getAncestorClasses(context)) {
         PyFunction superMethod = superClass.findMethodByName(name, false, context);
 
-        if (superMethod != null) {
-          final Property property = func.getProperty();
-          final Property superProperty = superMethod.getProperty();
-          if (property != null && superProperty != null) {
-            final AccessDirection direction = PyUtil.getPropertyAccessDirection(func);
-            final PyCallable callable = superProperty.getByDirection(direction).valueOrNull();
-            superMethod = (callable instanceof PyFunction) ? (PyFunction)callable : null;
-          }
+        final Property property = func.getProperty();
+        final Property superProperty = superMethod == null ? null : superMethod.getProperty();
+        if (property != null && superProperty != null) {
+          final AccessDirection direction = PyUtil.getPropertyAccessDirection(func);
+          final PyCallable callable = superProperty.getByDirection(direction).valueOrNull();
+          superMethod = (callable instanceof PyFunction) ? (PyFunction)callable : null;
+        }
 
+        if (superMethod != null) {
           boolean consumerWantsMore = consumer.process(superMethod);
           if (!queryParameters.isDeepSearch() || !consumerWantsMore) {
             return false;
           }
         }
-
       }
     }
     return true;
