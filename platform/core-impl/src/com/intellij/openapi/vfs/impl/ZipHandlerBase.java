@@ -119,6 +119,18 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     return info;
   }
 
+  public long getEntryCrc(@NotNull String relativePath) throws IOException {
+    try (ResourceHandle<ZipFile> zipRef = acquireZipHandle()) {
+      ZipFile zip = zipRef.get();
+      ZipEntry entry = zip.getEntry(relativePath);
+      if (entry != null) {
+        return entry.getCrc();
+      }
+    }
+
+    throw new FileNotFoundException(getFile() + "!/" + relativePath);
+  }
+
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException {
     try (ResourceHandle<ZipFile> zipRef = acquireZipHandle()) {
