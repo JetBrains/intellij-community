@@ -26,7 +26,7 @@
     <keyboard-shortcut first-keystroke="control 7"/>
     <keyboard-shortcut first-keystroke="alt 7"/>
   </action>
-  <action id="ActivateTODOToolWindow">
+  <action id="ActivateProblemsViewToolWindow">
     <keyboard-shortcut first-keystroke="alt 6"/>
     <keyboard-shortcut first-keystroke="control 6"/>
   </action>
