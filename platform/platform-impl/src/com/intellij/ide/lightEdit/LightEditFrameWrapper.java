@@ -33,6 +33,8 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
 
   private LightEditPanel myEditPanel;
 
+  private boolean myFrameTitleUpdateEnabled = true;
+
   LightEditFrameWrapper(@NotNull IdeFrameImpl frame, @NotNull BooleanSupplier closeHandler) {
     super(frame, null);
     myCloseHandler = closeHandler;
@@ -129,5 +131,16 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(
       LightEditUtil.getProject(),
       () -> new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(false), closeHandler));
+  }
+
+  void setFrameTitleUpdateEnabled(boolean frameTitleUpdateEnabled) {
+    myFrameTitleUpdateEnabled = frameTitleUpdateEnabled;
+  }
+
+  @Override
+  public void setFrameTitle(String text) {
+    if (myFrameTitleUpdateEnabled) {
+      super.setFrameTitle(text);
+    }
   }
 }

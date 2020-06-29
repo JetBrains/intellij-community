@@ -89,7 +89,7 @@ public final class LightEditServiceImpl implements LightEditService,
   public void showEditorWindow() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       init();
-      myFrameWrapper.getFrame().setTitle(getAppName());
+      myFrameWrapper.setFrameTitle(getAppName());
     }
   }
 
@@ -331,7 +331,7 @@ public final class LightEditServiceImpl implements LightEditService,
   @Override
   public void afterSelect(@Nullable LightEditorInfo editorInfo) {
     if (myFrameWrapper != null) {
-      myFrameWrapper.getFrame().setTitle(editorInfo == null ? getAppName() : getFileTitle(editorInfo.getFile()));
+      myFrameWrapper.setFrameTitle(editorInfo == null ? getAppName() : getFileTitle(editorInfo.getFile()));
     }
   }
 
@@ -412,16 +412,18 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   private void restoreSession() {
-    myConfiguration.sessionFiles.forEach(
-      path -> {
-        VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
-        if (file != null) {
-          doWhenActionManagerInitialized(() -> {
+    doWhenActionManagerInitialized(() -> {
+      myFrameWrapper.setFrameTitleUpdateEnabled(false);
+      myConfiguration.sessionFiles.forEach(
+        path -> {
+          VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
+          if (file != null) {
             doOpenFile(file);
-          });
+          }
         }
-      }
-    );
+      );
+      myFrameWrapper.setFrameTitleUpdateEnabled(true);
+    });
   }
 
   @Override
