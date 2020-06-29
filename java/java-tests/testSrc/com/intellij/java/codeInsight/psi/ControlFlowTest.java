@@ -2,11 +2,8 @@
 package com.intellij.java.codeInsight.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.controlFlow.*;
@@ -47,10 +44,7 @@ public class ControlFlowTest extends LightJavaCodeInsightTestCase {
     String result = controlFlow.toString().trim();
 
     final String expectedFullPath = StringUtil.trimEnd(file.getPath(),".java") + ".txt";
-    VirtualFile expectedFile = LocalFileSystem.getInstance().findFileByPath(expectedFullPath);
-    String expected = LoadTextUtil.loadText(expectedFile).toString().trim();
-    expected = expected.replaceAll("\r","");
-    assertEquals("Text mismatch (in file "+expectedFullPath+"):\n",expected, result);
+    assertSameLinesWithFile(expectedFullPath, result);
   }
 
   private void doAllTests() throws Exception {
