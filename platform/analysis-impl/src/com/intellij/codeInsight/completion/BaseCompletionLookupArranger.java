@@ -20,7 +20,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.hash.EqualityPolicy;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");
   private boolean myOverflow;
 
-  @Nullable private volatile CompletionLocation myLocation;
+  @Nullable private CompletionLocation myLocation;
   protected final CompletionProcessEx myProcess;
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
   private final Key<CompletionSorterImpl> mySorterKey = Key.create("SORTER_KEY");
@@ -109,8 +109,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       }
     }
 
-    //noinspection unchecked
-    Map<LookupElement, List<Pair<String, Object>>> result = new com.intellij.util.containers.hash.LinkedHashMap(EqualityPolicy.IDENTITY);
+    Map<LookupElement, List<Pair<String, Object>>> result = new Reference2ObjectLinkedOpenHashMap<>();
     Map<LookupElement, List<Pair<String, Object>>> additional = myFinalSorter.getRelevanceObjects(items);
     for (LookupElement item : items) {
       List<Pair<String, Object>> mainRelevance = map.get(item);
@@ -173,7 +172,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       mySkippedItems.add(element);
     }
 
-    if (isInBatchUpdate) {
+    if (Boolean.TRUE.equals(isInBatchUpdate.get())) {
       batchItems.add(new Pair<>(element, presentation));
     } else {
       super.addElement(element, presentation);
@@ -181,19 +180,19 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     }
   }
 
-  private boolean isInBatchUpdate = false;
+  private final ThreadLocal<Boolean> isInBatchUpdate = new ThreadLocal<>();
   private final List<Pair<LookupElement, LookupElementPresentation>> batchItems = new ArrayList<>();
 
   @ApiStatus.Internal
   public void batchUpdate(Runnable runnable) {
-    if (isInBatchUpdate) {
+    if (Boolean.TRUE.equals(isInBatchUpdate.get())) {
       runnable.run();
     } else {
-      isInBatchUpdate = true;
+      isInBatchUpdate.set(true);
       try {
         runnable.run();
       } finally {
-        isInBatchUpdate = false;
+        isInBatchUpdate.remove();
       }
       if (!batchItems.isEmpty()) {
         flushBatch();
@@ -230,7 +229,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     List<LookupElement> items = getMatchingItems();
     Iterator<LookupElement> iterator = sortByRelevance(groupItemsBySorter(items)).iterator();
 
-    final Set<LookupElement> retainedSet = ContainerUtil.newIdentityTroveSet();
+    Set<LookupElement> retainedSet = new ReferenceOpenHashSet<>();
     retainedSet.addAll(getPrefixItems(true));
     retainedSet.addAll(getPrefixItems(false));
     retainedSet.addAll(myFrozenItems);
