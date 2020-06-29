@@ -1,2 +1,2 @@
-- >qwe
-  ><caret>
+- > qwe
+  > <caret>

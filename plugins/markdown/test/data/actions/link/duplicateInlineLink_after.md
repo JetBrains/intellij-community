@@ -9,6 +9,5 @@
 [url jetbrains.com with title][reference]
 
 
-
 [reference]: http://jetbrains.com
 Titles Warning: true

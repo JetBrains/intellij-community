@@ -31,6 +31,10 @@ public class MarkdownPsiUtil {
     HEADER_LEVEL_5_SET,
     HEADER_LEVEL_6_SET);
 
+  public static boolean isNewLine(@NotNull PsiElement element) {
+    return WHITE_SPACES.contains(element.getNode().getElementType()) && element.getText().equals("\n");
+  }
+
   /*
    * nextHeaderConsumer 'null' means reaching EOF
    */

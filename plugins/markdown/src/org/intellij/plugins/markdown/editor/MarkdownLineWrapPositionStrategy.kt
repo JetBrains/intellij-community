@@ -9,6 +9,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.markdown.lang.psi.impl.*
 
 class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
+  init {
+    // We should wrap after space, cause otherwise formatting will eat space once AutoWrapHandler made wrap
+    addRule(Rule(' ', WrapCondition.AFTER))
+  }
+
   override fun calculateWrapPosition(document: Document,
                                      project: Project?,
                                      startOffset: Int,
@@ -35,7 +40,9 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
   }
 
   companion object {
-    private val stopSet = setOf(MarkdownHeaderImpl::class.java, MarkdownLinkDestinationImpl::class.java,
-                                MarkdownTableCellImpl::class.java, MarkdownTableRowImpl::class.java, MarkdownTableImpl::class.java)
+    private val stopSet = setOf(
+      MarkdownHeaderImpl::class.java, MarkdownLinkDestinationImpl::class.java, MarkdownTableCellImpl::class.java,
+      MarkdownTableRowImpl::class.java, MarkdownTableImpl::class.java
+    )
   }
 }

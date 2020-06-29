@@ -43,7 +43,6 @@ public class MarkdownElementType extends IElementType {
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return MessageFormat.format("Markdown:{0}", super.toString());
   }

@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MarkdownLazyElementType extends ILazyParseableElementType {
   private static final Logger LOG = Logger.getInstance(MarkdownLazyElementType.class);
+
   public MarkdownLazyElementType(@NotNull @NonNls String debugName) {
     super(debugName, MarkdownLanguage.INSTANCE);
   }
@@ -38,10 +39,15 @@ public class MarkdownLazyElementType extends ILazyParseableElementType {
       .parseInline(MarkdownElementType.markdownType(chameleon.getElementType()), chars, 0, chars.length());
 
     final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, getLanguage(), chars);
-    assert builder.getCurrentOffset() == 0;
+
+    PsiBuilder.Marker rootMarker = builder.mark();
+
+    //Flatten type is used to solve problem with trailing whitespaces
     new PsiBuilderFillingVisitor(builder).visitNode(node);
     assert builder.eof();
 
-    return builder.getTreeBuilt().getFirstChildNode();
+    rootMarker.done(this);
+
+    return builder.getTreeBuilt().getFirstChildNode().getFirstChildNode();
   }
 }

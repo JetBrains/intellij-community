@@ -69,6 +69,15 @@ public final class MarkdownPsiElementFactory {
   public static PsiElement createNewLine(@NotNull Project project) {
     return createFile(project, "\n").getFirstChild().getFirstChild();
   }
+  /**
+   * Prepares markdown file with [num] of new lines.
+   *
+   * @return root element children of which are new lines
+   */
+  @NotNull
+  public static PsiElement createNewLines(@NotNull Project project, int num) {
+    return createFile(project, StringUtil.repeat("\n", num)).getFirstChild();
+  }
 
   /**
    * Returns pair of the link reference and its declaration

@@ -1,2 +1,2 @@
->abc
-><caret>
+> abc
+> <caret>

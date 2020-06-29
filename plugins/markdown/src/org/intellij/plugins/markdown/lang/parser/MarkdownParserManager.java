@@ -26,8 +26,7 @@ public class MarkdownParserManager {
       return info.myParseResult;
     }
 
-    final ASTNode parseResult = new MarkdownParser(flavour)
-      .parse(MarkdownElementTypes.MARKDOWN_FILE, buffer.toString(), false);
+    final ASTNode parseResult = new MarkdownParser(flavour).parse(MarkdownElementTypes.MARKDOWN_FILE, buffer.toString(), false);
     ourLastParsingResult.set(new ParsingInfo(buffer, parseResult));
     return parseResult;
   }

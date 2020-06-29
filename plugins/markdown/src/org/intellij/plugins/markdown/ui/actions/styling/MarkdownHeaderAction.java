@@ -20,11 +20,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
-import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl;
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil;
+import org.intellij.plugins.markdown.util.MarkdownPsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,11 +97,11 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
 
     PsiElement first = elements.getFirst();
     PsiElement second = elements.getSecond();
-    if (PsiUtilCore.getElementType(first) == MarkdownTokenTypes.EOL) {
+    if (MarkdownPsiUtil.isNewLine(first)) {
       first = PsiTreeUtil.nextVisibleLeaf(first);
     }
 
-    if (PsiUtilCore.getElementType(second) == MarkdownTokenTypes.EOL) {
+    if (MarkdownPsiUtil.isNewLine(second)) {
       second = PsiTreeUtil.prevVisibleLeaf(second);
     }
 

@@ -141,7 +141,7 @@ public class MarkdownFoldingBuilder extends CustomFoldingBuilder implements Dumb
   public static PsiElement skipNewLinesBackward(@Nullable PsiElement element) {
     if (element == null) return null;
     for (PsiElement e = element.getPrevSibling(); e != null; e = e.getPrevSibling()) {
-      if (e.getNode().getElementType() != EOL) return e;
+      if (!MarkdownPsiUtil.isNewLine(e)) return e;
     }
     return null;
   }

@@ -1,1 +1,1 @@
-- >qwe<caret>
+- > qwe<caret>

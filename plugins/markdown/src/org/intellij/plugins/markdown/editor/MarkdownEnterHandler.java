@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -16,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuoteImpl;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
@@ -48,14 +50,22 @@ public class MarkdownEnterHandler extends EnterHandlerDelegateAdapter {
 
   private static boolean processBlockQuote(@NotNull Editor editor, @NotNull PsiElement element) {
     MarkdownBlockQuoteImpl blockQuote = PsiTreeUtil.getParentOfType(element, MarkdownBlockQuoteImpl.class);
+    PsiFile file = element.getContainingFile();
     if (blockQuote != null) {
+      MarkdownCustomCodeStyleSettings markdown = CodeStyle.getCustomSettings(file, MarkdownCustomCodeStyleSettings.class);
+
+      String toAdd = ">";
+      if (markdown.FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL) {
+        toAdd += " ";
+      }
+
       MarkdownListItemImpl listItem = PsiTreeUtil.getParentOfType(blockQuote, MarkdownListItemImpl.class);
       if (listItem == null) {
-        EditorModificationUtil.insertStringAtCaret(editor, "\n>");
+        EditorModificationUtil.insertStringAtCaret(editor, "\n" + toAdd);
       }
       else {
         String indent = StringUtil.repeat(" ", blockQuote.getTextOffset() - listItem.getTextOffset());
-        EditorModificationUtil.insertStringAtCaret(editor, "\n" + indent + ">");
+        EditorModificationUtil.insertStringAtCaret(editor, "\n" + indent + toAdd);
       }
       return true;
     }

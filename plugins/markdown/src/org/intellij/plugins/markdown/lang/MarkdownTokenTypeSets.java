@@ -15,9 +15,12 @@
  */
 package org.intellij.plugins.markdown.lang;
 
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface MarkdownTokenTypeSets extends MarkdownElementTypes {
+  TokenSet WHITE_SPACES = TokenSet.create(MarkdownTokenTypes.WHITE_SPACE, MarkdownTokenTypes.EOL, TokenType.WHITE_SPACE);
+
   TokenSet HEADER_MARKERS = TokenSet.create(
     MarkdownTokenTypes.ATX_HEADER,
     MarkdownTokenTypes.SETEXT_1,
@@ -34,6 +37,7 @@ public interface MarkdownTokenTypeSets extends MarkdownElementTypes {
                                     HEADER_LEVEL_4_SET,
                                     HEADER_LEVEL_5_SET,
                                     HEADER_LEVEL_6_SET);
+  TokenSet ATX_HEADERS = TokenSet.create(ATX_1, ATX_2, ATX_3, ATX_4, ATX_5, ATX_6);
 
   TokenSet REFERENCE_LINK_SET = TokenSet.create(FULL_REFERENCE_LINK, SHORT_REFERENCE_LINK);
 

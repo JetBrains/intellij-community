@@ -97,10 +97,14 @@ Includes the following features:</p>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MarkdownAnchorPathReferenceProvider"/>
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer" />
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" />
-    <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.MarkdownLanguageCodeStyleSettingsProvider"/>
     <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
-    <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
     <highlightErrorFilter implementation="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeFenceHighlightErrorFilter"/>
+
+    <!--Formatting-->
+    <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
+    <lang.formatter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.formatter.MarkdownFormattingModelBuilder"/>
+    <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
+
 
     <intentionAction>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
@@ -117,6 +121,9 @@ Includes the following features:</p>
     <registryKey key="markdown.open.link.in.external.browser"
                  defaultValue="true"
                  description="Open Markdown link in an external browser (otherwise open in the IDE viewer)"/>
+    <registryKey key="markdown.formatter.apply.to.code.fence"
+                 defaultValue="false"
+                 description="Should Markdown use injected languages' formatters to format code-fences"/>
   </extensions>
 
   <applicationListeners>
@@ -127,8 +134,10 @@ Includes the following features:</p>
   <extensions defaultExtensionNs="org.intellij.markdown">
     <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.javafx.JavaFxHtmlPanelProvider" />
     <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider" />
+
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.plantuml.PlantUMLCodeFenceLanguageProvider"/>
     <codeFencePluginGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.plantuml.PlantUMLCodeGeneratingProvider"/>
+
     <codeFencePluginGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.highlighter.MarkdownCodeFencePreviewHighlighter"/>
   </extensions>
 

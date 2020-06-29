@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -94,42 +95,48 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
 
     Project project = link.getProject();
     WriteCommandAction.runWriteCommandAction(file.getProject(), () -> {
-      if (!file.isValid()) {
-        return;
-      }
+      //disable postprocess reformatting, cause otherwise we will lose psi pointers after [doPostponedOperationsAndUnblockDocument]
+      PostprocessReformattingAspect.getInstance(file.getProject()).disablePostprocessFormattingInside(
+        () -> {
+          if (!file.isValid()) {
+            return;
+          }
 
-      Pair<PsiElement, PsiElement> referencePair = createLinkDeclarationAndReference(project, link, "reference");
+          Pair<PsiElement, PsiElement> referencePair = createLinkDeclarationAndReference(project, link, "reference");
 
-      insertLastNewLine(file);
-      insertLastNewLine(file);
-      PsiElement declaration = file.addAfter(referencePair.getSecond(), file.getLastChild());
-      PsiElement reference = link.replace(referencePair.getFirst());
+          insertLastNewLines(file, 2);
+          PsiElement declaration = file.addAfter(referencePair.getSecond(), file.getLastChild());
+          PsiElement reference = link.replace(referencePair.getFirst());
 
-      String url = Objects.requireNonNull(PsiTreeUtil.getChildOfType(declaration, MarkdownLinkDestinationImpl.class)).getText();
+          String url = Objects.requireNonNull(PsiTreeUtil.getChildOfType(declaration, MarkdownLinkDestinationImpl.class)).getText();
 
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+
+          TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(file);
+          PsiElement declarationLabel = declaration.getFirstChild();
+          PsiElement referenceLabel = reference.getFirstChild().getLastChild();
+
+          Expression expression =
+            ApplicationManager.getApplication().isUnitTestMode() ? new TextExpression("reference") : new EmptyExpression();
+          builder
+            .replaceElement(declarationLabel, TextRange.create(1, declarationLabel.getTextLength() - 1), VAR_NAME, expression, true);
+          builder
+            .replaceElement(referenceLabel, TextRange.create(1, referenceLabel.getTextLength() - 1), VAR_NAME, expression, true);
+
+          editor.getCaretModel().moveToOffset(0);
+          Template template = builder.buildInlineTemplate();
+
+          PsiElement title = referencePair.getSecond().getLastChild();
+          String titleText = null;
+          if (PsiUtilCore.getElementType(title) == LINK_TITLE) {
+            titleText = title.getText();
+          }
+
+          TemplateManager.getInstance(project).startTemplate(editor, template, new DuplicatesFinder(file, editor, url, titleText));
+        });
+
+      //reformat at the end
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-
-      TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(file);
-      PsiElement declarationLabel = declaration.getFirstChild();
-      PsiElement referenceLabel = reference.getFirstChild().getLastChild();
-
-      Expression expression =
-        ApplicationManager.getApplication().isUnitTestMode() ? new TextExpression("reference") : new EmptyExpression();
-      builder
-        .replaceElement(declarationLabel, TextRange.create(1, declarationLabel.getTextLength() - 1), VAR_NAME, expression, true);
-      builder
-        .replaceElement(referenceLabel, TextRange.create(1, referenceLabel.getTextLength() - 1), VAR_NAME, expression, true);
-
-      editor.getCaretModel().moveToOffset(0);
-      Template template = builder.buildInlineTemplate();
-
-      PsiElement title = referencePair.getSecond().getLastChild();
-      String titleText = null;
-      if (PsiUtilCore.getElementType(title) == LINK_TITLE) {
-        titleText = title.getText();
-      }
-
-      TemplateManager.getInstance(project).startTemplate(editor, template, new DuplicatesFinder(file, editor, url, titleText));
     });
   }
 
@@ -144,8 +151,11 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
     return Pair.create(psiFile, editor);
   }
 
-  private static void insertLastNewLine(@NotNull PsiFile psiFile) {
-    psiFile.addAfter(MarkdownPsiElementFactory.createNewLine(psiFile.getProject()), psiFile.getLastChild());
+  private static void insertLastNewLines(@NotNull PsiFile psiFile, int num) {
+    assert num >= 0: "Cannot insert negative number of new lines";
+
+    PsiElement newLines = MarkdownPsiElementFactory.createNewLines(psiFile.getProject(), num);
+    psiFile.addRange(newLines.getFirstChild(), newLines.getLastChild());
   }
 
   public static void replaceDuplicate(@NotNull PsiElement match, @NotNull String referenceText) {
