@@ -54,9 +54,8 @@ final class ProjectData {
       }
 
       @Override
-      public void toolWindowsRegistered(@NotNull List<String> ids) {
+      public void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
         ApplicationManager.getApplication().assertIsDispatchThread();
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         for (String id : ids) {
           ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
           ToolWindowData toolWindowData = new ToolWindowData(toolWindow, id);

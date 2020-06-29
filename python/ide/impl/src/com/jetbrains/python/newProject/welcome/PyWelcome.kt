@@ -27,7 +27,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.intellij.psi.PsiDocumentManager
@@ -92,13 +92,13 @@ private object PyWelcome {
       prepareFileAndOpen(project, baseDir).onSuccess {
         if (it != null) {
           // expand tree after the welcome script is created, otherwise expansion will have no effect on empty tree
-          expandProjectTree(project)
+          expandProjectTree(project, ToolWindowManager.getInstance(project))
           createRunConfiguration(project, it)
         }
       }
     }
     else {
-      expandProjectTree(project)
+      expandProjectTree(project, ToolWindowManager.getInstance(project))
     }
   }
 
@@ -137,10 +137,10 @@ private object PyWelcome {
   }
 
   @CalledInAny
-  private fun expandProjectTree(project: Project) {
+  private fun expandProjectTree(project: Project, toolWindowManager: ToolWindowManager) {
     // the approach was taken from com.intellij.platform.PlatformProjectViewOpener
 
-    val toolWindow = getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
+    val toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW)
     if (toolWindow == null) {
       val listener = ProjectViewListener(project)
       // collected listener will release the connection
@@ -248,16 +248,18 @@ private object PyWelcome {
 
     private var toolWindowRegistered = false
 
-    override fun toolWindowsRegistered(ids: List<String>) {
+    override fun toolWindowsRegistered(ids: List<String>, toolWindowManager: ToolWindowManager) {
       if (ToolWindowId.PROJECT_VIEW in ids) {
         toolWindowRegistered = true
         Disposer.dispose(this) // to release message bus connection
-        expandProjectTree(project)
+        expandProjectTree(project, toolWindowManager)
       }
     }
 
     override fun dispose() {
-      if (!toolWindowRegistered) PyWelcomeCollector.logWelcomeProjectView(project, ProjectViewResult.NO_TOOLWINDOW)
+      if (!toolWindowRegistered) {
+        PyWelcomeCollector.logWelcomeProjectView(project, ProjectViewResult.NO_TOOLWINDOW)
+      }
     }
   }
 }

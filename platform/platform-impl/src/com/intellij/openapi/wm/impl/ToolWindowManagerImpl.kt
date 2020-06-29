@@ -494,7 +494,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
 
-      project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries)
+      project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries, this)
       toolWindowPane!!.revalidateNotEmptyStripes()
     }
 
@@ -538,7 +538,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       contentFactory = factory,
       stripeTitle = getStripeTitleSupplier(bean.id, pluginDescriptor)
     ), toolWindowPane)
-    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id))
+    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
 
     toolWindowPane.getStripeFor(anchor).revalidate()
     toolWindowPane.validate()
@@ -970,7 +970,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow {
     val entry = doRegisterToolWindow(task,
       toolWindowPane = toolWindowPane ?: init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project)))
-    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id))
+    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
     val toolWindowPane = toolWindowPane!!
     toolWindowPane.getStripeFor(entry.toolWindow.anchor).revalidate()
     toolWindowPane.validate()

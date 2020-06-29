@@ -196,7 +196,7 @@ public final class VcsLogTabsWatcher implements Disposable {
 
   private final class MyToolWindowManagerListener implements ToolWindowManagerListener {
     @Override
-    public void toolWindowsRegistered(@NotNull List<String> ids) {
+    public void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
       if (ids.contains(ChangesViewContentManager.TOOLWINDOW_ID)) {
         installContentListeners();
       }
