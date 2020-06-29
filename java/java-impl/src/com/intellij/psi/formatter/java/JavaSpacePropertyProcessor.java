@@ -1839,6 +1839,9 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (myType1 == JavaElementType.TYPE && myType2 == JavaTokenType.IDENTIFIER) {
       createSpaceInCode(true);
     }
+    else if (myType1 == JavaElementType.MODIFIER_LIST && myType2 == JavaElementType.TYPE) {
+      createSpaceInCode(true);
+    }
   }
 
   public static Spacing getSpacing(Block node, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
