@@ -105,6 +105,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         queueValidation();
       }
     });
+    myOutputDirectoryField.getTextField().getAccessibleContext().setAccessibleName(JavaUiBundle.message("label.text.output.directory"));
     myShowSpecificContentOptionsGroup = createShowSpecificContentOptionsGroup();
     myShowSpecificContentOptionsButton.addActionListener(new ActionListener() {
       @Override
