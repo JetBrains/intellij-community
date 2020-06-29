@@ -57,16 +57,15 @@ public final class TerminalShellCommandHandlerHelper {
   TerminalShellCommandHandlerHelper(@NotNull ShellTerminalWidget widget) {
     myWidget = widget;
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, widget);
+
+    ApplicationManager.getApplication().getMessageBus().connect(myWidget).subscribe(
+      TerminalCommandHandlerCustomizer.Companion.getTERMINAL_COMMAND_HANDLER_TOPIC(), () -> scheduleCommandHighlighting());
   }
 
   public void processKeyPressed() {
     if (isFeatureEnabled()) {
       myAlarm.cancelAllRequests();
       scheduleCommandHighlighting();
-
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(
-        TerminalCommandHandlerCustomizer.Companion.getTERMINAL_COMMAND_HANDLER_TOPIC(),
-        () -> myAlarm.addRequest(() -> { scheduleCommandHighlighting(); }, 50));
     }
   }
 
