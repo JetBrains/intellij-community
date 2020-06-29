@@ -44,8 +44,8 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
         lastChildWasContent = child.type == MarkdownTokenTypes.CODE_FENCE_CONTENT
       }
       if (state == 0 && child.type == MarkdownTokenTypes.FENCE_LANG) {
-        language = HtmlGenerator.leafText(text, child).toString().trim().split(' ')[0]
-        attributes.add("class=\"language-$language\"")
+        language = HtmlGenerator.leafText(text, child).toString().trim()
+        attributes.add("class=\"language-${language.split(" ").joinToString(separator = "-")}\"")
       }
       if (state == 0 && child.type == MarkdownTokenTypes.EOL) {
         visitor.consumeTagOpen(node, "code", *attributes.toTypedArray())

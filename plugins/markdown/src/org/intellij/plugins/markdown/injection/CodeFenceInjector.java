@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.intellij.plugins.markdown.injection.alias.LanguageGuesser;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
  import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceContentImpl;

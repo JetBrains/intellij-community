@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.testFramework.LightVirtualFile
 import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
-import org.intellij.plugins.markdown.injection.LanguageGuesser
+import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.ui.preview.MarkdownUtil
 import java.awt.Color
 import java.lang.ref.SoftReference
@@ -34,11 +34,11 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
   private val values = ConcurrentHashMap<String, CachedHTMLResult>()
 
   override fun isApplicable(language: String): Boolean {
-    return LanguageGuesser.INSTANCE.guessLanguage(language) != null
+    return LanguageGuesser.guessLanguage(language) != null
   }
 
   override fun generateHtml(language: String, raw: String): String {
-    val lang = LanguageGuesser.INSTANCE.guessLanguage(language) ?: return escape(raw)
+    val lang = LanguageGuesser.guessLanguage(language) ?: return escape(raw)
 
     val md5 = MarkdownUtil.md5(raw, language)
 

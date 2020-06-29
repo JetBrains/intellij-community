@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import org.intellij.plugins.markdown.injection.LanguageGuesser;
+import org.intellij.plugins.markdown.injection.alias.LanguageGuesser;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
