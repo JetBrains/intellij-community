@@ -60,7 +60,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   }
 
   override fun dispose() {
-    for ((_, file) in files) {
+    for (file in (files.values + diffFiles.values)) {
       FileEditorManager.getInstance(project).closeFile(file)
       file.isValid = false
     }
