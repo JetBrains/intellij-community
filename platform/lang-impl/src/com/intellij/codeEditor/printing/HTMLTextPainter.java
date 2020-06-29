@@ -184,7 +184,8 @@ public final class HTMLTextPainter {
       }
 
       TextAttributes textAttributes = hIterator.getTextAttributes();
-      if (htmlStyleManager.isDefaultAttributes(textAttributes)) {
+      // for non-standalone always write attributes to ensure that we don't depend on surrounding context
+      if (isStandalone && htmlStyleManager.isDefaultAttributes(textAttributes)) {
         textAttributes = null;
       }
 
