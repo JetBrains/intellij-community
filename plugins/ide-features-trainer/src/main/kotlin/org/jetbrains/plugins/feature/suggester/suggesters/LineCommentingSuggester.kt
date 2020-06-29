@@ -3,7 +3,10 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiErrorElement
-import org.jetbrains.plugins.feature.suggester.*
+import org.jetbrains.plugins.feature.suggester.FeatureSuggester
+import org.jetbrains.plugins.feature.suggester.NoSuggestion
+import org.jetbrains.plugins.feature.suggester.PopupSuggestion
+import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.cache.UserActionsCache
 import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
 import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
@@ -14,9 +17,9 @@ import org.jetbrains.plugins.feature.suggester.changes.UserAction
 class LineCommentingSuggester : FeatureSuggester {
 
     companion object {
-        val POPUP_MESSAGE = "Try the Comment Line feature to do it faster (Ctrl + /)"
-        val UNCOMMENTING_POPUP_MESSAGE = "Why not use the Uncomment Line feature? (Ctrl + /)"
-        val DESCRIPTOR_ID = "codeassists.comment.line"
+        const val POPUP_MESSAGE = "Try the Comment Line feature to do it faster (Ctrl + /)"
+        const val UNCOMMENTING_POPUP_MESSAGE = "Why not use the Uncomment Line feature? (Ctrl + /)"
+        const val DESCRIPTOR_ID = "codeassists.comment.line"
     }
 
     private var uncommentingActionStart: UserAction? = null
@@ -30,26 +33,22 @@ class LineCommentingSuggester : FeatureSuggester {
         when (val lastAction = actions.last()) {
             is ChildAddedAction -> {
                 val child = lastAction.newChild
-                if (child != null && isOneLineComment(child)
+                if (child != null && child.isOneLineComment()
                     && isCommentAddedToLineStart(child.containingFile, child.textRange.startOffset)
                 ) {
                     return createSuggestion(DESCRIPTOR_ID, POPUP_MESSAGE)
                 }
             }
             is ChildReplacedAction -> {
-                val newChild = lastAction.newChild
-                val oldChild = lastAction.oldChild
+                val newChild = lastAction.newChild ?: return NoSuggestion
+                val oldChild = lastAction.oldChild ?: return NoSuggestion
 
-                if(newChild == null || oldChild == null) {
-                    return NoSuggestion
-                }
-
-                if (isOneLineComment(newChild)
+                if (newChild.isOneLineComment()
                     && oldChild !is PsiComment
                     && isCommentAddedToLineStart(newChild.containingFile, newChild.textRange.startOffset)
                 ) {
                     return createSuggestion(DESCRIPTOR_ID, POPUP_MESSAGE)
-                } else if (isOneLineComment(oldChild)
+                } else if (oldChild.isOneLineComment()
                     && newChild !is PsiComment
                     && isCommentAddedToLineStart(newChild.containingFile, newChild.textRange.startOffset)
                 ) {

@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.feature.suggester.cache
 
+import org.jetbrains.plugins.feature.suggester.changes.UserAction
+import org.jetbrains.plugins.feature.suggester.changes.UserAnAction
 import java.util.*
 
 open class ChangesCache<EventType>(val maxCacheSize: Int) {
@@ -32,3 +34,8 @@ open class ChangesCache<EventType>(val maxCacheSize: Int) {
         }
     }
 }
+
+
+class UserActionsCache(maxCacheSize: Int) : ChangesCache<UserAction>(maxCacheSize)
+
+class UserAnActionsCache(maxCacheSize: Int) : ChangesCache<UserAnAction>(maxCacheSize)

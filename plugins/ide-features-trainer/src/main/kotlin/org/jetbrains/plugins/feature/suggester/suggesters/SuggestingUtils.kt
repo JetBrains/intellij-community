@@ -15,10 +15,10 @@ internal fun isCommentAddedToLineStart(file: PsiFile, offset: Int): Boolean {
     return fileBeforeCommentText.substringAfterLast('\n', fileBeforeCommentText).all { it == ' ' }
 }
 
-internal fun isOneLineComment(psiElement: PsiElement) : Boolean {
-    return psiElement is PsiComment
-            && psiElement.text.startsWith("//")
-            && psiElement.text.substring(2).trim().isNotEmpty()
+internal fun PsiElement.isOneLineComment(): Boolean {
+    return this is PsiComment
+            && text.startsWith("//")
+            && text.substring(2).trim().isNotEmpty()
 }
 
 internal fun createSuggestion(descriptorId: String?, popupMessage: String, usageDelta: Long = 1000): Suggestion {

@@ -14,24 +14,20 @@ import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
 class SecondToArrayCompletionSuggester : FeatureSuggester {
 
     companion object {
-        val POPUP_MESSAGE =
+        const val POPUP_MESSAGE =
             "Why not use the second Smart Completion for 'toArray' method? (double Ctrl + Shift + Space)"
-        val DESCRIPTOR_ID = "editing.completion.second.smarttype.toar"
+        const val DESCRIPTOR_ID = "editing.completion.second.smarttype.toar"
     }
 
     override fun getSuggestion(actions: UserActionsCache, anActions: UserAnActionsCache): Suggestion {
-        val lastAction = actions.last()
-        val parent = lastAction.parent
-        when (lastAction) {
+        when (val lastAction = actions.last()) {
             is ChildAddedAction -> {
-                val child = lastAction.newChild
-                if (child is PsiMethodCallExpression && checkMethodCall(child)) {
+                if (isMethodCall(lastAction.newChild)) {
                     return createSuggestion(DESCRIPTOR_ID, POPUP_MESSAGE)
                 }
             }
             is ChildReplacedAction -> {
-                val newChild = lastAction.newChild
-                if(newChild is PsiMethodCallExpression && checkMethodCall(newChild)) {
+                if (isMethodCall(lastAction.newChild)) {
                     return createSuggestion(DESCRIPTOR_ID, POPUP_MESSAGE)
                 }
             }
@@ -39,22 +35,25 @@ class SecondToArrayCompletionSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    private fun checkMethodCall(call: PsiMethodCallExpression): Boolean {
-        //todo: hack not to suggest in wrong place
-        if(call.argumentList.expressions.isNotEmpty()) return false
-        val ref = call.methodExpression
-        if(ref.referenceName != "toArray") return false
-        val qualifierExpr = ref.qualifierExpression
-        if(qualifierExpr !is PsiReferenceExpression || qualifierExpr.qualifierExpression != null) {
+    private fun isMethodCall(child: PsiElement?): Boolean {
+        if (child !is PsiMethodCallExpression) {
             return false
         }
-        val expectedTypes = ExpectedTypesProvider.getExpectedTypes(call, true)
-        if(!expectedTypes.any { it.type is PsiArrayType }) return false
+        //todo: hack not to suggest in wrong place
+        if (child.argumentList.expressions.isNotEmpty()) return false
+        val ref = child.methodExpression
+        if (ref.referenceName != "toArray") return false
+        val qualifierExpr = ref.qualifierExpression
+        if (qualifierExpr !is PsiReferenceExpression || qualifierExpr.qualifierExpression != null) {
+            return false
+        }
+        val expectedTypes = ExpectedTypesProvider.getExpectedTypes(child, true)
+        if (!expectedTypes.any { it.type is PsiArrayType }) return false
         val resolve = ref.resolve()
-        if(resolve is PsiMethod) {
+        if (resolve is PsiMethod) {
             val clazz = resolve.containingClass ?: return false
-            val collectionClass = JavaPsiFacade.getInstance(call.project)
-                .findClass("java.util.Collection", GlobalSearchScope.allScope(call.project))
+            val collectionClass = JavaPsiFacade.getInstance(child.project)
+                .findClass("java.util.Collection", GlobalSearchScope.allScope(child.project))
                 ?: return false
             return clazz.isInheritor(collectionClass, true)
         }

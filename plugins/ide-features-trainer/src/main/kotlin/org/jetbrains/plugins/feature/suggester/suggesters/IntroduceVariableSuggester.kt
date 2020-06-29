@@ -24,8 +24,8 @@ class IntroduceVariableSuggester : FeatureSuggester {
     private var copiedExpression: Expression? = null
 
     companion object {
-        val POPUP_MESSAGE = "Why not use the Extract Variable refactoring? (Ctrl + Alt + V)"
-        val DESCRIPTOR_ID = "refactoring.introduceVariable"
+        const val POPUP_MESSAGE = "Why not use the Extract Variable refactoring? (Ctrl + Alt + V)"
+        const val DESCRIPTOR_ID = "refactoring.introduceVariable"
     }
 
     override fun getSuggestion(actions: UserActionsCache, anActions: UserAnActionsCache): Suggestion {
@@ -42,7 +42,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
             }
             is ChildRemovedAction -> {
                 val child = lastAction.child
-                if(parent != null && child is PsiExpression) {
+                if (parent != null && child is PsiExpression) {
                     copiedExpression = getCopiedExpression(child) ?: copiedExpression
                 }
             }

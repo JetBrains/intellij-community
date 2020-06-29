@@ -6,12 +6,10 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.IdeTooltipManager
-import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeAdapter
@@ -39,7 +37,7 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
             if (suggestion is PopupSuggestion) {
                 println("Action performed (before): ${suggestion.message}")
 
-                val virtualFile = action.parent?.containingFile?.virtualFile ?: return
+                action.parent?.containingFile?.virtualFile ?: return
                 val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
                 if (suggester.needToClearLookup) {
                     //todo: this is hack to avoid exception in spection completion case
@@ -47,15 +45,7 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
                     lookupManager as LookupManagerImpl
                     lookupManager.clearLookup()
                 }
-                val label = HintUtil.createQuestionLabel(suggestion.message)
-                //val hint: LightweightHint = PatchedLightweightHint(label)     can't create java.lang.NoClassDefFoundError PatchedLightweightHint
-                //todo: this is hack to avoid hiding on parameter info popup
-                val hint = LightweightHint(label)
-                val hintManager = HintManager.getInstance()
-                hintManager as HintManagerImpl
-                val point: Point = hintManager.getHintPosition(hint, editor, HintManager.ABOVE)
-                IdeTooltipManager.getInstance().hideCurrentNow(false)
-                hintManager.showEditorHint(hint, editor, point, HintManager.HIDE_BY_ESCAPE, 0, false)
+                showSuggestionHint(suggestion.message, editor)
 
                 // send event for testing
                 project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion)
@@ -66,11 +56,23 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
         }
     }
 
+    private fun showSuggestionHint(message: String, editor: Editor) {
+        val label = HintUtil.createQuestionLabel(message)
+        //val hint: LightweightHint = PatchedLightweightHint(label)     can't create java.lang.NoClassDefFoundError PatchedLightweightHint
+        //todo: this is hack to avoid hiding on parameter info popup
+        val hint = LightweightHint(label)
+        val hintManager = HintManager.getInstance()
+        hintManager as HintManagerImpl
+        val point: Point = hintManager.getHintPosition(hint, editor, HintManager.ABOVE)
+        IdeTooltipManager.getInstance().hideCurrentNow(false)
+        hintManager.showEditorHint(hint, editor, point, HintManager.HIDE_BY_ESCAPE, 0, false)
+    }
+
     override fun fileOpened(
         source: FileEditorManager,
         file: VirtualFile
     ) {
-        if(project != source.project || psiListenersIsSet)
+        if (project != source.project || psiListenersIsSet)
             return
 
         PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {

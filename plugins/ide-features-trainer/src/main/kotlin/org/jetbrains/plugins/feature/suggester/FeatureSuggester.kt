@@ -7,7 +7,8 @@ import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
 interface FeatureSuggester {
 
     companion object {
-        val EP_NAME: ExtensionPointName<FeatureSuggester> = ExtensionPointName.create("org.intellij.featureSuggester.featureSuggester")
+        val EP_NAME: ExtensionPointName<FeatureSuggester> =
+            ExtensionPointName.create("org.intellij.featureSuggester.featureSuggester")
 
         val suggesters: List<FeatureSuggester> = EP_NAME.extensionList
     }

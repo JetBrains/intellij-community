@@ -15,8 +15,8 @@ import org.jetbrains.plugins.feature.suggester.changes.ChildRemovedAction
 
 class SafeDeleteSuggester : FeatureSuggester {
     companion object {
-        val POPUP_MESSAGE = "Just to be on the safe side, try Safe Delete instead (Alt + Delete)"
-        val suggestionCountdownMillis = 150
+        const val POPUP_MESSAGE = "Just to be on the safe side, try Safe Delete instead (Alt + Delete)"
+        const val suggestionCountdownMillis = 150
     }
 
     private var lastTimeForPopupMillis = 0L
@@ -45,15 +45,11 @@ class SafeDeleteSuggester : FeatureSuggester {
     }
 
     private fun isDeclarationRemoving(action: ChildRemovedAction): Boolean {
-        val parent = action.parent
-        val child = action.child
-        if (parent != null && child != null) {
-            return child is PsiDeclarationStatement
-                    || child is PsiField
-                    || child is PsiMethod
-                    || child is PsiClass
-        }
-        return false
+        val (parent, child) = action
+        return parent != null && (child is PsiDeclarationStatement
+                || child is PsiField
+                || child is PsiMethod
+                || child is PsiClass)
     }
 
     override fun getId(): String = "Safe delete suggester"
