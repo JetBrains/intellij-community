@@ -33,17 +33,31 @@ class CommitsHistory {
     new CommitsHistory(union(other.commitsPerRemote))
   }
 
+  CommitsHistory minus(CommitsHistory other) {
+    new CommitsHistory(subtract(other.commitsPerRemote))
+  }
+
   private Map<String, Set<String>> union(Map<String, Set<String>> map) {
     if (map.isEmpty()) return commitsPerRemote
     if (commitsPerRemote.isEmpty()) return map
     Map<String, Set<String>> union = [:]
     [commitsPerRemote, map].each {
-      it.entrySet().each {
-        def commitSet = (union[it.key] ?: []) as Set<String>
-        commitSet += it.value as Set<String>
-        union[it.key as String] = commitSet
+      it.forEach { String remote, Set<String> commits ->
+        def commitSet = (union[remote] ?: []) as Set<String>
+        commitSet += commits
+        union[remote] = commitSet
       }
     }
     return union
+  }
+
+  private Map<String, Set<String>> subtract(Map<String, Set<String>> map) {
+    if (map.isEmpty()) return commitsPerRemote
+    if (commitsPerRemote.isEmpty()) return commitsPerRemote
+    Map<String, Set<String>> result = [:]
+    commitsPerRemote.forEach { String remote, Set<String> commits ->
+      result[remote] = (commits - map[remote] ?: []) as Set<String>
+    }
+    return result
   }
 }

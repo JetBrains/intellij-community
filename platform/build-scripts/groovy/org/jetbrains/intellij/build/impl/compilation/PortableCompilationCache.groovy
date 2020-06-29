@@ -24,7 +24,7 @@ class PortableCompilationCache {
     ProjectStamps.PORTABLE_CACHES_PROPERTY
   ]
   @Lazy
-  private final String remoteGitUrl = {
+  private String remoteGitUrl = {
     require(GIT_REPOSITORY_URL_PROPERTY, "Repository url").with {
       context.messages.info("Git remote url $it")
       it
@@ -40,6 +40,7 @@ class PortableCompilationCache {
    * Download JPS remote caches even if there are caches available locally
    */
   private boolean forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
+  private boolean cleanupRemoteCache = bool('intellij.jps.cache.cleanup', false)
   @Lazy
   private CompilationOutputsDownloader downloader = {
     def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
@@ -159,16 +160,20 @@ class PortableCompilationCache {
     uploader.updateCommitHistory()
   }
 
+  def buildCompilationCacheZip() {
+    uploader.buildCompilationCacheZip()
+  }
+
   /**
    * Publish already uploaded compilation cache to remote cache overriding existing commit history.
    * Used in force rebuild and cleanup.
    */
   def overrideCommitHistory(Set<String> forceRebuiltCommits) {
+    def staleCommitHistory = uploader.remoteCommitHistory()
     def newCommitHistory = new CommitsHistory([(remoteGitUrl): forceRebuiltCommits])
     uploader.updateCommitHistory(newCommitHistory, true)
-  }
-
-  def buildCompilationCacheZip() {
-    uploader.buildCompilationCacheZip()
+    if (cleanupRemoteCache) {
+      uploader.delete(staleCommitHistory - newCommitHistory)
+    }
   }
 }
