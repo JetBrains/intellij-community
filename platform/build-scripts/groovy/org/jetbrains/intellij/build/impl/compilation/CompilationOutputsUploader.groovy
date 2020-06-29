@@ -148,13 +148,25 @@ class CompilationOutputsUploader {
     }
   }
 
+  /**
+   * Upload and publish file with commits history
+   */
   void updateCommitHistory() {
+    def cacheUploaded = uploader.isExist("caches/$commitHash")
+    def metadataUploaded = uploader.isExist("metadata/$commitHash")
+    if (!cacheUploaded && !metadataUploaded) {
+      context.messages.warning("Unable to publish $commitHash due to missing caches/$commitHash and metadata/$commitHash. " +
+                               "Probably caused by previous cleanup build.")
+      return
+    }
+    if (cacheUploaded != metadataUploaded) {
+      context.messages.error("Unexpected state: JPS cache is uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded")
+    }
     def commitsHistory = new CommitsHistory([(remoteGitUrl): [commitHash].toSet()])
     if (uploader.isExist(CommitsHistory.JSON_FILE, false)) {
       def json = uploader.getAsString(CommitsHistory.JSON_FILE)
       commitsHistory += new CommitsHistory(json)
     }
-    // Upload and publish file with commits history
     File commitHistoryFile = new File(tmpDir, CommitsHistory.JSON_FILE)
     commitHistoryFile.parentFile.mkdirs()
     commitHistoryFile.write(commitsHistory.toJson())
