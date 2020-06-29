@@ -4,6 +4,7 @@ package com.intellij.compiler.server;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.CompilerProfilerUtil;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
@@ -1142,8 +1143,24 @@ public final class BuildManager implements Disposable {
     for (String option : userAdditionalOptionsList) {
       cmdLine.addParameter(option);
     }
+
+    final Path workDirectory = getBuildSystemDirectory();
+    try {
+      Files.createDirectories(workDirectory);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+
     if (isProfilingMode) {
-      cmdLine.addParameter("-agentlib:yjpagent=disablealloc,delay=10000,sessionname=ExternalBuild");
+      try {
+        CompilerProfilerUtil.copyYKLibraries(workDirectory);
+        String yjpagent = CompilerProfilerUtil.getYJPAgentPath(workDirectory);
+        cmdLine.addParameter("-agentpath:" + yjpagent + "=disablealloc,delay=10000,sessionname=ExternalBuild");
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
     }
 
     // debugging
@@ -1190,13 +1207,6 @@ public final class BuildManager implements Disposable {
 
     cmdLine.addParameter("-Dio.netty.noUnsafe=true");
 
-    final Path workDirectory = getBuildSystemDirectory();
-    try {
-      Files.createDirectories(workDirectory);
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
 
     final File projectSystemRoot = getProjectSystemDirectory(project);
     if (projectSystemRoot != null) {
