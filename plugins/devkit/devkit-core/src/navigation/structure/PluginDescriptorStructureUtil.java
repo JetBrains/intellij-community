@@ -15,6 +15,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -372,9 +373,8 @@ public final class PluginDescriptorStructureUtil {
     if (subTagDescription == null) {
       return null;
     }
-    return subTagDescription.getValues(element).stream()
-      .filter(e -> e instanceof ExtensionDomExtender.SimpleTagValue)
-      .map(e -> (ExtensionDomExtender.SimpleTagValue)e)
+    return StreamEx.of(subTagDescription.getValues(element))
+      .select(ExtensionDomExtender.SimpleTagValue.class)
       .map(ExtensionDomExtender.SimpleTagValue::getStringValue)
       .findAny()
       .orElse(null);

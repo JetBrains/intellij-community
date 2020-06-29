@@ -29,6 +29,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -450,13 +451,11 @@ class ModuleHighlightUtil {
       final PsiReferenceList list = providesStatement.getImplementationList();
       if (list == null) return null;
 
-      return Arrays.stream(list.getReferenceElements())
-        .map(ref -> ref.resolve())
-        .filter(Objects::nonNull)
-        .filter(clazz -> clazz instanceof PsiClass)
-        .map(clazz -> (PsiClass)clazz)
+      return StreamEx.of(list.getReferenceElements())
+        .map(PsiReference::resolve)
+        .select(PsiClass.class)
         .map(clazz -> HighlightUtil.checkPreviewFeatureElement(statement, clazz, level))
-        .filter(Objects::nonNull)
+        .nonNull()
         .findAny()
         .orElse(null);
     }
