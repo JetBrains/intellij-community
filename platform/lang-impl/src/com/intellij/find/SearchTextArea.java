@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
@@ -260,6 +261,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     if (actions != null && actions.length > 0) {
       JPanel buttonsGrid = new NonOpaquePanel(new GridLayout(1, actions.length, 0, 0));
       for (AnAction action : actions) {
+        if (action instanceof TooltipDescriptionProvider) {
+          action.getTemplatePresentation().setDescription(FindBundle.message("find.embedded.buttons.description"));
+        }
         ActionButton button = new MyActionButton(action, true);
         addedButtons.add(button);
         buttonsGrid.add(button);

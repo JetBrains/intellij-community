@@ -21,6 +21,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.find.SearchSession;
 import com.intellij.find.impl.RegExHelpPopup;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ToggleRegex extends EditorHeaderToggleAction implements Embeddable, TooltipLinkProvider {
+public class ToggleRegex extends EditorHeaderToggleAction implements Embeddable, TooltipLinkProvider, TooltipDescriptionProvider {
   public ToggleRegex() {
     super(FindBundle.message("find.regex"),
           AllIcons.Actions.Regex,
