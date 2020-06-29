@@ -24,7 +24,7 @@ public class EqualsWithItselfInspection extends BaseInspection {
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "compare", "compareUnsigned"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_SHORT, "compare", "compareUnsigned"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_BYTE, "compare", "compareUnsigned"),
-    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_BOOLEAN, "compare", "compareUnsigned"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_BOOLEAN, "compare"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_CHARACTER, "compare"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "compare"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "compare")
