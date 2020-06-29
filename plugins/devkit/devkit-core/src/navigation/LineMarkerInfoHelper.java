@@ -7,7 +7,6 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
@@ -16,10 +15,14 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.PointableCandidate;
 
 import java.text.MessageFormat;
@@ -33,17 +36,22 @@ final class LineMarkerInfoHelper {
     candidate -> GotoRelatedItem.createItems(ContainerUtil.createMaybeSingletonList(candidate.pointer.getElement()), "DevKit");
 
   private static final NullableFunction<PointableCandidate, String> EXTENSION_NAMER =
-    createNamer("line.marker.tooltip.extension.declaration", XmlTag::getName);
+    createNamer("line.marker.tooltip.extension.declaration", tag -> {
+      final DomElement element = DomUtil.getDomElement(tag);
+      if (!(element instanceof Extension)) return "?";
+      return getExtensionPointName(((Extension)element).getExtensionPoint());
+    });
 
   private static final NullableFunction<PointableCandidate, String> EXTENSION_POINT_NAMER =
     createNamer("line.marker.tooltip.extension.point.declaration", tag -> {
-      String name = tag.getAttributeValue("name");
-      if (StringUtil.isEmpty(name)) {
-        // shouldn't happen, just for additional safety
-        name = "Extension Point";
-      }
-      return name;
+      return getExtensionPointName(DomUtil.getDomElement(tag));
     });
+
+  @NotNull
+  private static String getExtensionPointName(DomElement element) {
+    if (!(element instanceof ExtensionPoint)) return "?";
+    return ((ExtensionPoint)element).getEffectiveQualifiedName();
+  }
 
   private static final String MODULE_SUFFIX_PATTERN = " <font color='" + ColorUtil.toHex(UIUtil.getInactiveTextColor()) + "'>[{0}]</font>";
 

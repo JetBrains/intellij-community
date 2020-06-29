@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -34,7 +34,7 @@ public abstract class ExtensionDeclarationRelatedItemLineMarkerProviderTestBase 
     String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
     int expectedTagPosition = pluginXmlFile.getText().indexOf(xmlDeclarationText);
     String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + pluginXmlPath
-                             + ":" + expectedTagPosition + "\">myEp</a> declaration in plugin.xml " +
+                             + ":" + expectedTagPosition + "\">com.intellij.myEp</a> declaration in plugin.xml " +
                              "<font color=" + color + ">[" + module.getName() + "]</font><br></body></html>";
 
     GutterMark gutter = myFixture.findGutter(file);
