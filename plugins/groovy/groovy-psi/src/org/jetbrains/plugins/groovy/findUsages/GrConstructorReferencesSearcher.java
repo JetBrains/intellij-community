@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
-  public ConstructorReferencesSearcher() {
+public class GrConstructorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+  public GrConstructorReferencesSearcher() {
     super(true);
   }
 
