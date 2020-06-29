@@ -585,8 +585,10 @@ public class JBCefClient implements JBCefDisposable {
     private synchronized List<T> syncInitList(@NotNull CefBrowser browser, @NotNull Runnable onInit) {
       List<T> list = myMap.get(browser);
       if (list == null) {
+        if (myMap.isEmpty()) {
+          onInit.run();
+        }
         myMap.put(browser, list = Collections.synchronizedList(new LinkedList<>()));
-        onInit.run();
       }
       return list;
     }
@@ -594,7 +596,9 @@ public class JBCefClient implements JBCefDisposable {
     private synchronized void syncRemoveFromMap(@NotNull List<T> list, @NotNull CefBrowser browser, @NotNull Runnable onClear) {
       if (list.isEmpty()) {
         myMap.remove(browser);
-        onClear.run();
+        if (myMap.isEmpty()) {
+          onClear.run();
+        }
       }
     }
 
