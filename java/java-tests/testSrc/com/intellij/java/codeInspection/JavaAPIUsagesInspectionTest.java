@@ -17,12 +17,33 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
@@ -67,22 +88,25 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
 
   //generate apiXXX.txt
   //configure jdk and set test project descriptor
-  /* private static final String JDK_HOME = "/home/me/java/jdk-15";
   private static final String PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-14.0.1";
+  private static final String JDK_HOME = "/home/me/java/jdk-15";
   private static final LanguageLevel LANGUAGE_LEVEL = LanguageLevel.JDK_14_PREVIEW;
   private static final String VERSION = "15";
   private static final LightProjectDescriptor API_VERSION_PROJECT_DESCRIPTOR = new LightProjectDescriptor() {
-    @Nullable
     @Override
-    public Sdk getSdk() {
+    public @NotNull Sdk getSdk() {
       return JavaSdk.getInstance().createJdk(VERSION, JDK_HOME + "/", false);
     }
   };
 
   //todo exclude inheritors of ConcurrentMap#putIfAbsent
   public void testCollectSinceApiUsages() {
+    //doCollectSinceApiUsages();
+  }
+
+  private void doCollectSinceApiUsages() {
     VfsRootAccess.allowRootAccess("/");
-    final LinkedHashSet<String> notDocumented = new LinkedHashSet<String>();
+    final LinkedHashSet<String> notDocumented = new LinkedHashSet<>();
     final Set<String> previews = new HashSet<>();
     final ContentIterator previewContentIterator = new ContentIterator() {
       @Override
@@ -151,10 +175,12 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
         return true;
       }
     };
+
     final VirtualFile srcFile = JarFileSystem.getInstance().findFileByPath(JDK_HOME + "/lib/src.zip!/");
     assert srcFile != null;
     VfsUtilCore.iterateChildrenRecursively(srcFile, VirtualFileFilter.ALL, contentIterator);
 
     notDocumented.forEach(System.out::println);
-  }*/
+  }
+
 }
