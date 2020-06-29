@@ -9,6 +9,7 @@ import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
@@ -187,7 +188,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
    *
    * Note: default implementation takes Component.getTreeLock()
    */
-  protected void setCursor(Component content, Cursor cursor) {
+  protected void setCursor(@NotNull Component content, Cursor cursor) {
     UIUtil.setCursor(content, cursor);
   }
 

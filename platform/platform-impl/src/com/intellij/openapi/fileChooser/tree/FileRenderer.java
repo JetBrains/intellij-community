@@ -35,7 +35,7 @@ public class FileRenderer {
   public ColoredTableCellRenderer forTable() {
     return new ColoredTableCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean focused, int row, int column) {
+      protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean focused, int row, int column) {
         customize(this, value, selected, focused);
       }
     };

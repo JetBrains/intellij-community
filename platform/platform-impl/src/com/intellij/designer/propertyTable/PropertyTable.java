@@ -1182,7 +1182,7 @@ public abstract class PropertyTable extends JBTable {
 
 
         @Override
-        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           super.customizeCellRenderer(table, value, selected, hasFocus, row, column);
           mySelected = selected;
           myDrawTopLine = row > 0;
@@ -1310,7 +1310,7 @@ public abstract class PropertyTable extends JBTable {
 
     private class MyCellRenderer extends ColoredTableCellRenderer {
       @Override
-      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         setPaintFocusBorder(false);
         setFocusBorderAroundIcon(true);
       }

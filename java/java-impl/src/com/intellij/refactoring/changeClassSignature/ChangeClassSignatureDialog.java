@@ -348,7 +348,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   private static class MyCellRenderer extends ColoredTableCellRenderer {
 
     @Override
-    public void customizeCellRenderer(JTable table, Object value,
+    public void customizeCellRenderer(@NotNull JTable table, Object value,
                                       boolean isSelected, boolean hasFocus, int row, int col) {
       if (value == null) return;
       setPaintFocusBorder(false);

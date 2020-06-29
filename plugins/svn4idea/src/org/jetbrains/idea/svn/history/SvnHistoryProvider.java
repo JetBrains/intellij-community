@@ -732,7 +732,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     @Override
-    protected void customizeCellRenderer(final JTable table,
+    protected void customizeCellRenderer(final @NotNull JTable table,
                                          final Object value,
                                          final boolean selected,
                                          final boolean hasFocus,
@@ -781,7 +781,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     private final Icon myIcon = PlatformIcons.COPY_ICON;
     private final ColoredTableCellRenderer myRenderer = new ColoredTableCellRenderer() {
       @Override
-      protected void customizeCellRenderer(final JTable table,
+      protected void customizeCellRenderer(final @NotNull JTable table,
                                            final Object value,
                                            final boolean selected,
                                            final boolean hasFocus,

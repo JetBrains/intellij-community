@@ -37,7 +37,7 @@ final class FormPropertyTableCellRenderer extends ColoredTableCellRenderer{
 
   @Override
   protected void customizeCellRenderer(
-    final JTable table,
+    final @NotNull JTable table,
     final Object value,
     final boolean selected,
     final boolean hasFocus,

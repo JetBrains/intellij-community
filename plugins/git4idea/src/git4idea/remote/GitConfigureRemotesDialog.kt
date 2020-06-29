@@ -279,7 +279,7 @@ private fun runInModalTask(title: String,
   }
 
   private inner class MyCellRenderer : ColoredTableCellRenderer() {
-    override fun customizeCellRenderer(table: JTable?, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+    override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
       if (value is RepoNode) {
         append(value.getPresentableString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
       }

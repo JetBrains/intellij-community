@@ -172,7 +172,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
     public TableCellRenderer doCreateRenderer(TableItem item) {
       return new ColoredTableCellRenderer() {
         @Override
-        public void customizeCellRenderer(JTable table, Object value,
+        public void customizeCellRenderer(@NotNull JTable table, Object value,
                                           boolean isSelected, boolean hasFocus, int row, int column) {
           if (value == null) return;
           append((String)value, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, null));

@@ -329,7 +329,7 @@ public abstract class ImportLayoutPanel extends JPanel {
   public static void resizeColumns(final PackageEntryTable packageTable, JBTable result, boolean areStaticImportsEnabled) {
     ColoredTableCellRenderer packageRenderer = new ColoredTableCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         PackageEntry entry = packageTable.getEntryAt(row);
 
         if (entry == PackageEntry.BLANK_LINE_ENTRY) {

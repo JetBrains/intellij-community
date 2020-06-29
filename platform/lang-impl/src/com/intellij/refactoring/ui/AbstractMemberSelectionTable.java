@@ -364,7 +364,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
 
     @Override
-    public void customizeCellRenderer(JTable table, final Object value,
+    public void customizeCellRenderer(@NotNull JTable table, final Object value,
                                       boolean isSelected, boolean hasFocus, final int row, final int column) {
 
       final int modelColumn = myTable.convertColumnIndexToModel(column);

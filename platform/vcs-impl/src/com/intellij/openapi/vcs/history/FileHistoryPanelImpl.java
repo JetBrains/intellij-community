@@ -677,7 +677,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
       myComparator = comparator;
       myRenderer = new BaseHistoryCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setOpaque(selected);
           append(VcsUtil.getShortRevisionString((VcsRevisionNumber)value), getDefaultAttributes());
           SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
@@ -717,7 +717,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
 
       myRenderer = new BaseHistoryCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setOpaque(selected);
           Date date = (Date)value;
           if (date != null) {
@@ -763,7 +763,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     }
 
     @Override
-    protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+    protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
       setToolTipText(myTooltipText);
       if (selected || hasFocus) {
         setBackground(table.getSelectionBackground());
@@ -841,7 +841,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
       super(getCommitMessageTitle());
       myRenderer = new BaseHistoryCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setOpaque(selected);
           if (value instanceof String) {
             String message = (String)value;

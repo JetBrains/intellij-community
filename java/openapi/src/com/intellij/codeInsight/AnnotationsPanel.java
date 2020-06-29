@@ -67,7 +67,7 @@ public class AnnotationsPanel {
       }
 
       @Override
-      protected void customizeCellRenderer(JTable table,
+      protected void customizeCellRenderer(@NotNull JTable table,
                                            Object value,
                                            boolean selected,
                                            boolean hasFocus,

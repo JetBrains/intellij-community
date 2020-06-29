@@ -187,7 +187,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
   private void setupNewNameColumn() {
     myTable.getColumnModel().getColumn(NEW_NAME_COLUMN).setCellRenderer(new ColoredTableCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         T element = getElements().get(row);
         String errorText = getErrorText(element);
         setToolTipText(errorText);
@@ -243,7 +243,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
   private void setupOldNameColumn() {
     myTable.getColumnModel().getColumn(OLD_NAME_COLUMN).setCellRenderer(new ColoredTableCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         //noinspection unchecked
         T element = (T) value;
         setToolTipText(getErrorText(element));

@@ -623,7 +623,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
 
   private class MyElementColumnCellRenderer extends ColoredTableCellRenderer {
     @Override
-    protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+    protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
       @SuppressWarnings("unchecked") T item = (T)value;
       String text = item == null ? "" : getItemText(item);
       append(text);

@@ -4,6 +4,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.progress.util.PotemkinProgress;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -106,7 +107,7 @@ public class WindowMoveListener extends WindowMouseListener {
     }
 
     @Override
-    protected void setCursor(Component content, Cursor cursor) {
+    protected void setCursor(@NotNull Component content, Cursor cursor) {
       myHelper.setCursor(content, cursor, () -> super.setCursor(content, cursor));
     }
 

@@ -353,7 +353,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         { setIpad(JBUI.emptyInsets()); } // Reset standard pads
 
         @Override
-        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected,
+        protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected,
                                              boolean hasFocus, int row, int column) {
           if (value == null) {
             append("No data", SimpleTextAttributes.ERROR_ATTRIBUTES);

@@ -558,7 +558,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   public abstract static class MyTableCellRenderer extends ColoredTableCellRenderer {
     @Override
-    protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean isSelected,
+    protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean isSelected,
                                          boolean hasFocus, int row, int column) {
 
       if (hasFocus) {

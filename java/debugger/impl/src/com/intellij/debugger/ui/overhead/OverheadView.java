@@ -183,7 +183,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     public TableCellRenderer getRenderer(OverheadProducer producer) {
       return new ColoredTableCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+        protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
           if (value instanceof OverheadProducer) {
             OverheadProducer overheadProducer = (OverheadProducer)value;
             if (overheadProducer.isObsolete()) {
@@ -233,7 +233,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     public TableCellRenderer getRenderer(OverheadProducer producer) {
       return new ColoredTableCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JTable table,
+        protected void customizeCellRenderer(@NotNull JTable table,
                                              @Nullable Object value,
                                              boolean selected,
                                              boolean hasFocus,
