@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -53,10 +54,16 @@ public class DictCreationQuickFix implements LocalQuickFix {
     if (myStatement == null) return;
     final PyExpression assignedValue = myStatement.getAssignedValue();
     if (assignedValue instanceof PyDictLiteralExpression) {
-      for (PyKeyValueExpression expression: ((PyDictLiteralExpression)assignedValue).getElements()) {
-        final PyExpression value = expression.getValue();
-        if (value != null)
-          statementsMap.put(expression.getKey().getText(), value.getText());
+      for (PsiElement expression: assignedValue.getChildren()) {
+        if (expression instanceof PyKeyValueExpression) {
+          PyKeyValueExpression kvExpr = (PyKeyValueExpression)expression;
+          final PyExpression value = kvExpr.getValue();
+          if (value != null)
+            statementsMap.put(kvExpr.getKey().getText(), value.getText());
+        }
+        else if (expression instanceof PyDoubleStarExpression) {
+          statementsMap.put(expression.getText(), null);
+        }
       }
 
       PyStatement statement = PsiTreeUtil.getNextSiblingOfType(myStatement, PyStatement.class);
@@ -93,12 +100,16 @@ public class DictCreationQuickFix implements LocalQuickFix {
       }
       List<String> statements = new ArrayList<>();
       for (Map.Entry<String, String> entry : statementsMap.entrySet()) {
-        statements.add(entry.getKey() + ": " + entry.getValue());
+        if (entry.getValue() != null) {
+          statements.add(entry.getKey() + ": " + entry.getValue());
+        }
+        else {
+          statements.add(entry.getKey());
+        }
       }
       final PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(myStatement),
                                                                     "{" + StringUtil.join(statements, ", ") + "}");
-      if (expression != null)
-        assignedValue.replace(expression);
+      assignedValue.replace(expression);
     }
   }
 }
