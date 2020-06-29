@@ -1,12 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
-import com.intellij.execution.configurations.ParametersList
+import com.intellij.internal.statistic.collectors.fus.TerminalFusAwareHandler
 import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.terminal.TerminalShellCommandHandler
 import com.intellij.util.PathUtil
 import java.util.*
 
@@ -23,9 +24,16 @@ class TerminalUsageTriggerCollector {
     }
 
     @JvmStatic
-    fun triggerSmartCommandExecuted(project: Project, command: String) {
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "terminal.smart.command.executed",
-                                                  FeatureUsageData().addData("command", ParametersList.parse(command)[0]))
+    fun triggerSmartCommandExecuted(project: Project,
+                                    workingDirectory: String?,
+                                    localSession: Boolean,
+                                    command: String,
+                                    handler: TerminalShellCommandHandler) {
+      val data = FeatureUsageData().addData("terminalCommandHandler", handler::class.java.name)
+      if (handler is TerminalFusAwareHandler) {
+        handler.fillData(project, workingDirectory, localSession, command, data)
+      }
+      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "terminal.smart.command.executed", data)
     }
 
     @JvmStatic

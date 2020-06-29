@@ -21,7 +21,7 @@ interface TerminalShellCommandHandler {
 
   companion object {
     private val LOG = Logger.getInstance(TerminalShellCommandHandler::class.java)
-    private val EP = ExtensionPointName.create<TerminalShellCommandHandler>("com.intellij.terminal.shellCommandHandler")
+    val EP = ExtensionPointName.create<TerminalShellCommandHandler>("com.intellij.terminal.shellCommandHandler")
 
     fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean {
       return EP.extensionList.any { it.matches(project, workingDirectory, localSession, command) }

@@ -212,7 +212,11 @@ public final class TerminalShellCommandHandlerHelper {
       return false;
     }
 
-    TerminalUsageTriggerCollector.Companion.triggerSmartCommandExecuted(project, command);
+    TerminalShellCommandHandler handler = TerminalShellCommandHandler.Companion.getEP().getExtensionList().stream()
+      .filter(it -> it.matches(project, workingDirectory, localSession, command))
+      .findFirst()
+      .orElseThrow(() -> new RuntimeException("Cannot find matching command handler."));
+    TerminalUsageTriggerCollector.Companion.triggerSmartCommandExecuted(project, workingDirectory, localSession, command, handler);
     TerminalShellCommandHandler.Companion.executeShellCommandHandler(myWidget.getProject(), getWorkingDirectory(),
                                                                      !hasRunningCommands(), command, matchedExecutorAction);
     clearTypedCommand(command);
