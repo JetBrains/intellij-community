@@ -5,24 +5,24 @@ Reports methods and fields in <b>Serializable</b> and <b>Externalizable</b> clas
 Examples:<br>
 <code><pre>
 class Test implements Serializable {
-  @Serial // will be marked as redundant
+  @Serial // could be marked as redundant
   private static long serialVersionUID = 7874493593505141603L;
 
-  @Serial // will be marked as redundant
+  @Serial // could be marked as redundant
   void writeObject(ObjectOutputStream out) throws IOException {
   }
 }
 </pre></code>
 <code><pre>
 class Test implements Externalizable {
-  @Serial // will be marked as redundant
+  @Serial // could be marked as redundant
   private void writeObject(ObjectOutputStream out) throws IOException {
   }
 }
 </pre></code>
 <p>To get more information about all valid cases, refer the documentation for <b>java.io.Serial</b>.</p>
 <!-- tooltip end -->
-<p>This inspection only applies to language level 14 or higher.</p>
+<p>This inspection only reports if the language level of the project or module is 14 or higher.</p>
 <p><small>New in 2020.3</small></p>
 </body>
 </html>
