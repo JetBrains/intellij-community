@@ -105,7 +105,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+import java.util.function.Function;
 import static com.intellij.openapi.util.Pair.pair;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
@@ -388,7 +388,7 @@ public final class BuildManager implements Disposable {
       final List<String> filtered = new ArrayList<>(paths.size());
       for (File file : paths) {
         final String path = FileUtil.toSystemIndependentName(file.getPath());
-        if (PATH_FILTER.fun(path)) {
+        if (PATH_FILTER.apply(path)) {
           filtered.add(path);
         }
       }

@@ -18,7 +18,6 @@ package com.intellij.lang.java.parser;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JShellElementType;
@@ -30,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * @author Eugene Zhuravlev
@@ -40,11 +40,11 @@ public class JShellParser extends JavaParser {
   private static final Set<IElementType> TOP_LEVEL_DECLARATIONS = ContainerUtil.set(
     JavaElementType.FIELD, JavaElementType.METHOD, JavaElementType.CLASS
   );
-  private static final Condition<IElementType> IMPORT_PARSED_CONDITION = tokenType -> JavaElementType.IMPORT_STATEMENT.equals(tokenType);
-  private static final Condition<IElementType> EXPRESSION_PARSED_CONDITION = type -> type != JavaElementType.REFERENCE_EXPRESSION;
-  private static final Condition<IElementType> STATEMENTS_PARSED_CONDITION = tokenType-> !JavaElementType.DECLARATION_STATEMENT.equals(tokenType) &&
+  private static final Predicate<IElementType> IMPORT_PARSED_CONDITION = tokenType -> JavaElementType.IMPORT_STATEMENT.equals(tokenType);
+  private static final Predicate<IElementType> EXPRESSION_PARSED_CONDITION = type -> type != JavaElementType.REFERENCE_EXPRESSION;
+  private static final Predicate<IElementType> STATEMENTS_PARSED_CONDITION = tokenType-> !JavaElementType.DECLARATION_STATEMENT.equals(tokenType) &&
                                                                                          !JavaElementType.EXPRESSION_STATEMENT.equals(tokenType);
-  private static final Condition<IElementType> DECLARATION_PARSED_CONDITION = tokenType -> TOP_LEVEL_DECLARATIONS.contains(tokenType);
+  private static final Predicate<IElementType> DECLARATION_PARSED_CONDITION = tokenType -> TOP_LEVEL_DECLARATIONS.contains(tokenType);
 
   private final FileParser myJShellFileParser = new FileParser(JShellParser.this) {
     private final TokenSet IMPORT_PARSING_STOP_LIST = TokenSet.orSet(
@@ -127,7 +127,7 @@ public class JShellParser extends JavaParser {
     }
   };
 
-  private static boolean isParsed(@Nullable PsiBuilder.Marker parsedMarker, PsiBuilder builder, final Condition<? super IElementType> cond) {
+  private static boolean isParsed(@Nullable PsiBuilder.Marker parsedMarker, PsiBuilder builder, final Predicate<? super IElementType> cond) {
     if (parsedMarker == null) {
       return false;
     }
@@ -135,7 +135,7 @@ public class JShellParser extends JavaParser {
     if (lastDone == null) {
       return false;
     }
-    return cond.value(lastDone.getTokenType());
+    return cond.test(lastDone.getTokenType());
   }
 
   private static void revert(PsiBuilder.Marker parsedMarker) {

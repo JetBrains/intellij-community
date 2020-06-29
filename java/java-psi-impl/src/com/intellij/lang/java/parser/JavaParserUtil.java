@@ -10,7 +10,6 @@ import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.TokenList;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 public final class JavaParserUtil {
   public static final TokenSet WS_COMMENTS = TokenSet.orSet(ElementType.JAVA_COMMENT_BIT_SET, TokenSet.WHITE_SPACE);
@@ -302,18 +302,18 @@ public final class JavaParserUtil {
     };
   }
 
-  public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Condition<? super Pair<IElementType, String>> condition) {
+  public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Predicate<? super Pair<IElementType, String>> condition) {
     return new PsiBuilderAdapter(builder) {
       @Override
       public IElementType getTokenType() {
         final Pair<IElementType, String> input = Pair.create(builder.getTokenType(), builder.getTokenText());
-        return condition.value(input) ? null : super.getTokenType();
+        return condition.test(input) ? null : super.getTokenType();
       }
 
       @Override
       public boolean eof() {
         final Pair<IElementType, String> input = Pair.create(builder.getTokenType(), builder.getTokenText());
-        return condition.value(input) || super.eof();
+        return condition.test(input) || super.eof();
       }
     };
   }

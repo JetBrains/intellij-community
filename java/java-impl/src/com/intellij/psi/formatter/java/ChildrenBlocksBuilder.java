@@ -3,7 +3,6 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public final class ChildrenBlocksBuilder {
   private final Config myConfig;
@@ -48,7 +48,7 @@ public final class ChildrenBlocksBuilder {
     private final Map<IElementType, Indent> myIndents = new HashMap<>();
     private final Map<IElementType, Wrap> myWraps = new HashMap<>();
 
-    private final Map<IElementType, Condition<ASTNode>> myNoneAlignmentCondition = new HashMap<>();
+    private final Map<IElementType, Predicate<? super ASTNode>> myNoneAlignmentCondition = new HashMap<>();
 
     private Alignment myDefaultAlignment;
     private Indent myDefaultIndent;
@@ -84,7 +84,7 @@ public final class ChildrenBlocksBuilder {
       return this;
     }
 
-    public Config setNoAlignmentIf(IElementType elementType, Condition<ASTNode> applyAlignCondition) {
+    public Config setNoAlignmentIf(IElementType elementType, Predicate<? super ASTNode> applyAlignCondition) {
       myNoneAlignmentCondition.put(elementType, applyAlignCondition);
       return this;
     }
@@ -102,8 +102,8 @@ public final class ChildrenBlocksBuilder {
     private Alignment getAlignment(ASTNode node) {
       IElementType elementType = node.getElementType();
 
-      Condition<ASTNode> noneAlignmentCondition = myNoneAlignmentCondition.get(elementType);
-      if (noneAlignmentCondition != null && noneAlignmentCondition.value(node)) {
+      Predicate<? super ASTNode> noneAlignmentCondition = myNoneAlignmentCondition.get(elementType);
+      if (noneAlignmentCondition != null && noneAlignmentCondition.test(node)) {
         return null;
       }
 

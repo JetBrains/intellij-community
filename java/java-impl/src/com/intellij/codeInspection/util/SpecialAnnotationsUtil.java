@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -44,6 +43,7 @@ import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author Gregory.Shrago
@@ -62,7 +62,7 @@ public class SpecialAnnotationsUtil {
   public static JPanel createSpecialAnnotationsListControl(final List<String> list,
                                                            final String borderTitle,
                                                            final boolean acceptPatterns,
-                                                           final Condition<? super PsiClass> isApplicable) {
+                                                           final Predicate<? super PsiClass> isApplicable) {
     @SuppressWarnings("Convert2Diamond")
     SortedListModel<String> listModel = new SortedListModel<String>(Comparator.naturalOrder());
     for (String s : list) {
@@ -91,13 +91,13 @@ public class SpecialAnnotationsUtil {
         listChanged();
       }
     });
-    return createSpecialAnnotationsListControl(borderTitle, acceptPatterns, isApplicable, listModel);
+    return createSpecialAnnotationsListControl(borderTitle, acceptPatterns, listModel, isApplicable);
   }
 
   public static JPanel createSpecialAnnotationsListControl(final String borderTitle,
                                                            final boolean acceptPatterns,
-                                                           final Condition<? super PsiClass> isApplicable,
-                                                           final SortedListModel<? super String> listModel) {
+                                                           final SortedListModel<? super String> listModel,
+                                                           final Predicate<? super PsiClass> isApplicable) {
     final JList injectionList = new JBList(listModel);
 
     injectionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -112,7 +112,7 @@ public class SpecialAnnotationsUtil {
                                                 GlobalSearchScope.allScope(project), new ClassFilter() {
               @Override
               public boolean isAccepted(PsiClass aClass) {
-                return isApplicable.value(aClass);
+                return isApplicable.test(aClass);
               }
             }, null);
           chooser.showDialog();

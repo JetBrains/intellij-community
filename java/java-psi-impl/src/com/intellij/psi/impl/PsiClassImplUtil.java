@@ -217,7 +217,7 @@ public final class PsiClassImplUtil {
     }
   }
 
-  private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = (NullableFunction<ClassIconRequest, Icon>)r -> {
+  private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = r -> {
     if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) return null;
 
     boolean isLocked = BitUtil.isSet(r.flags, Iconable.ICON_FLAG_READ_STATUS) && !r.psiClass.isWritable();
@@ -427,11 +427,12 @@ public final class PsiClassImplUtil {
                                                     String name,
                                                     @NotNull LanguageLevel languageLevel,
                                                     @NotNull GlobalSearchScope resolveScope) {
-    Function<PsiMember, PsiSubstitutor> finalSubstitutor = new Function<PsiMember, PsiSubstitutor>() {
+    java.util.function.Function<PsiMember, PsiSubstitutor> finalSubstitutor = new java.util.function.Function<PsiMember, PsiSubstitutor>() {
       final ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(aClass, resolveScope);
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
+
       @Override
-      public PsiSubstitutor fun(PsiMember member) {
+      public PsiSubstitutor apply(PsiMember member) {
         PsiSubstitutor finalSubstitutor = member.hasModifierProperty(PsiModifier.STATIC) ? substitutor : obtainSubstitutor(member);
         return member instanceof PsiMethod ? checkRaw(isRaw, factory, (PsiMethod)member, finalSubstitutor) : finalSubstitutor;
       }
@@ -470,7 +471,7 @@ public final class PsiClassImplUtil {
             }
 
             processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
-            if (!processor.execute(candidateField, state.put(PsiSubstitutor.KEY, finalSubstitutor.fun(candidateField)))) {
+            if (!processor.execute(candidateField, state.put(PsiSubstitutor.KEY, finalSubstitutor.apply(candidateField)))) {
               resolved = true;
             }
           }
@@ -505,7 +506,7 @@ public final class PsiClassImplUtil {
               PsiClass containingClass = inner.getContainingClass();
               if (containingClass != null) {
                 processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
-                if (!processor.execute(inner, state.put(PsiSubstitutor.KEY, finalSubstitutor.fun(inner)))) {
+                if (!processor.execute(inner, state.put(PsiSubstitutor.KEY, finalSubstitutor.apply(inner)))) {
                   resolved = true;
                 }
               }
@@ -545,7 +546,7 @@ public final class PsiClassImplUtil {
           }
 
           processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
-          if (!processor.execute(candidateMethod, state.put(PsiSubstitutor.KEY, finalSubstitutor.fun(candidateMethod)))) {
+          if (!processor.execute(candidateMethod, state.put(PsiSubstitutor.KEY, finalSubstitutor.apply(candidateMethod)))) {
             resolved = true;
           }
         }

@@ -69,10 +69,10 @@ public final class LeakHunter {
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
    */
   @TestOnly
-  public static <T> void processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
-                                      @NotNull Class<T> suspectClass,
-                                      @Nullable Predicate<? super T> isReallyLeak,
-                                      @NotNull PairProcessor<? super T, Object> processor) throws AssertionError {
+  static <T> void processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
+                               @NotNull Class<T> suspectClass,
+                               @Nullable final Predicate<? super T> isReallyLeak,
+                               @NotNull final PairProcessor<? super T, Object> processor) throws AssertionError {
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -82,7 +82,7 @@ public final class LeakHunter {
     PersistentEnumeratorBase.clearCacheForTests();
     Runnable runnable = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
-        DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, o -> true, (value, backLink) -> {
+        DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, __->true, (value, backLink) -> {
           @SuppressWarnings("unchecked")
           T leaked = (T)value;
           if (isReallyLeak == null || isReallyLeak.test(leaked)) {

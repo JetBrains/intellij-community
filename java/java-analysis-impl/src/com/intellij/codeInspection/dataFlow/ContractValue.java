@@ -22,12 +22,12 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Function;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.OptionalInt;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 public abstract class ContractValue {
@@ -133,8 +133,8 @@ public abstract class ContractValue {
   }
 
   public static ContractValue constant(Object value, @NotNull PsiType type) {
-    return new IndependentValue(factory -> factory.getConstant(TypeConversionUtil.computeCastTo(value, type), type),
-                                String.valueOf(value));
+    return new IndependentValue(String.valueOf(value), factory -> factory.getConstant(TypeConversionUtil.computeCastTo(value, type), type)
+    );
   }
 
   public static ContractValue booleanValue(boolean value) {
@@ -235,32 +235,32 @@ public abstract class ContractValue {
   }
 
   private static class IndependentValue extends ContractValue {
-    static final IndependentValue NULL = new IndependentValue(factory -> factory.getNull(), "null");
-    static final IndependentValue TRUE = new IndependentValue(factory -> factory.getBoolean(true), "true") {
+    static final IndependentValue NULL = new IndependentValue("null", factory -> factory.getNull());
+    static final IndependentValue TRUE = new IndependentValue("true", factory -> factory.getBoolean(true)) {
       @Override
       public boolean isExclusive(ContractValue other) {
         return other == FALSE;
       }
     };
-    static final IndependentValue FALSE = new IndependentValue(factory -> factory.getBoolean(false), "false") {
+    static final IndependentValue FALSE = new IndependentValue("false", factory -> factory.getBoolean(false)) {
       @Override
       public boolean isExclusive(ContractValue other) {
         return other == TRUE;
       }
     };
-    static final IndependentValue ZERO = new IndependentValue(factory -> factory.getInt(0), "0");
+    static final IndependentValue ZERO = new IndependentValue("0", factory -> factory.getInt(0));
 
     private final Function<? super DfaValueFactory, ? extends DfaValue> mySupplier;
     private final String myPresentation;
 
-    IndependentValue(Function<? super DfaValueFactory, ? extends DfaValue> supplier, String presentation) {
+    IndependentValue(String presentation, Function<? super DfaValueFactory, ? extends DfaValue> supplier) {
       mySupplier = supplier;
       myPresentation = presentation;
     }
 
     @Override
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
-      return mySupplier.fun(factory);
+      return mySupplier.apply(factory);
     }
 
     @Override

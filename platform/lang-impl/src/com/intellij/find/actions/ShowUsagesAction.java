@@ -402,7 +402,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     UsageNode USAGES_OUTSIDE_SCOPE_NODE = new UsageNode(null, table.USAGES_OUTSIDE_SCOPE_SEPARATOR);
     UsageNode MORE_USAGES_SEPARATOR_NODE = new UsageNode(null, table.MORE_USAGES_SEPARATOR);
 
-    PingEDT pingEDT = new PingEDT("Rebuild popup in EDT", o -> popup.isDisposed(), 100, () -> {
+    PingEDT pingEDT = new PingEDT("Rebuild popup in EDT", () -> popup.isDisposed(), 100, () -> {
       if (popup.isDisposed()) return;
 
       List<UsageNode> nodes = new ArrayList<>(usages.size());

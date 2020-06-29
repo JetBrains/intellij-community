@@ -3,7 +3,6 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -29,6 +28,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /**
@@ -529,7 +529,7 @@ public class FileUtil extends FileUtilRt {
   public static String createSequentFileName(@NotNull File aParentFolder,
                                              @NotNull String aFilePrefix,
                                              @NotNull String aExtension,
-                                             @NotNull Condition<? super File> condition) {
+                                             @NotNull Predicate<? super File> condition) {
     return findSequentFile(aParentFolder, aFilePrefix, aExtension, condition).getName();
   }
 
@@ -551,11 +551,11 @@ public class FileUtil extends FileUtilRt {
   public static File findSequentFile(@NotNull File parentFolder,
                                      @NotNull String filePrefix,
                                      @NotNull String extension,
-                                     @NotNull Condition<? super File> condition) {
+                                     @NotNull Predicate<? super File> condition) {
     int postfix = 0;
     String ext = extension.isEmpty() ? "" : '.' + extension;
     File candidate = new File(parentFolder, filePrefix + ext);
-    while (!condition.value(candidate)) {
+    while (!condition.test(candidate)) {
       postfix++;
       candidate = new File(parentFolder, filePrefix + postfix + ext);
     }

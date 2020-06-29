@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleConfigurable;
@@ -40,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.function.Predicate;
 
 public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private final JavaVisibilityPanel myJavaVisibilityPanel;
@@ -88,10 +88,11 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     GridBagConstraints gc =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHEAST, GridBagConstraints.BOTH,
                              new JBInsets(0, 0, 0, 0), 0, 0);
-    final Condition<PsiClass> isApplicable = aClass -> aClass.isAnnotationType();
+    Predicate<PsiClass> isApplicable = aClass -> aClass.isAnnotationType();
     //noinspection Convert2Diamond
     myRepeatAnnotationsModel = new SortedListModel<String>(Comparator.naturalOrder());
-    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl("Annotations to Copy", false, isApplicable, myRepeatAnnotationsModel), gc);
+    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl("Annotations to Copy", false, myRepeatAnnotationsModel,
+                                                                                   isApplicable), gc);
     return myPanel;
   }
 

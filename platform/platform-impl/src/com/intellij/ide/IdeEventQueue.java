@@ -27,7 +27,10 @@ import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.ExpirableRunnable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -69,6 +72,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.application.impl.InvocationUtil.*;
 
@@ -992,7 +996,7 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Condition<? super AWTEvent> exitCondition) {
+  public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Predicate<? super AWTEvent> exitCondition) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
     }
@@ -1026,7 +1030,7 @@ public final class IdeEventQueue extends EventQueue {
         event = null;
       }
     }
-    while (!exitCondition.value(event));
+    while (!exitCondition.test(event));
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy.exit(" + modalComponent + ", " + exitCondition + ")");
     }

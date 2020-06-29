@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class BaseCompletionLookupArranger extends LookupArranger implements CompletionLookupArranger {
   private static final Logger LOG = Logger.getInstance(BaseCompletionLookupArranger.class);
@@ -428,11 +428,11 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     }
   }
 
-  private static void addSomeItems(LinkedHashSet<? super LookupElement> model, Iterator<? extends LookupElement> iterator, Condition<? super LookupElement> stopWhen) {
+  private static void addSomeItems(Set<? super LookupElement> model, Iterator<? extends LookupElement> iterator, Predicate<? super LookupElement> stopWhen) {
     while (iterator.hasNext()) {
       LookupElement item = iterator.next();
       model.add(item);
-      if (stopWhen.value(item)) {
+      if (stopWhen.test(item)) {
         break;
       }
     }

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Contract;
@@ -14,6 +13,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Predicate;
 
 /**
  * @author peter
@@ -172,8 +172,8 @@ public final class ObjectUtils {
   }
 
   @Contract("null, _ -> null")
-  public static @Nullable <T> T nullizeByCondition(final @Nullable T obj, final @NotNull Condition<? super T> condition) {
-    if (condition.value(obj)) {
+  public static @Nullable <T> T nullizeByCondition(final @Nullable T obj, final @NotNull Predicate<? super T> condition) {
+    if (condition.test(obj)) {
       return null;
     }
     return obj;

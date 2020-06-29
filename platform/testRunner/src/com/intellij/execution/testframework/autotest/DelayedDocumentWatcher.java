@@ -51,7 +51,7 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
   private int myModificationStamp = 0;
 
   /**
-   * @deprecated Use {@link #DelayedDocumentWatcher(Project, int, IntConsumer, Condition)}
+   * @deprecated Use {@link #DelayedDocumentWatcher(Project, int, IntConsumer, Predicate)}
    */
   @Deprecated
   public DelayedDocumentWatcher(@NotNull Project project,

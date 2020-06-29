@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,6 +21,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -137,10 +137,10 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     retainFiles(VirtualFile::isValid);
   }
 
-  protected void retainFiles(@NotNull Condition<? super VirtualFile> c) {
+  protected void retainFiles(@NotNull Predicate<? super VirtualFile> c) {
     for (Map.Entry<String, T> entry : myCachedFiles.entrySet()) {
       T t = entry.getValue();
-      if (t == null || !c.value(t)) {
+      if (t == null || !c.test(t)) {
         //CFM::entrySet returns copy
         myCachedFiles.remove(entry.getKey());
       }

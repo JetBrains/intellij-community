@@ -41,9 +41,9 @@ class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.doHighlighting()
 
     def mainClass = ((PsiJavaFile)file).classes[0]
-    LeakHunter.checkLeak(mainClass, MethodElement, { MethodElement node ->
+    LeakHunter.checkLeak(mainClass, MethodElement) { MethodElement node ->
       superClass == node.psi.parent
-    } as Predicate<MethodElement>)
+    }
   }
 
   void "test no hard refs to AST after highlighting"() {
@@ -51,7 +51,7 @@ class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
     assert sup.findElementAt(0) // load AST
     assert !((PsiFileImpl)sup).stub
 
-    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup } as Predicate)
+    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup })
 
     def foo = myFixture.addFileToProject('a.java', 'class Foo extends Super { void bar() { bar(); } }')
     myFixture.configureFromExistingVirtualFile(foo.virtualFile)
@@ -60,8 +60,8 @@ class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
     assert !((PsiFileImpl)foo).stub
     assert ((PsiFileImpl)foo).treeElement
 
-    LeakHunter.checkLeak(foo, MethodElement, { it.psi.containingFile == foo } as Predicate)
-    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup } as Predicate)
+    LeakHunter.checkLeak(foo, MethodElement, { it.psi.containingFile == foo })
+    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup })
   }
 
   void "test no hard refs to Default File Template inspection internal AST"() {
@@ -74,7 +74,7 @@ class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
     def mainClass = ((PsiJavaFile)file).classes[0]
     LeakHunter.checkLeak(mainClass, MethodElement, { MethodElement node ->
       !node.psi.physical
-    } as Predicate<MethodElement>)
+    })
   }
 
   void "test no hard refs to AST via class reference type"() {
@@ -86,7 +86,7 @@ class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
 
     LeakHunter.checkLeak(type, MethodElement, { MethodElement node ->
       node.psi == cls.methods[0]
-    } as Predicate<MethodElement>)
+    })
 
     GCWatcher.tracking(cls.node).ensureCollected()
     assert !file.contentsLoaded
@@ -105,7 +105,7 @@ class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
 
     LeakHunter.checkLeak(type, ParameterElement, { ParameterElement node ->
       node.psi == cls.methods[0].parameterList.parameters[0]
-    } as Predicate<ParameterElement>)
+    })
 
     GCWatcher.tracking(cls.node).ensureCollected()
     assert !file.contentsLoaded
@@ -125,7 +125,7 @@ class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
 
     LeakHunter.checkLeak(type, MethodElement, { MethodElement node ->
       node.psi == cls.methods[0]
-    } as Predicate<MethodElement>)
+    })
 
     GCWatcher.tracking(cls.node).ensureCollected()
     assert !file.contentsLoaded
@@ -151,7 +151,7 @@ class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
 
     LeakHunter.checkLeak(type, MethodElement, { MethodElement node ->
       node.psi == cls.methods[0]
-    } as Predicate<MethodElement>)
+    })
 
     GCWatcher.tracking(cls.node).ensureCollected()
     assert !file.contentsLoaded

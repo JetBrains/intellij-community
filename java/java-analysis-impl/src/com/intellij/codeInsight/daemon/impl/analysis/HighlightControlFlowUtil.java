@@ -12,8 +12,6 @@ import com.intellij.lang.jvm.actions.ChangeModifierRequest;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -35,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class HighlightControlFlowUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -118,7 +117,7 @@ public final class HighlightControlFlowUtil {
     final PsiClass aClass = field.getContainingClass();
     if (aClass != null) {
       // field might be assigned in the other field initializers
-      if (isFieldInitializedInOtherFieldInitializer(aClass, field, isFieldStatic, Conditions.alwaysTrue())) return true;
+      if (isFieldInitializedInOtherFieldInitializer(aClass, field, isFieldStatic, __->true)) return true;
     }
     final PsiClassInitializer[] initializers;
     if (aClass != null) {
@@ -164,13 +163,13 @@ public final class HighlightControlFlowUtil {
   private static boolean isFieldInitializedInOtherFieldInitializer(@NotNull PsiClass aClass,
                                                                    @NotNull PsiField field,
                                                                    final boolean fieldStatic,
-                                                                   @NotNull Condition<? super PsiField> condition) {
+                                                                   @NotNull Predicate<? super PsiField> condition) {
     PsiField[] fields = aClass.getFields();
     for (PsiField psiField : fields) {
       if (psiField != field
           && psiField.hasModifierProperty(PsiModifier.STATIC) == fieldStatic
           && variableDefinitelyAssignedIn(field, psiField)
-          && condition.value(psiField)) {
+          && condition.test(psiField)) {
         return true;
       }
     }

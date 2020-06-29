@@ -5,7 +5,6 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class ArtifactUtil {
   private ArtifactUtil() {
@@ -507,7 +507,7 @@ public final class ArtifactUtil {
     return true;
   }
 
-  public static void removeChildrenRecursively(@NotNull CompositePackagingElement<?> element, @NotNull Condition<? super PackagingElement<?>> condition) {
+  public static void removeChildrenRecursively(@NotNull CompositePackagingElement<?> element, @NotNull Predicate<? super PackagingElement<?>> condition) {
     List<PackagingElement<?>> toRemove = new ArrayList<>();
     for (PackagingElement<?> child : element.getChildren()) {
       if (child instanceof CompositePackagingElement<?>) {
@@ -517,7 +517,7 @@ public final class ArtifactUtil {
           toRemove.add(child);
         }
       }
-      else if (condition.value(child)) {
+      else if (condition.test(child)) {
         toRemove.add(child);
       }
     }

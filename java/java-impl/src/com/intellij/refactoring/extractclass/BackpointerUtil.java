@@ -2,14 +2,15 @@
 
 package com.intellij.refactoring.extractclass;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+
+import java.util.function.Predicate;
 
 public final class BackpointerUtil {
   private BackpointerUtil() {
   }
 
-  public static boolean isBackpointerReference(PsiExpression expression, Condition<? super PsiField> value) {
+  public static boolean isBackpointerReference(PsiExpression expression, Predicate<? super PsiField> value) {
     if (expression instanceof PsiParenthesizedExpression) {
       final PsiExpression contents = ((PsiParenthesizedExpression)expression).getExpression();
       return isBackpointerReference(contents, value);
@@ -23,6 +24,6 @@ public final class BackpointerUtil {
       return false;
     }
     final PsiElement referent = reference.resolve();
-    return referent instanceof PsiField && value.value((PsiField)referent);
+    return referent instanceof PsiField && value.test((PsiField)referent);
   }
 }

@@ -120,6 +120,7 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable,
                                                                     CodeStyleSettingsListener, FocusListener {
@@ -276,7 +277,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private EditorDropHandler myDropHandler;
 
-  private Condition<RangeHighlighter> myHighlightingFilter;
+  private Predicate<? super RangeHighlighter> myHighlightingFilter;
 
   @NotNull private final IndentsModel myIndentsModel;
 
@@ -3449,14 +3450,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDropHandler = dropHandler;
   }
 
-  public void setHighlightingFilter(@Nullable Condition<RangeHighlighter> filter) {
+  public void setHighlightingFilter(@Nullable Predicate<? super RangeHighlighter> filter) {
     if (myHighlightingFilter == filter) return;
-    Condition<RangeHighlighter> oldFilter = myHighlightingFilter;
+    Predicate<? super RangeHighlighter> oldFilter = myHighlightingFilter;
     myHighlightingFilter = filter;
 
     for (RangeHighlighter highlighter : myDocumentMarkupModel.getDelegate().getAllHighlighters()) {
-      boolean oldAvailable = oldFilter == null || oldFilter.value(highlighter);
-      boolean newAvailable = filter == null || filter.value(highlighter);
+      boolean oldAvailable = oldFilter == null || oldFilter.test(highlighter);
+      boolean newAvailable = filter == null || filter.test(highlighter);
       if (oldAvailable != newAvailable) {
         boolean styleOrColorChanged = EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme()));
         myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
@@ -3469,7 +3470,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   boolean isHighlighterAvailable(@NotNull RangeHighlighter highlighter) {
-    return myHighlightingFilter == null || myHighlightingFilter.value(highlighter);
+    return myHighlightingFilter == null || myHighlightingFilter.test(highlighter);
   }
 
   private boolean hasBlockInlay(@NotNull Point point) {

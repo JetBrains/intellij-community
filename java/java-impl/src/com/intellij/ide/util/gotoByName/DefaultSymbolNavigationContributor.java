@@ -8,8 +8,6 @@ import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -30,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   private static final Logger LOG = Logger.getInstance(DefaultSymbolNavigationContributor.class);
@@ -56,7 +55,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   private static boolean hasSuperMethodCandidates(final PsiMethod method,
                                                   final GlobalSearchScope scope,
-                                                  final Condition<? super PsiMember> qualifiedMatcher) {
+                                                  final Predicate<PsiMember> qualifiedMatcher) {
     if (method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC)) return false;
 
     final PsiClass containingClass = method.getContainingClass();
@@ -69,7 +68,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
           if (parametersCount == candidate.getParameterList().getParametersCount() &&
               !candidate.hasModifierProperty(PsiModifier.PRIVATE) &&
               !candidate.hasModifierProperty(PsiModifier.STATIC) &&
-              qualifiedMatcher.value(candidate)) {
+              qualifiedMatcher.test(candidate)) {
             return false;
           }
         }
@@ -79,7 +78,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   }
 
-  private static boolean hasSuperMethod(PsiMethod method, GlobalSearchScope scope, Condition<? super PsiMember> qualifiedMatcher, String pattern) {
+  private static boolean hasSuperMethod(PsiMethod method, GlobalSearchScope scope, Predicate<PsiMember> qualifiedMatcher, String pattern) {
     if (pattern.contains(".") && Registry.is("ide.goto.symbol.include.overrides.on.qualified.patterns")) {
       return false;
     }
@@ -90,7 +89,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
     for (HierarchicalMethodSignature signature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
       PsiMethod superMethod = signature.getMethod();
-      if (PsiSearchScopeUtil.isInScope(scope, superMethod) && qualifiedMatcher.value(superMethod)) {
+      if (PsiSearchScopeUtil.isInScope(scope, superMethod) && qualifiedMatcher.test(superMethod)) {
         return true;
       }
     }
@@ -115,20 +114,20 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
 
     String completePattern = parameters.getCompletePattern();
-    final Condition<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(completePattern);
+    final Predicate<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(completePattern);
 
     //noinspection UnusedDeclaration
     final Set<PsiMethod> collectedMethods = new THashSet<>();
     boolean success = cache.processFieldsWithName(name, field -> {
-      if (isOpenable(field) && qualifiedMatcher.value(field)) return processor.process(field);
+      if (isOpenable(field) && qualifiedMatcher.test(field)) return processor.process(field);
       return true;
     }, scope, filter) &&
                       cache.processClassesWithName(name, aClass -> {
-                        if (isOpenable(aClass) && qualifiedMatcher.value(aClass)) return processor.process(aClass);
+                        if (isOpenable(aClass) && qualifiedMatcher.test(aClass)) return processor.process(aClass);
                         return true;
                       }, scope, filter) &&
                       cache.processMethodsWithName(name, method -> {
-                      if(!method.isConstructor() && isOpenable(method) && qualifiedMatcher.value(method)) {
+                      if(!method.isConstructor() && isOpenable(method) && qualifiedMatcher.test(method)) {
                         collectedMethods.add(method);
                       }
                       return true;
@@ -145,7 +144,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     }
   }
 
-  private static Condition<PsiMember> getQualifiedNameMatcher(String completePattern) {
+  private static Predicate<PsiMember> getQualifiedNameMatcher(String completePattern) {
     if (completePattern.contains("#") && completePattern.endsWith(")")) {
       return member -> member instanceof PsiMethod && JavaQualifiedNameProvider.hasQualifiedName(completePattern, (PsiMethod)member);
     }
@@ -158,7 +157,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
         return qualifiedName != null && matcher.matches(qualifiedName);
       };
     }
-    return Conditions.alwaysTrue();
+    return __->true;
   }
 
   private static class MyComparator implements Comparator<PsiModifierListOwner>{
