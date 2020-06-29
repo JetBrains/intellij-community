@@ -60,17 +60,26 @@ public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
     actions.add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR));
 
     for (AnAction action : actions) {
-      if (action instanceof ShortcutProvider) {
-        final ShortcutSet shortcut = ((ShortcutProvider)action).getShortcut();
-        if (shortcut != null) {
-          action.registerCustomShortcutSet(shortcut, panel);
-        }
-      }
-      if (action instanceof DirDiffModelHolder) {
-        ((DirDiffModelHolder)action).setModel(model);
-      }
+      setUp(model, panel, action);
     }
     myActions = actions.toArray(AnAction.EMPTY_ARRAY);
+  }
+
+  private static void setUp(DirDiffTableModel model, JComponent panel, AnAction action) {
+    if (action instanceof ShortcutProvider) {
+      final ShortcutSet shortcut = ((ShortcutProvider)action).getShortcut();
+      if (shortcut != null) {
+        action.registerCustomShortcutSet(shortcut, panel);
+      }
+    }
+    if (action instanceof DirDiffModelHolder) {
+      ((DirDiffModelHolder)action).setModel(model);
+    }
+    if (action instanceof ActionGroup) {
+      for (AnAction child : ((ActionGroup)action).getChildren(null)) {
+        setUp(model, panel, child);
+      }
+    }
   }
 
   @Override
