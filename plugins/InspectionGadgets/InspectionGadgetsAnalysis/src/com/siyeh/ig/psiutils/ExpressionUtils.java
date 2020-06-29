@@ -955,12 +955,12 @@ public final class ExpressionUtils {
   public static PsiExpression getEffectiveQualifier(@NotNull PsiReferenceExpression ref) {
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier != null) return qualifier;
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
     PsiMember member = tryCast(ref.resolve(), PsiMember.class);
     if (member == null) {
       // Reference resolves to non-member: probably variable/parameter/etc.
       return null;
     }
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
     PsiClass memberClass = member.getContainingClass();
     if (memberClass != null) {
       if (member.hasModifierProperty(PsiModifier.STATIC)) {

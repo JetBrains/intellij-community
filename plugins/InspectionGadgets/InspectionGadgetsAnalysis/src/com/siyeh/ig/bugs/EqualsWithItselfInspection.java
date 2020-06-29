@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,14 +65,10 @@ public class EqualsWithItselfInspection extends BaseInspection {
     final int count = argumentList.getExpressionCount();
     if (count == 1) {
       if (ONE_ARGUMENT_COMPARISON.test(expression)) {
+        final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
         final PsiExpression[] arguments = argumentList.getExpressions();
         final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (qualifier != null) {
-          return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifier, argument) &&
-                 !SideEffectChecker.mayHaveSideEffects(qualifier);
-        }
-        return argument instanceof PsiThisExpression;
+        return isItself(qualifier, argument);
       }
     }
     else if (count == 2) {
@@ -79,11 +76,15 @@ public class EqualsWithItselfInspection extends BaseInspection {
         final PsiExpression[] arguments = argumentList.getExpressions();
         final PsiExpression firstArgument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
         final PsiExpression secondArgument = PsiUtil.skipParenthesizedExprDown(arguments[1]);
-        return firstArgument != null &&
-               EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(firstArgument, secondArgument) &&
-               !SideEffectChecker.mayHaveSideEffects(firstArgument);
+        return isItself(firstArgument, secondArgument);
       }
     }
     return false;
+  }
+
+  private static boolean isItself(PsiExpression left, PsiExpression right) {
+    return left != null &&
+           EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, right) &&
+           !SideEffectChecker.mayHaveSideEffects(left);
   }
 }

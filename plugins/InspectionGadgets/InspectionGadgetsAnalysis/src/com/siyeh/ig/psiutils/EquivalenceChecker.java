@@ -601,8 +601,8 @@ public class EquivalenceChecker {
     else if (qualifier1 != qualifier2){
       return EXACT_MISMATCH;
     }
-    final PsiClass containingClass1 = PsiTreeUtil.getParentOfType(thisExpression1, PsiClass.class);
-    final PsiClass containingClass2 = PsiTreeUtil.getParentOfType(thisExpression2, PsiClass.class);
+    final PsiClass containingClass1 = PsiUtil.resolveClassInClassTypeOnly(thisExpression1.getType());
+    final PsiClass containingClass2 = PsiUtil.resolveClassInClassTypeOnly(thisExpression2.getType());
     if (containingClass1 == null || containingClass2 == null) {
       return EXACT_MISMATCH;
     }

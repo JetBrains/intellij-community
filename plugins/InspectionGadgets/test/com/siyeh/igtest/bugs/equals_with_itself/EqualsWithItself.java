@@ -66,4 +66,14 @@ class EqualsWithItself {
     Comparator c = (o1, o2) -> 0;
     c.<warning descr="'compare()' called on itself">compare</warning>(ss, ss);
   }
+
+  static class Outer {
+    class Inner extends Outer {
+      void test() {
+        if (equals(Outer.this)) { // equals called on itself
+
+        }
+      }
+    }
+  }
 }
