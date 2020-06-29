@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 
@@ -23,7 +24,7 @@ class PortableCompilationCache {
     ProjectStamps.PORTABLE_CACHES_PROPERTY
   ]
   @Lazy
-  private String remoteGitUrl = {
+  private final String remoteGitUrl = {
     require(GIT_REPOSITORY_URL_PROPERTY, "Repository url").with {
       context.messages.info("Git remote url $it")
       it
@@ -156,6 +157,15 @@ class PortableCompilationCache {
    */
   def publish() {
     uploader.updateCommitHistory()
+  }
+
+  /**
+   * Publish already uploaded compilation cache to remote cache overriding existing commit history.
+   * Used in force rebuild and cleanup.
+   */
+  def overrideCommitHistory(Set<String> forceRebuiltCommits) {
+    def newCommitHistory = new CommitsHistory([(remoteGitUrl): forceRebuiltCommits])
+    uploader.updateCommitHistory(newCommitHistory, true)
   }
 
   def buildCompilationCacheZip() {
