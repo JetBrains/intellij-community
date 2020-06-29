@@ -84,7 +84,9 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
     });
 
     final JPanel panel = new JPanel(new FlowLayout());
-    panel.add(new JLabel(JavaUiBundle.message("label.artifact.configurable.type")));
+    JLabel artifactTypeBoxLabel = new JLabel(JavaUiBundle.message("label.artifact.configurable.type"));
+    artifactTypeBoxLabel.setLabelFor(artifactTypeBox);
+    panel.add(artifactTypeBoxLabel);
     panel.add(artifactTypeBox);
     return panel;
   }
