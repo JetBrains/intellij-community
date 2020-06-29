@@ -1358,13 +1358,13 @@
                      implementationClass="com.intellij.codeInspection.RedundantExplicitCloseInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="TextBlockMigration"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids14" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids15" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.TextBlockMigrationInspection"
                      bundle="messages.JavaBundle"
                      key="inspection.text.block.migration.name"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="TextBlockBackwardMigration"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids14" enabledByDefault="true" level="INFORMATION"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids15" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.TextBlockBackwardMigrationInspection"
                      bundle="messages.JavaBundle"
                      key="inspection.text.block.backward.migration.name"/>
