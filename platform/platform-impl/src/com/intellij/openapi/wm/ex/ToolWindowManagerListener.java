@@ -45,11 +45,13 @@ public interface ToolWindowManagerListener extends EventListener {
    * @param toolWindow shown tool window
    */
   default void toolWindowShown(@NotNull ToolWindow toolWindow) {
+    toolWindowShown(toolWindow.getId(), toolWindow);
   }
 
   /**
    * @deprecated use {@link #toolWindowShown(ToolWindow)} instead
    */
+  @SuppressWarnings("unused")
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
   default void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
