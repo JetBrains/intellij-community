@@ -610,7 +610,7 @@ public class PsiLiteralUtil {
     }
     if (PsiType.FLOAT.equals(exprType) && PsiType.DOUBLE.equals(wantedType)) {
       String text = literal.getText();
-      if (StringUtil.endsWithIgnoreCase(text, "D")) {
+      if (StringUtil.endsWithIgnoreCase(text, "F")) {
         String newLiteral = text.substring(0, text.length() - 1);
         if (!StringUtil.containsAnyChar(newLiteral, ".eEpP")) {
           newLiteral += ".0";
