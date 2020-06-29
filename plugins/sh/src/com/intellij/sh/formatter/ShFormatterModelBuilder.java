@@ -37,7 +37,7 @@ public class ShFormatterModelBuilder implements FormattingModelBuilder {
 
       @Override
       public boolean isLeaf() {
-        return false;
+        return true;
       }
     };
 
