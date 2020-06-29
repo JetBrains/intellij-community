@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -40,6 +42,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
 import java.util.*;
@@ -1748,14 +1751,26 @@ public final class FSRecords {
   private static int contents;
   private static int reuses;
 
-  // TODO replace with sha-256
-  public static final MessageDigest CONTENT_HASH_DIGEST = DigestUtil.sha1();
+  @NotNull
+  public static MessageDigest getContentHashDigest() {
+    // TODO replace with sha-256
+    return DigestUtil.sha1();
+  }
+
+  private static byte @NotNull[] calculateHash(byte[] bytes, int offset, int length) {
+    // Probably we don't need to hash the length and "\0000".
+    MessageDigest digest = getContentHashDigest();
+    digest.update(String.valueOf(length).getBytes(StandardCharsets.UTF_8));
+    digest.update("\u0000".getBytes(StandardCharsets.UTF_8));
+    digest.update(bytes, offset, length);
+    return digest.digest();
+  }
 
   private static int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
     assert WE_HAVE_CONTENT_HASHES;
 
     long started = DUMP_STATISTICS ? System.nanoTime():0;
-    byte[] contentHash = DigestUtil.calculateContentHash(CONTENT_HASH_DIGEST, bytes, offset, length);
+    byte[] contentHash = calculateHash(bytes, offset, length);
     long done = DUMP_STATISTICS ? System.nanoTime() - started : 0;
     time += done;
 
