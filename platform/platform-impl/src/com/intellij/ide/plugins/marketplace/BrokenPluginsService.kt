@@ -12,6 +12,7 @@ import java.io.File
 
 class BrokenPluginStartupActivity : PreloadingActivity() {
   override fun preload(indicator: ProgressIndicator) {
+    if (System.getProperty("idea.ignore.disabled.plugins") != null) return
     BrokenPluginsService.updateBrokenPlugin()
   }
 }
