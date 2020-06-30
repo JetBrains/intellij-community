@@ -42,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTestCase {
@@ -106,7 +105,6 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
 
   private void doCollectSinceApiUsages() {
     VfsRootAccess.allowRootAccess("/");
-    final LinkedHashSet<String> notDocumented = new LinkedHashSet<>();
     final Set<String> previews = new HashSet<>();
     final ContentIterator previewContentIterator = new ContentIterator() {
       @Override
@@ -179,8 +177,6 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
     final VirtualFile srcFile = JarFileSystem.getInstance().findFileByPath(JDK_HOME + "/lib/src.zip!/");
     assert srcFile != null;
     VfsUtilCore.iterateChildrenRecursively(srcFile, VirtualFileFilter.ALL, contentIterator);
-
-    notDocumented.forEach(System.out::println);
   }
 
 }
