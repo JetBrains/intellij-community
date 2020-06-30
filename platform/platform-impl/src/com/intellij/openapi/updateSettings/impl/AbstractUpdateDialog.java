@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
 
 /**
  * @author anna
@@ -45,16 +44,15 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
 
   protected void configureMessageArea(@NotNull JEditorPane area) {
     String messageBody = myEnableLink ? IdeBundle.message("updates.configure.label") : "";
-    configureMessageArea(area, messageBody, null, null);
+    configureMessageArea(area, messageBody, null);
   }
 
   protected void configureMessageArea(@NotNull JEditorPane area,
                                       @NotNull String messageBody,
-                                      @Nullable Color fontColor,
                                       @Nullable HyperlinkListener listener) {
     String text =
       "<html><head>" +
-      UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), fontColor, null, null) +
+      UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
       "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>" +
       "</head><body>" + messageBody + "</body></html>";
 
