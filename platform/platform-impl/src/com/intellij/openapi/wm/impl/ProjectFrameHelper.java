@@ -371,6 +371,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
 
     if (myRootPane != null) {
+      myRootPane.setProject(project);
       myRootPane.installNorthComponents(project);
       StatusBar statusBar = myRootPane.getStatusBar();
       if (statusBar != null) {
