@@ -93,7 +93,6 @@
       <action id="Git.Stash" class="git4idea.actions.GitStash"/>
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash"/>
       <reference ref="ChangesView.Revert" />
-      <reference ref="UML.ShowChanges" />
     </group>
 
     <group id="Git.MainMenu" class="git4idea.actions.GitMainMenuActionGroup">
