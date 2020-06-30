@@ -6409,6 +6409,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertReceiverToParameter/autoSuggestedName.kt");
         }
 
+        @TestMetadata("callVariableAsFunction.kt")
+        public void testCallVariableAsFunction() throws Exception {
+            runTest("testData/intentions/convertReceiverToParameter/callVariableAsFunction.kt");
+        }
+
         @TestMetadata("explicitThisForExtension.kt")
         public void testExplicitThisForExtension() throws Exception {
             runTest("testData/intentions/convertReceiverToParameter/explicitThisForExtension.kt");

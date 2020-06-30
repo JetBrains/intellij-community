@@ -65,6 +65,7 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getImplicitReceivers
+import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -411,7 +412,9 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                         return null
                     }
 
-                    val receiverValue = resolvedCall.extensionReceiver ?: resolvedCall.dispatchReceiver
+                    val receiverValue = resolvedCall
+                        .let { (it as? VariableAsFunctionResolvedCall)?.variableCall ?: it }
+                        .let { it.extensionReceiver ?: it.dispatchReceiver }
                     if (receiverValue is ImplicitReceiver) {
                         processImplicitThis(resolvedCall.call.callElement, receiverValue)
                     }
