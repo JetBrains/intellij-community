@@ -229,6 +229,30 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testInferredReturnType1() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType2() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType3() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType4() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType5() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType6() throws Exception {
+    doTest();
+  }
+
   public void testExtractAssignmentExpression() throws Exception {
     try {
       doTest();

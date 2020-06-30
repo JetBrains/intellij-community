@@ -176,14 +176,10 @@ class MethodExtractor {
     val dependencies = withFilteredAnnotations(extractOptions)
     val factory = PsiElementFactory.getInstance(dependencies.project)
     val styleManager = CodeStyleManager.getInstance(dependencies.project)
-    var flowOutput = dependencies.flowOutput
-    if (dependencies.dataOutput is ExpressionOutput && flowOutput is ConditionalFlow) {
-      flowOutput = flowOutput.copy(statements = flowOutput.statements.filterNot { it is PsiReturnStatement })
-    }
     val codeBlock = BodyBuilder(factory)
       .build(
         dependencies.elements,
-        flowOutput,
+        dependencies.flowOutput,
         dependencies.dataOutput,
         dependencies.inputParameters,
         dependencies.disabledParameters,

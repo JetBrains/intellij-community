@@ -7,10 +7,14 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import com.intellij.psi.GenericsUtil
+import com.intellij.psi.controlFlow.ControlFlowUtil
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getExpressionType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessName
@@ -141,21 +145,54 @@ private fun findFlowOutput(analyzer: CodeFragmentAnalyzer): FlowOutput? {
   }
 }
 
-private fun findOutputFromReturn(flowOutput: FlowOutput): ExpressionOutput? {
-  val returnExpressions = flowOutput.statements
+private fun findCommonType(first: PsiType, second: PsiType, nullability: Nullability, manager: PsiManager): PsiType? {
+  return if (TypeConversionUtil.isNumericType(first) && TypeConversionUtil.isNumericType(second) && nullability == Nullability.NOT_NULL) {
+    TypeConversionUtil.binaryNumericPromotion(first, second)
+  } else {
+    GenericsUtil.getLeastUpperBound(first, second, manager)
+  }
+}
+
+private fun findCodeReturnType(context: PsiElement): PsiType? {
+  val codeMember = ControlFlowUtil.findCodeFragment(context).parent
+  return when(codeMember) {
+    is PsiMethod -> codeMember.returnType
+    is PsiLambdaExpression -> LambdaUtil.getFunctionalInterfaceReturnType(codeMember)
+    else -> null
+  }
+}
+
+private fun findOutputFromReturn(returnStatements: List<PsiStatement>): ExpressionOutput? {
+  val returnExpressions = returnStatements
     .mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
     .sortedBy { returnStatement -> returnStatement.startOffset }
-  val returnType = returnExpressions.asSequence()
-                              .mapNotNull { expression -> expression.type }
-                              .filterNot { type -> type == PsiType.NULL }
-                              .firstOrNull()
+
+  val context = returnExpressions.firstOrNull() ?: return null
+  val manager = PsiManager.getInstance(context.project)
+
   val variableName = returnExpressions.asSequence().map { expression -> guessName(expression) }.firstOrNull() ?: "x"
-  val nullability = CodeFragmentAnalyzer.inferNullability(returnExpressions)
-  return if (returnType != null) ExpressionOutput(returnType, variableName, returnExpressions, nullability) else null
+
+  val codeReturnType = findCodeReturnType(context) ?: PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(manager.project))
+  val nullability = if (codeReturnType is PsiPrimitiveType) {
+    Nullability.NOT_NULL
+  } else {
+    CodeFragmentAnalyzer.inferNullability(returnExpressions)
+  }
+
+  val inferredType = returnExpressions.map { it.type ?: PsiType.NULL }
+                    .reduce { commonType, type -> findCommonType(commonType, type, nullability, manager) ?: codeReturnType }
+
+  val returnType = when {
+    ! TypeConversionUtil.isAssignable(codeReturnType, inferredType) -> codeReturnType
+    inferredType is PsiPrimitiveType && nullability != Nullability.NOT_NULL -> inferredType.getBoxedType(context) ?: codeReturnType
+    else -> inferredType
+  }
+
+  return ExpressionOutput(returnType, variableName, returnExpressions, nullability)
 }
 
 private fun findFlowData(analyzer: CodeFragmentAnalyzer, flowOutput: FlowOutput): DataOutput? {
-  val returnOutput = findOutputFromReturn(flowOutput)
+  val returnOutput = findOutputFromReturn(flowOutput.statements)
   return when (flowOutput) {
     is ConditionalFlow -> when {
       returnOutput?.nullability == Nullability.NOT_NULL && returnOutput.type != PsiType.BOOLEAN -> returnOutput.copy(nullability = Nullability.NULLABLE)
