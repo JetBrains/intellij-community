@@ -166,7 +166,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
    */
   fun mapRangeToHostRange(host: PsiLanguageInjectionHost, rangeInPks: TextRange): TextRange? {
 
-    fun getHostRangeEscapeAware(segmentRange: TextRange, inSegmentEnd: Int, inSegmentStart: Int): TextRange {
+    fun getHostRangeEscapeAware(segmentRange: TextRange, inSegmentStart: Int, inSegmentEnd: Int): TextRange {
       val escaper = host.createLiteralTextEscaper()
       val decode = escaper.decode(segmentRange, StringBuilder())
       if (decode) {
@@ -195,10 +195,10 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
         val sourcePsi = segment.sourcePsi
         if (sourcePsi == host) {
-          return getHostRangeEscapeAware(segment.range, inSegmentEnd, inSegmentStart)
+          return getHostRangeEscapeAware(segment.range, inSegmentStart, inSegmentEnd)
         }
         if (sourcePsi?.parent == host) { // The Kotlin case
-          return getHostRangeEscapeAware(segment.range.shiftRight(sourcePsi.startOffsetInParent), inSegmentEnd, inSegmentStart)
+          return getHostRangeEscapeAware(segment.range.shiftRight(sourcePsi.startOffsetInParent), inSegmentStart, inSegmentEnd)
         }
         else return null // no idea what to do, feel free to extend
       }
