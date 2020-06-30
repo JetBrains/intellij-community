@@ -117,7 +117,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     return declaredVariables.intersect(externallyWrittenVariables).toList()
   }
 
-  fun findFieldUsages(targetClass: PsiClass, elements: List<PsiElement>): List<FieldUsage> {
+  fun findLocalFieldUsages(targetClass: PsiClass, elements: List<PsiElement>): List<FieldUsage> {
     val usedFields = ArrayList<FieldUsage>()
     val visitor = object : ClassMemberReferencesVisitor(targetClass) {
       override fun visitClassMemberReferenceElement(classMember: PsiMember, classMemberReference: PsiJavaCodeReferenceElement) {
@@ -128,7 +128,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       }
     }
     elements.forEach { it.accept(visitor) }
-    return usedFields.distinct()
+    return usedFields.distinct().filterNot { usage -> usage.field.modifierList?.hasExplicitModifier(PsiModifier.STATIC) == true }
   }
 
   private fun lastGotoPointFrom(instructionOffset: Int): Int {

@@ -13,7 +13,6 @@ import com.intellij.psi.*
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.refactoring.extractMethod.PrepareFailedException
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.hasExplicitModifier
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
@@ -211,7 +210,7 @@ object ExtractMethodPipeline {
 
   fun withForcedStatic(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
     val targetClass = PsiTreeUtil.getParentOfType(ExtractMethodHelper.getValidParentOf(extractOptions.elements.first()), PsiClass::class.java)!!
-    val fieldUsages = analyzer.findFieldUsages(targetClass, extractOptions.elements)
+    val fieldUsages = analyzer.findLocalFieldUsages(targetClass, extractOptions.elements)
     if (fieldUsages.any { it.isWrite }) return null
     val fieldInputParameters =
       fieldUsages.groupBy { it.field }.entries.map { (field, fieldUsages) ->
@@ -232,9 +231,8 @@ object ExtractMethodPipeline {
     val firstStatement = method.body?.statements?.firstOrNull() ?: return false
     val startsOnBegin = firstStatement.textRange in TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
     val outStatements = method.body?.statements.orEmpty().dropWhile { it.textRange.endOffset <= elements.last().textRange.endOffset }
-    val hasOuterFinalFieldAssignments = analyzer
-      .findFieldUsages(holderClass, outStatements)
-      .any { it.isWrite && it.field.hasExplicitModifier(PsiModifier.FINAL) }
+    val hasOuterFinalFieldAssignments = analyzer.findLocalFieldUsages(holderClass, outStatements)
+                                      .any { fieldUsage -> fieldUsage.isWrite && fieldUsage.field.hasExplicitModifier(PsiModifier.FINAL) }
     return method.isConstructor && startsOnBegin && !hasOuterFinalFieldAssignments && analyzer.findOutputVariables().isEmpty()
   }
 

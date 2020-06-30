@@ -90,8 +90,8 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 
   val targetClass = PsiTreeUtil.getParentOfType(ExtractMethodHelper.getValidParentOf(elements.first()), PsiClass::class.java)!!
 
-  val fieldUsages = analyzer.findFieldUsages(targetClass, elements)
-  val finalFieldsWrites = fieldUsages.filter { it.isWrite && it.field.hasExplicitModifier(PsiModifier.FINAL) }
+  val fieldUsages = analyzer.findLocalFieldUsages(targetClass, elements)
+  val finalFieldsWrites = fieldUsages.filter { fieldsUsage -> fieldsUsage.isWrite && fieldsUsage.field.hasExplicitModifier(PsiModifier.FINAL) }
   val finalFields = finalFieldsWrites.map { it.field }.distinct()
   val field = finalFields.singleOrNull()
   extractOptions = when {
