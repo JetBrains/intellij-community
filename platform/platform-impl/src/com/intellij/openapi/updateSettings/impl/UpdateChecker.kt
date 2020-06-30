@@ -5,6 +5,7 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.marketplace.BrokenPluginsService
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.*
@@ -236,6 +237,7 @@ object UpdateChecker {
     indicator: ProgressIndicator?,
     newBuildNumber: BuildNumber? = null
   ): CheckPluginsUpdateResult {
+    BrokenPluginsService.setupUpdateBrokenPlugins()
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return EMPTY_CHECK_UPDATE_RESULT
 

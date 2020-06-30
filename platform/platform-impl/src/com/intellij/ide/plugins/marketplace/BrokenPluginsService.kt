@@ -2,25 +2,23 @@
 package com.intellij.ide.plugins.marketplace
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.PreloadingActivity
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.execution.ParametersListUtil
 import java.io.File
 
-
-class BrokenPluginStartupActivity : PreloadingActivity() {
-  override fun preload(indicator: ProgressIndicator) {
-    if (System.getProperty("idea.ignore.disabled.plugins") != null) return
-    BrokenPluginsService.updateBrokenPlugin()
-  }
-}
-
 object BrokenPluginsService {
   private val marketplaceClient = MarketplaceRequests.getInstance()
 
-  fun updateBrokenPlugin() {
+  fun setupUpdateBrokenPlugins() {
+    if (System.getProperty("idea.ignore.disabled.plugins") != null) return
+    ApplicationManager.getApplication().executeOnPooledThread {
+      updateBrokenPlugin()
+    }
+  }
+
+  private fun updateBrokenPlugin() {
     val brokenPlugins = readBrokenPlugins()
     if (brokenPlugins.isEmpty()) return
     val file = File(PluginManagerCore.MARKETPLACE_INCOMPATIBLE_PLUGINS)
