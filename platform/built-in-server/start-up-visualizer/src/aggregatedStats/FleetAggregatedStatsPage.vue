@@ -78,14 +78,14 @@
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
                   <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :timeRange="timeRange"
-                                      :metrics='["prepareAppInitActivities.uiRoot.s"]'
+                                      :metrics='["prepareAppInitActivities.create window.e"]'
                                       :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
                   <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :timeRange="timeRange"
-                                      :metrics='["prepareAppInitActivities.start app"]'
+                                      :metrics='["prepareAppInitActivities.render.e"]'
                                       :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
