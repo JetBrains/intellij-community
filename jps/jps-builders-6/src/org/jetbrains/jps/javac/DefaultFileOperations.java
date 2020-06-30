@@ -8,7 +8,8 @@ import gnu.trove.TObjectByteHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.tools.*;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -41,7 +42,23 @@ class DefaultFileOperations implements FileOperations {
 
   @Override
   @NotNull
-  public Iterable<File> listFiles(File file, boolean recursively) {
+  public Iterable<File> listFiles(final File file, final boolean recursively) {
+    return new Iterable<File>() {
+      Collection<File> files = null;
+      @NotNull
+      @Override
+      public Iterator<File> iterator() {
+        Collection<File> _files = files;
+        if (_files == null) {
+          files = _files = listFilesImpl(file, recursively);
+        }
+        return _files.iterator();
+      }
+    };
+  }
+
+  @NotNull
+  private List<File> listFilesImpl(File file, boolean recursively) {
     final File[] files = listChildren(file);
     if (files == null || files.length == 0) {
       return Collections.emptyList();
