@@ -472,6 +472,11 @@ public class Py3CompletionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
   }
 
+  // EA-232631
+  public void testFStringLikeCompletionNotAvailableInStringElementsInSyntacticallyIllegalPosition() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";
