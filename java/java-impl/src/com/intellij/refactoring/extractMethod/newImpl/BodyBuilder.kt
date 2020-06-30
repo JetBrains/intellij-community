@@ -5,6 +5,7 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.createDeclaration
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findInCopy
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findTopmostParenthesis
@@ -38,9 +39,23 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     }
   }
 
+  private fun castNumericReturns(codeFragment: PsiElement, returnType: PsiType){
+    val castType = PsiPrimitiveType.getUnboxedType(returnType) ?: return
+    val returnStatements = PsiTreeUtil.findChildrenOfType(codeFragment, PsiReturnStatement::class.java)
+    returnStatements.mapNotNull { it.returnValue }
+      .filter { expression -> expression.type != PsiType.NULL && TypeConversionUtil.isNumericType(expression.type) }
+      .filterNot { expression -> TypeConversionUtil.isAssignable(returnType, expression.type ?: PsiType.NULL) }
+      .forEach { expression ->
+        val expressionText = "(${castType.name}) ${expression.text}"
+        val returnExpression = factory.createExpressionFromText(expressionText, expression.context)
+        expression.replace(returnExpression) }
+  }
+
   private fun findExitReplacements(flowOutput: FlowOutput, dataOutput: DataOutput): List<PsiReplace> {
-    val replacement = findDefaultFlowSubstitution(flowOutput, dataOutput) ?: return emptyList()
-    return flowOutput.statements.map { statement -> PsiReplace(statement, statementOf(replacement)) }
+    val flowReplacement = findDefaultFlowSubstitution(flowOutput, dataOutput) ?: return emptyList()
+    return flowOutput.statements
+      .filterNot { statement -> dataOutput is ExpressionOutput && statement is PsiReturnStatement && statement.returnValue != null }
+      .map { statement -> PsiReplace(statement, statementOf(flowReplacement)) }
   }
 
   private fun createInputReplacements(inputGroup: InputParameter): List<PsiReplace> {
@@ -142,6 +157,7 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     (inputReplacements + exitSubstitution).forEach { (source, target) -> source.replace(target) }
 
     val block = copy.first().parent as PsiCodeBlock
+    castNumericReturns(block, dataOutput.type)
 
     val defaultReturn = findDefaultReturn(dataOutput, flowOutput)
     if (defaultReturn != null) {
