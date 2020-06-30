@@ -40,12 +40,14 @@ class AnalysisConfig(
     val headLimit: Int = 100,
     val tailLimit: Int = 25,
     val showFieldNames: Boolean = false,
-    val smartIndent: Boolean = true
+    val smartIndent: Boolean = true,
+    val showSize: Boolean = true
   ) {
     companion object {
       fun default() = TreeDisplayOptions()
       fun all(showFieldNames: Boolean = false,
-              smartIndent: Boolean = true) =
+              smartIndent: Boolean = true,
+              showSize: Boolean = true) =
         TreeDisplayOptions(minimumObjectSize = 0,
                            minimumObjectCount = 0,
                            minimumSubgraphSize = 0,
@@ -54,7 +56,8 @@ class AnalysisConfig(
                            tailLimit = 0,
                            minimumPaths = Int.MAX_VALUE,
                            showFieldNames = showFieldNames,
-                           smartIndent = smartIndent)
+                           smartIndent = smartIndent,
+                           showSize = showSize)
     }
   }
 

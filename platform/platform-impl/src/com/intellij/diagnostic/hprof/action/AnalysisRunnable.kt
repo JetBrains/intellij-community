@@ -18,6 +18,7 @@ package com.intellij.diagnostic.hprof.action
 import com.intellij.diagnostic.DiagnosticBundle
 import com.intellij.diagnostic.HeapDumpAnalysisSupport
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
+import com.intellij.diagnostic.hprof.analysis.analyzeGraph
 import com.intellij.diagnostic.hprof.util.HeapDumpAnalysisNotificationGroup
 import com.intellij.diagnostic.report.HeapReportProperties
 import com.intellij.ide.BrowserUtil
@@ -99,7 +100,7 @@ class AnalysisRunnable(val hprofPath: Path,
         openOptions = setOf(StandardOpenOption.READ)
       }
       val reportString = FileChannel.open(hprofPath, openOptions).use { channel ->
-        HProfAnalysis(channel, SystemTempFilenameSupplier()).analyze(indicator)
+        HProfAnalysis(channel, SystemTempFilenameSupplier(), ::analyzeGraph).analyze(indicator)
       }
       if (deleteAfterAnalysis) {
         deleteHprofFileAsync()

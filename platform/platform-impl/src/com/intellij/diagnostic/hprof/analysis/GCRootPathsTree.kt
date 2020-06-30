@@ -349,6 +349,7 @@ class GCRootPathsTree(
 
           result.appendln("Root ${index + 1}:")
           printReportLine(printFunc,
+                          treeDisplayOptions,
                           rootNode.pathsCount,
                           rootPercent,
                           rootNode.pathsSize,
@@ -374,6 +375,7 @@ class GCRootPathsTree(
               val softWeakDescriptor = if (fieldName == null) softWeakClassCache.getSoftWeakDescriptor(classDefinition) else null
 
               printReportLine(buffer::println,
+                              treeDisplayOptions,
                               node.pathsCount,
                               (100.0 * node.pathsCount / totalInstanceCount).toInt(),
                               node.pathsSize,
@@ -407,6 +409,7 @@ class GCRootPathsTree(
                 // Don't report too deep paths
                 if (nextIndent.length >= treeDisplayOptions.maximumIndent)
                   printReportLine(buffer::println,
+                                  treeDisplayOptions,
                                   null, null, null, null,
                                   null, true, null, null, null,
                                   nextIndent, "\\-[...]")
@@ -425,6 +428,7 @@ class GCRootPathsTree(
     }
 
     private fun printReportLine(printFunc: (String) -> Any,
+                                treeDisplayOptions: AnalysisConfig.TreeDisplayOptions,
                                 pathsCount: Int?,
                                 percent: Int?,
                                 instanceSize: Int?,
@@ -446,8 +450,13 @@ class GCRootPathsTree(
       val softWeakString = if (softWeakDescriptor != null) " ($softWeakDescriptor)" else ""
       val subgraphSizeString = (subgraphSize?.let { toShortStringAsSize(it) } ?: "").padStart(STRING_PADDING_FOR_SIZE)
 
-      printFunc(
-        "[$pathsCountString/$percentString/$instanceSizeString] $subgraphSizeString $instanceCountString $status $indent$text$fieldNameString$disposedString$softWeakString")
+      if (treeDisplayOptions.showSize) {
+        printFunc(
+          "[$pathsCountString/$percentString/$instanceSizeString] $subgraphSizeString $instanceCountString $status $indent$text$fieldNameString$disposedString$softWeakString")
+      }
+      else {
+        printFunc("$status $indent$text$fieldNameString$disposedString$softWeakString")
+      }
     }
 
     fun collectDisposedDominatorNodes(result: MutableMap<ClassDefinition, MutableList<RegularNode>>) {
