@@ -52,6 +52,22 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     indexLog.add(IndexLogRecord.Add(id, data))
   }
 
+  override fun addIfAbsent(entity: WorkspaceEntity, data: T): Boolean {
+    entity as WorkspaceEntityBase
+    return if (entity.id !in index) {
+      add(entity.id, data)
+      true
+    } else false
+  }
+
+  override fun getOrPutDataByEntity(entity: WorkspaceEntity, defaultValue: () -> T): T {
+    return getDataByEntity(entity) ?: run {
+      val defaultVal = defaultValue()
+      add((entity as WorkspaceEntityBase).id, defaultVal)
+      defaultVal
+    }
+  }
+
   override fun removeMapping(entity: WorkspaceEntity) {
     entity as WorkspaceEntityBase
     remove(entity.id)

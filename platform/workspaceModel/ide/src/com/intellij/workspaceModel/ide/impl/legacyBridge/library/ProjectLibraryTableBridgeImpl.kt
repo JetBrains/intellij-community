@@ -75,17 +75,19 @@ internal class ProjectLibraryTableBridgeImpl(
                   alreadyCreatedLibrary
                 }
                 else {
-                  val newLibrary = LibraryBridgeImpl(
-                    libraryTable = this@ProjectLibraryTableBridgeImpl,
-                    project = project,
-                    initialId = change.entity.persistentId(),
-                    initialEntityStorage = entityStorage,
-                    targetBuilder = null
-                  )
+                  var newLibrary: LibraryBridge? = null
                   WorkspaceModel.getInstance(project).updateProjectModelSilent {
-                    it.mutableLibraryMap.addMapping(change.entity, newLibrary)
+                    newLibrary = it.mutableLibraryMap.getOrPutDataByEntity(change.entity) {
+                      LibraryBridgeImpl(
+                        libraryTable = this@ProjectLibraryTableBridgeImpl,
+                        project = project,
+                        initialId = change.entity.persistentId(),
+                        initialEntityStorage = entityStorage,
+                        targetBuilder = null
+                      )
+                    }
                   }
-                  newLibrary
+                  newLibrary!!
                 }
 
                 dispatcher.multicaster.afterLibraryAdded(library)
@@ -132,14 +134,16 @@ internal class ProjectLibraryTableBridgeImpl(
         }
         .toList()
       if (libraries.isNotEmpty()) {
+        val addedLibs = ArrayList<Library>()
         runWriteAction {
           WorkspaceModel.getInstance(project).updateProjectModelSilent {
             libraries.forEach { (entity, library) ->
-              it.mutableLibraryMap.addMapping(entity, library)
+              val added = it.mutableLibraryMap.addIfAbsent(entity, library)
+              if (added) addedLibs.add(library)
             }
           }
         }
-        libraries.forEach { (_, library) ->
+        addedLibs.forEach { library ->
           dispatcher.multicaster.afterLibraryAdded(library)
         }
       }

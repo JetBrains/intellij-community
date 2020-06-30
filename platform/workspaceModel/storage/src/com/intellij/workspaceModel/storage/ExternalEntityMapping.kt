@@ -12,5 +12,7 @@ interface ExternalEntityMapping<T> {
 
 interface MutableExternalEntityMapping<T> : ExternalEntityMapping<T> {
   fun addMapping(entity: WorkspaceEntity, data: T)
+  fun addIfAbsent(entity: WorkspaceEntity, data: T): Boolean
+  fun getOrPutDataByEntity(entity: WorkspaceEntity, defaultValue: () -> T): T
   fun removeMapping(entity: WorkspaceEntity)
 }
