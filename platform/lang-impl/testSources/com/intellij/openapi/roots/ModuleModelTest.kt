@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.testFramework.ApplicationRule
@@ -292,6 +293,32 @@ class ModuleModelTest {
     val moduleManager = projectModel.moduleManager
     assertThat(moduleManager.modules).containsExactly(a)
     assertThat(ModuleRootManager.getInstance(a).contentRoots).containsExactly(root, root2)
+  }
+
+  @Test
+  fun `twice module rename`() {
+    val antModuleName = "ant"
+    val mavenModuleName = "maven"
+    val gradleModuleName = "gradle"
+    val moduleManager = ModuleManager.getInstance(projectModel.project)
+
+    val antModule = projectModel.createModule(antModuleName)
+    var modules = moduleManager.modules
+    assertThat(modules.size).isEqualTo(1)
+    assertThat(modules[0].name).isEqualTo(antModuleName)
+
+    runWriteActionAndWait {
+      moduleManager.modifiableModel.let { model ->
+        model.renameModule(antModule, mavenModuleName)
+        model.renameModule(antModule, gradleModuleName)
+        model.commit()
+      }
+    }
+    assertThat(antModule.name).isEqualTo(gradleModuleName)
+
+    modules = moduleManager.modules
+    assertThat(modules.size).isEqualTo(1)
+    assertThat(modules[0].name).isEqualTo(gradleModuleName)
   }
 
   class ModifiableModuleModelAccessor(private val moduleModel: ModifiableModuleModel) : RootConfigurationAccessor() {
