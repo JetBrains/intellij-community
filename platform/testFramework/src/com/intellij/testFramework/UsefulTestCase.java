@@ -47,7 +47,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.AssumptionViolatedException;
 import org.junit.ComparisonFailure;
+import org.junit.rules.TestRule;
+import org.junit.runners.model.Statement;
 
 import javax.swing.*;
 import java.io.File;
@@ -139,6 +142,30 @@ public abstract class UsefulTestCase extends TestCase {
 
   public UsefulTestCase(@NotNull String name) {
     super(name);
+  }
+
+  /**
+   * This is not marked as @Rule on purpose to avoid breaking subclasses running
+   * with JUnit4 and defining their own rules for invoking the setUp/runTest/tearDown sequence.
+   *
+   * Subclasses that wish to re-use the proper machinery should opt-in by defining a field or a method
+   * (or just overriding this one) annotated with @{@link org.junit.Rule} and returning getRunBareTestRule().
+   */
+  public @NotNull TestRule getRunBareTestRule() {
+    return (base, description) -> new Statement() {
+      @Override
+      public void evaluate() throws Throwable {
+        String name = description.getMethodName();
+        name = StringUtil.notNullize(StringUtil.substringBefore(name, "["), name);
+        setName(name);
+
+        if (!shouldRunTest()) {
+          throw new AssumptionViolatedException("skipping " + getName() + ": shouldRunTest() == false");
+        }
+
+        runBare(base::evaluate);
+      }
+    };
   }
 
   protected boolean shouldContainTempFiles() {
@@ -461,13 +488,13 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   public final void runBare() throws Throwable {
+    if (!shouldRunTest()) {
+      return;
+    }
     runBare(myDefaultTestRunnable);
   }
 
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    if (!shouldRunTest()) {
-      return;
-    }
     if (runInDispatchThread()) {
       TestApplicationManagerKt.replaceIdeEventQueueSafely();
       EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(testRunnable));
@@ -1099,7 +1126,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected boolean annotatedWith(@NotNull Class<? extends Annotation> annotationClass) {
     Class<?> aClass = getClass();
-    String methodName = "test" + getTestName(false);
+    String methodName = getName();
     boolean methodChecked = false;
     while (aClass != null && aClass != Object.class) {
       if (aClass.getAnnotation(annotationClass) != null) return true;

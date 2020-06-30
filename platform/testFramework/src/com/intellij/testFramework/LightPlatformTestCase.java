@@ -47,6 +47,7 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
@@ -489,9 +490,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    if (!shouldRunTest()) {
-      return;
-    }
     super.runBare(testRunnable);
 
     // just to make sure all deferred Runnables to finish
@@ -562,8 +560,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @Override
   protected String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
-    assertTrue("Test name should start with 'test': " + name, name.startsWith("test"));
-    name = name.substring("test".length());
+    name = StringUtil.trimStart(name, "test");
     if (!name.isEmpty() && lowercaseFirstLetter && !PlatformTestUtil.isAllUppercaseName(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
