@@ -7,7 +7,7 @@ import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.stats.experiment.WebServiceStatus
+import com.intellij.stats.network.status.WebServiceStatusManager
 import com.intellij.util.Alarm
 import com.intellij.util.Time
 
@@ -40,10 +40,12 @@ internal class SenderPreloadingActivity : PreloadingActivity() {
     }
 
     try {
-      val statusHelper = WebServiceStatus.getInstance()
-      statusHelper.updateStatus()
-      if (statusHelper.isServerOk()) {
-        service<StatisticSender>().sendStatsData(statusHelper.dataServerUrl())
+      val serviceStatuses = WebServiceStatusManager.getAllStatuses()
+      for (status in serviceStatuses) {
+        status.update()
+        if (status.isServerOk()) {
+          service<StatisticSender>().sendStatsData(status.dataServerUrl())
+        }
       }
     }
     finally {

@@ -8,9 +8,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.stats.experiment.EmulatedExperiment
-import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.sender.isCompletionLogsSendAllowed
+import com.intellij.stats.experiment.ExperimentStatus
 import com.jetbrains.completion.ranker.WeakModelProvider
 import org.jetbrains.annotations.TestOnly
 
@@ -55,11 +54,11 @@ object RankingSupport {
 
   private fun shouldSortByML(language: Language, provider: RankingModelProvider): Boolean {
     val application = ApplicationManager.getApplication()
-    val webServiceStatus = WebServiceStatus.getInstance()
+    val experimentStatus = ExperimentStatus.getInstance()
     if (application.isUnitTestMode) return enabledInTests
-    if (application.isEAP && webServiceStatus.isExperimentOnCurrentIDE() && isCompletionLogsSendAllowed()) {
+    if (application.isEAP && experimentStatus.isExperimentOnCurrentIDE(language) && isCompletionLogsSendAllowed()) {
       // AB experiment
-      return EmulatedExperiment.shouldRank(language, webServiceStatus.experimentVersion())
+      return experimentStatus.shouldRank(language)
     }
 
     val settings = CompletionMLRankingSettings.getInstance()
