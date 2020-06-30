@@ -30,9 +30,14 @@ class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeS
 
   //SPACES
   @JvmField
+  var FORCE_ONE_SPACE_BETWEEN_WORDS: Boolean = true
+
+  @JvmField
   var FORCE_ONE_SPACE_AFTER_HEADER_SYMBOL: Boolean = true
+
   @JvmField
   var FORCE_ONE_SPACE_AFTER_LIST_BULLET: Boolean = true
+
   @JvmField
   var FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL: Boolean = true
 }

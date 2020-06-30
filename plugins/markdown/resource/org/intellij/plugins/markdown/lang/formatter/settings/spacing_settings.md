@@ -11,3 +11,5 @@ Spaces settings affect
 
 >And space between blockquote
 > and its content
+
+Even  space  inside  paragraph

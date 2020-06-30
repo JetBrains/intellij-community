@@ -19,9 +19,11 @@ import org.intellij.plugins.markdown.util.parents
  * It defines alignment equal for all block on the same line, and new for inner lists
  */
 internal open class MarkdownFormattingBlock(
-  private val settings: CodeStyleSettings, private val spacing: SpacingBuilder,
-  node: ASTNode, alignment: Alignment? = null
-) : AbstractBlock(node, null, alignment), SettingsAwareBlock {
+  node: ASTNode,
+  private val settings: CodeStyleSettings, protected val spacing: SpacingBuilder,
+  alignment: Alignment? = null, wrap: Wrap? = null
+) : AbstractBlock(node, wrap, alignment), SettingsAwareBlock {
+
   companion object {
     private val DEFAULT_ATTRIBUTES = ChildAttributes(Indent.getNoneIndent(), null)
 
@@ -32,9 +34,7 @@ internal open class MarkdownFormattingBlock(
 
   override fun isLeaf(): Boolean = subBlocks.size == 0
 
-  override fun getSpacing(child1: Block?, child2: Block): Spacing? {
-    return spacing.getSpacing(this, child1, child2)
-  }
+  override fun getSpacing(child1: Block?, child2: Block): Spacing? = spacing.getSpacing(this, child1, child2)
 
   override fun getIndent(): Indent? {
     if (node.elementType in MarkdownTokenTypeSets.LISTS && node.parents().any { it.elementType == MarkdownElementTypes.LIST_ITEM }) {
@@ -55,23 +55,24 @@ internal open class MarkdownFormattingBlock(
   }
 
   override fun buildChildren(): List<Block> {
+    val newAlignment = Alignment.createAlignment()
+
     return when (node.elementType) {
       //Code fence alignment is not supported for now because of manipulator problems
       // and the fact that when end of code fence is in blockquote -- parser
       // would treat blockquote as a part of code fence end token
       MarkdownElementTypes.CODE_FENCE -> emptyList()
       MarkdownElementTypes.LIST_ITEM -> {
-        val list = Alignment.createAlignment()
-        MarkdownBlocks.filterFromWhitespaces(node.children()).map {
-          val alignment = if (it.elementType in NON_ALIGNABLE_LIST_ELEMENTS) this.alignment else list
-          MarkdownBlocks.create(it, settings, alignment, spacing)
+        MarkdownBlocks.create(node.children(), settings, spacing) {
+          if (it.elementType in NON_ALIGNABLE_LIST_ELEMENTS) alignment else newAlignment
         }.toList()
       }
       MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.CODE_BLOCK, MarkdownElementTypes.BLOCK_QUOTE -> {
-        val alignment = alignment ?: Alignment.createAlignment()
-        MarkdownBlocks.create(node.children(), settings, alignment, spacing).toList()
+        MarkdownBlocks.create(node.children(), settings, spacing) { alignment ?: newAlignment }.toList()
       }
-      else -> MarkdownBlocks.create(node.children(), settings, alignment, spacing).toList()
+      else -> {
+        MarkdownBlocks.create(node.children(), settings, spacing) { alignment }.toList()
+      }
     }
   }
 }

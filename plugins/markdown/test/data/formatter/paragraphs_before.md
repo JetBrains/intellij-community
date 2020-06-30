@@ -1,22 +1,27 @@
 Very simple paragraph
 
-Very simple paragraph with
-two lines
+Very  simple  paragraph  with  two  spaces
 
-Very simple paragraph with 
-trailing space that should 
-be removed.
+Very simple paragraph which should not
+be reflowed and has two lines
 
-Few spaces at the end of line     
-should not be removed
+Very simple paragraph with trailing 
+space that should be removed. 
 
- One line paragraph with strange indentation.
+Few spaces at the end of line          
+should not be removed   
 
-  Paragraph with incorrect
- indentation, but containing 
+ Paragraph with strange indentation.
+
+  Paragraph with very incorrect
+ indentation, but containing about very
   few lines.
   
 Paragraph first
 
 
 And paragraph in two lines from first 
+
+Paragraph that should
+be reflowed cause
+part of it too short and part of it too long

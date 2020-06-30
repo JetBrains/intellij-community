@@ -74,6 +74,10 @@ internal object MarkdownSpacingBuilder {
       //PARAGRAPHS
       .betweenInside(MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.MARKDOWN_FILE)
       .blankLinesRange(markdown.MIN_LINES_BETWEEN_PARAGRAPHS, markdown.MAX_LINES_BETWEEN_PARAGRAPHS)
+      .apply {
+        val spaces = if (markdown.FORCE_ONE_SPACE_BETWEEN_WORDS) 1 else Integer.MAX_VALUE
+        between(MarkdownTokenTypes.TEXT, MarkdownTokenTypes.TEXT).spacing(1, spaces, 0, false, 0)
+      }
 
   }
 

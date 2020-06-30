@@ -60,6 +60,12 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
     else if (settingsType == SettingsType.SPACING_SETTINGS) {
       consumer.showCustomOption(
         MarkdownCustomCodeStyleSettings::class.java,
+        MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_BETWEEN_WORDS.name, "Between words",
+        "Force One Space"
+      )
+
+      consumer.showCustomOption(
+        MarkdownCustomCodeStyleSettings::class.java,
         MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_HEADER_SYMBOL.name, "After header symbol",
         "Force One Space"
       )

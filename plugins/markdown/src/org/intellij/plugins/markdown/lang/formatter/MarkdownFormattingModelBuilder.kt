@@ -10,7 +10,7 @@ import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownFormattingBlo
 
 internal class MarkdownFormattingModelBuilder : FormattingModelBuilder {
   override fun createModel(element: PsiElement, settings: CodeStyleSettings): FormattingModel {
-    val block = MarkdownFormattingBlock(settings, MarkdownSpacingBuilder.get(settings), element.node)
+    val block = MarkdownFormattingBlock(element.node, settings, MarkdownSpacingBuilder.get(settings))
 
     return DocumentBasedFormattingModel(block, settings, element.containingFile)
   }

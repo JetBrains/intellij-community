@@ -1,7 +1,8 @@
 # Sample header
 
-Sample paragraph
-Other paragraph
+Sample paragraph with two spaces
+
+Other paragraph with newline too early
 
 # Other header
 
