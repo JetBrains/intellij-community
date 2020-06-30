@@ -38,7 +38,7 @@ class HistogramVisitor(private val classStore: ClassStore) : HProfVisitor() {
     enable(HeapDumpRecordType.ClassDump)
   }
 
-  override fun visitPrimitiveArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, numberOfElements: Long, elementType: Type) {
+  override fun visitPrimitiveArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, numberOfElements: Long, elementType: Type, primitiveArrayData: ByteBuffer) {
     instanceCount++
     val classDefinition = classStore.getClassForPrimitiveArray(elementType)!!
     classToHistogramEntryInternal.getOrPut(classDefinition) {

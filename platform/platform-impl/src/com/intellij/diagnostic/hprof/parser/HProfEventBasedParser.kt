@@ -258,12 +258,13 @@ class HProfEventBasedParser(fileChannel: FileChannel) : AutoCloseable {
     val numberOfElements = readUnsignedInt()
     val elementTypeId = readUnsignedByte()
     val elementType = Type.getType(elementTypeId)
-    skip(numberOfElements * elementType.size)
+    val primitiveArrayData = buffer.getByteBuffer((numberOfElements * elementType.size).toInt())
     visitor.visitPrimitiveArrayDump(
       arrayObjectId,
       stackTraceSerialNumber,
       numberOfElements,
-      elementType
+      elementType,
+      primitiveArrayData
     )
   }
 

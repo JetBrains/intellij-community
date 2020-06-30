@@ -99,5 +99,7 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
 
   // Some objects may have additional data (varies by type). Only available when referenceResolution != NO_REFERENCES.
   abstract fun getExtraData(): Int
+
+  abstract fun getStringInstanceFieldValue(): String?
 }
 

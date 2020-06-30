@@ -35,6 +35,8 @@ class CreateAuxiliaryFilesVisitor(
   private var directByteBufferClass: ClassDefinition? = null
   private var directByteBufferCapacityOffset: Int = 0
   private var directByteBufferFdOffset: Int = 0
+  private var stringClass: ClassDefinition? = null
+  private var stringCoderOffset: Int = -1
 
   companion object {
     private val LOG = Logger.getInstance(CreateAuxiliaryFilesVisitor::class.java)
@@ -63,6 +65,12 @@ class CreateAuxiliaryFilesVisitor(
         LOG.error("DirectByteBuffer.capacity and/or .fd field is missing.")
       }
     }
+
+    stringClass = classStore.getClassIfExists("java.lang.String")
+    stringClass?.let {
+      stringCoderOffset = it.computeOffsetOfField("coder", classStore)
+    }
+
     // Map id=0 to 0
     offsets.writeInt(0)
   }
@@ -72,7 +80,7 @@ class CreateAuxiliaryFilesVisitor(
     offsets.close()
   }
 
-  override fun visitPrimitiveArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, numberOfElements: Long, elementType: Type) {
+  override fun visitPrimitiveArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, numberOfElements: Long, elementType: Type, primitiveArrayData: ByteBuffer) {
     assert(arrayObjectId <= Int.MAX_VALUE)
     assert(offsets.position() / 4 == arrayObjectId.toInt())
 
@@ -82,6 +90,7 @@ class CreateAuxiliaryFilesVisitor(
 
     assert(numberOfElements <= Int.MAX_VALUE) // arrays in java don't support more than Int.MAX_VALUE elements
     aux.writeNonNegativeLEB128Int(numberOfElements.toInt())
+    aux.writeBytes(primitiveArrayData)
   }
 
   override fun visitClassDump(classId: Long,
@@ -178,6 +187,14 @@ class CreateAuxiliaryFilesVisitor(
           // File-mapped buffer
           aux.writeNonNegativeLEB128Int(1)
         }
+      }
+    }
+    else if (objectClass == stringClass) {
+      if (stringCoderOffset == -1) {
+        aux.writeByte(-1)
+      }
+      else {
+        aux.writeByte(bytes.get(stringCoderOffset))
       }
     }
   }

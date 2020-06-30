@@ -35,7 +35,7 @@ abstract class RemapIDsVisitor : HProfVisitor() {
     currentID = 1
   }
 
-  override fun visitPrimitiveArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, numberOfElements: Long, elementType: Type) {
+  override fun visitPrimitiveArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, numberOfElements: Long, elementType: Type, primitiveArrayData: ByteBuffer) {
     addMapping(arrayObjectId, currentID++)
   }
 

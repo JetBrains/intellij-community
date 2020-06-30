@@ -138,8 +138,8 @@ class CompositeVisitor(private vararg val visitors: HProfVisitor) : HProfVisitor
     visitors.forEach { it.visitRootThreadObject(objectId, threadSerialNumber, stackTraceSerialNumber) }
   }
 
-  override fun visitPrimitiveArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, numberOfElements: Long, elementType: Type) {
-    visitors.forEach { it.visitPrimitiveArrayDump(arrayObjectId, stackTraceSerialNumber, numberOfElements, elementType) }
+  override fun visitPrimitiveArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, numberOfElements: Long, elementType: Type, primitiveArrayData: ByteBuffer) {
+    visitors.forEach { it.visitPrimitiveArrayDump(arrayObjectId, stackTraceSerialNumber, numberOfElements, elementType, primitiveArrayData) }
   }
 
   override fun visitClassDump(classId: Long,
