@@ -75,5 +75,12 @@ class EqualsWithItself {
         }
       }
     }
+    class Inner2 {
+      void test() {
+        if (<warning descr="'equals()' called on itself">equals</warning>(Inner2.this)) {
+
+        }
+      }
+    }
   }
 }

@@ -592,23 +592,13 @@ public class EquivalenceChecker {
   }
 
   @NotNull
-  private Match thisExpressionsMatch(@NotNull PsiThisExpression thisExpression1, @NotNull PsiThisExpression thisExpression2) {
-    final PsiJavaCodeReferenceElement qualifier1 = thisExpression1.getQualifier();
-    final PsiJavaCodeReferenceElement qualifier2 = thisExpression2.getQualifier();
-    if (qualifier1 != null && qualifier2 != null) {
-      return javaCodeReferenceElementsMatch(qualifier1, qualifier2);
-    }
-    else if (qualifier1 != qualifier2){
-      return EXACT_MISMATCH;
-    }
+  protected Match thisExpressionsMatch(@NotNull PsiThisExpression thisExpression1, @NotNull PsiThisExpression thisExpression2) {
     final PsiClass containingClass1 = PsiUtil.resolveClassInClassTypeOnly(thisExpression1.getType());
     final PsiClass containingClass2 = PsiUtil.resolveClassInClassTypeOnly(thisExpression2.getType());
     if (containingClass1 == null || containingClass2 == null) {
       return EXACT_MISMATCH;
     }
-    return Match.exact(containingClass1 == containingClass2 ||
-                       containingClass2.isInheritor(containingClass1, false) ||
-                       containingClass1.isInheritor(containingClass2, false));
+    return Match.exact(containingClass1 == containingClass2);
   }
 
   protected Match lambdaExpressionsMatch(PsiLambdaExpression expression1, PsiLambdaExpression expression2) {
