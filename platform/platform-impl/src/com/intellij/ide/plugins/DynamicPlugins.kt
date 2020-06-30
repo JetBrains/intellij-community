@@ -7,6 +7,9 @@ import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProje
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.diagnostic.MessagePool
+import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
+import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
+import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.ProjectUtil
@@ -37,7 +40,9 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -62,8 +67,10 @@ import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
 import java.awt.Window
 import java.io.File
+import java.nio.channels.FileChannel
 import java.nio.file.FileVisitResult
 import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.function.Predicate
@@ -551,6 +558,17 @@ object DynamicPlugins {
             FileUtil.asyncDelete(File(snapshotPath))
             classLoaderUnloaded = true
           }
+          if (Registry.`is`("ide.plugins.analyze.snapshot")) {
+            val analysisResult = analyzeSnapshot(snapshotPath, pluginDescriptor.pluginId)
+            if (analysisResult.isEmpty()) {
+              LOG.info("Successfully unloaded plugin ${pluginDescriptor.pluginId} (no strong references to classloader in .hprof file)")
+              FileUtil.asyncDelete(File(snapshotPath))
+              classLoaderUnloaded = true
+            }
+            else {
+              LOG.info("Snapshot analysis result: $analysisResult")
+            }
+          }
           notify("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING)
           LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
         }
@@ -803,6 +821,19 @@ object DynamicPlugins {
     }
     catch (e: Throwable) {
       LOG.info("Failed to clear Window.temporaryLostComponent", e)
+    }
+  }
+
+  private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
+    FileChannel.open(Paths.get(hprofPath), StandardOpenOption.READ).use { channel ->
+      val analysis = HProfAnalysis(
+        channel,
+        SystemTempFilenameSupplier()
+      ) { analysisContext, progressIndicator -> AnalyzeClassloaderReferencesGraph(analysisContext, pluginId.idString).analyze(progressIndicator) }
+      analysis.onlyStrongReferences = true
+      analysis.includeClassesAsRoots = false
+      analysis.setIncludeMetaInfo(false)
+      return analysis.analyze(ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator())
     }
   }
 }

@@ -52,7 +52,6 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
 
   private var includeMetaInfo = true
 
-  @TestOnly
   fun setIncludeMetaInfo(value: Boolean) {
     includeMetaInfo = value
   }
