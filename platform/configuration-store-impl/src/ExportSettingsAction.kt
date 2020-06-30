@@ -230,7 +230,7 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
 }
 
 private inline fun getAdditionalExportFile(stateAnnotation: State, storageManager: StateStorageManager, isSkipFile: (file: Path) -> Boolean): Path? {
-  val additionalExportPath = stateAnnotation.additionalExportFile
+  val additionalExportPath = stateAnnotation.additionalExportDirectory
   if (additionalExportPath.isEmpty()) {
     return null
   }

@@ -42,7 +42,7 @@ import java.util.*;
 @State(
   name = "TemplateSettings",
   storages = @Storage("templates.xml"),
-  additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
+  additionalExportDirectory = TemplateSettings.TEMPLATES_DIR_PATH
 )
 public final class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);

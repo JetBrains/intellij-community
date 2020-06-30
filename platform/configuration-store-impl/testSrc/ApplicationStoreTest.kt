@@ -449,7 +449,7 @@ internal class ApplicationStoreTest {
 
 internal data class TestState(@Attribute var foo: String = "", @Attribute var bar: String = "")
 
-@State(name = "A", storages = [(Storage("a.xml"))], additionalExportFile = "foo")
+@State(name = "A", storages = [(Storage("a.xml"))], additionalExportDirectory = "foo")
 internal open class A : PersistentStateComponent<TestState> {
   var options = TestState()
 

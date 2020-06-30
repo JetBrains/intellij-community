@@ -65,7 +65,7 @@ import java.util.function.Function;
 @State(
   name = "EditorColorsManagerImpl",
   storages = @Storage("colors.scheme.xml"),
-  additionalExportFile = EditorColorsManagerImpl.FILE_SPEC
+  additionalExportDirectory = EditorColorsManagerImpl.FILE_SPEC
 )
 public final class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {
   private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
