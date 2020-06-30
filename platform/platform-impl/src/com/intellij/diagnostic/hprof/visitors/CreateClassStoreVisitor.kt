@@ -83,6 +83,7 @@ class CreateClassStoreVisitor(private val stringIdMap: TLongObjectHashMap<String
                  stringIdMap[classIDToNameStringID[classId]].replace('/', '.'),
                  classId,
                  superClassId,
+                 classloaderClassId,
                  instanceSize.toInt(),
                  currentOffset,
                  refInstanceFields.toTypedArray(),

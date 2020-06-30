@@ -15,11 +15,13 @@
  */
 package com.intellij.diagnostic.hprof.classstore
 
+import com.intellij.diagnostic.hprof.parser.Type
 import java.util.function.LongUnaryOperator
 
 class ClassDefinition(val name: String,
                       val id: Long,
                       val superClassId: Long,
+                      val classLoaderId: Long,
                       val instanceSize: Int,
                       val superClassOffset: Int,
                       val refInstanceFields: Array<InstanceField>,
@@ -74,6 +76,8 @@ class ClassDefinition(val name: String,
         else -> name
       }
     }
+
+    val CLASS_FIELD = InstanceField("<class>", -1, Type.OBJECT)
   }
 
   fun getSuperClass(classStore: ClassStore): ClassDefinition? {
@@ -99,7 +103,7 @@ class ClassDefinition(val name: String,
       StaticField(oldStaticField.name, map(oldStaticField.objectId))
     }
     return ClassDefinition(
-      name, map(id), map(superClassId), instanceSize, superClassOffset,
+      name, map(id), map(superClassId), map(classLoaderId), instanceSize, superClassOffset,
       refInstanceFields, primitiveInstanceFields, newConstantFields, newStaticFields
     )
   }
@@ -124,9 +128,26 @@ class ClassDefinition(val name: String,
         return currentClass.refInstanceFields[currentIndex]
       }
       currentIndex -= size
-      currentClass = currentClass.getSuperClass(classStore) ?: throw IndexOutOfBoundsException("$index on class $name")
+      currentClass = currentClass.getSuperClass(classStore) ?: break
     }
     while (true)
+    if (currentIndex == 0) {
+      return CLASS_FIELD
+    }
+    throw IndexOutOfBoundsException("$index on class $name")
+  }
+
+  fun getClassFieldName(index: Int): String {
+    if (index in constantFields.indices) {
+      return "<constant>"
+    }
+    if (index in constantFields.size until constantFields.size + staticFields.size) {
+      return staticFields[index - constantFields.size].name
+    }
+    if (index == constantFields.size + staticFields.size) {
+      return "<loader>"
+    }
+    throw IndexOutOfBoundsException("$index on class $name")
   }
 
   /**
@@ -151,7 +172,7 @@ class ClassDefinition(val name: String,
   }
 
   fun copyWithName(newName: String): ClassDefinition {
-    return ClassDefinition(newName, id, superClassId, instanceSize, superClassOffset, refInstanceFields, primitiveInstanceFields,
+    return ClassDefinition(newName, id, superClassId, classLoaderId, instanceSize, superClassOffset, refInstanceFields, primitiveInstanceFields,
                            constantFields, staticFields)
   }
 }

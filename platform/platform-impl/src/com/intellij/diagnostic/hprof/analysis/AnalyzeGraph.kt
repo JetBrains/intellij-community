@@ -203,14 +203,16 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
       }
     }
 
-    // Mark all class object as to be visited, set them as their own parents
-    classStore.forEachClass { classDefinition ->
-      addIdToSetIfOrphan(rootsSet, classDefinition.id.toInt())
-      classDefinition.staticFields.forEach { staticField ->
-        addIdToSetIfOrphan(rootsSet, staticField.objectId.toInt())
-      }
-      classDefinition.constantFields.forEach { objectId ->
-        addIdToSetIfOrphan(rootsSet, objectId.toInt())
+    if (analysisContext.config.traverseOptions.includeClassesAsRoots) {
+      // Mark all class object as to be visited, set them as their own parents
+      classStore.forEachClass { classDefinition ->
+        addIdToSetIfOrphan(rootsSet, classDefinition.id.toInt())
+        classDefinition.staticFields.forEach { staticField ->
+          addIdToSetIfOrphan(rootsSet, staticField.objectId.toInt())
+        }
+        classDefinition.constantFields.forEach { objectId ->
+          addIdToSetIfOrphan(rootsSet, objectId.toInt())
+        }
       }
     }
 

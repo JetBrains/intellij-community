@@ -129,11 +129,17 @@ class GCRootPathsTree(
     for (i in gcPath.size() - 1 downTo 0) {
       val id = gcPath[i]
       val classDefinition = nav.getClassForObjectId(id.toLong())
-      var field: InstanceField? = null
+      var fieldName: String? = null
       if (fieldsPath[i] != 0) {
-        field = classDefinition.getRefField(nav.classStore, fieldsPath[i] - 1)
+        if (classDefinition.name == "java.lang.Class") {
+          val definition = nav.classStore[id.toLong()]
+          fieldName = definition.getClassFieldName(fieldsPath[i] - 1)
+        }
+        else {
+          fieldName = classDefinition.getRefField(nav.classStore, fieldsPath[i] - 1).name
+        }
       }
-      currentNode = currentNode.addEdge(id, size, sizesMapping[id], classDefinition, field, disposedObjectsIDsSet.contains(id))
+      currentNode = currentNode.addEdge(id, size, sizesMapping[id], classDefinition, fieldName, disposedObjectsIDsSet.contains(id))
     }
   }
 
@@ -160,11 +166,11 @@ class GCRootPathsTree(
                 objectSize: Int,
                 subgraphSizeInDwords: Int,
                 classDefinition: ClassDefinition,
-                field: InstanceField?,
+                fieldName: String?,
                 disposed: Boolean): Node
   }
 
-  data class Edge(val classDefinition: ClassDefinition, val field: InstanceField?, val disposed: Boolean)
+  data class Edge(val classDefinition: ClassDefinition, val fieldName: String?, val disposed: Boolean)
 
   class RegularNode : Node {
 
@@ -179,14 +185,14 @@ class GCRootPathsTree(
                          objectSize: Int,
                          subgraphSizeInDwords: Int,
                          classDefinition: ClassDefinition,
-                         field: InstanceField?,
+                         fieldName: String?,
                          disposed: Boolean): Node {
       var localEdges = edges
       if (localEdges == null) {
         localEdges = HashMap(1)
         edges = localEdges
       }
-      val node = localEdges.getOrPut(Edge(classDefinition, field, disposed)) { RegularNode() }
+      val node = localEdges.getOrPut(Edge(classDefinition, fieldName, disposed)) { RegularNode() }
       node.pathsCount++
       if (node.pathsSize + objectSize.toLong() > Int.MAX_VALUE) {
         node.pathsSize = Int.MAX_VALUE
@@ -233,7 +239,7 @@ class GCRootPathsTree(
                          objectSize: Int,
                          subgraphSizeInDwords: Int,
                          classDefinition: ClassDefinition,
-                         field: InstanceField?,
+                         fieldName: String?,
                          disposed: Boolean): Node {
       val nullableNode = edges.get(objectId)?.first
       val node: RegularNode
@@ -243,7 +249,7 @@ class GCRootPathsTree(
       }
       else {
         val newNode = RegularNode()
-        val pair = Pair(newNode, Edge(classDefinition, field, disposed))
+        val pair = Pair(newNode, Edge(classDefinition, fieldName, disposed))
         newNode.instances.add(objectId)
         edges.put(objectId, pair)
         node = newNode
@@ -362,10 +368,10 @@ class GCRootPathsTree(
 
             while (!stack.isEmpty()) {
               val (edge, node, indent, nextIndent) = stack.pop()
-              val (classDefinition, field, disposed) = edge
+              val (classDefinition, fieldName, disposed) = edge
 
               // Soft/weak referents don't have a parent field set to differentiate them from other (strong-referencing) fields.
-              val softWeakDescriptor = if (field == null) softWeakClassCache.getSoftWeakDescriptor(classDefinition) else null
+              val softWeakDescriptor = if (fieldName == null) softWeakClassCache.getSoftWeakDescriptor(classDefinition) else null
 
               printReportLine(buffer::println,
                               node.pathsCount,
@@ -376,7 +382,7 @@ class GCRootPathsTree(
                               node.edges == null,
                               softWeakDescriptor,
                               disposed,
-                              field?.name,
+                              fieldName,
                               indent,
                               classDefinition.prettyName)
 

@@ -163,6 +163,7 @@ class ObjectNavigatorOnAuxFiles(
       val classDefinition = classStore[classId]
       classDefinition.constantFields.forEach(references::add)
       classDefinition.staticFields.forEach { references.add(it.objectId) }
+      references.add(classDefinition.classLoaderId)
     }
   }
 
@@ -222,6 +223,8 @@ class ObjectNavigatorOnAuxFiles(
       c = classStore[superClassId]
     }
     while (true)
+
+    references.add(classDefinition.id)
 
     if (classDefinition == directByteBufferClass) {
       extraData = aux.readNonNegativeLEB128Int()

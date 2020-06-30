@@ -75,7 +75,8 @@ class AnalysisConfig(
   )
 
   class TraverseOptions(
-    val onlyStrongReferences: Boolean = false
+    val onlyStrongReferences: Boolean = false,
+    val includeClassesAsRoots: Boolean = true
   )
 
   class MetaInfoOptions(
