@@ -408,6 +408,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();
         }
+      },
+      () -> {
+        if (ApplicationManager.getApplication() instanceof ApplicationEx) {
+          HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
+        }
+      },
+      () -> {
+        resetAllFields();
       }
     );
   }
@@ -481,41 +489,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   public final void runBare() throws Throwable {
-    runBareImpl(this::startRunAndTear);
+    super.runBare();
   }
 
-  protected void runBareImpl(ThrowableRunnable<?> start) throws Throwable {
+  @Override
+  protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (!shouldRunTest()) {
       return;
     }
-
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    ThrowableRunnable<Throwable> testRunnable = () -> {
-      try {
-        start.run();
-      }
-      finally {
-        EdtTestUtil.runInEdtAndWait(() -> {
-          try {
-            Application application = ApplicationManager.getApplication();
-            if (application instanceof ApplicationEx) {
-              HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
-            }
-            resetAllFields();
-          }
-          catch (Throwable e) {
-            //noinspection CallToPrintStackTrace
-            e.printStackTrace();
-          }
-        });
-      }
-    };
-    if (runInDispatchThread()) {
-      EdtTestUtil.runInEdtAndWait(testRunnable);
-    }
-    else {
-      testRunnable.run();
-    }
+    super.runBare(testRunnable);
 
     // just to make sure all deferred Runnables to finish
     SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
@@ -526,21 +508,16 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-  private void startRunAndTear() throws Throwable {
-    setUp();
-    try {
-      ourAssertionsInTestDetected = true;
-      runTest();
-      ourAssertionsInTestDetected = false;
-    }
-    finally {
-      //try{
-      EdtTestUtil.runInEdtAndWait(() -> tearDown());
-      //}
-      //catch(Throwable th){
-      //th.printStackTrace();
-      //}
-    }
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    ourAssertionsInTestDetected = true;
+    super.runTestRunnable(testRunnable);
+    ourAssertionsInTestDetected = false;
+  }
+
+  @Override
+  protected void invokeTearDown() throws Exception {
+    EdtTestUtil.runInEdtAndWait(super::invokeTearDown);
   }
 
   @Override
