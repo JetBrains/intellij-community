@@ -6,6 +6,8 @@
                  description="Enable cache for the workspace model"/>
     <registryKey key="ide.new.project.model.strict.mode" defaultValue="false" restartRequired="true"
                  description="Enable required registration for kryo serialization"/>
+    <registryKey key="ide.new.project.model.indicator" defaultValue="false" restartRequired="true"
+                 description="Shows status bar workspacemodel indicator"/>
 
     <registryKey key="ide.workspace.model.jps.enabled" defaultValue="true" restartRequired="false"
                  description="Enable .iml reading/writing including settings (temporary key)"/>
@@ -20,5 +22,7 @@
     <applicationService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.StoreReloadManagerBridge"
                         overrides="true"/>
+
+    <statusBarWidgetFactory implementation="com.intellij.workspaceModel.ide.WorkspaceModelIndicator"/>
   </extensions>
 </idea-plugin>
