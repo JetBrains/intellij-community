@@ -15,13 +15,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import static com.intellij.codeInsight.lookup.LookupValueWithPriority.HIGHER;
-import static com.intellij.codeInsight.lookup.LookupValueWithPriority.NORMAL;
-
 /**
  * @author maxim
  */
 public class ColorSampleLookupValue {
+  private static final int NORMAL_PRIORITY = 0;
+  private static final int HIGHER_PRIORITY = 1;
+  static final int HIGH_PRIORITY = 2;
+
   private static volatile ColorSampleLookupValue[] ourColors;
   private final boolean myIsStandard;
   private final String myName;
@@ -120,7 +121,7 @@ public class ColorSampleLookupValue {
   }
 
   public int getPriority() {
-    return myName == null || Character.isLowerCase(myName.charAt(0)) ? HIGHER : NORMAL;
+    return myName == null || Character.isLowerCase(myName.charAt(0)) ? HIGHER_PRIORITY : NORMAL_PRIORITY;
   }
 
   @Override

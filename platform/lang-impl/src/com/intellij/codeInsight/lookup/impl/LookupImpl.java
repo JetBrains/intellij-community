@@ -519,12 +519,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   void finishLookupInWritableFile(char completionChar, @Nullable LookupElement item) {
     //noinspection deprecation,unchecked
-    if (item == null ||
-        !item.isValid() ||
-        item instanceof EmptyLookupItem ||
-        item.getObject() instanceof DeferredUserLookupValue &&
-        item.as(LookupItem.CLASS_CONDITION_KEY) != null &&
-        !((DeferredUserLookupValue)item.getObject()).handleUserSelection(item.as(LookupItem.CLASS_CONDITION_KEY), myProject)) {
+    if (item == null || !item.isValid() || item instanceof EmptyLookupItem) {
       hideWithItemSelected(null, completionChar);
       return;
     }

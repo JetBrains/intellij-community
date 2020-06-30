@@ -66,10 +66,6 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
 
   public void setObject(@NotNull T o) {
     myObject = o;
-
-    if (o instanceof LookupValueWithPriority) {
-      setPriority(((LookupValueWithPriority)o).getPriority());
-    }
   }
 
   public boolean equals(Object o){
