@@ -2,16 +2,16 @@
 package com.intellij.ide.plugins.marketplace
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.execution.ParametersListUtil
 import java.io.File
 
 
-class BrokenPluginStartupActivity : StartupActivity.Background {
-  override fun runActivity(project: Project) {
+class BrokenPluginStartupActivity : PreloadingActivity() {
+  override fun preload(indicator: ProgressIndicator) {
     BrokenPluginsService.updateBrokenPlugin()
   }
 }
