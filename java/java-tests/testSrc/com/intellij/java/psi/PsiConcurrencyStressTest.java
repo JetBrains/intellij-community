@@ -172,9 +172,4 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
         break;
     }
   }
-
-  @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-    runnable.run();
-  }
 }
