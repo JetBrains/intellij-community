@@ -221,6 +221,20 @@ class ExternalSystemStorageTest {
     }
 
   @Test
+  fun `load modules from internal storage if external is disabled but file exist`() =
+    loadProjectAndCheckResults("singleModuleInInternalAndExternalStorages") { project ->
+      val modules = ModuleManager.getInstance(project).modules
+      assertThat(modules).hasSize(1)
+      val testModule= modules[0]
+      assertThat(testModule.name).isEqualTo("test")
+      assertThat(testModule.moduleTypeName).isEqualTo(ModuleTypeId.JAVA_MODULE)
+      assertThat(testModule.moduleFilePath).isEqualTo("${project.basePath}/test.iml")
+      assertThat(ModuleRootManager.getInstance(testModule).contentRootUrls.single()).isEqualTo(VfsUtil.pathToUrl("${project.basePath}/test"))
+      val externalModuleProperty = ExternalSystemModulePropertyManager.getInstance(testModule)
+      assertThat(externalModuleProperty.isMavenized()).isTrue()
+    }
+
+  @Test
   fun `save imported facet in imported module`() = saveProjectInExternalStorageAndCheckResult("importedFacetInImportedModule") { project, projectDir ->
     val imported = ModuleManager.getInstance(project).newModule(projectDir.resolve("imported.iml").systemIndependentPath, ModuleTypeId.JAVA_MODULE)
     val facetManager = FacetManager.getInstance(imported)

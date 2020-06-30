@@ -15,6 +15,7 @@ import com.intellij.openapi.module.impl.AutomaticModuleUnloader
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.module.impl.UnloadedModuleDescriptionImpl
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
+import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
@@ -130,7 +131,9 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     val baseDirUrl = configLocation.baseDirectoryUrlString
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
     val externalStoragePath = project.getExternalConfigurationDir()
-    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false, virtualFileManager)
+    val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
+    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false,
+                                                                        virtualFileManager, externalStorageConfigurationManager)
     this.serializers.set(serializers)
     registerListener()
     val builder = WorkspaceEntityStorageBuilder.create()

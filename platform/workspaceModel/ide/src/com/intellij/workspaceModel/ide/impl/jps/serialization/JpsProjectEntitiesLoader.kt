@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -12,6 +13,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.nio.file.Path
 
@@ -24,10 +26,13 @@ object JpsProjectEntitiesLoader {
                                reader: JpsFileContentReader,
                                externalStoragePath: Path,
                                serializeArtifacts: Boolean,
-                               virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
-    return createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, serializeArtifacts, virtualFileManager)
+                               virtualFileManager: VirtualFileUrlManager,
+                               externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
+    return createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, serializeArtifacts, virtualFileManager,
+                                            externalStorageConfigurationManager)
   }
 
+  @TestOnly
   fun loadProject(configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder,
                   externalStoragePath: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
@@ -47,7 +52,7 @@ object JpsProjectEntitiesLoader {
                           builder: WorkspaceEntityStorageBuilder,
                           virtualFileManager: VirtualFileUrlManager) {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
-    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), source, null)
+    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), source)
     serializer.loadEntities(builder, reader, virtualFileManager)
   }
 
@@ -55,12 +60,15 @@ object JpsProjectEntitiesLoader {
                                                reader: JpsFileContentReader,
                                                externalStoragePath: Path,
                                                serializeArtifacts: Boolean,
-                                               virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
+                                               virtualFileManager: VirtualFileUrlManager,
+                                               externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
     val externalStorageRoot = externalStoragePath.toVirtualFileUrl(virtualFileManager)
     val externalStorageMapping = JpsExternalStorageMappingImpl(externalStorageRoot, configLocation)
     return when (configLocation) {
       is JpsProjectConfigLocation.FileBased -> createIprProjectSerializers(configLocation, reader, externalStorageMapping, serializeArtifacts, virtualFileManager)
-      is JpsProjectConfigLocation.DirectoryBased -> createDirectoryProjectSerializers(configLocation, reader, externalStorageMapping, serializeArtifacts, virtualFileManager)
+      is JpsProjectConfigLocation.DirectoryBased -> createDirectoryProjectSerializers(configLocation, reader, externalStorageMapping,
+                                                                                      serializeArtifacts, virtualFileManager,
+                                                                                      externalStorageConfigurationManager)
     }
   }
 
@@ -68,7 +76,8 @@ object JpsProjectEntitiesLoader {
                                                 reader: JpsFileContentReader,
                                                 externalStorageMapping: JpsExternalStorageMapping,
                                                 serializeArtifacts: Boolean,
-                                                virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
+                                                virtualFileManager: VirtualFileUrlManager,
+                                                externalStorageConfigurationManager: ExternalStorageConfigurationManager?): JpsProjectSerializers {
     val projectDirUrl = configLocation.projectDir.url
     val directorySerializersFactories = ArrayList<JpsDirectoryEntitiesSerializerFactory<*>>()
     val librariesDirectoryUrl = "$projectDirUrl/.idea/libraries"
@@ -85,7 +94,7 @@ object JpsProjectEntitiesLoader {
       entityTypeSerializers = listOf(JpsLibrariesExternalFileSerializer(librariesExternalStorageFile, internalLibrariesDirUrl)),
       directorySerializersFactories = directorySerializersFactories,
       moduleListSerializers = listOf(
-        ModuleListSerializerImpl("$projectDirUrl/.idea/modules.xml", externalModuleListSerializer),
+        ModuleListSerializerImpl("$projectDirUrl/.idea/modules.xml", externalModuleListSerializer, externalStorageConfigurationManager),
         externalModuleListSerializer
       ),
       configLocation = configLocation,
@@ -116,7 +125,7 @@ object JpsProjectEntitiesLoader {
     return JpsProjectSerializers.createSerializers(
       entityTypeSerializers = entityTypeSerializers,
       directorySerializersFactories = emptyList(),
-      moduleListSerializers = listOf(ModuleListSerializerImpl(projectFileUrl.url, null)),
+      moduleListSerializers = listOf(ModuleListSerializerImpl(projectFileUrl.url)),
       configLocation = configLocation,
       reader = reader,
       virtualFileManager = virtualFileManager,
