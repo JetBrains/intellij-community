@@ -43,7 +43,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       val commentRow = parent.createChildRow()
       commentRow.isComment = true
       commentRow.addComponent(component, cc)
-      //commentRow.addComponent(ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true), cc)
       if (forComponent) {
         cc.horizontal.gapBefore = BoundSize.NULL_SIZE
         cc.skip = columnIndex
