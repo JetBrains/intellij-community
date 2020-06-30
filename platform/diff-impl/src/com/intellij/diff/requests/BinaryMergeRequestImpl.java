@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.requests;
 
-import com.intellij.CommonBundle;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.merge.BinaryMergeRequest;
@@ -24,12 +23,14 @@ import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +127,12 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
       if (applyContent != null) {
         try {
           VirtualFile file = myFile.getFile();
-          if (!DiffUtil.makeWritable(myProject, file)) throw new IOException("File is read-only: " + file.getPresentableName());
+          if (!file.isValid()) {
+            throw new IOException(IdeBundle.message("error.file.not.found.message", file.getPresentableUrl()));
+          }
+          if (!DiffUtil.makeWritable(myProject, file)) {
+            throw new IOException(UIBundle.message("file.is.read.only.message.text", file.getPresentableUrl()));
+          }
 
           WriteCommandAction.writeCommandAction(null).run(() -> {
             file.setBinaryContent(applyContent);
@@ -134,7 +140,7 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
         }
         catch (IOException e) {
           LOG.warn(e);
-          Messages.showErrorDialog(myProject, DiffBundle.message("can.t.apply.result"), CommonBundle.getErrorTitle());
+          Messages.showErrorDialog(myProject, e.getMessage(), DiffBundle.message("can.t.finish.merge.resolve"));
         }
       }
 
