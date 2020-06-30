@@ -124,17 +124,18 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
       }
 
       if (applyContent != null) {
-        WriteCommandAction.writeCommandAction(null).run(() -> {
-          try {
-            VirtualFile file = myFile.getFile();
-            if (!DiffUtil.makeWritable(myProject, file)) throw new IOException("File is read-only: " + file.getPresentableName());
+        try {
+          VirtualFile file = myFile.getFile();
+          if (!DiffUtil.makeWritable(myProject, file)) throw new IOException("File is read-only: " + file.getPresentableName());
+
+          WriteCommandAction.writeCommandAction(null).run(() -> {
             file.setBinaryContent(applyContent);
-          }
-          catch (IOException e) {
-            LOG.warn(e);
-            Messages.showErrorDialog(myProject, DiffBundle.message("can.t.apply.result"), CommonBundle.getErrorTitle());
-          }
-        });
+          });
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+          Messages.showErrorDialog(myProject, DiffBundle.message("can.t.apply.result"), CommonBundle.getErrorTitle());
+        }
       }
 
       MergeCallback.getCallback(this).applyResult(result);
