@@ -230,14 +230,14 @@ public class OnePixelDivider extends Divider {
       if (isVertical()) {
         if (getHeight() > 0) {
           float ratio = (float)myPoint.y / (float)mySplitter.asComponent().getHeight();
-          proportion = MathUtil.clamp(MathUtil.clamp(ratio, firstMinProportion, 1 - secondMinProportion), 0f, 1f);
+          proportion = MathUtil.clamp(Math.min(Math.max(firstMinProportion, ratio), 1 - secondMinProportion), 0f, 1f);
           mySplitter.setProportion(proportion);
         }
       }
       else {
         if (getWidth() > 0) {
           float ratio = (float)myPoint.x / (float)mySplitter.asComponent().getWidth();
-          proportion = MathUtil.clamp(MathUtil.clamp(ratio, firstMinProportion, 1 - secondMinProportion), 0f, 1f);
+          proportion = MathUtil.clamp(Math.min(Math.max(firstMinProportion, ratio), 1 - secondMinProportion), 0f, 1f);
           mySplitter.setProportion(proportion);
         }
       }
