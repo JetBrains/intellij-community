@@ -62,7 +62,7 @@ public class HgReferenceValidatorTest extends HgPlatformTest {
 
   @Override
   @After
-  public void tearDown() {
+  public void tearDown() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
   }
 

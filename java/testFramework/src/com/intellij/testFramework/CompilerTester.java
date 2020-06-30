@@ -279,19 +279,24 @@ public class CompilerTester {
     }
   }
 
-  public static void enableDebugLogging() throws IOException {
+  public static void enableDebugLogging() {
     File logDirectory = BuildManager.getBuildLogDirectory();
     FileUtil.delete(logDirectory);
     FileUtil.createDirectory(logDirectory);
     Properties properties = new Properties();
-    try (InputStream config = LogSetup.readDefaultLogConfig()) {
-      properties.load(config);
-    }
+    try {
+      try (InputStream config = LogSetup.readDefaultLogConfig()) {
+        properties.load(config);
+      }
 
-    properties.setProperty("log4j.rootLogger", "debug, file");
-    File logFile = new File(logDirectory, LogSetup.LOG_CONFIG_FILE_NAME);
-    try (OutputStream output = new BufferedOutputStream(new FileOutputStream(logFile))) {
-      properties.store(output, null);
+      properties.setProperty("log4j.rootLogger", "debug, file");
+      File logFile = new File(logDirectory, LogSetup.LOG_CONFIG_FILE_NAME);
+      try (OutputStream output = new BufferedOutputStream(new FileOutputStream(logFile))) {
+        properties.store(output, null);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 

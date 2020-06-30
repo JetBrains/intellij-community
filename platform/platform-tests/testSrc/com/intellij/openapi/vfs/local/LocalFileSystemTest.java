@@ -28,7 +28,10 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -208,7 +211,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testCopyFile() {
+  public void testCopyFile() throws IOException {
     runInEdtAndWait(() -> {
       File fromDir = tempDir.newDirectory("from");
       File toDir = tempDir.newDirectory("to");
@@ -228,7 +231,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testCopyDir() {
+  public void testCopyDir() throws IOException {
     runInEdtAndWait(() -> {
       File fromDir = tempDir.newDirectory("from");
       File toDir = tempDir.newDirectory("to");
@@ -734,7 +737,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testDuplicateViaRename() {
+  public void testDuplicateViaRename() throws IOException {
     runInEdtAndWait(() -> {
       VirtualFile dir = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());
       assertNotNull(dir);
@@ -754,7 +757,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBrokenSymlinkMove() {
+  public void testBrokenSymlinkMove() throws IOException {
     assumeSymLinkCreationIsSupported();
 
     runInEdtAndWait(() -> {
@@ -809,7 +812,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testReadOnly() {
+  public void testReadOnly() throws IOException {
     runInEdtAndWait(() -> {
       File file = tempDir.newFile("file.txt");
       VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);

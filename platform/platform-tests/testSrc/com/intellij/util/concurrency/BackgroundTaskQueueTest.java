@@ -56,14 +56,9 @@ public class BackgroundTaskQueueTest extends HeavyPlatformTestCase {
   private Random myRandom;
 
   @Override
-  protected void setUp() {
+  protected void setUp() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
-      try {
-        super.setUp();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      super.setUp();
 
       myQueue = new BackgroundTaskQueue(getProject(), "test queue");
       myQueue.setForceAsyncInTests(true, getTestRootDisposable());
@@ -73,19 +68,14 @@ public class BackgroundTaskQueueTest extends HeavyPlatformTestCase {
   }
 
   @Override
-  protected void tearDown() {
+  protected void tearDown() throws Exception {
     myThreadRunner.finish();
 
     EdtTestUtil.runInEdtAndWait(() -> {
       myQueue.clear();
       myQueue = null;
 
-      try {
-        super.tearDown();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      super.tearDown();
     });
   }
 

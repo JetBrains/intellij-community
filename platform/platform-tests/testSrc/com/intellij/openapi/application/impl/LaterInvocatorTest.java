@@ -62,7 +62,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   };
 
   @Override
-  protected void setUp() {
+  protected void setUp() throws Exception {
     myWindow1 = new Frame() {
       public String toString() {
         return "Window1";
@@ -92,7 +92,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   @Override
-  protected void tearDown() {
+  protected void tearDown() throws Exception {
     myOrder.clear();
     flushSwingQueue();
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.leaveAllModals());

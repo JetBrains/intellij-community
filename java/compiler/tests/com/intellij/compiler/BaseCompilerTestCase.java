@@ -257,12 +257,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
       };
       PlatformTestUtil.saveProject(myProject);
       CompilerTestUtil.saveApplicationSettings();
-      try {
-        CompilerTester.enableDebugLogging();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      CompilerTester.enableDebugLogging();
       action.accept(callback);
     });
 

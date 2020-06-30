@@ -12,7 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.testFramework.EdtTestUtilKt;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
@@ -339,16 +339,15 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   @Override
   protected void invokeTestRunnable(@NotNull Runnable runnable) {
     if (runInDispatchThread()) {
-      EdtTestUtilKt.runInEdtAndWait(() -> {
+      EdtTestUtil.runInEdtAndWait(() -> {
         if (myReleaseIWLockOnRun) {
-          return ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
+          ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
             runnable.run();
             return null;
           });
         }
         else {
           runnable.run();
-          return null;
         }
       });
     }

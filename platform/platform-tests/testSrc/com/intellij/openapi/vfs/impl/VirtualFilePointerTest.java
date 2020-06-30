@@ -862,7 +862,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void listenerIsFiredForPointerCreatedBetweenAsyncAndSyncVfsEventProcessing() {
+  public void listenerIsFiredForPointerCreatedBetweenAsyncAndSyncVfsEventProcessing() throws IOException {
     VirtualFile vDir = getVirtualTempRoot();
     String childName = "child";
 
