@@ -86,6 +86,8 @@ open class MarketplaceRequests {
 
   private fun getUpdatesMetadataFilesDirectory() = File(PathManager.getPluginsPath()).resolve("meta")
 
+  internal fun getBrokenPluginsFile() = File(PathManager.getPluginsPath()).resolve("brokenPlugins.json")
+
   private fun getUpdateMetadataFile(update: IdeCompatibleUpdate) = getUpdatesMetadataFilesDirectory().resolve(
     update.externalUpdateId + ".json")
 
@@ -180,10 +182,10 @@ open class MarketplaceRequests {
     emptyList()
   }
 
-  fun getBrokenPluginsFile(file: File?): List<MarketplaceBrokenPlugin> {
+  fun getBrokenPlugins(): List<MarketplaceBrokenPlugin> {
     return try {
       readOrUpdateFile(
-        file,
+        getBrokenPluginsFile(),
         BROKEN_PLUGIN_PATH,
         null,
         "",

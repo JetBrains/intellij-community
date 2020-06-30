@@ -20,9 +20,9 @@ object BrokenPluginsService {
 
   private fun updateBrokenPlugin() {
     val file = File(PluginManagerCore.MARKETPLACE_INCOMPATIBLE_PLUGINS)
-    val isNotUpdatedPlugins = marketplaceClient.isFileNotModified(marketplaceClient.BROKEN_PLUGIN_PATH, file)
+    val isNotUpdatedPlugins = marketplaceClient.isFileNotModified(marketplaceClient.BROKEN_PLUGIN_PATH, marketplaceClient.getBrokenPluginsFile())
     if (isNotUpdatedPlugins) return
-    val brokenPlugins = readBrokenPlugins(file)
+    val brokenPlugins = readBrokenPlugins()
     if (brokenPlugins.isEmpty()) return
     file.writeText(
       brokenPlugins.entries
@@ -31,8 +31,8 @@ object BrokenPluginsService {
     PluginManagerCore.setUpNeedToUpdateBrokenPlugins()
   }
 
-  private fun readBrokenPlugins(file: File): Map<String, Set<String>> {
-    val allBrokenPlugins = marketplaceClient.getBrokenPluginsFile(file)
+  private fun readBrokenPlugins(): Map<String, Set<String>> {
+    val allBrokenPlugins = marketplaceClient.getBrokenPlugins()
     val currentBuild = ApplicationInfoImpl.getInstance().build
     val currentBrokenPlugins = allBrokenPlugins
       .filter {
