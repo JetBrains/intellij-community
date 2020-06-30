@@ -14,13 +14,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBIterator;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +67,8 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     myProject = project;
     myRoot = root;
     myTree = tree;
-    myTree.setModel(new SearchTreeModel<>(myRoot, DUMMY_SEARCH, o -> getText(o), this::createNode, this::getChildren));
+    myTree
+      .setModel(new SearchTreeModel<>(myRoot, DUMMY_SEARCH, o -> getText(o), this::createNode, this::getChildren, useIdentityHashing()));
     SwingUtilities.invokeLater(() -> rebuildTree());
   }
 
@@ -204,6 +205,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   protected void onSpeedSearchUpdateComplete(@Nullable String pattern) {
   }
 
+  protected boolean useIdentityHashing(){
+    return true;
+  }
+
   @Nullable
   protected abstract String getText(@Nullable U object);
 
@@ -238,20 +243,23 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     private final Function<U, N> myFactory;
     private final U myRootObject;
     private final Function<U, Iterable<U>> myStructure;
+    private final boolean myUseIdentityHashing;
     private SpeedSearchSupply mySpeedSearch;
-    private Map<U, N> myNodeCache = new IdentityHashMap<>();
+    private Map<U, N> myNodeCache;
     @SuppressWarnings("unchecked")
     private final EventDispatcher<Listener<U>> myNodeChanged = (EventDispatcher)EventDispatcher.create(Listener.class);
 
     public SearchTreeModel(@NotNull N root, @NotNull SpeedSearchSupply speedSearch,
                            @NotNull Function<U, String> namer, @NotNull Function<U, N> nodeFactory,
-                           @NotNull Function<U, Iterable<U>> structure) {
+                           @NotNull Function<U, Iterable<U>> structure, boolean useIdentityHashing) {
       super(root);
       myRootObject = Objects.requireNonNull(getUserObject(root));
       mySpeedSearch = speedSearch;
       myNamer = namer;
       myFactory = nodeFactory;
       myStructure = structure;
+      myUseIdentityHashing = useIdentityHashing;
+      myNodeCache = createNodeCache();
       addTreeModelListener(new TreeModelListener() {
         @Override
         @SuppressWarnings("unchecked")
@@ -295,7 +303,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     }
 
     public void updateStructure() {
-      Map<U, N> newNodes = new IdentityHashMap<>();
+      Map<U, N> newNodes = createNodeCache();
       for (U node : JBTreeTraverser.from(myStructure).withRoot(getRootObject())) {
         N treeNode = myNodeCache.get(node);
         newNodes.put(node, treeNode == null ? createNode(node) : treeNode);
@@ -344,13 +352,18 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
 
     public void refilter() {
       if (mySpeedSearch.isPopupActive()) {
-        Set<U> acceptCache = ContainerUtil.newIdentityTroveSet();
+        Set<U> acceptCache = myUseIdentityHashing ? new ReferenceOpenHashSet<>() : new HashSet<>();
         computeAcceptCache(myRootObject, acceptCache);
         filterChildren(myRootObject, x -> acceptCache.contains(x));
       }
       else {
         filterChildren(myRootObject, x -> true);
       }
+    }
+
+    @NotNull
+    private Map<U, N> createNodeCache() {
+      return myUseIdentityHashing ? new IdentityHashMap<>() : new HashMap<>();
     }
 
     private boolean computeAcceptCache(@NotNull U object, @NotNull Set<U> cache) {
@@ -416,7 +429,8 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       N cur = getChildSafe(node, 0);
       TIntArrayList newIds = new TIntArrayList();
       for (U child : accepted) {
-        boolean isCur = cur != null && getUserObject(cur) == child;
+        U curUsrObject = getUserObject(cur);
+        boolean isCur = cur != null && myUseIdentityHashing ? curUsrObject == child : (curUsrObject != null && curUsrObject.equals(child));
         if (isCur) {
           cur = getChildSafe(node, k + 1);
         }
