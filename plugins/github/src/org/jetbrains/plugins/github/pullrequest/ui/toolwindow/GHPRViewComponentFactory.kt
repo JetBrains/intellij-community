@@ -49,6 +49,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitsBrowserComponent.COMMITS_LIST_KEY
+import org.jetbrains.plugins.github.ui.HtmlInfoPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.event.FocusAdapter
@@ -309,8 +310,14 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         ComponentUtil.putClientProperty(splitter, CHANGES_TREE_KEY, changesTree)
       }
       .createWithUpdatesStripe(uiDisposable) { parent, model ->
-        createChangesTree(parent, createCommitChangesModel(model, commitSelectionListener),
-                          GithubBundle.message("pull.request.commit.does.not.contain.changes"))
+        val reviewUnsupportedWarning = createReviewUnsupportedPlaque()
+        model.addValueChangedListener {
+          reviewUnsupportedWarning.isVisible = !model.value.linearHistory
+        }
+        JBUI.Panels.simplePanel(createChangesTree(parent, createCommitChangesModel(model, commitSelectionListener),
+                                                  GithubBundle.message("pull.request.commit.does.not.contain.changes")))
+          .addToTop(reviewUnsupportedWarning)
+          .andTransparent()
       }.apply {
         border = IdeBorderFactory.createBorder(SideBorder.TOP)
       }
@@ -322,6 +329,13 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     return splitter.apply {
       firstComponent = commitsLoadingPanel
       secondComponent = changesBrowser
+    }
+  }
+
+  private fun createReviewUnsupportedPlaque(): JComponent {
+    return HtmlInfoPanel().apply {
+      setInfo(GithubBundle.message("pull.request.review.not.supported.non.linear"), HtmlInfoPanel.Severity.WARNING)
+      border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
     }
   }
 
