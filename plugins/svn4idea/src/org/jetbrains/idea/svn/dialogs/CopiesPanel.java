@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -368,27 +369,21 @@ public class CopiesPanel extends SimpleToolWindowPanel {
   }
 
   private static final class ErrorsFoundNotification extends Notification {
-
-    private static final String FIX_ACTION = "FIX";
     private static final String TITLE = "";
 
     private ErrorsFoundNotification(@NotNull final Project project) {
-      super(NOTIFICATION_GROUP.getDisplayId(), TITLE, getDescription(), NotificationType.ERROR, createListener(project));
-    }
-
-    private static NotificationListener.Adapter createListener(@NotNull final Project project) {
-      return new NotificationListener.Adapter() {
-        @Override
-        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (FIX_ACTION.equals(event.getDescription())) {
-            WorkingCopiesContent.show(project);
-          }
-        }
-      };
+      super(NOTIFICATION_GROUP.getDisplayId(), TITLE, getDescription(), NotificationType.ERROR);
+      addAction(NotificationAction.createSimpleExpiring(getActionName(), () -> {
+        WorkingCopiesContent.show(project);
+      }));
     }
 
     private static String getDescription() {
       return SvnBundle.message("subversion.roots.detection.errors.found.description");
+    }
+
+    private static String getActionName() {
+      return SvnBundle.message("subversion.roots.detection.errors.found.action.text");
     }
   }
 }
