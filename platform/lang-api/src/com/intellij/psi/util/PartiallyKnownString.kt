@@ -7,6 +7,7 @@ import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.util.SmartList
+import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.toHeadAndTail
 import org.jetbrains.annotations.ApiStatus
 
@@ -123,6 +124,12 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
         add(PartiallyKnownString(pending))
       }
 
+      fun rangeForSubElement(psiElement: PsiElement?, partRange: TextRange): TextRange =
+        psiElement.castSafelyTo<PsiLanguageInjectionHost>()?.let { host ->
+          val rangeOfTheHostContent = this.getRangeOfTheHostContent(host) ?: return@let null
+          mapRangeToHostRange(host, partRange.shiftRight(rangeOfTheHostContent.startOffset))
+        } ?: partRange.shiftRight(head.range.startOffset)
+
       when (head) {
         is StringEntry.Unknown -> return collectPaths(result, pending.apply { add(head) }, tail)
         is StringEntry.Known -> {
@@ -138,14 +145,14 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
                 add(PartiallyKnownString(
                   pending.apply {
                     add(StringEntry.Known(stringParts.first().substring(value), head.sourcePsi,
-                                          stringParts.first().shiftRight(head.range.startOffset)))
+                                          rangeForSubElement(head.sourcePsi, stringParts.first())))
                   }))
                 addAll(stringParts.subList(1, stringParts.size - 1).map {
                   PartiallyKnownString(it.substring(value), head.sourcePsi, it.shiftRight(head.range.startOffset))
                 })
               },
               mutableListOf(StringEntry.Known(stringParts.last().substring(value), head.sourcePsi,
-                                              stringParts.last().shiftRight(head.range.startOffset))),
+                                              rangeForSubElement(head.sourcePsi, stringParts.last()))),
               tail
             )
           }
@@ -176,11 +183,11 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
           return TextRange(start, end)
         else {
           logger<PartiallyKnownString>().warn("decoding of ${segmentRange} failed for ${host.text} : [$start, $end]")
-          return TextRange(inSegmentStart, inSegmentEnd)
+          return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
         }
       }
       else
-        return TextRange(inSegmentStart, inSegmentEnd)
+        return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
     }
 
     var accumulated = 0
