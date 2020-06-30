@@ -190,14 +190,16 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
 
   override fun getState(): SourceFolderManagerState? {
     synchronized(mutex) {
-      return SourceFolderManagerState(sourceFolders.values.map { model ->
-        val modelTypeName = dictionary.entries.find { it.value == model.type }?.key ?: return@map null
-        SourceFolderModelState(model.module.name,
-                               model.url,
-                               modelTypeName,
-                               model.packagePrefix,
-                               model.generated)
-      }.filterNotNull())
+      return SourceFolderManagerState(sourceFolders.valueSequence
+                                        .mapNotNull { model ->
+                                          val modelTypeName = dictionary.entries.find { it.value == model.type }?.key ?: return@mapNotNull null
+                                          SourceFolderModelState(model.module.name,
+                                                                 model.url,
+                                                                 modelTypeName,
+                                                                 model.packagePrefix,
+                                                                 model.generated)
+                                        }
+                                        .toList())
     }
   }
 
@@ -255,8 +257,8 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 }
 
-data class SourceFolderManagerState(var sourceFolders: Collection<SourceFolderModelState>) {
-  constructor() : this(listOf<SourceFolderModelState>())
+data class SourceFolderManagerState(val sourceFolders: Collection<SourceFolderModelState>) {
+  constructor() : this(mutableListOf())
 }
 
 data class SourceFolderModelState(var moduleName: String,
