@@ -9,9 +9,11 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -22,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class ClassLoadingUtils {
+  private static final Logger LOG = Logger.getInstance(ClassLoadingUtils.class);
   private static final int BATCH_SIZE = 4096;
   private ClassLoadingUtils() {}
 
@@ -113,7 +116,15 @@ public final class ClassLoadingUtils {
       setChuckByChunk(reference, mirrors);
     }
     else {
-      DebuggerUtilsEx.setValuesNoCheck(reference, mirrors);
+      try {
+        DebuggerUtilsEx.setValuesNoCheck(reference, mirrors);
+      }
+      catch (VMMismatchException e) {
+        LOG.error("Class vm: " + arrayClass.virtualMachine() +
+                  "\nReference vm: " + reference.virtualMachine() +
+                  "\nMirrors vms: " + StreamEx.of(mirrors).map(Mirror::virtualMachine).distinct().joining(", ")
+          , e);
+      }
     }
 
     return reference;
