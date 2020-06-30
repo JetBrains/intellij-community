@@ -289,11 +289,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  protected void installNorthComponents(@NotNull Project project) {
+  void setProject(Project project) {
     if (myCustomFrameTitlePane != null) {
       myCustomFrameTitlePane.setProject(project);
     }
+  }
 
+  protected void installNorthComponents(@NotNull Project project) {
     myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensionList(project));
     if (myNorthComponents.isEmpty()) {
       return;
