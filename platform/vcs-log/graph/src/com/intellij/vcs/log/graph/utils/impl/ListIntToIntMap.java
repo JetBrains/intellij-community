@@ -113,12 +113,6 @@ public final class ListIntToIntMap extends AbstractIntToIntMap implements Updata
     return sum;
   }
 
-  private void updateSumWithCorrectPrevious(int blockIndex) {
-    int endIndex = Math.min(myLongSize, (blockIndex + 1) * myBlockSize);
-
-    mySubSumOfBlocks[blockIndex] = calculateSumForBlock(blockIndex, endIndex - 1);
-  }
-
   @Override
   public void update(int startLongIndex, int endLongIndex) {
     checkUpdateParameters(startLongIndex, endLongIndex);
@@ -127,7 +121,8 @@ public final class ListIntToIntMap extends AbstractIntToIntMap implements Updata
     int prevEndSum = mySubSumOfBlocks[endSumIndex];
 
     for (int blockIndex = startSumIndex; blockIndex <= endSumIndex; blockIndex++) {
-      updateSumWithCorrectPrevious(blockIndex);
+      int endIndex = Math.min(myLongSize, (blockIndex + 1) * myBlockSize);
+      mySubSumOfBlocks[blockIndex] = calculateSumForBlock(blockIndex, endIndex - 1);
     }
 
     int sumDelta = mySubSumOfBlocks[endSumIndex] - prevEndSum;
