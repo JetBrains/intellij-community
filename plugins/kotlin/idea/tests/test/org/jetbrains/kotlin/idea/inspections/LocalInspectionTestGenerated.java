@@ -4885,6 +4885,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/implicitThis/already.kt");
         }
 
+        @TestMetadata("callVariableAsFunction.kt")
+        public void testCallVariableAsFunction() throws Exception {
+            runTest("testData/inspectionsLocal/implicitThis/callVariableAsFunction.kt");
+        }
+
+        @TestMetadata("callVariableAsFunction2.kt")
+        public void testCallVariableAsFunction2() throws Exception {
+            runTest("testData/inspectionsLocal/implicitThis/callVariableAsFunction2.kt");
+        }
+
         @TestMetadata("function.kt")
         public void testFunction() throws Exception {
             runTest("testData/inspectionsLocal/implicitThis/function.kt");
