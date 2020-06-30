@@ -182,20 +182,14 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
     })
 
   fun annotationParam(annotationQualifiedName: ElementPattern<String>, @NonNls parameterName: String): Self =
-    annotationParam(parameterName, qualifiedNamePattern(annotationQualifiedName))
+    annotationParam(parameterName, uAnnotationQualifiedNamePattern(annotationQualifiedName))
 
-  private fun qualifiedNamePattern(annotationQualifiedName: ElementPattern<String>): UElementPattern<UAnnotation, *> =
-    capture(UAnnotation::class.java).filterWithContext { it, context ->
-      it.qualifiedName?.let {
-        annotationQualifiedName.accepts(it, context)
-      } ?: false
-    }
 
   fun annotationParam(@NonNls annotationQualifiedName: String, @NonNls parameterName: String): Self =
     annotationParam(string().equalTo(annotationQualifiedName), parameterName)
 
   fun annotationParams(@NonNls annotationQualifiedName: String, @NonNls parameterNames: ElementPattern<String>): Self =
-    annotationParams(qualifiedNamePattern(string().equalTo(annotationQualifiedName)), parameterNames)
+    annotationParams(uAnnotationQualifiedNamePattern(string().equalTo(annotationQualifiedName)), parameterNames)
 
   fun inCall(callPattern: ElementPattern<UCallExpression>): Self =
     filterWithContext { it, context -> it.getUCallExpression()?.let { callPattern.accepts(it, context) } ?: false }
@@ -225,3 +219,10 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
 }
 
 class ULiteralExpressionPattern : UExpressionPattern<ULiteralExpression, ULiteralExpressionPattern>(ULiteralExpression::class.java)
+
+fun uAnnotationQualifiedNamePattern(annotationQualifiedName: ElementPattern<String>): UElementPattern<UAnnotation, *> =
+  capture(UAnnotation::class.java).filterWithContext { it, context ->
+    it.qualifiedName?.let {
+      annotationQualifiedName.accepts(it, context)
+    } ?: false
+  }
