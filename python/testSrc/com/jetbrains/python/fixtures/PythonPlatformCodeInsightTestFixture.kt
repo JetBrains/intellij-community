@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import com.jetbrains.python.PythonFileType
@@ -20,7 +19,6 @@ import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.fixture.PythonCommonCodeInsightTestFixture
 import junit.framework.TestCase.assertNotNull
 import java.io.File
-import java.lang.reflect.InvocationTargetException
 
 class PythonPlatformCodeInsightTestFixture : PythonCommonCodeInsightTestFixture {
   private val myDelegateTestCase = PyDelegateTestCase()
@@ -145,30 +143,6 @@ class PyDelegateTestCase : PyTestCase() {
 
   @Throws(Exception::class)
   fun runTest(test: ThrowableRunnable<Throwable>) {
-    val throwables = arrayOfNulls<Throwable>(1)
-    invokeTestRunnable {
-      try {
-        TestLoggerFactory.onTestStarted()
-        test.run()
-        TestLoggerFactory.onTestFinished(true)
-      }
-      catch (e: InvocationTargetException) {
-        TestLoggerFactory.onTestFinished(false)
-        e.fillInStackTrace()
-        throwables[0] = e.targetException
-      }
-      catch (e: IllegalAccessException) {
-        TestLoggerFactory.onTestFinished(false)
-        e.fillInStackTrace()
-        throwables[0] = e
-      }
-      catch (e: Throwable) {
-        TestLoggerFactory.onTestFinished(false)
-        throwables[0] = e
-      }
-    }
-
-    val throwable = throwables[0]
-    throwable?.let { throw it }
+    runTestRunnable(test)
   }
 }
