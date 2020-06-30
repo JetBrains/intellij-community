@@ -79,6 +79,7 @@ public final class PluginManagerCore {
   public static final String EDIT = "edit";
 
   private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
+  private static volatile boolean isNeedToLoadPluginFromMarketplace = true;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
   static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
   private static List<PluginError> ourLoadingErrors;
@@ -197,22 +198,27 @@ public final class PluginManagerCore {
     return set != null && set.contains(descriptor.getVersion());
   }
 
+  public static void setUpNeedToUpdateBrokenPlugins(){
+    isNeedToLoadPluginFromMarketplace = true;
+  }
+
   private static @NotNull Map<PluginId, Set<String>> getBrokenPluginVersions() {
     Map<PluginId, Set<String>> result = SoftReference.dereference(ourBrokenPluginVersions);
-    if (result != null) {
-      return result;
-    }
     if (System.getProperty("idea.ignore.disabled.plugins") != null) {
       result = Collections.emptyMap();
       ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
       return result;
     }
     File marketplaceBrokenPlugins = new File(MARKETPLACE_INCOMPATIBLE_PLUGINS);
-    if (marketplaceBrokenPlugins.exists()) {
+    if (isNeedToLoadPluginFromMarketplace && marketplaceBrokenPlugins.exists()) {
       result = readBrokenPluginFile(marketplaceBrokenPlugins);
-    } else {
-      result = readBrokenPluginFile(getPlatformBrokenPluginFile());
+      ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
+      isNeedToLoadPluginFromMarketplace = false;
     }
+    if (result != null) {
+      return result;
+    }
+    result = readBrokenPluginFile(getPlatformBrokenPluginFile());
     ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
     return result;
   }

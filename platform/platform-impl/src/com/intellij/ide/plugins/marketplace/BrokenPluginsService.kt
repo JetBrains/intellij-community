@@ -27,6 +27,7 @@ object BrokenPluginsService {
         .entries
         .joinToString("\n") { plugin -> "${plugin.key} ${plugin.value.joinToString(" ") { it }}" }
     )
+    PluginManagerCore.setUpNeedToUpdateBrokenPlugins()
   }
 
   private fun readBrokenPlugins(): Map<String, Set<String>> {
