@@ -1177,6 +1177,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (result != null) {
       PsiElement resolved = result.getElement();
       if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkRawOnParameterizedType(ref, resolved));
+      if (!myHolder.hasErrorResults() && resolved instanceof PsiModifierListOwner) {
+        myHolder.add(HighlightUtil.checkPreviewFeatureElement(ref, (PsiModifierListOwner)resolved, myLanguageLevel));
+      }
     }
   }
 
@@ -1614,6 +1617,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         QuickFixAction.registerQuickFixAction(info, AdjustFunctionContextFix.createFix(expression));
         myHolder.add(info);
       }
+    }
+    if (!myHolder.hasErrorResults() && method instanceof PsiModifierListOwner) {
+      myHolder.add(HighlightUtil.checkPreviewFeatureElement(expression, (PsiModifierListOwner)method, myLanguageLevel));
     }
   }
 

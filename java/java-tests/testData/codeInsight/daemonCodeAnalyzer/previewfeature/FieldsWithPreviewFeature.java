@@ -18,5 +18,13 @@ class Main {
     int k = new Main().i;
     <error descr="Patterns in 'instanceof' are not supported at language level '9'">org.myorg.preview.FromPreview</error> local = null;
   }
+  void f(<error descr="Text block literals are not supported at language level '9'">NotDirectlyAnnotatedField</error> a) {
+    <error descr="Text block literals are not supported at language level '9'">a.id</error> = 0;
+  }
 
+}
+
+@PreviewFeature(feature=Feature.TEXT_BLOCKS)
+class NotDirectlyAnnotatedField {
+  int id;
 }

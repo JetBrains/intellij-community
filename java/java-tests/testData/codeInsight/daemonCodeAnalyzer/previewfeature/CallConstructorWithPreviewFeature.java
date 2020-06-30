@@ -15,9 +15,19 @@ class Main {
     <error descr="Records are not supported at language level '9'">new Main(42l)</error>;
     <error descr="Text block literals are not supported at language level '9'">new Main("42")</error>;
     new Main(42);
-    <error descr="Patterns in 'instanceof' are not supported at language level '9'">new org.myorg.preview.FromPreview() {
+    new <error descr="Patterns in 'instanceof' are not supported at language level '9'">org.myorg.preview.FromPreview</error>() {
       public void g(){}
-    }</error>;
+    };
+    new <error descr="Text block literals are not supported at language level '9'">NotDirectlyAnnotatedConstructor</error>();
+    <error descr="Text block literals are not supported at language level '9'">new DirectlyAnnotatedConstructor()</error>;
   }
 
+}
+
+@PreviewFeature(feature=Feature.TEXT_BLOCKS)
+class NotDirectlyAnnotatedConstructor { }
+
+class DirectlyAnnotatedConstructor {
+  @PreviewFeature(feature=Feature.TEXT_BLOCKS)
+  DirectlyAnnotatedConstructor() {}
 }

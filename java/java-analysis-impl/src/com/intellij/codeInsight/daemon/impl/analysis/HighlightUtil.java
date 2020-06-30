@@ -18,6 +18,7 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -1624,6 +1625,11 @@ public final class HighlightUtil {
 
     final PsiAnnotation annotation = owner.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
     if (annotation != null) return annotation;
+
+    if (!(owner instanceof PsiClass) || !owner.hasModifier(JvmModifier.STATIC)) {
+      final PsiAnnotation result = getPreviewFeatureAnnotation(PsiTreeUtil.getParentOfType(owner, PsiClass.class));
+      if (result != null) return result;
+    }
 
     final PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(owner);
     if (psiPackage  == null) return null;

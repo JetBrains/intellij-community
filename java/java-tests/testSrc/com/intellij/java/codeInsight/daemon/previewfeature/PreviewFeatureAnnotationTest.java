@@ -41,6 +41,8 @@ public class PreviewFeatureAnnotationTest extends LightJavaCodeInsightFixtureTes
   public void testImportWithPreviewFeature() { doTest(); }
   public void testReferenceWithPreviewFeature() { doTest(); }
   public void testRequiresModuleWithPreviewFeature() { doTest(); }
+  public void testMethodReferenceWithPreviewFeature() { doTest(); }
+  public void testClassImplementsWithPreviewFeature() { doTest(); }
 
   private void doTest() {
     String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
