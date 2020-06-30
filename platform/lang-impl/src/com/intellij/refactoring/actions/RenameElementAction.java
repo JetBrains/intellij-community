@@ -30,10 +30,13 @@ public class RenameElementAction extends AnAction implements UpdateInBackground 
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    boolean enabled = dataContext.getData(CommonDataKeys.PROJECT) != null
-                      && getAvailableRenamers(dataContext).findAny().isPresent();
-    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setEnabled(isAvailable(e.getDataContext()));
+  }
+
+  @ApiStatus.Internal
+  public boolean isAvailable(@NotNull DataContext dataContext) {
+    return dataContext.getData(CommonDataKeys.PROJECT) != null
+           && getAvailableRenamers(dataContext).findAny().isPresent();
   }
 
   @Override
