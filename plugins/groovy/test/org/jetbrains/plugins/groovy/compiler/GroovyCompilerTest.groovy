@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
@@ -219,9 +220,9 @@ class Bar extends Foo {
   String getTestStartMessage() { "Starting " + getClass().name + " " + getName() }
 
   @Override
-  void runTest() {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
-      super.runTest()
+      super.runTestRunnable(testRunnable)
     }
     catch (Throwable e) {
       printLogs()
