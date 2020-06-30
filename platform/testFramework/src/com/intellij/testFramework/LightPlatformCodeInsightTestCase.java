@@ -41,13 +41,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestRule;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
@@ -62,18 +61,18 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   private TestIndexingModeSupporter.IndexingMode myIndexingMode = IndexingMode.SMART;
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     boolean runInCommand = isRunInCommand();
     boolean runInWriteAction = isRunInWriteAction();
 
     if (runInCommand && runInWriteAction) {
-      WriteCommandAction.writeCommandAction(getProject()).run(super::runTest);
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.runTestRunnable(testRunnable));
     }
     else if (runInCommand) {
       Ref<Throwable> e = new Ref<>();
       CommandProcessor.getInstance().executeCommand(getProject(), () -> {
         try {
-          super.runTest();
+          super.runTestRunnable(testRunnable);
         }
         catch (Throwable throwable) {
           e.set(throwable);
@@ -84,10 +83,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       }
     }
     else if (runInWriteAction) {
-      WriteAction.runAndWait(super::runTest);
+      WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
     }
     else {
-      super.runTest();
+      super.runTestRunnable(testRunnable);
     }
   }
 
