@@ -9,8 +9,6 @@ import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.paths.PsiDynaReference;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.CharPattern;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ObjectPattern;
@@ -121,36 +119,19 @@ public class CompletionData {
     }
   };
 
+  /**
+   * @deprecated {@link CompletionUtil#findReferencePrefix} instead
+   */
+  @Deprecated
   @Nullable
   public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {
-    try {
-      PsiUtilCore.ensureValid(insertedElement);
-      PsiReference ref = insertedElement.getContainingFile().findReferenceAt(offsetInFile);
-      if (ref != null) {
-        PsiElement element = ref.getElement();
-        int offsetInElement = offsetInFile - element.getTextRange().getStartOffset();
-        for (TextRange refRange : ReferenceRange.getRanges(ref)) {
-          if (refRange.contains(offsetInElement)) {
-            int beginIndex = refRange.getStartOffset();
-            String text = element.getText();
-            if (beginIndex < 0 || beginIndex > offsetInElement || offsetInElement > text.length()) {
-              throw new AssertionError("Inconsistent reference range:" +
-                                       " ref=" + ref.getClass() +
-                                       " element=" + element.getClass() +
-                                       " ref.start=" + refRange.getStartOffset() +
-                                       " offset=" + offsetInElement +
-                                       " psi.length=" + text.length());
-            }
-            return text.substring(beginIndex, offsetInElement);
-          }
-        }
-      }
-    }
-    catch (IndexNotReadyException ignored) {
-    }
-    return null;
+    return CompletionUtil.getReferencePrefix(insertedElement, offsetInFile);
   }
 
+  /**
+   * @deprecated Use {@link CompletionUtil} methods instead
+   */
+  @Deprecated
   public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile, ElementPattern<Character> prefixStartTrim) {
     if(insertedElement == null) return "";
 
@@ -168,10 +149,18 @@ public class CompletionData {
     return findPrefixDefault(insertedElement, offsetInFile, prefixStartTrim);
   }
 
+  /**
+   * @deprecated Use {@link CompletionUtil} methods instead
+   */
+  @Deprecated
   public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
     return findPrefixStatic(insertedElement, offsetInFile, NOT_JAVA_ID);
   }
 
+  /**
+   * @deprecated Use {@link CompletionUtil} methods instead
+   */
+  @Deprecated
   public static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final ElementPattern trimStart) {
     String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset());
     if (substr.length() == 0 || Character.isWhitespace(substr.charAt(substr.length() - 1))) return "";

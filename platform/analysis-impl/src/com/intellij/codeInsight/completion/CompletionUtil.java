@@ -14,13 +14,14 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.CharPattern;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.UnmodifiableIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -84,28 +85,58 @@ public final class CompletionUtil {
     return false;
   }
 
-  public static String findJavaIdentifierPrefix(CompletionParameters parameters) {
+  /**
+   * @return a prefix for completion matching, calculated from the given parameters.
+   * The prefix is the longest substring from inside {@code parameters.getPosition()}'s text,
+   * ending at {@code parameters.getOffset()}, being a valid Java identifier.
+   */
+  @NotNull
+  public static String findJavaIdentifierPrefix(@NotNull CompletionParameters parameters) {
     return findJavaIdentifierPrefix(parameters.getPosition(), parameters.getOffset());
   }
 
-  public static String findJavaIdentifierPrefix(final PsiElement insertedElement, final int offset) {
-    return findIdentifierPrefix(insertedElement, offset, CharPattern.javaIdentifierPartCharacter(), CharPattern.javaIdentifierStartCharacter());
+  /**
+   * @return a prefix for completion matching, calculated from the given parameters.
+   * The prefix is the longest substring from inside {@code position}'s text,
+   * ending at {@code offsetInFile}, being a valid Java identifier.
+   */
+  @NotNull
+  public static String findJavaIdentifierPrefix(@Nullable PsiElement position, int offsetInFile) {
+    return findIdentifierPrefix(position, offsetInFile, CharPattern.javaIdentifierPartCharacter(), CharPattern.javaIdentifierStartCharacter());
   }
 
-  public static String findReferenceOrAlphanumericPrefix(CompletionParameters parameters) {
+  /**
+   * @return the result of {@link #findReferencePrefix}, or {@link #findAlphanumericPrefix} if there's no reference.
+   */
+  @NotNull
+  public static String findReferenceOrAlphanumericPrefix(@NotNull CompletionParameters parameters) {
     String prefix = findReferencePrefix(parameters);
     return prefix == null ? findAlphanumericPrefix(parameters) : prefix;
   }
 
-  public static String findAlphanumericPrefix(CompletionParameters parameters) {
+  /**
+   * @return an alphanumertic prefix for completion matching, calculated from the given parameters.
+   * The prefix is the longest substring from inside {@code parameters.getPosition()}'s text,
+   * ending at {@code parameters.getOffset()}, consisting of letters and digits.
+   */
+  @NotNull
+  public static String findAlphanumericPrefix(@NotNull CompletionParameters parameters) {
     return findIdentifierPrefix(parameters.getPosition().getContainingFile(), parameters.getOffset(), CharPattern.letterOrDigitCharacter(), CharPattern.letterOrDigitCharacter());
   }
 
-  public static String findIdentifierPrefix(PsiElement insertedElement, int offset, ElementPattern<Character> idPart,
-                                            ElementPattern<Character> idStart) {
-    if (insertedElement == null) return "";
-    int startOffset = insertedElement.getTextRange().getStartOffset();
-    return findInText(offset, startOffset, idPart, idStart, insertedElement.getNode().getChars());
+  /**
+   * @return a prefix for completion matching, calculated from the given element's text and the offsets.
+   * The prefix is the longest substring from inside {@code position}'s text,
+   * ending at {@code offsetInFile}, beginning with a character
+   * satisfying {@code idStart}, and with all other characters satisfying {@code idPart}.
+   */
+  @NotNull
+  public static String findIdentifierPrefix(@Nullable PsiElement position, int offsetInFile,
+                                            @NotNull ElementPattern<Character> idPart,
+                                            @NotNull ElementPattern<Character> idStart) {
+    if (position == null) return "";
+    int startOffset = position.getTextRange().getStartOffset();
+    return findInText(offsetInFile, startOffset, idPart, idStart, position.getNode().getChars());
   }
 
   @SuppressWarnings("unused") // used in Rider
@@ -130,11 +161,45 @@ public final class CompletionUtil {
     return text.subSequence(start + 1, offsetInElement).toString().trim();
   }
 
+  /**
+   * @return a prefix from completion matching calculated by a reference found at parameters' offset
+   * (the reference text from the beginning until that offset),
+   * or {@code null} if there's no reference there.
+   */
   @Nullable
-  public static String findReferencePrefix(CompletionParameters parameters) {
-    return CompletionData.getReferencePrefix(parameters.getPosition(), parameters.getOffset());
+  public static String findReferencePrefix(@NotNull CompletionParameters parameters) {
+    return getReferencePrefix(parameters.getPosition(), parameters.getOffset());
   }
 
+  @Nullable
+  static String getReferencePrefix(@NotNull PsiElement position, int offsetInFile) {
+    try {
+      PsiUtilCore.ensureValid(position);
+      PsiReference ref = position.getContainingFile().findReferenceAt(offsetInFile);
+      if (ref != null) {
+        PsiElement element = ref.getElement();
+        int offsetInElement = offsetInFile - element.getTextRange().getStartOffset();
+        for (TextRange refRange : ReferenceRange.getRanges(ref)) {
+          if (refRange.contains(offsetInElement)) {
+            int beginIndex = refRange.getStartOffset();
+            String text = element.getText();
+            if (beginIndex < 0 || beginIndex > offsetInElement || offsetInElement > text.length()) {
+              throw new AssertionError("Inconsistent reference range:" +
+                                       " ref=" + ref.getClass() +
+                                       " element=" + element.getClass() +
+                                       " ref.start=" + refRange.getStartOffset() +
+                                       " offset=" + offsetInElement +
+                                       " psi.length=" + text.length());
+            }
+            return text.substring(beginIndex, offsetInElement);
+          }
+        }
+      }
+    }
+    catch (IndexNotReadyException ignored) {
+    }
+    return null;
+  }
 
   public static InsertionContext emulateInsertion(InsertionContext oldContext, int newStart, final LookupElement item) {
     final InsertionContext newContext = newContext(oldContext, item);
