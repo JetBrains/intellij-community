@@ -12,6 +12,24 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
   init {
     // We should wrap after space, cause otherwise formatting will eat space once AutoWrapHandler made wrap
     addRule(Rule(' ', WrapCondition.AFTER))
+    addRule(Rule('\t', WrapCondition.AFTER))
+
+    // Punctuation.
+    addRule(Rule(',', WrapCondition.AFTER))
+    addRule(Rule('.', WrapCondition.AFTER))
+    addRule(Rule('!', WrapCondition.AFTER))
+    addRule(Rule('?', WrapCondition.AFTER))
+    addRule(Rule(';', WrapCondition.AFTER))
+
+    // Brackets to wrap after.
+    addRule(Rule(')', WrapCondition.AFTER))
+    addRule(Rule(']', WrapCondition.AFTER))
+    addRule(Rule('}', WrapCondition.AFTER))
+
+    // Brackets to wrap before
+    addRule(Rule('(', WrapCondition.BEFORE))
+    addRule(Rule('[', WrapCondition.BEFORE))
+    addRule(Rule('{', WrapCondition.BEFORE))
   }
 
   override fun calculateWrapPosition(document: Document,
