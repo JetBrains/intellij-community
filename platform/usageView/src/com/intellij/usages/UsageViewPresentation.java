@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.regex.Pattern;
 
@@ -155,24 +154,19 @@ public class UsageViewPresentation {
   }
 
   /**
-   * Use {@link #getUsagesWord(int)} instead
+   * Please avoid using this method in string concatenations that are shown in UI
    */
-  @Deprecated
   @NotNull
   public String getUsagesWord() {
     return myUsagesWordSupplier.apply(1);
   }
 
   /**
-   * Use {@link #setUsagesWord(Function)} instead
+   * Use {@link #setUsagesWord(IntFunction)} instead
    */
   @Deprecated
   public void setUsagesWord(@NotNull String usagesWord) {
     myUsagesWordSupplier = count -> usagesWord;
-  }
-
-  public String getUsagesWord(int count) {
-    return myUsagesWordSupplier.apply(count);
   }
 
   public void setUsagesWord(@NotNull IntFunction<String> usagesWordSupplier) {
