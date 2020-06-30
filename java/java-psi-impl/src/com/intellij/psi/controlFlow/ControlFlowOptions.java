@@ -15,10 +15,16 @@ public class ControlFlowOptions {
   
   private final boolean myEnableShortCircuit;
   private final boolean myEvaluateConstantIfCondition;
+  private final boolean myExceptionAfterAssignment;
 
   public ControlFlowOptions(boolean enableShortCircuit, boolean evaluateConstantIfCondition) {
+    this(enableShortCircuit, evaluateConstantIfCondition, true);
+  }
+
+  public ControlFlowOptions(boolean enableShortCircuit, boolean evaluateConstantIfCondition, boolean exceptionAfterAssignment) {
     myEnableShortCircuit = enableShortCircuit;
     myEvaluateConstantIfCondition = evaluateConstantIfCondition;
+    myExceptionAfterAssignment = exceptionAfterAssignment;
   }
 
   /**
@@ -38,11 +44,20 @@ public class ControlFlowOptions {
   }
 
   /**
+   * @return true if control flow assumes that exception could be thrown after assigment. 
+   * True value is JLS-compatible, but might be counter-intuitive. 
+   */
+  public boolean isExceptionAfterAssignment() {
+    return myExceptionAfterAssignment;
+  }
+
+  /**
    * @return ControlFlowOptions object that is the same as current but without "evaluate constant if condition" option.
    * @see #shouldEvaluateConstantIfCondition() 
    */
   public ControlFlowOptions dontEvaluateConstantIfCondition() {
-    return myEvaluateConstantIfCondition ? new ControlFlowOptions(myEnableShortCircuit, false) : this;
+    return myEvaluateConstantIfCondition ? 
+           new ControlFlowOptions(myEnableShortCircuit, false, myExceptionAfterAssignment) : this;
   }
 
   @Override
@@ -51,11 +66,12 @@ public class ControlFlowOptions {
     if (o == null || getClass() != o.getClass()) return false;
     ControlFlowOptions options = (ControlFlowOptions)o;
     return myEnableShortCircuit == options.myEnableShortCircuit &&
-           myEvaluateConstantIfCondition == options.myEvaluateConstantIfCondition;
+           myEvaluateConstantIfCondition == options.myEvaluateConstantIfCondition &&
+           myExceptionAfterAssignment == options.myExceptionAfterAssignment;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myEnableShortCircuit, myEvaluateConstantIfCondition);
+    return Objects.hash(myEnableShortCircuit, myEvaluateConstantIfCondition, myExceptionAfterAssignment);
   }
 }

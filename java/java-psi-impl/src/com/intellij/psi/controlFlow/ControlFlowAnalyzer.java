@@ -228,6 +228,20 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateUncheckedExceptionJumpsIfNeeded(@NotNull PsiElement element, boolean atStart) {
+    if (!myOptions.isExceptionAfterAssignment() && !atStart) {
+      if (element instanceof PsiExpression) {
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
+        if (parent instanceof PsiAssignmentExpression && parent.getParent() instanceof PsiExpressionStatement) {
+          generateUncheckedExceptionJumps(element, false);
+          return;
+        }
+      }
+      if (element instanceof PsiCodeBlock || 
+          element instanceof PsiExpressionStatement && 
+          ((PsiExpressionStatement)element).getExpression() instanceof PsiAssignmentExpression) {
+        return;
+      }
+    }
     // optimization: reduce number of instructions
     boolean isGeneratingStatement = element instanceof PsiStatement && !(element instanceof PsiSwitchLabelStatement);
     boolean isGeneratingCodeBlock = element instanceof PsiCodeBlock && !(element.getParent() instanceof PsiSwitchStatement);
@@ -600,6 +614,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     for (PsiParameter catchParameter : myCatchParameters) {
       ProgressManager.checkCanceled();
+      if (myUnhandledExceptionCatchBlocks.contains(((PsiCatchSection)catchParameter.getDeclarationScope()).getCatchBlock())) {
+        continue;
+      }
       PsiType type = catchParameter.getType();
       List<PsiType> types =
         type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : Collections.singletonList(type);

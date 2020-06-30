@@ -71,6 +71,7 @@ public class DefUseTest extends LightJavaCodeInsightFixtureTestCase {
   public void testFieldInitializerUsedInMethodReference() { doTest(); }
   public void testFieldInitializerChainedConstructor() { doTest(); }
   public void testUnderAlwaysFalseCondition() { doTest(); }
+  public void testLastInTry() { doTest(); }
 
   @NotNull
   @Override
