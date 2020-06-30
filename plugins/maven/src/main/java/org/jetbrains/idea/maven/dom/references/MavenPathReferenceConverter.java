@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.references;
 
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
@@ -23,6 +25,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * @author Sergey Evdokimov
@@ -93,6 +96,27 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
                   }
                 }
               }
+              else if (getIndex() == getAllReferences().length - 1 &&
+                       Objects.equals("relativePath", genericDomValue.getXmlElementName()) &&
+                       context.getVirtualFile() != null) {
+                // it is a last context and should be resolved to pom.xml
+
+                VirtualFile parentFile = context.getVirtualFile().findChild(text);
+                if (parentFile != null) {
+                  VirtualFile parentPom = parentFile.isDirectory() ? parentFile.findChild("pom.xml") : parentFile;
+                  if (parentPom != null) {
+                    ReadAction.run(() -> {
+                      Project project = context.getProject();
+                      if (!project.isDisposed()) {
+                        PsiFile psiFile = PsiManager.getInstance(project).findFile(parentPom);
+                        if (psiFile != null) {
+                          result.add(new PsiElementResolveResult(psiFile));
+                        }
+                      }
+                    });
+                  }
+                }
+              }
               else if ("..".equals(resolvedText)) {
                 PsiFileSystemItem resolved = context.getParent();
                 if (resolved != null) {
@@ -100,7 +124,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
                     resolved = resolved.getParent();  // calculated regarding parent directory, not the pom itself
                   }
                   if (resolved != null) {
-                    result.add(new PsiElementResolveResult(resolved));
+                  result.add(new PsiElementResolveResult(resolved));
                   }
                 }
               }
