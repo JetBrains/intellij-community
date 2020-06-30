@@ -81,7 +81,7 @@ interface DynamicPluginListener {
   fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) { }
 
   /**
-   * @param isUpdate true if the plugin is being unloaded as part of an update installation and a new version will be loaded afterwards
+   * @param isUpdate `true` if the plugin is being unloaded as part of an update installation and a new version will be loaded afterwards
    */
   @JvmDefault
   fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) { }
@@ -91,7 +91,7 @@ interface DynamicPluginListener {
 
   /**
    * Checks if the plugin can be dynamically unloaded at this moment.
-   * Method should throw {@link CannotUnloadPluginException} if it isn't possible by some reason
+   * Method should throw [CannotUnloadPluginException] if it isn't possible for some reason.
    */
   @Throws(CannotUnloadPluginException::class)
   @JvmDefault
