@@ -105,6 +105,15 @@ public final class PluginManagerCore {
   public static boolean ourDisableNonBundledPlugins;
 
   /**
+   * Broken plugins stored in IDEA
+   */
+  private static final String BROKEN_PLUGIN_FILE = "/brokenPlugins.txt";
+  /**
+   * All broken plugins from Marketplace
+   */
+  public static final String MARKETPLACE_INCOMPATIBLE_PLUGINS = PathManager.getConfigPath() + "/incompatiblePlugins.txt";
+
+  /**
    * Bundled plugins that were updated.
    * When we update bundled plugin it becomes not bundled, so it is more difficult for analytics to use that data.
    */
@@ -193,30 +202,42 @@ public final class PluginManagerCore {
     if (result != null) {
       return result;
     }
-
     if (System.getProperty("idea.ignore.disabled.plugins") != null) {
       result = Collections.emptyMap();
       ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
       return result;
     }
+    File marketplaceBrokenPlugins = new File(MARKETPLACE_INCOMPATIBLE_PLUGINS);
+    if (marketplaceBrokenPlugins.exists()) {
+      result = readBrokenPluginFile(marketplaceBrokenPlugins);
+    } else {
+      result = readBrokenPluginFile(getPlatformBrokenPluginFile());
+    }
+    ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
+    return result;
+  }
 
-    result = new HashMap<>();
-    try (InputStream resource = PluginManagerCore.class.getResourceAsStream("/brokenPlugins.txt");
-         BufferedReader br = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
+  private static @NotNull File getPlatformBrokenPluginFile(){
+    URL fileUrl = PluginManagerCore.class.getResource(BROKEN_PLUGIN_FILE);
+    if (fileUrl == null) throw new RuntimeException("File " + BROKEN_PLUGIN_FILE + " was not found");
+    return new File(fileUrl.getFile());
+  }
+
+  private static Map<PluginId, Set<String>> readBrokenPluginFile(File file) {
+    Map<PluginId, Set<String>> result = new HashMap<>();
+    try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
       String s;
       while ((s = br.readLine()) != null) {
         s = s.trim();
         if (s.startsWith("//")) {
           continue;
         }
-
         List<String> tokens = ParametersListUtil.parse(s);
         if (tokens.isEmpty()) {
           continue;
         }
-
         if (tokens.size() == 1) {
-          throw new RuntimeException("brokenPlugins.txt is broken. The line contains plugin name, but does not contains version: " + s);
+          throw new RuntimeException(file.getName() + " is broken. The line contains plugin name, but does not contains version: " + s);
         }
 
         PluginId pluginId = PluginId.getId(tokens.get(0));
@@ -225,10 +246,8 @@ public final class PluginManagerCore {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException("Failed to read /brokenPlugins.txt", e);
+      throw new RuntimeException("Failed to read " + file.getName(), e);
     }
-
-    ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
     return result;
   }
 

@@ -100,6 +100,8 @@ open class MarketplaceRequests {
     "${PLUGIN_MANAGER_URL}/feature/getImplementations"
   ).addParameters(param)
 
+  private val BROKEN_PLUGIN_PATH = "${PLUGIN_MANAGER_URL}/files/brokenPlugins.json"
+
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> = try {
     if (param.isEmpty()) emptyList()
     else {
@@ -177,6 +179,23 @@ open class MarketplaceRequests {
     logWarnOrPrintIfDebug("Can not get organizations from Marketplace", e)
     emptyList()
   }
+
+  fun getBrokenPluginsFile(file: File?): List<MarketplaceBrokenPlugin> {
+    return try {
+      readOrUpdateFile(
+        file,
+        BROKEN_PLUGIN_PATH,
+        null,
+        "",
+        ::parseBrokenPlugins
+      )
+    }
+    catch (e: Exception) {
+      logWarnOrPrintIfDebug("Can not get broken plugins file from Marketplace", e)
+      emptyList()
+    }
+  }
+
 
   fun getAllPluginsTags(): List<String> = try {
     HttpRequests
@@ -304,6 +323,11 @@ open class MarketplaceRequests {
     LOG.error("Can not get compatible update by module from Marketplace", e)
     emptyList()
   }
+
+  private fun parseBrokenPlugins(reader: Reader) = objectMapper.readValue(
+    reader,
+    object : TypeReference<List<MarketplaceBrokenPlugin>>() {}
+  )
 
   private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<List<String>>() {})
 
