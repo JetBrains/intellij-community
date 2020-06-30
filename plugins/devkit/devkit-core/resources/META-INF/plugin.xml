@@ -84,7 +84,7 @@
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
     <compileServer.plugin classpath="devkit-jps-plugin.jar"/>
-    <postStartupActivity implementation="org.jetbrains.idea.devkit.module.PluginModuleConvertToGradleStartupActivity"/>
+    <backgroundPostStartupActivity implementation="org.jetbrains.idea.devkit.module.PluginModuleConvertToGradleStartupActivity"/>
 
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
     <lang.documentationProvider language="XML"

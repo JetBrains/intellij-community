@@ -14,11 +14,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.impl.BundledKeymapBean;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
@@ -30,7 +32,7 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import java.util.List;
 import java.util.Set;
 
-public class PluginModuleConvertToGradleStartupActivity implements StartupActivity {
+public class PluginModuleConvertToGradleStartupActivity implements StartupActivity.Background {
 
   @NonNls
   private static final String ID = "Migrate DevKit plugin to Gradle";
@@ -60,37 +62,44 @@ public class PluginModuleConvertToGradleStartupActivity implements StartupActivi
         if (devkitModules.size() > 1) break;
       }
     }
-    if (!isSimpleSingleModulePlugin(devkitModules)) return;
+    if (!isSimpleSingleModulePlugin(project, devkitModules)) return;
 
-    NOTIFICATION_GROUP.createNotification(ID, null, "Gradle-based setup is recommended for this project.", NotificationType.INFORMATION)
+    UIUtil.invokeLaterIfNeeded(() -> NOTIFICATION_GROUP.createNotification(ID, null, "Gradle-based setup is recommended for this project.",
+                                                                           NotificationType.INFORMATION)
       .addAction(NotificationAction.createSimpleExpiring("Migration guide", () ->
         BrowserUtil.browse("http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/prerequisites.html" +
                            "#adding-gradle-support-to-an-existing-devkit-based-intellij-platform-plugin")))
       .addAction(NotificationAction.createSimpleExpiring("Do not show again", () ->
         propertiesComponent.setValue(DO_NOT_SHOW_AGAIN_SETTING, true)))
       .setIcon(AllIcons.Nodes.Plugin)
-      .notify(project);
+      .notify(project));
   }
 
-  private static boolean isSimpleSingleModulePlugin(Set<Module> devkitModules) {
+  private static boolean isSimpleSingleModulePlugin(Project project, Set<Module> devkitModules) {
     if (devkitModules.size() != 1) return false;
 
-    final XmlFile pluginXml = PluginModuleType.getPluginXml(ContainerUtil.getOnlyItem(devkitModules));
-    if (pluginXml == null || !DescriptorUtil.isPluginXml(pluginXml)) return false;
+    return DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+      final XmlFile pluginXml = PluginModuleType.getPluginXml(ContainerUtil.getOnlyItem(devkitModules));
+      if (pluginXml == null || !DescriptorUtil.isPluginXml(pluginXml)) return false;
 
-    final IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXml);
-    assert ideaPlugin != null;
+      final IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXml);
+      assert ideaPlugin != null;
 
-    Extensions extensions = ContainerUtil.getOnlyItem(ideaPlugin.getExtensions());
-    if (extensions == null) return false;
-    final List<Extension> extensionList = extensions.collectExtensions();
-    final Extension extension = ContainerUtil.getOnlyItem(extensionList);
-    if (extension == null) return false;
+      Extensions extensions = ContainerUtil.getOnlyItem(ideaPlugin.getExtensions());
+      if (extensions == null) return false;
 
-    final ExtensionPoint extensionPoint = extension.getExtensionPoint();
-    if (extensionPoint == null) return false;
-    final String extensionPointName = extensionPoint.getEffectiveQualifiedName();
-    return UIThemeProvider.EP_NAME.getName().equals(extensionPointName) ||
-           BundledKeymapBean.EP_NAME.getName().equals(extensionPointName);
+      final List<Extension> extensionList = extensions.collectExtensions();
+      for (Extension extension : extensionList) {
+        final ExtensionPoint extensionPoint = extension.getExtensionPoint();
+        if (extensionPoint == null) return false;
+
+        final String extensionPointName = extensionPoint.getEffectiveQualifiedName();
+        if (!UIThemeProvider.EP_NAME.getName().equals(extensionPointName) &&
+            !BundledKeymapBean.EP_NAME.getName().equals(extensionPointName)) {
+          return false;
+        }
+      }
+      return !extensionList.isEmpty();
+    });
   }
 }
