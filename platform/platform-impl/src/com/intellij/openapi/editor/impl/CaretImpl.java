@@ -745,8 +745,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     int lineNumber = getLogicalPosition().line;
     int newOffset = offset - 1;
     int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
+    CharSequence chars = document.getImmutableCharSequence();
     for (; newOffset > minOffset; newOffset--) {
-      if (EditorActionUtil.isWordOrLexemeStart(myEditor, newOffset, camel)) break;
+      if (EditorActionUtil.isWordOrLexemeStart(myEditor, newOffset, camel) || isBetweenBrackets(chars, newOffset)) break;
     }
 
     return newOffset;
@@ -766,11 +767,20 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       if (lineNumber + 1 >= document.getLineCount()) return offset;
       maxOffset = document.getLineEndOffset(lineNumber + 1);
     }
+    CharSequence chars = document.getImmutableCharSequence();
     for (; newOffset < maxOffset; newOffset++) {
-      if (EditorActionUtil.isWordOrLexemeEnd(myEditor, newOffset, camel)) break;
+      if (EditorActionUtil.isWordOrLexemeEnd(myEditor, newOffset, camel) || isBetweenBrackets(chars, newOffset)) break;
     }
 
     return newOffset;
+  }
+
+  private static boolean isBetweenBrackets(CharSequence text, int offset) {
+    return offset < text.length() && isBracket(text.charAt(offset)) && offset > 0 && isBracket(text.charAt(offset - 1));
+  }
+
+  private static boolean isBracket(char c) {
+    return "()[]<>{}".indexOf(c) != -1;
   }
 
   private CaretImpl cloneWithoutSelection() {
