@@ -155,8 +155,12 @@ public final class MultiResolutionImageProvider {
    * Converts the provided {@link JBHiDPIScaledImage} to {@code MultiResolutionImage}.
    * If the provided image is not {@code JBHiDPIScaledImage} the returned {@code MultiResolutionImage} will
    * default to the provided image's single resolution variant.
+   *
+   * <p>
+   * This function works correctly since JDK version 9 only,
+   * for JDK 1.8 it can return null.
+   * </p>
    */
-  @Contract("null -> null; !null -> !null")
   public static Image convertFromJBImage(@Nullable Image jbImage) {
     if (jbImage == null) return null;
 
@@ -178,6 +182,9 @@ public final class MultiResolutionImageProvider {
 
     Image image = Objects.requireNonNull(IconLoader.toImage(jbIcon, ctx));
     image = convertFromJBImage(image);
+    if (image == null) {
+      return jbIcon; // to fix NPE (IDEA-244323)
+    }
     return new ImageIcon(image);
   }
 
