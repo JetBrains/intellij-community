@@ -10,7 +10,9 @@ import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -22,10 +24,10 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<
   protected Module myModule;
 
   @Override
-  public final void runBare() throws Throwable {
+  protected final void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     // don't create application in EDT
     TestApplicationManager.getInstance();
-    super.runBare();
+    super.runBare(testRunnable);
   }
 
   @Override

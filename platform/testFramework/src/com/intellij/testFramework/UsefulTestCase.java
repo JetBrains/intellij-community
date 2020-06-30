@@ -460,7 +460,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @Override
-  public void runBare() throws Throwable {
+  public final void runBare() throws Throwable {
     runBare(myDefaultTestRunnable);
   }
 

@@ -607,7 +607,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
-  public void runBare() throws Throwable {
+  protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (!shouldRunTest()) return;
 
     TestRunnerUtil.replaceIdeEventQueueSafely();

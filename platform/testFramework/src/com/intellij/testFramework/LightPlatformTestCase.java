@@ -488,11 +488,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
-  public final void runBare() throws Throwable {
-    super.runBare();
-  }
-
-  @Override
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (!shouldRunTest()) {
       return;
