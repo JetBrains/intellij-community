@@ -88,63 +88,76 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
         return false;
       }
     };
-    MySpeedSearch speedSearch = new MySpeedSearch<T>(myTree, field.getTextEditor()) {
-      @Override
-      protected void onSearchFieldUpdated(String pattern) {
-        TreePath[] paths = myTree.getSelectionModel().getSelectionPaths();
-        getSearchModel().refilter();
-        if (StringUtil.isNotEmpty(pattern)) TreeUtil.expandAll(myTree);
-        myTree.getSelectionModel().setSelectionPaths(paths);
-      }
 
-      @Override
-      public void select(@NotNull T node) {
-        TreeUtil.selectInTree(node, false, myTree);
-      }
-
-      @Override
-      public boolean isMatching(@NotNull T node) {
-        String text = getText(getUserObject(node));
-        return text != null && matchingFragments(text) != null;
-      }
-
-      @Nullable
-      @Override
-      public T getSelection() {
-        return ArrayUtil.getFirstElement(myTree.getSelectedNodes(getNodeClass(), null));
-      }
-
-      @NotNull
-      @Override
-      public Iterator<T> iterate(@Nullable T start, boolean fwd) {
-        JBTreeTraverser<T> traverser = JBTreeTraverser.<T>from(n -> {
-          int count = n.getChildCount();
-          List<T> children = new ArrayList<>(count);
-          for (int i = 0; i < count; ++i) {
-            T c = ObjectUtils.tryCast(n.getChildAt(fwd ? i : count - i - 1), getNodeClass());
-            if (c != null) children.add(c);
-          }
-          return children;
-        }).expand(Conditions.alwaysTrue());
-        if (start == null) {
-          traverser = traverser.withRoot(getRoot());
-        }
-        else {
-          List<T> roots = new ArrayList<>();
-          for (TreeNode node = null, parent = start; parent != null; node = parent, parent = node.getParent()) {
-            int idx = node == null ? -1 : parent.getIndex(node);
-            for (int i = fwd ? idx + 1 : 0, c = fwd ? parent.getChildCount() : idx; i < c; ++i) {
-              T child = ObjectUtils.tryCast(parent.getChildAt(fwd ? i : idx - i - 1), getNodeClass());
-              if (child != null) roots.add(child);
-            }
-          }
-          traverser = traverser.withRoots(roots);
-        }
-        return traverser.preOrderDfsTraversal().iterator();
-      }
-    };
-    getSearchModel().setSpeedSearch(speedSearch);
+    getSearchModel().setSpeedSearch(createSpeedSearch(field));
     return field;
+  }
+
+  @NotNull
+  protected SpeedSearchSupply createSpeedSearch(@NotNull SearchTextField searchTextField) {
+    return new FilteringSpeedSearch(searchTextField);
+  }
+
+  protected class FilteringSpeedSearch extends MySpeedSearch<T> {
+
+    protected FilteringSpeedSearch(@NotNull SearchTextField field) {
+      super(myTree, field.getTextEditor());
+    }
+
+    @Override
+    protected void onSearchFieldUpdated(String pattern) {
+      TreePath[] paths = myTree.getSelectionModel().getSelectionPaths();
+      getSearchModel().refilter();
+      expandTreeOnSearchUpdateComplete(pattern);
+      myTree.getSelectionModel().setSelectionPaths(paths);
+      onSpeedSearchUpdateComplete(pattern);
+    }
+
+    @Override
+    public void select(@NotNull T node) {
+      TreeUtil.selectInTree(node, false, myTree);
+    }
+
+    @Override
+    public boolean isMatching(@NotNull T node) {
+      String text = getText(getUserObject(node));
+      return text != null && matchingFragments(text) != null;
+    }
+
+    @Nullable
+    @Override
+    public T getSelection() {
+      return ArrayUtil.getFirstElement(myTree.getSelectedNodes(getNodeClass(), null));
+    }
+
+    @NotNull
+    @Override
+    public Iterator<T> iterate(@Nullable T start, boolean fwd) {
+      JBTreeTraverser<T> traverser = JBTreeTraverser.<T>from(n -> {
+        int count = n.getChildCount();
+        List<T> children = new ArrayList<>(count);
+        for (int i = 0; i < count; ++i) {
+          T c = ObjectUtils.tryCast(n.getChildAt(fwd ? i : count - i - 1), getNodeClass());
+          if (c != null) children.add(c);
+        }
+        return children;
+      }).expand(Conditions.alwaysTrue());
+      if (start == null) {
+        traverser = traverser.withRoot(getRoot());
+      }
+      else {
+        List<T> roots = new ArrayList<>();
+        for (TreeNode node = null, parent = start; parent != null; node = parent, parent = node.getParent()) {
+          int idx = node == null ? -1 : parent.getIndex(node);
+          for (int i = fwd ? idx + 1 : 0, c = fwd ? parent.getChildCount() : idx; i < c; ++i) {
+            T child = ObjectUtils.tryCast(parent.getChildAt(fwd ? i : idx - i - 1), getNodeClass());
+            if (child != null) roots.add(child);
+          }
+        }
+        traverser = traverser.withRoots(roots);
+      }
+      return traverser.preOrderDfsTraversal().iterator();
+    }
   }
 
   public void installSimple() {
@@ -182,6 +195,13 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   }
 
   protected void rebuildTree() {
+  }
+
+  protected void expandTreeOnSearchUpdateComplete(@Nullable String pattern) {
+    if (StringUtil.isNotEmpty(pattern)) TreeUtil.expandAll(myTree);
+  }
+
+  protected void onSpeedSearchUpdateComplete(@Nullable String pattern) {
   }
 
   @Nullable
@@ -264,6 +284,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     public void setSpeedSearch(@NotNull SpeedSearchSupply supply) {
       mySpeedSearch = supply;
       updateStructure();
+    }
+
+    public SpeedSearchSupply getSpeedSearch() {
+      return mySpeedSearch;
     }
 
     public void addNodeListener(@NotNull Listener<U> listener) {
@@ -460,6 +484,8 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     private boolean myUpdating = false;
     private final JTextComponent myField;
 
+    protected void onUpdatePattern(@Nullable String text) { }
+
     MySpeedSearch(@NotNull JComponent comp, @NotNull JTextComponent field) {
       myField = field;
       myField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -468,7 +494,9 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
           if (!myUpdating) {
             myUpdating = true;
             try {
-              updatePattern(myField.getText());
+              String text = myField.getText();
+              updatePattern(text);
+              onUpdatePattern(text);
               update();
             }
             finally {
