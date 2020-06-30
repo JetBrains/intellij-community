@@ -13,7 +13,8 @@ import junit.framework.TestSuite;
 import java.util.Arrays;
 import java.util.List;
 
-public class JavaBranchRefactoringSuite {
+@SuppressWarnings("NewClassNamingConvention") // to run on TeamCity
+public class JavaBranchRefactoringTest {
 
   public static Test suite() {
     TestSuite suite = new TestSuite();
