@@ -29,7 +29,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,6 +46,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
@@ -62,38 +63,47 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @Override
   protected void runTest() throws Throwable {
-    if (isRunInWriteAction()) {
-      WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, Throwable>)() -> {
-        doRunTest();
-        return null;
-      });
+    boolean runInCommand = isRunInCommand();
+    boolean runInWriteAction = isRunInWriteAction();
+
+    if (runInCommand && runInWriteAction) {
+      WriteCommandAction.writeCommandAction(getProject()).run(super::runTest);
     }
-    else {
+    else if (runInCommand) {
       Ref<Throwable> e = new Ref<>();
       CommandProcessor.getInstance().executeCommand(getProject(), () -> {
         try {
-          doRunTest();
+          super.runTest();
         }
         catch (Throwable throwable) {
           e.set(throwable);
         }
       }, null, null);
-      if (e.get() != null) throw e.get();
+      if (!e.isNull()) {
+        throw e.get();
+      }
     }
-  }
-
-  protected void doRunTest() throws Throwable {
-    super.runTest();
+    else if (runInWriteAction) {
+      WriteAction.runAndWait(super::runTest);
+    }
+    else {
+      super.runTest();
+    }
   }
 
   protected boolean isRunInWriteAction() {
     return false;
   }
 
+  protected boolean isRunInCommand() {
+    return true;
+  }
+
   /**
    * Configure test from data file. Data file is usual java, xml or whatever file that needs to be tested except it
    * has &lt;caret&gt; marker where caret should be placed when file is loaded in editor and &lt;selection&gt;&lt;/selection&gt;
    * denoting selection bounds.
+   *
    * @param relativePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    */
   protected void configureByFile(@TestDataFile @NonNls @NotNull String relativePath) {

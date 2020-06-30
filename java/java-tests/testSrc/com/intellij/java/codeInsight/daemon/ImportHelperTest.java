@@ -85,10 +85,10 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected boolean isRunInCommand() {
     // Avoid starting inside command (as implemented in super-class)
     // because we need to operate on application undo queue
-    doRunTest();
+    return false;
   }
 
   public void testImportsInsertedAlphabetically() {
