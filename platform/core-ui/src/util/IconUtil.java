@@ -199,6 +199,7 @@ public class IconUtil {
    * @see #computeFileIcon(VirtualFile, int, Project)
    * @see FileType#getIcon()
    */
+  @NotNull
   public static Icon computeBaseFileIcon(@NotNull VirtualFile vFile) {
     Icon icon = TypePresentationService.getService().getIcon(vFile);
     if (icon != null) {
@@ -208,7 +209,8 @@ public class IconUtil {
     if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
       return IconWithToolTip.tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
     }
-    return fileType.getIcon();
+    icon = fileType.getIcon();
+    return icon != null ? icon : getEmptyIcon(false);
   }
 
   @Nullable
