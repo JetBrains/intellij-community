@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
@@ -337,23 +336,18 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    if (runInDispatchThread()) {
-      EdtTestUtil.runInEdtAndWait(() -> {
-        if (myReleaseIWLockOnRun) {
-          ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-            runnable.run();
-            return null;
-          });
-        }
-        else {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+    super.invokeTestRunnable(() -> {
+      if (runInDispatchThread() && myReleaseIWLockOnRun) {
+        ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
           runnable.run();
-        }
-      });
-    }
-    else {
-      runnable.run();
-    }
+          return null;
+        });
+      }
+      else {
+        runnable.run();
+      }
+    });
   }
 
   private static <T> T computeAssertingExceptionConditionally(boolean shouldFail, @NotNull Supplier<T> computation) {
