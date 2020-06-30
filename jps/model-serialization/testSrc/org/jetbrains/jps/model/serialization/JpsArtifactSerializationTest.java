@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static org.jetbrains.jps.model.serialization.JpsProjectSerializationTest.SAMPLE_PROJECT_PATH;
@@ -28,13 +29,15 @@ public class JpsArtifactSerializationTest extends JpsSerializationTestCase {
 
   public void testSaveProject() throws IOException {
     loadProject(SAMPLE_PROJECT_PATH);
-    List<Path> artifactFiles = Files.list(getTestDataAbsoluteFile(SAMPLE_PROJECT_PATH + "/.idea/artifacts")).collect(Collectors.toList());
-    assertNotNull(artifactFiles);
-    for (Path file : artifactFiles) {
-      JpsArtifact artifact = getService().createReference(
-        FileUtilRt.getNameWithoutExtension(file.getFileName().toString())).asExternal(myModel).resolve();
-      assertNotNull(artifact);
-      doTestSaveArtifact(artifact, file);
+    try (Stream<Path> artifacts = Files.list(getTestDataAbsoluteFile(SAMPLE_PROJECT_PATH + "/.idea/artifacts"))) {
+      List<Path> artifactFiles = artifacts.collect(Collectors.toList());
+      assertNotNull(artifactFiles);
+      for (Path file : artifactFiles) {
+        JpsArtifact artifact = getService().createReference(
+          FileUtilRt.getNameWithoutExtension(file.getFileName().toString())).asExternal(myModel).resolve();
+        assertNotNull(artifact);
+        doTestSaveArtifact(artifact, file);
+      }
     }
   }
 
