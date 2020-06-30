@@ -19,11 +19,13 @@ object BrokenPluginsService {
   }
 
   private fun updateBrokenPlugin() {
-    val brokenPlugins = readBrokenPlugins().entries
-      .joinToString("\n") { plugin -> "${plugin.key} ${plugin.value.joinToString(" ") { it }}" }
+    val brokenPlugins = readBrokenPlugins()
     if (brokenPlugins.isEmpty()) return
     val file = File(PluginManagerCore.MARKETPLACE_INCOMPATIBLE_PLUGINS)
-    file.writeText(brokenPlugins)
+    file.writeText(
+      brokenPlugins.entries
+        .joinToString("\n") { plugin -> "${plugin.key} ${plugin.value.joinToString(" ") { it }}" }
+    )
     PluginManagerCore.setUpNeedToUpdateBrokenPlugins()
   }
 
