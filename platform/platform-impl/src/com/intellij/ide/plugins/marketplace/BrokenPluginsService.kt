@@ -19,14 +19,11 @@ object BrokenPluginsService {
   }
 
   private fun updateBrokenPlugin() {
-    val brokenPlugins = readBrokenPlugins()
+    val brokenPlugins = readBrokenPlugins().entries
+      .joinToString("\n") { plugin -> "${plugin.key} ${plugin.value.joinToString(" ") { it }}" }
     if (brokenPlugins.isEmpty()) return
     val file = File(PluginManagerCore.MARKETPLACE_INCOMPATIBLE_PLUGINS)
-    file.writeText(
-      readBrokenPlugins()
-        .entries
-        .joinToString("\n") { plugin -> "${plugin.key} ${plugin.value.joinToString(" ") { it }}" }
-    )
+    file.writeText(brokenPlugins)
     PluginManagerCore.setUpNeedToUpdateBrokenPlugins()
   }
 
@@ -52,6 +49,3 @@ object BrokenPluginsService {
   private fun String.escapeIfSpaceContains() = if (this.contains(" ")) ParametersListUtil.escape(this) else this
 
 }
-
-
-
