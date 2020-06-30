@@ -577,24 +577,19 @@ public class ImportHelper{
     if (aPackage == null) {
       return;
     }
-    PsiDirectory[] dirs = aPackage.getDirectories();
     GlobalSearchScope resolveScope = file.getResolveScope();
-    for (PsiDirectory dir : dirs) {
-      PsiFile[] files = dir.getFiles(); // do not iterate classes - too slow when not loaded
-      for (PsiFile aFile : files) {
-        if (!(aFile instanceof PsiJavaFile)) continue;
-        String name = aFile.getVirtualFile().getNameWithoutExtension();
-        for (String refName : onDemandRefs) {
-          String conflictClassName = refName + "." + name;
-          PsiClass conflictClass = facade.findClass(conflictClassName, resolveScope);
-          if (conflictClass == null || !helper.isAccessible(conflictClass, file, null)) continue;
-          String conflictClassName2 = packageName + "." + name;
-          PsiClass conflictClass2 = facade.findClass(conflictClassName2, resolveScope);
-          if (conflictClass2 != null &&
-              helper.isAccessible(conflictClass2, file, null) &&
-              ReferencesSearch.search(conflictClass, new LocalSearchScope(file), false).findFirst() != null) {
-            outClassesToReimport.add(conflictClass);
-          }
+    for (PsiClass aClass : aPackage.getClasses(resolveScope)) {
+      String name = aClass.getName();
+      for (String refName : onDemandRefs) {
+        String conflictClassName = refName + "." + name;
+        PsiClass conflictClass = facade.findClass(conflictClassName, resolveScope);
+        if (conflictClass == null || !helper.isAccessible(conflictClass, file, null)) continue;
+        String conflictClassName2 = packageName + "." + name;
+        PsiClass conflictClass2 = facade.findClass(conflictClassName2, resolveScope);
+        if (conflictClass2 != null &&
+            helper.isAccessible(conflictClass2, file, null) &&
+            ReferencesSearch.search(conflictClass, new LocalSearchScope(file), false).findFirst() != null) {
+          outClassesToReimport.add(conflictClass);
         }
       }
     }
