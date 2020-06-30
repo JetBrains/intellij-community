@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -23,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.xml.util.ColorSampleLookupValue;
 import com.intellij.xml.util.UserColorLookup;
 import org.jetbrains.annotations.NotNull;
@@ -47,15 +49,12 @@ public class JavaFxColorReference extends PsiReferenceBase<XmlAttributeValue> {
   }
 
   @Override
-  public Object @NotNull [] getVariants() {
-    final ColorSampleLookupValue[] lookupValues = ColorSampleLookupValue.getColors();
-    final Object[] vars = new Object[lookupValues.length + 1];
-    for (int i = 0; i < lookupValues.length; i++) {
-      final ColorSampleLookupValue value = lookupValues[i];
-      vars[i] = new ColorSampleLookupValue(value.getName(), value.getValue(), true);
-    }
-    vars[lookupValues.length] = new UserColorLookup();
-    return vars;
+  public LookupElement @NotNull [] getVariants() {
+    return JBIterable
+      .of(ColorSampleLookupValue.getColors())
+      .map(color -> new ColorSampleLookupValue(color.getName(), color.getValue(), true).toLookupElement())
+      .append(new UserColorLookup())
+      .toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

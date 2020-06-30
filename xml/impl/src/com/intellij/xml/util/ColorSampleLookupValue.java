@@ -1,14 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupValueWithPriority;
-import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Iconable;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,17 +15,18 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import static com.intellij.codeInsight.lookup.LookupValueWithPriority.HIGHER;
+import static com.intellij.codeInsight.lookup.LookupValueWithPriority.NORMAL;
+
 /**
  * @author maxim
  */
-public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUserLookupValue, Iconable, LookupValueWithPriority {
+public class ColorSampleLookupValue {
   private static volatile ColorSampleLookupValue[] ourColors;
   private final boolean myIsStandard;
   private final String myName;
   private final String myValue;
   private Color myColor;
-  @NonNls private static final String BR = "<br>";
-
 
   public ColorSampleLookupValue(String name, String value, boolean isStandard) {
     myName = name;
@@ -37,7 +34,6 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     myIsStandard = isStandard;
   }
 
-  @Override
   public String getPresentation() {
     return myName != null ? myName : myValue;
   }
@@ -50,8 +46,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return myIsStandard;
   }
 
-  @Override
-  public Icon getIcon(int flags) {
+  public Icon getIcon() {
     if (myColor == null) {
       if (myValue.startsWith("#")) {
         try {
@@ -68,14 +63,6 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     }
 
     return null;
-  }
-
-  @Override
-  public boolean handleUserSelection(LookupItem item, Project project) {
-    if (!myIsStandard) {
-      item.setLookupString(myValue);
-    }
-    return true;
   }
 
   public static ColorSampleLookupValue @NotNull [] getColors() {
@@ -122,7 +109,6 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return ourColors;
   }
 
-  @Override
   @Nullable
   public String getTypeHint() {
     return myName != null && !StringUtil.startsWithChar(myName, '#')
@@ -133,23 +119,8 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return myName;
   }
 
-  @Override
   public int getPriority() {
     return myName == null || Character.isLowerCase(myName.charAt(0)) ? HIGHER : NORMAL;
-  }
-
-  private static String toHex(@NotNull final Color color) {
-    final StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < 3; i++) {
-      String s = Integer.toHexString(i == 0 ? color.getRed() : i == 1 ? color.getGreen() : color.getBlue());
-      if (s.length() < 2) {
-        sb.append('0');
-      }
-
-      sb.append(s);
-    }
-
-    return sb.toString();
   }
 
   @Override
@@ -191,5 +162,17 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     result = 31 * result + (myValue != null ? myValue.hashCode() : 0);
     result = 31 * result + (myColor != null ? myColor.hashCode() : 0);
     return result;
+  }
+
+  @NotNull
+  public LookupElement toLookupElement() {
+    LookupElementBuilder lookupElement = LookupElementBuilder.create(this, getPresentation())
+      .withTypeText(getTypeHint())
+      .withIcon(getIcon());
+    if (!isIsStandard()) {
+      lookupElement = lookupElement.withInsertHandler(
+        (context, item) -> context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), getValue()));
+    }
+    return PrioritizedLookupElement.withPriority(lookupElement, getPriority());
   }
 }
