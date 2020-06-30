@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
@@ -52,22 +51,6 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     }
     finally {
       super.tearDown();
-    }
-  }
-
-  @Override
-  protected void runTest() throws Throwable {
-    final Throwable[] throwable = {null};
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-      try {
-        doRunTest();
-      }
-      catch (Throwable t) {
-        throwable[0] = t;
-      }
-    }, "", null);
-    if (throwable[0] != null) {
-      throw throwable[0];
     }
   }
 
