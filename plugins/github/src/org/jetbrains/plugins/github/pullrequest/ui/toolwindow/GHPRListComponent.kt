@@ -110,7 +110,8 @@ internal object GHPRListComponent {
 
     ListEmptyTextController(listLoader, searchQueryHolder, list.emptyText, disposable)
 
-    val search = GHPRSearchPanel.create(project, searchStringModel).apply {
+    val searchCompletionProvider = GHPRSearchCompletionProvider(project)
+    val search = GHPRSearchPanel.create(project, searchStringModel, searchCompletionProvider).apply {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
     }
 
