@@ -832,7 +832,7 @@ class DistributionJARsBuilder {
     }
 
     def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
-    def patchedPluginXmlPath = "$patchedPluginXmlDir/META-INF/plugin.xml"
+    def patchedPluginXmlFile = new File("$patchedPluginXmlDir/META-INF/plugin.xml")
 
     buildContext.ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
 
@@ -846,11 +846,13 @@ class DistributionJARsBuilder {
                     buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
                             : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
 
-    def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT")
+    def defaultPluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT")
       ? buildContext.buildNumber + ".${new SimpleDateFormat('yyyyMMdd').format(new Date())}"
       : buildContext.buildNumber
 
-    setPluginVersionAndSince(patchedPluginXmlPath, pluginVersion, compatibleBuildRange, pluginsToPublish.contains(plugin))
+    def pluginVersion = plugin.versionEvaluator.apply(patchedPluginXmlFile, defaultPluginVersion)
+
+    setPluginVersionAndSince(patchedPluginXmlFile, pluginVersion, compatibleBuildRange, pluginsToPublish.contains(plugin))
     layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
   }
 
@@ -1117,10 +1119,9 @@ class DistributionJARsBuilder {
     new LayoutBuilder(buildContext, COMPRESS_JARS)
   }
 
-  private void setPluginVersionAndSince(String pluginXmlPath, String pluginVersion, CompatibleBuildRange compatibleBuildRange, boolean toPublish) {
+  private void setPluginVersionAndSince(File pluginXmlFile, String pluginVersion, CompatibleBuildRange compatibleBuildRange, boolean toPublish) {
     Pair<String, String> sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, buildContext.buildNumber)
-    def file = new File(pluginXmlPath)
-    def text = file.text
+    def text = pluginXmlFile.text
             .replaceFirst(
                     "<version>[\\d.]*</version>",
                     "<version>${pluginVersion}</version>")
@@ -1142,7 +1143,7 @@ class DistributionJARsBuilder {
               "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"/>",
               !toPublish ? "" :
               "<product-descriptor code=\"\$1\" release-date=\"$releaseDate\" release-version=\"$releaseVersion\"/>")
-      buildContext.messages.info("        ${toPublish ? "Patching" : "Skipping"} ${file.parentFile.parentFile.name} <product-descriptor/>")
+      buildContext.messages.info("        ${toPublish ? "Patching" : "Skipping"} ${pluginXmlFile.parentFile.parentFile.name} <product-descriptor/>")
     }
 
     def anchor = text.contains("</id>") ? "</id>" : "</name>"
@@ -1152,7 +1153,7 @@ class DistributionJARsBuilder {
     if (!text.contains("<idea-version since-build")) {
       text = text.replace(anchor, "${anchor}\n  <idea-version since-build=\"${sinceUntil.first}\" until-build=\"${sinceUntil.second}\"/>")
     }
-    file.text = text
+    pluginXmlFile.text = text
   }
 
   static Pair<String, String> getCompatiblePlatformVersionRange(CompatibleBuildRange compatibleBuildRange, String buildNumber) {
