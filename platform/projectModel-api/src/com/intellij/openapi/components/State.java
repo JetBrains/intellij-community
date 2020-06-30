@@ -44,7 +44,7 @@ public @interface State {
   /**
    * Additional export directory path (relative to application-level configuration root directory).
    */
-  String additionalExportDirectory() default "";
+  @NotNull String additionalExportDirectory() default "";
 
   /**
    * @deprecated Use {@link #additionalExportDirectory()}.

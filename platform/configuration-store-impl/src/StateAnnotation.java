@@ -39,8 +39,8 @@ public class StateAnnotation implements State {
   }
 
   @Override
-  public String additionalExportDirectory() {
-    return null;
+  public @NotNull String additionalExportDirectory() {
+    return "";
   }
 
   @Deprecated
