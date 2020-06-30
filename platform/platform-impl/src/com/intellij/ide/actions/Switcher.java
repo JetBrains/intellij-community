@@ -769,6 +769,7 @@ public final class Switcher extends AnAction implements DumbAware {
         }
       }
 
+      List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
       if (filesData.size() <= 1 || pinned) {
         if (!filesForInit.isEmpty()) {
           int editorsFilesCount = (int) editors.stream().map(info -> info.first).distinct().count();
@@ -777,7 +778,7 @@ public final class Switcher extends AnAction implements DumbAware {
           for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
             if (pinned
                 && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
-                && addedFiles.contains(filesForInit.get(i))) {
+                && selectedFiles.contains(filesForInit.get(i))) {
               continue;
             }
 
