@@ -146,6 +146,11 @@ public final class JBCefApp {
     return isSupported(false);
   }
 
+  private static boolean isJavaFXAlreadyInitialized() {
+    return Thread.getAllStackTraces().keySet().stream()
+      .anyMatch(t -> t.getName().startsWith("JavaFX Application Thread"));
+  }
+
   private static boolean isSupported(boolean logging) {
     if (ourSupported != null) {
       return ourSupported.get();
