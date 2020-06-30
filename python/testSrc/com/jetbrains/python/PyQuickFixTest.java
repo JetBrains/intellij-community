@@ -359,6 +359,11 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyListCreationInspection.class, PyPsiBundle.message("QFIX.list.creation"), true, true);
   }
 
+  // PY-16194
+  public void testListCreationOnlyConsecutiveAppends() {
+    doInspectionTest(PyListCreationInspection.class, PyPsiBundle.message("QFIX.list.creation"), true, true);
+  }
+
   // PY-1445
   public void testConvertSingleQuotedDocstring() {
     getIndentOptions().INDENT_SIZE = 2;
