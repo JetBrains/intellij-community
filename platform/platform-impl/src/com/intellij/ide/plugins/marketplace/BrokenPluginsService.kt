@@ -20,6 +20,8 @@ object BrokenPluginsService {
 
   private fun updateBrokenPlugin() {
     val file = File(PluginManagerCore.MARKETPLACE_INCOMPATIBLE_PLUGINS)
+    val isNotUpdatedPlugins = marketplaceClient.isFileNotModified(marketplaceClient.BROKEN_PLUGIN_PATH, file)
+    if (isNotUpdatedPlugins) return
     val brokenPlugins = readBrokenPlugins(file)
     if (brokenPlugins.isEmpty()) return
     file.writeText(
