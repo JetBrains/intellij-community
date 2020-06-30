@@ -125,8 +125,9 @@ public final class DiffUtil {
 
   @NotNull
   private static List<Image> loadDiffFrameImages() {
-    return Arrays.asList(ImageLoader.loadFromResource("/diff_frame32.png"), ImageLoader.loadFromResource("/diff_frame64.png"),
-                         ImageLoader.loadFromResource("/diff_frame128.png"));
+    return Arrays.asList(ImageLoader.loadFromResource("/vcs/diff_frame32.png"),
+                         ImageLoader.loadFromResource("/vcs/diff_frame64.png"),
+                         ImageLoader.loadFromResource("/vcs/diff_frame128.png"));
   }
 
   //
