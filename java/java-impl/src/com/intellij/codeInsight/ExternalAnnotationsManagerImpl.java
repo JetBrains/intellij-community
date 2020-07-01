@@ -9,6 +9,8 @@ import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -124,6 +126,12 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
             notifyChangedExternally();
           }
         }
+      }
+    });
+    connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        dropAnnotationsCache();
       }
     });
 
