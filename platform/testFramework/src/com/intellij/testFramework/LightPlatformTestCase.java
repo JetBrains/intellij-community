@@ -76,6 +76,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLife
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -109,6 +111,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
+
+  @Rule
+  public final @NotNull TestRule runBareTestRule = getRunBareTestRule();
 
   /**
    * @return Project to be used in tests for example for project components retrieval.

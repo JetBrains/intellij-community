@@ -20,12 +20,9 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.junit.runners.model.Statement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +32,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
-import static org.apache.commons.lang.StringUtils.substringBefore;
-
 @RunWith(Parameterized.class)
 public class ProgressRunnerTest extends LightPlatformTestCase {
   @Parameterized.Parameter
@@ -44,15 +39,6 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   @Parameterized.Parameter(1)
   public boolean myReleaseIWLockOnRun;
-
-  @Rule
-  public final TestRule myBaseRule = (base, description) -> new Statement() {
-    @Override
-    public void evaluate() throws Throwable {
-      setName(substringBefore(description.getMethodName(), "["));
-      runBare();
-    }
-  };
 
   @Parameterized.Parameters(name = "onEdt = {0}, releaseIW = {1}")
   public static List<Object[]> dataOnEdt() {

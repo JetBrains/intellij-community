@@ -7,7 +7,10 @@ import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResol
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver.TestUnknownSdkFixMode.TEST_LOCAL_FIX
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_DIRECTORY_PATH_KEY
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
 class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
   @Test
   fun `test simple gradle jvm resolution`() {

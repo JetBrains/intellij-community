@@ -46,8 +46,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestRule;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
@@ -60,9 +58,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   private PsiFile myFile;
   private VirtualFile myVFile;
   private TestIndexingModeSupporter.IndexingMode myIndexingMode = IndexingMode.SMART;
-
-  @Rule
-  public final @NotNull TestRule runBareTestRule = getRunBareTestRule();
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
