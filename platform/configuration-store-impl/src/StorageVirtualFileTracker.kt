@@ -67,7 +67,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
               // we don't support DirectoryBasedStorage renaming
 
               // StoragePathMacros.MODULE_FILE -> old path, we must update value
-              storage.storageManager.pathRenamed(oldPath, event.path, event)
+              (storage.storageManager as? RenameableStateStorageManager)?.pathRenamed(Paths.get(event.path), event)
             }
           }
           else {

@@ -21,11 +21,11 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.putValue
 import com.intellij.util.io.*
@@ -33,7 +33,6 @@ import java.io.IOException
 import java.io.OutputStream
 import java.io.StringWriter
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 
 internal fun isImportExportActionApplicable(): Boolean {
@@ -49,7 +48,7 @@ open class ExportSettingsAction : AnAction(), DumbAware {
   protected open fun exportSettings(saveFile: Path, markedComponents: Set<ExportableItem>) {
     val exportFiles = markedComponents.mapTo(CollectionFactory.createSmallMemoryFootprintSet()) { it.file }
     saveFile.outputStream().use {
-      exportSettings(exportFiles, it, FileUtil.toSystemIndependentName(PathManager.getConfigPath()))
+      exportSettings(exportFiles, it, PathManager.getConfigDir())
     }
   }
 
@@ -92,24 +91,26 @@ open class ExportSettingsAction : AnAction(), DumbAware {
   }
 }
 
-fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String) {
-  val filter = CollectionFactory.createSmallMemoryFootprintSet<String>()
-  Compressor.Zip(out).filter { entryName, _ -> filter.add(entryName) }.use { zip ->
-    for (file in exportFiles) {
-      val fileInfo = file.basicAttributesIfExists() ?: continue
-      val relativePath = FileUtil.getRelativePath(configPath, file.toAbsolutePath().systemIndependentPath, '/')!!
-      if (fileInfo.isDirectory) {
-        zip.addDirectory(relativePath, file.toFile())
+fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: Path) {
+  val filter = HashSet<String>()
+  Compressor.Zip(out)
+    .nioFilter { entryName, _ -> filter.add(entryName) }
+    .use { zip ->
+      for (file in exportFiles) {
+        val fileInfo = file.basicAttributesIfExists() ?: continue
+        val relativePath = configPath.relativize(file).toString()
+        if (fileInfo.isDirectory) {
+          zip.addDirectory(relativePath, file)
+        }
+        else {
+          zip.addFile(relativePath, file)
+        }
       }
-      else {
-        zip.addFile(relativePath, file.inputStream())
-      }
+
+      exportInstalledPlugins(zip)
+
+      zip.addFile(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER, ArrayUtil.EMPTY_BYTE_ARRAY)
     }
-
-    exportInstalledPlugins(zip)
-
-    zip.addFile(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER, ArrayUtil.EMPTY_BYTE_ARRAY)
-  }
 }
 
 data class ExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
@@ -133,7 +134,7 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
   val processor = { component: ExportableComponent ->
     for (file in component.exportFiles) {
       val item = ExportableItem(file.toPath(), component.presentableName, RoamingType.DEFAULT)
-      result.putValue(item.file, item)
+      result.computeIfAbsent(item.file) { SmartList() }.add(item)
     }
   }
 
@@ -144,11 +145,16 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
   @Suppress("DEPRECATION")
   ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
 
-  val configPath = storageManager.expandMacros(ROOT_CONFIG)
+  val configPath = storageManager.expandMacro(ROOT_CONFIG)
 
   fun isSkipFile(file: Path): Boolean {
     if (onlyPaths != null) {
-      var relativePath = FileUtil.getRelativePath(configPath, file.systemIndependentPath, '/')!!
+      // maybe in tests where in memory fs is used
+      if (configPath.fileSystem != file.fileSystem) {
+        return true
+      }
+
+      var relativePath = configPath.relativize(file).systemIndependentPath
       if (!file.fileName.toString().contains('.') && !file.isFile()) {
         relativePath += '/'
       }
@@ -184,7 +190,7 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
 
     try {
       additionalExportFile = getAdditionalExportFile(stateAnnotation, storageManager, ::isSkipFile)
-      file = Paths.get(storageManager.expandMacros(storage.path))
+      file = storageManager.expandMacro(storage.path)
     }
     catch (e: UnknownMacroException) {
       LOG.error("Cannot expand macro for component \"${stateAnnotation.name}\"", e)
@@ -214,7 +220,7 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
   // must be in the end - because most of SchemeManager clients specify additionalExportFile in the State spec
   (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
     if (it.roamingType != RoamingType.DISABLED && it.fileSpec.getOrNull(0) != '$') {
-      val file = Paths.get(storageManager.expandMacros(ROOT_CONFIG), it.fileSpec)
+      val file = storageManager.expandMacro(ROOT_CONFIG).resolve(it.fileSpec)
       if (!result.containsKey(file) && !isSkipFile(file)) {
         result.putValue(file, ExportableItem(file, it.presentableName ?: "", it.roamingType))
       }
@@ -232,10 +238,11 @@ private inline fun getAdditionalExportFile(stateAnnotation: State, storageManage
   val additionalExportFile: Path?
   // backward compatibility - path can contain macro
   if (additionalExportPath[0] == '$') {
-    additionalExportFile = Paths.get(storageManager.expandMacros(additionalExportPath))
+    additionalExportFile = storageManager.expandMacro(additionalExportPath)
   }
   else {
-    additionalExportFile = Paths.get(storageManager.expandMacros(ROOT_CONFIG), additionalExportPath)
+    @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
+    additionalExportFile = storageManager.expandMacro(ROOT_CONFIG).resolve(additionalExportPath)!!
   }
   return if (isSkipFile(additionalExportFile)) null else additionalExportFile
 }

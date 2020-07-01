@@ -14,6 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -43,13 +46,13 @@ public final class VMOptions {
       arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
     }
     else {
-      File file = getWriteFile();
-      if (file == null || !file.exists()) {
+      Path file = getWriteFile();
+      if (file == null || !Files.exists(file)) {
         return -1;
       }
 
       try {
-        String content = FileUtil.loadFile(file);
+        String content = FileUtil.loadFile(file.toFile());
         arguments = Collections.singletonList(content);
       }
       catch (IOException e) {
@@ -137,12 +140,13 @@ public final class VMOptions {
   }
 
   private static void writeGeneralOptions(@NotNull Function<String, String> transformContent) {
-    File file = getWriteFile();
-    if (file == null) {
+    Path path = getWriteFile();
+    if (path == null) {
       LOG.warn("VM options file not configured");
       return;
     }
 
+    File file = path.toFile();
     try {
       String content = file.exists() ? FileUtil.loadFile(file) : read();
       content = transformContent.apply(content);
@@ -168,9 +172,9 @@ public final class VMOptions {
   @Nullable
   public static String read() {
     try {
-      File newFile = getWriteFile();
-      if (newFile != null && newFile.exists()) {
-        return FileUtil.loadFile(newFile);
+      Path newFile = getWriteFile();
+      if (newFile != null && Files.exists(newFile)) {
+        return FileUtil.loadFile(newFile.toFile());
       }
 
       String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
@@ -185,8 +189,7 @@ public final class VMOptions {
     return null;
   }
 
-  @Nullable
-  public static File getWriteFile() {
+  public static @Nullable Path getWriteFile() {
     String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
     if (vmOptionsFile == null) {
       // launchers should specify a path to a VM options file used to configure a JVM
@@ -196,7 +199,7 @@ public final class VMOptions {
     vmOptionsFile = new File(vmOptionsFile).getAbsolutePath();
     if (!PathManager.isUnderHomeDirectory(vmOptionsFile)) {
       // a file is located outside the IDE installation - meaning it is safe to overwrite
-      return new File(vmOptionsFile);
+      return Paths.get(vmOptionsFile);
     }
 
     String location = PathManager.getCustomOptionsDirectory();
@@ -204,7 +207,7 @@ public final class VMOptions {
       return null;
     }
 
-    return new File(location, getCustomVMOptionsFileName());
+    return Paths.get(location, getCustomVMOptionsFileName());
   }
 
   @NotNull

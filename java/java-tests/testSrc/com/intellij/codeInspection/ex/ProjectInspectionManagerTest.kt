@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -63,7 +63,7 @@ class ProjectInspectionManagerTest {
       </state>""".trimIndent()
       assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
 
-      val inspectionDir = Paths.get(project.stateStore.projectConfigDir!!, PROFILE_DIR)
+      val inspectionDir = project.stateStore.projectConfigDir!!.resolve(PROFILE_DIR)
       val file = inspectionDir.resolve("profiles_settings.xml")
       project.stateStore.save()
       assertThat(file).exists()
@@ -93,7 +93,7 @@ class ProjectInspectionManagerTest {
   @Test
   fun `do not save default project profile`() {
     doTest { project ->
-      val inspectionDir = Paths.get(project.stateStore.projectConfigDir!!, PROFILE_DIR)
+      val inspectionDir = project.stateStore.projectConfigDir!!.resolve(PROFILE_DIR)
       val profileFile = inspectionDir.resolve("Project_Default.xml")
       assertThat(profileFile).doesNotExist()
 
@@ -127,7 +127,7 @@ class ProjectInspectionManagerTest {
 
       project.stateStore.save()
 
-      val inspectionDir = Paths.get(project.stateStore.projectConfigDir!!, PROFILE_DIR)
+      val inspectionDir = project.stateStore.projectConfigDir!!.resolve(PROFILE_DIR)
       val file = inspectionDir.resolve("profiles_settings.xml")
 
       assertThat(file).doesNotExist()
@@ -166,7 +166,7 @@ class ProjectInspectionManagerTest {
       assertThat(profileManager.currentProfile.isProjectLevel).isTrue()
       assertThat(profileManager.currentProfile.name).isEqualTo("Project Default")
 
-      val projectConfigDir = Paths.get(project.stateStore.projectConfigDir!!)
+      val projectConfigDir = project.stateStore.projectConfigDir!!
 
       // test creation of .idea/inspectionProfiles dir, not .idea itself
       projectConfigDir.createDirectories()

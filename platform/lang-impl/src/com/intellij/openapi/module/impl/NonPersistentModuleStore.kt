@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.nio.file.Paths
 
 @ApiStatus.Internal
 internal class NonPersistentModuleStore : ModuleStore {
@@ -34,9 +35,8 @@ private object NonPersistentStateStorageManager : StateStorageManager {
   override fun getStateStorage(storageSpec: Storage): StateStorage = NonPersistentStateStorage
   override fun addStreamProvider(provider: StreamProvider, first: Boolean) = Unit
   override fun removeStreamProvider(clazz: Class<out StreamProvider>) = Unit
-  override fun rename(path: String, newName: String) = Unit
   override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? = null
-  override fun expandMacros(path: String): String = path
+  override fun expandMacro(path: String): Path = Paths.get(path)
 }
 
 private object NonPersistentStateStorage : StateStorage {

@@ -8,6 +8,7 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentWriter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.getProjectStateStorage
@@ -99,13 +100,13 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
       }
     }
 
-    val moduleFilePath = moduleStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)
-    val internalComponents = internalModuleComponents[moduleFilePath]
+    val moduleFilePath = moduleStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
+    val internalComponents = internalModuleComponents.get(moduleFilePath.systemIndependentPath)
     if (internalComponents != null) {
       commitToStorage(MODULE_FILE_STORAGE_ANNOTATION, internalComponents)
     }
 
-    val moduleFileName = FileUtil.getNameWithoutExtension(PathUtil.getFileName(moduleFilePath))
+    val moduleFileName = FileUtil.getNameWithoutExtension(moduleFilePath.fileName.toString())
     val externalComponents = externalModuleComponents[moduleFileName]
     if (externalComponents != null) {
       val providerFactory = StreamProviderFactory.EP_NAME.getExtensionList(project).firstOrNull()

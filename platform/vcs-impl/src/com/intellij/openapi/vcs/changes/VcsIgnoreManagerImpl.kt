@@ -22,7 +22,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import java.io.IOException
-import java.nio.file.Paths
 
 private val LOG = Logger.getInstance(VcsIgnoreManagerImpl::class.java)
 
@@ -106,7 +105,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
   private fun removeConfigurationFromVcsIgnore(project: Project, configurationName: String) {
     val projectFileOrConfigDir =
       if (project.isDirectoryBased) {
-        VfsUtil.findFile(Paths.get(project.stateStore.projectConfigDir!!), true)!!
+        VfsUtil.findFile(project.stateStore.projectConfigDir!!, true)!!
       }
       else {
         project.projectFile!!
@@ -135,7 +134,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
 
   private fun checkConfigurationVcsIgnored(project: Project, configurationFileName: String): IgnoredCheckResult {
     return if (project.isDirectoryBased) {
-      val projectConfigDir = VfsUtil.findFile(Paths.get(project.stateStore.projectConfigDir!!), true)!!
+      val projectConfigDir = VfsUtil.findFile(project.stateStore.projectConfigDir!!, true)!!
       val checkForIgnore = virtualToIoFile(projectConfigDir)
         .resolve(RUN_CONFIGURATIONS_DIRECTORY)
         .resolve("$configurationFileName*.xml")

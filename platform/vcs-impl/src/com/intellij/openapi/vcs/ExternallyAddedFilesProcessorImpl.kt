@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.Disposable
@@ -32,10 +32,10 @@ internal const val ASKED_ADD_EXTERNAL_FILES_PROPERTY = "ASKED_ADD_EXTERNAL_FILES
 
 private val LOG = logger<ExternallyAddedFilesProcessorImpl>()
 
-class ExternallyAddedFilesProcessorImpl(project: Project,
-                                        private val parentDisposable: Disposable,
-                                        private val vcs: AbstractVcs,
-                                        private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
+internal class ExternallyAddedFilesProcessorImpl(project: Project,
+                                                 private val parentDisposable: Disposable,
+                                                 private val vcs: AbstractVcs,
+                                                 private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, AsyncVfsEventsListener, ChangeListListener {
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
@@ -163,7 +163,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   private fun Project.getProjectConfigDir(): VirtualFile? {
     if (!isDirectoryBased || isDefault) return null
 
-    val projectConfigDir = stateStore.projectConfigDir?.let(LocalFileSystem.getInstance()::findFileByPath)
+    val projectConfigDir = stateStore.projectConfigDir?.let(LocalFileSystem.getInstance()::findFileByNioFile)
     if (projectConfigDir == null) {
       LOG.warn("Cannot find project config directory for non-default and non-directory based project ${name}")
     }

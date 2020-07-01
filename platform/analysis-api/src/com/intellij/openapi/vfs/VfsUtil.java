@@ -194,11 +194,11 @@ public final class VfsUtil extends VfsUtilCore {
   }
 
   public static @Nullable VirtualFile findFile(@NotNull Path file, boolean refreshIfNeeded) {
-    return findFile(FileUtil.toSystemIndependentName(file.toAbsolutePath().toString()), refreshIfNeeded);
+    return findFile(file.toAbsolutePath().toString().replace(File.separatorChar, '/'), refreshIfNeeded);
   }
 
   public static @Nullable VirtualFile findFileByIoFile(@NotNull File file, boolean refreshIfNeeded) {
-    return findFile(FileUtil.toSystemIndependentName(file.getAbsolutePath()), refreshIfNeeded);
+    return findFile(file.getAbsolutePath().replace(File.separatorChar, '/'), refreshIfNeeded);
   }
 
   private static @Nullable VirtualFile findFile(@NotNull String filePath, boolean refreshIfNeeded) {

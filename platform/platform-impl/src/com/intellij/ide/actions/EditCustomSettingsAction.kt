@@ -26,13 +26,18 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
 import com.intellij.util.LineSeparator
-import java.io.File
+import com.intellij.util.io.exists
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.write
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import javax.swing.JFrame
 import javax.swing.ScrollPaneConstants
 
 abstract class EditCustomSettingsAction : DumbAwareAction() {
-  protected abstract fun file(): File?
+  protected abstract fun file(): Path?
   protected abstract fun template(): String
 
   override fun update(e: AnActionEvent) {
@@ -45,25 +50,25 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
     val file = file() ?: return
 
     if (project != null) {
-      if (!file.exists()) {
-        val confirmation = IdeBundle.message("edit.custom.settings.confirm", FileUtil.getLocationRelativeToUserHome(file.path))
+      if (!Files.exists(file)) {
+        val confirmation = IdeBundle.message("edit.custom.settings.confirm", FileUtil.getLocationRelativeToUserHome(file.toString()))
         val result = showOkCancelDialog(title = e.presentation.text!!, message = confirmation,
                                         okText = IdeBundle.message("button.create"), cancelText = IdeBundle.message("button.cancel"),
                                         icon = Messages.getQuestionIcon(), project = project)
         if (result == Messages.CANCEL) return
 
         try {
-          FileUtil.writeToFile(file, StringUtil.convertLineSeparators(template(), LineSeparator.getSystemLineSeparator().separatorString))
+          file.write(StringUtil.convertLineSeparators(template(), LineSeparator.getSystemLineSeparator().separatorString))
         }
         catch (ex: IOException) {
-          Logger.getInstance(javaClass).warn(file.path, ex)
+          Logger.getInstance(javaClass).warn(file.toString(), ex)
           val message = IdeBundle.message("edit.custom.settings.failed", file, ex.message)
           Messages.showErrorDialog(project, message, CommonBundle.getErrorTitle())
           return
         }
       }
 
-      val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+      val vFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
       if (vFile != null) {
         vFile.refresh(false, false)
         val psiFile = PsiManager.getInstance(project).findFile(vFile)
@@ -73,18 +78,18 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
       }
     }
     else if (frame != null) {
-      val text = StringUtil.convertLineSeparators(if (file.exists()) FileUtil.loadFile(file) else template())
+      val text = StringUtil.convertLineSeparators(if (file.exists()) FileUtil.loadFile(file.toFile()) else template())
 
       object : DialogWrapper(frame, true) {
         private val editor: EditorTextField
 
         init {
-          title = FileUtil.getLocationRelativeToUserHome(file.path)
+          title = FileUtil.getLocationRelativeToUserHome(file.toString())
           setOKButtonText(IdeBundle.message("button.save"))
 
           val document = EditorFactory.getInstance().createDocument(text)
           val defaultProject = DefaultProjectFactory.getInstance().defaultProject
-          val fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.name)
+          val fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.fileName.toString())
           editor = object : EditorTextField(document, defaultProject, fileType, false, false) {
             override fun createEditor(): EditorEx {
               val editor = super.createEditor()
@@ -104,11 +109,11 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
         override fun doOKAction() {
           val toSave = StringUtil.convertLineSeparators(editor.text, LineSeparator.getSystemLineSeparator().separatorString)
           try {
-            FileUtil.writeToFile(file, toSave)
+            FileUtil.writeToFile(file.toFile(), toSave)
             close(OK_EXIT_CODE)
           }
           catch (ex: IOException) {
-            Logger.getInstance(javaClass).warn(file.path, ex)
+            Logger.getInstance(javaClass).warn(file.toString(), ex)
             val message = IdeBundle.message("edit.custom.settings.failed", file, ex.message)
             Messages.showErrorDialog(this.window, message, CommonBundle.getErrorTitle())
           }
@@ -122,15 +127,15 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
   private companion object {
     val file = lazy {
       val dir = PathManager.getCustomOptionsDirectory()
-      return@lazy if (dir != null) File(dir, PathManager.PROPERTIES_FILE_NAME) else null
+      return@lazy if (dir != null) Paths.get(dir, PathManager.PROPERTIES_FILE_NAME) else null
     }
   }
 
-  override fun file(): File? = file.value
+  override fun file(): Path? = file.value
   override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} properties\n\n"
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
-    override fun isWritable(file: VirtualFile): Boolean = FileUtil.pathsEqual(file.path, EditCustomPropertiesAction.file.value?.path)
+    override fun isWritable(file: VirtualFile): Boolean = FileUtil.pathsEqual(file.path, EditCustomPropertiesAction.file.value?.systemIndependentPath)
   }
 }
 
@@ -139,12 +144,12 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
     val file = lazy { VMOptions.getWriteFile() }
   }
 
-  override fun file(): File? = file.value
+  override fun file(): Path? = file.value
   override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n${VMOptions.read() ?: ""}"
 
   fun isEnabled(): Boolean = file() != null
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
-    override fun isWritable(file: VirtualFile): Boolean = FileUtil.pathsEqual(file.path, EditCustomVmOptionsAction.file.value?.path)
+    override fun isWritable(file: VirtualFile): Boolean = FileUtil.pathsEqual(file.path, EditCustomVmOptionsAction.file.value?.systemIndependentPath)
   }
 }

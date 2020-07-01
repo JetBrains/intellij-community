@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StreamProvider
@@ -7,7 +7,6 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
@@ -19,8 +18,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.io.exists
-import com.intellij.util.io.move
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
@@ -210,27 +207,18 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
   }
 }
 
-class IcsApplicationLoadListener : ApplicationLoadListener {
+internal class IcsApplicationLoadListener : ApplicationLoadListener {
   var icsManager: IcsManager by Delegates.notNull()
     private set
 
-  override fun beforeApplicationLoaded(application: Application, configPath: String) {
+  override fun beforeApplicationLoaded(application: Application, configPath: Path) {
     if (application.isUnitTestMode) {
       return
     }
 
     val customPath = System.getProperty("ics.settingsRepository")
-    val pluginSystemDir = if (customPath == null) Paths.get(configPath, "settingsRepository") else Paths.get(FileUtil.expandUserHome(customPath))
+    val pluginSystemDir = if (customPath == null) configPath.resolve("settingsRepository") else Paths.get(FileUtil.expandUserHome(customPath))
     icsManager = IcsManager(pluginSystemDir)
-
-    if (!pluginSystemDir.exists()) {
-      LOG.runAndLogException {
-        val oldPluginDir = appSystemDir.resolve("settingsRepository")
-        if (oldPluginDir.exists()) {
-          oldPluginDir.move(pluginSystemDir)
-        }
-      }
-    }
 
     val repositoryManager = icsManager.repositoryManager
     if (repositoryManager.isRepositoryExists() && repositoryManager is GitRepositoryManager) {

@@ -128,11 +128,10 @@ class ModuleStoreTest {
     }
 
     fun removeContentRoot(module: Module) {
-      val modulePath = module.stateStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)
-      val moduleFile = Paths.get(modulePath)
+      val moduleFile = module.stateStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
       assertThat(moduleFile).isRegularFile
 
-      val virtualFile = LocalFileSystem.getInstance().findFileByPath(modulePath)!!
+      val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(moduleFile)!!
       val oldText = moduleFile.readText()
       val newText = oldText.replace("<content url=\"file://\$MODULE_DIR$/${module.name}\" />\n", "")
       assertThat(oldText).isNotEqualTo(newText)

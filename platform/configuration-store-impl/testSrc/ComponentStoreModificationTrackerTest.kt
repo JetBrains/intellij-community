@@ -12,7 +12,6 @@ import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -164,32 +163,27 @@ internal class ComponentStoreModificationTrackerTest {
       <component name="TestPersistentStateComponentWithModificationTracker" foo="new" />
     </application>""".trimIndent())
   }
-
 }
 
 private class MyComponentStore(testAppConfigPath: Path) : ChildlessComponentStore() {
-  private class MyStorageManager(private val rootDir: Path) : StateStorageManagerImpl("application") {
+  private class MyStorageManager : StateStorageManagerImpl("application") {
     override fun getFileBasedStorageConfiguration(fileSpec: String) = appFileBasedStorageConfiguration
 
     override val isUseXmlProlog = false
 
     override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-    override fun expandMacros(path: String) = if (path[0] == '$') super.expandMacros(path) else "${expandMacro(APP_CONFIG)}/$path"
-
-    override fun resolvePath(path: String): Path = rootDir.resolve(path)
+    override fun expandMacro(collapsedPath: String): Path = if (collapsedPath[0] == '$') super.expandMacro(collapsedPath) else macros.get(0).value.resolve(collapsedPath)
   }
 
-  override val storageManager = MyStorageManager(testAppConfigPath)
+  override val storageManager = MyStorageManager()
 
   init {
     setPath(testAppConfigPath)
   }
 
   override fun setPath(path: Path) {
-    val systemIndependentPath = path.systemIndependentPath
-    storageManager.addMacro(APP_CONFIG, systemIndependentPath)
     // yes, in tests APP_CONFIG equals to ROOT_CONFIG (as ICS does)
-    storageManager.addMacro(ROOT_CONFIG, systemIndependentPath)
+    storageManager.setMacros(listOf(Macro(APP_CONFIG, path), Macro(ROOT_CONFIG, path)))
   }
 }

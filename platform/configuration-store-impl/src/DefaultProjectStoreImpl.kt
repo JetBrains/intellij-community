@@ -9,7 +9,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.io.Writer
 import java.nio.file.Path
-import java.nio.file.Paths
 
 private const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
 
@@ -64,7 +63,7 @@ class DefaultProjectStoreImpl(override val project: Project) : ChildlessComponen
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
 
   private val storage by lazy {
-    DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, PathMacroManager.getInstance(project))
+    DefaultProjectStorage(ApplicationManager.getApplication().stateStore.storageManager.expandMacro(FILE_SPEC), FILE_SPEC, PathMacroManager.getInstance(project))
   }
 
   override val storageManager = object : StateStorageManager {
@@ -77,12 +76,9 @@ class DefaultProjectStoreImpl(override val project: Project) : ChildlessComponen
     override fun removeStreamProvider(clazz: Class<out StreamProvider>) {
     }
 
-    override fun rename(path: String, newName: String) {
-    }
-
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun expandMacros(path: String) = throw UnsupportedOperationException()
+    override fun expandMacro(path: String) = throw UnsupportedOperationException()
 
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }

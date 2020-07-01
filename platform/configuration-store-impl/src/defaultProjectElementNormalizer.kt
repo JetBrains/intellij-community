@@ -11,7 +11,6 @@ import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.serviceContainer.processComponentInstancesOfType
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
 import com.intellij.util.isEmpty
@@ -109,7 +108,7 @@ internal fun moveComponentConfiguration(defaultProject: Project,
         // ignore - this data should be not copied
         ignoredComponentNames.add(stateAnnotation.name)
       }
-      else -> storageNameToComponentNames.getOrPut(storagePathResolver(storagePath)) { CollectionFactory.createSmallMemoryFootprintSet() }.add(stateAnnotation.name)
+      else -> storageNameToComponentNames.getOrPut(storagePathResolver(storagePath)) { HashSet() }.add(stateAnnotation.name)
     }
   }
 

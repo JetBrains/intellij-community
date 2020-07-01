@@ -20,6 +20,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -323,7 +324,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void load(@Nullable String path) {
+  public void load(@Nullable Path path) {
   }
 
   @Override

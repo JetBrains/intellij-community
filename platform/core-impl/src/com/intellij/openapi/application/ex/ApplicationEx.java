@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.nio.file.Path;
 
 public interface ApplicationEx extends Application {
   String LOCATOR_FILE_NAME = ".home";
@@ -28,7 +29,7 @@ public interface ApplicationEx extends Application {
    *
    * @param configPath Path to /config folder
    */
-  void load(@Nullable String configPath);
+  void load(@Nullable Path configPath);
 
   default void load() {
     load(null);

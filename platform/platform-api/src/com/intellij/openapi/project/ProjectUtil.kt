@@ -26,6 +26,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.text.trimMiddle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -157,22 +158,25 @@ private fun getProjectCacheFileName(presentableUrl: String?,
                                     isForceNameUse: Boolean,
                                     hashSeparator: String,
                                     extensionWithDot: String): String {
-  var name = when {
+  val name = when {
     isForceNameUse || presentableUrl == null -> projectName
     else -> {
       // lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was, user projects will not have long names as in our tests
       PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
   }
+  return doGetProjectFileName(presentableUrl, sanitizeFileName(name, isTruncate = false), hashSeparator, extensionWithDot)
+}
 
-  name = sanitizeFileName(name, isTruncate = false)
-
+@ApiStatus.Internal
+fun doGetProjectFileName(presentableUrl: String?,
+                         name: String,
+                         hashSeparator: String,
+                         extensionWithDot: String): String {
   // do not use project.locationHash to avoid prefix for IPR projects (not required in our case because name in any case is prepended)
   val locationHash = Integer.toHexString((presentableUrl ?: name).hashCode())
-
-  // trim to avoid "File name too long"
-  name = name.trimMiddle(name.length.coerceAtMost(255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)
-  return "$name$hashSeparator${locationHash}$extensionWithDot"
+  // trim name to avoid "File name too long"
+  return "${name.trimMiddle(name.length.coerceAtMost(255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)}$hashSeparator$locationHash$extensionWithDot"
 }
 
 @JvmOverloads

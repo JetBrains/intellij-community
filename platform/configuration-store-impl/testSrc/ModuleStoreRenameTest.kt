@@ -7,8 +7,6 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.impl.UndoManagerImpl
-import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
@@ -29,7 +27,6 @@ import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.junit.After
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -40,6 +37,7 @@ import kotlin.properties.Delegates
 private val Module.storage: FileBasedStorage
   get() = (stateStore.storageManager as StateStorageManagerImpl).getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).first()
 
+@RunsInActiveStoreMode
 internal class ModuleStoreRenameTest {
   companion object {
     @JvmField
@@ -59,9 +57,10 @@ internal class ModuleStoreRenameTest {
   @JvmField
   val ruleChain = RuleChain(
     tempDirManager,
+    ActiveStoreRule(projectRule),
     object : ExternalResource() {
       override fun before() {
-        runInEdtAndWait {
+        ApplicationManager.getApplication().invokeAndWait {
           val moduleFileParent = tempDirManager.newPath()
           module = projectRule.createModule(moduleFileParent.resolve("m.iml"))
           dependentModule = projectRule.createModule(moduleFileParent.resolve("dependent-module.iml"))
@@ -88,15 +87,6 @@ internal class ModuleStoreRenameTest {
     },
     DisposeModulesRule(projectRule)
   )
-
-  @After
-  fun tearDown() {
-    ApplicationManager.getApplication().invokeAndWait {
-      val undoManager = UndoManager.getInstance(projectRule.project) as UndoManagerImpl
-      undoManager.dropHistoryInTests()
-      undoManager.flushCurrentCommandMerger()
-    }
-  }
 
   // project structure
   @Test
@@ -152,7 +142,7 @@ internal class ModuleStoreRenameTest {
     assertThat(newFile).isRegularFile
 
     // ensure that macro value updated
-    assertThat(module.stateStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
+    assertThat(module.stateStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile)
 
     saveProjectState()
     assertThat(dependentModule.storage.file.readText()).contains("""<orderEntry type="module" module-name="$newName" />""")

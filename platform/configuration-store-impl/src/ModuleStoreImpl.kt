@@ -8,10 +8,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.io.exists
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.streams.asSequence
 
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 
@@ -25,15 +23,20 @@ internal open class ModuleStoreImpl(module: Module) : ModuleStoreBase() {
 
   final override fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  // todo what about Upsource? For now this implemented not in the ModuleStoreBase because `project` and `module` are available only in this class (ModuleStoreImpl)
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val result = super.getStorageSpecs(component, stateSpec, operation)
     if (!project.isDirectoryBased) {
       return result
     }
-    return StreamProviderFactory.EP_NAME.extensions(project).asSequence()
-             .map { LOG.runAndLogException { it.customizeStorageSpecs(component, storageManager, stateSpec, result, operation) } }
-             .find { it != null } ?: result
+
+    for (provider in StreamProviderFactory.EP_NAME.getExtensionList(project)) {
+      LOG.runAndLogException {
+        provider.customizeStorageSpecs(component, storageManager, stateSpec, result, operation)?.let {
+          return it
+        }
+      }
+    }
+    return result
   }
 }
 
@@ -57,14 +60,19 @@ abstract class ModuleStoreBase : ChildlessComponentStore(), ModuleStore {
 
   abstract override val storageManager: StateStorageManagerImpl
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> =
-    if (stateSpec.storages.isEmpty()) listOf(MODULE_FILE_STORAGE_ANNOTATION)
-    else super.getStorageSpecs(component, stateSpec, operation)
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
+    if (stateSpec.storages.isEmpty()) {
+      return listOf(MODULE_FILE_STORAGE_ANNOTATION)
+    }
+    else {
+      return super.getStorageSpecs(component, stateSpec, operation)
+    }
+  }
 
   final override fun setPath(path: Path) = setPath(path, null, false)
 
   override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
-    val isMacroAdded = storageManager.addMacro(StoragePathMacros.MODULE_FILE, path.systemIndependentPath)
+    val isMacroAdded = storageManager.setMacros(listOf(Macro(StoragePathMacros.MODULE_FILE, path))).isEmpty()
     // if file not null - update storage
     storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE, storageCustomizer = {
       if (this !is FileBasedStorage) {
@@ -82,7 +90,7 @@ abstract class ModuleStoreBase : ChildlessComponentStore(), ModuleStore {
         preloadStorageData(isNew)
       }
       else {
-        storageManager.updatePath(StoragePathMacros.MODULE_FILE, path.systemIndependentPath)
+        storageManager.updatePath(StoragePathMacros.MODULE_FILE, path)
       }
     })
   }

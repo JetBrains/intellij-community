@@ -13,7 +13,6 @@ import com.intellij.util.io.Ksuid
 import com.intellij.util.io.delete
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Paths
 
 private const val TEST_COMPONENT_NAME = "DefaultProjectStoreTestComponent"
 
@@ -57,7 +56,7 @@ fun checkDefaultProjectAsTemplate(task: (checkTask: (project: Project, defaultPr
 @ApiStatus.Internal
 fun createDeleteAppConfigRule(): WrapRule {
   return WrapRule {
-    val path = Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros("\$APP_CONFIG$"))
+    val path = ApplicationManager.getApplication().stateStore.storageManager.expandMacro("\$APP_CONFIG$")
     return@WrapRule {
       path.delete()
     }

@@ -28,9 +28,7 @@ public interface IProjectStore extends IComponentStore {
   /**
    * `null` for default or non-directory based project.
    */
-  @SystemIndependent
-  @Nullable
-  String getProjectConfigDir();
+  @Nullable Path getProjectConfigDir();
 
   /**
    * System-independent path.

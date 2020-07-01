@@ -7,11 +7,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NamedJDOMExternalizable
-import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader
@@ -22,20 +20,19 @@ internal class ApplicationPathMacroManager : PathMacroManager(null)
 const val APP_CONFIG = "\$APP_CONFIG$"
 
 class ApplicationStoreImpl : ComponentStoreWithExtraComponents() {
-  private val application = ApplicationManager.getApplication()
-
-  override val storageManager = ApplicationStorageManager(application, PathMacroManager.getInstance(ApplicationManager.getApplication()))
+  override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication(), PathMacroManager.getInstance(ApplicationManager.getApplication()))
 
   // number of app components require some state, so, we load default state in test mode
   override val loadPolicy: StateLoadPolicy
-    get() = if (application.isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
+    get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
 
   override fun setPath(path: Path) {
-    val systemIndependentPath = path.systemIndependentPath
-    // app config must be first, because collapseMacros collapse from fist to last, so, at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
-    storageManager.addMacro(APP_CONFIG, "$systemIndependentPath/${PathManager.OPTIONS_DIRECTORY}")
-    storageManager.addMacro(ROOT_CONFIG, systemIndependentPath)
-    storageManager.addMacro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve("app.xml").systemIndependentPath)
+    storageManager.setMacros(listOf(
+      // app config must be first, because collapseMacros collapse from fist to last, so, at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
+      Macro(APP_CONFIG, path.resolve(PathManager.OPTIONS_DIRECTORY)),
+      Macro(ROOT_CONFIG, path),
+      Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve("app.xml"))
+    ))
   }
 
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
@@ -71,12 +68,12 @@ internal val appFileBasedStorageConfiguration = object: FileBasedStorageConfigur
 }
 
 class ApplicationStorageManager(application: Application?, pathMacroManager: PathMacroManager? = null)
-  : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
+  : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor (), application) {
   override fun getFileBasedStorageConfiguration(fileSpec: String) = appFileBasedStorageConfiguration
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
     return when (component) {
-      is NamedJDOMExternalizable -> "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}"
+      is NamedJDOMExternalizable -> "${component.externalFileName}${PathManager.DEFAULT_EXT}"
       else -> PathManager.DEFAULT_OPTIONS_FILE
     }
   }
@@ -102,5 +99,8 @@ class ApplicationStorageManager(application: Application?, pathMacroManager: Pat
 
   override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-  override fun expandMacros(path: String) = if (path[0] == '$') super.expandMacros(path) else "${expandMacro(APP_CONFIG)}/$path"
+  override fun expandMacro(collapsedPath: String): Path {
+    // APP_CONFIG is the first macro
+    return if (collapsedPath[0] == '$') super.expandMacro(collapsedPath) else macros.get(0).value.resolve(collapsedPath)
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore
 
 import com.intellij.openapi.Disposable
@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
@@ -32,6 +33,7 @@ import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import org.jetbrains.annotations.SystemIndependent
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG = logger<GitIgnoreInStoreDirGenerator>()
@@ -70,7 +72,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
       needGenerate.set(false)
       return false
     }
-    val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByPath(projectConfigDirPath)
+    val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByNioFile(projectConfigDirPath)
     if (projectConfigDirVFile != null && !needGenerateInternalIgnoreFile(project, projectConfigDirVFile)) {
       needGenerate.set(false)
       return false
@@ -109,20 +111,22 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
       LOG.warn("Project config dir path not found. Project is default or not directory based.")
       return
     }
-    val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByPath(projectConfigDirPath)
+    val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByNioFile(projectConfigDirPath)
     if (projectConfigDirVFile == null) {
       LOG.warn("Project config dir not found in VFS by path $projectConfigDirPath")
       return
     }
 
-    if (skipGeneration(project, projectConfigDirVFile, projectConfigDirPath)) return
+    if (skipGeneration(project, projectConfigDirVFile, projectConfigDirPath)) {
+      return
+    }
 
     doGenerate(project, projectConfigDirPath, projectConfigDirVFile)
   }
 
   private fun skipGeneration(project: Project,
                              projectConfigDirVFile: VirtualFile,
-                             projectConfigDirPath: String): Boolean {
+                             projectConfigDirPath: Path): Boolean {
     if (!needGenerateInternalIgnoreFile(project, projectConfigDirVFile)) {
       needGenerate.set(false)
       return true
@@ -144,7 +148,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
   }
 
   private fun doGenerate(project: Project,
-                         projectConfigDirPath: String,
+                         projectConfigDirPath: Path,
                          projectConfigDirVFile: VirtualFile) {
     val gitVcsKey = GitVcs.getKey()
     val gitIgnoreContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, gitVcsKey) ?: return
@@ -153,7 +157,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
     val gitIgnoreFile = createGitignore(projectConfigDirVFile)
     for (ignoredFileProvider in IgnoredFileProvider.IGNORE_FILE.extensions) {
       val ignoresInStoreDir =
-        ignoredFileProvider.getIgnoredFiles(project).filter { ignore -> inStoreDir(projectConfigDirPath, ignore) }.toTypedArray()
+        ignoredFileProvider.getIgnoredFiles(project).filter { ignore -> inStoreDir(projectConfigDirPath.systemIndependentPath, ignore) }.toTypedArray()
       if (ignoresInStoreDir.isEmpty()) continue
 
       val ignoredGroupDescription = gitIgnoreContentProvider.buildIgnoreGroupDescription(ignoredFileProvider)
@@ -163,8 +167,8 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
     markGenerated(project, projectConfigDirVFile)
   }
 
-  private fun haveNotGitVcs(project: Project, projectConfigDirPath: String): Boolean {
-    val projectConfigDir = VcsUtil.getFilePath(projectConfigDirPath)
+  private fun haveNotGitVcs(project: Project, projectConfigDirPath: Path): Boolean {
+    val projectConfigDir = VcsUtil.getFilePath(projectConfigDirPath.toFile())
     val vcs = VcsUtil.getVcsFor(project, projectConfigDir) ?: return false
     return vcs.keyInstanceMethod != GitVcs.getKey()
   }
@@ -190,6 +194,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
   private fun createGitignore(inDir: VirtualFile) =
     invokeAndWaitIfNeeded { runWriteAction { inDir.createChildData(inDir, GITIGNORE) } }
 
-  private fun inStoreDir(projectConfigDirPath: String, ignore: IgnoredFileDescriptor) =
-    ignore.path?.let { FileUtil.isAncestor(projectConfigDirPath, it, true) } ?: false
+  private fun inStoreDir(projectConfigDirPath: String, ignore: IgnoredFileDescriptor): Boolean {
+    return ignore.path?.let { FileUtil.isAncestor(projectConfigDirPath, it, true) } ?: false
+  }
 }
