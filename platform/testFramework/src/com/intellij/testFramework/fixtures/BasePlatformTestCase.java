@@ -17,6 +17,8 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 
 /**
  * Base class for light tests.
@@ -28,6 +30,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class BasePlatformTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
+
+  @Rule
+  public final @NotNull TestRule runBareTestRule = getRunBareTestRule();
 
   @Override
   public @NotNull Disposable getTestRootDisposable() {
