@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.math.BigDecimal",".*")
       .add("java.net.InetAddress",".*")
       .add("java.net.URI",".*")
+      .add("java.nio.channels.AsynchronousChannelGroup",".*")
       .add("java.util.Arrays", ".*")
       .add("java.util.List", "of")
       .add("java.util.Set", "of")
@@ -112,6 +113,12 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.util.UUID",".*")
       .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparentBounds|hasAnchoringBounds|hitEnd|requireEnd")
       .add("java.util.regex.Pattern",".*")
+      .add("java.util.concurrent.CountDownLatch","await|getCount")
+      .add("java.util.concurrent.ExecutorService","awaitTermination|isShutdown|isTerminated")
+      .add("java.util.concurrent.ForkJoinPool","awaitQuiescence")
+      .add("java.util.concurrent.Semaphore","tryAcquire|availablePermits|isFair|hasQueuedThreads|getQueueLength|getQueuedThreads")
+      .add("java.util.concurrent.locks.Condition","await|awaitNanos|awaitUntil")
+      .add("java.util.concurrent.locks.Lock","tryLock|newCondition")
       .add("java.util.stream.BaseStream",".*")
       .finishDefault();
   }
