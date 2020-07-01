@@ -110,18 +110,11 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
       while (iterator.hasNext()) {
         EditorWindowImpl editorWindow = iterator.next();
         if (!editorWindow.isValid()) {
-          disposeEditor(editorWindow);
+          editorWindow.dispose();
           iterator.remove();
         }
       }
     }
-  }
-
-  private static void disposeEditor(@NotNull EditorWindow editorWindow) {
-    EditorWindowImpl impl = (EditorWindowImpl)editorWindow;
-    impl.dispose();
-
-    InjectedLanguageUtil.clearCaches(impl.myInjectedFile.getProject(), impl.getDocument());
   }
 
   static void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
@@ -129,7 +122,7 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
       for (Iterator<EditorWindowImpl> iterator = allEditors.iterator(); iterator.hasNext(); ) {
         EditorWindowImpl editor = iterator.next();
         if (InjectionRegistrarImpl.intersect(editor.getDocument(), (DocumentWindowImpl)documentWindow)) {
-          disposeEditor(editor);
+          editor.dispose();
           iterator.remove();
           break;
         }
@@ -211,6 +204,8 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
 
     myDisposed = true;
     Disposer.dispose(myDocumentWindow);
+
+    InjectedLanguageUtil.clearCaches(myInjectedFile.getProject(), getDocument());
   }
 
   @Override
