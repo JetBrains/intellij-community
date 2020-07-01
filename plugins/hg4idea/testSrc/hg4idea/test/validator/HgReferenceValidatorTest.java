@@ -15,11 +15,9 @@
  */
 package hg4idea.test.validator;
 
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,10 +42,8 @@ public class HgReferenceValidatorTest extends HgPlatformTest {
   @NotNull private final String myBranchName;
   private final boolean myExpected;
 
-  @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() {
     HgRepository hgRepository = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
     assertNotNull(hgRepository);
     myValidator = new HgBranchReferenceValidator(hgRepository);
@@ -58,12 +54,6 @@ public class HgReferenceValidatorTest extends HgPlatformTest {
     hg("commit -m 'createdBranch " + BRANCH_NAME + "' ");
     hg("branch '" + UNCOMMITTED_BRANCH + "'");
     hgRepository.update();
-  }
-
-  @Override
-  @After
-  public void tearDown() throws Exception {
-    EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
   }
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})

@@ -72,6 +72,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 
 import javax.swing.*;
 import java.io.File;
@@ -125,6 +127,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   private @Nullable CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
   private AccessToken projectTracker;
+
+  @Rule
+  public final @NotNull TestRule runBareTestRule = getRunBareTestRule();
 
   public @NotNull TempFiles getTempDir() {
     return myTempFiles;
@@ -610,7 +615,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     TestRunnerUtil.replaceIdeEventQueueSafely();
     try {
-      runBareImpl();
+      runBareImpl(testRunnable);
     }
     finally {
       try {
@@ -624,7 +629,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  private void runBareImpl() throws Throwable {
+  private void runBareImpl(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     ThrowableRunnable<Throwable> runnable = () -> {
       try {
         myAssertionsInTestDetected = true;
@@ -644,7 +649,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       Throwable exception = null;
       try {
         myAssertionsInTestDetected = true;
-        runTest();
+        runTestRunnable(testRunnable);
         myAssertionsInTestDetected = false;
       }
       catch (Throwable e) {

@@ -19,10 +19,8 @@ import com.intellij.ide.projectView.impl.ModuleGroup
 import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.testFramework.HeavyPlatformTestCase
 import org.junit.Assert
-import org.junit.Test
 
 class GroupModulesByQualifiedNamesTest : HeavyPlatformTestCase() {
-  @Test
   fun `test single module`() {
     val module = createModule("a.b.module")
     assertEquals("module", grouper.getShortenedName(module))

@@ -3,26 +3,22 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
 import org.jetbrains.jps.util.JpsPathUtil
-import org.junit.Before
-import org.junit.Test
 import java.io.File
 
 class JpsProjectReloadingTest : HeavyPlatformTestCase() {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
-  @Before
   override fun setUp() {
     super.setUp()
     virtualFileManager = VirtualFileUrlManager.getInstance(project)
   }
 
-  @Test
   fun `test modify iml`() {
     checkProjectAfterReload("common/modifyIml", "common/modifyIml") { (storage, projectDirUrl) ->
       val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
@@ -42,7 +38,6 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     }
   }
 
-  @Test
   fun `test add library`() {
     checkProjectAfterReload( "directoryBased/addLibrary", "fileBased/addLibrary") { (storage, projectDirUrl) ->
       val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
@@ -71,7 +66,6 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     }
   }
 
-  @Test
   fun `test modify library`() {
     checkProjectAfterReload("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { (storage, projectDirUrl) ->
       val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
@@ -83,7 +77,6 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     }
   }
 
-  @Test
   fun `test remove library`() {
     checkProjectAfterReload("directoryBased/removeLibrary", "fileBased/removeLibrary") { (storage, _) ->
       assertEquals(setOf("jarDir", "log4j"), storage.projectLibraries.mapTo(HashSet()) {it.name})

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.vcs.log.Hash;
@@ -53,24 +52,16 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     myTestCaseDir = testDir;
   }
 
-  @Override
   @Before
-  public void setUp() throws Exception {
-    EdtTestUtil.runInEdtAndWait(() -> super.setUp());
+  public void before() throws Exception {
     myTempDir = new File(projectRoot.getPath(), "test");
     prepareTest(myTestCaseDir);
   }
 
   @After
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      if (myTempDir != null) {
-        FileUtil.delete(myTempDir);
-      }
-    }
-    finally {
-      EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
+  public void after() {
+    if (myTempDir != null) {
+      FileUtil.delete(myTempDir);
     }
   }
 
