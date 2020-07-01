@@ -82,7 +82,7 @@ class PortableCompilationCache {
 
   private def compileProject() {
     def tasks = CompilationTasks.create(context)
-    if (forceRebuild || !downloader.availableForHeadCommit) {
+    if (forceRebuild || !downloader.availableForHeadCommit || !forceDownload) {
       // When force rebuilding incrementalCompilation has to be set to false otherwise backward-refs won't be created.
       // During rebuild JPS checks {@code CompilerReferenceIndex.exists(buildDir) || isRebuild} and if
       // incremental compilation enabled JPS won't create {@link JavaBackwardReferenceIndexWriter}.
@@ -103,7 +103,7 @@ class PortableCompilationCache {
         }
       }
     }
-    else if (downloader.availableForHeadCommit) {
+    else if (downloader.availableForHeadCommit && forceDownload) {
       tasks.resolveProjectDependencies()
     }
     context.options.incrementalCompilation = false
