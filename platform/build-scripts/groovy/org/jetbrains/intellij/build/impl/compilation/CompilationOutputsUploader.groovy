@@ -28,7 +28,7 @@ class CompilationOutputsUploader {
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
-  private final String tmpDir
+  private final String syncFolder
   private final boolean uploadCompilationOutputsOnly
 
   private final AtomicInteger uploadedOutputsCount = new AtomicInteger()
@@ -42,8 +42,8 @@ class CompilationOutputsUploader {
 
   CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl,
                              String remoteGitUrl, String commitHash,
-                             String tmpDir, boolean uploadCompilationOutputsOnly) {
-    this.tmpDir = tmpDir
+                             String syncFolder, boolean uploadCompilationOutputsOnly) {
+    this.syncFolder = syncFolder
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
     this.remoteGitUrl = remoteGitUrl
@@ -104,7 +104,7 @@ class CompilationOutputsUploader {
     if (!uploader.isExist(cachePath)) {
       uploader.upload(cachePath, zipFile)
     }
-    File zipCopy = new File(tmpDir, cachePath)
+    File zipCopy = new File(syncFolder, cachePath)
     move(zipFile, zipCopy)
   }
 
@@ -112,7 +112,7 @@ class CompilationOutputsUploader {
     String metadataPath = "metadata/$commitHash"
     File sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
-    File sourceStateFileCopy = new File(tmpDir, metadataPath)
+    File sourceStateFileCopy = new File(syncFolder, metadataPath)
     move(sourceStateFile, sourceStateFileCopy)
   }
 
@@ -135,7 +135,7 @@ class CompilationOutputsUploader {
         uploader.upload(sourcePath, zipFile)
         uploadedOutputsCount.incrementAndGet()
       }
-      File zipCopy = new File(tmpDir, sourcePath)
+      File zipCopy = new File(syncFolder, sourcePath)
       move(zipFile, zipCopy)
     }
   }
@@ -184,7 +184,7 @@ class CompilationOutputsUploader {
   }
 
   private File writeCommitHistory(CommitsHistory commitsHistory) {
-    File commitHistoryFile = new File(tmpDir, CommitsHistory.JSON_FILE)
+    File commitHistoryFile = new File(syncFolder, CommitsHistory.JSON_FILE)
     commitHistoryFile.parentFile.mkdirs()
     commitHistoryFile.write(commitsHistory.toJson())
     return commitHistoryFile
