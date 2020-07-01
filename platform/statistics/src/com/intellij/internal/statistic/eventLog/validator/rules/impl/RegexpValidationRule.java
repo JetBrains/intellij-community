@@ -18,14 +18,14 @@ import java.util.regex.Pattern;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 
-public class RegexpWhiteListRule extends PerformanceCareRule implements FUSRegexpAwareRule {
+public class RegexpValidationRule extends PerformanceCareRule implements FUSRegexpAwareRule {
   private final NullableLazyValue<Pattern> myPattern;
   @Nullable private final String myRegexp;
 
   private static final List<String> ESCAPE_FROM = Arrays.asList("\\", "[", "]", "{", "}", "(", ")", "-", "^", "*", "+", "?", ".", "|", "$");
   private static final List<String> ESCAPE_TO = ContainerUtil.map(ESCAPE_FROM, s -> "\\" + s);
 
-  public RegexpWhiteListRule(@Nullable final String regexp) {
+  public RegexpValidationRule(@Nullable final String regexp) {
     myPattern = regexp == null ? null : new NullableLazyValue<Pattern>() {
       @Nullable
       @Override
@@ -56,7 +56,7 @@ public class RegexpWhiteListRule extends PerformanceCareRule implements FUSRegex
 
   @Override
   public String toString() {
-    return "RegexpWhiteListRule: myRegexp=" + asRegexp();
+    return "RegexpValidationRule: myRegexp=" + asRegexp();
   }
 
   public static String escapeText(@NotNull String text) {

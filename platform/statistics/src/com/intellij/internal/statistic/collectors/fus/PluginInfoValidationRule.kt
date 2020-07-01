@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
 
-class PluginInfoWhiteListRule : CustomWhiteListRule() {
+class PluginInfoValidationRule : CustomWhiteListRule() {
   override fun acceptRuleId(ruleId: String?) = ruleId in acceptedRules
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {

@@ -20,15 +20,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public abstract class LocalFileCustomWhiteListRule extends CustomWhiteListRule {
-  private static final Logger LOG = Logger.getInstance(LocalFileCustomWhiteListRule.class);
+public abstract class LocalFileCustomValidationRule extends CustomWhiteListRule {
+  private static final Logger LOG = Logger.getInstance(LocalFileCustomValidationRule.class);
 
-  private WeakReference<CachedWhitelistedItems> myWhitelistRef;
+  private WeakReference<CachedAllowedItems> myAllowedItemsRef;
   private final String myRuleId;
   private final Class myResourceHolder;
   private final String myRelativePath;
 
-  protected LocalFileCustomWhiteListRule(@NotNull String ruleId, @NotNull Class resource, @NotNull String path) {
+  protected LocalFileCustomValidationRule(@NotNull String ruleId, @NotNull Class resource, @NotNull String path) {
     myRuleId = ruleId;
     myResourceHolder = resource;
     myRelativePath = path;
@@ -39,24 +39,24 @@ public abstract class LocalFileCustomWhiteListRule extends CustomWhiteListRule {
     return myRuleId.equals(ruleId);
   }
 
-  private boolean isWhitelisted(@NotNull String value) {
-    final CachedWhitelistedItems whitelist = getWhitelist();
-    return whitelist.contains(value);
+  private boolean isAllowed(@NotNull String value) {
+    final CachedAllowedItems allowed = getAllowedItems();
+    return allowed.contains(value);
   }
 
   @NotNull
-  private synchronized CachedWhitelistedItems getWhitelist() {
-    final CachedWhitelistedItems whitelist = SoftReference.dereference(myWhitelistRef);
-    if (whitelist != null) {
-      return whitelist;
+  private synchronized LocalFileCustomValidationRule.CachedAllowedItems getAllowedItems() {
+    final CachedAllowedItems allowed = SoftReference.dereference(myAllowedItemsRef);
+    if (allowed != null) {
+      return allowed;
     }
-    final CachedWhitelistedItems items = create();
-    myWhitelistRef = new WeakReference<>(items);
+    final CachedAllowedItems items = create();
+    myAllowedItemsRef = new WeakReference<>(items);
     return items;
   }
 
   @NotNull
-  private CachedWhitelistedItems create() {
+  private LocalFileCustomValidationRule.CachedAllowedItems create() {
     try {
       //noinspection IOResourceOpenedButNotSafelyClosed
       InputStream resourceStream = myResourceHolder.getResourceAsStream(myRelativePath);
@@ -67,14 +67,14 @@ public abstract class LocalFileCustomWhiteListRule extends CustomWhiteListRule {
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(resourceStream, StandardCharsets.UTF_8))) {
         final List<String> values = FileUtil.loadLines(reader);
         if (!values.isEmpty()) {
-          return CachedWhitelistedItems.create(ContainerUtil.map2SetNotNull(values, value -> createValue(value)));
+          return CachedAllowedItems.create(ContainerUtil.map2SetNotNull(values, value -> createValue(value)));
         }
       }
     }
     catch (IOException e) {
       LOG.info(e);
     }
-    return CachedWhitelistedItems.empty();
+    return CachedAllowedItems.empty();
   }
 
   @Nullable
@@ -85,16 +85,16 @@ public abstract class LocalFileCustomWhiteListRule extends CustomWhiteListRule {
   @NotNull
   @Override
   final protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-    if (isThirdPartyValue(data) || isWhitelisted(data)) {
+    if (isThirdPartyValue(data) || isAllowed(data)) {
       return ValidationResultType.ACCEPTED;
     }
     return ValidationResultType.REJECTED;
   }
 
-  private static final class CachedWhitelistedItems {
+  private static final class CachedAllowedItems {
     private final Set<String> myValues;
 
-    private CachedWhitelistedItems(@NotNull Set<String> values) {
+    private CachedAllowedItems(@NotNull Set<String> values) {
       myValues = values;
     }
 
@@ -103,13 +103,13 @@ public abstract class LocalFileCustomWhiteListRule extends CustomWhiteListRule {
     }
 
     @NotNull
-    public static CachedWhitelistedItems create(@NotNull Set<String> values) {
-      return new CachedWhitelistedItems(values);
+    public static LocalFileCustomValidationRule.CachedAllowedItems create(@NotNull Set<String> values) {
+      return new CachedAllowedItems(values);
     }
 
     @NotNull
-    public static CachedWhitelistedItems empty() {
-      return new CachedWhitelistedItems(Collections.emptySet());
+    public static LocalFileCustomValidationRule.CachedAllowedItems empty() {
+      return new CachedAllowedItems(Collections.emptySet());
     }
   }
 }

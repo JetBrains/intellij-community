@@ -16,10 +16,10 @@ import java.util.Collections;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 
-public class EnumWhiteListRule extends PerformanceCareRule implements FUSRegexpAwareRule {
+public class EnumValidationRule extends PerformanceCareRule implements FUSRegexpAwareRule {
   private final Collection<String> myEnumValues;
 
-  public EnumWhiteListRule(@Nullable Collection<String> strings) {
+  public EnumValidationRule(@Nullable Collection<String> strings) {
     myEnumValues = strings == null ? Collections.emptySet() : ContainerUtil.unmodifiableOrEmptyCollection(strings);
   }
 
@@ -33,12 +33,12 @@ public class EnumWhiteListRule extends PerformanceCareRule implements FUSRegexpA
   @NotNull
   @Override
   public String asRegexp() {
-    return  StringUtil.join(ContainerUtil.map(myEnumValues, s -> RegexpWhiteListRule.escapeText(s)), "|");
+    return  StringUtil.join(ContainerUtil.map(myEnumValues, s -> RegexpValidationRule.escapeText(s)), "|");
   }
 
   @Override
   public String toString() {
-    return "EnumWhiteListRule: myEnumValues=" + asRegexp();
+    return "EnumValidationRule: myEnumValues=" + asRegexp();
   }
 
 }

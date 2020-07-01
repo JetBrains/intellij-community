@@ -4,11 +4,11 @@ package com.intellij.internal.statistic.eventLog.validator.rules.utils;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRegexpAwareRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupContextData;
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumWhiteListRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpWhiteListRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilExpressionWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilExpressionValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public final class WhiteListSimpleRuleFactory {
+public final class ValidationSimpleRuleFactory {
   private static final String RULE_PREFIX = "rule:";          // rule:TRUE , rule:FALSE
   private static final String ENUM_PREFIX = "enum:";          // enum:A|B|C
   private static final String REGEXP_PREFIX = "regexp:";      // regexp:\d+
@@ -36,12 +36,12 @@ public final class WhiteListSimpleRuleFactory {
 
   @NotNull
   public static FUSRule createRule(@NotNull String rule) {
-    return createRule(rule, WhiteListGroupContextData.EMPTY);
+    return createRule(rule, EventGroupContextData.EMPTY);
   }
 
   @NotNull
   public static FUSRule createRule(@NotNull String rule,
-                                   @NotNull WhiteListGroupContextData contextData) {
+                                   @NotNull EventGroupContextData contextData) {
     // 1. enum:<value> or {enum:<value>}   => enum:A|B|C
     // 2. enum#<ref-id> or {enum#<ref-id>} => enum#my-enum
     // 3. regexp:<value> or {regexp:<value>} => regexp:0|[1-9][0-9]*
@@ -55,15 +55,15 @@ public final class WhiteListSimpleRuleFactory {
   }
 
   @Nullable
-  private static FUSRule createSimpleRule(@NotNull String rule, @NotNull WhiteListGroupContextData contextData) {
+  private static FUSRule createSimpleRule(@NotNull String rule, @NotNull EventGroupContextData contextData) {
 
     return createSimpleRule(rule,
                             Pair.create(RULE_PREFIX,s -> getBooleanRule(s)),
                             Pair.create(UTIL_PREFIX,s -> getCustomUtilRule(s)),
-                            Pair.create(ENUM_PREFIX, s -> new EnumWhiteListRule(StringUtil.split(s, ENUM_SEPARATOR, true, false))),
-                            Pair.create(ENUM_REF_PREFIX, s -> new EnumWhiteListRule(contextData.getEnum(s))),
-                            Pair.create(REGEXP_PREFIX, s -> new RegexpWhiteListRule(s)),
-                            Pair.create(REGEXP_REF_PREFIX, s -> new RegexpWhiteListRule(contextData.getRegexp(s)))); }
+                            Pair.create(ENUM_PREFIX, s -> new EnumValidationRule(StringUtil.split(s, ENUM_SEPARATOR, true, false))),
+                            Pair.create(ENUM_REF_PREFIX, s -> new EnumValidationRule(contextData.getEnum(s))),
+                            Pair.create(REGEXP_PREFIX, s -> new RegexpValidationRule(s)),
+                            Pair.create(REGEXP_REF_PREFIX, s -> new RegexpValidationRule(contextData.getRegexp(s)))); }
 
   @Nullable
   private static CustomWhiteListRule getCustomUtilRule(String s) {
@@ -101,7 +101,7 @@ public final class WhiteListSimpleRuleFactory {
 
   @NotNull
   private static FUSRule createExpressionRule(@NotNull String rule,
-                                              @NotNull WhiteListGroupContextData contextData) {
+                                              @NotNull EventGroupContextData contextData) {
     List<String> nodes = parseSimpleExpression(rule);
     if (nodes.size() == 1) {
       String n = nodes.get(0);
@@ -114,11 +114,11 @@ public final class WhiteListSimpleRuleFactory {
     if (rule.contains(UTIL_PREFIX)) {
       return createExpressionUtilRule(nodes);
     }
-    return createExpressionWhiteListRule(rule, contextData);
+    return createExpressionValidationRule(rule, contextData);
   }
 
   @NotNull
-  private static FUSRule createExpressionWhiteListRule(@NotNull String rule, @NotNull WhiteListGroupContextData contextData) {
+  private static FUSRule createExpressionValidationRule(@NotNull String rule, @NotNull EventGroupContextData contextData) {
     StringBuilder sb = new StringBuilder();
     for (String node : parseSimpleExpression(rule)) {
       if (isExpressionNode(node)) {
@@ -133,10 +133,10 @@ public final class WhiteListSimpleRuleFactory {
         }
       }
       else {
-        sb.append(RegexpWhiteListRule.escapeText(node));
+        sb.append(RegexpValidationRule.escapeText(node));
       }
     }
-    return new RegexpWhiteListRule(sb.toString());
+    return new RegexpValidationRule(sb.toString());
   }
 
   // 'aaaaa{util#foo_util}bbbb' = > prefix='aaaaa', suffix='bbbb',  utilRule = createRule('{util#foo_util}')
@@ -168,7 +168,7 @@ public final class WhiteListSimpleRuleFactory {
       }
     }
     if (fusRule == null) return UNPARSED_EXPRESSION;
-    return new UtilExpressionWhiteListRule(fusRule, prefix, suffix);
+    return new UtilExpressionValidationRule(fusRule, prefix, suffix);
   }
 
   @NotNull

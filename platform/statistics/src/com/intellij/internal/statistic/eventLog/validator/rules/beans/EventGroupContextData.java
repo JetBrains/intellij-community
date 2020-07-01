@@ -7,29 +7,29 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
 
-public class WhiteListGroupContextData {
-  public static final WhiteListGroupContextData EMPTY = create(null, null, null, null);
+public class EventGroupContextData {
+  public static final EventGroupContextData EMPTY = create(null, null, null, null);
 
   @Nullable private final Map<String, Set<String>> myEnums;
   @Nullable private final Map<String, Set<String>> myGlobalEnums;
   @Nullable private final Map<String, String> myRegexps;
   @Nullable private final Map<String, String> myGlobalRegexps;
 
-  public WhiteListGroupContextData(@Nullable Map<String, Set<String>> enums,
-                                   @Nullable Map<String, Set<String>> globalEnums,
-                                   @Nullable Map<String, String> regexps,
-                                   @Nullable Map<String, String> globalRegexps) {
+  public EventGroupContextData(@Nullable Map<String, Set<String>> enums,
+                               @Nullable Map<String, Set<String>> globalEnums,
+                               @Nullable Map<String, String> regexps,
+                               @Nullable Map<String, String> globalRegexps) {
     myEnums = enums;
     myGlobalEnums = globalEnums;
     myRegexps = regexps;
     myGlobalRegexps = globalRegexps;
   }
 
-  public static WhiteListGroupContextData create(@Nullable Map<String, Set<String>> enums,
-                                                 @Nullable Map<String, Set<String>> globalEnums,
-                                                 @Nullable Map<String, String> regexps,
-                                                 @Nullable Map<String, String> globalRegexps) {
-    return new WhiteListGroupContextData(enums, globalEnums, regexps, globalRegexps);
+  public static EventGroupContextData create(@Nullable Map<String, Set<String>> enums,
+                                             @Nullable Map<String, Set<String>> globalEnums,
+                                             @Nullable Map<String, String> regexps,
+                                             @Nullable Map<String, String> globalRegexps) {
+    return new EventGroupContextData(enums, globalEnums, regexps, globalRegexps);
   }
 
   @Nullable

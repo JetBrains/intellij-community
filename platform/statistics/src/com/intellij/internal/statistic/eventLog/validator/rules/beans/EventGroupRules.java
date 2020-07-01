@@ -5,8 +5,8 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumWhiteListRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.utils.WhiteListSimpleRuleFactory;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
@@ -18,15 +18,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 
-public final class WhiteListGroupRules {
-  public static final WhiteListGroupRules EMPTY =
-    new WhiteListGroupRules(Collections.emptySet(), Collections.emptyMap(), WhiteListGroupContextData.EMPTY);
+public final class EventGroupRules {
+  public static final EventGroupRules EMPTY =
+    new EventGroupRules(Collections.emptySet(), Collections.emptyMap(), EventGroupContextData.EMPTY);
 
   private final FUSRule[] eventIdRules;
   private final Map<String, FUSRule[]> eventDataRules = new ConcurrentHashMap<>();
 
-  private WhiteListGroupRules(@Nullable Set<String> eventIdRules,
-                              @Nullable Map<String, Set<String>> eventDataRules, @NotNull WhiteListGroupContextData contextData) {
+  private EventGroupRules(@Nullable Set<String> eventIdRules,
+                          @Nullable Map<String, Set<String>> eventDataRules, @NotNull EventGroupContextData contextData) {
     this.eventIdRules = getRules(eventIdRules, contextData);
 
     if (eventDataRules != null) {
@@ -50,12 +50,12 @@ public final class WhiteListGroupRules {
   }
 
   private static FUSRule @NotNull [] getRules(@Nullable Set<String> rules,
-                                              @NotNull WhiteListGroupContextData contextData) {
+                                              @NotNull EventGroupContextData contextData) {
 
     if (rules == null) return FUSRule.EMPTY_ARRAY;
     List<FUSRule> fusRules = new SortedList<>(getRulesComparator());
     for (String rule : rules) {
-      ContainerUtil.addIfNotNull(fusRules, WhiteListSimpleRuleFactory.createRule(rule, contextData));
+      ContainerUtil.addIfNotNull(fusRules, ValidationSimpleRuleFactory.createRule(rule, contextData));
     }
     return fusRules.toArray(FUSRule.EMPTY_ARRAY);
   }
@@ -63,8 +63,8 @@ public final class WhiteListGroupRules {
   private static @NotNull Comparator<FUSRule> getRulesComparator() {
     // todo: do it better )))
     return (o1, o2) -> {
-      if (o1 instanceof EnumWhiteListRule) return o2 instanceof EnumWhiteListRule ? -1 : 0;
-      return o2 instanceof EnumWhiteListRule ? 0 : 1;
+      if (o1 instanceof EnumValidationRule) return o2 instanceof EnumValidationRule ? -1 : 0;
+      return o2 instanceof EnumValidationRule ? 0 : 1;
     };
   }
 
@@ -136,13 +136,13 @@ public final class WhiteListGroupRules {
     return prevResult != null ? prevResult : REJECTED;
   }
 
-  public static @NotNull WhiteListGroupRules create(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
-                                                    @Nullable Map<String, Set<String>> globalEnums,
-                                                    @Nullable Map<String, String> globalRegexps) {
+  public static @NotNull EventGroupRules create(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
+                                                @Nullable Map<String, Set<String>> globalEnums,
+                                                @Nullable Map<String, String> globalRegexps) {
     FUStatisticsWhiteListGroupsService.WLRule rules = group.rules;
     return rules == null
            ? EMPTY
-           : new WhiteListGroupRules(rules.event_id, rules.event_data,
-                                     WhiteListGroupContextData.create(rules.enums, globalEnums, rules.regexps, globalRegexps));
+           : new EventGroupRules(rules.event_id, rules.event_data,
+                                 EventGroupContextData.create(rules.enums, globalEnums, rules.regexps, globalRegexps));
   }
 }

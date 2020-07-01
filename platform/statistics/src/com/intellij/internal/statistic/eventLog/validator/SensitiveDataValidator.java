@@ -4,10 +4,10 @@ package com.intellij.internal.statistic.eventLog.validator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumWhiteListRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistGroupRulesStorage;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.internal.statistic.eventLog.EventLogSystemEvents.*;
+import static com.intellij.internal.statistic.eventLog.EventLogSystemEvents.SYSTEM_EVENTS;
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginInfoTo;
 
@@ -44,11 +44,11 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginIn
  *     <li>
  *       <b>Enum</b>: a list of possible values, e.g.
  *       <i>"{enum:started|finished}"</i> checks that the value is equal to 'started' or 'finished'.<br/>
- *      See: {@link EnumWhiteListRule}
+ *      See: {@link EnumValidationRule}
  *     </li>
  *     <li>
  *       <b>Regexp</b>: e.g. <i>"{regexp#integer}</i> checks that the value is integer.<br/>
- *       See: {@link RegexpWhiteListRule}
+ *       See: {@link RegexpValidationRule}
  *     </li>
  *     <li>
  *       <b>Custom rule</b>: class which inherits {@link CustomWhiteListRule} and validates dynamic data like action id or file type, e.g.
@@ -141,8 +141,8 @@ public class SensitiveDataValidator {
   }
 
   public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
-    WhiteListGroupRules whiteListRule = myWhiteListStorage.getGroupRules(group.getId());
-    if (isTestModeEnabled(whiteListRule)) {
+    EventGroupRules groupRules = myWhiteListStorage.getGroupRules(group.getId());
+    if (isTestModeEnabled(groupRules)) {
       return context.eventData;
     }
 
@@ -152,7 +152,7 @@ public class SensitiveDataValidator {
       String key = entry.getKey();
       Object entryValue = entry.getValue();
 
-      validatedData.put(key, validateEventData(context, whiteListRule, key, entryValue));
+      validatedData.put(key, validateEventData(context, groupRules, key, entryValue));
     }
 
     boolean containsPluginInfo = validatedData.containsKey("plugin") ||
@@ -164,27 +164,27 @@ public class SensitiveDataValidator {
     return validatedData;
   }
 
-  private static boolean isTestModeEnabled(@Nullable WhiteListGroupRules rule) {
+  private static boolean isTestModeEnabled(@Nullable EventGroupRules rule) {
     return TestModeValidationRule.isTestModeEnabled() && rule != null &&
            Arrays.stream(rule.getEventIdRules()).anyMatch(r -> r instanceof TestModeValidationRule);
   }
 
   public ValidationResultType validateEvent(@NotNull EventLogGroup group, @NotNull EventContext context) {
-    WhiteListGroupRules whiteListRule = myWhiteListStorage.getGroupRules(group.getId());
-    if (whiteListRule == null || !whiteListRule.areEventIdRulesDefined()) {
+    EventGroupRules groupRules = myWhiteListStorage.getGroupRules(group.getId());
+    if (groupRules == null || !groupRules.areEventIdRulesDefined()) {
       return UNDEFINED_RULE; // there are no rules (eventId and eventData) to validate
     }
 
-    return whiteListRule.validateEventId(context);
+    return groupRules.validateEventId(context);
   }
 
   private Object validateEventData(@NotNull EventContext context,
-                                   @Nullable WhiteListGroupRules whiteListRule,
+                                   @Nullable EventGroupRules groupRules,
                                    @NotNull String key,
                                    @NotNull Object entryValue) {
     if (myWhiteListStorage.isUnreachableWhitelist()) return UNREACHABLE_METADATA;
-    if (whiteListRule == null) return UNDEFINED_RULE;
-    return whiteListRule.validateEventData(key, entryValue, context);
+    if (groupRules == null) return UNDEFINED_RULE;
+    return groupRules.validateEventData(key, entryValue, context);
   }
 
   public void update() {

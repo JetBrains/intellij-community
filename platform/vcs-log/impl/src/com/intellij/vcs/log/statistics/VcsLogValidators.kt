@@ -4,7 +4,7 @@ package com.intellij.vcs.log.statistics
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomWhitelistRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomValidationRule
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter
@@ -28,7 +28,7 @@ class VcsLogFilterNameValidator :
   CustomStringsWhiteListRule("vcs_log_filter_name", VcsLogFilterCollection.STANDARD_KEYS.map { it.name }.toSet())
 
 class VcsLogSortKindValidator :
-  LocalEnumCustomWhitelistRule("vcs_log_sort_kind", PermanentGraph.SortType::class.java)
+  LocalEnumCustomValidationRule("vcs_log_sort_kind", PermanentGraph.SortType::class.java)
 
 class VcsLogHighlighterIdValidator :
   CustomStringsWhiteListRule("vcs_log_highlighter_id", setOf(MyCommitsHighlighter.Factory.ID, MergeCommitsHighlighter.Factory.ID,
