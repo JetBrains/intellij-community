@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -70,6 +56,29 @@ public @interface CheckReturnValue {
     When when() default When.ALWAYS;
 }""",
 
+      """package com.google.errorprone.annotations;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+@Documented
+ @Target(value={METHOD,CONSTRUCTOR,TYPE,PACKAGE})
+ @Retention(value=RUNTIME)
+public @interface CheckReturnValue {}
+""",
+
+      """package org.assertj.core.util;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+@Target(value={CONSTRUCTOR,METHOD,PACKAGE,TYPE})
+@Retention(value=CLASS)
+public @interface CheckReturnValue {}
+""",
+
       """package a;
  public @interface CheckReturnValue {}""",
 
@@ -81,6 +90,15 @@ import java.lang.annotation.Target;
 @Target(value={ElementType.METHOD, ElementType.TYPE})
 @Retention(value=RetentionPolicy.CLASS)
 public @interface CanIgnoreReturnValue {}""",
+
+      """package org.assertj.core.util;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+@Target(value={CONSTRUCTOR,METHOD,PACKAGE,TYPE})
+@Retention(value=CLASS)
+public @interface CanIgnoreReturnValue{} """,
       
       """package org.apache.commons.lang3;
 public class Validate {
@@ -105,6 +123,98 @@ public class Validate {
            "    ignoreMe(); // OK.  This line should *not* produce a warning.\n" +
            "  }\n" +
            "}")
+  }
+
+  void testCanIgnoreReturnValue2() {
+    doTest("""
+class TestClass {
+
+    public void m() {
+        var javax = new Javax();
+        javax./*Result of 'Javax.unannotated()' is ignored*/unannotated/**/();
+        javax.assertJ();
+        javax.errorProne();
+
+        var errorProne = new ErrorProne();
+        errorProne./*Result of 'ErrorProne.unannotated()' is ignored*/unannotated/**/();
+        errorProne.assertJ();
+        errorProne.errorProne();
+
+        var assertJ = new AssertJ();
+        assertJ./*Result of 'AssertJ.unannotated()' is ignored*/unannotated/**/();
+        assertJ.assertJ();
+        assertJ.errorProne();
+
+    }
+
+    @javax.annotation.CheckReturnValue
+    public static class Javax {
+        int unannotated() {
+            return 3;
+        }
+
+        @org.assertj.core.util.CanIgnoreReturnValue
+        int assertJ() {
+            return 3;
+        }
+
+        @com.google.errorprone.annotations.CanIgnoreReturnValue
+        int errorProne() {
+            return 3;
+        }
+    }
+
+    @com.google.errorprone.annotations.CheckReturnValue
+    public static class ErrorProne {
+        int unannotated() {
+            return 3;
+        }
+
+        @org.assertj.core.util.CanIgnoreReturnValue
+        int assertJ() {
+            return 3;
+        }
+
+        @com.google.errorprone.annotations.CanIgnoreReturnValue
+        int errorProne() {
+            return 3;
+        }
+    }
+
+    @org.assertj.core.util.CheckReturnValue
+    public static class AssertJ {
+        int unannotated() {
+            return 3;
+        }
+
+        @org.assertj.core.util.CanIgnoreReturnValue
+        int assertJ() {
+            return 3;
+        }
+
+        @com.google.errorprone.annotations.CanIgnoreReturnValue
+        int errorProne() {
+            return 3;
+        }
+    }
+}
+""")
+  }
+
+  void testCanIgnoreReturnValue3() {
+    doTest("""
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.CheckReturnValue;
+@CheckReturnValue
+class Test {
+    static int lookAtMe() { return 1; }
+    @CanIgnoreReturnValue
+    static int ignoreMe() { return 2; }
+    void run() {
+        /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // <- inspection 
+        ignoreMe(); // <- also inspection
+    }
+}""")
   }
 
   void testCustomCheckReturnValue() {

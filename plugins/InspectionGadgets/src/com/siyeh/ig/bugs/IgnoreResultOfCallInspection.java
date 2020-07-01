@@ -76,6 +76,8 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         .parameterTypes("T"));
   private static final Set<String> IGNORE_ANNOTATIONS = ContainerUtil
     .immutableSet("org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
+  private static final Set<String> CHECK_ANNOTATIONS = ContainerUtil.immutableSet(
+    "javax.annotation.CheckReturnValue", "org.assertj.core.util.CheckReturnValue", "com.google.errorprone.annotations.CheckReturnValue");
   protected final MethodMatcher myMethodMatcher;
   /**
    * @noinspection PublicField
@@ -230,7 +232,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         return !isIgnored(method, null);
       }
 
-      PsiAnnotation annotation = findAnnotationInTree(method, null, Collections.singleton("javax.annotation.CheckReturnValue"));
+      PsiAnnotation annotation = findAnnotationInTree(method, null, CHECK_ANNOTATIONS);
       if (annotation == null) {
         annotation = getAnnotationByShortNameCheckReturnValue(method);
       }
