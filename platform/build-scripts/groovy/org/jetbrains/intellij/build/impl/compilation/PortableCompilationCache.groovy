@@ -6,6 +6,8 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.impl.CompilationContextImpl
+import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
 import org.jetbrains.jps.incremental.storage.ProjectStamps
@@ -81,33 +83,22 @@ class PortableCompilationCache {
   }
 
   private def compileProject() {
-    def tasks = CompilationTasks.create(context)
-    if (forceRebuild || !downloader.availableForHeadCommit || !forceDownload) {
-      // When force rebuilding incrementalCompilation has to be set to false otherwise backward-refs won't be created.
-      // During rebuild JPS checks {@code CompilerReferenceIndex.exists(buildDir) || isRebuild} and if
-      // incremental compilation enabled JPS won't create {@link JavaBackwardReferenceIndexWriter}.
-      // For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
-      context.options.incrementalCompilation = !forceRebuild
-      try {
-        tasks.resolveProjectDependenciesAndCompileAll()
+    CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
+    def jps = new JpsCompilationRunner(context)
+    try {
+      jps.buildAll()
+    }
+    catch (Exception e) {
+      if (context.options.incrementalCompilation && !forceDownload) {
+        context.messages.warning('Incremental compilation using locally available caches failed. ' +
+                                 'Re-trying using JPS remote caches.')
+        downloadCachesAndOutput()
+        jps.buildAll()
       }
-      catch (Exception e) {
-        if (context.options.incrementalCompilation && !forceDownload) {
-          context.messages.warning('Incremental compilation using locally available caches failed. ' +
-                                   'Re-trying using JPS remote caches.')
-          downloadCachesAndOutput()
-          tasks.resolveProjectDependenciesAndCompileAll()
-        }
-        else {
-          throw e
-        }
+      else {
+        throw e
       }
     }
-    else if (downloader.availableForHeadCommit && forceDownload) {
-      tasks.resolveProjectDependencies()
-    }
-    context.options.incrementalCompilation = false
-    context.options.useCompiledClassesFromProjectOutput = true
   }
 
   /**
@@ -120,7 +111,17 @@ class PortableCompilationCache {
     else if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
       downloadCachesAndOutput()
     }
-    compileProject()
+    CompilationTasks.create(context).resolveProjectDependencies()
+    if (forceRebuild || !downloader.availableForHeadCommit || !forceDownload) {
+      // When force rebuilding incrementalCompilation has to be set to false otherwise backward-refs won't be created.
+      // During rebuild JPS checks {@code CompilerReferenceIndex.exists(buildDir) || isRebuild} and if
+      // incremental compilation enabled JPS won't create {@link JavaBackwardReferenceIndexWriter}.
+      // For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
+      context.options.incrementalCompilation = !forceRebuild
+      compileProject()
+    }
+    context.options.incrementalCompilation = false
+    context.options.useCompiledClassesFromProjectOutput = true
   }
 
   private def downloadCachesAndOutput() {
