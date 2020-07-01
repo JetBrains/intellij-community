@@ -54,5 +54,5 @@ patchPluginXml {
 }
 
 group 'ru.adelf'
-version '2020.2' // Plugin version
+version '2020.3' // Plugin version
 sourceCompatibility = 1.8

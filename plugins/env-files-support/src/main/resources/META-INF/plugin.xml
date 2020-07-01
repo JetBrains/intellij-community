@@ -32,6 +32,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      2020.3
+      <ul>
+        <li>phpunit.xml environment variables completion</li>
+        <li>Fix incorrect syntax with slashes in quoted .env values</li>
+      </ul>
       2020.2
       <ul>
         <li>2020.2 IDE versions support</li>
