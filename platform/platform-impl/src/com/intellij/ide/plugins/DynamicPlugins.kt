@@ -153,8 +153,9 @@ object DynamicPlugins {
       for (pluginDependency in pluginDependencies) {
         if (!pluginDependency.isOptional &&
             !PluginManagerCore.isModuleDependency(pluginDependency.id) &&
-            PluginManagerCore.ourLoadedPlugins.none { it.pluginId == pluginDependency.id }) {
-          return "Required dependency ${pluginDependency.id} is not currently loaded"
+            PluginManagerCore.ourLoadedPlugins.none { it.pluginId == pluginDependency.id } &&
+            context.none { it.pluginId == pluginDependency.id }) {
+          return "Required dependency ${pluginDependency.id} of plugin ${descriptor.pluginId} is not currently loaded"
         }
       }
     }
@@ -279,8 +280,14 @@ object DynamicPlugins {
       }
 
       if (dependencyMessage == null && checkImplementationDetailDependencies) {
+        val contextWithImplementationDetails = context.toMutableList()
+        contextWithImplementationDetails.add(descriptor)
         processImplementationDetailDependenciesOnPlugin(descriptor) { _, fullDescriptor ->
-          dependencyMessage = checkCanUnloadWithoutRestart(fullDescriptor, context = context, checkImplementationDetailDependencies = false)
+          contextWithImplementationDetails.add(fullDescriptor)
+        }
+
+        processImplementationDetailDependenciesOnPlugin(descriptor) { _, fullDescriptor ->
+          dependencyMessage = checkCanUnloadWithoutRestart(fullDescriptor, context = contextWithImplementationDetails, checkImplementationDetailDependencies = false)
           dependencyMessage == null
         }
       }
