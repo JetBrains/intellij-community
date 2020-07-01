@@ -257,6 +257,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTestPassFieldsAsParams();
   }
 
+  public void testNotPassedStaticField2() throws Exception {
+    doTestPassFieldsAsParams();
+  }
+
   public void testExtractAssignmentExpression() throws Exception {
     try {
       doTest();
