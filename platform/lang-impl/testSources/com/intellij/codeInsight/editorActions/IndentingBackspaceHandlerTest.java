@@ -22,18 +22,14 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-
 @RunWith(com.intellij.testFramework.Parameterized.class)
 @TestDataPath("/testData/../../../platform/lang-impl/testData/editor/indentingBackspace/")
 public class IndentingBackspaceHandlerTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
   @Test
   public void testAction() {
-    runInEdtAndWait(() -> {
-      configureByFile(myFileSuffix);
-      backspace();
-      checkResultByFile(myFileSuffix.replace(".", "-after."));
-    });
+    configureByFile(myFileSuffix);
+    backspace();
+    checkResultByFile(myFileSuffix.replace(".", "-after."));
   }
 
   @Nullable

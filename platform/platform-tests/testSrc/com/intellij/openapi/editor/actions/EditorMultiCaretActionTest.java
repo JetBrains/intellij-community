@@ -25,12 +25,10 @@ import org.junit.runner.RunWith;
 public class EditorMultiCaretActionTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
   @Test
   public void testAction() {
-    EdtTestUtil.runInEdtAndWait(() -> {
-      configureByFile(getBeforeFileName());
-      EditorTestUtil.setEditorVisibleSize(getEditor(), 120, 20); // some actions require visible area to be defined, like EditorPageUp
-      executeAction(getActionName());
-      checkResultByFile(getAfterFileName());
-    });
+    configureByFile(getBeforeFileName());
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 120, 20); // some actions require visible area to be defined, like EditorPageUp
+    executeAction(getActionName());
+    checkResultByFile(getAfterFileName());
   }
 
   @Nullable

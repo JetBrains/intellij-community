@@ -45,8 +45,9 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
@@ -59,6 +60,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   private PsiFile myFile;
   private VirtualFile myVFile;
   private TestIndexingModeSupporter.IndexingMode myIndexingMode = IndexingMode.SMART;
+
+  @Rule
+  public final @NotNull TestRule runBareTestRule = getRunBareTestRule();
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
@@ -281,6 +285,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void setUp() throws Exception {
     super.setUp();
     myIndexingMode.setUpTest(getProject(), getTestRootDisposable());
+  }
+
+  @Before  // runs after (all overrides of) setUp()
+  public void before() throws Throwable {
+    myIndexingMode.ensureIndexingStatus(getProject());
   }
 
   @Override
@@ -760,59 +769,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       return "test" + myFileSuffix;
     }
     return super.getName();
-  }
-
-  @Before
-  public void before() throws Throwable {
-    final Throwable[] throwables = new Throwable[1];
-
-    invokeTestRunnable(() -> {
-      try {
-        setUp();
-        myIndexingMode.ensureIndexingStatus(getProject());
-      }
-      catch (Throwable e) {
-        throwables[0] = e;
-      }
-    });
-
-    if (throwables[0] != null) {
-      throw throwables[0];
-    }
-  }
-
-  @After
-  public void after() throws Throwable {
-    final Throwable[] throwables = new Throwable[1];
-
-    invokeTestRunnable(() -> {
-      try {
-        tearDown();
-      }
-      catch (Throwable e) {
-        throwables[0] = e;
-      }
-    });
-    if (throwables[0] != null) {
-      throw throwables[0];
-    }
-  }
-
-  protected void runSingleTest(@NotNull final Runnable testRunnable) throws Throwable {
-    final Throwable[] throwables = new Throwable[1];
-
-    invokeTestRunnable(() -> {
-      try {
-        testRunnable.run();
-      }
-      catch (Throwable e) {
-        throwables[0] = e;
-      }
-    });
-
-    if (throwables[0] != null) {
-      throw throwables[0];
-    }
   }
 
   protected void setEditor(Editor editor) {
