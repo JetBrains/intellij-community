@@ -2,40 +2,31 @@
 package org.jetbrains.idea.maven.compatibility;
 
 
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.RunAll;
-import com.intellij.testFramework.TestLoggerFactory;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.rules.TestName;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 
-@RunWith(value = Parameterized.class)
+@RunWith(Parameterized.class)
 public abstract class MavenCompatibilityTest extends MavenImportingTestCase {
-  @Rule public TestName name = new TestName();
+  @Rule
+  public final @NotNull TestRule runBareTestRule = getRunBareTestRule();
 
   @NotNull
   protected MavenWrapperTestFixture myWrapperTestFixture;
 
   @Parameter
   public String myMavenVersion;
-
-
 
   protected void assumeVersionMoreThan(String version) {
     Assume.assumeTrue("Version should be more than " + version, VersionComparatorUtil.compare(myMavenVersion, version) > 0);
@@ -49,67 +40,16 @@ public abstract class MavenCompatibilityTest extends MavenImportingTestCase {
     Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(myMavenVersion, version) != 0);
   }
 
-  protected void doTest(ThrowableRunnable<Throwable> throwableRunnable) throws Throwable {
-    final Throwable[] throwables = new Throwable[1];
-
-    Runnable runnable = () -> {
-      try {
-        TestLoggerFactory.onTestStarted();
-        assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(myProject).getMavenDistribution().getVersion());
-        throwableRunnable.run();
-        TestLoggerFactory.onTestFinished(true);
-      }
-      catch (InvocationTargetException e) {
-        TestLoggerFactory.onTestFinished(false);
-        e.fillInStackTrace();
-        throwables[0] = e.getTargetException();
-      }
-      catch (IllegalAccessException e) {
-        TestLoggerFactory.onTestFinished(false);
-        e.fillInStackTrace();
-        throwables[0] = e;
-      }
-      catch (Throwable e) {
-        TestLoggerFactory.onTestFinished(false);
-        throwables[0] = e;
-      }
-    };
-
-    try {
-      WriteAction.runAndWait(() -> {
-        invokeTestRunnable(runnable);
-      });
-    }
-    catch (Throwable throwable) {
-      ExceptionUtil.rethrowAllAsUnchecked(throwable);
-    }
-    if (throwables[0] != null) {
-      throw throwables[0];
-    }
-  }
-
-  @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
     myWrapperTestFixture = new MavenWrapperTestFixture(myProject, myMavenVersion);
     myWrapperTestFixture.setUp();
   }
 
-  @Override
-  public String getName() {
-    return name.getMethodName() == null ? super.getName() : FileUtil.sanitizeFileName(name.getMethodName());
-  }
-
-  @Override
   @After
-  public void tearDown() {
-    new RunAll(
-      () -> myWrapperTestFixture.tearDown(),
-      ()-> super.tearDown()
-    ).run();
+  public void after() throws Exception {
+    myWrapperTestFixture.tearDown();
   }
-
 
   @Parameterized.Parameters(name = "with Maven-{0}")
   public static List<String[]> getMavenVersions() {

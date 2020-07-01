@@ -6,177 +6,179 @@ import org.junit.Test;
 
 public class MavenCompatibilityProjectImportingTest extends MavenCompatibilityTest {
   @Test
-  public void testSmokeImport() throws Throwable {
+  public void testSmokeImport() {
+    assertCorrectVersion();
 
-    doTest(() -> {
-
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>");
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
 
 
-      assertModules("project");
-    });
+    assertModules("project");
+  }
+
+  private void assertCorrectVersion() {
+    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(myProject).getMavenDistribution().getVersion());
   }
 
   @Test
-  public void testInterpolateModel() throws Throwable {
-    doTest(() -> {
+  public void testInterpolateModel() {
+    assertCorrectVersion();
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
 
-                    "<properties>\n" +
-                    "    <junitVersion>4.0</junitVersion>" +
-                    "  </properties>" +
-                    "<dependencies>" +
-                    "  <dependency>" +
-                    "    <groupId>junit</groupId>" +
-                    "    <artifactId>junit</artifactId>" +
-                    "    <version>${junitVersion}</version>" +
-                    "  </dependency>" +
-                    "</dependencies>");
+                  "<properties>\n" +
+                  "    <junitVersion>4.0</junitVersion>" +
+                  "  </properties>" +
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>${junitVersion}</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
 
-      assertModules("project");
+    assertModules("project");
 
-      assertModuleLibDep("project", "Maven: junit:junit:4.0");
-    });
+    assertModuleLibDep("project", "Maven: junit:junit:4.0");
   }
 
   @Test
-  public void testImportProjectProperties() throws Throwable {
+  public void testImportProjectProperties() {
     assumeVersionMoreThan("3.0.3");
-    doTest(() -> {
-      createModulePom("module1", "<parent>" +
-                                 "<groupId>test</groupId>" +
-                                 "<artifactId>project</artifactId>" +
-                                 "<version>1</version>" +
-                                 "</parent>" +
-                                 "<artifactId>module1</artifactId>" +
-                                 "<dependencies>" +
-                                 "  <dependency>" +
-                                 "    <groupId>junit</groupId>" +
-                                 "    <artifactId>junit</artifactId>" +
-                                 "    <version>${junitVersion}</version>" +
-                                 "  </dependency>" +
-                                 "</dependencies>"
-      );
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
+    assertCorrectVersion();
 
-                    "<properties>" +
-                    "    <junitVersion>4.0</junitVersion>" +
-                    "  </properties>" +
-                    "<modules>" +
-                    "<module>module1</module>" +
-                    "</modules>");
+    createModulePom("module1", "<parent>" +
+                               "<groupId>test</groupId>" +
+                               "<artifactId>project</artifactId>" +
+                               "<version>1</version>" +
+                               "</parent>" +
+                               "<artifactId>module1</artifactId>" +
+                               "<dependencies>" +
+                               "  <dependency>" +
+                               "    <groupId>junit</groupId>" +
+                               "    <artifactId>junit</artifactId>" +
+                               "    <version>${junitVersion}</version>" +
+                               "  </dependency>" +
+                               "</dependencies>"
+    );
 
-      waitForReadingCompletion();
-      assertModules("project", "module1");
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
 
-      assertModuleLibDep("module1", "Maven: junit:junit:4.0");
-    });
+                  "<properties>" +
+                  "    <junitVersion>4.0</junitVersion>" +
+                  "  </properties>" +
+                  "<modules>" +
+                  "<module>module1</module>" +
+                  "</modules>");
+
+    waitForReadingCompletion();
+    assertModules("project", "module1");
+
+    assertModuleLibDep("module1", "Maven: junit:junit:4.0");
   }
 
   @Test
-  public void testImportAddedProjectProperties() throws Throwable {
+  public void testImportAddedProjectProperties() {
     assumeVersionMoreThan("3.0.3");
     assumeVersionNot("3.6.0");
-    doTest(() -> {
 
-      createModulePom("module1", "<parent>" +
-                                 "<groupId>test</groupId>" +
-                                 "<artifactId>project</artifactId>" +
-                                 "<version>1</version>" +
-                                 "</parent>" +
-                                 "<artifactId>module1</artifactId>" +
-                                 "<dependencies>" +
-                                 "  <dependency>" +
-                                 "    <groupId>junit</groupId>" +
-                                 "    <artifactId>junit</artifactId>" +
-                                 "    <version>${junitVersion}</version>" +
-                                 "  </dependency>" +
-                                 "</dependencies>"
-      );
+    assertCorrectVersion();
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
+    createModulePom("module1", "<parent>" +
+                               "<groupId>test</groupId>" +
+                               "<artifactId>project</artifactId>" +
+                               "<version>1</version>" +
+                               "</parent>" +
+                               "<artifactId>module1</artifactId>" +
+                               "<dependencies>" +
+                               "  <dependency>" +
+                               "    <groupId>junit</groupId>" +
+                               "    <artifactId>junit</artifactId>" +
+                               "    <version>${junitVersion}</version>" +
+                               "  </dependency>" +
+                               "</dependencies>"
+    );
 
-                    "<properties>" +
-                    "    <junitVersion>4.0</junitVersion>" +
-                    "  </properties>" +
-                    "<modules>" +
-                    "<module>module1</module>" +
-                    "</modules>");
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
 
-      waitForReadingCompletion();
-      assertModules("project", "module1");
+                  "<properties>" +
+                  "    <junitVersion>4.0</junitVersion>" +
+                  "  </properties>" +
+                  "<modules>" +
+                  "<module>module1</module>" +
+                  "</modules>");
 
-      assertModuleLibDep("module1", "Maven: junit:junit:4.0");
+    waitForReadingCompletion();
+    assertModules("project", "module1");
+
+    assertModuleLibDep("module1", "Maven: junit:junit:4.0");
 
       /*myWrapperTestFixture.tearDown();
       myWrapperTestFixture.setUp();*/
 
-      createModulePom("module1", "<parent>" +
-                                 "<groupId>test</groupId>" +
-                                 "<artifactId>project</artifactId>" +
-                                 "<version>1</version>" +
-                                 "</parent>" +
-                                 "<artifactId>module1</artifactId>" +
-                                 "<dependencies>" +
-                                 "  <dependency>" +
-                                 "    <groupId>junit</groupId>" +
-                                 "    <artifactId>junit</artifactId>" +
-                                 "    <version>${junitVersion2}</version>" +
-                                 "  </dependency>" +
-                                 "</dependencies>"
-      );
+    createModulePom("module1", "<parent>" +
+                               "<groupId>test</groupId>" +
+                               "<artifactId>project</artifactId>" +
+                               "<version>1</version>" +
+                               "</parent>" +
+                               "<artifactId>module1</artifactId>" +
+                               "<dependencies>" +
+                               "  <dependency>" +
+                               "    <groupId>junit</groupId>" +
+                               "    <artifactId>junit</artifactId>" +
+                               "    <version>${junitVersion2}</version>" +
+                               "  </dependency>" +
+                               "</dependencies>"
+    );
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
 
-                    "<properties>" +
-                    "    <junitVersion>4.0</junitVersion>" +
-                    "    <junitVersion2>4.1</junitVersion2>" +
-                    "  </properties>" +
-                    "<modules>" +
-                    "<module>module1</module>" +
-                    "</modules>");
-      waitForReadingCompletion();
-      assertModuleLibDep("module1", "Maven: junit:junit:4.1");
-    });
+                  "<properties>" +
+                  "    <junitVersion>4.0</junitVersion>" +
+                  "    <junitVersion2>4.1</junitVersion2>" +
+                  "  </properties>" +
+                  "<modules>" +
+                  "<module>module1</module>" +
+                  "</modules>");
+    waitForReadingCompletion();
+    assertModuleLibDep("module1", "Maven: junit:junit:4.1");
   }
 
   @Test
-  public void testImportSubProjectWithPropertyInParent() throws Throwable {
+  public void testImportSubProjectWithPropertyInParent() {
     assumeVersionMoreThan("3.0.3");
-    doTest(() -> {
-      createModulePom("module1", "<parent>" +
-                                 "<groupId>test</groupId>" +
-                                 "<artifactId>project</artifactId>" +
-                                 "<version>${revision}</version>" +
-                                 "</parent>" +
-                                 "<artifactId>module1</artifactId>");
 
-      importProject("<groupId>test</groupId>" +
-                    "    <artifactId>project</artifactId>" +
-                    "    <version>${revision}</version>" +
-                    "    <packaging>pom</packaging>" +
-                    "    <modules>" +
-                    "        <module>module1</module>\n" +
-                    "    </modules>" +
-                    "    <properties>" +
-                    "        <revision>1.0-SNAPSHOT</revision>" +
-                    "    </properties>");
-      waitForReadingCompletion();
+    assertCorrectVersion();
 
-      assertModules("project", "module1");
+    createModulePom("module1", "<parent>" +
+                               "<groupId>test</groupId>" +
+                               "<artifactId>project</artifactId>" +
+                               "<version>${revision}</version>" +
+                               "</parent>" +
+                               "<artifactId>module1</artifactId>");
 
-    });
+    importProject("<groupId>test</groupId>" +
+                  "    <artifactId>project</artifactId>" +
+                  "    <version>${revision}</version>" +
+                  "    <packaging>pom</packaging>" +
+                  "    <modules>" +
+                  "        <module>module1</module>\n" +
+                  "    </modules>" +
+                  "    <properties>" +
+                  "        <revision>1.0-SNAPSHOT</revision>" +
+                  "    </properties>");
+    waitForReadingCompletion();
+
+    assertModules("project", "module1");
   }
 }
