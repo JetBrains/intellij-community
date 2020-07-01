@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener
@@ -219,6 +220,23 @@ class ModuleStoreTest {
         it.assertThat(modulesFileAtEnd).isEqualTo(modulesFileAtStart)
         it.assertThat(ProjectRootManager.getInstance(project).contentRootUrls).contains("file://${contentRoot.path}")
       }
+    }
+  }
+
+  @Test
+  fun `do not fix format of iml if nothing was changed`() = runBlocking {
+    val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData/moduleWithBlankLineAtEnd")
+    val imlFileText = testData.resolve("module.iml").readText()
+    val projectCreator: suspend (VirtualFile) -> Path = {
+      it.writeChild(".idea/modules.xml", testData.resolve(".idea/modules.xml").readText())
+      it.writeChild("module.iml", imlFileText)
+      Paths.get(it.path)
+    }
+
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, projectCreator) { project ->
+      project.stateStore.save()
+      val moduleFilePath = Paths.get(project.basePath!!).resolve("module.iml")
+      assertThat(moduleFilePath.readText()).isEqualTo(imlFileText)
     }
   }
 }

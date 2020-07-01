@@ -150,6 +150,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
           updater.replaceBySource({ it is JpsFileEntitySource || it is JpsImportedEntitySource }, builder.toStorage())
         }
       }
+      sourcesToSave.clear()
       childActivity.end()
     }
     activity.end()
