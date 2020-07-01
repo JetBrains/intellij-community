@@ -519,4 +519,24 @@ class X{
   }
 }"""
   }
+
+  void testIgnoreMethodDefinedInSubclasses() {
+    doTest("""
+import java.util.stream.Stream;
+import java.util.*;
+abstract class StreamEx<T> implements Stream<T> {
+  public <C extends Collection<? super T>> C into(C collection) {
+    return null;
+  }
+  
+  public static<T> StreamEx<T> of(T... values) {
+    return null; 
+  }
+  
+  public static void main(String[] args) {
+    List<Integer> list = new ArrayList<>();
+    StreamEx.of(1, 2, 3).into(list);
+  }
+}""")
+  }
 }

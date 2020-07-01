@@ -1,13 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.psi.PsiCall;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.BaseInspection;
 import org.jdom.Element;
@@ -117,8 +114,12 @@ public class MethodMatcher {
         continue;
       }
       final String className = myClassNames.get(i);
-      if (InheritanceUtil.isInheritor(aClass, className)) {
-        return true;
+      final PsiClass base = JavaPsiFacade.getInstance(method.getProject()).findClass(className, aClass.getResolveScope());
+      if (InheritanceUtil.isInheritorOrSelf(aClass, base, true)) {
+        if (base.findMethodsBySignature(method, false).length > 0) {
+          // is method present in base class and not introduced in some subclass
+          return true;
+        }
       }
     }
     return false;
@@ -152,7 +153,8 @@ public class MethodMatcher {
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     String settings = null;
     for (Element option : node.getChildren("option")) {
-      if (option.getAttributeValue("name").equals(getOptionName())) {
+      final String value = option.getAttributeValue("name");
+      if (value != null && value.equals(getOptionName())) {
         settings = option.getAttributeValue("value");
         break;
       }

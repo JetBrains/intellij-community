@@ -122,6 +122,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.util.concurrent.locks.Condition","await|awaitNanos|awaitUntil")
       .add("java.util.concurrent.locks.Lock","tryLock|newCondition")
       .add("java.util.stream.BaseStream",".*")
+      .add("java.util.stream.Stream",".*")
+      .add("java.util.stream.DoubleStream",".*")
+      .add("java.util.stream.IntStream",".*")
+      .add("java.util.stream.LongStream",".*")
       .finishDefault();
   }
 
