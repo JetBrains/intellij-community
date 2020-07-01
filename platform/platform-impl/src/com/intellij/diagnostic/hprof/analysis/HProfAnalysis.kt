@@ -151,8 +151,9 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
       )
 
       val analysisReport = analysisCallback(analysisContext, PartialProgressIndicator(progress, 0.4, 0.4))
-
-      result.appendln(analysisReport)
+      if (analysisReport.isNotBlank()) {
+        result.appendln(analysisReport)
+      }
 
       analysisStopwatch.stop()
 
