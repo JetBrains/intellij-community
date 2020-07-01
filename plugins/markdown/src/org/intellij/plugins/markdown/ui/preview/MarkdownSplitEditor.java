@@ -6,10 +6,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
 import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MarkdownSplitEditor extends SplitFileEditor<TextEditor, MarkdownPreviewFileEditor> implements TextEditor {
   private boolean myAutoScrollPreview = MarkdownApplicationSettings.getInstance().getMarkdownPreviewSettings().isAutoScrollPreview();
@@ -47,6 +49,12 @@ public class MarkdownSplitEditor extends SplitFileEditor<TextEditor, MarkdownPre
   @Override
   public String getName() {
     return "Markdown split editor";
+  }
+
+  @Nullable
+  @Override
+  public VirtualFile getFile() {
+    return getMainEditor().getFile();
   }
 
   @NotNull
