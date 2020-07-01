@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public abstract class LocalFileCustomValidationRule extends CustomWhiteListRule {
+public abstract class LocalFileCustomValidationRule extends CustomValidationRule {
   private static final Logger LOG = Logger.getInstance(LocalFileCustomValidationRule.class);
 
   private WeakReference<CachedAllowedItems> myAllowedItemsRef;

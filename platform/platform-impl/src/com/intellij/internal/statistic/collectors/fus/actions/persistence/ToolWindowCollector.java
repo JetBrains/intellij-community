@@ -8,7 +8,7 @@ import com.intellij.ide.actions.ToolWindowViewModeAction;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -160,7 +160,7 @@ public final class ToolWindowCollector {
     ACTIVATED, CLICKED, SHOWN, HIDDEN
   }
 
-  public static class ToolWindowUtilValidator extends CustomWhiteListRule {
+  public static class ToolWindowUtilValidator extends CustomValidationRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {

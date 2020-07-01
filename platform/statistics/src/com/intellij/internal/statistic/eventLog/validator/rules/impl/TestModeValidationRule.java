@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.ACCEPTED;
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.REJECTED;
 
-public final class TestModeValidationRule extends CustomWhiteListRule {
+public final class TestModeValidationRule extends CustomValidationRule {
   @Override
   public boolean acceptRuleId(@Nullable String ruleId) {
     return "fus_test_mode".equals(ruleId);

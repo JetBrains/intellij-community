@@ -5,10 +5,7 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRegexpAwareRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilExpressionValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
@@ -66,15 +63,18 @@ public final class ValidationSimpleRuleFactory {
                             Pair.create(REGEXP_REF_PREFIX, s -> new RegexpValidationRule(contextData.getRegexp(s)))); }
 
   @Nullable
-  private static CustomWhiteListRule getCustomUtilRule(String s) {
-    for (CustomWhiteListRule extension : CustomWhiteListRule.EP_NAME.getExtensions()) {
+  private static FUSRule getCustomUtilRule(String s) {
+    for (CustomValidationRule extension : CustomValidationRule.EP_NAME.getExtensions()) {
       if (isDevelopedByJetBrains(extension) && extension.acceptRuleId(s)) return extension;
     }
 
+    for (CustomWhiteListRule extension : CustomWhiteListRule.EP_NAME.getExtensions()) {
+      if (isDevelopedByJetBrains(extension) && extension.acceptRuleId(s)) return extension;
+    }
     return null;
   }
 
-  private static boolean isDevelopedByJetBrains(CustomWhiteListRule extension) {
+  private static boolean isDevelopedByJetBrains(FUSRule extension) {
     return ApplicationManager.getApplication().isUnitTestMode() || PluginInfoDetectorKt.getPluginInfo(extension.getClass()).isDevelopedByJetBrains();
   }
 
@@ -150,7 +150,7 @@ public final class ValidationSimpleRuleFactory {
         if (!string.contains(UTIL_PREFIX)) return UNPARSED_EXPRESSION;
 
         FUSRule simpleRule = createRule(unwrapRuleNode(string));
-        if (simpleRule instanceof CustomWhiteListRule) {
+        if (simpleRule instanceof CustomValidationRule || simpleRule instanceof CustomWhiteListRule) {
           fusRule = simpleRule;
         }
         else {

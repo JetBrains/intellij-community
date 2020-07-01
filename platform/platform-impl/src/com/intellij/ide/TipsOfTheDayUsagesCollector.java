@@ -5,7 +5,7 @@ import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -37,7 +37,7 @@ public class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
     TIP_SHOWN.log(tip.fileName, algorithm, version);
   }
 
-  public static class TipInfoWhiteListRule extends CustomWhiteListRule {
+  public static class TipInfoValidationRule extends CustomValidationRule {
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
       return "tip_info".equals(ruleId);

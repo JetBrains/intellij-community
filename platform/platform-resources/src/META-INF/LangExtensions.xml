@@ -974,22 +974,22 @@
     <statistics.counterUsagesCollector groupId="completion" version="3"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector$ValidationRule" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$FileTypeSchemaValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger$LiveTemplateValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.MethodNameRuleValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationExecutorUtilValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger$PostfixTemplateValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.tools.InspectionsUsagesCollector$InspectionToolValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.notification.impl.NotificationCollector$NotificationGroupValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.notification.impl.NotificationCollector$NotificationIdValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator" />
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector$ValidationRule" />
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$FileTypeSchemaValidator" />
+    <statistics.validation.customValidationRule implementation="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger$LiveTemplateValidator" />
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator" />
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule" />
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator" />
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.MethodNameRuleValidator" />
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator" />
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator" />
+    <statistics.validation.customValidationRule implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator" />
+    <statistics.validation.customValidationRule implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationExecutorUtilValidator" />
+    <statistics.validation.customValidationRule implementation="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger$PostfixTemplateValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.tools.InspectionsUsagesCollector$InspectionToolValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.notification.impl.NotificationCollector$NotificationGroupValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.notification.impl.NotificationCollector$NotificationIdValidator"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>

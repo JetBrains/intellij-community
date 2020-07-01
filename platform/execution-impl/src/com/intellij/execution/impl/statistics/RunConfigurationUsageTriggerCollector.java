@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,7 @@ public final class RunConfigurationUsageTriggerCollector {
     });
   }
 
-  public static class RunConfigurationExecutorUtilValidator extends CustomWhiteListRule {
+  public static class RunConfigurationExecutorUtilValidator extends CustomValidationRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {

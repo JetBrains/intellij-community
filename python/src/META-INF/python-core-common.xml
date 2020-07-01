@@ -354,7 +354,7 @@
     <!-- Statistics -->
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
-    <statistics.validation.customWhiteListRule implementation="com.jetbrains.python.statistics.PyPackageUsagesWhiteListRule"/>
+    <statistics.validation.customValidationRule implementation="com.jetbrains.python.statistics.PyPackageUsagesValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.PySdkToInstallCollector"/>
 
     <!-- Code-insight IDE bridge -->

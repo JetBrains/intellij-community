@@ -5,7 +5,7 @@ import com.intellij.featureStatistics.*
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.registerExtension
 import junit.framework.TestCase
@@ -13,7 +13,7 @@ import org.junit.Test
 
 class ProductivityValidatorTest : ProductivityFeaturesTest() {
 
-  private fun doValidateEventData(validator: CustomWhiteListRule, name: String, eventData: FeatureUsageData) {
+  private fun doValidateEventData(validator: CustomValidationRule, name: String, eventData: FeatureUsageData) {
     val context = EventContext.create("event_id", eventData.build())
     val data = context.eventData[name] as String
     TestCase.assertEquals(ValidationResultType.ACCEPTED, validator.validate(data, context))

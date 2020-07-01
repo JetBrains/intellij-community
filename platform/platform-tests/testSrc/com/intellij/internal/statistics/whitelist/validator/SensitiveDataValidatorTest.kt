@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory.parseSimpleExpression
@@ -515,7 +515,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
   private fun doTestWithRuleList(fileName: String, func: (TestSensitiveDataValidator) -> Unit) {
     val disposable = Disposer.newDisposable()
     try {
-      val ep = Extensions.getRootArea().getExtensionPoint(CustomWhiteListRule.EP_NAME)
+      val ep = Extensions.getRootArea().getExtensionPoint(CustomValidationRule.EP_NAME)
       ep.registerExtension(TestExistingWhitelistRule(), disposable)
       ep.registerExtension(TestThirdPartyWhitelistRule(), disposable)
 
@@ -573,7 +573,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
   internal inner class TestExistingWhitelistRule : LocalEnumCustomValidationRule("existing_rule", TestCustomActionId::class.java)
 
-  internal inner class TestThirdPartyWhitelistRule : CustomWhiteListRule() {
+  internal inner class TestThirdPartyWhitelistRule : CustomValidationRule() {
     override fun acceptRuleId(ruleId: String?): Boolean = "third_party_rule" == ruleId
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {

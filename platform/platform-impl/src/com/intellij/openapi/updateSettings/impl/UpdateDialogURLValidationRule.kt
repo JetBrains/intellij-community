@@ -3,10 +3,10 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import java.net.URI
 
-class UpdateDialogURLWhiteListRule : CustomWhiteListRule() {
+class UpdateDialogURLValidationRule : CustomValidationRule() {
   private val jbDomains = listOf("jetbrains.com", "intellij.net", "intellij.com", "kotlinlang.com", "jb.gg")
 
   override fun acceptRuleId(ruleId: String?) =

@@ -3,14 +3,14 @@ package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.PluginType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClassNameRuleValidator extends CustomWhiteListRule {
+public class ClassNameRuleValidator extends CustomValidationRule {
   @Override
   public boolean acceptRuleId(@Nullable String ruleId) {
     return "dialog_class".equals(ruleId) || "quick_fix_class_name".equals(ruleId) || "class_name".equals(ruleId);
