@@ -27,6 +27,7 @@ public final class JBCefStartup {
       }
     } else {
       //todo[tav] remove when JavaFX + JCEF co-exist is fixed on macOS, or when JavaFX is deprecated
+      //This code enables pre initialization of JCEF on macOS if and only if JavaFX Runtime plugin is installed
       PluginManager pluginManager = PluginManager.getInstance();
       String id = "com.intellij.javafx";
       PluginId javaFX = PluginId.findId(id);
