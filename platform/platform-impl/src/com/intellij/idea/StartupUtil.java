@@ -786,9 +786,10 @@ public final class StartupUtil {
       // todo: does not seem to request focus when shown
       runInEdtAndWait(log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement), initUiTask);
       dialogWasShown = true;
-    }
-    if (ConsentOptions.getInstance().getConsents().second) {
-      runInEdtAndWait(log, Agreements.INSTANCE::showDataSharingAgreement, initUiTask);
+    } else {
+      if (ConsentOptions.getInstance().getConsents().second) {
+        runInEdtAndWait(log, Agreements.INSTANCE::showDataSharingAgreement, initUiTask);
+      }
     }
     return dialogWasShown;
   }
