@@ -148,16 +148,12 @@ public class ExeReader extends Bin.Structure{
 
     for (Bin sectionHeader : mySectionHeaders.getArray()) {
       Value virtualAddressMember = ((ImageSectionHeader)sectionHeader).getValueMember("VirtualAddress");
-      long sectionVirtualAddress = virtualAddressMember.getValue();
 
       // Section always starts from an address divisible by 0x1000
       if (virtualAddress % 0x1000 != 0)
         virtualAddress += 0x1000 - virtualAddress % 0x1000;
 
-      if (sectionVirtualAddress < virtualAddress) {
-        virtualAddressMember.setValue(virtualAddress);
-      }
-
+      virtualAddressMember.setValue(virtualAddress);
       virtualAddress += ((ImageSectionHeader)sectionHeader).getValueMember("VirtualSize").getValue();
     }
 
