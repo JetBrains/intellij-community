@@ -570,14 +570,17 @@ object DynamicPlugins {
             if (analysisResult.isEmpty()) {
               LOG.info("Successfully unloaded plugin ${pluginDescriptor.pluginId} (no strong references to classloader in .hprof file)")
               FileUtil.asyncDelete(File(snapshotPath))
+              classloadersFromUnloadedPlugins.remove(pluginDescriptor.pluginId)
               classLoaderUnloaded = true
             }
             else {
               LOG.info("Snapshot analysis result: $analysisResult")
             }
           }
-          notify("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING)
-          LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
+          if (!classLoaderUnloaded) {
+            notify("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING)
+            LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
+          }
         }
         else {
           LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded")
