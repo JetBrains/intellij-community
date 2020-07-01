@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -107,7 +106,7 @@ public final class XmlReader {
             }
           }
           catch (final Exception exc) {
-            @SuppressWarnings("UnresolvedPropertyKey") String errorDescription = MessageFormat.format(UIDesignerBundle.message("error.class.cannot.be.instantiated"), lwComponent.getComponentClassName());
+            String errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", lwComponent.getComponentClassName());
             final String message = FormEditingUtil.getExceptionMessage(exc);
             if (message != null) {
               errorDescription += ": " + message;
