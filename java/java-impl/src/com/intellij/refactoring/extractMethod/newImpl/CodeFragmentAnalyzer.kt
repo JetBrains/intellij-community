@@ -129,7 +129,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       }
     }
     elements.forEach { it.accept(visitor) }
-    return usedFields.distinct().filterNot { usage -> usage.field.modifierList?.hasExplicitModifier(PsiModifier.STATIC) == true }
+    return usedFields.distinct().filterNot { usage -> usage.field.modifierList?.hasModifierProperty(PsiModifier.STATIC) == true }
   }
 
   private fun lastGotoPointFrom(instructionOffset: Int): Int {
