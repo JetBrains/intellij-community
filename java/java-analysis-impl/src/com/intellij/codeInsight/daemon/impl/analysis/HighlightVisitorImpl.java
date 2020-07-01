@@ -1899,13 +1899,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitConditionalExpression(PsiConditionalExpression expression) {
     super.visitConditionalExpression(expression);
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) && PsiPolyExpressionUtil.isPolyExpression(expression)) {
-      PsiElement element = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-       if (element instanceof PsiExpressionList) {
-         PsiElement parent = element.getParent();
-         if (parent instanceof PsiCall && !((PsiCall)parent).resolveMethodGenerics().isValidResult()) {
-          return;
-        }
-       }
       final PsiExpression thenExpression = expression.getThenExpression();
       final PsiExpression elseExpression = expression.getElseExpression();
       if (thenExpression != null && elseExpression != null) {

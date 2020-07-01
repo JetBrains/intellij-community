@@ -498,6 +498,9 @@ public final class HighlightMethodUtil {
       if (mismatchedExpressions.size() == 1) {
         toolTip = createOneArgMismatchTooltip(candidateInfo, mismatchedExpressions, expressions, parameters);
       }
+      else if (mismatchedExpressions.isEmpty()) {
+        toolTip = description;
+      }
       if (toolTip == null) {
         toolTip = createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
       }
