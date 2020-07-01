@@ -3,7 +3,6 @@ package com.intellij.testFramework
 
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.AppUIExecutor
@@ -21,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectManagerExImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -266,24 +264,6 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
       store.isOptimiseTestLoadSpeed = true
     }
   }
-}
-
-@JvmOverloads
-fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true): OpenProjectTask {
-  // In tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times).
-  // Also, cleanPersistedContents is called on start test application.
-  var task = OpenProjectTask(forceOpenInNewFrame = true,
-                             isRefreshVfsNeeded = false,
-                             runConversionBeforeOpen = false,
-                             runConfigurators = false,
-                             showWelcomeScreen = false,
-                             useDefaultProjectAsTemplate = false)
-  if (!runPostStartUpActivities) {
-    task = task.copy(beforeInit = {
-      it.putUserData(ProjectManagerExImpl.RUN_START_UP_ACTIVITIES, false)
-    })
-  }
-  return task
 }
 
 inline fun Project.use(task: (Project) -> Unit) {

@@ -19,12 +19,10 @@ import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.Map;
-import java.util.Objects;
 
 public class PathMacroManager implements PathMacroSubstitutor {
-  @NotNull
-  public static PathMacroManager getInstance(@NotNull ComponentManager componentManager) {
-    return Objects.requireNonNull(componentManager.getService(PathMacroManager.class));
+  public static @NotNull PathMacroManager getInstance(@NotNull ComponentManager componentManager) {
+    return componentManager.getService(PathMacroManager.class);
   }
 
   private static class Holder {

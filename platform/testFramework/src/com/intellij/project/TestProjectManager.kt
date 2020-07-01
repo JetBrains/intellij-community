@@ -14,6 +14,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectExImpl
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerExImpl
+import com.intellij.openapi.util.Key
 import com.intellij.project.TestProjectManager.Companion.getCreationPlace
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.LeakHunter
@@ -23,6 +24,7 @@ import com.intellij.util.ref.GCUtil
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -36,6 +38,9 @@ private val LOG_PROJECT_LEAKAGE = System.getProperty("idea.log.leaked.projects.i
 @ApiStatus.Internal
 internal class TestProjectManager : ProjectManagerExImpl() {
   companion object {
+    @ApiStatus.Internal
+    val RUN_START_UP_ACTIVITIES = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
+
     @JvmStatic
     fun getInstanceExIfCreated(): TestProjectManager? {
       return ProjectManager.getInstanceIfCreated() as TestProjectManager?
@@ -196,6 +201,11 @@ internal class TestProjectManager : ProjectManagerExImpl() {
         throw AssertionError("Too many projects leaked, again.")
       }
     }
+  }
+
+  override fun isRunStartUpActivitiesEnabled(project: Project): Boolean {
+    val runStartUpActivitiesFlag = project.getUserData(RUN_START_UP_ACTIVITIES)
+    return runStartUpActivitiesFlag == null || runStartUpActivitiesFlag
   }
 }
 

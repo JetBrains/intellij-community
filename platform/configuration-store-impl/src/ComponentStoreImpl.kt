@@ -92,19 +92,27 @@ abstract class ComponentStoreImpl : IComponentStore {
       if (component is PersistentStateComponent<*>) {
         val stateSpec = getStateSpec(component.javaClass)
 
-        val forceLoad = stateSpec?.allowLoadInTests ?: false
-        if (!forceLoad && !(loadPolicy == StateLoadPolicy.LOAD || (loadPolicy == StateLoadPolicy.LOAD_ONLY_DEFAULT && stateSpec != null && stateSpec.defaultStateAsResource))) {
-          component.noStateLoaded()
-          return
-        }
-
         if (stateSpec == null) {
+          if (loadPolicy != StateLoadPolicy.LOAD) {
+            component.noStateLoaded()
+            component.initializeComponent()
+            return
+          }
+
           val info = createComponentInfo(component, stateSpec, serviceDescriptor)
           initComponent(info, null, ThreeState.NO)
         }
         else {
           componentName = stateSpec.name
+          // still must be added to component list to support explicit save later
           val info = doAddComponent(componentName, component, stateSpec, serviceDescriptor)
+
+          if (!stateSpec.allowLoadInTests && !(loadPolicy == StateLoadPolicy.LOAD || (loadPolicy == StateLoadPolicy.LOAD_ONLY_DEFAULT && stateSpec.defaultStateAsResource))) {
+            component.noStateLoaded()
+            component.initializeComponent()
+            return
+          }
+
           if (initComponent(info, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
             // if not service, so, component manager will check it later for all components
             project?.let {

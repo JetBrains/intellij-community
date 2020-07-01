@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
 import com.intellij.openapi.application.Application;
@@ -39,7 +39,7 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     String testRunner = ReadAction.compute(() -> detectTestRunnerFromSetupPy(module));
     assert testRunner != null : "detectTestRunnerFromSetupPy can't return null";
     if (!testRunner.isEmpty()) {
-      LOG.debug("Test runner '" + testRunner + "' was discovered from setup.py in the module '" + module.getModuleFilePath() + "'");
+      LOG.debug("Test runner '" + testRunner + "' was discovered from setup.py in the module '" + module.getModuleNioFile() + "'");
       return new TestRunnerService.ServiceState(testRunner);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet;
 
@@ -65,7 +65,7 @@ public class FacetManagerTest extends FacetTestCase {
 
   public void testAddFacetToNotYetCommittedModule() {
     ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-    Module newModule = moduleModel.newModule(new File(myProject.getBasePath(), "new.iml").getAbsolutePath(), EmptyModuleType.EMPTY_MODULE);
+    Module newModule = moduleModel.newModule(new File(myProject.getBasePath(), "new.iml").toPath(), EmptyModuleType.EMPTY_MODULE);
     FacetManager manager = FacetManager.getInstance(newModule);
     assertNull(manager.getFacetByType(MockFacetType.ID));
 
@@ -117,7 +117,7 @@ public class FacetManagerTest extends FacetTestCase {
     assertEquals(configData, facetByType.getConfiguration().getData());
     assertSame(mockFacet, facetByType);
   }
-  
+
   public void testAddRemoveFacetWithSubFacet() {
     assertNull(getFacetManager().getFacetByType(MockSubFacetType.ID));
     assertNull(getFacetManager().getFacetByType(MockFacetType.ID));

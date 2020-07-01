@@ -54,9 +54,6 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     get() = dotIdea != null
 
   final override fun setOptimiseTestLoadSpeed(value: Boolean) {
-    // we don't load default state in tests as app store does because
-    // 1) we should not do it
-    // 2) it was so before, so, we preserve old behavior (otherwise RunManager will load template run configurations)
     loadPolicy = if (value) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
   }
 
@@ -126,8 +123,14 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       }
 
       if (isUnitTestMode) {
+        // we don't load default state in tests as app store does because
+        // 1) we should not do it
+        // 2) it was so before, so, we preserve old behavior (otherwise RunManager will load template run configurations)
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !file.exists()
+        val componentStoreLoadingEnabled = project.getUserData(IProjectStore.COMPONENT_STORE_LOADING_ENABLED)
+        if (if (componentStoreLoadingEnabled == null) !file.exists() else !componentStoreLoadingEnabled) {
+          loadPolicy = StateLoadPolicy.NOT_LOAD
+        }
         macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, workspacePath))
       }
     }
@@ -269,9 +272,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     return if (!ignoreProjectStorageScheme && !isDirectoryBased) null else PathUtil.getParentPath(projectFilePath).nullize()
   }
 
-  final override fun getDirectoryStorePath(): Path? {
-    return if (isDirectoryBased) dirOrFile!!.resolve(Project.DIRECTORY_STORE_FOLDER) else null
-  }
+  final override fun getDirectoryStorePath() = dotIdea
 
   override fun getDirectoryStorePathOrBase(): String = PathUtil.getParentPath(projectFilePath)
 

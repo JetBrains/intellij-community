@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import org.junit.Assume
@@ -80,12 +79,12 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
     val imlFile = generateImlPath(name)
     val manager = moduleManager
     return runWriteActionAndWait {
-      manager.newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
+      manager.newModule(imlFile, EmptyModuleType.EMPTY_MODULE)
     }
   }
 
   fun createModule(name: String, moduleModel: ModifiableModuleModel): Module {
-    return moduleModel.newModule(generateImlPath(name).systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
+    return moduleModel.newModule(generateImlPath(name), EmptyModuleType.EMPTY_MODULE)
   }
 
   private fun generateImlPath(name: String) = projectRootDir.resolve("$name/$name.iml")

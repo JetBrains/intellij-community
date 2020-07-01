@@ -65,10 +65,9 @@ internal class BuiltInWebServerTest : BuiltInServerTestCase() {
 }
 
 private fun createModule(projectDir: Path, project: Project) {
-  val systemIndependentPath = projectDir.systemIndependentPath
   runWriteActionAndWait {
-    val module = ModuleManager.getInstance(project).newModule("$systemIndependentPath/test.iml", EmptyModuleType.EMPTY_MODULE)
-    ModuleRootModificationUtil.addContentRoot(module, systemIndependentPath)
+    val module = ModuleManager.getInstance(project).newModule(projectDir.resolve("test.iml"), EmptyModuleType.EMPTY_MODULE)
+    ModuleRootModificationUtil.addContentRoot(module, projectDir.systemIndependentPath)
   }
 }
 

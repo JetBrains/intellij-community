@@ -165,7 +165,7 @@ class ModuleBridgesTest {
       val moduleFile = module.moduleFile?.toVirtualFileUrl(virtualFileManager)?.file
       assertNotNull(moduleFile)
       assertEquals(newNameFile, moduleFile)
-      assertTrue(module.moduleFilePath.endsWith(newNameFile.name))
+      assertTrue(module.getModuleNioFile().toString().endsWith(newNameFile.name))
 
       StoreUtil.saveDocumentsAndProjectSettings(project)
 

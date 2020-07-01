@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
@@ -7,7 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -25,17 +27,20 @@ public interface ModifiableModuleModel {
    */
   Module @NotNull [] getModules();
 
+  @NotNull Module newModule(@NotNull String filePath, @NotNull String moduleTypeId);
+
   /**
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related. {@link #commit()} must be called to
    * bring the changes in effect.
    *
-   * @param filePath     path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
+   * @param file         path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
-  @NotNull
-  Module newModule(@NotNull String filePath, @NotNull String moduleTypeId);
+  default @NotNull Module newModule(@NotNull Path file, @NotNull String moduleTypeId) {
+    return newModule(file.toAbsolutePath().normalize().toString().replace(File.separatorChar, '/'), moduleTypeId);
+  }
 
   /**
    * Creates a non-persistent module of the specified type and adds it to the project

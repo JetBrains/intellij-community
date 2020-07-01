@@ -41,11 +41,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -54,7 +55,7 @@ import static com.intellij.openapi.util.Pair.pair;
 @State(name = "HttpConfigurable", storages = @Storage("proxy.settings.xml"), reportStatistic = false)
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
   private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
-  private static final File PROXY_CREDENTIALS_FILE = new File(PathManager.getOptionsPath(), "proxy.settings.pwd");
+  private static final Path PROXY_CREDENTIALS_FILE = Paths.get(PathManager.getOptionsPath(), "proxy.settings.pwd");
 
   public boolean PROXY_TYPE_IS_SOCKS;
   public boolean USE_HTTP_PROXY;
@@ -143,8 +144,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public void initializeComponent() {
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
-    CommonProxy.getInstance().setCustom(name, mySelector);
-    CommonProxy.getInstance().setCustomAuth(name, new IdeaWideAuthenticator(this));
+    CommonProxy commonProxy = CommonProxy.getInstance();
+    commonProxy.setCustom(name, mySelector);
+    commonProxy.setCustomAuth(name, new IdeaWideAuthenticator(this));
   }
 
   /** @deprecated use {@link #initializeComponent()} */
@@ -154,16 +156,16 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     initializeComponent();
   }
 
-  @NotNull
-  public ProxySelector getOnlyBySettingsSelector() {
+  public @NotNull ProxySelector getOnlyBySettingsSelector() {
     return mySelector;
   }
 
   @Override
   public void dispose() {
-    final String name = getClass().getName();
-    CommonProxy.getInstance().removeCustom(name);
-    CommonProxy.getInstance().removeCustomAuth(name);
+    String name = getClass().getName();
+    CommonProxy commonProxy = CommonProxy.getInstance();
+    commonProxy.removeCustom(name);
+    commonProxy.removeCustomAuth(name);
   }
 
   private void correctPasswords(@NotNull HttpConfigurable to) {

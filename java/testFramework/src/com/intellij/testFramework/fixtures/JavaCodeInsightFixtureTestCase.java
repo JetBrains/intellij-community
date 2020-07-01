@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.Disposable;
@@ -38,7 +38,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
     TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     myFixture = JavaIndexingModeCodeInsightTestFixture.Companion.wrapFixture(myFixture, myIndexingMode);
-    JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    JavaModuleFixtureBuilder<?> moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     if (toAddSourceRoot()) {
       moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
     }
@@ -91,8 +91,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 
-  protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) throws Exception {}
-
+  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {}
 
   protected Project getProject() {
     return myFixture.getProject();

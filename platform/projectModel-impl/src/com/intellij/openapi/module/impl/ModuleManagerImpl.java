@@ -530,11 +530,19 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   }
 
   @Override
-  @NotNull
-  public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId) {
+  public @NotNull Module newModule(@NotNull String filePath, @NotNull String moduleTypeId) {
     incModificationCount();
-    final ModifiableModuleModel modifiableModel = getModifiableModel();
-    final Module module = modifiableModel.newModule(filePath, moduleTypeId);
+    ModifiableModuleModel modifiableModel = getModifiableModel();
+    Module module = modifiableModel.newModule(filePath, moduleTypeId);
+    modifiableModel.commit();
+    return module;
+  }
+
+  @Override
+  public @NotNull Module newModule(@NotNull Path filePath, @NotNull String moduleTypeId) {
+    incModificationCount();
+    ModifiableModuleModel modifiableModel = getModifiableModel();
+    Module module = modifiableModel.newModule(filePath, moduleTypeId);
     modifiableModel.commit();
     return module;
   }
@@ -783,8 +791,13 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
     @Override
     @NotNull
-    public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId) {
-      return newModule(filePath, moduleTypeId, null);
+    public final Module newModule(@NotNull String filePath, @NotNull String moduleTypeId) {
+      return newModule(filePath, null, moduleTypeId, null);
+    }
+
+    @Override
+    public Module newModule(@NotNull Path file, @NotNull String moduleTypeId) {
+      return newModule(null, file, moduleTypeId, null);
     }
 
     @Override
@@ -803,8 +816,17 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     @Override
     @NotNull
     public Module newModule(@NotNull String filePath, @NotNull String moduleTypeId, @Nullable Map<String, String> options) {
+      return newModule(filePath, null, moduleTypeId, options);
+    }
+
+    private Module newModule(@Nullable String filePath, @Nullable Path file, @NotNull String moduleTypeId, @Nullable Map<String, String> options) {
       assertWritable();
-      filePath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath));
+      if (filePath == null) {
+        filePath = Objects.requireNonNull(file).toAbsolutePath().normalize().toString().replace(File.separatorChar, '/');
+      }
+      else {
+        filePath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath));
+      }
 
       ModuleEx module = getModuleByFilePath(filePath);
       if (module != null) {
@@ -812,10 +834,10 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       }
 
       module = myManager.createModule(filePath);
-      final ModuleEx newModule = module;
-      Path finalFilePath = Paths.get(filePath);
+      ModuleEx newModule = module;
+      Path finalFile = file == null ? Paths.get(filePath) : file;
       initModule(module, () -> {
-        ((ModuleStore)newModule.getService(IComponentStore.class)).setPath(finalFilePath, null, true);
+        ((ModuleStore)newModule.getService(IComponentStore.class)).setPath(finalFile, null, true);
 
         newModule.setModuleType(moduleTypeId);
         if (options != null) {

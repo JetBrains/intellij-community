@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -47,7 +46,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -926,7 +924,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                                                     false);
           final Module originalModule = moduleEditor.getModule();
           if (originalModule != null) {
-            component.setPath(FileUtil.toSystemDependentName(PathUtil.getParentPath(originalModule.getModuleFilePath())));
+            component.setPath(FileUtil.toSystemDependentName(originalModule.getModuleNioFile().getParent().toString()));
           }
 
           final DialogBuilder dialogBuilder = new DialogBuilder(myTree);

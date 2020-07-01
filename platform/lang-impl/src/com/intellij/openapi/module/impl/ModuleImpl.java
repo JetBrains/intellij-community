@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ProjectModelElement;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -40,6 +39,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -172,11 +173,11 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   @Override
   @NotNull
-  public String getModuleFilePath() {
+  public Path getModuleNioFile() {
     if (!isPersistent()) {
-      return "";
+      return Paths.get("");
     }
-    return FileUtil.toSystemIndependentName(getStore().getStorageManager().expandMacro(StoragePathMacros.MODULE_FILE).toString());
+    return getStore().getStorageManager().expandMacro(StoragePathMacros.MODULE_FILE);
   }
 
   @Override

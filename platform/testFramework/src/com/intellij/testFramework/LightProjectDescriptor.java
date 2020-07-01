@@ -76,7 +76,7 @@ public class LightProjectDescriptor {
     }
 
     return WriteAction.compute(() -> {
-      return ModuleManager.getInstance(project).newModule(moduleFile.toString(), getModuleTypeId());
+      return ModuleManager.getInstance(project).newModule(moduleFile, getModuleTypeId());
     });
   }
 

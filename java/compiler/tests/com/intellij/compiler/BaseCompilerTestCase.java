@@ -6,11 +6,15 @@ import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
@@ -51,6 +55,16 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   @Override
   protected boolean isCreateProjectFileExplicitly() {
     return false;
+  }
+
+  @Override
+  protected @NotNull Project doCreateAndOpenProject(@NotNull Path projectFile) {
+    OpenProjectTask options = new OpenProjectTaskBuilder()
+      // RecompileAfterVfsChangesTest fails runPostStartUpActivities is disabled
+      //.runPostStartUpActivities(false)
+      .componentStoreLoadingEnabled(false)
+      .build();
+    return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(projectFile, options));
   }
 
   @Override
@@ -124,13 +138,13 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
     });
   }
 
-  protected Module addModule(String moduleName, @Nullable VirtualFile sourceRoot) {
+  protected Module addModule(@NotNull String moduleName, @Nullable VirtualFile sourceRoot) {
     return addModule(moduleName, sourceRoot, null);
   }
 
   protected Module addModule(String moduleName, @Nullable VirtualFile sourceRoot, @Nullable VirtualFile testRoot) {
     return WriteAction.computeAndWait(() -> {
-      final Module module = createModule(moduleName);
+      Module module = createModule(moduleName);
       if (sourceRoot != null) {
         PsiTestUtil.addSourceContentToRoots(module, sourceRoot, false);
       }
@@ -225,8 +239,8 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
     return log;
   }
 
-  private CompilationLog compile(final Consumer<CompileStatusNotification> action) {
-    final Ref<CompilationLog> result = Ref.create(null);
+  private CompilationLog compile(@NotNull Consumer<CompileStatusNotification> action) {
+    final Ref<CompilationLog> result = new Ref<>(null);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final List<String> generatedFilePaths = new ArrayList<>();
@@ -236,8 +250,11 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
         generatedFilePaths.add(relativePath);
       }
     });
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      final CompileStatusNotification callback = new CompileStatusNotification() {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      PlatformTestUtil.saveProject(myProject);
+      CompilerTestUtil.saveApplicationSettings();
+      CompilerTester.enableDebugLogging();
+      action.accept(new CompileStatusNotification() {
         @Override
         public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
           try {
@@ -254,11 +271,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
             semaphore.up();
           }
         }
-      };
-      PlatformTestUtil.saveProject(myProject);
-      CompilerTestUtil.saveApplicationSettings();
-      CompilerTester.enableDebugLogging();
-      action.accept(callback);
+      });
     });
 
     try {

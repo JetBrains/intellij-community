@@ -6,12 +6,14 @@ import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -24,7 +26,10 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
@@ -47,14 +52,13 @@ import javax.swing.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
  */
-public class CompilerTester {
+public final class CompilerTester {
   private static final Logger LOG = Logger.getInstance(CompilerTester.class);
 
   private final Project myProject;
@@ -98,10 +102,10 @@ public class CompilerTester {
 
   public void tearDown() {
     try {
-      new RunAll(
+      RunAll.runAll(
         () -> CompilerTestUtil.disableExternalCompiler(getProject()),
         () -> myMainOutput.tearDown()
-      ).run();
+      );
     }
     finally {
       myMainOutput = null;
@@ -169,28 +173,20 @@ public class CompilerTester {
     return runCompiler(callback -> CompilerManager.getInstance(getProject()).compile(files, callback));
   }
 
-  @NotNull
-  public List<CompilerMessage> runCompiler(@NotNull Consumer<? super CompileStatusNotification> runnable) {
+  public @NotNull List<CompilerMessage> runCompiler(@NotNull Consumer<? super CompileStatusNotification> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
     final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
     EdtTestUtil.runInEdtAndWait(() -> {
-      refreshVfs(getProject().getProjectFilePath());
-      for (Module module : myModules) {
-        refreshVfs(module.getModuleFilePath());
-      }
-
       PlatformTestUtil.saveProject(getProject(), false);
       CompilerTestUtil.saveApplicationSettings();
+
       // for now directory based project is used for external storage
       if (!ProjectKt.isDirectoryBased(myProject)) {
         for (Module module : myModules) {
-          Path ioFile = Paths.get(module.getModuleFilePath());
-          if (!Files.exists(ioFile)) {
-            getProject().save();
-            assert Files.exists(ioFile) : "File does not exist: " + ioFile.toString();
-          }
+          Path ioFile = module.getModuleNioFile();
+          assert Files.exists(ioFile) : "File does not exist: " + ioFile;
         }
       }
 
@@ -206,11 +202,11 @@ public class CompilerTester {
           LOG.warn(message);
 
           String fakeMacroName = "__remove_me__";
-          IComponentStore applicationStore = CompilerTestUtil.getApplicationStore();
+          IComponentStore appStore = ServiceKt.getStateStore(ApplicationManager.getApplication());
           pathMacroManager.setMacro(fakeMacroName, fakeMacroName);
-          applicationStore.saveComponent((PersistentStateComponent<?>)pathMacroManager);
+          appStore.saveComponent((PersistentStateComponent<?>)pathMacroManager);
           pathMacroManager.setMacro(fakeMacroName, null);
-          applicationStore.saveComponent((PersistentStateComponent<?>)pathMacroManager);
+          appStore.saveComponent((PersistentStateComponent<?>)pathMacroManager);
           if (!Files.exists(macroFilePath)) {
             throw new AssertionError(message);
           }
@@ -297,13 +293,6 @@ public class CompilerTester {
     }
     catch (IOException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private static void refreshVfs(String path) {
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
-    if (vFile != null) {
-      vFile.refresh(false, false);
     }
   }
 

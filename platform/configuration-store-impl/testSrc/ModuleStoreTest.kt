@@ -186,9 +186,7 @@ class ModuleStoreTest {
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, projectCreator) { project ->
       // Creating a persistent module to make non-empty valid modules.xml
       runWriteAction {
-        ModuleManager.getInstance(project).newModule(
-          tempDirManager.newPath().resolve("persistent.iml").systemIndependentPath,
-          ModuleTypeId.JAVA_MODULE)
+        ModuleManager.getInstance(project).newModule(tempDirManager.newPath().resolve("persistent.iml"), ModuleTypeId.JAVA_MODULE)
       }
       project.stateStore.save()
 
@@ -262,6 +260,6 @@ val Module.contentRootUrls: Array<String>
 internal fun ProjectRule.createModule(path: Path): Module {
   val project = project
   return runWriteAction {
-    ModuleManager.getInstance(project).newModule(path.systemIndependentPath, ModuleTypeId.JAVA_MODULE)
+    ModuleManager.getInstance(project).newModule(path, ModuleTypeId.JAVA_MODULE)
   }
 }

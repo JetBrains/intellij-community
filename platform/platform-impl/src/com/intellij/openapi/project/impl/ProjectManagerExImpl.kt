@@ -24,10 +24,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.impl.ProjectManagerExImpl.Companion.RUN_START_UP_ACTIVITIES
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.IdeFocusManager
@@ -45,11 +43,6 @@ import java.nio.file.*
 
 @ApiStatus.Internal
 open class ProjectManagerExImpl : ProjectManagerImpl() {
-  companion object {
-    @ApiStatus.Internal
-    val RUN_START_UP_ACTIVITIES = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
-  }
-
   final override fun createProject(name: String?, path: String): Project? {
     return newProject(toCanonicalName(path), OpenProjectTask(isNewProject = true, runConfigurators = false, projectName = name))
   }
@@ -144,7 +137,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     }
 
     try {
-      openProject(project, ProgressManager.getInstance().progressIndicator)
+      openProject(project, ProgressManager.getInstance().progressIndicator, isRunStartUpActivitiesEnabled(project))
     }
     catch (e: ProcessCanceledException) {
       app.invokeAndWait { closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false) }
@@ -240,6 +233,8 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       return PrepareProjectResult(project, module = null)
     }
   }
+
+  protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
 }
 
 private fun message(e: Throwable): String {
@@ -294,7 +289,7 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
   return false
 }
 
-private fun openProject(project: Project, indicator: ProgressIndicator?) {
+private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean) {
   val waitEdtActivity = StartUpMeasurer.startMainActivity("placing calling projectOpened on event queue")
   if (indicator != null) {
     indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..." else ProjectBundle.message(
@@ -328,8 +323,7 @@ private fun openProject(project: Project, indicator: ProgressIndicator?) {
     ProjectImpl.ourClassesAreLoaded = true
   }
 
-  val runStartUpActivitiesFlag = project.getUserData(RUN_START_UP_ACTIVITIES)
-  if (runStartUpActivitiesFlag == null || runStartUpActivitiesFlag) {
+  if (runStartUpActivities) {
     (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
   }
 }

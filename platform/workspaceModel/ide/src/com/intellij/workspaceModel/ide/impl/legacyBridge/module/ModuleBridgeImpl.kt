@@ -28,6 +28,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.picocontainer.MutablePicoContainer
 import java.io.File
 import java.nio.file.Path
+import java.nio.file.Paths
 
 internal class ModuleBridgeImpl(
   override var moduleEntityId: ModuleId,
@@ -37,7 +38,7 @@ internal class ModuleBridgeImpl(
   override var entityStorage: VersionedEntityStorage,
   override var diff: WorkspaceEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, filePath?.toString()), ModuleBridge {
-  private val directoryPath: String? = filePath?.parent?.toString()
+  private val directoryPath: Path? = filePath?.parent
   private var vfsRefreshWasCalled = false
 
   init {
@@ -149,5 +150,5 @@ internal class ModuleBridgeImpl(
 
   override fun getOptionsModificationCount(): Long = 0
 
-  override fun getModuleFilePath(): String = directoryPath?.let { "$it/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}" } ?: ""
+  override fun getModuleNioFile(): Path = directoryPath?.resolve("$name${ModuleFileType.DOT_DEFAULT_EXTENSION}") ?: Paths.get("")
 }

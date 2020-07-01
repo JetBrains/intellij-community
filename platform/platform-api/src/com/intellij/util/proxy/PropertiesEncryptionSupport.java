@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.proxy;
 
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.Cipher;
@@ -23,7 +8,8 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.util.Properties;
@@ -31,7 +17,7 @@ import java.util.Properties;
 /**
  * @author Eugene Zhuravlev
  */
-public class PropertiesEncryptionSupport {
+public final class PropertiesEncryptionSupport {
   private final Key myKey;
 
   public PropertiesEncryptionSupport(Key key) {
@@ -49,22 +35,23 @@ public class PropertiesEncryptionSupport {
   }
 
   @NotNull
-  public Properties load(@NotNull File file) throws Exception {
-    final byte[] bytes = decrypt(FileUtil.loadFileBytes(file));
-    final Properties props = new Properties();
+  public Properties load(@NotNull Path file) throws Exception {
+    byte[] bytes = decrypt(Files.readAllBytes(file));
+    Properties props = new Properties();
     props.load(new ByteArrayInputStream(bytes));
     return props;
   }
 
-  public void store(@NotNull Properties props, @NotNull String comments, @NotNull File file) throws Exception {
+  public void store(@NotNull Properties props, @NotNull String comments, @NotNull Path file) throws Exception {
     if (props.isEmpty()) {
-      FileUtil.delete(file);
+      Files.deleteIfExists(file);
       return;
     }
 
-    try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
       props.store(out, comments);
-      FileUtil.writeToFile(file, encrypt(out.toByteArray()));
+      Files.createDirectories(file.getParent());
+      Files.write(file, encrypt(out.toByteArray()));
     }
   }
 

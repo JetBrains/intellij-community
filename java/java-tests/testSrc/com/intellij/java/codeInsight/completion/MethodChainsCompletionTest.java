@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -17,6 +17,7 @@ import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.SmartList;
 
+import java.io.IOException;
 import java.util.List;
 
 @SkipSlowTestLocally
@@ -56,125 +57,125 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/methodChains/";
   }
 
-  public void testOneRelevantMethod() {
+  public void testOneRelevantMethod() throws IOException {
     assertAdvisorLookupElementEquals("e.getProject", 0, 1, 0, assertOneElement(doCompletion()));
   }
 
-  public void testCyclingMethodsNotShowed() {
+  public void testCyclingMethodsNotShowed() throws IOException {
     assertEmpty(doCompletion());
   }
 
-  public void testStaticMethod() {
+  public void testStaticMethod() throws IOException {
     List<JavaRelevantChainLookupElement> elements = doCompletion();
     assertSize(2, elements);
     assertAdvisorLookupElementEquals("getInstance", 0, 1, 0, elements.get(0));
   }
 
-  public void testStaticMethodAndMethod() {
+  public void testStaticMethodAndMethod() throws IOException {
     List<JavaRelevantChainLookupElement> elements = doCompletion();
     assertEquals(String.valueOf(elements), 2, elements.size());
     assertAdvisorLookupElementEquals("findClass", 1, 1, 0, elements.get(1));
     assertAdvisorLookupElementEquals("m.getContainingClass", 0, 1, 0, elements.get(0));
   }
 
-  public void testOneChainContainsOther() {
+  public void testOneChainContainsOther() throws IOException {
     assertAdvisorLookupElementEquals("p.getBaseDir", 0, 1, 0, assertOneElement(doCompletion()));
   }
 
-  public void _testOneChainContainsOther2() {
+  public void _testOneChainContainsOther2() throws IOException {
     assertLookupElementStringEquals(assertOneElement(doCompletion()), "psiElement.getManager");
   }
 
-  public void testTwoVariablesWithOneTypeOrSuperType() {
+  public void testTwoVariablesWithOneTypeOrSuperType() throws IOException {
     assertAdvisorLookupElementEquals("c.getProject", 0, 1, 0, assertOneElement(doCompletion()));
   }
 
-  public void testSuperClassMethodsCallings() {
+  public void testSuperClassMethodsCallings() throws IOException {
     assertAdvisorLookupElementEquals("m.getProject", 0, 1, 0, assertOneElement(doCompletion()));
   }
 
-  public void testMethodsWithParametersInContext() {
+  public void testMethodsWithParametersInContext() throws IOException {
     assertAdvisorLookupElementEquals("getInstance().findFile().findElementAt", 1, 3, 0, doCompletion().get(0));
   }
 
-  public void testChainsWithIndependentCallings() {
+  public void testChainsWithIndependentCallings() throws IOException {
     assertSize(2, doCompletion());
   }
 
-  public void _testMethodReturnsSubclassOfTargetClassShowed2() {
+  public void _testMethodReturnsSubclassOfTargetClassShowed2() throws IOException {
     assertOneElement(doCompletion());
   }
 
-  public void _testResultsForSuperClassesShowed() {
+  public void _testResultsForSuperClassesShowed() throws IOException {
     // if no other elements found we search by super classes
     assertOneElement(doCompletion());
   }
 
-  public void _testInnerClasses() {
+  public void _testInnerClasses() throws IOException {
     assertAdvisorLookupElementEquals("j.getEntry", 0, 1, 0, assertOneElement(doCompletion()));
   }
 
-  public void testMethodsWithSameName() {
+  public void testMethodsWithSameName() throws IOException {
     assertAdvisorLookupElementEquals("f.createType", 1, 1, 0, assertOneElement(doCompletion()));
   }
 
-  public void testBigrams2() {
+  public void testBigrams2() throws IOException {
     List<JavaRelevantChainLookupElement> collection = doCompletion();
     assertAdvisorLookupElementEquals("e.getContainingFile().getVirtualFile", 0, 2, 0, assertOneElement(collection));
   }
 
-  public void _testBigrams3() {
+  public void _testBigrams3() throws IOException {
     List<JavaRelevantChainLookupElement> elements = doCompletion();
     assertSize(1, elements);
     assertAdvisorLookupElementEquals("getInstance().findFile", 2, 2, 0, elements.get(0));
   }
 
-  public void testMethodWithNoQualifiedVariableInContext() {
+  public void testMethodWithNoQualifiedVariableInContext() throws IOException {
     assertOneElement(doCompletion());
   }
 
-  public void testMethodIsNotRelevantForField() {
+  public void testMethodIsNotRelevantForField() throws IOException {
     assertOneElement(doCompletion());
   }
 
-  public void testNotRelevantMethodsFilteredInResult() {
+  public void testNotRelevantMethodsFilteredInResult() throws IOException {
     assertOneElement(doCompletion());
   }
 
-  public void testGetterInContext() {
+  public void testGetterInContext() throws IOException {
     assertAdvisorLookupElementEquals("getMyElement().getProject", 0, 1, 0, assertOneElement(doCompletion()));
   }
 
-  public void _testMethodParameterCompletion() {
+  public void _testMethodParameterCompletion() throws IOException {
     assertOneElement(doCompletion());
   }
 
-  public void testNoWayToObtainVariableExplicitly() {
+  public void testNoWayToObtainVariableExplicitly() throws IOException {
     assertOneElement(doCompletion());
   }
 
-  public void _testCyclingInstancesObtaining() {
+  public void _testCyclingInstancesObtaining() throws IOException {
     assertEmpty(doCompletion());
   }
 
-  public void testCyclingInstancesObtaining2() {
+  public void testCyclingInstancesObtaining2() throws IOException {
     assertOneElement(doCompletion());
   }
 
-  public void testMethodsWithSameNameWithoutSameParent() {
+  public void testMethodsWithSameNameWithoutSameParent() throws IOException {
     assertSize(2, doCompletion());
   }
 
-  public void _testResultQualifierNotSameWithTarget() {
+  public void _testResultQualifierNotSameWithTarget() throws IOException {
     assertEmpty(doCompletion());
   }
 
-  public void testPreferGetterToMethodChain() {
+  public void testPreferGetterToMethodChain() throws IOException {
     compileAndComplete();
     myFixture.assertPreferredCompletionItems(0, "getEditor", "getInstance().getEditor");
   }
 
-  public void testResultOrdering() {
+  public void testResultOrdering() throws IOException {
     List<JavaRelevantChainLookupElement> lookupElements = doCompletion();
     assertSize(4, lookupElements);
     assertLookupElementStringEquals(lookupElements.get(0), "f.createFileFromText");
@@ -183,80 +184,80 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertLookupElementStringEquals(lookupElements.get(3), "psiClass.getContainingClass");
   }
 
-  public void testResultRelevance() {
+  public void testResultRelevance() throws IOException {
     List<JavaRelevantChainLookupElement> javaRelevantChainLookupElements = doCompletion();
     assertSize(1, javaRelevantChainLookupElements);
     //assertEquals("e.getContainingClass", weightableChainLookupElements.get(0).getLookupString());
     assertEquals("getInstance().findClass", javaRelevantChainLookupElements.get(0).getLookupString());
   }
 
-  public void testResultRelevance3() {
+  public void testResultRelevance3() throws IOException {
     List<JavaRelevantChainLookupElement> javaRelevantChainLookupElements = doCompletion();
     assertSize(2, javaRelevantChainLookupElements);
     assertEquals("e.getProject1", javaRelevantChainLookupElements.get(0).getLookupString());
     assertEquals("psiManager.getProject", javaRelevantChainLookupElements.get(1).getLookupString());
   }
 
-  public void testRenderingVariableInContextAndNotInContext() {
+  public void testRenderingVariableInContextAndNotInContext() throws IOException {
     doTestRendering();
   }
 
-  public void testRenderingStaticMethods() {
+  public void testRenderingStaticMethods() throws IOException {
     doTestRendering();
   }
 
-  public void testRenderingIntroduceVariable() {
+  public void testRenderingIntroduceVariable() throws IOException {
     doTestRendering();
   }
 
-  public void testMethodQualifierClass() {
+  public void testMethodQualifierClass() throws IOException {
     doTestRendering();
   }
 
-  public void testArray() {
+  public void testArray() throws IOException {
     JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
     assertEquals("c.getMethods", element.getLookupString());
   }
 
-  public void testCollection() {
+  public void testCollection() throws IOException {
     JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
     assertEquals("c.getMethods", element.getLookupString());
   }
 
-  public void testReturnStatement() {
+  public void testReturnStatement() throws IOException {
     JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
     assertEquals("f.createClass", element.getLookupString());
   }
 
-  public void testMethodCallInFieldInitializer() {
+  public void testMethodCallInFieldInitializer() throws IOException {
     doTestRendering();
   }
 
-  public void testDoNotSuggestUninitializedVariable() {
+  public void testDoNotSuggestUninitializedVariable() throws IOException {
     JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
     assertEquals("psiElement.getProject", element.getLookupString());
   }
 
-  public void testChainWithCastOnContextVariable() {
+  public void testChainWithCastOnContextVariable() throws IOException {
     JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
     assertEquals("(EditorEx)editor.getMarkupModel", element.toString());
   }
 
-  public void testChainWithCastOnVariableOutsideContext() {
+  public void testChainWithCastOnVariableOutsideContext() throws IOException {
     assertEmpty(doCompletion());
   }
 
-  public void testChainWithCastOnStaticMethod() {
+  public void testChainWithCastOnStaticMethod() throws IOException {
     JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
     assertEquals("(InspectionManagerEx)getInstance().createContext", element.toString());
   }
 
-  public void testChainEndedWithCast() {
+  public void testChainEndedWithCast() throws IOException {
     JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
     assertEquals("(InspectionManagerEx)getInstance", element.toString());
   }
 
-  public void testLongChainWithCast() {
+  public void testLongChainWithCast() throws IOException {
     assertEquals("the test should be modified when MAX_CHAIN_SIZE is changed", 4, ChainSearchMagicConstants.MAX_CHAIN_SIZE);
     assertEquals("a.getB().getC().getD", assertOneElement(doCompletion()).toString());
   }
@@ -283,7 +284,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertEquals(parametersInContext, chainRelevance.getParametersInContext());
   }
 
-  private void doTestRendering() {
+  private void doTestRendering() throws IOException {
     compileAndIndexData(TEST_INDEX_FILE_NAME);
     myFixture.configureByFiles(getBeforeCompletionFilePath());
     for (LookupElement element : myFixture.complete(CompletionType.SMART)) {
@@ -297,7 +298,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     fail("relevant method chain isn't found");
   }
 
-  private List<JavaRelevantChainLookupElement> doCompletion() {
+  private List<JavaRelevantChainLookupElement> doCompletion() throws IOException {
     LookupElement[] allLookupElements = compileAndComplete();
     List<JavaRelevantChainLookupElement> targetLookupElements = new SmartList<>();
     for (LookupElement lookupElement : allLookupElements) {
@@ -308,7 +309,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     return targetLookupElements;
   }
 
-  private LookupElement[] compileAndComplete() {
+  private LookupElement[] compileAndComplete() throws IOException {
     compileAndIndexData(TEST_INDEX_FILE_NAME);
     myFixture.configureByFiles(getTestCompletionFilePath());
     LookupElement[] lookupElements = myFixture.complete(CompletionType.SMART);

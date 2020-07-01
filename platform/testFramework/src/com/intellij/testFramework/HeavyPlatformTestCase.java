@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.project.ProjectKt;
 import com.intellij.project.TestProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -56,7 +57,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.MemoryDumpHelper;
-import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -263,7 +263,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   protected @NotNull Project doCreateAndOpenProject(@NotNull Path projectFile) {
     // doCreateRealModule uses myProject.getName() as module name - use constant project name because projectFile here unique temp file
-    return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(projectFile, FixtureRuleKt.createTestOpenProjectOptions().withProjectName(getProjectFilename())));
+    return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(projectFile, new OpenProjectTaskBuilder().projectName(getProjectFilename()).build()));
   }
 
   public static @NotNull String publishHeapDump(@NotNull String fileNamePrefix) {
@@ -294,18 +294,16 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected final @NotNull Path getProjectDirOrFile(boolean isDirectoryBasedProject) {
+    Path tempFile = TemporaryDirectory.generateTemporaryPath(getProjectFilename() + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
     if (!isDirectoryBasedProject && isCreateProjectFileExplicitly()) {
       try {
-        Path tempFile = FileUtil.createTempFile(getName(), ProjectFileType.DOT_DEFAULT_EXTENSION).toPath();
-        myFilesToDelete.add(tempFile);
-        return tempFile;
+        Files.createFile(tempFile);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
 
-    Path tempFile = TemporaryDirectory.generateTemporaryPath(getProjectFilename() + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
     myFilesToDelete.add(tempFile);
     return tempFile;
   }
@@ -337,13 +335,13 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected @NotNull Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, @NotNull ModuleType<?> moduleType) {
-    return createModuleAt(moduleName, project, moduleType, Objects.requireNonNull(project.getBasePath()));
+    return createModuleAt(moduleName, project, moduleType, ProjectKt.getStateStore(project).getProjectBasePath());
   }
 
   protected @NotNull Module createModuleAt(@NotNull String moduleName,
                                            @NotNull Project project,
                                            @NotNull ModuleType<?> moduleType,
-                                           @NotNull String path) {
+                                           @NotNull Path path) {
     return HeavyTestHelper.createModuleAt(moduleName, project, moduleType, path, isCreateProjectFileExplicitly(), myFilesToDelete);
   }
 
@@ -878,8 +876,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected static @NotNull VirtualFile getOrCreateModuleDir(@NotNull Module module) throws IOException {
-    File moduleDir = new File(PathUtil.getParentPath(module.getModuleFilePath()));
-    FileUtil.ensureExists(moduleDir);
-    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir));
+    Path moduleDir = module.getModuleNioFile().getParent();
+    Files.createDirectories(moduleDir);
+    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleDir));
   }
 }

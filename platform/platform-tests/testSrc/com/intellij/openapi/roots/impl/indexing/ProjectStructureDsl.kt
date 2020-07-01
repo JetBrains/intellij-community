@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -289,7 +288,7 @@ private fun createJavaModule(project: Project, moduleName: String, moduleRootDir
   return WriteCommandAction.writeCommandAction(project).compute(
     ThrowableComputable<Module, RuntimeException> {
       val moduleModel = ModuleManager.getInstance(project).modifiableModel
-      val module = moduleModel.newModule(moduleRootDirectory.resolve("$moduleName.iml").systemIndependentPath, type.id)
+      val module = moduleModel.newModule(moduleRootDirectory.resolve("$moduleName.iml"), type.id)
       moduleModel.commit()
       module
     }

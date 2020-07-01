@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.io.systemIndependentPath
@@ -159,12 +160,13 @@ class AutomaticModuleUnloaderTest {
     val moduleFiles = moduleNames.map { newModulesProjectDir.resolve("$it.iml") }
     val project = ProjectManagerEx.getInstanceEx().newProject(newModulesProjectDir, createTestOpenProjectOptions())!!
     try {
+      val moduleManager = ModuleManager.getInstance(project)
       runWriteAction {
         moduleFiles.map {
-          ModuleManager.getInstance(project).newModule(it.toAbsolutePath().toString(), StdModuleTypes.JAVA.id)
+          moduleManager.newModule(it.toAbsolutePath().toString(), StdModuleTypes.JAVA.id)
         }
       }
-      setup(ModuleManager.getInstance(project).modules.associateBy { it.name })
+      setup(moduleManager.modules.associateBy { it.name })
     }
     finally {
       saveAndCloseProject(project)
@@ -179,7 +181,7 @@ class AutomaticModuleUnloaderTest {
 
   private fun reloadProjectWithNewModules(project: Project, moduleFiles: List<Path>, beforeReload: () -> Unit = {}): Project {
     saveAndCloseProject(project)
-    val modulesXmlFile = File(project.basePath, ".idea/modules.xml")
+    val modulesXmlFile = (project as ProjectStoreOwner).componentStore.getDirectoryStorePath().resolve("modules.xml")
     val rootElement = JDOMUtil.load(modulesXmlFile)
     val moduleRootComponent = JDomSerializationUtil.findComponent(rootElement, JpsProjectLoader.MODULE_MANAGER_COMPONENT)
     val modulesTag = moduleRootComponent!!.getChild("modules")!!

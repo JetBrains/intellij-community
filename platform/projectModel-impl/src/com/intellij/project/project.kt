@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.project
 
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 val Project.stateStore: IProjectStore
-  get() = (this as ComponentManager).stateStore as IProjectStore
+  get() = (this as ProjectStoreOwner).componentStore
 
 @ApiStatus.Internal
 interface ProjectStoreOwner {

@@ -487,7 +487,7 @@ public final class PsiTestUtil {
       String moduleName;
       ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
       try {
-        moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type.getId()).getName();
+        moduleName = moduleModel.newModule(root.toNioPath().resolve(name + ".iml"), type.getId()).getName();
         moduleModel.commit();
       }
       catch (Throwable t) {

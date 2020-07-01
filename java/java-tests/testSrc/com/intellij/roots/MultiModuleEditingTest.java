@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.ProjectTopics;
@@ -32,6 +18,7 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.JavaModuleTestCase;
@@ -39,16 +26,13 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class MultiModuleEditingTest extends JavaModuleTestCase {
-
   private static final String TEST_PATH = PathManagerEx.getTestDataPath() +
                                           "/moduleRootManager/multiModuleEditing".replace('/', File.separatorChar);
   @Override
@@ -68,10 +52,12 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
     final Module moduleA;
     final Module moduleB;
 
+    Path dir = ProjectKt.getStateStore(myProject).getProjectBasePath();
+
     {
       final ModifiableModuleModel modifiableModel = moduleManager.getModifiableModel();
-      moduleA = modifiableModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
-      moduleB = modifiableModel.newModule("b.iml", StdModuleTypes.JAVA.getId());
+      moduleA = modifiableModel.newModule(dir.resolve("a.iml"), StdModuleTypes.JAVA.getId());
+      moduleB = modifiableModel.newModule(dir.resolve("b.iml"), StdModuleTypes.JAVA.getId());
       assertEquals("Changes are not applied until commit", 0, moduleManager.getModules().length);
       //noinspection SSBasedInspection
       moduleListener.assertCorrectEvents(new String[0][]);
@@ -103,12 +89,14 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
     final MyModuleListener moduleListener = new MyModuleListener();
     connection.subscribe(ProjectTopics.MODULES, moduleListener);
 
+    Path dir = ProjectKt.getStateStore(myProject).getProjectBasePath();
+
     final Module moduleA;
     final Module moduleB;
     {
       final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
-      moduleA = moduleModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
-      moduleB = moduleModel.newModule("b.iml", StdModuleTypes.JAVA.getId());
+      moduleA = moduleModel.newModule(dir.resolve("a.iml"), StdModuleTypes.JAVA.getId());
+      moduleB = moduleModel.newModule(dir.resolve("b.iml"), StdModuleTypes.JAVA.getId());
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelB.addModuleOrderEntry(moduleA);
@@ -142,11 +130,13 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
     final Module moduleA;
     final Module moduleB;
 
+    Path dir = ProjectKt.getStateStore(myProject).getProjectBasePath();
+
     {
       final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
-      moduleA = moduleModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
-      moduleB = moduleModel.newModule("b.iml", StdModuleTypes.JAVA.getId());
-      final Module moduleC = moduleModel.newModule("c.iml", StdModuleTypes.JAVA.getId());
+      moduleA = moduleModel.newModule(dir.resolve("a.iml"), StdModuleTypes.JAVA.getId());
+      moduleB = moduleModel.newModule(dir.resolve("b.iml"), StdModuleTypes.JAVA.getId());
+      final Module moduleC = moduleModel.newModule(dir.resolve("c.iml"), StdModuleTypes.JAVA.getId());
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelB.addModuleOrderEntry(moduleC);
       moduleModel.disposeModule(moduleC);

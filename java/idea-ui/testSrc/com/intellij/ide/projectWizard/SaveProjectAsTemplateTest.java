@@ -27,7 +27,7 @@ import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.SaveProjectAsTemplateAction;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.FixtureRuleKt;
+import com.intellij.testFramework.OpenProjectTaskBuilder;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.DateFormatUtil;
@@ -158,7 +158,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return ProjectManagerEx.getInstanceEx().openProject(projectFile.getParent(), FixtureRuleKt.createTestOpenProjectOptions());
+    return ProjectManagerEx.getInstanceEx().openProject(projectFile.getParent(), new OpenProjectTaskBuilder().build());
   }
 
   @NotNull

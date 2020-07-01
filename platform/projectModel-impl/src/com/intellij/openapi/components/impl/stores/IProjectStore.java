@@ -3,17 +3,21 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public interface IProjectStore extends IComponentStore {
-  @NotNull
-  Path getProjectBasePath();
+  @TestOnly
+  Key<Boolean> COMPONENT_STORE_LOADING_ENABLED = Key.create("COMPONENT_STORE_LOADING_ENABLED");
+
+  @NotNull Path getProjectBasePath();
 
   @NotNull
   String getProjectName();

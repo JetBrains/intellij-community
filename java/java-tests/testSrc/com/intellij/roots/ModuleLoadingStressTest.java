@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
@@ -9,29 +10,29 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import kotlin.Unit;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ModuleLoadingStressTest extends HeavyPlatformTestCase {
-  public void testContentEntryExchange() {
-    String path = myProject.getBasePath();
+  public void testContentEntryExchange() throws IOException {
+    Path path = ProjectKt.getStateStore(myProject).getProjectBasePath();
     int count = 100;
     for (int i = 0; i < count; i++) {
       String name = "module" + i;
-      File folder = new File(path, name);
+      Path folder = path.resolve(name);
       createModule(name, folder, path);
       String inner = "inner" + i;
-      createModule(inner, new File(folder, inner), path);
+      createModule(inner, folder.resolve(inner), path);
     }
 
-    com.intellij.application.UtilKt.runInAllowSaveMode(() -> {
-      myProject.save();
-      return Unit.INSTANCE;
-    });
+    StoreUtil.saveSettings(myProject, false);
 
     String projectFilePath = myProject.getProjectFilePath();
     String moduleName = myModule.getName();
@@ -48,10 +49,10 @@ public class ModuleLoadingStressTest extends HeavyPlatformTestCase {
     }
   }
 
-  private void createModule(String name, File contentRoot, String path) {
+  private void createModule(String name, @NotNull Path contentRoot, @NotNull Path path) throws IOException {
     Module module = createModuleAt(name, myProject, JavaModuleType.getModuleType(), path);
-    assertTrue(contentRoot.mkdir());
-    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(contentRoot);
+    Files.createDirectories(contentRoot);
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(contentRoot);
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     model.addContentEntry(root);
     ApplicationManager.getApplication().runWriteAction(() -> model.commit());

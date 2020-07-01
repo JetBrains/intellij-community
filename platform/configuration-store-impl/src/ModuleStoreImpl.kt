@@ -6,6 +6,7 @@ import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.io.exists
 import org.jetbrains.annotations.ApiStatus
@@ -51,7 +52,7 @@ private class TestModuleStore(module: Module) : ModuleStoreImpl(module) {
   }
 
   override val loadPolicy: StateLoadPolicy
-    get() = moduleComponentLoadPolicy ?: (project.stateStore as ComponentStoreImpl).loadPolicy
+    get() = moduleComponentLoadPolicy ?: ((project as ProjectStoreOwner).componentStore as ComponentStoreImpl).loadPolicy
 }
 
 // used in upsource

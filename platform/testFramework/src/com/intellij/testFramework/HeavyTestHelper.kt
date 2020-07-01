@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
@@ -16,7 +17,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.createFile
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.FileAlreadyExistsException
@@ -45,11 +45,11 @@ internal object HeavyTestHelper {
   fun createModuleAt(moduleName: String,
                      project: Project,
                      moduleType: ModuleType<*>,
-                     path: String,
+                     path: Path,
                      isCreateProjectFileExplicitly: Boolean,
                      filesToDelete: MutableCollection<Path>): Module {
     if (isCreateProjectFileExplicitly) {
-      val moduleFile = Paths.get(path, "$moduleName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+      val moduleFile = path.resolve("$moduleName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
       try {
         moduleFile.createFile()
       }
@@ -57,17 +57,17 @@ internal object HeavyTestHelper {
       }
 
       filesToDelete.add(moduleFile)
-      return WriteAction.computeAndWait<Module, RuntimeException> {
+      return runWriteActionAndWait {
         val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleFile)!!
-        val module = ModuleManager.getInstance(project).newModule(virtualFile.path, moduleType.id)
+        val module = ModuleManager.getInstance(project).newModule(virtualFile.toNioPath(), moduleType.id)
         module.moduleFile
         module
       }
     }
     else {
       val moduleManager = ModuleManager.getInstance(project)
-      return WriteAction.computeAndWait<Module, RuntimeException> {
-        moduleManager.newModule(path + File.separatorChar + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION, moduleType.id)
+      return runWriteActionAndWait {
+        moduleManager.newModule(path.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION), moduleType.id)
       }
     }
   }

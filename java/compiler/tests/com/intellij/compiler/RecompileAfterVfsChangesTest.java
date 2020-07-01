@@ -33,7 +33,6 @@ public class RecompileAfterVfsChangesTest extends BaseCompilerTestCase {
     makeProjectForTheFirstTime();
     assertOutput(m, fs().file("a.txt", "hello"));
 
-
     WriteAction.run(() -> file.rename(this, "b.txt"));
     make(m);
     assertOutput(m, fs().file("b.txt", "hello"));
@@ -42,7 +41,7 @@ public class RecompileAfterVfsChangesTest extends BaseCompilerTestCase {
   private void makeProjectForTheFirstTime() {
     buildAllModules();
 
-    //first compilation creates an output directory which causes 'rootChanged' which drops BuildManager's ProjectData cache and forces rescanning,
+    // first compilation creates an output directory which causes 'rootChanged' which drops BuildManager's ProjectData cache and forces rescanning,
     // so we need to perform an additional dummy compilation to check that ProjectData is updated correctly
     buildAllModules().assertUpToDate();
   }

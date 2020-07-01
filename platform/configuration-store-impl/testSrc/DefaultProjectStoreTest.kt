@@ -7,11 +7,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
 import com.intellij.testFramework.rules.createDeleteAppConfigRule
+import com.intellij.testFramework.use
 import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.isEmpty
 import org.junit.ClassRule
@@ -32,11 +35,9 @@ internal class DefaultProjectStoreTest {
   @Rule
   val fsRule = InMemoryFsRule()
 
-  private val tempDirManager = TemporaryDirectory()
-
   @JvmField
   @Rule
-  val ruleChain = RuleChain(tempDirManager, createDeleteAppConfigRule())
+  val ruleChain = RuleChain(createDeleteAppConfigRule())
 
   @Test
   fun `new project from default - file-based storage`() {
