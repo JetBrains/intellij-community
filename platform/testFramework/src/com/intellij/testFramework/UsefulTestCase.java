@@ -50,6 +50,7 @@ import org.junit.Assert;
 import org.junit.AssumptionViolatedException;
 import org.junit.ComparisonFailure;
 import org.junit.rules.TestRule;
+import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import javax.swing.*;
@@ -70,6 +71,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
+
+import static org.junit.Assume.assumeTrue;
 
 public abstract class UsefulTestCase extends TestCase {
   public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
@@ -156,14 +159,14 @@ public abstract class UsefulTestCase extends TestCase {
         String name = description.getMethodName();
         name = StringUtil.notNullize(StringUtil.substringBefore(name, "["), name);
         setName(name);
-
-        if (!shouldRunTest()) {
-          throw new AssumptionViolatedException("skipping " + getName() + ": shouldRunTest() == false");
-        }
-
+        checkShouldRunTest(description);
         runBare(base::evaluate);
       }
     };
+  }
+
+  protected void checkShouldRunTest(@NotNull Description description) throws AssumptionViolatedException {
+    assumeTrue("skipped: shouldRunTest() returned false", shouldRunTest());
   }
 
   protected boolean shouldContainTempFiles() {
