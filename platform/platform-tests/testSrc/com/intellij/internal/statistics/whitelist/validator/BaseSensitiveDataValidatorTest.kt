@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 import com.intellij.internal.statistic.eventLog.whitelist.EventLogMetadataLoader
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorage
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
@@ -45,7 +45,7 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
   internal fun newValidator(content: String, customBuild: String? = null): TestSensitiveDataValidator {
     val storage = object : WhitelistStorage("TEST", TestEventLogWhitelistPersistence(content), TestEventLogWhitelistLoader(content)) {
       override fun createValidators(build: EventLogBuild?,
-                                    groups: FUStatisticsWhiteListGroupsService.WLGroups): MutableMap<String, WhiteListGroupRules> {
+                                    groups: FUStatisticsWhiteListGroupsService.WLGroups): MutableMap<String, EventGroupRules> {
         if (customBuild != null) {
           return super.createValidators(EventLogBuild.fromString(customBuild), groups)
         }

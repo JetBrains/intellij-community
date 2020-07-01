@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalFileCustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalFileCustomValidationRule
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
 import org.junit.Test
@@ -28,33 +28,33 @@ class LocalFileWhitelistValidatorTest : LightPlatformTestCase() {
 
   @Test
   fun `test validate first allowed value by file`() {
-    val validator = TestLocalFileWhitelistValidator()
+    val validator = TestLocalFileValidationRule()
     doValidateEventId(validator, "allowed.value", FeatureUsageData())
   }
 
   @Test
   fun `test validate second allowed value by file`() {
-    val validator = TestLocalFileWhitelistValidator()
+    val validator = TestLocalFileValidationRule()
     doValidateEventId(validator, "another.allowed.value", FeatureUsageData())
   }
 
   @Test
   fun `test reject unknown value`() {
-    val validator = TestLocalFileWhitelistValidator()
+    val validator = TestLocalFileValidationRule()
     doRejectEventId(validator, "unknown.value", FeatureUsageData())
   }
 
   @Test
   fun `test reject value if file doesn't exist`() {
-    val validator = EmptyLocalFileWhitelistValidator()
+    val validator = EmptyLocalFileValidationRule()
     doRejectEventId(validator, "value", FeatureUsageData())
   }
 }
 
-private class TestLocalFileWhitelistValidator : LocalFileCustomWhiteListRule("local_file",
-                                                                     LocalFileWhitelistValidatorTest::class.java,
-                                                                     "file-with-allowed-values.txt")
+private class TestLocalFileValidationRule : LocalFileCustomValidationRule(
+  "local_file", LocalFileWhitelistValidatorTest::class.java, "file-with-allowed-values.txt"
+)
 
-private class EmptyLocalFileWhitelistValidator : LocalFileCustomWhiteListRule("local_file",
-                                                                              LocalFileWhitelistValidatorTest::class.java,
-                                                                              "not-existing-file.txt")
+private class EmptyLocalFileValidationRule : LocalFileCustomValidationRule(
+  "local_file", LocalFileWhitelistValidatorTest::class.java, "not-existing-file.txt"
+)

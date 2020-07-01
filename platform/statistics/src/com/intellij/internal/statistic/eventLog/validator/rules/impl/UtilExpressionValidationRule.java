@@ -8,12 +8,12 @@ import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule;
 import org.jetbrains.annotations.NotNull;
 
-public class UtilExpressionWhiteListRule extends PerformanceCareRule implements FUSRule {
+public class UtilExpressionValidationRule extends PerformanceCareRule implements FUSRule {
   @NotNull private final FUSRule myRule;
   @NotNull private final String myPrefix;
   @NotNull private final String mySuffix;
 
-  public UtilExpressionWhiteListRule(@NotNull FUSRule rule, @NotNull String prefix, @NotNull String suffix) {
+  public UtilExpressionValidationRule(@NotNull FUSRule rule, @NotNull String prefix, @NotNull String suffix) {
     myRule = rule;
     myPrefix = prefix;
     mySuffix = suffix;
@@ -39,6 +39,6 @@ public class UtilExpressionWhiteListRule extends PerformanceCareRule implements 
 
   @Override
   public String toString() {
-    return "UtilExpressionWhiteListRule: myPrefix=" + myPrefix +",mySuffix=" + mySuffix+",myRule=" + myRule;
+    return "UtilExpressionValidationRule: myPrefix=" + myPrefix +",mySuffix=" + mySuffix+",myRule=" + myRule;
   }
 }

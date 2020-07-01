@@ -7,9 +7,9 @@ import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomWhitelistRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpWhiteListRule
-import com.intellij.internal.statistic.eventLog.validator.rules.utils.WhiteListSimpleRuleFactory.parseSimpleExpression
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory.parseSimpleExpression
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
 import junit.framework.TestCase
@@ -24,7 +24,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
   @Test
   fun test_regex_escapes() {
     val foo = "[aa] \\ \\p{Lower} (a|b|c) [a-zA-Z_0-9] X?+ X*+ X?? [\\p{L}&&[^\\p{Lu}]] "
-    val pattern = Pattern.compile(RegexpWhiteListRule.escapeText(foo))
+    val pattern = Pattern.compile(RegexpValidationRule.escapeText(foo))
     assertTrue(pattern.matcher(foo).matches())
     assert(true)
   }
@@ -569,9 +569,9 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
   @Suppress("unused")
   internal enum class TestCustomActionId {FIRST, SECOND, THIRD}
 
-  internal inner class TestLocalEnumCustomWhitelistRule : LocalEnumCustomWhitelistRule("custom_action_id", TestCustomActionId::class.java)
+  internal inner class TestLocalEnumCustomWhitelistRule : LocalEnumCustomValidationRule("custom_action_id", TestCustomActionId::class.java)
 
-  internal inner class TestExistingWhitelistRule : LocalEnumCustomWhitelistRule("existing_rule", TestCustomActionId::class.java)
+  internal inner class TestExistingWhitelistRule : LocalEnumCustomValidationRule("existing_rule", TestCustomActionId::class.java)
 
   internal inner class TestThirdPartyWhitelistRule : CustomWhiteListRule() {
     override fun acceptRuleId(ruleId: String?): Boolean = "third_party_rule" == ruleId

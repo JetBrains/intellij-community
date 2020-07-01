@@ -7,11 +7,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class LocalEnumCustomWhitelistRule extends CustomWhiteListRule {
+public abstract class LocalEnumCustomValidationRule extends CustomWhiteListRule {
   private final String myRule;
   private final Class<? extends Enum> myEnumClass;
 
-  public LocalEnumCustomWhitelistRule(@NotNull String rule, @NotNull Class<? extends Enum> enumClass) {
+  public LocalEnumCustomValidationRule(@NotNull String rule, @NotNull Class<? extends Enum> enumClass) {
     myRule = rule;
     myEnumClass = enumClass;
   }

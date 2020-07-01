@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException;
 import com.intellij.internal.statistic.service.fus.EventLogMetadataParseException;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentMap;
 public class WhitelistStorage extends BaseWhitelistStorage {
   private static final Logger LOG = Logger.getInstance(WhitelistStorage.class);
 
-  protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = new ConcurrentHashMap<>();
+  protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
   private final @NotNull Semaphore mySemaphore;
   private final @NotNull String myRecorderId;
   private @Nullable String myVersion;
@@ -50,7 +50,7 @@ public class WhitelistStorage extends BaseWhitelistStorage {
   }
 
   @Override
-  public @Nullable WhiteListGroupRules getGroupRules(@NotNull String groupId) {
+  public @Nullable EventGroupRules getGroupRules(@NotNull String groupId) {
     return eventsValidators.get(groupId);
   }
 
@@ -74,7 +74,7 @@ public class WhitelistStorage extends BaseWhitelistStorage {
     try {
       FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
       EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
-      Map<String, WhiteListGroupRules> result = createValidators(build, groups);
+      Map<String, EventGroupRules> result = createValidators(build, groups);
       isWhiteListInitialized.set(false);
       eventsValidators.clear();
       eventsValidators.putAll(result);
