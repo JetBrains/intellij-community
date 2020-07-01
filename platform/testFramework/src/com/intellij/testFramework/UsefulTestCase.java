@@ -108,8 +108,6 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private final @NotNull ThrowableRunnable<Throwable> myDefaultTestRunnable = super::runTest;
-
   /**
    * Pass here the exception you want to be thrown first
    * E.g.<pre>
@@ -356,9 +354,13 @@ public abstract class UsefulTestCase extends TestCase {
     return myTestRootDisposable;
   }
 
+  /**
+   * @deprecated not JUnit4-friendly; to override the way tests are executed use {@link #runTestRunnable} instead
+   */
   @Override
-  protected void runTest() throws Throwable {
-    runTestRunnable(myDefaultTestRunnable);
+  @Deprecated
+  protected final void runTest() throws UnsupportedOperationException {
+    throw new UnsupportedOperationException("Use runTestRunnable() to override the way tests are executed");
   }
 
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
@@ -435,12 +437,7 @@ public abstract class UsefulTestCase extends TestCase {
     try (AutoCloseable ignored = this::invokeTearDown) {
       invokeSetUp();
 
-      if (testRunnable == myDefaultTestRunnable) {
-        runTest();  // indirection to handle legacy overloads
-      }
-      else {
-        runTestRunnable(testRunnable);
-      }
+      runTestRunnable(testRunnable);
     }
   }
 
@@ -491,7 +488,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (!shouldRunTest()) {
       return;
     }
-    runBare(myDefaultTestRunnable);
+    runBare(super::runTest);
   }
 
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {

@@ -29,6 +29,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.testFramework.*;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -53,13 +54,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   private FileASTNode fileNode;
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (getTestName(false).contains("NoCommand")) {
-      super.runTest();
+      super.runTestRunnable(testRunnable);
       return;
     }
     WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, Throwable>)() -> {
-      super.runTest();
+      super.runTestRunnable(testRunnable);
       return null;
     });
   }

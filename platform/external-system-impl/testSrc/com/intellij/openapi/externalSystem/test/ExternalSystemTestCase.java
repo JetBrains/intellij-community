@@ -35,10 +35,7 @@ import com.intellij.task.ProjectTaskManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.io.TestFileSystemItem;
@@ -215,18 +212,18 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
       if (runInWriteAction()) {
         try {
-          WriteAction.runAndWait(() -> super.runTest());
+          WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
         }
         catch (Throwable throwable) {
           ExceptionUtil.rethrowAllAsUnchecked(throwable);
         }
       }
       else {
-        super.runTest();
+        super.runTestRunnable(testRunnable);
       }
     }
     catch (Exception throwable) {

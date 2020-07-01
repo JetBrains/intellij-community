@@ -110,9 +110,9 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
   }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     myChecker.init(getTestName(true));
-    super.runTest();
+    super.runTestRunnable(testRunnable);
   }
 
   @Override

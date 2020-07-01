@@ -3,8 +3,14 @@ package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.debugger.engine.*;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.RemoteStateState;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -103,8 +109,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   @Override
-  protected void runTest() throws Throwable {
-    super.runTest();
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    super.runTestRunnable(testRunnable);
     if(getDebugProcess() != null) {
       getDebugProcess().getProcessHandler().startNotify();
       waitProcess(getDebugProcess().getProcessHandler());
