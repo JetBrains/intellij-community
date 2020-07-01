@@ -343,8 +343,8 @@ public final class EditorModificationUtil {
   @NotNull
   public static List<CaretState> calcBlockSelectionState(@NotNull Editor editor,
                                                          @NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
-    int startLine = MathUtil.clamp(blockStart.line, 0, editor.getDocument().getLineCount() - 1);
-    int endLine = MathUtil.clamp(blockEnd.line, 0, editor.getDocument().getLineCount() - 1);
+    int startLine = Math.max(Math.min(blockStart.line, editor.getDocument().getLineCount() - 1), 0);
+    int endLine = Math.max(Math.min(blockEnd.line, editor.getDocument().getLineCount() - 1), 0);
     int step = endLine < startLine ? -1 : 1;
     int count = 1 + Math.abs(endLine - startLine);
     List<CaretState> caretStates = new LinkedList<>();
