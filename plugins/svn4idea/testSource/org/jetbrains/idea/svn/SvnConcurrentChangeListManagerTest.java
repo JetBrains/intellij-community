@@ -19,8 +19,8 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
   private String myDefaulListName;
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
     myDefaulListName = LocalChangeList.getDefaultName();
     myScheme = new DuringChangeListManagerUpdateTestScheme(myProject, myTempDirFixture.getTempDirPath());
   }

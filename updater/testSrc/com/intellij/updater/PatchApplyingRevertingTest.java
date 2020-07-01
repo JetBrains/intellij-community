@@ -34,8 +34,8 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Before
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
     myFile = getTempFile("patch.zip");
     myPatchSpec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())

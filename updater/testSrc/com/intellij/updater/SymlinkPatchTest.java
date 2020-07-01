@@ -13,10 +13,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SymlinkPatchTest extends PatchTestCase {
   @Override
-  public void setUp() throws Exception {
+  public void before() throws Exception {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    super.setUp();
+    super.before();
 
     FileUtil.writeToFile(new File(myOlderDir, "Readme.txt"), "hello");
     resetNewerDir();

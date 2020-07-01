@@ -14,8 +14,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -29,7 +27,6 @@ class JarRepositoryManagerTest : UsefulTestCase() {
   private lateinit var myTestLocalMvnCache: File
   private lateinit var myTestRepo: RemoteRepositoryDescription
 
-  @Before
   override fun setUp() {
     super.setUp()
     myFixture = runInEdtAndGet {
@@ -42,7 +39,6 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     JarRepositoryManager.setLocalRepositoryPath(myTestLocalMvnCache)
   }
 
-  @After
   override fun tearDown() {
     try {
       runInEdtAndWait {

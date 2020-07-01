@@ -26,8 +26,8 @@ import java.nio.file.Paths
 private const val LOG_SEPARATOR_START = "-------------"
 
 class SvnRenameTest : SvnTestCase() {
-  override fun setUp() {
-    super.setUp()
+  override fun before() {
+    super.before()
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
   }

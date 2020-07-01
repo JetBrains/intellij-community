@@ -138,7 +138,7 @@ public abstract class PyEnvTestCase {
   }
 
   @Before
-  public void setUp() {
+  public void before() {
     if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
       assertThat(getAvailableTags())
         .describedAs("Can't find some tags between all available interpreter, test (all methods) will be skipped")
@@ -346,10 +346,10 @@ public abstract class PyEnvTestCase {
   }
 
   /**
-   * Always call parrent when overwrite
+   * Always call parent when overriding.
    */
   @After
-  public void tearDown() {
+  public void after() {
     // We can stop message capturing even if it was not started as cleanup process.
     stopMessageCapture();
     Disposer.dispose(myDisposable);

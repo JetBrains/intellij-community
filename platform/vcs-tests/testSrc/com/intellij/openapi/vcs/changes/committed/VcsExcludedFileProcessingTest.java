@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import org.junit.Before;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,7 +16,6 @@ public class VcsExcludedFileProcessingTest extends HeavyPlatformTestCase {
   private MockAbstractVcs myVcs;
 
   @Override
-  @Before
   public void setUp() throws Exception {
     super.setUp();
 

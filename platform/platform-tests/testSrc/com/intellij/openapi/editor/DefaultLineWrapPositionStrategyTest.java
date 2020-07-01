@@ -26,8 +26,8 @@ public class DefaultLineWrapPositionStrategyTest extends AbstractLineWrapPositio
 
   @Override
   @Before
-  public void setUp() {
-    super.setUp();
+  public void prepare() {
+    super.prepare();
     myStrategy = new DefaultLineWrapPositionStrategy();
   }
 

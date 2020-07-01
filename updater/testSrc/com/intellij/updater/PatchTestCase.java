@@ -20,8 +20,8 @@ public abstract class PatchTestCase extends UpdaterTestCase {
   protected File myOlderDir;
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
 
     myOlderDir = getTempFile("oldDir");
     myNewerDir = getTempFile("newDir");

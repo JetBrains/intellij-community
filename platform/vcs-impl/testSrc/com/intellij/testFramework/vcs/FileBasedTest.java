@@ -31,7 +31,7 @@ public abstract class FileBasedTest {
   protected Project myProject;
 
   @Before
-  public void setUp() throws Exception {
+  public void before() throws Exception {
     myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getClass().getSimpleName()).getFixture();
     myProjectFixture.setUp();
     myProject = myProjectFixture.getProject();
@@ -40,7 +40,7 @@ public abstract class FileBasedTest {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void after() throws Exception {
     new RunAll()
       .append(() -> myProject = null)
       .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())

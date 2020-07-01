@@ -35,8 +35,8 @@ public class VcsDirtyScopeTest extends FileBasedTest {
 
   @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
 
     myVcs = new MockAbstractVcs(myProject);
     myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
@@ -47,10 +47,10 @@ public class VcsDirtyScopeTest extends FileBasedTest {
 
   @Override
   @After
-  public void tearDown() throws Exception {
+  public void after() throws Exception {
     myVcsManager = null;
     myVcs = null;
-    super.tearDown();
+    super.after();
   }
 
   private static class Data {

@@ -105,7 +105,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   @Before
-  public void setUp() throws Exception {
+  public void before() throws Exception {
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myTempDirFixture.setUp();
     resetCanonicalTempPathCache(myTempDirFixture.getTempDirPath());
@@ -185,7 +185,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void after() throws Exception {
     new RunAll(
       () -> changeListManager.waitEverythingDoneInTestMode(),
       () -> runInEdtAndWait(this::tearDownProject),

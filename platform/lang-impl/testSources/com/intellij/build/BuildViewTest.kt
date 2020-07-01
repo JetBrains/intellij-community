@@ -9,8 +9,6 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.ThrowableRunnable
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 
@@ -18,14 +16,12 @@ class BuildViewTest : LightPlatformTestCase() {
 
   private lateinit var buildViewTestFixture: BuildViewTestFixture
 
-  @Before
   override fun setUp() {
     super.setUp()
     buildViewTestFixture = BuildViewTestFixture(project)
     buildViewTestFixture.setUp()
   }
 
-  @After
   override fun tearDown() {
     RunAll()
       .append(ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() })

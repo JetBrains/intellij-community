@@ -16,8 +16,6 @@ import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 class GradleTaskManagerTest: UsefulTestCase() {
@@ -28,7 +26,6 @@ class GradleTaskManagerTest: UsefulTestCase() {
   private lateinit var gradleExecSettings: GradleExecutionSettings
 
 
-  @Before
   override fun setUp() {
     super.setUp()
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
@@ -43,7 +40,6 @@ class GradleTaskManagerTest: UsefulTestCase() {
                                                      DistributionType.WRAPPED, false)
   }
 
-  @After
   override fun tearDown() {
     try {
       myTestFixture.tearDown()

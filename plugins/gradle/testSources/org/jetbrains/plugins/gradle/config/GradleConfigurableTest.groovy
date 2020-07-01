@@ -36,7 +36,7 @@ class GradleConfigurableTest {
   Map<Project, GradleSettings> settings = [:].withDefault { new GradleSettings() }
 
   @Before
-  void setUp() {
+  void before() {
     helper = [
       getSettings : { settings[it] },
       applySettings: {linkedProjectPath, gradleHomePath, preferLocalInstallationToWrapper, autoImport, serviceDirectoryPath, project -> },

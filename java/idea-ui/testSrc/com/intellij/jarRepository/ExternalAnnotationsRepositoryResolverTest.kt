@@ -16,8 +16,6 @@ import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.concurrency.Promise
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -31,7 +29,6 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
   private lateinit var myTestLocalMvnCache: File
   private lateinit var myTestRepo: RemoteRepositoryDescription
 
-  @Before
   override fun setUp() {
     super.setUp()
     myFixture = runInEdtAndGet {
@@ -44,7 +41,6 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
     JarRepositoryManager.setLocalRepositoryPath(myTestLocalMvnCache)
   }
 
-  @After
   override fun tearDown() {
     try {
       runInEdtAndWait {
