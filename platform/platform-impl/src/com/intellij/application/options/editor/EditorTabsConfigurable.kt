@@ -63,8 +63,9 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
             myScrollTabLayoutInEditorCheckBox =
               checkBox(scrollTabLayoutInEditor).enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
             row {
-              checkBox(hideTabsIfNeeded).enableIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }
-                                                    and myScrollTabLayoutInEditorCheckBox.selected)
+              checkBox(hideTabsIfNeeded).enableIf(
+                myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
+                                                    and myScrollTabLayoutInEditorCheckBox.selected).component
             }
           }
         }
