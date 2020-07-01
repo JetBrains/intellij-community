@@ -176,29 +176,19 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
       if (runInWriteAction()) {
-        try {
-          WriteAction.runAndWait(() -> super.runTest());
-        }
-        catch (Throwable throwable) {
-          ExceptionUtil.rethrowAllAsUnchecked(throwable);
-        }
+        WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
       }
       else {
-        super.runTest();
+        super.runTestRunnable(testRunnable);
       }
     }
-    catch (Exception throwable) {
-      Throwable each = throwable;
-      do {
-        if (each instanceof HeadlessException) {
-          printIgnoredMessage("Doesn't work in Headless environment");
-          return;
-        }
+    catch (Throwable throwable) {
+      if (ExceptionUtil.causedBy(throwable, HeadlessException.class)) {
+        printIgnoredMessage("Doesn't work in Headless environment");
       }
-      while ((each = each.getCause()) != null);
       throw throwable;
     }
   }
