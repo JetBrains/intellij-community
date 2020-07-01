@@ -305,26 +305,33 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     while (expression != null) {
       if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) &&
           (acceptVoid || !PsiType.VOID.equals(expression.getType()))) {
-        if (expression instanceof PsiMethodReferenceExpression) {
+        if (isExtractable(expression)) {
           expressions.add(expression);
-        }
-        else if (!(expression instanceof PsiAssignmentExpression)) {
-          if (!(expression instanceof PsiReferenceExpression)) {
-            expressions.add(expression);
-          }
-          else {
-            if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
-              final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
-              if (!(resolve instanceof PsiClass) && !(resolve instanceof PsiPackage)) {
-                expressions.add(expression);
-              }
-            }
-          }
         }
       }
       expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
     }
     return expressions;
+  }
+
+  public static boolean isExtractable(PsiExpression expression) {
+    if (expression instanceof PsiMethodReferenceExpression) {
+      return true;
+    }
+    else if (!(expression instanceof PsiAssignmentExpression)) {
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return true;
+      }
+      else {
+        if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
+          final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
+          if (!(resolve instanceof PsiClass) && !(resolve instanceof PsiPackage)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   public static PsiElement[] findStatementsAtOffset(final Editor editor, final PsiFile file, final int offset) {
@@ -369,7 +376,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     if (tempExpr == null) {
       tempExpr = getSelectedExpression(project, file, startOffset, endOffset);
     }
-    return tempExpr;
+    return isExtractable(tempExpr) ? tempExpr : null;
   }
 
   /**
