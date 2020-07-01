@@ -1,7 +1,6 @@
 package ru.adelf.idea.dotenv.util;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider;
@@ -22,6 +21,6 @@ public class EnvironmentVariablesProviderUtil {
     private static <T> T[] getExtensions(@NotNull String name) {
         ExtensionPointName<T> pointName = new ExtensionPointName<>(name);
 
-        return Extensions.getRootArea().getExtensionPoint(pointName).getExtensions();
+        return pointName.getExtensions();
     }
 }
