@@ -2720,12 +2720,16 @@ public final class UIUtil {
   }
 
   public static void setNotOpaqueRecursively(@NotNull Component component) {
+    setOpaqueRecursively(component, false);
+  }
+
+  public static void setOpaqueRecursively(@NotNull Component component, boolean opaque) {
     if (!(component instanceof JComponent)) {
       return;
     }
     forEachComponentInHierarchy(component, c -> {
       if (c instanceof JComponent) {
-        ((JComponent)c).setOpaque(false);
+        ((JComponent)c).setOpaque(opaque);
       }
     });
   }
