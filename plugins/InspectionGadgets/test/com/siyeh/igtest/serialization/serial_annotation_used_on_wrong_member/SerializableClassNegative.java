@@ -27,6 +27,11 @@ class Test implements Serializable {
   protected Object readResolve() throws ObjectStreamException {
     return 1;
   }
+
+  public void foo() {
+    <error descr="'@Serial' not applicable to local variable">@Serial</error>
+    int a = 1;
+  }
 }
 
 enum Bar {

@@ -5,17 +5,17 @@ Reports methods and fields in <b>Serializable</b> and <b>Externalizable</b> clas
 Examples:<br>
 <code><pre>
 class Test implements Serializable {
-  @Serial // could be marked as redundant
+  @Serial //The annotated field is not a part of serialization mechanism as it's not final
   private static long serialVersionUID = 7874493593505141603L;
 
-  @Serial // could be marked as redundant
+  @Serial //The annotated method is not a part of the serialization mechanism as it's not private
   void writeObject(ObjectOutputStream out) throws IOException {
   }
 }
 </pre></code>
 <code><pre>
 class Test implements Externalizable {
-  @Serial // could be marked as redundant
+  @Serial //The annotated method is not a part of the serialization mechanism as it's inside Externalizable class
   private void writeObject(ObjectOutputStream out) throws IOException {
   }
 }

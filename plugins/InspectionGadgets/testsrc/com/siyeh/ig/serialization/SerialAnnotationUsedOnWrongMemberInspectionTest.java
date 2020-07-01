@@ -7,7 +7,7 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RedundantSerialAnnotationInspectionTest extends LightJavaInspectionTestCase {
+public class SerialAnnotationUsedOnWrongMemberInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
@@ -41,8 +41,12 @@ public class RedundantSerialAnnotationInspectionTest extends LightJavaInspection
     doTest();
   }
 
+  public void testSuppressedSerial() {
+    doTest();
+  }
+
   @Override
   protected @Nullable InspectionProfileEntry getInspection() {
-    return new RedundantSerialAnnotationInspection();
+    return new SerialAnnotationUsedOnWrongMemberInspection();
   }
 }

@@ -15,7 +15,12 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RedundantSerialAnnotationInspection extends BaseInspection {
+public class SerialAnnotationUsedOnWrongMemberInspection extends BaseInspection {
+
+  @Override
+  public @NotNull String getID() {
+    return "serial";
+  }
 
   @Override
   public boolean shouldInspect(PsiFile file) {
@@ -24,7 +29,7 @@ public class RedundantSerialAnnotationInspection extends BaseInspection {
 
   @Override
   protected @NotNull @InspectionMessage String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("redundant.serial.annotation.problem.descriptor", infos);
+    return InspectionGadgetsBundle.message("serial.annotation.used.on.wrong.member.problem.descriptor", infos);
   }
 
   @Override
@@ -51,11 +56,19 @@ public class RedundantSerialAnnotationInspection extends BaseInspection {
         return;
       }
 
-      PsiField psiField = PsiTreeUtil.getParentOfType(annotation, PsiField.class);
+      PsiAnnotationOwner annotationOwner = annotation.getOwner();
+      if (!(annotationOwner instanceof PsiModifierList)) return;
+      PsiElement annotationOwnerParent = ((PsiModifierList)annotationOwner).getParent();
+      PsiField psiField = null;
       PsiMethod psiMethod = null;
-      if (psiField == null) {
-        psiMethod = PsiTreeUtil.getParentOfType(annotation, PsiMethod.class);
-        if (psiMethod == null) return;
+      if (annotationOwnerParent instanceof PsiField) {
+        psiField = (PsiField)annotationOwnerParent;
+      }
+      else if (annotationOwnerParent instanceof PsiMethod) {
+        psiMethod = (PsiMethod)annotationOwnerParent;
+      }
+      else {
+        return;
       }
 
       boolean isWellAnnotatedElement;
