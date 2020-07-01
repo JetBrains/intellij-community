@@ -678,7 +678,7 @@ public final class HighlightMethodUtil {
   private static void registerMethodReturnFixAction(@NotNull HighlightInfo highlightInfo,
                                                     @NotNull MethodCandidateInfo candidate,
                                                     @NotNull PsiCall methodCall) {
-    if (methodCall.getParent() instanceof PsiReturnStatement) {
+    if (candidate.getInferenceErrorMessage() != null && methodCall.getParent() instanceof PsiReturnStatement) {
       final PsiMethod containerMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class, true, PsiLambdaExpression.class);
       if (containerMethod != null) {
         final PsiMethod method = candidate.getElement();
