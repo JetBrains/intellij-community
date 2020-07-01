@@ -219,7 +219,10 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
     return KEY;
   }
 
-  @Nullable
+  @NotNull
+  public static SettingsKey<JavaLensSettings> getSettingsKey() {
+    return KEY;
+  }
   @Override
   public String getPreviewText() {
     return null;
