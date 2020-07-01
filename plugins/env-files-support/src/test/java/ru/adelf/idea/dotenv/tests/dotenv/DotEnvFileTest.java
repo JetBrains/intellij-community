@@ -44,6 +44,12 @@ public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
         assertIndexNotContains(DotEnvKeysIndex.KEY,"Comment", "#Comment", "#Another comment");
     }
 
+    public void testSlashInTheEndOfQuoted() {
+        assertIndexContains(DotEnvKeysIndex.KEY,"SLASH_IN_THE_END_OF_QUOTED", "AFTER");
+
+        assertIndexContains(DotEnvKeyValuesIndex.KEY,"SLASH_IN_THE_END_OF_QUOTED=123 #com\\\\", "AFTER=1");
+    }
+
     public void testMultiLine() {
         assertIndexContains(DotEnvKeyValuesIndex.KEY,"MULTI_LINE=MULTI...");
     }

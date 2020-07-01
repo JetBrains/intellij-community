@@ -3,11 +3,9 @@
 package ru.adelf.idea.dotenv.grammars;
 
 import com.intellij.lexer.FlexLexer;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import ru.adelf.idea.dotenv.psi.DotEnvTypes;
-import com.intellij.psi.TokenType;
-
-import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
 
 
 /**
@@ -71,11 +69,11 @@ class _DotEnvLexer implements FlexLexer {
   private static final String ZZ_ACTION_PACKED_0 =
     "\5\0\2\1\1\2\1\3\1\4\1\5\1\1\1\3"+
     "\2\6\2\7\1\10\1\7\1\3\1\11\1\12\1\13"+
-    "\1\12\3\11\1\0\2\4\1\1\1\2\1\6\1\2"+
-    "\4\1\1\14";
+    "\1\3\3\11\1\0\2\4\1\1\1\2\1\6\1\0"+
+    "\1\2\4\1\1\14";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[39];
+    int [] result = new int[40];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -104,10 +102,10 @@ class _DotEnvLexer implements FlexLexer {
     "\0\210\0\231\0\252\0\273\0\252\0\314\0\335\0\356"+
     "\0\167\0\252\0\377\0\u0110\0\252\0\u0121\0\252\0\u0132"+
     "\0\u0143\0\u0154\0\u0165\0\210\0\u0176\0\u0187\0\u0198\0\335"+
-    "\0\u01a9\0\u0154\0\u01ba\0\u01cb\0\u01dc\0\u01ed\0\u01fe";
+    "\0\u01a9\0\u0132\0\u0154\0\u01ba\0\u01cb\0\u01dc\0\u01ed\0\u01fe";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[39];
+    int [] result = new int[40];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -146,18 +144,19 @@ class _DotEnvLexer implements FlexLexer {
     "\1\40\1\16\1\0\10\16\1\41\2\10\2\20\1\16"+
     "\1\20\1\16\1\0\7\16\1\0\3\10\2\23\1\0"+
     "\1\23\11\0\1\16\3\0\1\16\1\0\13\16\6\26"+
-    "\1\0\1\26\1\30\20\26\1\30\10\26\2\31\2\0"+
-    "\16\31\1\42\2\10\2\42\1\31\1\42\12\31\1\33"+
-    "\2\10\2\33\1\31\1\33\11\31\2\35\2\0\17\35"+
-    "\2\0\3\35\1\12\11\35\2\6\1\0\1\6\2\0"+
-    "\1\6\1\0\1\34\1\6\1\0\2\6\1\43\3\6"+
-    "\1\16\1\41\2\10\2\41\1\16\1\41\1\16\1\0"+
-    "\7\16\2\6\1\0\1\6\2\0\1\6\1\0\1\34"+
-    "\1\6\1\0\3\6\1\44\4\6\1\0\1\6\2\0"+
-    "\1\6\1\0\1\34\1\6\1\0\4\6\1\45\3\6"+
-    "\1\0\1\6\2\0\1\6\1\0\1\34\1\6\1\0"+
-    "\5\6\1\46\2\6\1\0\1\6\2\0\1\6\1\47"+
-    "\1\34\1\6\1\0\6\6\7\0\1\47\11\0";
+    "\1\0\1\26\1\42\11\26\3\0\1\26\1\0\13\26"+
+    "\2\31\2\0\16\31\1\43\2\10\2\43\1\31\1\43"+
+    "\12\31\1\33\2\10\2\33\1\31\1\33\11\31\2\35"+
+    "\2\0\17\35\2\0\3\35\1\12\11\35\2\6\1\0"+
+    "\1\6\2\0\1\6\1\0\1\34\1\6\1\0\2\6"+
+    "\1\44\3\6\1\16\1\41\2\10\2\41\1\16\1\41"+
+    "\1\16\1\0\7\16\2\6\1\0\1\6\2\0\1\6"+
+    "\1\0\1\34\1\6\1\0\3\6\1\45\4\6\1\0"+
+    "\1\6\2\0\1\6\1\0\1\34\1\6\1\0\4\6"+
+    "\1\46\3\6\1\0\1\6\2\0\1\6\1\0\1\34"+
+    "\1\6\1\0\5\6\1\47\2\6\1\0\1\6\2\0"+
+    "\1\6\1\50\1\34\1\6\1\0\6\6\7\0\1\50"+
+    "\11\0";
 
   private static int [] zzUnpackTrans() {
     int [] result = new int[527];
@@ -199,10 +198,10 @@ class _DotEnvLexer implements FlexLexer {
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
     "\5\0\5\1\1\11\1\1\1\11\4\1\1\11\2\1"+
-    "\1\11\1\1\1\11\4\1\1\0\13\1";
+    "\1\11\1\1\1\11\4\1\1\0\5\1\1\0\6\1";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[39];
+    int [] result = new int[40];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;

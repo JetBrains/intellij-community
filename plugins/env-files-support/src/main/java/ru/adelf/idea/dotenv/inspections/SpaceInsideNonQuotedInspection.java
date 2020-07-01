@@ -16,7 +16,6 @@ import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 import ru.adelf.idea.dotenv.psi.DotEnvValue;
 
 public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
-    private static final Logger LOG = Logger.getInstance(SpaceInsideNonQuotedInspection.class);
 
     private AddQuotesQuickFix addQuotesQuickFix = new AddQuotesQuickFix();
 
@@ -78,7 +77,7 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
 
                 valueElement.getNode().getTreeParent().replaceChild(valueElement.getNode(), newValueElement.getNode());
             } catch (IncorrectOperationException e) {
-                LOG.error(e);
+                Logger.getInstance(SpaceInsideNonQuotedInspection.class).error(e);
             }
         }
 
