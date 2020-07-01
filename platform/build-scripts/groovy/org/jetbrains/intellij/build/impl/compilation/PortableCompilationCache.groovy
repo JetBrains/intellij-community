@@ -33,10 +33,6 @@ class PortableCompilationCache {
   @Lazy
   private String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }()
   /**
-   * If true then current execution is expected to perform only warm up and upload of new commits caches, nothing else like tests execution
-   */
-  private boolean uploadOnly = bool('intellij.jps.cache.uploadOnly', false)
-  /**
    * Download JPS remote caches even if there are caches available locally
    */
   private boolean forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
@@ -120,11 +116,6 @@ class PortableCompilationCache {
   def warmUp() {
     if (forceRebuild) {
       clearJpsOutputs()
-    }
-    else if (uploadOnly && downloader.availableForHeadCommit) {
-      context.messages.info('Downloading is skipped because caches are ' +
-                            'available for the head commit so nothing new would be uploaded ' +
-                            '(current execution is expected to perform only upload of new commits caches)')
     }
     else if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
       downloadCachesAndOutput()
