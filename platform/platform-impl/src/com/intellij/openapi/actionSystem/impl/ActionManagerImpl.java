@@ -34,6 +34,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -166,6 +167,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
+    DynamicActionConfigurationCustomizer.EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));
+    DynamicActionConfigurationCustomizer.EP_NAME.addExtensionPointListener(
+      new ExtensionPointListener<DynamicActionConfigurationCustomizer>() {
+        @Override
+        public void extensionAdded(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
+          extension.registerActions(ActionManagerImpl.this);
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
+          extension.unregisterActions(ActionManagerImpl.this);
+        }
+      }, this);
     EDITOR_ACTION_HANDLER_EP.addChangeListener(this::updateAllHandlers, this);
   }
 
