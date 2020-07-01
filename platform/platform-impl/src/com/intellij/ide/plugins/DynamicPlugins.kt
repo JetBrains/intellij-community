@@ -650,6 +650,10 @@ object DynamicPlugins {
     // unregister plugin extension points
     processExtensionPoints(pluginDescriptor, openedProjects) { points, area -> area.unregisterExtensionPoints(points) }
 
+    pluginDescriptor.app.extensionPoints?.clear()
+    pluginDescriptor.project.extensionPoints?.clear()
+    pluginDescriptor.module.extensionPoints?.clear()
+
     val pluginId = pluginDescriptor.pluginId ?: loadedPluginDescriptor.pluginId
     application.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
     val appMessageBus = application.messageBus as MessageBusEx
