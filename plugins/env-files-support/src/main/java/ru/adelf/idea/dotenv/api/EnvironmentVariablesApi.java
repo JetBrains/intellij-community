@@ -114,6 +114,7 @@ public class EnvironmentVariablesApi {
 
         searchHelper.processAllFilesWithWord(key, GlobalSearchScope.allScope(project), psiFileProcessor, true);
         searchHelper.processAllFilesWithWordInLiterals(key, GlobalSearchScope.allScope(project), psiFileProcessor);
+        searchHelper.processAllFilesWithWordInText(key, GlobalSearchScope.allScope(project), psiFileProcessor, true);
 
         return targets.toArray(PsiElement.EMPTY_ARRAY);
     }

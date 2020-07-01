@@ -5,8 +5,11 @@ import com.jetbrains.php.lang.psi.elements.FunctionReference;
 import com.jetbrains.php.lang.psi.elements.ParameterList;
 
 import java.util.Arrays;
+import java.util.List;
 
 class PhpPsiHelper {
+
+    public static final List<String> FUNCTIONS = Arrays.asList("getenv", "env");
 
     /**
      * Checks that this element is first parameter of needed functions, like env('element')
@@ -15,7 +18,7 @@ class PhpPsiHelper {
      * @return true if it's needed parameter in needed function
      */
     static boolean isEnvFunctionParameter(PsiElement psiElement) {
-        return isFunctionParameter(psiElement, 0, "getenv", "env");
+        return isFunctionParameter(psiElement, 0, FUNCTIONS);
     }
 
     /**
@@ -27,10 +30,10 @@ class PhpPsiHelper {
 
         String name = functionReference.getName();
 
-        return (name != null && Arrays.asList("getenv", "env").contains(name));
+        return (name != null && FUNCTIONS.contains(name));
     }
 
-    private static boolean isFunctionParameter(PsiElement psiElement, int parameterIndex, String... funcName) {
+    private static boolean isFunctionParameter(PsiElement psiElement, int parameterIndex, List<String> functions) {
         PsiElement variableContext = psiElement.getContext();
         if(!(variableContext instanceof ParameterList)) {
             return false;
@@ -43,7 +46,7 @@ class PhpPsiHelper {
                 FunctionReference methodReference = (FunctionReference) context;
                 String name = methodReference.getName();
 
-                return (name != null && Arrays.asList(funcName).contains(name) && getParameterIndex(parameterList, psiElement) == parameterIndex);
+                return (name != null && functions.contains(name) && getParameterIndex(parameterList, psiElement) == parameterIndex);
             }
         }
     }
