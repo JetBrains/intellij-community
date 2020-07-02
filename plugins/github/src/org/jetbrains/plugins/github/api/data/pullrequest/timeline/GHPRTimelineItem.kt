@@ -35,7 +35,6 @@ LockedEvent | UnlockedEvent
 MarkedAsDuplicateEvent | UnmarkedAsDuplicateEvent
 ConvertToDraftEvent
 
-CommentDeletedEvent
 ???PullRequestCommitCommentThread
 ???PullRequestReviewThread
 AddedToProjectEvent
@@ -59,6 +58,7 @@ AutomaticBaseChangeSucceededEvent | AutomaticBaseChangeFailedEvent
 /*IGNORE
 ReferencedEvent
 MentionedEvent
+CommentDeletedEvent
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = true,
               defaultImpl = Unknown::class)
@@ -100,6 +100,6 @@ interface GHPRTimelineItem {
   class Unknown(val __typename: String) : GHPRTimelineItem
 
   companion object {
-    val IGNORED_TYPES = setOf("ReferencedEvent", "MentionedEvent")
+    val IGNORED_TYPES = setOf("ReferencedEvent", "MentionedEvent", "CommentDeletedEvent")
   }
 }
