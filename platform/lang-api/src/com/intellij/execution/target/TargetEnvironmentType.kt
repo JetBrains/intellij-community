@@ -4,9 +4,11 @@ package com.intellij.execution.target
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 import com.intellij.execution.target.TargetEnvironmentType.Companion.EXTENSION_NAME
 import com.intellij.ide.wizard.AbstractWizardStepEx
+import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import javax.swing.JComponent
 
 /**
  * Contributed type for ["com.intellij.executionTargetType"][EXTENSION_NAME] extension point
@@ -34,8 +36,18 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
 
   abstract fun createConfigurable(project: Project, config: C): Configurable
 
+  open fun createVolumeContributionUI(): TargetSpecificVolumeContributionUI? = null
+
   companion object {
     @JvmField
     val EXTENSION_NAME = ExtensionPointName.create<TargetEnvironmentType<*>>("com.intellij.executionTargetType")
+  }
+
+  interface TargetSpecificVolumeContributionUI {
+    fun createComponent(): JComponent
+
+    fun resetFrom(state: BaseState?)
+
+    fun getValueToApply(): BaseState?
   }
 }

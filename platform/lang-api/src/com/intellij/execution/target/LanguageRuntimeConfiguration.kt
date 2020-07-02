@@ -15,21 +15,35 @@ import java.nio.file.Path
  * Since different language configurations do not share any common bits, this is effectively a marker.
  */
 abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigurationBase(typeId, EXTENSION_NAME) {
-
-  protected val volumePaths = mutableMapOf<VolumeDescriptor, String>()
-  protected val volumeTargetSpecificBits = mutableMapOf<VolumeDescriptor, BaseState>()
+  private val volumeTargetSpecificBits = mutableMapOf<VolumeDescriptor, BaseState?>()
+  private val volumePaths = mutableMapOf<VolumeDescriptor, String>()
 
   fun createUploadRoot(descriptor: VolumeDescriptor, localRootPath: Path): UploadRoot {
     return UploadRoot(localRootPath, getTargetPath(descriptor))
   }
 
-  open fun getTargetSpecificData(volumeDescriptor: VolumeDescriptor): BaseState? {
+  fun getTargetSpecificData(volumeDescriptor: VolumeDescriptor): BaseState? {
     return volumeTargetSpecificBits[volumeDescriptor]
   }
 
-  open fun getTargetPath(volumeDescriptor: VolumeDescriptor): TargetPath {
-    val path = volumePaths[volumeDescriptor]
+  fun setTargetSpecificData(volumeDescriptor: VolumeDescriptor, data: BaseState?) {
+    volumeTargetSpecificBits[volumeDescriptor] = data
+  }
+
+  protected fun getTargetPathValue(volumeDescriptor: VolumeDescriptor): String? = volumePaths[volumeDescriptor]
+
+  fun getTargetPath(volumeDescriptor: VolumeDescriptor): TargetPath {
+    val path = getTargetPathValue(volumeDescriptor)
     return if (path.isNullOrEmpty()) TargetPath.Temporary(hint = volumeDescriptor.wizardLabel) else TargetPath.Persistent(path)
+  }
+
+  fun setTargetPath(volumeDescriptor: VolumeDescriptor, targetPath: String?) {
+    if (targetPath == null) {
+      volumePaths.remove(volumeDescriptor)
+    }
+    else {
+      volumePaths[volumeDescriptor] = targetPath
+    }
   }
 }
 
