@@ -102,7 +102,7 @@ open class MarketplaceRequests {
     "${PLUGIN_MANAGER_URL}/feature/getImplementations"
   ).addParameters(param)
 
-  internal val BROKEN_PLUGIN_PATH = "${PLUGIN_MANAGER_URL}/files/brokenPlugins.json"
+  private val BROKEN_PLUGIN_PATH = "${PLUGIN_MANAGER_URL}/files/brokenPlugins.json"
 
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> = try {
     if (param.isEmpty()) emptyList()
@@ -235,15 +235,6 @@ open class MarketplaceRequests {
   fun loadPluginDescriptor(xmlId: String, externalPluginId: String, externalUpdateId: String): PluginNode {
     val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
     return loadPluginDescriptor(xmlId, ideCompatibleUpdate)
-  }
-
-  fun isFileNotModified(url: String, file: File): Boolean {
-    val eTag = loadEtagForFile(file)
-    return HttpRequests
-      .request(url)
-      .tuner { connection -> connection.setUpETag(eTag) }
-      .productNameAsUserAgent()
-      .connect { request -> return@connect request.connection.isNotModified(file) }
   }
 
   @Throws(IOException::class)

@@ -18,11 +18,6 @@ object BrokenPluginsService {
   }
 
   private fun updateBrokenPlugin() {
-    val isNotUpdatedPlugins = marketplaceClient.isFileNotModified(
-      marketplaceClient.BROKEN_PLUGIN_PATH,
-      marketplaceClient.getBrokenPluginsFile()
-    )
-    if (isNotUpdatedPlugins) return
     val brokenPlugins = getBrokenPlugins()
     if (brokenPlugins.isEmpty()) return
     PluginManagerCore.updateBrokenPlugins(brokenPlugins)
