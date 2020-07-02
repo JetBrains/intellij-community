@@ -128,12 +128,12 @@ class GCRootPathsTree(
     var currentNode: Node = topNode
     for (i in gcPath.size() - 1 downTo 0) {
       val id = gcPath[i]
-      val classDefinition = nav.getClassForObjectId(id.toLong())
+      var classDefinition = nav.getClassForObjectId(id.toLong())
       var fieldName: String? = null
       if (fieldsPath[i] != 0) {
         if (classDefinition.name == "java.lang.Class") {
-          val definition = nav.classStore[id.toLong()]
-          fieldName = definition.getClassFieldName(fieldsPath[i] - 1)
+          classDefinition = nav.classStore[id.toLong()]
+          fieldName = classDefinition.getClassFieldName(fieldsPath[i] - 1)
         }
         else {
           fieldName = classDefinition.getRefField(nav.classStore, fieldsPath[i] - 1).name
