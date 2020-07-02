@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.PythonTestUtil
@@ -143,6 +144,8 @@ class PyDelegateTestCase : PyTestCase() {
 
   @Throws(Exception::class)
   fun runTest(test: ThrowableRunnable<Throwable>) {
-    runTestRunnable(test)
+    runInEdtAndWait {
+      runTestRunnable(test)
+    }
   }
 }
