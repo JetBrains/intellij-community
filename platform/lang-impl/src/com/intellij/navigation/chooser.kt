@@ -7,17 +7,18 @@ import com.intellij.ide.ui.createTargetPresentationRenderer
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsContexts.PopupTitle
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.function.Consumer
 
-fun <T> chooseTargetPopup(title: String,
+fun <T> chooseTargetPopup(title: @PopupTitle String,
                           targets: List<T>,
                           presentation: (T) -> TargetPopupPresentation?,
                           consumer: Consumer<in T>): JBPopup {
   return chooseTargetPopup(title, targets, presentation, consumer::accept)
 }
 
-fun <T> chooseTargetPopup(title: String,
+fun <T> chooseTargetPopup(title: @PopupTitle String,
                           targets: List<T>,
                           presentation: (T) -> TargetPopupPresentation?,
                           consumer: (T) -> Unit): JBPopup {

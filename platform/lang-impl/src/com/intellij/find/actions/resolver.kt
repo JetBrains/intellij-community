@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.usages.UsageTarget
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 
 /* This file contains weird logic so Symbols will work with PsiElements and UsageTargets. */
 
-internal fun findShowUsages(project: Project, dataContext: DataContext, popupTitle: String, handler: UsageVariantHandler) {
+internal fun findShowUsages(project: Project, dataContext: DataContext, popupTitle: @PopupTitle String, handler: UsageVariantHandler) {
   val allTargets = allTargets(
     project,
     searchTargets(dataContext),
