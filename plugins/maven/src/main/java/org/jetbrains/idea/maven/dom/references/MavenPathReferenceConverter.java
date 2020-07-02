@@ -105,15 +105,10 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
                 if (parentFile != null) {
                   VirtualFile parentPom = parentFile.isDirectory() ? parentFile.findChild("pom.xml") : parentFile;
                   if (parentPom != null) {
-                    ReadAction.run(() -> {
-                      Project project = context.getProject();
-                      if (!project.isDisposed()) {
-                        PsiFile psiFile = PsiManager.getInstance(project).findFile(parentPom);
-                        if (psiFile != null) {
-                          result.add(new PsiElementResolveResult(psiFile));
-                        }
-                      }
-                    });
+                    PsiFile psiFile = context.getManager().findFile(parentPom);
+                    if (psiFile != null) {
+                      result.add(new PsiElementResolveResult(psiFile));
+                    }
                   }
                 }
               }
