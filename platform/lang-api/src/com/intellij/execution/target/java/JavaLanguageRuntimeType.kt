@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.java
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.icons.AllIcons
@@ -56,8 +57,30 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     }
   }
 
+  override fun volumeDescriptors(config: JavaLanguageRuntimeConfiguration) = listOf(APPLICATION_FOLDER_VOLUME,
+                                                                                    CLASS_PATH_VOLUME,
+                                                                                    AGENTS_VOLUME)
+
   companion object {
     @JvmStatic
     val TYPE_ID = "JavaLanguageRuntime"
+
+    @JvmStatic
+    val APPLICATION_FOLDER_VOLUME =
+      VolumeDescriptor(ExecutionBundle.message("java.language.runtime.application.folder.label"),
+                       ExecutionBundle.message("java.language.runtime.application.folder.description"),
+                       "/app")
+
+    @JvmStatic
+    val CLASS_PATH_VOLUME =
+      VolumeDescriptor(ExecutionBundle.message("java.language.runtime.classpath.volume.label"),
+                       ExecutionBundle.message("java.language.runtime.classpath.volume.description"),
+                       "")
+
+    @JvmStatic
+    val AGENTS_VOLUME =
+      VolumeDescriptor(ExecutionBundle.message("java.language.runtime.agents.volume.label"),
+                       ExecutionBundle.message("java.language.runtime.application.folder.description"),
+                       "")
   }
 }
