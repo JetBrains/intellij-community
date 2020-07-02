@@ -85,19 +85,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
 
     //noinspection unchecked
     T selectedItem = (T)myComboBox.getSelectedItem();
-    myPopup = new ComboBoxPopup<T>(this, selectedItem, value -> myComboBox.setSelectedItem(value)) {
-      @Override
-      public void cancel(InputEvent e) {
-        if (e instanceof MouseEvent) {
-          // we want the second click on combo-box just to close
-          // and not to instantly show the popup again in the following
-          // DarculaJBPopupComboPopup#mousePressed()
-          Point point = new RelativePoint((MouseEvent)e).getPoint(myComboBox);
-          myJustClosedViaClick = new Rectangle(myComboBox.getSize()).contains(point);
-        }
-        super.cancel(e);
-      }
-    };
+    myPopup = createPopup(selectedItem);
     myPopup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -266,5 +254,21 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
   @Override
   public void ancestorMoved(AncestorEvent event) {
     hide();
+  }
+
+  protected ComboBoxPopup<T> createPopup(@Nullable T selectedItem) {
+    return new ComboBoxPopup<T>(this, selectedItem, value -> myComboBox.setSelectedItem(value)) {
+      @Override
+      public void cancel(InputEvent e) {
+        if (e instanceof MouseEvent) {
+          // we want the second click on combo-box just to close
+          // and not to instantly show the popup again in the following
+          // DarculaJBPopupComboPopup#mousePressed()
+          Point point = new RelativePoint((MouseEvent)e).getPoint(myComboBox);
+          myJustClosedViaClick = new Rectangle(myComboBox.getSize()).contains(point);
+        }
+        super.cancel(e);
+      }
+    };
   }
 }
