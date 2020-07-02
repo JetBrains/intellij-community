@@ -74,7 +74,7 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
   }
 
   private fun getStaticFieldObjectId(className: String, fieldName: String) =
-    classStore[className].staticFields.first { it.name == fieldName }.objectId
+    classStore[className].objectStaticFields.first { it.name == fieldName }.value
 
   companion object {
     fun createOnAuxiliaryFiles(parser: HProfEventBasedParser,

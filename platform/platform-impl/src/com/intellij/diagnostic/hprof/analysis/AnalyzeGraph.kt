@@ -18,7 +18,6 @@ package com.intellij.diagnostic.hprof.analysis
 import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
-import com.intellij.diagnostic.hprof.util.IntList
 import com.intellij.diagnostic.hprof.util.PartialProgressIndicator
 import com.intellij.diagnostic.hprof.visitors.HistogramVisitor
 import com.google.common.base.Stopwatch
@@ -211,8 +210,8 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
       // Mark all class object as to be visited, set them as their own parents
       classStore.forEachClass { classDefinition ->
         addIdToSetIfOrphan(rootsSet, classDefinition.id.toInt())
-        classDefinition.staticFields.forEach { staticField ->
-          addIdToSetIfOrphan(rootsSet, staticField.objectId.toInt())
+        classDefinition.objectStaticFields.forEach { staticField ->
+          addIdToSetIfOrphan(rootsSet, staticField.value.toInt())
         }
         classDefinition.constantFields.forEach { objectId ->
           addIdToSetIfOrphan(rootsSet, objectId.toInt())

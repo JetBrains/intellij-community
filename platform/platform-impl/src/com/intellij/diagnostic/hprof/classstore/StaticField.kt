@@ -15,4 +15,4 @@
  */
 package com.intellij.diagnostic.hprof.classstore
 
-class StaticField(val name: String, val objectId: Long)
+class StaticField(val name: String, val value: Long)

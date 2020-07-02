@@ -27,7 +27,8 @@ class ClassDefinition(val name: String,
                       val refInstanceFields: Array<InstanceField>,
                       private val primitiveInstanceFields: Array<InstanceField>,
                       val constantFields: LongArray,
-                      val staticFields: Array<StaticField>) {
+                      val objectStaticFields: Array<StaticField>,
+                      val primitiveStaticFields: Array<StaticField>) {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -98,13 +99,13 @@ class ClassDefinition(val name: String,
     val newConstantFields = LongArray(constantFields.size) {
       map(constantFields[it])
     }
-    val newStaticFields = Array(staticFields.size) {
-      val oldStaticField = staticFields[it]
-      StaticField(oldStaticField.name, map(oldStaticField.objectId))
+    val newStaticObjectFields = Array(objectStaticFields.size) {
+      val oldStaticField = objectStaticFields[it]
+      StaticField(oldStaticField.name, map(oldStaticField.value))
     }
     return ClassDefinition(
       name, map(id), map(superClassId), map(classLoaderId), instanceSize, superClassOffset,
-      refInstanceFields, primitiveInstanceFields, newConstantFields, newStaticFields
+      refInstanceFields, primitiveInstanceFields, newConstantFields, newStaticObjectFields, primitiveStaticFields
     )
   }
 
@@ -141,13 +142,17 @@ class ClassDefinition(val name: String,
     if (index in constantFields.indices) {
       return "<constant>"
     }
-    if (index in constantFields.size until constantFields.size + staticFields.size) {
-      return staticFields[index - constantFields.size].name
+    if (index in constantFields.size until constantFields.size + objectStaticFields.size) {
+      return objectStaticFields[index - constantFields.size].name
     }
-    if (index == constantFields.size + staticFields.size) {
+    if (index == constantFields.size + objectStaticFields.size) {
       return "<loader>"
     }
     throw IndexOutOfBoundsException("$index on class $name")
+  }
+
+  fun getPrimitiveStaticFieldValue(name: String): Long? {
+    return primitiveStaticFields.find { it.name == name }?.value
   }
 
   /**
@@ -173,7 +178,7 @@ class ClassDefinition(val name: String,
 
   fun copyWithName(newName: String): ClassDefinition {
     return ClassDefinition(newName, id, superClassId, classLoaderId, instanceSize, superClassOffset, refInstanceFields, primitiveInstanceFields,
-                           constantFields, staticFields)
+                           constantFields, objectStaticFields, primitiveStaticFields)
   }
 }
 

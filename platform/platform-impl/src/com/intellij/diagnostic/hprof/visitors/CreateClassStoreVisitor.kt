@@ -57,7 +57,6 @@ class CreateClassStoreVisitor(private val stringIdMap: TLongObjectHashMap<String
     instanceFields: Array<InstanceFieldEntry>) {
     val refInstanceFields = mutableListOf<InstanceField>()
     val primitiveInstanceFields = mutableListOf<InstanceField>()
-    val staticFieldList = mutableListOf<StaticField>()
     var currentOffset = 0
     instanceFields.forEach {
       val fieldName = stringIdMap[it.fieldNameStringId]
@@ -73,11 +72,13 @@ class CreateClassStoreVisitor(private val stringIdMap: TLongObjectHashMap<String
     }
     val constantsArray = TLongArrayList(constants.size)
     constants.filter { it.type == Type.OBJECT }.forEach { constantsArray.add(it.value) }
-    val objectStaticFields = staticFields.filter { it.type == Type.OBJECT }
-    objectStaticFields.forEach {
-      val field = StaticField(stringIdMap[it.fieldNameStringId], it.value)
-      staticFieldList.add(field)
-    }
+    val objectStaticFieldList = staticFields
+      .filter { it.type == Type.OBJECT }
+      .map { StaticField(stringIdMap[it.fieldNameStringId], it.value) }
+    val primitiveStaticFieldList = staticFields
+      .filter { it.type != Type.OBJECT }
+      .map { StaticField(stringIdMap[it.fieldNameStringId], it.value) }
+
     result.put(classId,
                ClassDefinition(
                  stringIdMap[classIDToNameStringID[classId]].replace('/', '.'),
@@ -89,7 +90,8 @@ class CreateClassStoreVisitor(private val stringIdMap: TLongObjectHashMap<String
                  refInstanceFields.toTypedArray(),
                  primitiveInstanceFields.toTypedArray(),
                  constantsArray.toNativeArray(),
-                 staticFieldList.toTypedArray()
+                 objectStaticFieldList.toTypedArray(),
+                 primitiveStaticFieldList.toTypedArray()
                ))
   }
 

@@ -132,7 +132,7 @@ class ObjectNavigatorOnAuxFiles(
           return data.toString(Charsets.ISO_8859_1)
         }
         else if (coder == 1 /* String.UTF16 */) {
-          return data.toString(Charsets.UTF_16)
+          return decodeUTF16String(data)
         }
       }
       else if (arrayClass.name == "[C") {  // Java 8 and earlier
@@ -141,6 +141,21 @@ class ObjectNavigatorOnAuxFiles(
       }
     }
     return null
+  }
+
+  private fun decodeUTF16String(data: ByteArray): String {
+    val utf16Class = classStore.getClassIfExists("java.lang.StringUTF16")
+    if (utf16Class != null) {
+      val hiByteShift = utf16Class.getPrimitiveStaticFieldValue("HI_BYTE_SHIFT")
+      val loByteShift = utf16Class.getPrimitiveStaticFieldValue("LO_BYTE_SHIFT")
+      if (hiByteShift != null && loByteShift != null) {
+        val chars = CharArray(data.size / 2) { index ->
+          ((data[index * 2].toInt() shl hiByteShift.toInt()) or (data [index * 2 + 1].toInt() shl loByteShift.toInt())).toChar()
+        }
+        return String(chars)
+      }
+    }
+    return data.toString(Charsets.UTF_16)
   }
 
   override fun getExtraData(): Int {
@@ -162,7 +177,7 @@ class ObjectNavigatorOnAuxFiles(
     if (referenceResolution != ReferenceResolution.NO_REFERENCES) {
       val classDefinition = classStore[classId]
       classDefinition.constantFields.forEach(references::add)
-      classDefinition.staticFields.forEach { references.add(it.objectId) }
+      classDefinition.objectStaticFields.forEach { references.add(it.value) }
       references.add(classDefinition.classLoaderId)
     }
   }
@@ -277,8 +292,8 @@ class ObjectNavigatorOnAuxFiles(
       if (classDefinition.id == id) {
         rootReason = RootReason.createClassDefinitionReason(classDefinition)
       }
-      classDefinition.staticFields.firstOrNull {
-        it.objectId == id
+      classDefinition.objectStaticFields.firstOrNull {
+        it.value == id
       }?.let {
         rootReason = RootReason.createStaticFieldReferenceReason(classDefinition, it.name)
       }

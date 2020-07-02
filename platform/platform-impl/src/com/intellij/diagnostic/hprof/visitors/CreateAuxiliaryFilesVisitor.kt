@@ -90,7 +90,9 @@ class CreateAuxiliaryFilesVisitor(
 
     assert(numberOfElements <= Int.MAX_VALUE) // arrays in java don't support more than Int.MAX_VALUE elements
     aux.writeNonNegativeLEB128Int(numberOfElements.toInt())
+    primitiveArrayData.mark()
     aux.writeBytes(primitiveArrayData)
+    primitiveArrayData.reset()
   }
 
   override fun visitClassDump(classId: Long,
