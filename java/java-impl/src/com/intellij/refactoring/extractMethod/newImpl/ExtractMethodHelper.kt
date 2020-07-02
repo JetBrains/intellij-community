@@ -6,6 +6,7 @@ import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
@@ -20,6 +21,12 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.RefactoringUtil
 
 object ExtractMethodHelper {
+
+  @JvmStatic
+  fun findEditorSelection(editor: Editor): TextRange? {
+    val selectionModel = editor.selectionModel
+    return if (selectionModel.hasSelection()) TextRange(selectionModel.selectionStart, selectionModel.selectionEnd) else null
+  }
 
   fun wrapWithCodeBlock(elements: List<PsiElement>): List<PsiCodeBlock> {
     require(elements.isNotEmpty())

@@ -45,6 +45,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper;
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor;
 import com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
@@ -167,7 +168,9 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
 
   public static void invokeOnElements(@NotNull Project project, final Editor editor, PsiFile file, PsiElement @NotNull [] elements) {
     if (Registry.is("java.refactoring.extractMethod.newImplementation") && canUseNewImpl(project, file, elements)) {
-      new MethodExtractor().doExtract(editor, getRefactoringName(), HelpID.EXTRACT_METHOD);
+      TextRange selection = ExtractMethodHelper.findEditorSelection(editor);
+      if (selection == null && elements.length == 1) selection = elements[0].getTextRange();
+      if (selection != null) new MethodExtractor().doExtract(file, selection, getRefactoringName(), HelpID.EXTRACT_METHOD);
       return;
     }
 
