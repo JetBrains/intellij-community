@@ -71,17 +71,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     final JComponent content = createContent();
 
-    JScrollPane scrollPane = createScrollPane(content);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.getHorizontalScrollBar().setBorder(null);
+    JComponent popupComponent = createPopupComponent(content);
 
-    scrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
-    scrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
-
-    scrollPane.setBorder(JBUI.Borders.empty());
-
-    init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
+    init(project, popupComponent, getPreferredFocusableComponent(), true, true, true, null,
          isResizable(), aStep.getTitle(), null, true, Collections.emptySet(), false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.emptyList(),
          null, null, false, true, true, null, true, null);
@@ -116,6 +108,20 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
 
 
+  }
+
+  @NotNull
+  protected JComponent createPopupComponent(JComponent content) {
+    JScrollPane scrollPane = createScrollPane(content);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.getHorizontalScrollBar().setBorder(null);
+
+    scrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
+    scrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
+
+    scrollPane.setBorder(JBUI.Borders.empty());
+    return scrollPane;
   }
 
   @NotNull
