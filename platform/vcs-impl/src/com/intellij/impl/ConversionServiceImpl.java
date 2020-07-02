@@ -22,7 +22,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.util.graph.*;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,14 +45,14 @@ public final class ConversionServiceImpl extends ConversionService {
       }
 
       listener.conversionNeeded();
-      final List<ConversionRunner> runners = getConversionRunners(context);
+      List<ConversionRunner> runners = getConversionRunners(context);
 
       Set<Path> affectedFiles = new HashSet<>();
       for (ConversionRunner runner : runners) {
         affectedFiles.addAll(runner.getAffectedFiles());
       }
 
-      final List<Path> readOnlyFiles = ConversionRunner.getReadOnlyFiles(affectedFiles);
+      List<Path> readOnlyFiles = ConversionRunner.getReadOnlyFiles(affectedFiles);
       if (!readOnlyFiles.isEmpty()) {
         listener.cannotWriteToFiles(ContainerUtil.map(readOnlyFiles, path -> path.toFile()));
         return ConversionResultImpl.ERROR_OCCURRED;
@@ -156,7 +155,7 @@ public final class ConversionServiceImpl extends ConversionService {
 
   private static List<ConversionRunner> getSortedConverters(@NotNull ConversionContextImpl context) throws CannotConvertException {
     CachedConversionResult conversionResult = loadCachedConversionResult(context.getProjectFile());
-    ObjectLongHashMap<String> oldMap = conversionResult.myProjectFilesTimestamps;
+    ObjectLongHashMap<String> oldMap = conversionResult.projectFilesTimestamps;
     ObjectLongHashMap<String> newMap = getProjectFilesMap(context);
     LOG.debug("Checking project files");
     boolean changed;
@@ -195,7 +194,7 @@ public final class ConversionServiceImpl extends ConversionService {
       LOG.debug("Project files were modified.");
     }
     else {
-      performedConversionIds = conversionResult.myAppliedConverters;
+      performedConversionIds = conversionResult.appliedConverters;
       LOG.debug("Project files are up to date. Applied converters: " + performedConversionIds);
     }
     return createConversionRunners(context, performedConversionIds);
@@ -284,19 +283,19 @@ public final class ConversionServiceImpl extends ConversionService {
           for (Element element : child.getChildren()) {
             String id = element.getAttributeValue("id");
             if (id != null) {
-              result.myAppliedConverters.add(id);
+              result.appliedConverters.add(id);
             }
           }
         }
         else if (child.getName().equals("project-files")) {
           List<Element> projectFiles = child.getChildren();
-          result.myProjectFilesTimestamps.ensureCapacity(projectFiles.size());
+          result.projectFilesTimestamps.ensureCapacity(projectFiles.size());
           for (Element element : projectFiles) {
             String path = element.getAttributeValue("path");
             String timestamp = element.getAttributeValue("timestamp");
             if (path != null && timestamp != null) {
               try {
-                result.myProjectFilesTimestamps.put(path, Long.parseLong(timestamp));
+                result.projectFilesTimestamps.put(path, Long.parseLong(timestamp));
               }
               catch (NumberFormatException ignore) {
               }
@@ -386,11 +385,11 @@ public final class ConversionServiceImpl extends ConversionService {
   }
 
   private static final class CachedConversionResult {
-    public final Set<String> myAppliedConverters = new THashSet<>();
-    public final ObjectLongHashMap<String> myProjectFilesTimestamps = new ObjectLongHashMap<>();
+    public final Set<String> appliedConverters = new HashSet<>();
+    public final ObjectLongHashMap<String> projectFilesTimestamps = new ObjectLongHashMap<>();
   }
 
-  private static class ConverterProvidersGraph implements InboundSemiGraph<ConverterProvider> {
+  private static final class ConverterProvidersGraph implements InboundSemiGraph<ConverterProvider> {
     private final List<ConverterProvider> myProviders;
 
     ConverterProvidersGraph(@NotNull List<ConverterProvider> providers) {

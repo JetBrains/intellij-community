@@ -203,7 +203,7 @@ public final class ConversionRunner {
     return myProvider;
   }
 
-  public static List<Path> getReadOnlyFiles(final Collection<? extends Path> affectedFiles) {
+  public static @NotNull List<Path> getReadOnlyFiles(@NotNull Collection<Path> affectedFiles) {
     List<Path> result = new ArrayList<>();
     for (Path file : affectedFiles) {
       if (!Files.isWritable(file)) {
@@ -213,7 +213,7 @@ public final class ConversionRunner {
     return result;
   }
 
-  public void convertModule(Path moduleFile) throws CannotConvertException {
+  public void convertModule(@NotNull Path moduleFile) throws CannotConvertException {
     final ModuleSettings settings = myContext.getModuleSettings(moduleFile.toFile());
     myModuleFileConverter.preProcess(settings);
     myModuleFileConverter.process(settings);

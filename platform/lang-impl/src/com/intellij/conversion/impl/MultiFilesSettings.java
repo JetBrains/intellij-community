@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
@@ -39,9 +39,8 @@ class MultiFilesSettings {
     }
   }
 
-  @NotNull
-  protected Collection<? extends Element> getSettings(@NotNull String componentName, @NotNull String tagName) {
-    final List<Element> result = new ArrayList<>();
+  protected @NotNull Collection<Element> getSettings(@NotNull String componentName, @NotNull String tagName) {
+    List<Element> result = new ArrayList<>();
     if (myProjectFile != null) {
       result.addAll(JDOMUtil.getChildren(myProjectFile.findComponent(componentName), tagName));
     }
@@ -49,13 +48,11 @@ class MultiFilesSettings {
     for (SettingsXmlFile file : mySettingsFiles) {
       result.addAll(JDOMUtil.getChildren(file.getRootElement(), tagName));
     }
-
     return result;
   }
 
-  public Collection<Path> getAffectedFiles() {
-    final List<Path> files = new ArrayList<>();
-
+  public @NotNull Collection<Path> getAffectedFiles() {
+    List<Path> files = new ArrayList<>();
     if (myProjectFile != null) {
       files.add(myProjectFile.getFile());
     }

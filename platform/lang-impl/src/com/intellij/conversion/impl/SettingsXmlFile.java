@@ -35,11 +35,11 @@ final class SettingsXmlFile {
     myRootElement = myDocument.getRootElement();
   }
 
-  public Path getFile() {
+  public @NotNull Path getFile() {
     return myFile;
   }
 
-  public Element getRootElement() {
+  public @NotNull Element getRootElement() {
     return myRootElement;
   }
 

@@ -8,7 +8,7 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -32,7 +32,7 @@ public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl imple
   }
 
   public static String getModuleName(Path moduleFile) {
-    return StringUtil.trimEnd(moduleFile.getFileName().toString(), ModuleFileType.DOT_DEFAULT_EXTENSION);
+    return Strings.trimEnd(moduleFile.getFileName().toString(), ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   @Override
@@ -48,19 +48,16 @@ public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl imple
   }
 
   @Override
-  @NotNull
-  public File getModuleFile() {
-    return mySettingsFile.getFile().toFile();
+  public @NotNull Path getModuleFile() {
+    return mySettingsFile.getFile();
   }
 
   @Override
   @NotNull
-  public Collection<? extends Element> getFacetElements(@NotNull String facetTypeId) {
-    final Element facetManager = getComponentElement(JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME);
-    final ArrayList<Element> elements = new ArrayList<>();
-
+  public Collection<Element> getFacetElements(@NotNull String facetTypeId) {
+    Element facetManager = getComponentElement(JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME);
+    ArrayList<Element> elements = new ArrayList<>();
     addFacetTypes(facetTypeId, facetManager, elements);
-
     return elements;
   }
 
@@ -68,7 +65,8 @@ public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl imple
     for (Element child : JDOMUtil.getChildren(parent, JpsFacetSerializer.FACET_TAG)) {
       if (facetTypeId.equals(child.getAttributeValue(JpsFacetSerializer.TYPE_ATTRIBUTE))) {
         elements.add(child);
-      } else {
+      }
+      else {
         addFacetTypes(facetTypeId, child, elements);
       }
     }

@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
@@ -13,16 +12,13 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 
-public class ProjectLibrariesSettingsImpl extends MultiFilesSettings implements ProjectLibrariesSettings {
-
-  public ProjectLibrariesSettingsImpl(@Nullable Path projectFile, File @Nullable [] librariesFiles,
-                                      ConversionContextImpl context) throws CannotConvertException {
+final class ProjectLibrariesSettingsImpl extends MultiFilesSettings implements ProjectLibrariesSettings {
+  ProjectLibrariesSettingsImpl(@Nullable Path projectFile, File @Nullable [] librariesFiles, ConversionContextImpl context) throws CannotConvertException {
     super(projectFile, librariesFiles, context);
   }
 
   @Override
-  @NotNull
-  public Collection<? extends Element> getProjectLibraries() {
+  public @NotNull Collection<Element> getProjectLibraries() {
     return getSettings("libraryTable", JpsLibraryTableSerializer.LIBRARY_TAG);
   }
 }

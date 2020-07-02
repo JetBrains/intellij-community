@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -154,17 +155,17 @@ public class ConvertProjectDialog extends DialogWrapper {
     return true;
   }
 
-  private List<Path> getReadOnlyFiles() {
+  private @NotNull List<Path> getReadOnlyFiles() {
     return ConversionRunner.getReadOnlyFiles(myAffectedFiles);
   }
 
-  private static void unlockFiles(final List<? extends Path> files) {
+  private static void unlockFiles(@NotNull List<Path> files) {
     for (Path file : files) {
       FileUtil.setReadOnlyAttribute(file.toAbsolutePath().toString(), false);
     }
   }
 
-  private void showErrorMessage(final String message) {
+  private void showErrorMessage(@NotNull String message) {
     Messages.showErrorDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"));
   }
 

@@ -41,7 +41,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -59,7 +58,7 @@ public final class ConversionContextImpl implements ConversionContext {
   private final Path myWorkspaceFile;
   private volatile List<Path> myModuleFiles;
   private ComponentManagerSettings myProjectSettings;
-  private WorkspaceSettingsImpl myWorkspaceSettings;
+  private WorkspaceSettings myWorkspaceSettings;
   private final List<Path> myNonExistingModuleFiles = new ArrayList<>();
   private final Map<Path, ModuleSettingsImpl> myFile2ModuleSettings = new HashMap<>();
   private final Map<String, ModuleSettingsImpl> myName2ModuleSettings = new HashMap<>();
@@ -117,7 +116,10 @@ public final class ConversionContextImpl implements ConversionContext {
       List<Path> moduleFiles = myModuleFiles;
       if (moduleFiles == null) {
         try {
-          moduleFiles = Files.exists(myModuleListFile) ? findModuleFiles(JDOMUtil.load(myModuleListFile)) : Collections.emptyList();
+          moduleFiles = findModuleFiles(JDOMUtil.load(myModuleListFile));
+        }
+        catch (NoSuchFileException ignore) {
+          moduleFiles = Collections.emptyList();
         }
         catch (JDOMException | IOException e) {
           throw new CompletionException(e);
@@ -176,15 +178,11 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   private static void addLastModifiedTme(@NotNull Path file, @NotNull ObjectLongHashMap<String> files) {
-    FileTime time;
     try {
-      time = Files.getLastModifiedTime(file);
+      files.put(file.toString(), Files.getLastModifiedTime(file).toMillis());
     }
     catch (IOException ignore) {
-      return;
     }
-
-    files.put(file.toString(), time.toMillis());
   }
 
   private static void addXmlFilesFromDirectory(@NotNull Path dir, @NotNull ObjectLongHashMap<String> result) {
@@ -264,14 +262,14 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @NotNull
-  public String expandPath(@NotNull String path, @NotNull ModuleSettingsImpl moduleSettings) {
+  public String expandPath(@NotNull String path, @NotNull ModuleSettings moduleSettings) {
     return createExpandMacroMap(moduleSettings).substitute(path, true);
   }
 
   private @NotNull ExpandMacroToPathMap createExpandMacroMap(@Nullable ModuleSettings moduleSettings) {
     ExpandMacroToPathMap map = createExpandMacroMap();
     if (moduleSettings != null) {
-      String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getModuleFile().getParentFile().getAbsolutePath());
+      String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getModuleFile().getParent().toAbsolutePath().toString());
       map.addMacroExpand(PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath);
     }
     return map;
@@ -285,20 +283,19 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @Override
-  @NotNull
-  public String collapsePath(@NotNull String path) {
-    ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.PROJECT_DIR_MACRO_NAME, myProjectBaseDir.toFile());
+  public @NotNull String collapsePath(@NotNull String path) {
+    ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.PROJECT_DIR_MACRO_NAME, myProjectBaseDir);
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
   public static String collapsePath(@NotNull String path, @NotNull ModuleSettings moduleSettings) {
-    final ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.MODULE_DIR_MACRO_NAME, moduleSettings.getModuleFile().getParentFile());
+    final ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.MODULE_DIR_MACRO_NAME, moduleSettings.getModuleFile().getParent());
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  private static ReplacePathToMacroMap createCollapseMacroMap(final String macroName, final File dir) {
+  private static ReplacePathToMacroMap createCollapseMacroMap(final String macroName, @NotNull Path dir) {
     ReplacePathToMacroMap map = new ReplacePathToMacroMap();
-    map.addMacroReplacement(FileUtil.toSystemIndependentName(dir.getAbsolutePath()), macroName);
+    map.addMacroReplacement(FileUtil.toSystemIndependentName(dir.toAbsolutePath().toString()), macroName);
     PathMacrosImpl.getInstanceEx().addMacroReplacements(map);
     return map;
   }
@@ -326,7 +323,7 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @NotNull
-  public List<File> getClassRoots(Element libraryElement, @Nullable ModuleSettingsImpl moduleSettings) {
+  public List<File> getClassRoots(Element libraryElement, @SuppressWarnings("TypeMayBeWeakened") @Nullable ModuleSettingsImpl moduleSettings) {
     List<File> files = new ArrayList<>();
     //todo[nik] support jar directories
     final Element classesChild = libraryElement.getChild("CLASSES");
@@ -472,7 +469,6 @@ public final class ConversionContextImpl implements ConversionContext {
     return myWorkspaceSettings;
   }
 
-
   @Override
   public ModuleSettings getModuleSettings(@NotNull Path moduleFile) throws CannotConvertException {
     ModuleSettingsImpl settings = myFile2ModuleSettings.get(moduleFile);
@@ -512,7 +508,7 @@ public final class ConversionContextImpl implements ConversionContext {
     return myWorkspaceFile;
   }
 
-  public void saveFiles(Collection<? extends Path> files, List<? extends ConversionRunner> usedRunners) throws IOException {
+  public void saveFiles(Collection<? extends Path> files, List<ConversionRunner> usedRunners) throws IOException {
     Set<String> performedConversions = new HashSet<>();
     for (ConversionRunner runner : usedRunners) {
       final ConverterProvider provider = runner.getProvider();
@@ -585,7 +581,7 @@ final class ProjectFileVersionState {
   @XCollection(propertyElementName = "performed-conversions", elementName = "converter", valueAttributeName = "id")
   final List<String> performedConversionIds;
 
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "RedundantSuppression"})
   ProjectFileVersionState() {
     performedConversionIds = new ArrayList<>();
   }
