@@ -406,12 +406,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    if (runInDispatchThread()) {
-      EdtTestUtil.runInEdtAndWait(testRunnable);
-    }
-    else {
-      testRunnable.run();
-    }
+    testRunnable.run();
   }
 
   /**
