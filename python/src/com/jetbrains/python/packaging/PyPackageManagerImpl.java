@@ -49,8 +49,8 @@ import static com.intellij.webcore.packaging.PackageVersionComparator.VERSION_CO
  */
 public class PyPackageManagerImpl extends PyPackageManager {
 
-  private static final String SETUPTOOLS_VERSION = "44.1.0";
-  private static final String PIP_VERSION = "20.0.2";
+  private static final String SETUPTOOLS_VERSION = "44.1.1";
+  private static final String PIP_VERSION = "20.1.1";
 
   private static final String SETUPTOOLS_WHEEL_NAME = "setuptools-" + SETUPTOOLS_VERSION + "-py2.py3-none-any.whl";
   private static final String PIP_WHEEL_NAME = "pip-" + PIP_VERSION + "-py2.py3-none-any.whl";
