@@ -10,7 +10,7 @@ class Test {
     @Nullable
     private Double newMethod(boolean b) {
         if (b) {
-            return (double) 42;
+            return 42.0;
         }
         if (!b) {
             return 42.0;

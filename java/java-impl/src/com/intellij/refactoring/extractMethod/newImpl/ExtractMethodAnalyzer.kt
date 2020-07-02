@@ -153,26 +153,17 @@ private fun findCommonType(first: PsiType, second: PsiType, nullability: Nullabi
   }
 }
 
-private fun findCodeReturnType(context: PsiElement): PsiType? {
-  val codeMember = ControlFlowUtil.findCodeFragment(context).parent
-  return when(codeMember) {
-    is PsiMethod -> codeMember.returnType
-    is PsiLambdaExpression -> LambdaUtil.getFunctionalInterfaceReturnType(codeMember)
-    else -> null
-  }
-}
-
 private fun findOutputFromReturn(returnStatements: List<PsiStatement>): ExpressionOutput? {
   val returnExpressions = returnStatements
     .mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
-    .sortedBy { returnStatement -> returnStatement.startOffset }
+    .sortedBy { returnExpression -> returnExpression.startOffset }
 
   val context = returnExpressions.firstOrNull() ?: return null
-  val manager = PsiManager.getInstance(context.project)
+  val manager = context.manager
 
   val variableName = returnExpressions.asSequence().map { expression -> guessName(expression) }.firstOrNull() ?: "x"
 
-  val codeReturnType = findCodeReturnType(context) ?: PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(manager.project))
+  val codeReturnType = PsiTypesUtil.getMethodReturnType(context) ?: PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(manager.project))
   val nullability = if (codeReturnType is PsiPrimitiveType) {
     Nullability.NOT_NULL
   } else {

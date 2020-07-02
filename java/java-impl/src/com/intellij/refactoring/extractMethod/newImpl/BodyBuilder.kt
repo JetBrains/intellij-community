@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -39,16 +40,13 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     }
   }
 
-  private fun castNumericReturns(codeFragment: PsiElement, returnType: PsiType){
+  private fun castNumericReturns(codeFragment: PsiElement, returnType: PsiType) {
     val castType = PsiPrimitiveType.getUnboxedType(returnType) ?: return
     val returnStatements = PsiTreeUtil.findChildrenOfType(codeFragment, PsiReturnStatement::class.java)
     returnStatements.mapNotNull { it.returnValue }
       .filter { expression -> expression.type != PsiType.NULL && TypeConversionUtil.isNumericType(expression.type) }
       .filterNot { expression -> TypeConversionUtil.isAssignable(returnType, expression.type ?: PsiType.NULL) }
-      .forEach { expression ->
-        val expressionText = "(${castType.name}) ${expression.text}"
-        val returnExpression = factory.createExpressionFromText(expressionText, expression.context)
-        expression.replace(returnExpression) }
+      .forEach { expression -> AddTypeCastFix.addTypeCast(expression.project, expression, castType) }
   }
 
   private fun findExitReplacements(flowOutput: FlowOutput, dataOutput: DataOutput): List<PsiReplace> {
