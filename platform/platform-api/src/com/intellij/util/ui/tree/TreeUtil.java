@@ -697,7 +697,7 @@ public final class TreeUtil {
         bounds.x = tree.getVisibleRect().x;
       }
 
-    LOG.debug("tree scroll: ", path);
+    if (LOG.isTraceEnabled()) LOG.debug("tree scroll: ", path);
     tree.scrollRectToVisible(bounds);
     // try to scroll later when the tree is ready
     Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
@@ -719,7 +719,7 @@ public final class TreeUtil {
       if (pathBounds != null) {
         Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
         long stamp = property instanceof Long ? (Long)property : Long.MAX_VALUE;
-        LOG.debug("tree scroll ", attempt, stamp == expected ? ": try again: " : ": ignore: ", path);
+        if (LOG.isTraceEnabled()) LOG.debug("tree scroll ", attempt, stamp == expected ? ": try again: " : ": ignore: ", path);
         if (stamp == expected) {
           bounds.y = pathBounds.y - offset; // restore bounds according to the current row
           Rectangle visible = tree.getVisibleRect();
@@ -1374,7 +1374,7 @@ public final class TreeUtil {
   }
 
   private static void expandPathWithDebug(@NotNull JTree tree, @NotNull TreePath path) {
-    LOG.debug("tree expand path: ", path);
+    if (LOG.isTraceEnabled()) LOG.debug("tree expand path: ", path);
     tree.expandPath(path);
   }
 
@@ -1528,7 +1528,7 @@ public final class TreeUtil {
         // do not expand children if parent path is collapsed
         if (!tree.isVisible(path)) {
           if (!promise.isCancelled()) {
-            LOG.debug("tree expand canceled");
+            if (LOG.isTraceEnabled()) LOG.debug("tree expand canceled");
             promise.cancel();
           }
           return TreeVisitor.Action.SKIP_SIBLINGS;
@@ -1607,7 +1607,7 @@ public final class TreeUtil {
     assert EventQueue.isDispatchThread();
     Rectangle bounds = tree.getPathBounds(path);
     if (bounds == null) {
-      LOG.debug("cannot scroll to: ", path);
+      if (LOG.isTraceEnabled()) LOG.debug("cannot scroll to: ", path);
       return false;
     }
     Container parent = tree.getParent();

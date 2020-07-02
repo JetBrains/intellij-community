@@ -199,7 +199,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private TreePath invalidateInternal(@Nullable Node node, boolean structure) {
     assert invoker.isValidThread();
     while (node != null && !isValid(node)) {
-      LOG.debug("invalid element cannot be updated: ", node);
+      if (LOG.isTraceEnabled()) LOG.debug("invalid element cannot be updated: ", node);
       node = (Node)node.getParent();
       structure = true;
     }
@@ -207,7 +207,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       node = root.get();
       if (node != null) node.invalidate();
       root.invalidate();
-      LOG.debug("root invalidated: ", node);
+      if (LOG.isTraceEnabled()) LOG.debug("root invalidated: ", node);
       treeStructureChanged(null, null, null);
       return ROOT_INVALIDATED;
     }
@@ -280,7 +280,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     if (!root.isValid()) {
       Node newRoot = getValidRoot();
       root.set(newRoot);
-      LOG.debug("root updated: ", newRoot);
+      if (LOG.isTraceEnabled()) LOG.debug("root updated: ", newRoot);
     }
     return root.get();
   }
@@ -299,7 +299,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       List<Node> oldChildren = node.children.set(newChildren);
       if (oldChildren != null) oldChildren.forEach(child -> child.setParent(null));
       if (newChildren != null) newChildren.forEach(child -> child.setParent(node));
-      LOG.debug("children updated: ", node);
+      if (LOG.isTraceEnabled()) LOG.debug("children updated: ", node);
     }
   }
 
@@ -456,7 +456,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     private void invalidate() {
       if (leafState != LeafState.ALWAYS) {
         children.invalidate();
-        LOG.debug("node invalidated: ", this);
+        if (LOG.isTraceEnabled()) LOG.debug("node invalidated: ", this);
         getChildren().forEach(Node::invalidate);
       }
     }
