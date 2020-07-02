@@ -66,16 +66,6 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     setIconTextGap(JBUIScale.scale(1));
     setHorizontalAlignment(SwingConstants.LEADING);
     setHorizontalTextPosition(SwingConstants.LEADING);
-
-    setUI(new MetalLabelUI() {
-      @Override
-      protected String layoutCL(JLabel label, FontMetrics fontMetrics, String text, Icon icon,
-                                Rectangle viewR, Rectangle iconR, Rectangle textR) {
-        String result = super.layoutCL(label, fontMetrics, text, icon, viewR, iconR, textR);
-        iconR.y += JBUIScale.scale(1);
-        return result;
-      }
-    });
   }
 
   public T getChosenItem() {
