@@ -21,18 +21,22 @@ data class FusInputEvent(val inputEvent: InputEvent?, val place: String?) {
   }
 }
 
-abstract class EventField<T> {
+sealed class EventField<T> {
   abstract val name: String
   abstract fun addData(fuData: FeatureUsageData, value: T)
 
   infix fun with(data: T): EventPair<T> = EventPair(this, data)
 }
 
+abstract class PrimitiveEventField<T> : EventField<T>() {
+  abstract val validationRule: List<String>
+}
+
 data class EventPair<T>(val field: EventField<T>, val data: T) {
   fun addData(featureUsageData: FeatureUsageData) = field.addData(featureUsageData, data)
 }
 
-data class StringEventField(override val name: String): EventField<String?>() {
+data class StringEventField(override val name: String): PrimitiveEventField<String?>() {
   var customRuleId: String? = null
     private set
   var customEnumId: String? = null
@@ -53,21 +57,38 @@ data class StringEventField(override val name: String): EventField<String?>() {
     customEnumId = id
     return this
   }
+
+  override val validationRule: List<String>
+    get() = if (customRuleId != null)
+      listOf("{util#${customRuleId}}")
+    else if (customEnumId != null)
+      listOf("{enum#${customEnumId}}")
+    else
+      emptyList()
 }
 
-data class IntEventField(override val name: String): EventField<Int>() {
+data class IntEventField(override val name: String): PrimitiveEventField<Int>() {
+  override val validationRule: List<String>
+    get() =  listOf("{regexp#integer}")
+
   override fun addData(fuData: FeatureUsageData, value: Int) {
     fuData.addData(name, value)
   }
 }
 
-data class LongEventField(override val name: String): EventField<Long>() {
+data class LongEventField(override val name: String): PrimitiveEventField<Long>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
   override fun addData(fuData: FeatureUsageData, value: Long) {
     fuData.addData(name, value)
   }
 }
 
-data class BooleanEventField(override val name: String): EventField<Boolean>() {
+data class BooleanEventField(override val name: String): PrimitiveEventField<Boolean>() {
+  override val validationRule: List<String>
+    get() = listOf("{enum#boolean}")
+
   override fun addData(fuData: FeatureUsageData, value: Boolean) {
     fuData.addData(name, value)
   }
@@ -75,15 +96,16 @@ data class BooleanEventField(override val name: String): EventField<Boolean>() {
 
 data class EnumEventField<T : Enum<*>>(override val name: String,
                                        private val enumClass: Class<T>,
-                                       private val transform: (T) -> String): EventField<T>() {
+                                       private val transform: (T) -> String): PrimitiveEventField<T>() {
   override fun addData(fuData: FeatureUsageData, value: T) {
     fuData.addData(name, transform(value))
   }
 
-  fun transformAllEnumConstants(): List<String> = enumClass.enumConstants.map(transform)
+  override val validationRule: List<String>
+    get() = enumClass.enumConstants.map(transform)
 }
 
-data class StringListEventField(override val name: String): EventField<List<String>>() {
+data class StringListEventField(override val name: String): PrimitiveEventField<List<String>>() {
   var customRuleId: String? = null
     private set
 
@@ -95,15 +117,21 @@ data class StringListEventField(override val name: String): EventField<List<Stri
     customRuleId = id
     return this
   }
+
+  override val validationRule: List<String>
+    get() = if (customRuleId != null) listOf("{util#${customRuleId}}") else emptyList()
 }
 
-data class ClassEventField(override val name: String): EventField<Class<*>?>() {
+data class ClassEventField(override val name: String): PrimitiveEventField<Class<*>?>() {
   override fun addData(fuData: FeatureUsageData, value: Class<*>?) {
     if (value != null) {
       val pluginInfo = getPluginInfo(value)
       fuData.addData(name, if (pluginInfo.isSafeToReport()) value.name else "third.party")
     }
   }
+
+  override val validationRule: List<String>
+    get() = listOf("{util#class_name}")
 }
 
 class ObjectEventField(override val name: String, vararg val fields: EventField<*>) : EventField<ObjectEventData>() {
@@ -226,8 +254,11 @@ object EventFields {
   fun StringList(name: String): StringListEventField = StringListEventField(name)
 
   @JvmField
-  val InputEvent = object : EventField<FusInputEvent?>() {
+  val InputEvent = object : PrimitiveEventField<FusInputEvent?>() {
     override val name = "input_event"
+    override val validationRule: List<String>
+      get() = listOf("{util#shortcut}")
+
     override fun addData(fuData: FeatureUsageData, value: FusInputEvent?) {
       if (value != null) {
         fuData.addInputEvent(value.inputEvent, value.place)
@@ -236,31 +267,45 @@ object EventFields {
   }
 
   @JvmField
-  val ActionPlace = object : EventField<String?>() {
+  val ActionPlace = object : PrimitiveEventField<String?>() {
     override val name: String = "place"
+    override val validationRule: List<String>
+      get() = listOf("{util#place}")
+
     override fun addData(fuData: FeatureUsageData, value: String?) {
       fuData.addPlace(value)
     }
   }
 
+  //will be replaced with ObjectEventField in the future
   @JvmField
-  val PluginInfo = object : EventField<PluginInfo>() {
+  val PluginInfo = object : PrimitiveEventField<PluginInfo>() {
     override val name = "plugin_type"
+    override val validationRule: List<String>
+      get() = listOf("plugin_info")
+
     override fun addData(fuData: FeatureUsageData, value: PluginInfo) {
       fuData.addPluginInfo(value)
     }
   }
 
+  //will be replaced with ObjectEventField in the future
   @JvmField
-  val PluginInfoFromInstance = object : EventField<Any>() {
+  val PluginInfoFromInstance = object : PrimitiveEventField<Any>() {
     override val name = "plugin_type"
+    override val validationRule: List<String>
+      get() = listOf("plugin_info")
+
     override fun addData(fuData: FeatureUsageData, value: Any) {
       fuData.addPluginInfo(getPluginInfo(value::class.java))
     }
   }
 
   @JvmField
-  val AnonymizedPath = object : EventField<String?>() {
+  val AnonymizedPath = object : PrimitiveEventField<String?>() {
+    override val validationRule: List<String>
+      get() = listOf("{util#hash}")
+
     override val name = "file_path"
     override fun addData(fuData: FeatureUsageData, value: String?) {
       fuData.addAnonymizedPath(value)
@@ -268,24 +313,32 @@ object EventFields {
   }
 
   @JvmField
-  val Language = object : EventField<Language?>() {
+  val Language = object : PrimitiveEventField<Language?>() {
     override val name = "lang"
+    override val validationRule: List<String>
+      get() = listOf("{util#lang}")
+
     override fun addData(fuData: FeatureUsageData, value: Language?) {
       fuData.addLanguage(value)
     }
   }
 
   @JvmField
-  val CurrentFile = object : EventField<Language?>() {
+  val CurrentFile = object : PrimitiveEventField<Language?>() {
     override val name = "current_file"
+    override val validationRule: List<String>
+      get() = listOf("{util#current_file}")
+
     override fun addData(fuData: FeatureUsageData, value: Language?) {
       fuData.addCurrentFile(value)
     }
   }
 
   @JvmField
-  val Version = object : EventField<String?>() {
+  val Version = object : PrimitiveEventField<String?>() {
     override val name: String = "version"
+    override val validationRule: List<String>
+      get() = listOf("{regexp#version}")
 
     override fun addData(fuData: FeatureUsageData, value: String?) {
       fuData.addVersionByString(value)

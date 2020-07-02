@@ -15,50 +15,6 @@ object WhitelistBuilder {
   data class WhitelistEvent(val event: String, val fields: List<WhitelistField>)
   data class WhitelistGroup(val id: String, val type: String, val schema: List<WhitelistEvent>)
 
-  private fun valueSchema(field: EventField<*>): List<String> = when(field) {
-    is StringEventField ->
-      if (field.customRuleId != null)
-        listOf("{util#${field.customRuleId}}")
-      else if (field.customEnumId != null)
-        listOf("{enum#${field.customEnumId}}")
-      else
-        emptyList()
-
-    is StringListEventField ->
-      if (field.customRuleId != null) listOf("{util#${field.customRuleId}}") else emptyList()
-
-    is EnumEventField<*> ->
-      field.transformAllEnumConstants()
-
-    is IntEventField, is LongEventField ->
-      listOf("{regexp#integer}")
-
-    is BooleanEventField ->
-      listOf("{enum#boolean}")
-
-    EventFields.AnonymizedPath ->
-      listOf("{util#hash}")
-
-    EventFields.InputEvent ->
-      listOf("{util#shortcut}")
-
-    EventFields.ActionPlace ->
-      listOf("{util#place}")
-
-    EventFields.CurrentFile ->
-      listOf("{util#current_file}")
-
-    EventFields.Version ->
-      listOf("{regexp#version}")
-
-    EventFields.Language ->
-      listOf("{util#lang}")
-
-    else -> {
-      emptyList()
-    }
-  }
-
   private fun fieldSchema(field: EventField<*>, fieldName: String): List<WhitelistField> {
     if (field == EventFields.PluginInfo || field == EventFields.PluginInfoFromInstance) {
       return listOf(
@@ -71,7 +27,7 @@ object WhitelistBuilder {
     return when (field) {
       is ObjectEventField -> buildObjectEvenScheme(fieldName, field.fields)
       is ObjectListEventField -> buildObjectEvenScheme(fieldName, field.fields)
-      else -> listOf(WhitelistField(fieldName, valueSchema(field)))
+      is PrimitiveEventField -> listOf(WhitelistField(fieldName, field.validationRule))
     }
   }
 
