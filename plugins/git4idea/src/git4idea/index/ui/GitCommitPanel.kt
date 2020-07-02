@@ -58,6 +58,7 @@ abstract class GitCommitPanel(private val project: Project,
 
   private fun buildPanel(): Component {
     val centerPanel = JBUI.Panels.simplePanel()
+    centerPanel.background = getButtonPanelBackground()
 
     val amendActionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
                                                                              DefaultActionGroup(AmendAction()), true)
@@ -65,13 +66,12 @@ abstract class GitCommitPanel(private val project: Project,
     amendActionToolbar.setReservePlaceAutoPopupIcon(false)
     amendActionToolbar.component.isOpaque = false
     amendActionToolbar.component.border = null
-    amendActionToolbar.component.background = getButtonPanelBackground()
 
-    val bottomPanel = JBPanel<JBPanel<*>>(HorizontalLayout(JBUI.scale(4), SwingConstants.CENTER))
-    bottomPanel.background = getButtonPanelBackground()
+    val bottomPanel = JBUI.Panels.simplePanel()
+    bottomPanel.isOpaque = false
     bottomPanel.border = getButtonPanelBorder()
-    bottomPanel.add(commitButton)
-    bottomPanel.add(amendActionToolbar.component)
+    bottomPanel.addToLeft(commitButton)
+    bottomPanel.addToRight(amendActionToolbar.component)
 
     commitMessage.editorField.addSettingsProvider { it.setBorder(JBUI.Borders.emptyLeft(6)) }
     commitMessage.editorField.setPlaceholder(VcsBundle.message("commit.message.placeholder"))
