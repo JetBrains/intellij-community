@@ -154,6 +154,33 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     })
   }
 
+  void "test recent files at the top of results"() {
+    withMixingEnabled({
+      def file1 = myFixture.addFileToProject("ApplicationFile.txt", "")
+      def file2 = myFixture.addFileToProject("AppFile.txt", "")
+      def file3 = myFixture.addFileToProject("ActionPerformerPreviewFile.txt", "")
+      def file4 = myFixture.addFileToProject("AppInfoFile.txt", "")
+      def file5 = myFixture.addFileToProject("SecondAppInfoFile.txt", "")
+      def file6 = myFixture.addFileToProject("SecondAppFile.txt", "")
+      def wrongFile = myFixture.addFileToProject("wrong.txt", "")
+
+      def ui = createTestUI([
+        ChooseByNameTest.createFileContributor(project),
+        new RecentFilesSEContributor(ChooseByNameTest.createEvent(project))
+      ])
+
+      def future = ui.findElementsForPattern("appfile")
+      assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [file2, file1, file4, file3, file6, file5]
+
+      myFixture.openFileInEditor(file4.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(file3.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(file5.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(wrongFile.getOriginalFile().getVirtualFile())
+      future = ui.findElementsForPattern("appfile")
+      assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [file4, file5, file3, file2, file1, file6]
+    })
+  }
+
   private SearchEverywhereUIBase createTestUI(List<SearchEverywhereContributor<Object>> contributors) {
     if (mySearchUI != null) Disposer.dispose(mySearchUI)
 
