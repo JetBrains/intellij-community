@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -111,7 +112,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
           val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
           mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
         }
-        .mapNotNull { if (it is PyUnionType) it.excludeNull(typeEvalContext) else it }
+        .mapNotNull { PyTypeUtil.toNonWeakType(it, typeEvalContext) }
         .toList()
         .let { PyUnionType.union(it) }
         .let {
