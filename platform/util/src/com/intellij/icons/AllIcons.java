@@ -1066,7 +1066,6 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowMessages = load("/toolwindows/toolWindowMessages.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowModuleDependencies = load("/toolwindows/toolWindowModuleDependencies.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowPalette = load("/toolwindows/toolWindowPalette.svg");
-    /** 13x13 */ public static final @NotNull Icon ToolWindowPreview = load("/toolwindows/toolWindowPreview.png");
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblems = load("/toolwindows/toolWindowProblems.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblemsEmpty = load("/toolwindows/toolWindowProblemsEmpty.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowProfiler = load("/toolwindows/toolWindowProfiler.svg");
@@ -1078,6 +1077,12 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowUIDesigner = load("/toolwindows/toolWindowUIDesigner.svg");
     /** 13x13 */ public static final @NotNull Icon WarningEvents = load("/toolwindows/warningEvents.svg");
     /** 13x13 */ public static final @NotNull Icon WebToolWindow = load("/toolwindows/webToolWindow.svg");
+
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon ToolWindowPreview = load("/toolwindows/toolWindowPreview.png");
 
   }
 
