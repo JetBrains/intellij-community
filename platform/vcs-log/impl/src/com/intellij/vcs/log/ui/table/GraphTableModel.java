@@ -10,17 +10,12 @@ import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.exception.FrequentErrorLogger;
-import com.intellij.util.text.JBDateFormat;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
-import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.visible.VisiblePack;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
  * Columns correspond exactly to {@link VcsLogColumn} enum
@@ -122,48 +115,14 @@ public final class GraphTableModel extends AbstractTableModel {
     }
 
     try {
-      return getValue(rowIndex, column, getCommitMetadata(rowIndex));
+      return column.getValue(this, rowIndex);
     }
     catch (ProcessCanceledException ignore) {
-      return getStub(column);
+      return column.getStubValue(this);
     }
     catch (Throwable t) {
       ERROR_LOG.error("Failed to get information for the log table", t);
-      return getStub(column);
-    }
-  }
-
-  @NotNull
-  private Object getValue(int rowIndex, @NotNull VcsLogColumn column, @NotNull VcsShortCommitDetails data) {
-    switch (column) {
-      case ROOT:
-        return myDataPack.getFilePath(rowIndex);
-      case COMMIT:
-        return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex),
-                                   myDataPack.getVisibleGraph().getRowInfo(rowIndex).getPrintElements());
-      case AUTHOR:
-        return CommitPresentationUtil.getAuthorPresentation(data);
-      case DATE:
-        long timeStamp = myProperties.exists(CommonUiProperties.PREFER_COMMIT_DATE) &&
-                         Boolean.TRUE.equals(myProperties.get(CommonUiProperties.PREFER_COMMIT_DATE)) ?
-                         data.getCommitTime() : data.getAuthorTime();
-        return timeStamp < 0 ? "" : JBDateFormat.getFormatter().formatPrettyDateTime(timeStamp);
-      case HASH:
-        return data.getId().toShortString();
-      default:
-        throw new IllegalStateException("Unexpected value: " + column);
-    }
-  }
-
-  @NotNull
-  private Object getStub(@NotNull VcsLogColumn column) {
-    switch (column) {
-      case ROOT:
-        return VcsUtil.getFilePath(getFirstItem(myLogData.getRoots()));
-      case COMMIT:
-        return new GraphCommitCell("", Collections.emptyList(), Collections.emptyList());
-      default:
-        return "";
+      return column.getStubValue(this);
     }
   }
 
@@ -193,6 +152,16 @@ public final class GraphTableModel extends AbstractTableModel {
   @NotNull
   public VisiblePack getVisiblePack() {
     return myDataPack;
+  }
+
+  @NotNull
+  public VcsLogData getLogData() {
+    return myLogData;
+  }
+
+  @NotNull
+  public VcsLogUiProperties getProperties() {
+    return myProperties;
   }
 
   @NotNull

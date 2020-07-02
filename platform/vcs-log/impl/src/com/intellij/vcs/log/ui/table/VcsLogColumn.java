@@ -7,14 +7,22 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.text.DateTimeFormatManager;
 import com.intellij.util.text.JBDateFormat;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
  * Do not reorder: this might affect serialization. Add new columns at the end only.
@@ -27,17 +35,49 @@ public enum VcsLogColumn {
     public String getLocalizedName() {
       return "";
     }
+
+    @Override
+    @NotNull
+    public FilePath getValue(@NotNull GraphTableModel model, int row) {
+      return model.getVisiblePack().getFilePath(row);
+    }
+
+    @Override
+    @NotNull
+    public FilePath getStubValue(@NotNull GraphTableModel model) {
+      return VcsUtil.getFilePath(getFirstItem(model.getLogData().getRoots()));
+    }
   },
   COMMIT("Subject", GraphCommitCell.class) {
     @Override
     public String getLocalizedName() {
       return VcsLogBundle.message("vcs.log.column.subject");
     }
+
+    @Override
+    @NotNull
+    public GraphCommitCell getValue(@NotNull GraphTableModel model, int row) {
+      VcsCommitMetadata commit = model.getCommitMetadata(row);
+      return new GraphCommitCell(commit.getSubject(), model.getRefsAtRow(row),
+                                 model.getVisiblePack().getVisibleGraph().getRowInfo(row).getPrintElements());
+    }
+
+    @Override
+    @NotNull
+    public GraphCommitCell getStubValue(@NotNull GraphTableModel model) {
+      return new GraphCommitCell("", Collections.emptyList(), Collections.emptyList());
+    }
   },
   AUTHOR("Author", String.class) {
     @Override
     public String getLocalizedName() {
       return VcsLogBundle.message("vcs.log.column.author");
+    }
+
+    @Override
+    @NotNull
+    public String getValue(@NotNull GraphTableModel model, int row) {
+      return CommitPresentationUtil.getAuthorPresentation(model.getCommitMetadata(row));
     }
   },
   DATE("Date", String.class) {
@@ -51,6 +91,17 @@ public enum VcsLogColumn {
       if (DateTimeFormatManager.getInstance().isPrettyFormattingAllowed()) return null;
       return JBDateFormat.getFormatter().formatDateTime(DateFormatUtil.getSampleDateTime());
     }
+
+    @Override
+    @NotNull
+    public String getValue(@NotNull GraphTableModel model, int row) {
+      VcsLogUiProperties properties = model.getProperties();
+      VcsCommitMetadata commit = model.getCommitMetadata(row);
+      boolean preferCommitDate = properties.exists(CommonUiProperties.PREFER_COMMIT_DATE) &&
+                                 Boolean.TRUE.equals(properties.get(CommonUiProperties.PREFER_COMMIT_DATE));
+      long timeStamp = preferCommitDate ? commit.getCommitTime() : commit.getAuthorTime();
+      return timeStamp < 0 ? "" : JBDateFormat.getFormatter().formatPrettyDateTime(timeStamp);
+    }
   },
   HASH("Hash", String.class) {
     @Override
@@ -61,6 +112,12 @@ public enum VcsLogColumn {
     @Override
     public String getContentSample() {
       return StringUtil.repeat("e", VcsLogUtil.SHORT_HASH_LENGTH);
+    }
+
+    @Override
+    @NotNull
+    public String getValue(@NotNull GraphTableModel model, int row) {
+      return model.getCommitMetadata(row).getId().toShortString();
     }
   };
 
@@ -85,6 +142,14 @@ public enum VcsLogColumn {
   }
 
   abstract public String getLocalizedName();
+
+  @NotNull
+  abstract public Object getValue(@NotNull GraphTableModel model, int row);
+
+  @NotNull
+  public Object getStubValue(@NotNull GraphTableModel model) {
+    return "";
+  }
 
   /**
    * @return stable name (to identify column in statistics)
