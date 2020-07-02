@@ -100,9 +100,6 @@ public class ScriptGenerator {
   @NotNull
   private static File createTempExecutable(@NotNull String fileName, @NotNull String content) throws IOException {
     File file = new File(PathManager.getTempPath(), fileName);
-    if (SystemInfo.isWindows && file.getPath().contains(" ")) {
-      file = new File(FileUtil.getTempDirectory(), fileName);
-    }
     FileUtil.writeToFile(file, content);
     FileUtil.setExecutable(file);
     return file;
