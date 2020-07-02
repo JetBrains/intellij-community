@@ -18,6 +18,7 @@ Author: Christian Boos
 
 import os
 import signal
+import sys
 
 import threading
 
@@ -46,6 +47,7 @@ class InteractiveShell:
 
 got_kbdint = False
 sigint_timer = None
+IS_MACOS = sys.platform == 'darwin'
 
 #-----------------------------------------------------------------------------
 # Code
@@ -137,7 +139,11 @@ def create_inputhook_qt5(mgr, app=None):
                 timer.timeout.connect(event_loop.quit)
                 while not stdin_ready():
                     timer.start(50)
-                    event_loop.processEvents()
+                    if IS_MACOS:
+                        # This workaround works for macOS, but the real reason is unknown. Investigation needed
+                        event_loop.processEvents()
+                    else:
+                        event_loop.exec_()
                     timer.stop()
         except KeyboardInterrupt:
             global got_kbdint, sigint_timer
