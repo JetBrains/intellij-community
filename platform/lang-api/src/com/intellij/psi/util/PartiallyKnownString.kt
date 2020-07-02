@@ -148,7 +148,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
                                           rangeForSubElement(head.sourcePsi, stringParts.first())))
                   }))
                 addAll(stringParts.subList(1, stringParts.size - 1).map {
-                  PartiallyKnownString(it.substring(value), head.sourcePsi, it.shiftRight(head.range.startOffset))
+                  PartiallyKnownString(it.substring(value), head.sourcePsi, rangeForSubElement(head.sourcePsi, it))
                 })
               },
               mutableListOf(StringEntry.Known(stringParts.last().substring(value), head.sourcePsi,
