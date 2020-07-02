@@ -19,7 +19,7 @@ public abstract class LafManager {
   public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
 
   @ApiStatus.Internal
-  public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel();
+  public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel(@NotNull ModelType type);
 
   @ApiStatus.Internal
   public abstract UIManager.LookAndFeelInfo findLaf(LafReference reference);
@@ -28,7 +28,7 @@ public abstract class LafManager {
   public abstract UIManager.LookAndFeelInfo getCurrentLookAndFeel();
 
   @ApiStatus.Internal
-  public abstract LafReference getCurrentLookAndFeelReference();
+  public abstract LafReference getLookAndFeelReference(@NotNull LafType lafType);
 
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
     setCurrentLookAndFeel(lookAndFeelInfo, false);
@@ -98,5 +98,19 @@ public abstract class LafManager {
     public int hashCode() {
       return Objects.hash(name, className, themeId);
     }
+  }
+
+  @ApiStatus.Internal
+  public enum LafType {
+    CURRENT,
+    PREFERRED_LIGHT,
+    PREFERRED_DARK
+  }
+
+  @ApiStatus.Internal
+  public enum ModelType {
+    ALL,
+    LIGHT,
+    DARK
   }
 }

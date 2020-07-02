@@ -31,7 +31,7 @@ public class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public LafReference getCurrentLookAndFeelReference() {
+  public LafReference getLookAndFeelReference(@NotNull LafType type) {
     return null;
   }
 

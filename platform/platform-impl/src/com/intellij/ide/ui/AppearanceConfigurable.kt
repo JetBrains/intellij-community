@@ -90,13 +90,31 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   override fun createPanel(): DialogPanel {
     return panel {
       blockRow {
-        fullRow {
-          label(message("combobox.look.and.feel"))
-          comboBox(lafManager.lafComboBoxModel,
-                   { lafManager.currentLookAndFeelReference },
-                   { QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) })
-            .shouldUpdateLaF()
-        }.largeGapAfter()
+        if (lafManager.isAutoDetect) {
+          titledRow(message("label.preferred.theme")) {
+            fullRow {
+              label(message("combobox.preferred.light.laf"))
+              comboBox(lafManager.lafComboBoxModel,
+                       { lafManager.getLookAndFeelReference(LafManager.LafType.PREFERRED_LIGHT) },
+                       { })
+
+              label(message("combobox.preferred.dark.laf")).withLargeLeftGap()
+
+              comboBox(lafManager.lafComboBoxModel,
+                       { lafManager.getLookAndFeelReference(LafManager.LafType.PREFERRED_DARK) },
+                       { })
+            }.largeGapAfter()
+          }
+        }
+        else {
+          fullRow {
+            label(message("combobox.look.and.feel"))
+            comboBox(lafManager.lafComboBoxModel,
+                     { lafManager.getLookAndFeelReference(LafManager.LafType.CURRENT) },
+                     { QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) })
+              .shouldUpdateLaF()
+          }.largeGapAfter()
+        }
         fullRow {
           val overrideLaF = checkBox(cdOverrideLaFFont)
             .shouldUpdateLaF()

@@ -62,7 +62,7 @@ private fun getEditorFont() = fontOptions.getSize(fontOptions.fontFamily)
 class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title")) {
   private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
-  private val lafProperty = propertyGraph.graphProperty { laf.currentLookAndFeelReference }
+  private val lafProperty = propertyGraph.graphProperty { laf.getLookAndFeelReference(LafManager.LafReferenceType.CURRENT) }
   private val ideFontProperty = propertyGraph.graphProperty { getIdeFont() }
   private val editorFontProperty = propertyGraph.graphProperty { getEditorFont() }
   private val keymapProperty = propertyGraph.graphProperty { keymapManager.activeKeymap }

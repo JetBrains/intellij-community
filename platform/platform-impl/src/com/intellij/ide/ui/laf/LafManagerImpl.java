@@ -7,6 +7,7 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.actions.QuickChangeLookAndFeel;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.*;
@@ -71,6 +72,7 @@ import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.FontUtil.enableKerning;
 
@@ -134,7 +136,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private boolean myFirstSetup = true;
   private boolean myUpdatingPlugin = false;
   private final Set<String> myThemesInUpdatedPlugin = new HashSet<>();
-  private boolean autodetect = Registry.is("ide.laf.autodetect");
+  private boolean autodetect;
 
   private static UIManager.LookAndFeelInfo getDefaultLightTheme() {
     for(UIThemeProvider provider: UIThemeProvider.EP_NAME.getExtensionList()) {
@@ -217,6 +219,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void initializeComponent() {
+    autodetect = Registry.is("ide.laf.autodetect");
     Registry.get("ide.laf.autodetect").addListener(new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
@@ -271,7 +274,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       SystemDarkThemeDetector.getInstance().check(systemDark -> {
         if (currentDark != systemDark) {
-          setCurrentLookAndFeel(systemDark ? myDefaultDarkTheme : myDefaultLightTheme);
+          QuickChangeLookAndFeel.switchLafAndUpdateUI(LafManager.getInstance(), systemDark ? myDefaultDarkTheme : myDefaultLightTheme, true);
         }
         return Unit.INSTANCE;
       });
@@ -364,15 +367,27 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
-    if (myLafComboBoxModel == null) {
-      myLafComboBoxModel = new CollectionComboBoxModel<>(getLafReferences());
+  public CollectionComboBoxModel<LafReference> getLafComboBoxModel(@NotNull ModelType type) {
+    CollectionComboBoxModel<LafReference> model = myModelCache.get(type);
+    if (model == null) {
+      model = new CollectionComboBoxModel<>(getLafReferences(type));
+      myModelCache.put(type, model);
     }
-    return myLafComboBoxModel;
+
+    return model;
   }
 
-  private List<LafReference> getLafReferences() {
-    return ContainerUtil.map(myLaFs.getValue(), LafManagerImpl::createLafReference);
+  private List<LafReference> getLafReferences(ModelType type) {
+    return ContainerUtil.map(ContainerUtil.filter(myLaFs.getValue(), info -> {
+      if (type == ModelType.ALL) return true;
+      if (info instanceof UIThemeBasedLookAndFeelInfo) {
+        boolean isDark = ((UIThemeBasedLookAndFeelInfo)info).getTheme().isDark();
+        return type == ModelType.DARK && isDark ||
+               type == ModelType.LIGHT && !isDark;
+      }
+      return type == ModelType.LIGHT && info.getName().equals(IntelliJLaf.NAME) ||
+             type == ModelType.DARK && info.getName().equals(DarculaLaf.NAME);
+    }), LafManagerImpl::createLafReference);
   }
 
   @NotNull
@@ -395,8 +410,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public LafReference getCurrentLookAndFeelReference() {
-    return createLafReference(myCurrentLaf);
+  public LafReference getLookAndFeelReference(@NotNull LafType type) {
+    switch (type) {
+      case PREFERRED_LIGHT:
+        return createLafReference(myDefaultLightTheme);
+
+      case PREFERRED_DARK:
+        return createLafReference(myDefaultDarkTheme);
+
+      case CURRENT:
+      default:
+        return createLafReference(myCurrentLaf);
+    }
   }
 
   public UIManager.LookAndFeelInfo getDefaultLaf() {
@@ -879,7 +904,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void restoreOriginalFontDefaults(UIDefaults defaults) {
-    LafReference lf = myCurrentLaf == null ? null : getCurrentLookAndFeelReference();
+    LafReference lf = myCurrentLaf == null ? null : getLookAndFeelReference(LafType.CURRENT);
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults != null) {
       for (String resource : ourPatchableFontResources) {
@@ -890,7 +915,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {
-    LafReference lf = myCurrentLaf == null ? null : getCurrentLookAndFeelReference();
+    LafReference lf = myCurrentLaf == null ? null : getLookAndFeelReference(LafType.CURRENT);
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults == null) {
       lfDefaults = new HashMap<>();
