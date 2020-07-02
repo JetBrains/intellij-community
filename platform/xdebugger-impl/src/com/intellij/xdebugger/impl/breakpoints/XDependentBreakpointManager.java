@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -15,18 +14,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @SuppressWarnings("rawtypes")
-public class XDependentBreakpointManager {
+public final class XDependentBreakpointManager {
   private final Map<XBreakpoint<?>,  XDependentBreakpointInfo> mySlave2Info = new HashMap<>();
   private final MultiMap<XBreakpointBase, XDependentBreakpointInfo> myMaster2Info = new MultiMap<>();
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDependentBreakpointListener myEventPublisher;
 
-  public XDependentBreakpointManager(@NotNull XBreakpointManagerImpl breakpointManager) {
+  public XDependentBreakpointManager(@NotNull XBreakpointManagerImpl breakpointManager, @NotNull MessageBusConnection messageBusConnection) {
     myBreakpointManager = breakpointManager;
-    MessageBus messageBus = breakpointManager.getProject().getMessageBus();
-    myEventPublisher = messageBus.syncPublisher(XDependentBreakpointListener.TOPIC);
-    MessageBusConnection busConnection = messageBus.connect();
-    busConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
+    myEventPublisher = breakpointManager.getProject().getMessageBus().syncPublisher(XDependentBreakpointListener.TOPIC);
+    messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
       @Override
       public void breakpointRemoved(@NotNull final XBreakpoint<?> breakpoint) {
         XDependentBreakpointInfo info = mySlave2Info.remove(breakpoint);

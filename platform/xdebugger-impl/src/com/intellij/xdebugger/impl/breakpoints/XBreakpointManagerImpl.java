@@ -18,6 +18,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
@@ -51,13 +52,13 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   private RemovedBreakpointData myLastRemovedBreakpoint = null;
   private volatile boolean myFirstLoadDone = false;
 
-  public XBreakpointManagerImpl(@NotNull Project project, @NotNull XDebuggerManagerImpl debuggerManager) {
+  public XBreakpointManagerImpl(@NotNull Project project, @NotNull XDebuggerManagerImpl debuggerManager, @NotNull MessageBusConnection messageBusConnection) {
     myProject = project;
     myDebuggerManager = debuggerManager;
-    myDependentBreakpointManager = new XDependentBreakpointManager(this);
+    myDependentBreakpointManager = new XDependentBreakpointManager(this, messageBusConnection);
     myLineBreakpointManager = new XLineBreakpointManager(project);
 
-    project.getMessageBus().connect(debuggerManager).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener() {
+    messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener() {
       @SuppressWarnings("unchecked")
       @Override
       public void breakpointAdded(@NotNull XBreakpoint breakpoint) {
