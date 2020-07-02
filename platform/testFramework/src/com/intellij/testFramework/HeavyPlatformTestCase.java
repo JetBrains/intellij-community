@@ -704,18 +704,18 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     boolean runInCommand = annotatedWith(WrapInCommand.class);
     boolean runInWriteAction = isRunInWriteAction();
 
     if (runInCommand && runInWriteAction) {
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.invokeTestRunnable(testRunnable));
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.runTestRunnable(testRunnable));
     }
     else if (runInCommand) {
       Ref<Throwable> e = new Ref<>();
       CommandProcessor.getInstance().executeCommand(getProject(), () -> {
         try {
-          super.invokeTestRunnable(testRunnable);
+          super.runTestRunnable(testRunnable);
         }
         catch (Throwable throwable) {
           e.set(throwable);
@@ -726,10 +726,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       }
     }
     else if (runInWriteAction) {
-      WriteAction.runAndWait(() -> super.invokeTestRunnable(testRunnable));
+      WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
     }
     else {
-      super.invokeTestRunnable(testRunnable);
+      super.runTestRunnable(testRunnable);
     }
   }
 

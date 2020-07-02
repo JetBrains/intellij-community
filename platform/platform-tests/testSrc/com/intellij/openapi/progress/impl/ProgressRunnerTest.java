@@ -323,8 +323,8 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    super.invokeTestRunnable(() -> {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    super.runTestRunnable(() -> {
       if (runInDispatchThread() && myReleaseIWLockOnRun) {
         ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
           testRunnable.run();

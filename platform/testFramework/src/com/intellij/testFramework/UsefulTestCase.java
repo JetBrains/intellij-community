@@ -364,10 +364,6 @@ public abstract class UsefulTestCase extends TestCase {
     throw new UnsupportedOperationException("Use runTestRunnable() to override the way tests are executed");
   }
 
-  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    invokeTestRunnable(testRunnable);
-  }
-
   protected boolean shouldRunTest() {
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
     if (policy != null && !policy.canRun(getClass())) {
@@ -376,7 +372,7 @@ public abstract class UsefulTestCase extends TestCase {
     return TestFrameworkUtil.canRunTest(getClass());
   }
 
-  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     testRunnable.run();
   }
 
@@ -385,7 +381,7 @@ public abstract class UsefulTestCase extends TestCase {
    * <ul>
    *   <li/> {@link #tearDown} is called even if {@link #setUp} has failed;
    *   <li/> exceptions from tearDown() don't shadow those from the main test method, but are rather linked as suppressed;
-   *   <li/> it allows to customise the way the methods are invoked through {@link #invokeTestRunnable},
+   *   <li/> it allows to customise the way the methods are invoked through {@link #runTestRunnable},
    *         {@link #invokeSetUp} and {@link #invokeTearDown}, for example, to make them execute on a different thread.
    * </ul>
    */

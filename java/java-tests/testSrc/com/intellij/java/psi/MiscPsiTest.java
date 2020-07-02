@@ -32,7 +32,7 @@ import java.io.IOException;
 @SkipSlowTestLocally
 public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     WriteCommandAction.writeCommandAction(getProject()).run(testRunnable);
   }
 

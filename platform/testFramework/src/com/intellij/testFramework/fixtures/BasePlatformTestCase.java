@@ -103,12 +103,12 @@ public abstract class BasePlatformTestCase extends UsefulTestCase {
    }
 
   @Override
-  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (isWriteActionRequired()) {
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.invokeTestRunnable(testRunnable));
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.runTestRunnable(testRunnable));
     }
     else {
-      super.invokeTestRunnable(testRunnable);
+      super.runTestRunnable(testRunnable);
     }
   }
 

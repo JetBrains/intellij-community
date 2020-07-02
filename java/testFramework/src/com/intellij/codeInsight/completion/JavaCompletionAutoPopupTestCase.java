@@ -26,7 +26,7 @@ public abstract class JavaCompletionAutoPopupTestCase extends LightJavaCodeInsig
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     myTester.runWithAutoPopupEnabled(testRunnable);
   }
 

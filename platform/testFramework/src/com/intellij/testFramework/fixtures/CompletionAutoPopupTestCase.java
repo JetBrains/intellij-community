@@ -27,7 +27,7 @@ public abstract class CompletionAutoPopupTestCase extends BasePlatformTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     myTester.runWithAutoPopupEnabled(testRunnable);
   }
 

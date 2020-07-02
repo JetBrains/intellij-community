@@ -239,11 +239,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     }
   }
 
-  @Override
-  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    testRunnable.run();
-  }
-
   protected boolean runInWriteAction() {
     return false;
   }

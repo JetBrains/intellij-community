@@ -24,7 +24,7 @@ import kotlin.coroutines.CoroutineContext
  * @author eldar
  */
 class AppUIExecutorTest : LightPlatformTestCase() {
-  override fun invokeTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
     SwingUtilities.invokeLater {
       testRunnable.run()
     }
