@@ -4,8 +4,8 @@ package com.intellij.compiler.server;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.CompilerProfilerUtil;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.YourKitProfilerService;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
@@ -1154,8 +1154,12 @@ public final class BuildManager implements Disposable {
 
     if (isProfilingMode) {
       try {
-        CompilerProfilerUtil.copyYKLibraries(workDirectory);
-        String yjpagent = CompilerProfilerUtil.getYJPAgentPath(workDirectory);
+        YourKitProfilerService yourKitProfilerService = ServiceManager.getService(YourKitProfilerService.class);
+        if (yourKitProfilerService == null) {
+          throw new IOException("Performance Plugin is missing or disabled");
+        }
+        yourKitProfilerService.copyYKLibraries(workDirectory);
+        String yjpagent = workDirectory.resolve(yourKitProfilerService.getYKAgentFullName()).toAbsolutePath().toString();
         cmdLine.addParameter("-agentpath:" + yjpagent + "=disablealloc,delay=10000,sessionname=ExternalBuild");
       }
       catch (IOException e) {
