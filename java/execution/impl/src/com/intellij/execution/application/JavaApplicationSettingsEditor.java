@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -63,6 +64,7 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                configuration -> isNotEmpty(configuration.getVMParameters())));
 
     EditorTextField mainClass = ClassEditorField.createClassField(myProject, () -> classpathCombo.getSelectedModule());
+    UIUtil.setMonospaced(mainClass);
     mainClass.setPlaceholder(ExecutionBundle.message("application.configuration.main.class.placeholder"));
     setMinimumWidth(mainClass, 300);
     fragments.add(new SettingsEditorFragment<>("mainClass", null, null, mainClass, 20,

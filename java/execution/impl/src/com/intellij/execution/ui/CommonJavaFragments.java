@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -90,6 +91,7 @@ public class CommonJavaFragments {
     ModuleClasspathCombo.Item option, Predicate<S> getter, BiConsumer<S, Boolean> setter) {
     ModuleClasspathCombo comboBox = new ModuleClasspathCombo(option);
     setMinimumWidth(comboBox, 400);
+    UIUtil.setMonospaced(comboBox);
     return new SettingsEditorFragment<>("module.classpath",
                                         ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module"),
                                         ExecutionBundle.message("group.java.options"),
@@ -128,6 +130,7 @@ public class CommonJavaFragments {
         }
       }
     });
+    UIUtil.setMonospaced(comboBox);
 
     setMinimumWidth(jrePathEditor, 100);
     jrePathEditor.getLabel().setVisible(false);

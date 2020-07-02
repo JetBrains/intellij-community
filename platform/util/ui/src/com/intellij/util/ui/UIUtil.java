@@ -232,6 +232,11 @@ public final class UIUtil {
     }
   }
 
+  public static void setMonospaced(Component component) {
+    Font font = component.getFont();
+    component.setFont(new FontUIResource(Font.MONOSPACED, font.getStyle(), font.getSize()));
+  }
+
   public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
     return SystemInfo.isMac && ColorUtil.isDark(backgroundColor) ?
            MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
