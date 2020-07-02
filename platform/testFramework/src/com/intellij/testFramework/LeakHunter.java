@@ -69,10 +69,10 @@ public final class LeakHunter {
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
    */
   @TestOnly
-  static <T> void processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
-                               @NotNull Class<T> suspectClass,
-                               @Nullable final Predicate<? super T> isReallyLeak,
-                               @NotNull final PairProcessor<? super T, Object> processor) throws AssertionError {
+  public static <T> void processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
+                                      @NotNull Class<T> suspectClass,
+                                      @Nullable final Predicate<? super T> isReallyLeak,
+                                      @NotNull final PairProcessor<? super T, Object> processor) throws AssertionError {
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }
