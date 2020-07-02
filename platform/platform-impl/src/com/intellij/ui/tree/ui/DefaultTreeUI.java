@@ -409,7 +409,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
         JTree tree = getTree();
         if (tree == null || !isAutoExpandAllowed(tree) || !tree.isVisible(path)) return;
         TreeModel model = tree.getModel();
-        if (model instanceof AsyncTreeModel) {
+        if (model instanceof AsyncTreeModel && 1 == model.getChildCount(path.getLastPathComponent())) {
           int pathCount = 1 + path.getPathCount();
           for (int i = 0; i <= oldRowCount; i++) {
             TreePath row = getPathForRow(i);
