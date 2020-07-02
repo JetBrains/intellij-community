@@ -9,6 +9,7 @@ import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.config.AbstractProperty;
+import org.jetbrains.annotations.NotNull;
 
 public final class TestFrameworkActions {
   public static void installFilterAction(final TestFrameworkRunningModel model) {
@@ -24,6 +25,7 @@ public final class TestFrameworkActions {
     addPropertyListener(TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG, propertyListener, model, true);
   }
 
+  @NotNull
   private static Filter getFilter(TestConsoleProperties properties) {
     final boolean shouldFilterPassed = TestConsoleProperties.HIDE_PASSED_TESTS.value(properties);
     final Filter hidePassedFilter = shouldFilterPassed ? Filter.NOT_PASSED.or(Filter.DEFECT) : Filter.NO_FILTER;
