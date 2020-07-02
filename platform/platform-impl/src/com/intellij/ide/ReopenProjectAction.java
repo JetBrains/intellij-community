@@ -62,7 +62,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
                                   || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
                                   || e.getPlace() == ActionPlaces.WELCOME_SCREEN
                                   || LightEdit.owns(project);
-    RecentProjectsManagerBase.getInstanceEx().openProject(file, OpenProjectTask.withProjectToClose(project, forceOpenInNewFrame));
+    RecentProjectsManagerBase.getInstanceEx().openProject(file, OpenProjectTask.withProjectToClose(project, forceOpenInNewFrame).withRunConfigurators());
   }
 
   @SystemIndependent
