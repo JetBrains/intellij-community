@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
@@ -42,29 +43,27 @@ public final class IndexedHashesSupport {
     return digest.digest();
   }
 
-  private static byte @NotNull [] calculateIndexedHashForFileContent(@NotNull FileContentImpl content) {
+  public static byte @NotNull [] calculateIndexedHash(@NotNull IndexedFile indexedFile, byte @NotNull [] contentHash) {
     Hasher hasher = INDEXED_FILE_CONTENT_HASHER.newHasher();
-
-    byte[] contentHash = PersistentFSImpl.getContentHashIfStored(content.getFile());
-    if (contentHash == null) {
-      contentHash = getBinaryContentHash(content.getContent());
-      // todo store content hash in FS
-    }
     hasher.putBytes(contentHash);
 
-    if (!content.getFileTypeWithoutSubstitution().isBinary()) {
-      hasher.putString(content.getCharset().name(), StandardCharsets.UTF_8);
+    if (!FileContentImpl.getFileTypeWithoutSubstitution(indexedFile).isBinary()) {
+      Charset charset =
+        indexedFile instanceof FileContentImpl
+        ? ((FileContentImpl)indexedFile).getCharset()
+        : indexedFile.getFile().getCharset();
+      hasher.putString(charset.name(), StandardCharsets.UTF_8);
     }
 
-    hasher.putString(content.getFileName(), StandardCharsets.UTF_8);
+    hasher.putString(indexedFile.getFileName(), StandardCharsets.UTF_8);
 
-    FileType fileType = content.getFileType();
+    FileType fileType = indexedFile.getFileType();
     hasher.putString(fileType.getName(), StandardCharsets.UTF_8);
 
     @Nullable
     FileIndexingFlavorProvider<?> provider = FileIndexingFlavorProvider.INSTANCE.forFileType(fileType);
     if (provider != null) {
-      buildFlavorHash(content, provider, new HashBuilder() {
+      buildFlavorHash(indexedFile, provider, new HashBuilder() {
         @Override
         public @NotNull HashBuilder putInt(int val) {
           hasher.putInt(val);
@@ -88,10 +87,19 @@ public final class IndexedHashesSupport {
     return hasher.hash().asBytes();
   }
 
-  private static <F> void buildFlavorHash(@NotNull FileContent content,
+  private static byte @NotNull [] calculateIndexedHashForFileContent(@NotNull FileContentImpl content) {
+    byte[] contentHash = PersistentFSImpl.getContentHashIfStored(content.getFile());
+    if (contentHash == null) {
+      contentHash = getBinaryContentHash(content.getContent());
+      // todo store content hash in FS
+    }
+    return calculateIndexedHash(content, contentHash);
+  }
+
+  private static <F> void buildFlavorHash(@NotNull IndexedFile indexedFile,
                                           @NotNull FileIndexingFlavorProvider<F> flavorProvider,
                                           @NotNull HashBuilder hashBuilder) {
-    F flavor = flavorProvider.getFlavor(content);
+    F flavor = flavorProvider.getFlavor(indexedFile);
     hashBuilder.putString(flavorProvider.getId());
     hashBuilder.putInt(flavorProvider.getVersion());
     if (flavor != null) {

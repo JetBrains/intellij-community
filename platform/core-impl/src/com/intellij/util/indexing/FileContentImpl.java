@@ -107,7 +107,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     if (project == null) {
       project = DefaultProjectFactory.getInstance().getDefaultProject();
     }
-    FileType fileType = getFileTypeWithoutSubstitution();
+    FileType fileType = getFileTypeWithoutSubstitution(this);
     if (!(fileType instanceof LanguageFileType)) {
       throw new AssertionError("PSI can be created only for a file with LanguageFileType but actual is " + fileType.getClass()  + "." +
                                "\nPlease use a proper FileBasedIndexExtension#getInputFilter() implementation for the caller index");
@@ -144,13 +144,6 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
       content.setProject(project);
     }
     return content;
-  }
-
-  @ApiStatus.Internal
-  @NotNull
-  public FileType getFileTypeWithoutSubstitution() {
-    FileType fileType = getFileType();
-    return fileType instanceof SubstitutedFileType ? ((SubstitutedFileType)fileType).getOriginalFileType() : fileType;
   }
 
   @NotNull
@@ -194,7 +187,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   @NotNull
   @Override
   public CharSequence getContentAsText() {
-    FileType unsubstitutedFileType = getFileTypeWithoutSubstitution();
+    FileType unsubstitutedFileType = getFileTypeWithoutSubstitution(this);
     if (unsubstitutedFileType.isBinary()) {
       throw new IllegalDataException("Cannot obtain text for binary file type : " + unsubstitutedFileType.getDescription());
     }
@@ -257,5 +250,12 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   public Project getProject() {
     Project project = super.getProject();
     return project != null ? project : getUserData(IndexingDataKeys.PROJECT);
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public static FileType getFileTypeWithoutSubstitution(@NotNull IndexedFile indexedFile) {
+    FileType fileType = indexedFile.getFileType();
+    return fileType instanceof SubstitutedFileType ? ((SubstitutedFileType)fileType).getOriginalFileType() : fileType;
   }
 }
