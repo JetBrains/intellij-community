@@ -78,8 +78,9 @@ public final class ExistingModuleLoader extends ModuleBuilder {
     final Path file = Paths.get(moduleFilePath);
     if (Files.exists(file)) {
       try {
-        final ConversionResult result = ConversionService.getInstance().convertModule(project, file);
-        if (result.openingIsCanceled()) {
+        ConversionService conversionService = ConversionService.getInstance();
+        ConversionResult result = conversionService == null ? null : conversionService.convertModule(project, file);
+        if (result != null && result.openingIsCanceled()) {
           return false;
         }
         final Element root = JDOMUtil.load(file);

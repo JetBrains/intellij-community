@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -28,7 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
-import com.intellij.project.isDirectoryBased
+import com.intellij.project.stateStore
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.pooledThreadSingleAlarm
@@ -229,14 +230,10 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
           }
 
           if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
-            val path = if (project.isDirectoryBased) project.basePath else project.projectFilePath
-            if (path == null) {
-              LOG.info("Cannot save conversion result: filePath == null")
-            }
-            else {
-              // update last modified for all project files that were modified between project open and close
-              ConversionService.getInstance().saveConversionResult(Paths.get(path))
-            }
+            val stateStore = project.stateStore
+            val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else Paths.get(stateStore.projectFilePath)
+            // update last modified for all project files that were modified between project open and close
+            ConversionService.getInstance()?.saveConversionResult(path)
           }
         }
       })

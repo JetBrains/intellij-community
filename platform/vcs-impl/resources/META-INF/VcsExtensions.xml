@@ -9,8 +9,7 @@
     <applicationService serviceInterface="com.intellij.vfs.AsyncVfsEventsPostProcessor"
                         serviceImplementation="com.intellij.vfs.AsyncVfsEventsPostProcessorImpl"/>
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
-                        serviceImplementation="com.intellij.impl.ConversionServiceImpl"
-                        overrides="true"/>
+                        serviceImplementation="com.intellij.impl.ConversionServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangeListManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl" preload="notHeadless"/>

@@ -216,9 +216,6 @@
     <applicationService serviceInterface="com.intellij.lang.DefaultASTFactory"
                         serviceImplementation="com.intellij.lang.DefaultASTFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.conversion.ConversionService"
-                        serviceImplementation="com.intellij.conversion.DummyConversionService"/>
-
     <applicationService serviceInterface="com.intellij.psi.search.searches.IndexPatternSearch"
                         serviceImplementation="com.intellij.psi.impl.search.IndexPatternSearchImpl"/>
 

@@ -199,14 +199,17 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     else {
       var conversionResult: ConversionResult? = null
       if (options.runConversionBeforeOpen) {
-        indicator?.text = IdeUICustomization.getInstance().projectMessage("progress.text.project.checking.configuration")
-        conversionResult = runMainActivity("project conversion") {
-          ConversionService.getInstance().convert(projectStoreBaseDir)
+        val conversionService = ConversionService.getInstance()
+        if (conversionService != null) {
+          indicator?.text = IdeUICustomization.getInstance().projectMessage("progress.text.project.checking.configuration")
+          conversionResult = runMainActivity("project conversion") {
+            conversionService.convert(projectStoreBaseDir)
+          }
+          if (conversionResult.openingIsCanceled()) {
+            return null
+          }
+          indicator?.text = ""
         }
-        if (conversionResult.openingIsCanceled()) {
-          return null
-        }
-        indicator?.text = ""
       }
 
       project = instantiateProject(projectStoreBaseDir, options)
