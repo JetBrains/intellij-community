@@ -4,6 +4,7 @@ package com.intellij.execution.target.java
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType
+import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
@@ -28,8 +29,11 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
 
   override fun createSerializer(config: JavaLanguageRuntimeConfiguration): PersistentStateComponent<*> = config
 
-  override fun createConfigurable(project: Project, config: JavaLanguageRuntimeConfiguration): Configurable =
-    ServiceManager.getService(JavaLanguageRuntimeUIFactory::class.java).create(config)
+  override fun createConfigurable(project: Project,
+                                  config: JavaLanguageRuntimeConfiguration,
+                                  target: TargetEnvironmentConfiguration): Configurable {
+    return ServiceManager.getService(JavaLanguageRuntimeUIFactory::class.java).create(config, target)
+  }
 
   override fun createIntrospector(config: JavaLanguageRuntimeConfiguration): Introspector? {
     if (config.homePath.isNotBlank() && config.javaVersionString.isNotBlank()) return null

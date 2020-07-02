@@ -5,6 +5,7 @@ import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAM
 import com.intellij.execution.target.TargetEnvironmentType.Companion.EXTENSION_NAME
 import com.intellij.ide.wizard.AbstractWizardStepEx
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 
 /**
@@ -30,6 +31,8 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
    * Instantiates a new environment factory for given prepared [configuration][config].
    */
   abstract fun createEnvironmentFactory(project: Project, config: C): TargetEnvironmentFactory
+
+  abstract fun createConfigurable(project: Project, config: C): Configurable
 
   companion object {
     @JvmField

@@ -4,6 +4,8 @@ package com.intellij.execution.target
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CompletableFuture
@@ -47,6 +49,8 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
   open fun createIntrospector(config: C): Introspector? = null
 
   open fun volumeDescriptors(config: C): List<VolumeDescriptor> = emptyList()
+
+  abstract fun createConfigurable(project: Project, config: C, target: TargetEnvironmentConfiguration): Configurable
 
   companion object {
     @JvmField
