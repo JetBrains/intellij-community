@@ -58,7 +58,7 @@ public final class ConversionContextImpl implements ConversionContext {
   private final Path myProjectFile;
   private final Path myWorkspaceFile;
   private volatile List<Path> myModuleFiles;
-  private ProjectSettingsImpl myProjectSettings;
+  private ComponentManagerSettings myProjectSettings;
   private WorkspaceSettingsImpl myWorkspaceSettings;
   private final List<Path> myNonExistingModuleFiles = new ArrayList<>();
   private final Map<Path, ModuleSettingsImpl> myFile2ModuleSettings = new HashMap<>();
@@ -443,9 +443,9 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @Override
-  public ProjectSettings getProjectSettings() throws CannotConvertException {
+  public @NotNull ComponentManagerSettings getProjectSettings() throws CannotConvertException {
     if (myProjectSettings == null) {
-      myProjectSettings = new ProjectSettingsImpl(myProjectFile, this);
+      myProjectSettings = new ComponentManagerSettingsImpl(myProjectFile, this);
     }
     return myProjectSettings;
   }

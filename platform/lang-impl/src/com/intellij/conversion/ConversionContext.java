@@ -29,7 +29,7 @@ public interface ConversionContext {
    */
   File getSettingsBaseDir();
 
-  ProjectSettings getProjectSettings() throws CannotConvertException;
+  @NotNull ComponentManagerSettings getProjectSettings() throws CannotConvertException;
 
   RunManagerSettings getRunManagerSettings() throws CannotConvertException;
 

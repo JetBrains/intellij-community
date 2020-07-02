@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.*;
@@ -11,11 +10,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public class ConversionRunner {
+public final class ConversionRunner {
   private final ConverterProvider myProvider;
   private final ConversionContextImpl myContext;
   private final ConversionProcessor<ModuleSettings> myModuleFileConverter;
-  private final ConversionProcessor<ProjectSettings> myProjectFileConverter;
+  private final ConversionProcessor<ComponentManagerSettings> myProjectFileConverter;
   private final ConversionProcessor<WorkspaceSettings> myWorkspaceConverter;
   private boolean myProcessProjectFile;
   private boolean myProcessWorkspaceFile;
