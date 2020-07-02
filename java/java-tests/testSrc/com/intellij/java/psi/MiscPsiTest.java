@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,8 +32,8 @@ import java.io.IOException;
 @SkipSlowTestLocally
 public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> runnable.run());
+  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    WriteCommandAction.writeCommandAction(getProject()).run(testRunnable);
   }
 
   public void testCopyTextFile() throws Exception{

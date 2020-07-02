@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,8 +27,8 @@ public abstract class CompletionAutoPopupTestCase extends BasePlatformTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    myTester.runWithAutoPopupEnabled(runnable);
+  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    myTester.runWithAutoPopupEnabled(testRunnable);
   }
 
   public LookupImpl getLookup() {

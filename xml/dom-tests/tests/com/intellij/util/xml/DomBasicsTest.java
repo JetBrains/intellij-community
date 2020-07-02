@@ -28,6 +28,7 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.impl.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -44,8 +45,8 @@ import java.util.*;
  */
 public class DomBasicsTest extends DomTestCase {
   @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-    WriteCommandAction.writeCommandAction(null).run(() -> runnable.run());
+  protected void invokeTestRunnable(final @NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    WriteCommandAction.writeCommandAction(null).run(testRunnable);
   }
 
   public void testFileElementCaching() {

@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 
@@ -46,12 +47,12 @@ class TransactionTest extends LightPlatformTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (app) {
       guard.assertWriteActionAllowed()
     }
 
-    SwingUtilities.invokeLater(runnable)
+    SwingUtilities.invokeLater { testRunnable.run() }
     UIUtil.dispatchAllInvocationEvents()
   }
 

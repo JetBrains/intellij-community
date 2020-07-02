@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.Semaphore;
@@ -322,16 +323,16 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     super.invokeTestRunnable(() -> {
       if (runInDispatchThread() && myReleaseIWLockOnRun) {
         ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-          runnable.run();
+          testRunnable.run();
           return null;
         });
       }
       else {
-        runnable.run();
+        testRunnable.run();
       }
     });
   }

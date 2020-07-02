@@ -101,12 +101,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if ("testUndoToFileContentForUnsavedCommittedDocument".equals(getName())) {
-      super.invokeTestRunnable(runnable)
+      super.invokeTestRunnable(testRunnable)
     }
     else {
-      WriteCommandAction.runWriteCommandAction(getProject(), runnable)
+      WriteCommandAction.writeCommandAction(getProject()).run(testRunnable)
     }
   }
 

@@ -53,7 +53,6 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -391,7 +390,7 @@ public abstract class UsefulTestCase extends TestCase {
       }
     };
 
-    invokeTestRunnable(runnable);
+    invokeTestRunnable(runnable::run);
 
     if (throwables[0] != null) {
       throw throwables[0];
@@ -406,24 +405,12 @@ public abstract class UsefulTestCase extends TestCase {
     return TestFrameworkUtil.canRunTest(getClass());
   }
 
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (runInDispatchThread()) {
-      // reduce stack trace
-      Application app = ApplicationManager.getApplication();
-      if (app == null) {
-        if (SwingUtilities.isEventDispatchThread()) {
-          runnable.run();
-        }
-        else {
-          SwingUtilities.invokeAndWait(runnable);
-        }
-      }
-      else {
-        app.invokeAndWait(runnable);
-      }
+      EdtTestUtil.runInEdtAndWait(testRunnable);
     }
     else {
-      runnable.run();
+      testRunnable.run();
     }
   }
 

@@ -11,9 +11,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
@@ -28,7 +30,7 @@ public class CompletionAutoPopupTester {
     myFixture = fixture;
   }
 
-  public void runWithAutoPopupEnabled(Runnable r) {
+  public void runWithAutoPopupEnabled(@NotNull ThrowableRunnable<Throwable> r) throws Throwable {
     assert !ApplicationManager.getApplication().isDispatchThread();
     TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true);
     try {

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JavaCompletionAutoPopupTestCase extends LightJavaCodeInsightFixtureTestCase {
@@ -25,8 +26,8 @@ public abstract class JavaCompletionAutoPopupTestCase extends LightJavaCodeInsig
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    myTester.runWithAutoPopupEnabled(runnable);
+  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    myTester.runWithAutoPopupEnabled(testRunnable);
   }
 
   public LookupImpl getLookup() {

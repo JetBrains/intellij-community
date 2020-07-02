@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -23,8 +24,10 @@ import kotlin.coroutines.CoroutineContext
  * @author eldar
  */
 class AppUIExecutorTest : LightPlatformTestCase() {
-  override fun invokeTestRunnable(runnable: Runnable) {
-    SwingUtilities.invokeLater(runnable)
+  override fun invokeTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+    SwingUtilities.invokeLater {
+      testRunnable.run()
+    }
     UIUtil.dispatchAllInvocationEvents()
   }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -32,8 +33,8 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    runnable.run();
+  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    testRunnable.run();
   }
 
   public void testDeadlocks() {

@@ -704,31 +704,32 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    Ref<Exception> e = new Ref<>();
-    Runnable runnable1 = () -> {
-      try {
-        if (ApplicationManager.getApplication().isDispatchThread() && isRunInWriteAction()) {
-          ApplicationManager.getApplication().runWriteAction(runnable);
-        }
-        else {
-          runnable.run();
-        }
-      }
-      catch (Exception e1) {
-        e.set(e1);
-      }
-    };
+  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    boolean runInCommand = annotatedWith(WrapInCommand.class);
+    boolean runInWriteAction = isRunInWriteAction();
 
-    if (annotatedWith(WrapInCommand.class)) {
-      CommandProcessor.getInstance().executeCommand(myProject, runnable1, "", null);
+    if (runInCommand && runInWriteAction) {
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.invokeTestRunnable(testRunnable));
+    }
+    else if (runInCommand) {
+      Ref<Throwable> e = new Ref<>();
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+        try {
+          super.invokeTestRunnable(testRunnable);
+        }
+        catch (Throwable throwable) {
+          e.set(throwable);
+        }
+      }, null, null);
+      if (!e.isNull()) {
+        throw e.get();
+      }
+    }
+    else if (runInWriteAction) {
+      WriteAction.runAndWait(() -> super.invokeTestRunnable(testRunnable));
     }
     else {
-      runnable1.run();
-    }
-
-    if (!e.isNull()) {
-      throw e.get();
+      super.invokeTestRunnable(testRunnable);
     }
   }
 

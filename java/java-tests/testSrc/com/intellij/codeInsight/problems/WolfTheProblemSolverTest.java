@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -231,8 +233,8 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-      ApplicationManager.getApplication().runReadAction(runnable);
+  protected void invokeTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    ReadAction.run(testRunnable);
   }
 
   private void highlightFile(@NotNull VirtualFile virtualFile) {
