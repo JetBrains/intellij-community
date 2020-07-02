@@ -38,7 +38,7 @@ public final class ConversionResultImpl implements ConversionResult {
     myErrorOccurred = errorOccurred;
   }
 
-  public ConversionResultImpl(List<? extends ConversionRunner> converters) {
+  public ConversionResultImpl(@NotNull List<ConversionRunner> converters) {
     this(true, false, false);
     for (ConversionRunner converter : converters) {
       myChangedFiles.addAll(converter.getAffectedFiles());

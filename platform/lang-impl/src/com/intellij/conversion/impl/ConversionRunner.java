@@ -3,7 +3,7 @@ package com.intellij.conversion.impl;
 
 import com.intellij.conversion.*;
 import com.intellij.openapi.components.StorageScheme;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -78,14 +78,14 @@ public final class ConversionRunner {
     return myModuleFileConverter != null && myModuleFileConverter.isConversionNeeded(myContext.getModuleSettings(moduleFile.toFile()));
   }
 
-  public Collection<Path> getCreatedFiles() {
-    return ContainerUtil.map(myConverter.getCreatedFiles(), file -> file.toPath());
+  public @NotNull Collection<Path> getCreatedFiles() {
+    return myConverter.getCreatedFiles();
   }
 
   public Set<Path> getAffectedFiles() {
     Set<Path> affectedFiles = new HashSet<>();
     if (myProcessProjectFile) {
-      affectedFiles.add(myContext.getProjectFile().toPath());
+      affectedFiles.add(myContext.getProjectFile());
     }
     if (myProcessWorkspaceFile) {
       affectedFiles.add(myContext.getWorkspaceFile());

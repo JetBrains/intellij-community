@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.conversion.impl.ui;
 
 import com.intellij.CommonBundle;
@@ -21,7 +20,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -35,12 +33,12 @@ public class ConvertProjectDialog extends DialogWrapper {
   private JTextPane myTextPane;
   private boolean myConverted;
   private final ConversionContextImpl myContext;
-  private final List<? extends ConversionRunner> myConversionRunners;
-  private final File myBackupDir;
+  private final List<ConversionRunner> myConversionRunners;
+  private final Path myBackupDir;
   private final Set<Path> myAffectedFiles;
   private boolean myNonExistingFilesMessageShown;
 
-  public ConvertProjectDialog(ConversionContextImpl context, final List<? extends ConversionRunner> conversionRunners) {
+  public ConvertProjectDialog(ConversionContextImpl context, List<ConversionRunner> conversionRunners) {
     super(true);
     setTitle(IdeBundle.message("dialog.title.convert.project"));
     setModal(true);
@@ -58,10 +56,10 @@ public class ConvertProjectDialog extends DialogWrapper {
       message.append(myConversionRunners.get(0).getProvider().getConversionDialogText(context));
     }
     else {
-      message.append(IdeBundle.message("conversion.dialog.text.1", context.getProjectFile().getName(),
+      message.append(IdeBundle.message("conversion.dialog.text.1", context.getProjectFile().getFileName().toString(),
                                        ApplicationNamesInfo.getInstance().getFullProductName()));
     }
-    message.append(IdeBundle.message("conversion.dialog.text.2", myBackupDir.getAbsolutePath()));
+    message.append(IdeBundle.message("conversion.dialog.text.2", myBackupDir.toString()));
     Messages.configureMessagePaneUi(myTextPane, XmlStringUtil.wrapInHtml(message), null);
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {

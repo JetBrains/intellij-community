@@ -57,7 +57,7 @@ public final class ConversionServiceImpl extends ConversionService {
         listener.cannotWriteToFiles(ContainerUtil.map(readOnlyFiles, path -> path.toFile()));
         return ConversionResultImpl.ERROR_OCCURRED;
       }
-      final File backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
+      Path backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
       List<ConversionRunner> usedRunners = new ArrayList<>();
       for (ConversionRunner runner : runners) {
         if (runner.isConversionNeeded()) {
@@ -68,7 +68,7 @@ public final class ConversionServiceImpl extends ConversionService {
         }
       }
       context.saveFiles(affectedFiles, usedRunners);
-      listener.successfullyConverted(backupDir);
+      listener.successfullyConverted(backupDir.toFile());
       saveConversionResult(context);
       return new ConversionResultImpl(runners);
     }
@@ -225,8 +225,8 @@ public final class ConversionServiceImpl extends ConversionService {
     final Graph<ConverterProvider> graph = GraphGenerator.generate(CachingSemiGraph.cache(new ConverterProvidersGraph(providers)));
     final DFSTBuilder<ConverterProvider> builder = new DFSTBuilder<>(graph);
     if (!builder.isAcyclic()) {
-      final Pair<ConverterProvider,ConverterProvider> pair = builder.getCircularDependency();
-      LOG.error("cyclic dependencies between converters: " + pair.getFirst().getId() + " and " + pair.getSecond().getId());
+      Pair<ConverterProvider, ConverterProvider> pair = builder.getCircularDependency();
+      LOG.error("cyclic dependencies between converters: " + Objects.requireNonNull(pair).getFirst().getId() + " and " + pair.getSecond().getId());
     }
     final Comparator<ConverterProvider> comparator = builder.comparator();
     runners.sort((o1, o2) -> comparator.compare(o1.getProvider(), o2.getProvider()));
@@ -269,8 +269,7 @@ public final class ConversionServiceImpl extends ConversionService {
     }
   }
 
-  @NotNull
-  private static CachedConversionResult loadCachedConversionResult(@NotNull File projectFile) {
+  private static @NotNull CachedConversionResult loadCachedConversionResult(@NotNull Path projectFile) {
     CachedConversionResult result = new CachedConversionResult();
     try {
       Path infoFile = getConversionInfoFile(projectFile);
@@ -312,8 +311,8 @@ public final class ConversionServiceImpl extends ConversionService {
   }
 
   @NotNull
-  private static Path getConversionInfoFile(@NotNull File projectFile) {
-    String dirName = PathUtil.suggestFileName(projectFile.getName() + Integer.toHexString(projectFile.getAbsolutePath().hashCode()));
+  private static Path getConversionInfoFile(@NotNull Path projectFile) {
+    String dirName = PathUtil.suggestFileName(projectFile.getFileName().toString() + Integer.toHexString(projectFile.toAbsolutePath().hashCode()));
     return Paths.get(PathManager.getSystemPath(), "conversion", dirName + ".xml");
   }
 

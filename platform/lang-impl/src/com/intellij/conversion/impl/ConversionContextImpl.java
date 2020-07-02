@@ -219,9 +219,8 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @Override
-  @NotNull
-  public File getProjectBaseDir() {
-    return myProjectBaseDir.toFile();
+  public @NotNull Path getProjectBaseDir() {
+    return myProjectBaseDir;
   }
 
   @Override
@@ -301,7 +300,7 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @Override
-  public Collection<File> getLibraryClassRoots(@NotNull String name, @NotNull String level) {
+  public @NotNull Collection<Path> getLibraryClassRoots(@NotNull String name, @NotNull String level) {
     try {
       Element libraryElement = null;
       if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(level)) {
@@ -310,12 +309,7 @@ public final class ConversionContextImpl implements ConversionContext {
       else if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(level)) {
         libraryElement = findGlobalLibraryElement(name);
       }
-
-      if (libraryElement != null) {
-        return getClassRoots(libraryElement, null);
-      }
-
-      return Collections.emptyList();
+      return libraryElement == null ? Collections.emptyList() : ContainerUtil.map(getClassRoots(libraryElement, null), File::toPath);
     }
     catch (CannotConvertException e) {
       return Collections.emptyList();
@@ -433,10 +427,9 @@ public final class ConversionContextImpl implements ConversionContext {
     return mySettingsBaseDir != null ? mySettingsBaseDir.toFile() : null;
   }
 
-  @NotNull
   @Override
-  public File getProjectFile() {
-    return myProjectFile.toFile();
+  public @NotNull Path getProjectFile() {
+    return myProjectFile;
   }
 
   @Override

@@ -4,6 +4,7 @@ package com.intellij.conversion;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -52,7 +53,7 @@ public abstract class ProjectConverter {
   /**
    * @return files created during conversion process
    */
-  public Collection<File> getCreatedFiles() {
+  public Collection<Path> getCreatedFiles() {
     return Collections.emptyList();
   }
 

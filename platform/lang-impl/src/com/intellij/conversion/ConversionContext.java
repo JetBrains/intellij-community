@@ -12,14 +12,12 @@ import java.util.Collection;
 import java.util.List;
 
 public interface ConversionContext {
-  @NotNull
-  File getProjectBaseDir();
+  @NotNull Path getProjectBaseDir();
 
   /**
    * @return path to parent directory of .idea directory for directory-based storage scheme or path to ipr-file for file-based scheme
    */
-  @NotNull
-  File getProjectFile();
+  @NotNull Path getProjectFile();
 
   @NotNull
   StorageScheme getStorageScheme();
@@ -56,7 +54,7 @@ public interface ConversionContext {
   @NotNull
   String collapsePath(@NotNull String path);
 
-  Collection<File> getLibraryClassRoots(@NotNull String name, @NotNull String level);
+  @NotNull Collection<Path> getLibraryClassRoots(@NotNull String name, @NotNull String level);
 
   @Nullable
   ComponentManagerSettings getCompilerSettings();
