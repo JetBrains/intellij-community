@@ -7,6 +7,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -20,9 +21,11 @@ import java.util.*;
  * @author yole
  */
 public class PyUnionType implements PyType {
-  private final Set<PyType> myMembers;
 
-  PyUnionType(Collection<PyType> members) {
+  @NotNull
+  private final LinkedHashSet<@Nullable PyType> myMembers;
+
+  PyUnionType(@NotNull LinkedHashSet<@Nullable PyType> members) {
     myMembers = new LinkedHashSet<>(members);
   }
 
@@ -84,41 +87,26 @@ public class PyUnionType implements PyType {
 
   @Nullable
   public static PyType union(@Nullable PyType type1, @Nullable PyType type2) {
-    Set<PyType> members = new LinkedHashSet<>();
-    if (type1 instanceof PyUnionType) {
-      members.addAll(((PyUnionType)type1).myMembers);
-    }
-    else {
-      members.add(type1);
-    }
-    if (type2 instanceof PyUnionType) {
-      members.addAll(((PyUnionType)type2).myMembers);
-    }
-    else {
-      members.add(type2);
-    }
-    if (members.size() == 1) {
-      return members.iterator().next();
-    }
-    return new PyUnionType(members);
+    return union(Arrays.asList(type1, type2));
   }
 
   @Nullable
-  public static PyType union(Collection<PyType> members) {
-    final int n = members.size();
-    if (n == 0) {
-      return null;
-    }
-    else if (n == 1) {
-      return members.iterator().next();
+  public static PyType union(@NotNull Collection<@Nullable PyType> members) {
+    if (members.size() < 2) {
+      return ContainerUtil.getFirstItem(members);
     }
     else {
-      final Iterator<PyType> it = members.iterator();
-      PyType res = unit(it.next());
-      while (it.hasNext()) {
-        res = union(res, it.next());
+      final LinkedHashSet<PyType> newMembers = new LinkedHashSet<>();
+      for (PyType member : members) {
+        if (member instanceof PyUnionType) {
+          newMembers.addAll(((PyUnionType)member).getMembers());
+        }
+        else {
+          newMembers.add(member);
+        }
       }
-      return res;
+
+      return newMembers.size() < 2 ? ContainerUtil.getFirstItem(newMembers) : new PyUnionType(newMembers);
     }
   }
 
@@ -140,8 +128,9 @@ public class PyUnionType implements PyType {
     return myMembers.contains(null);
   }
 
+  @NotNull
   public Collection<PyType> getMembers() {
-    return myMembers;
+    return Collections.unmodifiableCollection(myMembers);
   }
 
   /**
@@ -178,16 +167,6 @@ public class PyUnionType implements PyType {
   @Nullable
   public PyType excludeNull(@NotNull TypeEvalContext context) {
     return isWeak() ? exclude(null, context) : this;
-  }
-
-  private static PyType unit(@Nullable PyType type) {
-    if (type instanceof PyUnionType) {
-      Set<PyType> members = new LinkedHashSet<>(((PyUnionType)type).getMembers());
-      return new PyUnionType(members);
-    }
-    else {
-      return new PyUnionType(Collections.singletonList(type));
-    }
   }
 
   @Override
