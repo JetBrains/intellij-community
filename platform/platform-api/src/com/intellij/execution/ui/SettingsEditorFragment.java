@@ -37,7 +37,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public SettingsEditorFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                @Nls(capitalization = Nls.Capitalization.Sentence) String group,
+                                @Nls(capitalization = Nls.Capitalization.Title) String group,
                                 C component,
                                 int commandLinePosition,
                                 BiConsumer<Settings, C> reset,
@@ -55,7 +55,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public SettingsEditorFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                @Nls(capitalization = Nls.Capitalization.Sentence) String group,
+                                @Nls(capitalization = Nls.Capitalization.Title) String group,
                                 C component,
                                 BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply,
                                 Predicate<Settings> initialSelection)  {
