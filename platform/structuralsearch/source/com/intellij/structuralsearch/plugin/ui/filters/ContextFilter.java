@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -27,13 +27,17 @@ class ContextFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
     return variable != null && !StringUtil.isEmpty(variable.getContextConstraint());
   }
 
   @Override
   public void clearFilter() {
-    myTable.getMatchVariableConstraint().setContextConstraint("");
+    final MatchVariableConstraint constraint = myTable.getMatchVariable();
+    if (constraint == null) {
+      return;
+    }
+    constraint.setContextConstraint("");
   }
 
   @Override
@@ -44,13 +48,16 @@ class ContextFilter extends FilterAction {
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
+    if (variable == null) {
+      return;
+    }
     component.append(SSRBundle.message("context.0.label", StringUtil.unquoteString(variable.getContextConstraint())));
   }
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariableConstraint(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
       private final JLabel myLabel = new JLabel(SSRBundle.message("context.label"));
       private final TextFieldWithAutoCompletion<String> textField =
         TextFieldWithAutoCompletion.create(myTable.getProject(), Collections.emptyList(), false, "");

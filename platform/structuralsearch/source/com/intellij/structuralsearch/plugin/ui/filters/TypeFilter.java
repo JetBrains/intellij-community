@@ -30,13 +30,16 @@ class TypeFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
     return variable != null && !StringUtil.isEmpty(variable.getNameOfExprType());
   }
 
   @Override
   public void clearFilter() {
-    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
+    if (variable == null) {
+      return;
+    }
     variable.setNameOfExprType("");
     variable.setInvertExprType(false);
     variable.setExprTypeWithinHierarchy(false);
@@ -44,7 +47,7 @@ class TypeFilter extends FilterAction {
 
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
-    if (myTable.getVariable() == null) {
+    if (myTable.getMatchVariable() == null) {
       return false;
     }
     final StructuralSearchProfile profile = myTable.getProfile();
@@ -54,17 +57,21 @@ class TypeFilter extends FilterAction {
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = myTable.getMatchVariableConstraint();
-    final String s = constraint.isRegexExprType() ? constraint.getNameOfExprType() : constraint.getExpressionTypes();
-    final String value = constraint.isInvertExprType() ? "!" + s : s;
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
+    if (variable == null) {
+      return;
+    }
+    final String s = variable.isRegexExprType() ? variable.getNameOfExprType() : variable.getExpressionTypes();
+    final String value = variable.isInvertExprType() ? "!" + s : s;
     myLabel.append(SSRBundle.message("type.0.label", value));
-    if (constraint.isExprTypeWithinHierarchy()) myLabel.append(SSRBundle.message("within.hierarchy.label"),
-                                                               SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    if (variable.isExprTypeWithinHierarchy()) {
+      myLabel.append(SSRBundle.message("within.hierarchy.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
   }
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariableConstraint(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createTextComponent("", myTable.getProject());
       private final JLabel myTypeLabel = new JLabel(SSRBundle.message("type.label"));

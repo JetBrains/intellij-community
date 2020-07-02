@@ -29,13 +29,13 @@ class ReferenceFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
     return variable != null && !StringUtil.isEmpty(variable.getReferenceConstraint());
   }
 
   @Override
   public void clearFilter() {
-    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
     if (variable == null) {
       return;
     }
@@ -51,14 +51,17 @@ class ReferenceFilter extends FilterAction {
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint constraint = myTable.getMatchVariable();
+    if (constraint == null) {
+      return;
+    }
     final String value = constraint.isInvertReference() ? "!" + constraint.getReferenceConstraint() : constraint.getReferenceConstraint();
     component.append(SSRBundle.message("reference.0.label", value));
   }
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariableConstraint(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel(SSRBundle.message("reference.label"));
       private final TextFieldWithAutoCompletion<String> textField =

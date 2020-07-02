@@ -28,13 +28,13 @@ class TextFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
     return variable != null && (!StringUtil.isEmpty(variable.getRegExp()) || variable.isWithinHierarchy());
   }
 
   @Override
   public void clearFilter() {
-    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
     if (variable == null) {
       return;
     }
@@ -55,16 +55,19 @@ class TextFilter extends FilterAction {
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = myTable.getMatchVariableConstraint();
-    String value = constraint.isInvertRegExp() ? "!" + constraint.getRegExp() : constraint.getRegExp();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
+    if (variable == null) {
+      return;
+    }
+    final String value = variable.isInvertRegExp() ? "!" + variable.getRegExp() : variable.getRegExp();
     myLabel.append(SSRBundle.message("text.0.label", value));
-    if (constraint.isWholeWordsOnly()) myLabel.append(SSRBundle.message("whole.words.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    if (constraint.isWithinHierarchy()) myLabel.append(SSRBundle.message("within.hierarchy.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    if (variable.isWholeWordsOnly()) myLabel.append(SSRBundle.message("whole.words.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    if (variable.isWithinHierarchy()) myLabel.append(SSRBundle.message("within.hierarchy.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariableConstraint(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createRegexComponent("", myTable.getProject());
       private final JCheckBox myWordsCheckBox = new JCheckBox(SSRBundle.message("whole.words.check.box"), false);

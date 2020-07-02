@@ -27,7 +27,7 @@ class CountFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
     if (variable == null) {
       return false;
     }
@@ -36,7 +36,7 @@ class CountFilter extends FilterAction {
 
   @Override
   public void clearFilter() {
-    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
     if (variable == null) {
       return;
     }
@@ -46,14 +46,17 @@ class CountFilter extends FilterAction {
 
   @Override
   public void initFilter() {
-    final MatchVariableConstraint constraint = myTable.getMatchVariableConstraint();
+    final MatchVariableConstraint constraint = myTable.getMatchVariable();
+    if (constraint == null) {
+      return;
+    }
     constraint.setMinCount(myMinZero ? 0 : 1);
     constraint.setMaxCount(myMaxUnlimited ? Integer.MAX_VALUE : 1);
   }
 
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
-    if (!(myTable.getVariable() instanceof MatchVariableConstraint)) {
+    if (myTable.getMatchVariable() == null) {
       return false;
     }
     final StructuralSearchProfile profile = myTable.getProfile();
@@ -64,9 +67,12 @@ class CountFilter extends FilterAction {
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = myTable.getMatchVariableConstraint();
-    final int min = constraint.getMinCount();
-    final int max = constraint.getMaxCount();
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
+    if (variable == null) {
+      return;
+    }
+    final int min = variable.getMinCount();
+    final int max = variable.getMaxCount();
     myLabel.append(SSRBundle.message("count.label", "[" + min + "," + (max == Integer.MAX_VALUE ? "∞" : max) + ']'));
     if (min == 1 && max == 1) {
       myLabel.append(SSRBundle.message("default.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -75,7 +81,7 @@ class CountFilter extends FilterAction {
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariableConstraint(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final IntegerField myMinField = new IntegerField();
       private final IntegerField myMaxField = new IntegerField();

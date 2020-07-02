@@ -6,6 +6,7 @@ import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -18,7 +19,8 @@ public interface FilterTable {
 
   NamedScriptableDefinition getVariable();
 
-  default MatchVariableConstraint getMatchVariableConstraint() {
+  @Nullable
+  default MatchVariableConstraint getMatchVariable() {
     final NamedScriptableDefinition variable = getVariable();
     return variable instanceof MatchVariableConstraint ? (MatchVariableConstraint)variable : null;
   }
