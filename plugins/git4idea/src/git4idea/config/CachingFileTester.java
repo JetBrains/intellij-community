@@ -60,6 +60,10 @@ abstract class CachingFileTester<T> {
   }
 
   private static long getModificationTime(@NotNull GitExecutable executable) throws IOException {
+    if (executable instanceof GitExecutable.Unknown) {
+      return 0;
+    }
+
     if (executable instanceof GitExecutable.Local) {
       String filePath = executable.getExePath();
       if (!filePath.contains(File.separator)) {
