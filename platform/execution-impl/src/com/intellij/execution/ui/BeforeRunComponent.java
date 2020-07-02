@@ -105,7 +105,9 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
     if (myTags == null) return;
     TaskButton taskButton = ContainerUtil.find(myTags, button -> button.myProvider.getId() == providerId);
     if (add) {
-      createTask(null, taskButton);
+      if (!taskButton.isVisible()) {
+        createTask(null, taskButton);
+      }
     }
     else {
       taskButton.setVisible(false);
