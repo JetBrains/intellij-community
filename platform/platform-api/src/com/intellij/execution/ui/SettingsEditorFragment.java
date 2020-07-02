@@ -17,15 +17,6 @@ import java.util.function.Predicate;
 
 public class SettingsEditorFragment<Settings, C extends JComponent> extends SettingsEditor<Settings> {
 
-  /**
-   * Should be implemented by a JComponent
-   */
-  public interface FragmentComponent<Settings> {
-    void reset(Settings s);
-    void apply(Settings s);
-    boolean isVisible(Settings s);
-  }
-
   private final String myId;
   private final String myName;
   private final String myGroup;
