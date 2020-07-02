@@ -66,7 +66,13 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     }
 
     EntryInfo info = map.get(entryName);
-    if (info != null) return info;
+    if (info != null) {
+      if (!isDirectory) {
+        Logger.getInstance(ZipHandlerBase.class).info(
+          "Duplicated entry: " + getFile() + "!/" + entryName + ' ' + info.length + '/' + entry.getSize());
+      }
+      return info;
+    }
 
     Trinity<String, String, String> path = splitPathAndFix(entryName);
     EntryInfo parentInfo = getOrCreate(path.first, map, zip);
