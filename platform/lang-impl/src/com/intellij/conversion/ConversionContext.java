@@ -27,7 +27,7 @@ public interface ConversionContext {
    */
   File getSettingsBaseDir();
 
-  @NotNull ComponentManagerSettings getProjectSettings() throws CannotConvertException;
+  @NotNull ComponentManagerSettings getProjectSettings();
 
   RunManagerSettings getRunManagerSettings() throws CannotConvertException;
 
@@ -45,11 +45,9 @@ public interface ConversionContext {
   /**
    * @param fileName name of the file under .idea directory which contains the settings. For ipr-based storage format the settings will
    *                 be loaded from ipr-file
-   * @return {@link ComponentManagerSettings} instance which can be used to read and modify the settings or {@code null} if the configuration
-   * file cannot be loaded
+   * @return {@link ComponentManagerSettings} instance which can be used to read and modify the settings.
    */
-  @Nullable
-  ComponentManagerSettings createProjectSettings(@NotNull String fileName);
+  @NotNull ComponentManagerSettings createProjectSettings(@NotNull String fileName);
 
   @NotNull
   String collapsePath(@NotNull String path);
@@ -69,7 +67,7 @@ public interface ConversionContext {
 
   ProjectLibrariesSettings getProjectLibrariesSettings() throws CannotConvertException;
 
-  ArtifactsSettings getArtifactsSettings() throws CannotConvertException;
+  @NotNull ArtifactsSettings getArtifactsSettings() throws CannotConvertException;
 
   @NotNull
   String expandPath(@NotNull String path);

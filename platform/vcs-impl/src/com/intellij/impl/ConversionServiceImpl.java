@@ -10,7 +10,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -18,10 +17,10 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.util.graph.*;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +48,7 @@ public final class ConversionServiceImpl extends ConversionService {
 
       Set<Path> affectedFiles = new HashSet<>();
       for (ConversionRunner runner : runners) {
-        affectedFiles.addAll(runner.getAffectedFiles());
+        runner.collectAffectedFiles(affectedFiles);
       }
 
       List<Path> readOnlyFiles = ConversionRunner.getReadOnlyFiles(affectedFiles);
@@ -58,16 +57,14 @@ public final class ConversionServiceImpl extends ConversionService {
         return ConversionResultImpl.ERROR_OCCURRED;
       }
       Path backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
-      List<ConversionRunner> usedRunners = new ArrayList<>();
       for (ConversionRunner runner : runners) {
         if (runner.isConversionNeeded()) {
           runner.preProcess();
           runner.process();
           runner.postProcess();
-          usedRunners.add(runner);
         }
       }
-      context.saveFiles(affectedFiles, usedRunners);
+      context.saveFiles(affectedFiles);
       listener.successfullyConverted(backupDir.toFile());
       saveConversionResult(context);
       return new ConversionResultImpl(runners);
@@ -107,7 +104,7 @@ public final class ConversionServiceImpl extends ConversionService {
   }
 
   @NotNull
-  private static List<ConversionRunner> getConversionRunners(ConversionContextImpl context) throws CannotConvertException {
+  private static List<ConversionRunner> getConversionRunners(@NotNull ConversionContextImpl context) throws CannotConvertException {
     final List<ConversionRunner> converters = getSortedConverters(context);
     final Iterator<ConversionRunner> iterator = converters.iterator();
 
@@ -153,16 +150,15 @@ public final class ConversionServiceImpl extends ConversionService {
     return false;
   }
 
-  private static List<ConversionRunner> getSortedConverters(@NotNull ConversionContextImpl context) throws CannotConvertException {
-    CachedConversionResult conversionResult = loadCachedConversionResult(context.getProjectFile());
-    ObjectLongHashMap<String> oldMap = conversionResult.projectFilesTimestamps;
+  private static @NotNull List<ConversionRunner> getSortedConverters(@NotNull ConversionContextImpl context) throws CannotConvertException {
+    Object2LongMap<String> oldMap = context.getProjectFileTimestamps();
     ObjectLongHashMap<String> newMap = getProjectFilesMap(context);
     LOG.debug("Checking project files");
     boolean changed;
     if (LOG.isDebugEnabled()) {
       Ref<Boolean> changedRef = new Ref<>(false);
       newMap.forEachEntry((path, newValue) -> {
-        long oldValue = oldMap.get(path);
+        long oldValue = oldMap.getLong(path);
         if (oldValue == -1) {
           LOG.debug(" new file: " + path);
           changedRef.set(true);
@@ -178,7 +174,7 @@ public final class ConversionServiceImpl extends ConversionService {
     else {
       // if debug log is not enabled, do not process all entries
       changed = !newMap.forEachEntry((path, newValue) -> {
-        long oldValue = oldMap.get(path);
+        long oldValue = oldMap.getLong(path);
         boolean isFileChangedOrNew = newValue != oldValue;
         if (isFileChangedOrNew) {
           LOG.info("conversion will be performed because at least " + path + " is changed (oldLastModified=" + oldValue + ", newLastModified=" + newValue);
@@ -194,7 +190,7 @@ public final class ConversionServiceImpl extends ConversionService {
       LOG.debug("Project files were modified.");
     }
     else {
-      performedConversionIds = conversionResult.appliedConverters;
+      performedConversionIds = context.getAppliedConverters();
       LOG.debug("Project files are up to date. Applied converters: " + performedConversionIds);
     }
     return createConversionRunners(context, performedConversionIds);
@@ -260,60 +256,13 @@ public final class ConversionServiceImpl extends ConversionService {
       return true;
     });
 
-    Path infoFile = getConversionInfoFile(context.getProjectFile());
+    Path infoFile = context.getConversionInfoFile();
     try {
       JDOMUtil.write(root, infoFile);
     }
     catch (IOException e) {
       LOG.error(e);
     }
-  }
-
-  private static @NotNull CachedConversionResult loadCachedConversionResult(@NotNull Path projectFile) {
-    CachedConversionResult result = new CachedConversionResult();
-    try {
-      Path infoFile = getConversionInfoFile(projectFile);
-      if (!Files.exists(infoFile)) {
-        return result;
-      }
-      Element root = JDOMUtil.load(infoFile);
-      for (Element child : root.getChildren()) {
-        if (child.getName().equals("applied-converters")) {
-          for (Element element : child.getChildren()) {
-            String id = element.getAttributeValue("id");
-            if (id != null) {
-              result.appliedConverters.add(id);
-            }
-          }
-        }
-        else if (child.getName().equals("project-files")) {
-          List<Element> projectFiles = child.getChildren();
-          result.projectFilesTimestamps.ensureCapacity(projectFiles.size());
-          for (Element element : projectFiles) {
-            String path = element.getAttributeValue("path");
-            String timestamp = element.getAttributeValue("timestamp");
-            if (path != null && timestamp != null) {
-              try {
-                result.projectFilesTimestamps.put(path, Long.parseLong(timestamp));
-              }
-              catch (NumberFormatException ignore) {
-              }
-            }
-          }
-        }
-      }
-      return result;
-    }
-    catch (Exception e) {
-      LOG.info(e);
-      return result;
-    }
-  }
-
-  @NotNull
-  private static Path getConversionInfoFile(@NotNull Path projectFile) {
-    String dirName = PathUtil.suggestFileName(projectFile.getFileName().toString() + Integer.toHexString(projectFile.toAbsolutePath().hashCode()));
-    return Paths.get(PathManager.getSystemPath(), "conversion", dirName + ".xml");
   }
 
   @Override
@@ -340,16 +289,14 @@ public final class ConversionServiceImpl extends ConversionService {
 
     try {
       ConversionContextImpl context = new ConversionContextImpl(projectPath);
-      final List<ConversionRunner> runners = createConversionRunners(context, Collections.emptySet());
-      final File backupFile = ProjectConversionUtil.backupFile(moduleFile);
-      List<ConversionRunner> usedRunners = new ArrayList<>();
+      List<ConversionRunner> runners = createConversionRunners(context, Collections.emptySet());
+      File backupFile = ProjectConversionUtil.backupFile(moduleFile);
       for (ConversionRunner runner : runners) {
         if (runner.isModuleConversionNeeded(moduleFile)) {
           runner.convertModule(moduleFile);
-          usedRunners.add(runner);
         }
       }
-      context.saveFiles(Collections.singletonList(moduleFile), usedRunners);
+      context.saveFiles(Collections.singletonList(moduleFile));
       Messages.showInfoMessage(project, IdeBundle.message("message.your.module.was.successfully.converted.br.old.version.was.saved.to.0", backupFile.getAbsolutePath()),
                                IdeBundle.message("dialog.title.convert.module"));
       return new ConversionResultImpl(runners);
@@ -381,11 +328,6 @@ public final class ConversionServiceImpl extends ConversionService {
       LOG.info(e);
       return false;
     }
-  }
-
-  private static final class CachedConversionResult {
-    public final Set<String> appliedConverters = new HashSet<>();
-    public final ObjectLongHashMap<String> projectFilesTimestamps = new ObjectLongHashMap<>();
   }
 
   private static final class ConverterProvidersGraph implements InboundSemiGraph<ConverterProvider> {

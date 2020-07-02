@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.conversion;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -37,14 +36,5 @@ public abstract class ConverterProvider {
   @Nullable
   public String getConversionDialogText(ConversionContext context) {
     return null;
-  }
-
-  /**
-   * @return {@code false} if the converter cannot determine that the conversion was already performed using project files only.
-   * In such case the information about performed conversion will be stored in .ipr file so the converter will not be asked to perform
-   * the conversion again.
-   */
-  public boolean canDetermineIfConversionAlreadyPerformedByProjectFiles() {
-    return true;
   }
 }

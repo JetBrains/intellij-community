@@ -42,9 +42,9 @@ public final class JDomSerializationUtil {
     return component;
   }
 
-  public static void addComponent(Element root, Element component) {
+  public static void addComponent(@NotNull Element root, @NotNull Element component) {
     String componentName = component.getAttributeValue(Constants.NAME);
-    final Element old = findComponent(root, componentName);
+    Element old = findComponent(root, componentName);
     if (old != null) {
       root.removeContent(old);
     }

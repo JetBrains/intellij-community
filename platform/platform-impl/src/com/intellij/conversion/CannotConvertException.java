@@ -11,4 +11,8 @@ public final class CannotConvertException extends RuntimeException {
   public CannotConvertException(@NotNull String message, Throwable cause) {
     super(message, cause);
   }
+
+  public CannotConvertException(@NotNull Throwable cause) {
+    super(cause);
+  }
 }

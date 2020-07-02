@@ -40,8 +40,9 @@ public final class ConversionResultImpl implements ConversionResult {
 
   public ConversionResultImpl(@NotNull List<ConversionRunner> converters) {
     this(true, false, false);
+
     for (ConversionRunner converter : converters) {
-      myChangedFiles.addAll(converter.getAffectedFiles());
+      converter.collectAffectedFiles(myChangedFiles);
       myCreatedFiles.addAll(converter.getCreatedFiles());
     }
   }

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
@@ -23,17 +24,16 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
-public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements ModuleSettings {
+@ApiStatus.Internal
+public final class ModuleSettingsImpl extends SettingsXmlFile implements ModuleSettings {
   private final String myModuleName;
+  private final ConversionContextImpl context;
 
-  public ModuleSettingsImpl(@NotNull Path moduleFile, ConversionContextImpl context) throws CannotConvertException {
-    super(moduleFile, context);
+  ModuleSettingsImpl(@NotNull Path moduleFile, @NotNull ConversionContextImpl context) throws CannotConvertException {
+    super(moduleFile);
 
-    myModuleName = getModuleName(moduleFile);
-  }
-
-  public static String getModuleName(Path moduleFile) {
-    return Strings.trimEnd(moduleFile.getFileName().toString(), ModuleFileType.DOT_DEFAULT_EXTENSION);
+    myModuleName = Strings.trimEnd(moduleFile.getFileName().toString(), ModuleFileType.DOT_DEFAULT_EXTENSION);
+    this.context = context;
   }
 
   @Override

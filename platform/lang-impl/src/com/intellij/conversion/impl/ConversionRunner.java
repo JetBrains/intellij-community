@@ -6,9 +6,14 @@ import com.intellij.openapi.components.StorageScheme;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.AccessMode;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public final class ConversionRunner {
   private final ConverterProvider myProvider;
@@ -40,12 +45,14 @@ public final class ConversionRunner {
   }
 
   public boolean isConversionNeeded() throws CannotConvertException {
-    if (myContext.isConversionAlreadyPerformed(myProvider)) return false;
+    if (myContext.isConversionAlreadyPerformed(myProvider)) {
+      return false;
+    }
 
     myProcessProjectFile = myContext.getStorageScheme() == StorageScheme.DEFAULT && myProjectFileConverter != null
                            && myProjectFileConverter.isConversionNeeded(myContext.getProjectSettings());
 
-    myProcessWorkspaceFile = myWorkspaceConverter != null && Files.exists(myContext.getWorkspaceFile())
+    myProcessWorkspaceFile = myWorkspaceConverter != null && Files.exists(myContext.getWorkspaceSettings().getPath())
                              && myWorkspaceConverter.isConversionNeeded(myContext.getWorkspaceSettings());
 
     myModulesFilesToProcess.clear();
@@ -82,40 +89,40 @@ public final class ConversionRunner {
     return myConverter.getCreatedFiles();
   }
 
-  public Set<Path> getAffectedFiles() {
-    Set<Path> affectedFiles = new HashSet<>();
+  public void collectAffectedFiles(@NotNull Collection<Path> affectedFiles) {
     if (myProcessProjectFile) {
       affectedFiles.add(myContext.getProjectFile());
     }
     if (myProcessWorkspaceFile) {
-      affectedFiles.add(myContext.getWorkspaceFile());
+      affectedFiles.add(myContext.getWorkspaceSettings().getPath());
     }
     affectedFiles.addAll(myModulesFilesToProcess);
 
-    try {
-      if (myProcessRunConfigurations) {
-        affectedFiles.addAll(myContext.getRunManagerSettings().getAffectedFiles());
+    if (myProcessRunConfigurations) {
+      try {
+        myContext.getRunManagerSettings().collectAffectedFiles(affectedFiles);
       }
-      if (myProcessProjectLibraries) {
-        affectedFiles.addAll(myContext.getProjectLibrariesSettings().getAffectedFiles());
-      }
-      if (myArtifacts) {
-        affectedFiles.addAll(myContext.getArtifactsSettings().getAffectedFiles());
+      catch (CannotConvertException ignored) {
       }
     }
-    catch (CannotConvertException ignored) {
+    if (myProcessProjectLibraries) {
+      try {
+        myContext.getProjectLibrariesSettings().collectAffectedFiles(affectedFiles);
+      }
+      catch (CannotConvertException ignored) {
+      }
     }
-    if (!myProvider.canDetermineIfConversionAlreadyPerformedByProjectFiles()) {
-      final ComponentManagerSettings settings = myContext.getProjectFileVersionSettings();
-      if (settings != null) {
-        affectedFiles.add(settings.getPath());
+    if (myArtifacts) {
+      try {
+        myContext.getArtifactsSettings().collectAffectedFiles(affectedFiles);
+      }
+      catch (CannotConvertException ignored) {
       }
     }
 
     for (File file : myConverter.getAdditionalAffectedFiles()) {
       affectedFiles.add(file.toPath());
     }
-    return affectedFiles;
   }
 
   public void preProcess() throws CannotConvertException {
@@ -206,7 +213,12 @@ public final class ConversionRunner {
   public static @NotNull List<Path> getReadOnlyFiles(@NotNull Collection<Path> affectedFiles) {
     List<Path> result = new ArrayList<>();
     for (Path file : affectedFiles) {
-      if (!Files.isWritable(file)) {
+      try {
+        file.getFileSystem().provider().checkAccess(file, AccessMode.WRITE);
+      }
+      catch (NoSuchFileException ignored) {
+      }
+      catch (IOException ignored) {
         result.add(file);
       }
     }

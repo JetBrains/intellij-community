@@ -22,7 +22,6 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,7 +45,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     myConversionRunners = conversionRunners;
     myAffectedFiles = new HashSet<>();
     for (ConversionRunner conversionRunner : conversionRunners) {
-      myAffectedFiles.addAll(conversionRunner.getAffectedFiles());
+      conversionRunner.collectAffectedFiles(myAffectedFiles);
     }
 
     myBackupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
@@ -105,16 +104,14 @@ public class ConvertProjectDialog extends DialogWrapper {
       }
 
       ProjectConversionUtil.backupFiles(myAffectedFiles, myContext.getProjectBaseDir(), myBackupDir);
-      List<ConversionRunner> usedRunners = new ArrayList<>();
       for (ConversionRunner runner : myConversionRunners) {
         if (runner.isConversionNeeded()) {
           runner.preProcess();
           runner.process();
           runner.postProcess();
-          usedRunners.add(runner);
         }
       }
-      myContext.saveFiles(myAffectedFiles, usedRunners);
+      myContext.saveFiles(myAffectedFiles);
       myConverted = true;
       super.doOKAction();
     }
