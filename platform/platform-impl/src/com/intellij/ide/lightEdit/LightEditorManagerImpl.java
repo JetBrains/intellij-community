@@ -81,7 +81,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
    * @return The newly created editor info.
    */
   @Override
-  public @NotNull LightEditorInfo createNewEditor(@Nullable String preferredName) {
+  public @NotNull LightEditorInfo createEmptyEditor(@Nullable String preferredName) {
     String name = preferredName != null ? preferredName : getUniqueName();
     LightVirtualFile file = new LightVirtualFile(name);
     file.setFileType(PlainTextFileType.INSTANCE);

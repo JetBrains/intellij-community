@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
@@ -71,7 +72,7 @@ public final class LightEditUtil {
           }
         }
       }
-      LightEditService.getInstance().createNewFile(fileName);
+      ApplicationManager.getApplication().invokeLater(() -> LightEditService.getInstance().createNewFile(fileName));
       return true;
     }
     return false;
