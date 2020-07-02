@@ -79,7 +79,6 @@ public final class PluginManagerCore {
   public static final String EDIT = "edit";
 
   private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
-  private static volatile boolean isNeedToLoadPluginFromMarketplace = true;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
   static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
   private static List<PluginError> ourLoadingErrors;
@@ -109,10 +108,6 @@ public final class PluginManagerCore {
    * Broken plugins stored in IDEA
    */
   private static final String BROKEN_PLUGIN_FILE = "/brokenPlugins.txt";
-  /**
-   * All broken plugins from Marketplace
-   */
-  public static final String MARKETPLACE_INCOMPATIBLE_PLUGINS = PathManager.getConfigPath() + "/incompatiblePlugins.txt";
 
   /**
    * Bundled plugins that were updated.
@@ -198,8 +193,8 @@ public final class PluginManagerCore {
     return set != null && set.contains(descriptor.getVersion());
   }
 
-  public static void setUpNeedToUpdateBrokenPlugins(){
-    isNeedToLoadPluginFromMarketplace = true;
+  public static void updateBrokenPlugins(Map<PluginId, Set<String>> brokenPlugins){
+    ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(brokenPlugins);
   }
 
   private static @NotNull Map<PluginId, Set<String>> getBrokenPluginVersions() {
@@ -209,29 +204,17 @@ public final class PluginManagerCore {
       ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
       return result;
     }
-    File marketplaceBrokenPlugins = new File(MARKETPLACE_INCOMPATIBLE_PLUGINS);
-    if (isNeedToLoadPluginFromMarketplace && marketplaceBrokenPlugins.exists()) {
-      result = readBrokenPluginFile(marketplaceBrokenPlugins);
-      ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
-      isNeedToLoadPluginFromMarketplace = false;
-    }
     if (result != null) {
       return result;
     }
-    result = readBrokenPluginFile(getPlatformBrokenPluginFile());
+    result = readBrokenPluginFile(PluginManagerCore.class.getResourceAsStream(BROKEN_PLUGIN_FILE));
     ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
     return result;
   }
 
-  private static @NotNull File getPlatformBrokenPluginFile(){
-    URL fileUrl = PluginManagerCore.class.getResource(BROKEN_PLUGIN_FILE);
-    if (fileUrl == null) throw new RuntimeException("File " + BROKEN_PLUGIN_FILE + " was not found");
-    return new File(fileUrl.getFile());
-  }
-
-  private static Map<PluginId, Set<String>> readBrokenPluginFile(File file) {
+  private static Map<PluginId, Set<String>> readBrokenPluginFile(InputStream inputStream) {
     Map<PluginId, Set<String>> result = new HashMap<>();
-    try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+    try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       String s;
       while ((s = br.readLine()) != null) {
         s = s.trim();
@@ -243,7 +226,8 @@ public final class PluginManagerCore {
           continue;
         }
         if (tokens.size() == 1) {
-          throw new RuntimeException(file.getName() + " is broken. The line contains plugin name, but does not contains version: " + s);
+          throw new RuntimeException(
+            BROKEN_PLUGIN_FILE + " is broken. The line contains plugin name, but does not contains version: " + s);
         }
 
         PluginId pluginId = PluginId.getId(tokens.get(0));
@@ -252,7 +236,7 @@ public final class PluginManagerCore {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException("Failed to read " + file.getName(), e);
+      throw new RuntimeException("Failed to read " + BROKEN_PLUGIN_FILE, e);
     }
     return result;
   }

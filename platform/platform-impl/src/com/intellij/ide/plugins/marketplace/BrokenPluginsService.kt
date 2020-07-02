@@ -4,9 +4,8 @@ package com.intellij.ide.plugins.marketplace
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.util.execution.ParametersListUtil
-import java.io.File
 
 object BrokenPluginsService {
   private val marketplaceClient = MarketplaceRequests.getInstance()
@@ -19,19 +18,17 @@ object BrokenPluginsService {
   }
 
   private fun updateBrokenPlugin() {
-    val file = File(PluginManagerCore.MARKETPLACE_INCOMPATIBLE_PLUGINS)
-    val isNotUpdatedPlugins = marketplaceClient.isFileNotModified(marketplaceClient.BROKEN_PLUGIN_PATH, marketplaceClient.getBrokenPluginsFile())
+    val isNotUpdatedPlugins = marketplaceClient.isFileNotModified(
+      marketplaceClient.BROKEN_PLUGIN_PATH,
+      marketplaceClient.getBrokenPluginsFile()
+    )
     if (isNotUpdatedPlugins) return
     val brokenPlugins = readBrokenPlugins()
     if (brokenPlugins.isEmpty()) return
-    file.writeText(
-      brokenPlugins.entries
-        .joinToString("\n") { plugin -> "${plugin.key} ${plugin.value.joinToString(" ") { it }}" }
-    )
-    PluginManagerCore.setUpNeedToUpdateBrokenPlugins()
+    PluginManagerCore.updateBrokenPlugins(brokenPlugins)
   }
 
-  private fun readBrokenPlugins(): Map<String, Set<String>> {
+  private fun readBrokenPlugins(): Map<PluginId, Set<String>> {
     val allBrokenPlugins = marketplaceClient.getBrokenPlugins()
     val currentBuild = ApplicationInfoImpl.getInstance().build
     val currentBrokenPlugins = allBrokenPlugins
@@ -44,12 +41,9 @@ object BrokenPluginsService {
       }
       .groupBy { it.id }.entries
       .associate { (pluginId, brokenPlugins) ->
-        val versions = brokenPlugins.map { it.version.escapeIfSpaceContains() }.toSet()
-        pluginId.escapeIfSpaceContains() to versions
+        PluginId.getId(pluginId) to brokenPlugins.map { it.version }.toMutableSet()
       }
     return currentBrokenPlugins
   }
-
-  private fun String.escapeIfSpaceContains() = if (this.contains(" ")) ParametersListUtil.escape(this) else this
 
 }
