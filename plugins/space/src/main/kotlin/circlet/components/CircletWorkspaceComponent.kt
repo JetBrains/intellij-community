@@ -75,8 +75,8 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
         // sign in automatically on application startup.
         launch(wsLifetime, Ui) {
             if (!autoSignIn(settingsOnStartup, wsLifetime)) {
+                notifyDisconnected()
             }
-            notifyDisconnected()
         }
     }
 
