@@ -5,6 +5,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -45,6 +46,8 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
    */
   open fun createIntrospector(config: C): Introspector? = null
 
+  open fun volumeDescriptors(config: C): List<VolumeDescriptor> = emptyList()
+
   companion object {
     @JvmField
     val EXTENSION_NAME = ExtensionPointName.create<LanguageRuntimeType<*>>("com.intellij.executionTargetLanguageRuntimeType")
@@ -62,4 +65,8 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
   interface Introspector {
     fun introspect(subject: Introspectable): CompletableFuture<*>?
   }
+
+  data class VolumeDescriptor(@get:Nls val wizardLabel: String,
+                              @get:Nls val description: String,
+                              @get:NonNls val defaultPath: String)
 }
