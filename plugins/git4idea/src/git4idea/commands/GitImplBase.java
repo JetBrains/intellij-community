@@ -164,7 +164,7 @@ public abstract class GitImplBase implements Git {
         }
       }
       catch (IOException e) {
-        return GitCommandResult.startError("Failed to start Git process " + e.getLocalizedMessage());
+        return GitCommandResult.startError(GitBundle.message("git.executable.unknown.error.message", e.getLocalizedMessage()));
       }
     }
     else {
@@ -305,7 +305,7 @@ public abstract class GitImplBase implements Git {
     @Override
     public void startFailed(@NotNull Throwable t) {
       myStartFailed = true;
-      myOutputCollector.errorLineReceived("Failed to start Git process " + t.getLocalizedMessage());
+      myOutputCollector.errorLineReceived(GitBundle.message("git.executable.unknown.error.message", t.getLocalizedMessage()));
     }
   }
 
