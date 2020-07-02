@@ -7,7 +7,6 @@ import com.intellij.conversion.*;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
-import com.intellij.ide.impl.convert.ProjectFileVersionState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.StorageScheme;
@@ -19,7 +18,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -28,6 +27,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -77,18 +77,18 @@ public final class ConversionContextImpl implements ConversionContext {
   public ConversionContextImpl(@NotNull Path projectPath) {
     myProjectFile = projectPath;
 
-    if (Files.isDirectory(myProjectFile)) {
-      myStorageScheme = StorageScheme.DIRECTORY_BASED;
-      myProjectBaseDir = myProjectFile;
-      mySettingsBaseDir = myProjectBaseDir.toAbsolutePath().resolve(Project.DIRECTORY_STORE_FOLDER);
-      myModuleListFile = mySettingsBaseDir.resolve("modules.xml");
-      myWorkspaceFile = mySettingsBaseDir.resolve("workspace.xml");
+    if (projectPath.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+      myStorageScheme = StorageScheme.DEFAULT;
+      myProjectBaseDir = projectPath.getParent();
+      myModuleListFile = projectPath;
+      myWorkspaceFile = projectPath.getParent().resolve(Strings.trimEnd(projectPath.getFileName().toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) + WorkspaceFileType.DOT_DEFAULT_EXTENSION);
     }
     else {
-      myStorageScheme = StorageScheme.DEFAULT;
-      myProjectBaseDir = myProjectFile.getParent();
-      myModuleListFile = myProjectFile;
-      myWorkspaceFile = Paths.get(StringUtil.trimEnd(projectPath.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) + WorkspaceFileType.DOT_DEFAULT_EXTENSION);
+      myStorageScheme = StorageScheme.DIRECTORY_BASED;
+      myProjectBaseDir = projectPath;
+      mySettingsBaseDir = myProjectBaseDir.resolve(Project.DIRECTORY_STORE_FOLDER);
+      myModuleListFile = mySettingsBaseDir.resolve("modules.xml");
+      myWorkspaceFile = mySettingsBaseDir.resolve("workspace.xml");
     }
 
     myPerformedConversionIds = loadPerformedConversionIds();
@@ -227,31 +227,26 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @Override
-  public File[] getModuleFiles() {
-    try {
-      return ContainerUtil.map2Array(getModulePaths(), File.class, path -> path.toFile());
-    }
-    catch (CannotConvertException e) {
-      // should never happen - this method is deprecated and when called, myModuleFiles should be already computed
-      throw new RuntimeException(e);
-    }
-  }
-
-  @NotNull
-  @Override
-  public List<Path> getModulePaths() throws CannotConvertException {
+  public @NotNull List<Path> getModulePaths() throws CannotConvertException {
     List<Path> result = myModuleFiles;
     if (result == null) {
-      result = Files.exists(myModuleListFile) ? findModuleFiles(JDomConvertingUtil.load(myModuleListFile)) : Collections.emptyList();
+      try {
+        result = findModuleFiles(JDOMUtil.load(myModuleListFile));
+      }
+      catch (NoSuchFileException e) {
+        result = Collections.emptyList();
+      }
+      catch (JDOMException | IOException e) {
+        throw new CannotConvertException(myModuleListFile + ": " + e.getMessage(), e);
+      }
       myModuleFiles = result;
     }
     return result;
   }
 
-  @NotNull
-  private List<Path> findModuleFiles(@NotNull Element root) {
-    Element modulesManager = JDomSerializationUtil.findComponent(root, JpsProjectLoader.MODULE_MANAGER_COMPONENT);
-    Element modules = modulesManager == null ? null : modulesManager.getChild(JpsProjectLoader.MODULES_TAG);
+  private @NotNull List<Path> findModuleFiles(@NotNull Element root) {
+    Element moduleManager = JDomSerializationUtil.findComponent(root, JpsProjectLoader.MODULE_MANAGER_COMPONENT);
+    Element modules = moduleManager == null ? null : moduleManager.getChild(JpsProjectLoader.MODULES_TAG);
     if (modules == null) {
       return Collections.emptyList();
     }
@@ -273,10 +268,10 @@ public final class ConversionContextImpl implements ConversionContext {
     return createExpandMacroMap(moduleSettings).substitute(path, true);
   }
 
-  private ExpandMacroToPathMap createExpandMacroMap(@Nullable ModuleSettingsImpl moduleSettings) {
-    final ExpandMacroToPathMap map = createExpandMacroMap();
+  private @NotNull ExpandMacroToPathMap createExpandMacroMap(@Nullable ModuleSettings moduleSettings) {
+    ExpandMacroToPathMap map = createExpandMacroMap();
     if (moduleSettings != null) {
-      final String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getModuleFile().getParentFile().getAbsolutePath());
+      String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getModuleFile().getParentFile().getAbsolutePath());
       map.addMacroExpand(PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath);
     }
     return map;
@@ -296,7 +291,7 @@ public final class ConversionContextImpl implements ConversionContext {
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public static String collapsePath(@NotNull String path, @NotNull ModuleSettingsImpl moduleSettings) {
+  public static String collapsePath(@NotNull String path, @NotNull ModuleSettings moduleSettings) {
     final ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.MODULE_DIR_MACRO_NAME, moduleSettings.getModuleFile().getParentFile());
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
@@ -380,7 +375,7 @@ public final class ConversionContextImpl implements ConversionContext {
 
   @Override
   @Nullable
-  public ComponentManagerSettingsImpl createProjectSettings(@NotNull final String fileName) {
+  public ComponentManagerSettingsImpl createProjectSettings(@NotNull String fileName) {
     try {
       Path file;
       if (myStorageScheme == StorageScheme.DEFAULT) {
@@ -546,25 +541,18 @@ public final class ConversionContextImpl implements ConversionContext {
 
   @NotNull
   private Set<String> loadPerformedConversionIds() {
-    final ComponentManagerSettings component = getProjectFileVersionSettings();
+    ComponentManagerSettings component = getProjectFileVersionSettings();
     if (component != null) {
-      final Element componentElement = component.getComponentElement(PROJECT_FILE_VERSION_COMPONENT_NAME);
+      Element componentElement = component.getComponentElement(PROJECT_FILE_VERSION_COMPONENT_NAME);
       if (componentElement != null) {
-        final ProjectFileVersionState state = XmlSerializer.deserialize(componentElement, ProjectFileVersionState.class);
-        return new HashSet<>(state.getPerformedConversionIds());
+        return new HashSet<>(XmlSerializer.deserialize(componentElement, ProjectFileVersionState.class).performedConversionIds);
       }
     }
     return Collections.emptySet();
   }
 
-  @NotNull
-  public SettingsXmlFile getOrCreateFile(@NotNull Path file) throws CannotConvertException {
-    SettingsXmlFile settingsFile = mySettingsFiles.get(file);
-    if (settingsFile == null) {
-      settingsFile = new SettingsXmlFile(file);
-      mySettingsFiles.put(file, settingsFile);
-    }
-    return settingsFile;
+  public @NotNull SettingsXmlFile getOrCreateFile(@NotNull Path file) throws CannotConvertException {
+    return mySettingsFiles.computeIfAbsent(file, file1 -> new SettingsXmlFile(file1));
   }
 
   @Override
@@ -590,5 +578,19 @@ public final class ConversionContextImpl implements ConversionContext {
   private File @NotNull [] getSettingsXmlFiles(@NotNull String dirName) {
     Path librariesDir = mySettingsBaseDir.resolve(dirName);
     return ObjectUtils.notNull(librariesDir.toFile().listFiles(FileFilters.filesWithExtension("xml")), ArrayUtilRt.EMPTY_FILE_ARRAY);
+  }
+}
+
+final class ProjectFileVersionState {
+  @XCollection(propertyElementName = "performed-conversions", elementName = "converter", valueAttributeName = "id")
+  final List<String> performedConversionIds;
+
+  @SuppressWarnings("unused")
+  ProjectFileVersionState() {
+    performedConversionIds = new ArrayList<>();
+  }
+
+  ProjectFileVersionState(@NotNull List<String> value) {
+    performedConversionIds = value;
   }
 }

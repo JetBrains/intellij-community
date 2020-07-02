@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
@@ -24,7 +23,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
-public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements ModuleSettings {
+public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements ModuleSettings {
   private final String myModuleName;
 
   public ModuleSettingsImpl(Path moduleFile, ConversionContextImpl context) throws CannotConvertException {

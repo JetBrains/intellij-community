@@ -110,16 +110,15 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     val storageManager = storageManager
     val fs = LocalFileSystem.getInstance()
     val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
-    val filePath = file.systemIndependentPath
     val macros = ArrayList<Macro>(5)
-    if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+    if (file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
       macros.add(Macro(PROJECT_FILE, file))
 
       val workspacePath = file.parent.resolve("${file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
       macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
 
       if (isRefreshVfsNeeded) {
-        VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByNioFile(workspacePath))
+        VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByNioFile(file), fs.refreshAndFindFileByNioFile(workspacePath))
       }
 
       if (isUnitTestMode) {

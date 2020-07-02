@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
@@ -18,15 +18,14 @@ import java.util.List;
 
 import static com.intellij.execution.impl.RunManagerImplKt.PROJECT_RUN_MANAGER_COMPONENT_NAME;
 
-public class RunManagerSettingsImpl implements RunManagerSettings {
+final class RunManagerSettingsImpl implements RunManagerSettings {
   @NonNls public static final String RUN_MANAGER_COMPONENT_NAME = "RunManager";
   @NonNls public static final String CONFIGURATION_ELEMENT = "configuration";
   private SettingsXmlFile myWorkspaceFile;
   private SettingsXmlFile myProjectFile;
   private final List<SettingsXmlFile> mySharedConfigurationFiles;
 
-  public RunManagerSettingsImpl(@NotNull Path workspaceFile, @Nullable Path projectFile, File @Nullable [] sharedConfigurationFiles,
-                                ConversionContextImpl context) throws CannotConvertException {
+  RunManagerSettingsImpl(@NotNull Path workspaceFile, @Nullable Path projectFile, File @Nullable [] sharedConfigurationFiles, ConversionContextImpl context) throws CannotConvertException {
     if (Files.exists(workspaceFile)) {
       myWorkspaceFile = context.getOrCreateFile(workspaceFile);
     }
@@ -44,9 +43,8 @@ public class RunManagerSettingsImpl implements RunManagerSettings {
   }
 
   @Override
-  @NotNull
-  public Collection<? extends Element> getRunConfigurations() {
-    final List<Element> result = new ArrayList<>();
+  public @NotNull Collection<? extends Element> getRunConfigurations() {
+    List<Element> result = new ArrayList<>();
     if (myWorkspaceFile != null) {
       result.addAll(JDOMUtil.getChildren(myWorkspaceFile.findComponent(RUN_MANAGER_COMPONENT_NAME), CONFIGURATION_ELEMENT));
     }
@@ -62,8 +60,8 @@ public class RunManagerSettingsImpl implements RunManagerSettings {
     return result;
   }
 
-  public Collection<Path> getAffectedFiles() {
-    final List<Path> files = new ArrayList<>();
+  public @NotNull Collection<Path> getAffectedFiles() {
+    List<Path> files = new ArrayList<>();
     if (myWorkspaceFile != null) {
       files.add(myWorkspaceFile.getFile());
     }
@@ -75,5 +73,4 @@ public class RunManagerSettingsImpl implements RunManagerSettings {
     }
     return files;
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl.convert;
 
 import com.intellij.conversion.CannotConvertException;
@@ -6,33 +6,18 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.JDOMUtil;
-import org.jdom.Document;
+import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
-public final class JDomConvertingUtil extends JDomSerializationUtil {
+public final class JDomConvertingUtil {
   private JDomConvertingUtil() {
-  }
-
-  /**
-   * @deprecated Use {@link #load(Path)}
-   */
-  @Deprecated
-  public static Document loadDocument(File file) throws CannotConvertException {
-    try {
-      return JDOMUtil.loadDocument(file);
-    }
-    catch (JDOMException | IOException e) {
-      throw new CannotConvertException(file.getAbsolutePath() + ": " + e.getMessage(), e);
-    }
   }
 
   public static Element load(Path file) throws CannotConvertException {
@@ -40,7 +25,7 @@ public final class JDomConvertingUtil extends JDomSerializationUtil {
       return JDOMUtil.load(file);
     }
     catch (JDOMException | IOException e) {
-      throw new CannotConvertException(file.toAbsolutePath() + ": " + e.getMessage(), e);
+      throw new CannotConvertException(file + ": " + e.getMessage(), e);
     }
   }
 
@@ -91,10 +76,10 @@ public final class JDomConvertingUtil extends JDomSerializationUtil {
   }
 
   public static void removeDuplicatedOptions(final Element element) {
-    List<Element> children = new ArrayList<>(element.getChildren(OPTION_ELEMENT));
+    List<Element> children = new ArrayList<>(element.getChildren(Constants.OPTION));
     Set<String> names = new HashSet<>();
     for (Element child : children) {
-      if (!names.add(child.getAttributeValue(NAME_ATTRIBUTE))) {
+      if (!names.add(child.getAttributeValue(Constants.NAME))) {
         element.removeContent(child);
       }
     }
