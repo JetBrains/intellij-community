@@ -28,12 +28,16 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.isEmpty
+import com.intellij.util.OpenSourceUtil
+import com.intellij.util.Processor
+import git4idea.conflicts.getConflictType
 import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
 import git4idea.index.actions.StagingAreaOperation
 import git4idea.index.isRenamed
 import git4idea.index.ui.NodeKind.Companion.sortOrder
+import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
@@ -180,7 +184,15 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
   private class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
     AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.fileStatus) {
     private val movedRelativePath by lazy { getMovedRelativePath(getUserObject()) }
+    private val conflict by lazy {
+      if (getUserObject().kind == NodeKind.CONFLICTED) {
+        GitStagingAreaHolder.createConflict(getUserObject().root, getUserObject().status)
+      }
+      else null
+    }
+
     override fun filePath(userObject: GitFileStatusNode): FilePath = userObject.filePath
+
     override fun originText(userObject: GitFileStatusNode): String? {
       val originalPath = userObject.origPath ?: return null
       if (movedRelativePath != null) {
@@ -193,6 +205,20 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
       val origPath = userObject.origPath
       if (origPath == null || origPath.parentPath == userObject.filePath.parentPath) return null
       return PlatformVcsPathPresenter.getPresentableRelativePath(userObject.filePath, origPath)
+    }
+
+    override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+      super.render(renderer, selected, expanded, hasFocus)
+
+      conflict?.let { conflict ->
+        renderer.append(FontUtil.spaceAndThinSpace() + getConflictType(conflict), SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      }
+    }
+
+    override fun appendParentPath(renderer: ChangesBrowserNodeRenderer, parentPath: FilePath?) {
+      if (conflict == null) {
+        super.appendParentPath(renderer, parentPath)
+      }
     }
   }
 

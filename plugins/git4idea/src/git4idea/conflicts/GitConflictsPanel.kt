@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangesUtil
@@ -37,6 +36,7 @@ import git4idea.repo.GitConflict.Status
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.status.GitStagingAreaHolder
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import java.util.*
@@ -209,6 +209,21 @@ class GitConflictsPanel(
   }
 }
 
+internal fun getConflictType(conflict: GitConflict): @Nls String {
+  val oursStatus = conflict.getStatus(ConflictSide.OURS, true)
+  val theirsStatus = conflict.getStatus(ConflictSide.THEIRS, true)
+  return when {
+    oursStatus == Status.DELETED && theirsStatus == Status.DELETED -> GitBundle.message("conflicts.type.both.deleted")
+    oursStatus == Status.ADDED && theirsStatus == Status.ADDED -> GitBundle.message("conflicts.type.both.added")
+    oursStatus == Status.MODIFIED && theirsStatus == Status.MODIFIED -> GitBundle.message("conflicts.type.both.modified")
+    oursStatus == Status.DELETED -> GitBundle.message("conflicts.type.deleted.by.you")
+    theirsStatus == Status.DELETED -> GitBundle.message("conflicts.type.deleted.by.them")
+    oursStatus == Status.ADDED -> GitBundle.message("conflicts.type.added.by.you")
+    theirsStatus == Status.ADDED -> GitBundle.message("conflicts.type.added.by.them")
+    else -> throw IllegalStateException("ours: $oursStatus; theirs: $theirsStatus")
+  }
+}
+
 private class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory) : TreeModelBuilder(project, grouping) {
   fun addConflicts(conflicts: List<GitConflict>) {
     for (conflict in conflicts) {
@@ -234,18 +249,7 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
       appendCount(renderer)
     }
 
-    val oursStatus = conflict.getStatus(ConflictSide.OURS, true)
-    val theirsStatus = conflict.getStatus(ConflictSide.THEIRS, true)
-    val conflictType = when {
-      oursStatus == Status.DELETED && theirsStatus == Status.DELETED -> GitBundle.message("conflicts.type.both.deleted")
-      oursStatus == Status.ADDED && theirsStatus == Status.ADDED -> GitBundle.message("conflicts.type.both.added")
-      oursStatus == Status.MODIFIED && theirsStatus == Status.MODIFIED -> GitBundle.message("conflicts.type.both.modified")
-      oursStatus == Status.DELETED -> GitBundle.message("conflicts.type.deleted.by.you")
-      theirsStatus == Status.DELETED -> GitBundle.message("conflicts.type.deleted.by.them")
-      oursStatus == Status.ADDED -> GitBundle.message("conflicts.type.added.by.you")
-      theirsStatus == Status.ADDED -> GitBundle.message("conflicts.type.added.by.them")
-      else -> throw IllegalStateException("ours: $oursStatus; theirs: $theirsStatus")
-    }
+    val conflictType = getConflictType(conflict)
     renderer.append(spaceAndThinSpace() + conflictType, SimpleTextAttributes.GRAYED_ATTRIBUTES)
 
     renderer.setIcon(filePath, filePath.isDirectory || !isLeaf)
