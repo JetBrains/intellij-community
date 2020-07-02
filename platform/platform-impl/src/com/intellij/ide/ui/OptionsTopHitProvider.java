@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.text.Matcher;
@@ -77,7 +78,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                                        @Nullable Project project) {
     if (provider.getId().startsWith(id) || pattern.startsWith(" ")) {
       pattern = pattern.startsWith(" ") ? pattern.trim() : pattern.substring(id.length()).trim();
-      consumeTopHitsForApplicableProvider(provider, new WordPrefixMatcher(pattern), collector, project);
+      consumeTopHitsForApplicableProvider(provider, buildMatcher(pattern), collector, project);
     }
   }
 
@@ -90,6 +91,11 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
         collector.accept(option);
       }
     }
+  }
+
+  @NotNull
+  private static Matcher buildMatcher(String pattern) {
+    return pattern.contains(" ") ? new WordPrefixMatcher(pattern) : NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   private static @Nullable String checkPattern(@NotNull String pattern) {
@@ -147,7 +153,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     }
 
     public void consumeAllTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
-      Matcher matcher = new WordPrefixMatcher(pattern);
+      Matcher matcher = buildMatcher(pattern);
       for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getExtensionList()) {
         consumeTopHitsForApplicableProvider(provider, matcher, collector, project);
       }
