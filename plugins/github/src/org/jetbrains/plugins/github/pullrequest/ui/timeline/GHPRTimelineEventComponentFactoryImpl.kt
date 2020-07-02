@@ -228,15 +228,25 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
                                                             GithubBundle.message("pull.request.timeline.ready.for.review"),
                                                             event.createdAt))
         is GHPRCrossReferencedEvent -> {
-          val source = event.source
           Item(GithubIcons.Timeline,
                GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
                                                             GithubBundle.message("pull.request.timeline.mentioned"),
                                                             event.createdAt),
-            //language=HTML
-               HtmlEditorPane("""${source.title}&nbsp<a href='${source.url}'>#${source.number}</a>""").apply {
-                 border = JBUI.Borders.emptyLeft(28)
-               })
+               createComponent(event.source))
+        }
+        is GHPRConnectedEvent -> {
+          Item(GithubIcons.Timeline,
+               GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
+                                                            GithubBundle.message("pull.request.timeline.connected"),
+                                                            event.createdAt),
+               createComponent(event.subject))
+        }
+        is GHPRDisconnectedEvent -> {
+          Item(GithubIcons.Timeline,
+               GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
+                                                            GithubBundle.message("pull.request.timeline.disconnected"),
+                                                            event.createdAt),
+               createComponent(event.subject))
         }
 
         else -> throwUnknownType(event)
@@ -258,5 +268,11 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
       if (text.isNotEmpty()) this.append("<p>").append(text).append("</p>")
       return this
     }
+
+    private fun createComponent(reference: GHPRReferencedSubject) =
+      //language=HTML
+      HtmlEditorPane("""${reference.title}&nbsp<a href='${reference.url}'>#${reference.number}</a>""").apply {
+        border = JBUI.Borders.emptyLeft(28)
+      }
   }
 }
