@@ -627,45 +627,29 @@ public final class GenericsUtil {
    * @param type
    * @return type where "? extends FinalClass" components are replaced with "FinalClass" components.
    */
-  public static @NotNull PsiType simplifyExtendsFinalClass(@NotNull PsiType type) {
-    return type.accept(new PsiTypeVisitor<PsiType>() {
-      @Override
-      public PsiType visitType(@NotNull PsiType type) {
-        return type;
-      }
-
-      @Override
-      public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
-        return arrayType.getComponentType().accept(this).createArrayType().annotate(arrayType.getAnnotationProvider());
-      }
-
-      @Override
-      public PsiType visitClassType(@NotNull PsiClassType classType) {
-        PsiType[] parameters = classType.getParameters();
-        if (parameters.length == 0) return classType;
-        PsiClass target = classType.resolve();
-        if (target == null) return classType;
-        parameters = ContainerUtil.map2Array(parameters, PsiType.class, p -> p.accept(this));
-        return JavaPsiFacade.getElementFactory(target.getProject())
-          .createType(target, parameters).annotate(classType.getAnnotationProvider());
-      }
-
-      @Override
-      public PsiType visitWildcardType(@NotNull PsiWildcardType wildcardType) {
+  public static @NotNull PsiType eliminateExtendsFinalWildcard(@NotNull PsiType type) {
+    if (!(type instanceof PsiClassType)) return type;
+    PsiClassType classType = (PsiClassType)type;
+    PsiType[] parameters = classType.getParameters();
+    boolean changed = false;
+    for (int i = 0; i < parameters.length; i++) {
+      PsiType param = parameters[i];
+      if (param instanceof PsiWildcardType) {
+        PsiWildcardType wildcardType = (PsiWildcardType)param;
         PsiClassType bound = ObjectUtils.tryCast(wildcardType.getBound(), PsiClassType.class);
-        if (bound != null) {
-          bound = (PsiClassType)bound.accept(this);
-          if (wildcardType.isExtends()) {
-            PsiClass boundClass = PsiUtil.resolveClassInClassTypeOnly(bound);
-            if (boundClass != null && boundClass.hasModifierProperty(PsiModifier.FINAL)) {
-              return bound;
-            }
-            return PsiWildcardType.createExtends(wildcardType.getManager(), bound);
+        if (bound != null && wildcardType.isExtends()) {
+          PsiClass boundClass = PsiUtil.resolveClassInClassTypeOnly(bound);
+          if (boundClass != null && boundClass.hasModifierProperty(PsiModifier.FINAL)) {
+            parameters[i] = bound;
+            changed = true;
           }
-          return PsiWildcardType.createSuper(wildcardType.getManager(), bound);
         }
-        return wildcardType;
       }
-    });
+    }
+    if (!changed) return type;
+    PsiClass target = classType.resolve();
+    if (target == null) return classType;
+    return JavaPsiFacade.getElementFactory(target.getProject())
+      .createType(target, parameters).annotate(classType.getAnnotationProvider());
   }
 }
