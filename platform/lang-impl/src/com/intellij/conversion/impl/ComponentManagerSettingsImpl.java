@@ -11,27 +11,26 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 
 public class ComponentManagerSettingsImpl implements ComponentManagerSettings, XmlBasedSettings {
-  protected final SettingsXmlFile mySettingsFile;
-  protected final ConversionContextImpl myContext;
+  private final Path file;
+  protected final ConversionContextImpl context;
 
   protected ComponentManagerSettingsImpl(@NotNull Path file, @NotNull ConversionContextImpl context) throws CannotConvertException {
-    myContext = context;
-    mySettingsFile = context.getOrCreateFile(file);
+    this.file = file;
+    this.context = context;
   }
 
   @Override
   public Element getComponentElement(@NotNull @NonNls String componentName) {
-    return mySettingsFile.findComponent(componentName);
+    return context.getOrCreateFile(file).findComponent(componentName);
   }
 
   @Override
-  @NotNull
-  public Element getRootElement() {
-    return mySettingsFile.getRootElement();
+  public @NotNull Element getRootElement() {
+    return context.getOrCreateFile(file).getRootElement();
   }
 
   @Override
   public @NotNull Path getPath() {
-    return mySettingsFile.getFile();
+    return file;
   }
 }

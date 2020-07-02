@@ -26,8 +26,9 @@ import java.util.*;
 public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements ModuleSettings {
   private final String myModuleName;
 
-  public ModuleSettingsImpl(Path moduleFile, ConversionContextImpl context) throws CannotConvertException {
+  public ModuleSettingsImpl(@NotNull Path moduleFile, ConversionContextImpl context) throws CannotConvertException {
     super(moduleFile, context);
+
     myModuleName = getModuleName(moduleFile);
   }
 
@@ -45,11 +46,6 @@ public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl imple
   @Nullable
   public String getModuleType() {
     return getRootElement().getAttributeValue(Module.ELEMENT_TYPE);
-  }
-
-  @Override
-  public @NotNull Path getModuleFile() {
-    return mySettingsFile.getFile();
   }
 
   @Override
@@ -96,7 +92,7 @@ public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl imple
   @Override
   @NotNull
   public String expandPath(@NotNull String path) {
-    return myContext.expandPath(path, this);
+    return context.expandPath(path, this);
   }
 
   @NotNull
@@ -138,7 +134,7 @@ public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl imple
   @Override
   @Nullable
   public String getProjectOutputUrl() {
-    final ComponentManagerSettings rootManagerSettings = myContext.getProjectRootManagerSettings();
+    final ComponentManagerSettings rootManagerSettings = context.getProjectRootManagerSettings();
     final Element projectRootManager = rootManagerSettings == null ? null : rootManagerSettings.getComponentElement("ProjectRootManager");
     final Element outputElement = projectRootManager == null ? null : projectRootManager.getChild("output");
     return outputElement == null ? null : outputElement.getAttributeValue("url");
@@ -146,7 +142,7 @@ public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl imple
 
   @Override
   public void addExcludedFolder(@NotNull File directory) {
-    final ComponentManagerSettings rootManagerSettings = myContext.getProjectRootManagerSettings();
+    final ComponentManagerSettings rootManagerSettings = context.getProjectRootManagerSettings();
     if (rootManagerSettings != null) {
       final Element projectRootManager = rootManagerSettings.getComponentElement("ProjectRootManager");
       if (projectRootManager != null) {
@@ -174,7 +170,7 @@ public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl imple
   @NotNull
   public List<File> getModuleLibraryRoots(String libraryName) {
     final Element library = findModuleLibraryElement(libraryName);
-    return library != null ? myContext.getClassRoots(library, this) : Collections.emptyList();
+    return library != null ? context.getClassRoots(library, this) : Collections.emptyList();
   }
 
   @Override
@@ -218,7 +214,7 @@ public final class ModuleSettingsImpl extends ComponentManagerSettingsImpl imple
       if (JpsModuleRootModelSerializer.MODULE_TYPE.equals(element.getAttributeValue(JpsModuleRootModelSerializer.TYPE_ATTRIBUTE))) {
         final String moduleName = element.getAttributeValue(JpsModuleRootModelSerializer.MODULE_NAME_ATTRIBUTE);
         if (moduleName != null) {
-          final ModuleSettings moduleSettings = myContext.getModuleSettings(moduleName);
+          final ModuleSettings moduleSettings = context.getModuleSettings(moduleName);
           if (moduleSettings != null) {
             ((ModuleSettingsImpl)moduleSettings).collectDependencies(dependencies);
           }

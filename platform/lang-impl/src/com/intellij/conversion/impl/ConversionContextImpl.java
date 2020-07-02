@@ -262,14 +262,14 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @NotNull
-  public String expandPath(@NotNull String path, @NotNull ModuleSettings moduleSettings) {
+  public String expandPath(@NotNull String path, @NotNull XmlBasedSettings moduleSettings) {
     return createExpandMacroMap(moduleSettings).substitute(path, true);
   }
 
-  private @NotNull ExpandMacroToPathMap createExpandMacroMap(@Nullable ModuleSettings moduleSettings) {
+  private @NotNull ExpandMacroToPathMap createExpandMacroMap(@Nullable XmlBasedSettings moduleSettings) {
     ExpandMacroToPathMap map = createExpandMacroMap();
     if (moduleSettings != null) {
-      String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getModuleFile().getParent().toAbsolutePath().toString());
+      String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getPath().getParent().toAbsolutePath().toString());
       map.addMacroExpand(PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath);
     }
     return map;
@@ -288,8 +288,8 @@ public final class ConversionContextImpl implements ConversionContext {
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public static String collapsePath(@NotNull String path, @NotNull ModuleSettings moduleSettings) {
-    final ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.MODULE_DIR_MACRO_NAME, moduleSettings.getModuleFile().getParent());
+  public static String collapsePath(@NotNull String path, @NotNull XmlBasedSettings moduleSettings) {
+    ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.MODULE_DIR_MACRO_NAME, moduleSettings.getPath().getParent());
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 

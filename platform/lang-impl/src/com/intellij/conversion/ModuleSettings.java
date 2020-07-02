@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
@@ -19,8 +18,6 @@ public interface ModuleSettings extends ComponentManagerSettings {
 
   @Nullable
   String getModuleType();
-
-  @NotNull Path getModuleFile();
 
   @NotNull
   Collection<Element> getFacetElements(@NotNull String facetTypeId);
