@@ -3,12 +3,14 @@ package com.intellij.ide
 
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Pair
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import com.intellij.util.ImageLoader
 import com.intellij.util.io.basicAttributesIfExists
+import com.intellij.util.io.exists
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
@@ -124,19 +126,31 @@ internal class RecentProjectIconHelper {
       return null
     }
 
-    val file = Paths.get(path, ".idea", if (isDark) "icon_dark.png" else "icon.png")
+    var file = Paths.get(path, ".idea", if (isDark) "icon_dark.png" else "icon.png")
+    var recolor = false
+    if (isDark && !file.exists()) {
+      file = Paths.get(path, ".idea", "icon.png")
+      recolor = true
+    }
+
     val fileInfo = file.basicAttributesIfExists() ?: return null
     val timestamp = fileInfo.lastModifiedTime().toMillis()
 
-    var icon = projectIcons.get(path)
-    if (icon != null && icon.timestamp == timestamp) {
-      return icon.icon
+    var iconWrapper = projectIcons.get(path)
+    if (iconWrapper != null && iconWrapper.timestamp == timestamp) {
+      return iconWrapper.icon
     }
 
     try {
-      icon = MyIcon(createIcon(file) ?: return null, timestamp)
-      projectIcons.put(path, icon)
-      return icon.icon
+      var icon = createIcon(file) ?: return null
+      if (recolor) {
+        icon = IconLoader.getDarkIcon(icon, true)
+      }
+
+      iconWrapper = MyIcon(icon, timestamp)
+
+      projectIcons.put(path, iconWrapper)
+      return iconWrapper.icon
     }
     catch (e: Exception) {
       LOG.error(e)
