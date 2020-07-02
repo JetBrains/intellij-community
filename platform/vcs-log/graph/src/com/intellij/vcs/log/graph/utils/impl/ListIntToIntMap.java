@@ -7,8 +7,6 @@ import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 public final class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
   public static final int DEFAULT_BLOCK_SIZE = 30;
 
@@ -71,12 +69,8 @@ public final class ListIntToIntMap extends AbstractIntToIntMap implements Updata
   @Override
   public int getLongIndex(int shortIndex) {
     checkShortIndex(shortIndex);
-    int i = Arrays.binarySearch(mySubSumOfBlocks, shortIndex);
-    if (i < 0) {
-      i = -i - 1;
-    }
 
-    int blockIndex = i;
+    int blockIndex = lastInsertionPoint(mySubSumOfBlocks, shortIndex);
     int prefVisibleCount = 0;
     if (blockIndex > 0) prefVisibleCount = mySubSumOfBlocks[blockIndex - 1];
 
@@ -129,5 +123,30 @@ public final class ListIntToIntMap extends AbstractIntToIntMap implements Updata
     for (int blockIndex = endSumIndex + 1; blockIndex < mySubSumOfBlocks.length; blockIndex++) {
       mySubSumOfBlocks[blockIndex] += sumDelta;
     }
+  }
+
+  /**
+   * Finds an insertion point for the key in a sorted array using binary search.
+   * Can not be implemented with {@link java.util.Arrays#binarySearch(int[], int)}} as the latter does not guarantee
+   * which of the multiple occurrences of the key is going to be found, while this method always returns the last insertion point.
+   *
+   * @param array the array to be searched
+   * @param key the value to be searched for
+   * @return index of the insertion point for the key. The insertion point is defined as the index of the first element greater than the key.
+   */
+  private static int lastInsertionPoint(int[] array, int key) {
+    int l = 0;
+    int u = array.length - 1;
+    while (u > l) {
+      int middle = (l + u) / 2;
+      if (array[middle] <= key) {
+        l = middle + 1;
+      }
+      else {
+        u = middle;
+      }
+    }
+    assert l == u;
+    return l;
   }
 }
