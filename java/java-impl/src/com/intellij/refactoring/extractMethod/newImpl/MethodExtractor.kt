@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
@@ -26,9 +27,7 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.wrapWi
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.MapFromDialog.mapFromDialog
-import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ExpressionOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
-import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.ConditionalFlow
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
@@ -39,9 +38,9 @@ class MethodExtractor {
 
   private val LOG = Logger.getInstance(MethodExtractor::class.java)
 
-  fun doInplaceExtract(editor: Editor) {
+  fun doInplaceExtract(editor: Editor, file: PsiFile, range: TextRange) {
     val project = editor.project ?: return
-    val statements = ExtractSelector().suggestElementsToExtract(editor)
+    val statements = ExtractSelector().suggestElementsToExtract(file, range)
     val extractOptions = findExtractOptions(statements)
 
     fun command() {
@@ -58,15 +57,17 @@ class MethodExtractor {
     CommandProcessor.getInstance().executeCommand(project, ::command, ExtractMethodHandler.getRefactoringName(), null)
   }
 
-  fun doExtract(editor: Editor, refactoringName: String, helpId: String) {
+  fun doExtract(file: PsiFile, range: TextRange, refactoringName: String, helpId: String) {
+    val project = file.project
+    val editor = PsiEditorUtil.findEditor(file) ?: return
+
     if (Registry.`is`("java.refactoring.extractMethod.inplace")) {
-      doInplaceExtract(editor)
+      doInplaceExtract(editor, file, range)
       return
     }
-    val project = editor.project ?: return
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
+
     try {
-      val statements = ExtractSelector().suggestElementsToExtract(editor)
+      val statements = ExtractSelector().suggestElementsToExtract(file, range)
       if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return
       if (statements.isEmpty()) {
         throw ExtractException(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"), file)
@@ -117,7 +118,8 @@ class MethodExtractor {
   ): Boolean {
     val project = editor.project ?: return false
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return false
-    val elements = ExtractSelector().suggestElementsToExtract(editor)
+    val range = ExtractMethodHelper.findEditorSelection(editor) ?: return false
+    val elements = ExtractSelector().suggestElementsToExtract(file, range)
     if (elements.isEmpty()) throw ExtractException("Nothing to extract", file)
     var options = findExtractOptions(elements)
     val analyzer = CodeFragmentAnalyzer(elements)
