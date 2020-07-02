@@ -125,7 +125,7 @@ public class CompletionData {
   @Deprecated
   @Nullable
   public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {
-    return CompletionUtil.getReferencePrefix(insertedElement, offsetInFile);
+    return CompletionUtil.findReferencePrefix(insertedElement, offsetInFile);
   }
 
   /**

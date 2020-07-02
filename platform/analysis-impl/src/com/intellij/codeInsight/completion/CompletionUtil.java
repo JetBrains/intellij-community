@@ -168,11 +168,16 @@ public final class CompletionUtil {
    */
   @Nullable
   public static String findReferencePrefix(@NotNull CompletionParameters parameters) {
-    return getReferencePrefix(parameters.getPosition(), parameters.getOffset());
+    return findReferencePrefix(parameters.getPosition(), parameters.getOffset());
   }
 
+  /**
+   * @return a prefix from completion matching calculated by a reference found at the given offset
+   * (the reference text from the beginning until that offset),
+   * or {@code null} if there's no reference there.
+   */
   @Nullable
-  static String getReferencePrefix(@NotNull PsiElement position, int offsetInFile) {
+  public static String findReferencePrefix(@NotNull PsiElement position, int offsetInFile) {
     try {
       PsiUtilCore.ensureValid(position);
       PsiReference ref = position.getContainingFile().findReferenceAt(offsetInFile);
