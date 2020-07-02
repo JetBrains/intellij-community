@@ -82,7 +82,7 @@ public class NewObjectEqualityInspection extends BaseInspection {
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null) return expression;
       PsiElement block = ControlFlowUtil.findCodeFragment(variable);
-      PsiElement expressionContext = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiLambdaExpression.class);
+      PsiElement expressionContext = PsiTreeUtil.getParentOfType(expression, PsiMember.class, PsiLambdaExpression.class);
       if (expressionContext == null || PsiTreeUtil.isAncestor(block, expressionContext, true)) return expression;
       if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, block, null)) return expression;
       ControlFlow flow;
