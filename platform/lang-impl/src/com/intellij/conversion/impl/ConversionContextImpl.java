@@ -262,11 +262,11 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @NotNull
-  public String expandPath(@NotNull String path, @NotNull XmlBasedSettings moduleSettings) {
+  public String expandPath(@NotNull String path, @NotNull ComponentManagerSettings moduleSettings) {
     return createExpandMacroMap(moduleSettings).substitute(path, true);
   }
 
-  private @NotNull ExpandMacroToPathMap createExpandMacroMap(@Nullable XmlBasedSettings moduleSettings) {
+  private @NotNull ExpandMacroToPathMap createExpandMacroMap(@Nullable ComponentManagerSettings moduleSettings) {
     ExpandMacroToPathMap map = createExpandMacroMap();
     if (moduleSettings != null) {
       String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getPath().getParent().toAbsolutePath().toString());
@@ -288,7 +288,7 @@ public final class ConversionContextImpl implements ConversionContext {
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public static String collapsePath(@NotNull String path, @NotNull XmlBasedSettings moduleSettings) {
+  public static String collapsePath(@NotNull String path, @NotNull ComponentManagerSettings moduleSettings) {
     ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.MODULE_DIR_MACRO_NAME, moduleSettings.getPath().getParent());
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }

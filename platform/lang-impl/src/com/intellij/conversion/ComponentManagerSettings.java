@@ -6,6 +6,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ComponentManagerSettings extends XmlBasedSettings {
+import java.nio.file.Path;
+
+public interface ComponentManagerSettings {
   @Nullable Element getComponentElement(@NotNull @NonNls String componentName);
+
+  @NotNull Element getRootElement();
+
+  @NotNull Path getPath();
 }

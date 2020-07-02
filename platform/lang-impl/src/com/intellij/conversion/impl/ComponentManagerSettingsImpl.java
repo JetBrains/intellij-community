@@ -3,14 +3,13 @@ package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ComponentManagerSettings;
-import com.intellij.conversion.XmlBasedSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 
-public class ComponentManagerSettingsImpl implements ComponentManagerSettings, XmlBasedSettings {
+public class ComponentManagerSettingsImpl implements ComponentManagerSettings {
   private final Path file;
   protected final ConversionContextImpl context;
 
