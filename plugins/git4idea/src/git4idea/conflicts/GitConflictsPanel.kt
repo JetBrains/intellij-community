@@ -145,24 +145,8 @@ class GitConflictsPanel(
   }
 
   fun showMergeWindowForSelection() {
-    val conflicts = getSelectedConflicts().filter { mergeHandler.canResolveConflict(it) && !getConflictOperationLock(it).isLocked }.toList()
-    if (conflicts.isEmpty()) return
-
     val reversed = HashSet(reversedRoots)
-
-    for (conflict in conflicts) {
-      val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(conflict.filePath.path)
-      if (file == null) {
-        VcsNotifier.getInstance(project).notifyError(GitBundle.message("conflicts.merge.window.error.title"),
-                                                     GitBundle.message("conflicts.merge.window.error.message", conflict.filePath))
-        continue
-      }
-
-      val lock = getConflictOperationLock(conflict)
-      MergeConflictResolveUtil.showMergeWindow(project, file, lock) {
-        mergeHandler.resolveConflict(conflict, file, reversed.contains(conflict.root))
-      }
-    }
+    showMergeWindow(project, mergeHandler, getSelectedConflicts(), reversed::contains)
   }
 
   fun canAcceptConflictSideForSelection(): Boolean {
@@ -190,9 +174,7 @@ class GitConflictsPanel(
     }.queue()
   }
 
-  private fun getConflictOperationLock(conflict: GitConflict): BackgroundableActionLock {
-    return BackgroundableActionLock.getLock(project, conflict.filePath)
-  }
+  private fun getConflictOperationLock(conflict: GitConflict) = getConflictOperationLock(project, conflict)
 
 
   private inner class MainPanel : JPanel(BorderLayout()), DataProvider {
@@ -206,6 +188,29 @@ class GitConflictsPanel(
 
   interface Listener : EventListener {
     fun onDescriptionChange(description: String) {}
+  }
+}
+
+internal fun getConflictOperationLock(project: Project, conflict: GitConflict): BackgroundableActionLock {
+  return BackgroundableActionLock.getLock(project, conflict.filePath)
+}
+
+internal fun showMergeWindow(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>, isReversed: (VirtualFile) -> Boolean) {
+  val conflicts = selectedConflicts.filter { handler.canResolveConflict(it) && !getConflictOperationLock(project, it).isLocked }.toList()
+  if (conflicts.isEmpty()) return
+
+  for (conflict in conflicts) {
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(conflict.filePath.path)
+    if (file == null) {
+      VcsNotifier.getInstance(project).notifyError(GitBundle.message("conflicts.merge.window.error.title"),
+                                                   GitBundle.message("conflicts.merge.window.error.message", conflict.filePath))
+      continue
+    }
+
+    val lock = getConflictOperationLock(project, conflict)
+    MergeConflictResolveUtil.showMergeWindow(project, file, lock) {
+      handler.resolveConflict(conflict, file, isReversed(conflict.root))
+    }
   }
 }
 

@@ -28,8 +28,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.isEmpty
-import com.intellij.util.OpenSourceUtil
-import com.intellij.util.Processor
 import git4idea.conflicts.getConflictType
 import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
@@ -37,6 +35,7 @@ import git4idea.index.GitStageTracker
 import git4idea.index.actions.StagingAreaOperation
 import git4idea.index.isRenamed
 import git4idea.index.ui.NodeKind.Companion.sortOrder
+import git4idea.repo.GitConflict
 import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -184,12 +183,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
   private class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
     AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.fileStatus) {
     private val movedRelativePath by lazy { getMovedRelativePath(getUserObject()) }
-    private val conflict by lazy {
-      if (getUserObject().kind == NodeKind.CONFLICTED) {
-        GitStagingAreaHolder.createConflict(getUserObject().root, getUserObject().status)
-      }
-      else null
-    }
+    private val conflict by lazy { getUserObject().createConflict() }
 
     override fun filePath(userObject: GitFileStatusNode): FilePath = userObject.filePath
 
@@ -400,4 +394,8 @@ data class GitFileStatusNode(val root: VirtualFile, val status: GitFileStatus, v
   override fun toString(): String {
     return "GitFileStatusNode.Saved(root=$root, status=$fileStatus, kind=$kind)"
   }
+}
+
+internal fun GitFileStatusNode.createConflict(): GitConflict? {
+  return GitStagingAreaHolder.createConflict(root, status)
 }
