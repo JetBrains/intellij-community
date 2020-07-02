@@ -52,7 +52,7 @@ class A {
 
   private fun doTest(
     text: String,
-    settings: JavaLensSettings = JavaLensSettings(true, true, false)
+    settings: JavaLensSettings = JavaLensSettings(true, true)
   ) {
     testProvider(
       "test.java",

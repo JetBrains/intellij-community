@@ -182,7 +182,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
     JMenuItem item = new JMenuItem(JavaBundle.message("button.text.settings"));
     item.addActionListener(e -> {
       FUCounterUsageLogger.getInstance().logEvent(project, FUS_GROUP_ID, SETTING_CLICKED_EVENT_ID);
-      openSettings(JavaLanguage.INSTANCE, project);
+      InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE, model -> model.getId().equals(CODE_LENS_ID));
     });
     popupMenu.add(item);
 
@@ -190,14 +190,6 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
       popupMenu.show(e.getComponent(), e.getX(), e.getY());
       return Unit.INSTANCE;
     });
-  }
-
-  public static void openSettings(@NotNull Language language, @NotNull Project project) {
-    InlayHintsConfigurable.showSettingsDialogForLanguage(project, language, model -> model.getId().equals(CODE_LENS_ID));
-  }
-
-  public static JavaLensSettings getSettings() {
-    return InlayHintsSettings.instance().findSettings(KEY, JavaLanguage.INSTANCE, JavaLensSettings::new);
   }
 
   @NotNull

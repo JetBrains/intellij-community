@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.problems
 
-import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
+import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -51,7 +51,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         val interfaceKeyword = factory.createKeyword(PsiKeyword.INTERFACE)
         classKeyword?.replace(interfaceKeyword)
       }
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
   }
 
@@ -91,7 +91,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         targetClass = targetClass.replace(annoType) as PsiClass
       }
     }
-    assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+    assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
   }
 
   fun testInheritedMethodUsage() {
@@ -125,7 +125,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
       }
 
-      assertTrue(hasReportedProblems<PsiClass>(aClass, refClass))
+      assertTrue(hasReportedProblems<PsiClass>(refClass))
     }
   }
 
@@ -157,7 +157,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         psiClass.fields[0].modifierList?.setModifierProperty(PsiModifier.PRIVATE, true)
       }
 
-      assertNotEmpty(ProjectProblemPassUtils.getInlays(myFixture.editor).entries)
+      assertNotEmpty(getProblems())
 
       val selectedEditor = FileEditorManager.getInstance(project).selectedEditor
       WriteCommandAction.runWriteCommandAction(project) {
@@ -167,7 +167,8 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
       }
       PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-      assertEmpty(ProjectProblemPassUtils.getInlays(myFixture.editor).entries)
+      myFixture.doHighlighting()
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
     }
   }
 
@@ -200,7 +201,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         val innerClass = psiClass.findInnerClassByName("Inner", false)
         innerClass?.modifierList?.setModifierProperty(PsiModifier.STATIC, !isStatic)
       }
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
   }
 
@@ -236,7 +237,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
 
     doTest(targetClass) {
       changeClass(targetClass, classChangeAction)
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
   }
 

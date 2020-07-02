@@ -4,17 +4,12 @@ package com.intellij.java.propertyBased
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.problems.MemberCollector
 import com.intellij.codeInsight.daemon.problems.MemberUsageCollector
-import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
-import com.intellij.codeInsight.hints.BlockInlayRenderer
-import com.intellij.codeInsight.hints.presentation.DynamicDelegatePresentation
-import com.intellij.codeInsight.hints.presentation.OnClickPresentation
-import com.intellij.codeInsight.hints.presentation.OnHoverPresentation
-import com.intellij.codeInsight.hints.presentation.SequencePresentation
+import com.intellij.codeInsight.daemon.problems.Problem
+import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.codeInsight.javadoc.JavaDocUtil
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
@@ -35,8 +30,6 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.propertyBased.MadTestingUtil
-import com.intellij.usages.UsageInfo2UsageAdapter
-import com.intellij.usages.UsageViewManager
 import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.psiutils.TypeUtils
 import junit.framework.TestCase
@@ -44,9 +37,6 @@ import one.util.streamex.StreamEx
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import java.awt.Point
-import java.awt.event.MouseEvent
-import javax.swing.JPanel
 import kotlin.math.absoluteValue
 
 @SkipSlowTestLocally
@@ -75,7 +65,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
         val editor = openEditor(fileToChange.virtualFile)
         rehighlight(fileToChange, editor)
-        if (getFilesReportedByProblemSearch(editor, fileToChange).isNotEmpty()) continue
+        if (getFilesReportedByProblemSearch(editor).isNotEmpty()) continue
 
         env.logMessage("Selected file: ${fileToChange.name}")
 
@@ -97,14 +87,14 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val psiFile = psiManager.findFile(changedFile)!!
       val editor = openEditor(changedFile)
       rehighlight(psiFile, editor)
-      val reportedChanges = ProjectProblemPassUtils.getInlays(editor)
-      for ((member, inlay) in reportedChanges) {
-        if (inlay != null) {
-          TestCase.fail("Problems are still reported even after the fix. " +
-                        "File: ${changedFile.name}, " +
-                        "Member: ${JavaDocUtil.getReferenceText(myProject, member)}, " +
-                        "Reported problems: ${extractProblems(changedFile, inlay)}")
-        }
+      val problems: Map<PsiMember, Set<Problem>> = ProjectProblemUtils.getReportedProblems(
+        editor)
+      if (problems.isNotEmpty()) {
+        TestCase.fail("""
+          Problems are still reported even after the fix.
+          File: ${changedFile.name}, 
+          ${problems.map { (member, memberProblems) -> extractMemberProblems(member, memberProblems) }}
+        """.trimIndent())
       }
     }
   }
@@ -150,7 +140,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
         env.logMessage("Too costly to analyze element after change, skipping all iteration")
         return null
       }
-      reportedFiles.addAll(getFilesReportedByProblemSearch(editor, fileToChange))
+      reportedFiles.addAll(getFilesReportedByProblemSearch(editor))
       val curScope = psiMember.useScope
       member.scope = prevScope.union(curScope)
     }
@@ -263,76 +253,30 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
   private fun inScope(psiFile: PsiFile, scope: SearchScope): Boolean = scope.contains(psiFile.virtualFile)
 
-  private fun extractProblems(virtualFile: VirtualFile, inlay: Inlay<*>): String {
-    data class Problem(val fileName: String, val offset: Int, val selectedElement: String,
-                       val context: String?, val fileErrors: List<HighlightInfo>)
+  private fun extractMemberProblems(member: PsiMember, memberProblems: Set<Problem>): String {
+    data class ProblemData(val fileName: String, val offset: Int, val reportedElement: String,
+                           val context: String?, val fileErrors: List<HighlightInfo>)
 
-    fun getProblem(openedFile: VirtualFile, textEditor: TextEditor): Problem {
-      val editor = textEditor.editor
-      val psiFile = PsiManager.getInstance(myProject).findFile(openedFile)!!
-      val offset = editor.caretModel.offset
-      val selectedElement = psiFile.findElementAt(offset)!!
-      val context = PsiTreeUtil.getParentOfType(selectedElement,
-                                                PsiStatement::class.java, PsiExpression::class.java,
-                                                PsiMethod::class.java, PsiClass::class.java)
-      val fileErrors = rehighlight(psiFile, editor).filter { it.severity == HighlightSeverity.ERROR }
-      return Problem(openedFile.name, offset, selectedElement.text, context?.text, fileErrors)
+    fun getProblemData(problem: Problem): ProblemData {
+      val context = problem.context
+      val reportedElement = problem.reportedElement
+      val psiFile = reportedElement.containingFile
+      val fileName = psiFile.name
+      val offset = reportedElement.textOffset
+      val textEditor = FileEditorManager.getInstance(myProject).openFile(psiFile.virtualFile, true) as TextEditor
+      val fileErrors = rehighlight(psiFile, textEditor.editor).filter { it.severity == HighlightSeverity.ERROR }
+      return ProblemData(fileName, offset, reportedElement.text, context.text, fileErrors)
     }
 
-    clickOnInlay(inlay)
-
-    val textEditor = FileEditorManager.getInstance(myProject).selectedEditor as TextEditor
-    val openedFile = textEditor.file!!
-    if (openedFile != virtualFile) return getProblem(openedFile, textEditor).toString()
-
-    val usageView = UsageViewManager.getInstance(myProject).selectedUsageView!!
-    val problems = usageView.usages.map { usage ->
-      usage.navigate(true)
-      val editor = FileEditorManager.getInstance(myProject).selectedEditor as TextEditor
-      val file = editor.file!!
-      getProblem(file, editor)
-    }
-    return problems.joinToString { it.toString() }
+    return "Member: ${JavaDocUtil.getReferenceText(member.project, member)}," +
+           " Problems: ${memberProblems.map { getProblemData(it) }}\n"
   }
 
-  private fun getFilesReportedByProblemSearch(editor: Editor, psiFile: PsiFile): Set<VirtualFile> {
-    val reportedChanges: Map<PsiMember, Inlay<*>> = ProjectProblemPassUtils.getInlays(editor)
-    val virtualFile = psiFile.virtualFile
-    val filesWithProblems = mutableSetOf<VirtualFile>()
-    for (inlay in reportedChanges.values) {
-      clickOnInlay(inlay)
-      val selectedEditor = FileEditorManager.getInstance(myProject).selectedEditor!!
-      val openedFile = selectedEditor.file!!
-      if (openedFile != virtualFile) {
-        filesWithProblems.add(openedFile)
-        openEditor(virtualFile)
-        continue
-      }
-      val usageView = UsageViewManager.getInstance(myProject).selectedUsageView!!
-      for (usage in usageView.usages) {
-        val usageFile = (usage as UsageInfo2UsageAdapter).usageInfo.virtualFile!!
-        filesWithProblems.add(usageFile)
-      }
-    }
-    return filesWithProblems
-  }
-
-  companion object {
-    private fun clickOnInlay(inlay: Inlay<*>) {
-      val click = MouseEvent(JPanel(), 0, 0, 0, 0, 0, 0, true, MouseEvent.BUTTON1)
-      val point = Point(0, 0)
-      val renderer = inlay.renderer as BlockInlayRenderer
-      val constrainedPresentations = renderer.getConstrainedPresentations()
-      val presentation = constrainedPresentations[0]
-      val rootPresentation = presentation.root
-      val settingsOnClickPresentation = (rootPresentation.content as SequencePresentation).presentations[1] as OnClickPresentation
-      val problemsHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
-      problemsHoverPresentation.mouseMoved(click, point)
-      val delegatePresentation = problemsHoverPresentation.presentation as DynamicDelegatePresentation
-      val problemsClickPresentation = delegatePresentation.delegate as OnClickPresentation
-      problemsClickPresentation.mouseClicked(click, point)
-    }
-  }
+  private fun getFilesReportedByProblemSearch(editor: Editor): Set<VirtualFile> =
+    ProjectProblemUtils.getReportedProblems(editor).asSequence()
+      .flatMap { it.value.asSequence() }
+      .map { it.reportedElement.containingFile }
+      .mapTo(mutableSetOf()) { it.virtualFile }
 
   private sealed class Modification(protected val member: PsiMember, env: ImperativeCommand.Environment) {
 

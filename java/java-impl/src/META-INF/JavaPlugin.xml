@@ -2022,6 +2022,7 @@
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
     <registryKey key="ide.java.show.bundled.runtime" defaultValue="true" description="Enables using bundled JetBrains Runtime for execution"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLensProvider"/>
+    <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemHintProvider"/>
     <statistics.counterUsagesCollector groupId="java.lens" version="2"/>
     <notificationAllowlist groupIds="Accepted language levels;Build Script Found;Clean artifact;Java Preview Features;HotSwap;
     Analyze thread dump;SharedIndexes;Compiler;Source searcher;Repository;JSHELL_NOTIFICATIONS;Build;Quarantine Cleaner"/>
