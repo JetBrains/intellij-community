@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.AssumptionViolatedException;
 import org.junit.ComparisonFailure;
+import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -72,6 +73,35 @@ import java.util.function.Supplier;
 
 import static org.junit.Assume.assumeTrue;
 
+/**
+ * This class is compatible with both JUnit 3 and JUnit 4. To use JUnit 4, just annotate your test subclass
+ * with @RunWith(JUnit4.class) or any other (like Parametrized.class), and you are all set.
+ *
+ * Don't annotate the JUnit 3 setUp()/tearDown() methods as @Before/@After, and don't call them from other @Before/@After methods.
+ * Also don't define @Rule's calling runBare(), just subclassing this class (directly or indirectly) is enough. <p/>
+ *
+ * The execution order is the following:
+ * <pre{@code
+ *
+ *   - (JUnit 4 only) #checkShouldRunTest(Description) that can be used to ignore tests with meaningful message
+ *   - #shouldRunTest() is also called (both JUnit 3 and JUnit 4)
+ *
+ *   - #setUp(), usually overridden so that it initializes classes in order from base to specific
+ *
+ *       - (JUnit 4 only) any @Rule fields, then @Rule methods
+ *       - (JUnit 4 only) any @Before methods
+ *
+ *           - the testXxx() method (JUnit 3), or the @Test method (JUnit 4)
+ *
+ *       - (JUnit 4 only) any @After methods
+ *       - (JUnit 4 only) any @Rule methods, then @Rule fields, cleanup
+ *
+ *   - #tearDown(), usually overridden in the reverse order: from specific to base
+ * } </pre>
+ *
+ * Note that @Rule, @Before and @After methods execute within the same context/thread as the @Test method,
+ * which may differ from how setUp()/tearDown() are executed.
+ */
 public abstract class UsefulTestCase extends TestCase {
   public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
   public static final String TEMP_DIR_MARKER = "unitTest_";
@@ -110,6 +140,28 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   /**
+   * This @Rule ensures that JUnit4 tests defined in subclasses annotated with @RunWith are executed
+   * in the exactly the same context as if they would have been executed were they plain old JUnit3 tests.
+   * This includes calling all the necessary setUp()/tearDown() together with any other customization defined by the
+   * platform subclasses like {@link LightPlatformTestCase} or {@link HeavyPlatformTestCase}: running on EDT,
+   * in a write action, wrapped in a command, etc.
+   *
+   * It's executed around any other rules and @Before/@After methods defined in subclasses.
+   * Subclasses may overwrite this field in order to execute other rules around the base one.
+   */
+  @Rule
+  public @NotNull TestRule runBareTestRule = (base, description) -> new Statement() {
+    @Override
+    public void evaluate() throws Throwable {
+      String name = description.getMethodName();
+      name = StringUtil.notNullize(StringUtil.substringBefore(name, "["), name);
+      setName(name);
+      checkShouldRunTest(description);
+      runBare(base::evaluate);
+    }
+  };
+
+  /**
    * Pass here the exception you want to be thrown first
    * E.g.<pre>
    * {@code
@@ -141,26 +193,6 @@ public abstract class UsefulTestCase extends TestCase {
 
   public UsefulTestCase(@NotNull String name) {
     super(name);
-  }
-
-  /**
-   * This is not marked as @Rule on purpose to avoid breaking subclasses running
-   * with JUnit4 and defining their own rules for invoking the setUp/runTest/tearDown sequence.
-   *
-   * Subclasses that wish to re-use the proper machinery should opt-in by defining a field or a method
-   * (or just overriding this one) annotated with @{@link org.junit.Rule} and returning getRunBareTestRule().
-   */
-  public @NotNull TestRule getRunBareTestRule() {
-    return (base, description) -> new Statement() {
-      @Override
-      public void evaluate() throws Throwable {
-        String name = description.getMethodName();
-        name = StringUtil.notNullize(StringUtil.substringBefore(name, "["), name);
-        setName(name);
-        checkShouldRunTest(description);
-        runBare(base::evaluate);
-      }
-    };
   }
 
   protected void checkShouldRunTest(@NotNull Description description) throws AssumptionViolatedException {

@@ -128,9 +128,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   private AccessToken projectTracker;
 
-  @Rule
-  public final @NotNull TestRule runBareTestRule = getRunBareTestRule();
-
   public @NotNull TempFiles getTempDir() {
     return myTempFiles;
   }

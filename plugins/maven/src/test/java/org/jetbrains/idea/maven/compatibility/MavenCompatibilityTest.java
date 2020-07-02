@@ -8,8 +8,6 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
@@ -19,9 +17,6 @@ import java.util.List;
 
 @RunWith(Parameterized.class)
 public abstract class MavenCompatibilityTest extends MavenImportingTestCase {
-  @Rule
-  public final @NotNull TestRule runBareTestRule = getRunBareTestRule();
-
   @NotNull
   protected MavenWrapperTestFixture myWrapperTestFixture;
 

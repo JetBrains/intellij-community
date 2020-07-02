@@ -18,7 +18,6 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,15 +46,9 @@ public class CodeAnalysisAnnotationsTest extends LightJavaCodeInsightFixtureTest
   }
 
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() {
     Registry.get("java.codeanalysis.annotations.available").setValue(true, getTestRootDisposable());
     mockAnnotations();
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    super.tearDown();
   }
 
   private void mockAnnotations() {

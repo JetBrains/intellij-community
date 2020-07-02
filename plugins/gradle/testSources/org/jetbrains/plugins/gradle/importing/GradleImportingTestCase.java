@@ -70,7 +70,7 @@ import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderT
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS;
 import static org.junit.Assume.assumeThat;
 
-@RunWith(value = Parameterized.class)
+@RunWith(Parameterized.class)
 public abstract class GradleImportingTestCase extends ExternalSystemImportingTestCase {
   public static final String BASE_GRADLE_VERSION = AbstractModelBuilderTest.BASE_GRADLE_VERSION;
   protected static final String GRADLE_JDK_NAME = "Gradle JDK";
@@ -79,9 +79,8 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @Rule public TestName name = new TestName();
 
   @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
-  @NotNull
-  @org.junit.runners.Parameterized.Parameter()
-  public String gradleVersion;
+  @Parameterized.Parameter()
+  public @NotNull String gradleVersion;
   private GradleProjectSettings myProjectSettings;
   private String myJdkHome;
 
@@ -199,11 +198,6 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
-  }
-
-  @Override
-  public String getName() {
-    return name.getMethodName() == null ? super.getName() : FileUtil.sanitizeFileName(name.getMethodName());
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")

@@ -24,7 +24,6 @@ import org.hamcrest.SelfDescribing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.junit.Before;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,7 +62,6 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     }
   }
 
-  @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();

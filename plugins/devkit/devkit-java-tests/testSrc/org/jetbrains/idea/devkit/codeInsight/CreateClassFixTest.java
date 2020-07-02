@@ -34,11 +34,8 @@ public class CreateClassFixTest extends UsefulTestCase {
   @org.junit.runners.Parameterized.Parameter(0) public String myTestName;
   @org.junit.runners.Parameterized.Parameter(1) public boolean myCreateClass;
 
-  @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
-
+  public void before() throws Exception {
     JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = JavaTestFixtureFactory.createFixtureBuilder(getClass().getSimpleName());
     myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
@@ -49,19 +46,10 @@ public class CreateClassFixTest extends UsefulTestCase {
     myFixture.enableInspections(new RegistrationProblemsInspection());
   }
 
-  @Override
   @After
-  public void tearDown() throws Exception {
-    try {
-      myFixture.tearDown();
-      myFixture = null;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  public void after() throws Exception {
+    myFixture.tearDown();
+    myFixture = null;
   }
 
   @NotNull

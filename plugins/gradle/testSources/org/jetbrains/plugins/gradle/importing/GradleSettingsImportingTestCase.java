@@ -20,8 +20,6 @@ import com.intellij.openapi.util.registry.Registry;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.runners.Parameterized;
 
 import java.util.*;
@@ -31,14 +29,12 @@ import static com.intellij.openapi.externalSystem.service.project.settings.Confi
 public abstract class GradleSettingsImportingTestCase extends GradleImportingTestCase {
   public static final String IDEA_EXT_PLUGIN_VERSION = "0.5";
 
-  @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();
     Registry.get(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED).setValue(true);
   }
 
-  @After
   @Override
   public void tearDown() throws Exception {
     try {

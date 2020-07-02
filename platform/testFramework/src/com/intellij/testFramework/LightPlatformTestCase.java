@@ -112,9 +112,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
-  @Rule
-  public final @NotNull TestRule runBareTestRule = getRunBareTestRule();
-
   /**
    * @return Project to be used in tests for example for project components retrieval.
    */

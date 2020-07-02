@@ -32,9 +32,6 @@ import org.junit.rules.TestRule;
 public abstract class BasePlatformTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
 
-  @Rule
-  public final @NotNull TestRule runBareTestRule = getRunBareTestRule();
-
   @Override
   public @NotNull Disposable getTestRootDisposable() {
     return myFixture == null ? super.getTestRootDisposable() : myFixture.getTestRootDisposable();
