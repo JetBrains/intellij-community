@@ -209,7 +209,8 @@ object ExtractMethodPipeline {
   }
 
   fun withForcedStatic(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
-    val targetClass = PsiTreeUtil.getParentOfType(ExtractMethodHelper.getValidParentOf(extractOptions.elements.first()), PsiClass::class.java)!!
+    val targetClass = PsiTreeUtil.getParentOfType(extractOptions.anchor, PsiClass::class.java)!!
+    if (PsiUtil.isLocalOrAnonymousClass(targetClass) || PsiUtil.isInnerClass(targetClass)) return null
     val fieldUsages = analyzer.findLocalFieldUsages(targetClass, extractOptions.elements)
     if (fieldUsages.any { it.isWrite }) return null
     val fieldInputParameters =

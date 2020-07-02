@@ -126,7 +126,8 @@ class MethodExtractor {
 
     val candidates = ExtractMethodPipeline.findTargetCandidates(analyzer, options)
     val defaultTargetClass = candidates.firstOrNull { it !is PsiAnonymousClass } ?: candidates.first()
-    options = ExtractMethodPipeline.withTargetClass(analyzer, options, defaultTargetClass) ?: throw ExtractException("Fail", elements.first())
+    options = ExtractMethodPipeline.withTargetClass(analyzer, options, targetClass ?: defaultTargetClass)
+                                    ?: throw ExtractException("Fail", elements.first())
     options = options.copy(methodName = "newMethod")
     if (isConstructor != options.isConstructor){
       options = ExtractMethodPipeline.asConstructor(analyzer, options) ?: throw ExtractException("Fail", elements.first())
@@ -141,9 +142,6 @@ class MethodExtractor {
     }
     if (returnType != null) {
       options = options.copy(dataOutput = options.dataOutput.withType(returnType))
-    }
-    if (targetClass != null) {
-      options = ExtractMethodPipeline.withTargetClass(analyzer, options, targetClass) ?: options
     }
     if (disabledParameters.isNotEmpty()) {
       options = options.copy(

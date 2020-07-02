@@ -1414,6 +1414,29 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
+  public void testNoStaticForInnerClass() {
+    try {
+      configureByFile(BASE_PATH + getTestName(false) + ".java");
+      performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
+      fail("Static modifier is forbidden inside inner classes");
+    } catch (PrepareFailedException e){
+    }
+  }
+
+  public void testStaticForNestedClass() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testStaticForOuterClass() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    final int caret = getEditor().getSelectionModel().getLeadSelectionOffset();
+    final PsiClass outerClass = PsiTreeUtil.getParentOfType(getFile().findElementAt(caret), PsiClass.class).getContainingClass();
+    performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, outerClass, null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
   public void testDontMakeParametersFinalDueToUsagesInsideAnonymous() throws Exception {
     doTest();
   }
