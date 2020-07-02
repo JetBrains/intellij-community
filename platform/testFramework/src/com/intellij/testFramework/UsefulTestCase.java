@@ -58,7 +58,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
@@ -366,35 +365,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    final Throwable[] throwables = new Throwable[1];
-
-    Runnable runnable = () -> {
-      try {
-        TestLoggerFactory.onTestStarted();
-        testRunnable.run();
-        TestLoggerFactory.onTestFinished(true);
-      }
-      catch (InvocationTargetException e) {
-        TestLoggerFactory.onTestFinished(false);
-        e.fillInStackTrace();
-        throwables[0] = e.getTargetException();
-      }
-      catch (IllegalAccessException e) {
-        TestLoggerFactory.onTestFinished(false);
-        e.fillInStackTrace();
-        throwables[0] = e;
-      }
-      catch (Throwable e) {
-        TestLoggerFactory.onTestFinished(false);
-        throwables[0] = e;
-      }
-    };
-
-    invokeTestRunnable(runnable::run);
-
-    if (throwables[0] != null) {
-      throw throwables[0];
-    }
+    invokeTestRunnable(testRunnable);
   }
 
   protected boolean shouldRunTest() {
@@ -477,13 +448,29 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    final ThrowableRunnable<Throwable> wrappedRunnable = wrapTestRunnable(testRunnable);
+
     if (runInDispatchThread()) {
       TestApplicationManagerKt.replaceIdeEventQueueSafely();
-      EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(testRunnable));
+      EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
     }
     else {
-      defaultRunBare(testRunnable);
+      defaultRunBare(wrappedRunnable);
     }
+  }
+
+  protected @NotNull ThrowableRunnable<Throwable> wrapTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
+    return () -> {
+      boolean success = false;
+      TestLoggerFactory.onTestStarted();
+      try {
+        testRunnable.run();
+        success = true;
+      }
+      finally {
+        TestLoggerFactory.onTestFinished(success);
+      }
+    };
   }
 
   protected boolean runInDispatchThread() {
