@@ -90,19 +90,13 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void onSelectionChange(@Nullable TabInfo tabInfo) {
-    LightEditorInfo selectedEditorInfo = null;
-    if (tabInfo != null) {
-      Object data = tabInfo.getObject();
-      if (data instanceof LightEditorInfo) {
-        selectedEditorInfo = (LightEditorInfo)data;
-      }
-    }
+    LightEditorInfo selectedEditorInfo = tabInfo != null ? getEditorInfo(tabInfo) : null;
     myEditorManager.fireEditorSelected(selectedEditorInfo);
   }
 
   void selectTab(@NotNull LightEditorInfo info) {
     getTabs().stream()
-      .filter(tabInfo -> tabInfo.getObject().equals(info))
+      .filter(tabInfo -> info.equals(getEditorInfo(tabInfo)))
       .findFirst().ifPresent(tabInfo -> select(tabInfo, true));
   }
 
@@ -154,9 +148,8 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void closeTab(@NotNull TabInfo tabInfo) {
-    Object data = tabInfo.getObject();
-    if (data instanceof LightEditorInfo) {
-      final LightEditorInfo editorInfo = (LightEditorInfo)data;
+    final LightEditorInfo editorInfo = getEditorInfo(tabInfo);
+    if (editorInfo != null) {
       if (!editorInfo.isUnsaved() ||
           autosaveDocument(editorInfo) ||
           LightEditUtil.confirmClose(
@@ -228,7 +221,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   VirtualFile getSelectedFile() {
     TabInfo info = getSelectedInfo();
     if (info != null) {
-      LightEditorInfo editorInfo = ObjectUtils.tryCast(info.getObject(), LightEditorInfo.class);
+      LightEditorInfo editorInfo = getEditorInfo(info);
       if (editorInfo != null) {
         return editorInfo.getFile();
       }
@@ -238,8 +231,9 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
 
   List<VirtualFile> getOpenFiles() {
     return getTabs().stream()
-                    .filter(tab -> tab.getObject() instanceof LightEditorInfo)
-                    .map(tab -> ((LightEditorInfo)tab.getObject()).getFile())
+                    .map(tab -> getEditorInfo(tab))
+                    .filter(editorInfo -> editorInfo != null)
+                    .map(editorInfo -> editorInfo.getFile())
                     .collect(Collectors.toList());
   }
 
@@ -247,7 +241,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   FileEditor getSelectedFileEditor() {
     TabInfo info = getSelectedInfo();
     if (info != null) {
-      LightEditorInfo editorInfo = ObjectUtils.tryCast(info.getObject(), LightEditorInfo.class);
+      LightEditorInfo editorInfo = getEditorInfo(info);
       if (editorInfo != null) {
         return editorInfo.getFileEditor();
       }
@@ -284,9 +278,9 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
 
   private void asyncUpdateTab(@NotNull TabInfo tabInfo) {
     assert ApplicationManager.getApplication().isDispatchThread();
-    Object object = tabInfo.getObject();
-    if (!(object instanceof LightEditorInfo)) return;
-    asyncUpdateTabs(Collections.singletonList(Pair.createNonNull(tabInfo, (LightEditorInfo)object)));
+    LightEditorInfo editorInfo = getEditorInfo(tabInfo);
+    if (editorInfo == null) return;
+    asyncUpdateTabs(Collections.singletonList(Pair.createNonNull(tabInfo, editorInfo)));
   }
 
   private void asyncUpdateTabs(@NotNull List<Pair.NonNull<TabInfo, LightEditorInfo>> tabEditorPairs) {
@@ -339,5 +333,11 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
         asyncUpdateTabs(tabEditorPairs);
       }
     });
+  }
+
+  @Nullable
+  private static LightEditorInfo getEditorInfo(@NotNull TabInfo tabInfo) {
+    Object data = tabInfo.getObject();
+    return data instanceof LightEditorInfo ? (LightEditorInfo)data : null;
   }
 }
