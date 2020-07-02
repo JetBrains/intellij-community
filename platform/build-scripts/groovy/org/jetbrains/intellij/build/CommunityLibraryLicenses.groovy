@@ -313,7 +313,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Jackson Databind", libraryName: "jackson-databind", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson-databind"),
     new LibraryLicense(name: "Jackson Datatype Joda",
-                       libraryName: "com.fasterxml.jackson.datatype:jackson-datatype-joda:2.10.2",
+                       libraryName: "jackson-datatype-joda",
                        license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0",
                        url: "https://github.com/FasterXML/jackson-datatype-joda"),

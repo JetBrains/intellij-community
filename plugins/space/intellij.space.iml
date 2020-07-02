@@ -9,16 +9,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library name="space-idea-sdk" type="repository">
-        <properties maven-id="com.jetbrains:space-idea-sdk:1.0.49863" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/space-idea-sdk/1.0.49863/space-idea-sdk-1.0.49863.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.vcs.git" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
@@ -116,19 +106,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library name="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.10.2" type="repository">
-        <properties maven-id="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.10.2" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.10.2/jackson-datatype-joda-2.10.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.10.2/jackson-annotations-2.10.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.10.2/jackson-core-2.10.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.10.2/jackson-databind-2.10.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.9.9/joda-time-2.9.9.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="jackson-datatype-joda" level="project" />
+    <orderEntry type="library" name="space-idea-sdk" level="project" />
   </component>
 </module>
