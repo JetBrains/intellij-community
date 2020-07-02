@@ -3,6 +3,8 @@ package git4idea.merge.dialog
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
+import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup
+import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBInsets
@@ -15,7 +17,10 @@ import java.awt.Rectangle
 import java.awt.geom.Line2D
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RectangularShape
+import java.util.function.Consumer
 import javax.swing.JButton
+import javax.swing.JComboBox
+import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.plaf.basic.ComboPopup
 
@@ -28,7 +33,8 @@ import javax.swing.plaf.basic.ComboPopup
  */
 internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
                               var outerInsets: Insets = JBInsets.create(DarculaUIUtil.BW.get(), DarculaUIUtil.BW.get()),
-                              private val popupEmptyText: String = StatusText.getDefaultEmptyText())
+                              private val popupEmptyText: String = StatusText.getDefaultEmptyText(),
+                              private val popupComponentProvider: ((JComponent?) -> JComponent)? = null)
   : DarculaComboBoxUI(0f, Insets(1, 0, 1, 0), false) {
 
   override fun paintArrow(g2: Graphics2D, btn: JButton) {
@@ -69,11 +75,34 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
 
   override fun getBorderInsets(c: Component?) = outerInsets
 
-  override fun createPopup(): ComboPopup = super.createPopup().apply { configureList(list) }
+  override fun createPopup(): ComboPopup {
+    val popup = if (useJBPopup())
+      MyComboBoxPopup(comboBox, popupComponentProvider)
+    else
+      CustomComboPopup(comboBox)
+
+    return popup.apply { configureList(list) }
+  }
+
+  private fun useJBPopup() = comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null
 
   private fun configureList(list: JList<*>) {
     (list as? ComponentWithEmptyText)?.let {
       it.emptyText.text = popupEmptyText
+    }
+  }
+
+  private class MyComboBoxPopup<T>(private val comboBox: JComboBox<T>,
+                                   private val popupComponentProvider: ((JComponent?) -> JComponent)? = null)
+    : DarculaJBPopupComboPopup<T>(comboBox) {
+
+
+    override fun createPopup(selectedItem: T?) = object : ComboBoxPopup<T>(this,
+                                                                           selectedItem,
+                                                                           Consumer { value: T -> comboBox.setSelectedItem(value) }) {
+
+      override fun createPopupComponent(content: JComponent?) = popupComponentProvider?.invoke(super.createPopupComponent(content))
+                                                                ?: super.createPopupComponent(content)
     }
   }
 }
