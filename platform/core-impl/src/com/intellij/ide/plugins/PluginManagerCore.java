@@ -207,14 +207,16 @@ public final class PluginManagerCore {
     if (result != null) {
       return result;
     }
-    result = readBrokenPluginFile(PluginManagerCore.class.getResourceAsStream(BROKEN_PLUGIN_FILE));
+    result = readBrokenPluginFile();
     ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
     return result;
   }
 
-  private static Map<PluginId, Set<String>> readBrokenPluginFile(InputStream inputStream) {
+  private static Map<PluginId, Set<String>> readBrokenPluginFile() {
     Map<PluginId, Set<String>> result = new HashMap<>();
-    try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+    try (BufferedReader br = new BufferedReader(
+      new InputStreamReader(PluginManagerCore.class.getResourceAsStream(BROKEN_PLUGIN_FILE), StandardCharsets.UTF_8))
+    ) {
       String s;
       while ((s = br.readLine()) != null) {
         s = s.trim();

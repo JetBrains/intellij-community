@@ -23,12 +23,12 @@ object BrokenPluginsService {
       marketplaceClient.getBrokenPluginsFile()
     )
     if (isNotUpdatedPlugins) return
-    val brokenPlugins = readBrokenPlugins()
+    val brokenPlugins = getBrokenPlugins()
     if (brokenPlugins.isEmpty()) return
     PluginManagerCore.updateBrokenPlugins(brokenPlugins)
   }
 
-  private fun readBrokenPlugins(): Map<PluginId, Set<String>> {
+  private fun getBrokenPlugins(): Map<PluginId, Set<String>> {
     val allBrokenPlugins = marketplaceClient.getBrokenPlugins()
     val currentBuild = ApplicationInfoImpl.getInstance().build
     val currentBrokenPlugins = allBrokenPlugins
@@ -41,7 +41,7 @@ object BrokenPluginsService {
       }
       .groupBy { it.id }.entries
       .associate { (pluginId, brokenPlugins) ->
-        PluginId.getId(pluginId) to brokenPlugins.map { it.version }.toMutableSet()
+        PluginId.getId(pluginId) to brokenPlugins.map { it.version }.toSet()
       }
     return currentBrokenPlugins
   }
