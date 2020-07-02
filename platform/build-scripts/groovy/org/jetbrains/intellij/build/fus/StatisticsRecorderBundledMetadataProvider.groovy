@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.fus
 
+import com.intellij.internal.statistic.config.EventLogExternalSettings
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.http.client.methods.HttpGet
@@ -28,12 +29,16 @@ class StatisticsRecorderBundledMetadataProvider {
       }
       list.write new Retry(context.messages).call {
         download(context, metadataServiceUri(context).with {
-          def name = context.applicationInfo.productCode + '.json'
-          it.endsWith('/') ? "$it$name" : "$it/$name"
+          appendProductCode(context, it)
         })
       }
       return dir
     }
+  }
+
+  private static GString appendProductCode(BuildContext context, String uri) {
+    def name = context.applicationInfo.productCode + '.json'
+    return uri.endsWith('/') ? "$uri$name" : "$uri/$name"
   }
 
   private static String download(BuildContext context, String uri) {
@@ -46,8 +51,12 @@ class StatisticsRecorderBundledMetadataProvider {
 
   @CompileDynamic
   private static String metadataServiceUri(BuildContext context) {
-    def providerUri = context.proprietaryBuildTools.featureUsageStatisticsProperties.whiteListProviderUri
+    def providerUri = appendProductCode(context, context.proprietaryBuildTools.featureUsageStatisticsProperties.metadataProviderUri)
     context.messages.info("Parsing $providerUri")
-    new XmlSlurper().parse(providerUri).'@white-list-service'.toString()
+
+    def config = download(context, providerUri)
+    def appInfo = context.applicationInfo
+    def settings = EventLogExternalSettings.parseSendSettings(new StringReader(config), "${appInfo.majorVersion}.${appInfo.minorVersion}")
+    return settings.getEndpoint("metadata")
   }
 }
