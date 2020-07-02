@@ -2,7 +2,6 @@
 package com.intellij.openapi;
 
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
