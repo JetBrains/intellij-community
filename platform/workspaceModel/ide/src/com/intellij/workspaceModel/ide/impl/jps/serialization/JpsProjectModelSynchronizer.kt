@@ -130,6 +130,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     val baseDirUrl = configLocation.baseDirectoryUrlString
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
     val externalStoragePath = project.getExternalConfigurationDir()
+    //TODO:: Get rid of dependency on ExternalStorageConfigurationManager in order to use in build process
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
     val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false,
                                                                         virtualFileManager, externalStorageConfigurationManager)
