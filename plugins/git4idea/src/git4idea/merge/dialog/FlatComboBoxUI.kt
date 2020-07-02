@@ -34,7 +34,7 @@ import javax.swing.plaf.basic.ComboPopup
 internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
                               var outerInsets: Insets = JBInsets.create(DarculaUIUtil.BW.get(), DarculaUIUtil.BW.get()),
                               private val popupEmptyText: String = StatusText.getDefaultEmptyText(),
-                              private val popupComponentProvider: ((JComponent?) -> JComponent)? = null)
+                              private val popupComponentProvider: ((JComponent) -> JComponent)? = null)
   : DarculaComboBoxUI(0f, Insets(1, 0, 1, 0), false) {
 
   override fun paintArrow(g2: Graphics2D, btn: JButton) {
@@ -93,7 +93,7 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
   }
 
   private class MyComboBoxPopup<T>(private val comboBox: JComboBox<T>,
-                                   private val popupComponentProvider: ((JComponent?) -> JComponent)? = null)
+                                   private val popupComponentProvider: ((JComponent) -> JComponent)? = null)
     : DarculaJBPopupComboPopup<T>(comboBox) {
 
 
@@ -101,7 +101,7 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
                                                                            selectedItem,
                                                                            Consumer { value: T -> comboBox.setSelectedItem(value) }) {
 
-      override fun createPopupComponent(content: JComponent?) = popupComponentProvider?.invoke(super.createPopupComponent(content))
+      override fun createPopupComponent(content: JComponent) = popupComponentProvider?.invoke(super.createPopupComponent(content))
                                                                 ?: super.createPopupComponent(content)
     }
   }
