@@ -92,7 +92,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
-  @NotNull private final TableCellRenderer myDummyRenderer = new MyDefaultTableCellRenderer();
+  @NotNull private final BaseStyleProvider myBaseStyleProvider;
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   @NotNull private final MyMouseAdapter myMouseAdapter;
   @NotNull private final StringCellRenderer myStringCellRenderer;
@@ -120,6 +120,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return VcsLogGraphTable.this.getRowHeight();
       }
     };
+    myBaseStyleProvider = new BaseStyleProvider(this);
     myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this);
     myStringCellRenderer = new StringCellRenderer();
 
@@ -591,9 +592,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @NotNull
   public VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
-    Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, "", selected, hasFocus, row, column);
-    return createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(),
-                       VcsLogHighlighter.TextStyle.NORMAL);
+    return myBaseStyleProvider.getBaseStyle(row, column, hasFocus, selected);
   }
 
   @NotNull
@@ -746,14 +745,21 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return UIManager.getFont("Table.font");
   }
 
-  private static class MyDefaultTableCellRenderer extends DefaultTableCellRenderer {
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      component.setBackground(isSelected
-                              ? table.hasFocus() ? UIUtil.getListSelectionBackground(true) : UIUtil.getListSelectionBackground(false)
-                              : UIUtil.getListBackground());
-      return component;
+  private static class BaseStyleProvider {
+    @NotNull private final JTable myTable;
+    @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
+
+    BaseStyleProvider(@NotNull JTable table) {
+      myTable = table;
+    }
+
+    @NotNull
+    public VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
+      Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(myTable, "", selected, hasFocus, row, column);
+      Color background = selected
+                         ? myTable.hasFocus() ? UIUtil.getListSelectionBackground(true) : UIUtil.getListSelectionBackground(false)
+                         : UIUtil.getListBackground();
+      return createStyle(dummyRendererComponent.getForeground(), background, VcsLogHighlighter.TextStyle.NORMAL);
     }
   }
 
