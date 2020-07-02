@@ -4,7 +4,7 @@ package org.jetbrains.uast.test.java
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.asIdentifiers
 import org.jetbrains.uast.test.common.asRefNames
-import org.jetbrains.uast.test.env.assertEqualsToFile
+import com.intellij.testFramework.assertEqualsToFile
 import java.io.File
 
 abstract class AbstractJavaIdentifiersTest : AbstractJavaUastTest() {
