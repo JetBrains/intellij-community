@@ -367,7 +367,7 @@ final class ActionUpdater {
   }
 
   private boolean hasEnabledChildren(ActionGroup group, UpdateStrategy strategy) {
-    return hasChildrenWithState(group, false, true, strategy);
+    return hasChildrenWithState(group, false, true, strategy, new LinkedHashSet<>());
   }
 
   boolean hasVisibleChildren(ActionGroup group) {
@@ -375,11 +375,16 @@ final class ActionUpdater {
   }
 
   private boolean hasVisibleChildren(ActionGroup group, UpdateStrategy strategy) {
-    return hasChildrenWithState(group, true, false, strategy);
+    return hasChildrenWithState(group, true, false, strategy, new LinkedHashSet<>());
   }
 
-  private boolean hasChildrenWithState(ActionGroup group, boolean checkVisible, boolean checkEnabled, UpdateStrategy strategy) {
+  private boolean hasChildrenWithState(ActionGroup group, boolean checkVisible, boolean checkEnabled, UpdateStrategy strategy, LinkedHashSet<ActionGroup> visited) {
     if (group instanceof AlwaysVisibleActionGroup) {
+      return true;
+    }
+
+    if (visited.size() > 1000) {
+      LOG.error("Too deep action group nesting: " + visited);
       return true;
     }
 
@@ -396,6 +401,10 @@ final class ActionUpdater {
       Presentation presentation = orDefault(anAction, update(anAction, strategy));
       if (anAction instanceof ActionGroup) {
         ActionGroup childGroup = (ActionGroup)anAction;
+        if (!visited.add(childGroup)) {
+          LOG.error("Action group cycle detected: " + childGroup + " in " + visited);
+          return true;
+        }
 
         // popup menu must be visible itself
         if (childGroup.isPopup()) {
@@ -404,7 +413,7 @@ final class ActionUpdater {
           }
         }
 
-        if (hasChildrenWithState(childGroup, checkVisible, checkEnabled, strategy)) {
+        if (hasChildrenWithState(childGroup, checkVisible, checkEnabled, strategy, visited)) {
           return true;
         }
       }
