@@ -34,7 +34,8 @@ class FromArrayConversion {
 
     final String qualifierText = ReferenceExpressionCompletionContributor.getQualifierText(qualifier);
     final PsiExpression conversion = createExpression("java.util.Arrays." + methodName + "(" + qualifierText + prefix + ")", element);
-    if (!expectedType.isAssignableFrom(conversion.getType())) return;
+    PsiType type = conversion.getType();
+    if (type == null || !expectedType.isAssignableFrom(type)) return;
 
     final String presentable = "Arrays." + methodName + "(" + qualifierText + prefix + ")";
     String[] lookupStrings = {StringUtil.isEmpty(qualifierText) ? presentable : prefix, prefix, presentable, methodName + "(" + prefix + ")"};
