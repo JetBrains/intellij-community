@@ -17,6 +17,7 @@ import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +100,11 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsDialog";
+  }
+
+  @Override
+  public Dimension getInitialSize() {
+    return new JBDimension(800, 600);
   }
 
   @Override
