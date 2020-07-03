@@ -232,7 +232,7 @@ public final class UIUtil {
     }
   }
 
-  public static void setMonospaced(Component component) {
+  public static void setMonospaced(@NotNull Component component) {
     Font font = component.getFont();
     component.setFont(new FontUIResource(Font.MONOSPACED, font.getStyle(), font.getSize()));
   }
