@@ -157,7 +157,9 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     for (SettingsEditorFragment<Settings, ?> fragment : list) {
       fragment.addSettingsEditorListener(editor -> panel.rebuildRows());
     }
+    myConstraints.insets = JBUI.insetsLeft(-panel.getLeftInset());
     addLine(panel);
+    myConstraints.insets = JBUI.emptyInsets();
   }
 
   private static class ToggleFragmentAction extends ToggleAction {
