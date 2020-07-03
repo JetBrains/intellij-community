@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.wm.*;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,16 +118,21 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
         return;
       }
 
-      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-      if (statusBar == null) {
-        LOG.error("Cannot add a widget for project without root status bar: " + factory.getId());
-        return;
-      }
-
       StatusBarWidget widget = factory.createWidget(myProject);
       myWidgetFactories.put(factory, widget);
       myWidgetIdsMap.put(widget.ID(), factory);
-      statusBar.addWidget(widget, getAnchor(factory, availableFactories), this);
+      String anchor = getAnchor(factory, availableFactories);
+
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (!myProject.isDisposed()) {
+          StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+          if (statusBar == null) {
+            LOG.error("Cannot add a widget for project without root status bar: " + factory.getId());
+            return;
+          }
+          statusBar.addWidget(widget, anchor, this);
+        }
+      });
     }
   }
 
@@ -159,10 +165,14 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
       if (createdWidget != null) {
         myWidgetIdsMap.remove(createdWidget.ID());
         factory.disposeWidget(createdWidget);
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-        if (statusBar != null) {
-          statusBar.removeWidget(createdWidget.ID());
-        }
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (!myProject.isDisposed()) {
+            StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+            if (statusBar != null) {
+              statusBar.removeWidget(createdWidget.ID());
+            }
+          }
+        });
       }
     }
   }
@@ -181,7 +191,11 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
         return;
       }
       myWidgetFactories.put(factory, null);
-      ApplicationManager.getApplication().invokeLater(() -> updateWidget(factory));
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myProject.isDisposed()) {
+          updateWidget(factory);
+        }
+      });
       incModificationCount();
     }
   }
