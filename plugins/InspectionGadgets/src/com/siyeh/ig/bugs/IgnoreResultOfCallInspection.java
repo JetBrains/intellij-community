@@ -217,6 +217,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) return false;
       if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return false;
+      if (call instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
+        if (MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS.test(previousCall)) return false;
+      }
       if (PropertyUtil.isSimpleGetter(method)) {
         return !isIgnored(method, null);
       }
@@ -304,10 +308,6 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
       if (!honorInferred && !JavaMethodContractUtil.hasExplicitContractAnnotation(method)) return false;
       if (!JavaMethodContractUtil.isPure(method) || hasTrivialReturnValue(method)) return false;
-      if (call instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
-        if (MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS.test(previousCall)) return false;
-      }
       if (!SideEffectChecker.mayHaveExceptionalSideEffect(method)) return true;
       if (!(call instanceof PsiCallExpression) || JavaMethodContractUtil.getMethodCallContracts(method, null).isEmpty()) return false;
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(call);
