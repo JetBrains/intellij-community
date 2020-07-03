@@ -87,7 +87,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   @Override
   public String getParentGroup() {
-    return JavaModuleType.BUILD_TOOLS_GROUP;
+    return JavaModuleType.JAVA_GROUP;
   }
 
   @Override
