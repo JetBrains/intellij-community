@@ -29,14 +29,11 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
     private var psiListenersIsSet: Boolean = false
 
     fun actionPerformed(action: UserAction) {
-        println(action)
         actionsCache.add(action)
         for (suggester in FeatureSuggester.suggesters) {
             if (!isEnabled(suggester)) continue
             val suggestion = suggester.getSuggestion(actionsCache, anActionsCache)
             if (suggestion is PopupSuggestion) {
-                println("Action performed (before): ${suggestion.message}")
-
                 action.parent?.containingFile?.virtualFile ?: return
                 val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
                 if (suggester.needToClearLookup) {
@@ -49,8 +46,6 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
 
                 // send event for testing
                 project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion)
-
-                println("Action performed (after): ${suggestion.message}")
                 return
             }
         }
@@ -102,7 +97,6 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
         })
 
         psiListenersIsSet = true
-        println("PSI listeners have set")
     }
 
     private fun isEnabled(suggester: FeatureSuggester): Boolean {
