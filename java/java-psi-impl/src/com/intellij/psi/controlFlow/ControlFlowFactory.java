@@ -1,18 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public final class ControlFlowFactory {
+import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
+
+public final class ControlFlowFactory implements Disposable {
   // psiElements hold weakly, controlFlows softly
   private final Map<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = ContainerUtil.createConcurrentWeakKeySoftValueMap();
 
@@ -23,7 +26,12 @@ public final class ControlFlowFactory {
   }
 
   public ControlFlowFactory(@NotNull Project project) {
-    PsiManagerEx.getInstanceEx(project).registerRunnableToRunOnChange(() -> clearCache());
+    project.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        if (isPhysical) clearCache();
+      }
+    });
   }
 
   private void clearCache() {
@@ -145,6 +153,11 @@ public final class ControlFlowFactory {
   @NotNull
   private ConcurrentList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
     return cachedFlows.computeIfAbsent(element, __ -> ContainerUtil.createConcurrentList());
+  }
+
+  @Override
+  public void dispose() {
+
   }
 }
 

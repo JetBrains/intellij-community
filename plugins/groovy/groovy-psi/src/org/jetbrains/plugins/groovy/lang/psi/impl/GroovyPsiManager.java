@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -8,7 +9,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -31,10 +32,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
-/**
- * @author ven
- */
-public class GroovyPsiManager {
+import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
+
+public class GroovyPsiManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(GroovyPsiManager.class);
 
   private static final Set<String> ourPopularClasses = ContainerUtil.newHashSet(GroovyCommonClassNames.GROOVY_LANG_CLOSURE,
@@ -56,8 +56,12 @@ public class GroovyPsiManager {
 
   public GroovyPsiManager(Project project) {
     myProject = project;
-
-    PsiManagerEx.getInstanceEx(myProject).registerRunnableToRunOnAnyChange(() -> dropTypesCache());
+    myProject.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        dropTypesCache();
+      }
+    });
   }
 
   public void dropTypesCache() {
@@ -184,4 +188,8 @@ public class GroovyPsiManager {
     return ourGuard.doPreventingRecursion(element, true, computable);
   }
 
+  @Override
+  public void dispose() {
+
+  }
 }
