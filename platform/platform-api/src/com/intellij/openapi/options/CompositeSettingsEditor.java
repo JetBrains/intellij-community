@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -22,7 +24,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
 
   public CompositeSettingsEditor() {}
 
-  public CompositeSettingsEditor(Factory<Settings> factory) {
+  public CompositeSettingsEditor(@Nullable Factory<Settings> factory) {
     super(factory);
 
     if (factory != null) {
@@ -72,7 +74,9 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
       @Override
       public void stateChanged(@NotNull SettingsEditor<Settings> editor) {
         fireEditorStateChanged();
-        if (mySyncController != null) mySyncController.handleStateChange(editor);
+        if (mySyncController != null && !myIsDisposed) {
+          mySyncController.handleStateChange(editor, CompositeSettingsEditor.this);
+        }
       }
     };
 
@@ -100,25 +104,23 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
 
   private final class SynchronizationController {
     private final Set<SettingsEditor<?>> myChangedEditors = new HashSet<>();
-    private final Alarm mySyncAlarm;
+    private Alarm mySyncAlarm;
     private boolean myIsInSync;
 
-    private SynchronizationController() {
-      mySyncAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    }
-
-    public void handleStateChange(@NotNull SettingsEditor<?> editor) {
-      if (myIsInSync || myIsDisposed) {
+    public void handleStateChange(@NotNull SettingsEditor<?> editor, @NotNull Disposable parentDisposable) {
+      if (myIsInSync) {
         return;
       }
 
       myChangedEditors.add(editor);
-      mySyncAlarm.cancelAllRequests();
-      mySyncAlarm.addRequest(() -> {
-        if (!myIsDisposed) {
-          sync();
-        }
-      }, 300);
+
+      if (mySyncAlarm == null) {
+        mySyncAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
+      }
+      else {
+        mySyncAlarm.cancelAllRequests();
+      }
+      mySyncAlarm.addRequest(this::sync, 300);
     }
 
     public void sync() {
