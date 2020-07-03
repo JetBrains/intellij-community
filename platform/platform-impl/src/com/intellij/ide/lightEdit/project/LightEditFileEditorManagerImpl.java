@@ -8,16 +8,18 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
+public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
 
   LightEditFileEditorManagerImpl(@NotNull Project project) {
     super(project);
@@ -123,5 +125,29 @@ final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
   @Override
   public boolean hasOpenFiles() {
     return !LightEditService.getInstance().getEditorManager().getOpenFiles().isEmpty();
+  }
+
+  @NotNull
+  public EditorWithProviderComposite createEditorComposite(@NotNull LightEditorInfo editorInfo) {
+    editorInfo.getFileEditor().putUserData(DUMB_AWARE, true); // Needed for composite not to postpone loading via DumbService.wrapGently()
+    EditorWithProviderComposite composite = createComposite(
+      editorInfo.getFile(),
+      new FileEditor[]{editorInfo.getFileEditor()},
+      new FileEditorProvider[]{((LightEditorInfoImpl)editorInfo).getProvider()});
+    assert composite != null;
+    return composite;
+  }
+
+  @Override
+  protected @Nullable EditorWithProviderComposite getEditorComposite(@NotNull FileEditor editor) {
+    VirtualFile virtualFile = editor.getFile();
+    return virtualFile != null ? LightEditUtil.findEditorComposite(virtualFile) : null;
+  }
+
+  @Override
+  public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
+    return ContainerUtil.map(LightEditService.getInstance().getEditorManager()
+                                             .getEditors(file), editorInfo -> editorInfo.getFileEditor())
+                        .toArray(FileEditor.EMPTY_ARRAY);
   }
 }

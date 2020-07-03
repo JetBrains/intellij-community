@@ -105,7 +105,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 })
 public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(FileEditorManagerImpl.class);
-  private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
+  protected static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
 
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
@@ -913,8 +913,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
   }
 
-  private @Nullable EditorWithProviderComposite createComposite(@NotNull VirtualFile file,
-                                                                FileEditor @NotNull [] editors, FileEditorProvider @NotNull [] providers) {
+  protected final @Nullable EditorWithProviderComposite createComposite(@NotNull VirtualFile file,
+                                                                        FileEditor @NotNull [] editors,
+                                                                        FileEditorProvider @NotNull [] providers) {
     if (ArrayUtil.contains(null, editors) || ArrayUtil.contains(null, providers)) {
       List<FileEditor> editorList = new ArrayList<>(editors.length);
       List<FileEditorProvider> providerList = new ArrayList<>(providers.length);
@@ -1442,7 +1443,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     getMainSplitters().readExternal(state);
   }
 
-  private @Nullable EditorWithProviderComposite getEditorComposite(@NotNull FileEditor editor) {
+  protected  @Nullable EditorWithProviderComposite getEditorComposite(@NotNull FileEditor editor) {
     for (EditorsSplitters splitters : getAllSplitters()) {
       List<EditorWithProviderComposite> editorsComposites = splitters.getEditorComposites();
       for (int i = editorsComposites.size() - 1; i >= 0; i--) {

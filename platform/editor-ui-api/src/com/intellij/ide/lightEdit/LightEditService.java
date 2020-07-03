@@ -18,7 +18,7 @@ public interface LightEditService {
     return ServiceManager.getService(LightEditService.class);
   }
 
-  void createNewFile(@Nullable String preferredName);
+  LightEditorInfo createNewFile(@Nullable String preferredName);
 
   void saveToAnotherFile(@NotNull VirtualFile file);
 

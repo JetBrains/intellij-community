@@ -12,16 +12,20 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
+import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
@@ -40,6 +44,8 @@ import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.Co
 public final class LightEditUtil {
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
   private static final String OPEN_FILE_IN_PROJECT_HREF = "open_file_in_project";
+
+  static final Key<String> CREATION_MESSAGE = Key.create("light.edit.file.creation.message");
 
   private static boolean ourForceOpenInExistingProjectFlag;
 
@@ -63,6 +69,7 @@ public final class LightEditUtil {
   private static boolean handleNonExisting(@NotNull Path path) {
     if (path.getNameCount() > 0) {
       String fileName = path.getFileName().toString();
+      final Ref<String> creationMessage = Ref.create();
       if (path.getNameCount() > 1) {
         File newFile = path.toFile();
         if (FileUtil.createIfDoesntExist(newFile)) {
@@ -71,8 +78,17 @@ public final class LightEditUtil {
             return LightEditService.getInstance().openFile(newVFile);
           }
         }
+        else {
+          creationMessage.set(ApplicationBundle.message("light.edit.file.creation.failed.message", path.toString(), fileName));
+        }
       }
-      ApplicationManager.getApplication().invokeLater(() -> LightEditService.getInstance().createNewFile(fileName));
+      ApplicationManager.getApplication().invokeLater(() -> {
+        LightEditorInfo editorInfo = LightEditService.getInstance().createNewFile(fileName);
+        if (creationMessage.get() != null) {
+          editorInfo.getFile().putUserData(CREATION_MESSAGE, creationMessage.get());
+          EditorNotifications.getInstance(getProject()).updateNotifications(editorInfo.getFile());
+        }
+      });
       return true;
     }
     return false;
@@ -181,6 +197,11 @@ public final class LightEditUtil {
           });
       }
     };
+  }
+
+  @Nullable
+  public static EditorWithProviderComposite findEditorComposite(@NotNull VirtualFile virtualFile) {
+    return ((LightEditServiceImpl)LightEditService.getInstance()).getEditPanel().getTabs().findEditorComposite(virtualFile);
   }
 
   public static void setForceOpenInExistingProject(boolean openInExistingProject) {

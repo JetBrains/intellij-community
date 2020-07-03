@@ -31,5 +31,8 @@ public interface LightEditorManager {
   @NotNull
   Collection<VirtualFile> getOpenFiles();
 
+  @NotNull
+  Collection<LightEditorInfo> getEditors(@NotNull VirtualFile virtualFile);
+
   boolean isFileOpen(@NotNull VirtualFile file);
 }

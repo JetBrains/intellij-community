@@ -175,6 +175,11 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   @Override
+  public @NotNull Collection<LightEditorInfo> getEditors(@NotNull VirtualFile virtualFile) {
+    return ContainerUtil.filter(myEditors, editorInfo -> virtualFile.equals(editorInfo.getFile()));
+  }
+
+  @Override
   public boolean isFileOpen(@NotNull VirtualFile file) {
     return myEditors.stream().anyMatch(editorInfo -> file.equals(editorInfo.getFile()));
   }

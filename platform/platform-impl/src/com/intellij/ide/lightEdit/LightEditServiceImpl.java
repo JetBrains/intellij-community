@@ -204,10 +204,11 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  public void createNewFile(@Nullable String preferredName) {
+  public LightEditorInfo createNewFile(@Nullable String preferredName) {
     showEditorWindow();
     LightEditorInfo newEditorInfo = myEditorManager.createEmptyEditor(preferredName);
     addEditorTab(newEditorInfo);
+    return newEditorInfo;
   }
 
   @Override

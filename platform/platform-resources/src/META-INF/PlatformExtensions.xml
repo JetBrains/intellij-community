@@ -954,6 +954,7 @@
       <className>com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention</className>
       <category>LightEdit mode</category>
     </intentionAction>
+    <editorNotificationProvider implementation="com.intellij.ide.lightEdit.LightEditNonExistentFileNotificationProvider"/>
 
     <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
     <statistics.counterUsagesCollector groupId="intellij.cds" version="2"/>

@@ -4,9 +4,13 @@ package com.intellij.ide.lightEdit;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CloseAction;
+import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -15,11 +19,14 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
@@ -64,11 +71,14 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void addEditorTab(@NotNull LightEditorInfo editorInfo, int index) {
-    TabInfo tabInfo = new TabInfo(new EditorContainer(editorInfo.getFileEditor()))
+    EditorWithProviderComposite editorContainer =
+      ((LightEditFileEditorManagerImpl)FileEditorManager.getInstance(LightEditService.getInstance().getOrCreateProject()))
+        .createEditorComposite(editorInfo);
+    TabInfo tabInfo = new TabInfo(editorContainer.getComponent())
       .setText(editorInfo.getFile().getPresentableName())
       .setIcon(getFileTypeIcon(editorInfo));
 
-    tabInfo.setObject(editorInfo);
+    tabInfo.setObject(new TabEditorData(editorInfo, editorContainer));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
     tabActions.add(new CloseTabAction(editorInfo));
@@ -133,7 +143,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     }
 
     private void closeCurrentTab() {
-      TabInfo tabInfo = findInfo(myEditorInfo);
+      TabInfo tabInfo = findTabInfo(myEditorInfo);
       if (tabInfo != null) {
         closeTab(tabInfo);
       }
@@ -185,7 +195,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   void closeTab(@NotNull LightEditorInfo editorInfo) {
-    TabInfo tabInfo = findInfo(editorInfo);
+    TabInfo tabInfo = findTabInfo(editorInfo);
     if (tabInfo != null) {
       closeTab(tabInfo);
     }
@@ -207,7 +217,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   void replaceTab(@NotNull LightEditorInfo oldInfo, @NotNull LightEditorInfo newInfo) {
-    TabInfo oldTabInfo = findInfo(oldInfo);
+    TabInfo oldTabInfo = findTabInfo(oldInfo);
     if (oldTabInfo != null) {
       int oldIndex = getIndexOf(oldTabInfo);
       if (oldIndex >= 0) {
@@ -249,37 +259,45 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     return null;
   }
 
-  private final class EditorContainer extends JPanel implements DataProvider {
+  private static class TabEditorData {
+    private final @NotNull LightEditorInfo             editorInfo;
+    private final @NotNull EditorWithProviderComposite editorComposite;
 
-    private EditorContainer(@NotNull FileEditor editor) {
-      super(new BorderLayout());
-      add(editor.getComponent(), BorderLayout.CENTER);
+    private TabEditorData(@NotNull LightEditorInfo editorInfo, @NotNull EditorWithProviderComposite editorComposite) {
+      this.editorInfo = editorInfo;
+      this.editorComposite = editorComposite;
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return LightEditUtil.getProject();
-      }
-      else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return getSelectedFile();
-      }
-      else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        final VirtualFile selectedFile = getSelectedFile();
-        return selectedFile != null ? new VirtualFile[] {selectedFile} : VirtualFile.EMPTY_ARRAY;
-      }
-      else if (CloseAction.CloseTarget.KEY.is(dataId)) {
-        return LightEditTabs.this;
-      }
-      return null;
+    public boolean equals(Object obj) {
+      return obj instanceof TabEditorData && ((TabEditorData)obj).editorInfo.equals(editorInfo);
     }
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return LightEditUtil.getProject();
+    }
+    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return getSelectedFile();
+    }
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+      final VirtualFile selectedFile = getSelectedFile();
+      return selectedFile != null ? new VirtualFile[] {selectedFile} : VirtualFile.EMPTY_ARRAY;
+    }
+    else if (CloseAction.CloseTarget.KEY.is(dataId)) {
+      return this;
+    }
+    return null;
   }
 
   private void asyncUpdateTab(@NotNull TabInfo tabInfo) {
     assert ApplicationManager.getApplication().isDispatchThread();
     LightEditorInfo editorInfo = getEditorInfo(tabInfo);
     if (editorInfo == null) return;
+    EditorNotifications.getInstance(LightEditUtil.getProject()).updateNotifications(editorInfo.getFile());
     asyncUpdateTabs(Collections.singletonList(Pair.createNonNull(tabInfo, editorInfo)));
   }
 
@@ -325,7 +343,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   public void fileStatusChanged(@NotNull Collection<LightEditorInfo> editorInfos) {
     ApplicationManager.getApplication().invokeLater(() -> {
       List<Pair.NonNull<TabInfo, LightEditorInfo>> tabEditorPairs = ContainerUtil.mapNotNull(editorInfos, editorInfo -> {
-        TabInfo info = findInfo(editorInfo);
+        TabInfo info = findTabInfo(editorInfo);
         if (info == null) return null;
         return Pair.createNonNull(info, editorInfo);
       });
@@ -338,6 +356,28 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   @Nullable
   private static LightEditorInfo getEditorInfo(@NotNull TabInfo tabInfo) {
     Object data = tabInfo.getObject();
-    return data instanceof LightEditorInfo ? (LightEditorInfo)data : null;
+    return data instanceof TabEditorData ? ((TabEditorData)data).editorInfo : null;
+  }
+
+  @Nullable
+  private TabInfo findTabInfo(@NotNull LightEditorInfo editorInfo) {
+    for (TabInfo tabInfo : getTabs()) {
+      final Object data = tabInfo.getObject();
+      if (data instanceof TabEditorData && ((TabEditorData)data).editorInfo.equals(editorInfo)) {
+        return tabInfo;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public EditorWithProviderComposite findEditorComposite(@NotNull VirtualFile virtualFile) {
+    for (TabInfo tabInfo : getTabs()) {
+      final Object data = tabInfo.getObject();
+      if (data instanceof TabEditorData && virtualFile.equals(((TabEditorData)data).editorInfo.getFile())) {
+        return ((TabEditorData)data).editorComposite;
+      }
+    }
+    return null;
   }
 }
