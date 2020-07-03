@@ -1,0 +1,34 @@
+<html>
+<body>
+Reports redundant <b>assert</b> statements and <b>assertXXX()</b> method calls.
+Examples:<br>
+<code><pre>
+void javaAssertion() {
+  try {
+    ...
+    assert 1 == 2; // the assertion is silently ignored
+  } catch (AssertionError e) {}
+}
+</pre></code>
+<code><pre>
+@Test
+void testWithAssertJ() {
+  try {
+    ...
+    assertThat(1).as("test").isEqualTo(2); // the assertion is silently ignored
+  } catch (AssertionError e) {}
+}
+</pre></code>
+<code><pre>
+@Test
+void testWithJunit() {
+  try {
+    ...
+    assertEquals(1, 2); // the assertion is silently ignored
+  } catch (AssertionError e) {}
+}
+</pre></code>
+<!-- tooltip end -->
+<p><small>New in 2020.3</small></p>
+</body>
+</html>

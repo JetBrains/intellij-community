@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING;
@@ -21,7 +22,7 @@ import static com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING;
 public class AssertBetweenInconvertibleTypesInspection extends BaseInspection {
   private static final CallMatcher ASSERTJ_IS_EQUAL = CallMatcher.instanceCall(
     "org.assertj.core.api.Assert", "isEqualTo", "isSameAs", "isNotEqualTo", "isNotSameAs")
-    .parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
+    .parameterCount(1);
   private static final CallMatcher ASSERTJ_DESCRIBED = CallMatcher.instanceCall(
     "org.assertj.core.api.Descriptable", "describedAs", "as");
   private static final CallMatcher ASSERTJ_ASSERT_THAT = CallMatcher.staticCall(
@@ -66,13 +67,8 @@ public class AssertBetweenInconvertibleTypesInspection extends BaseInspection {
     }
 
     private void processAssertJ(@NotNull PsiMethodCallExpression call) {
-      if (!ASSERTJ_IS_EQUAL.test(call)) return;
-      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
-      while (ASSERTJ_DESCRIBED.test(qualifierCall)) {
-        qualifierCall = MethodCallUtils.getQualifierMethodCall(qualifierCall);
-      }
-      if (!ASSERTJ_ASSERT_THAT.test(qualifierCall)) return;
-      checkConvertibleTypes(call, call.getArgumentList().getExpressions()[0], qualifierCall.getArgumentList().getExpressions()[0]);
+      getAssertThatMethodCall(call).ifPresent(assertThatCall -> checkConvertibleTypes(call, call.getArgumentList().getExpressions()[0],
+                                                                                      assertThatCall.getArgumentList().getExpressions()[0]));
     }
 
     private void processAssertHint(@Nullable AssertHint assertHint, @NotNull PsiMethodCallExpression expression) {
@@ -100,6 +96,16 @@ public class AssertBetweenInconvertibleTypesInspection extends BaseInspection {
         registerError(name, isAssertNotEqualsMethod(methodName) ? WEAK_WARNING : GENERIC_ERROR_OR_WARNING, methodName, mismatch.getLeft(), mismatch.getRight());
       }
     }
+  }
+
+  static Optional<PsiMethodCallExpression> getAssertThatMethodCall(@NotNull PsiMethodCallExpression call) {
+    if (!ASSERTJ_IS_EQUAL.test(call)) return Optional.empty();
+    PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+    while (ASSERTJ_DESCRIBED.test(qualifierCall)) {
+      qualifierCall = MethodCallUtils.getQualifierMethodCall(qualifierCall);
+    }
+    if (!ASSERTJ_ASSERT_THAT.test(qualifierCall)) return Optional.empty();
+    return Optional.of(qualifierCall);
   }
 
   private static boolean isAssertNotEqualsMethod(@NotNull String methodName) {
