@@ -1188,6 +1188,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTestWithJava17();
   }
 
+  public void testNonPhysicalSubexpression() throws Exception {
+    doTest();
+  }
+
   public void testCopyParamAnnotations() throws Exception {
     doTest();
   }
