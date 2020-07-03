@@ -50,6 +50,7 @@ import org.junit.Assert;
 import org.junit.AssumptionViolatedException;
 import org.junit.ComparisonFailure;
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -147,7 +148,7 @@ public abstract class UsefulTestCase extends TestCase {
    * in a write action, wrapped in a command, etc.
    *
    * It's executed around any other rules and @Before/@After methods defined in subclasses.
-   * Subclasses may overwrite this field in order to execute other rules around the base one.
+   * Subclasses may change this by using {@link #asOuterRule}.
    */
   @Rule
   public @NotNull TestRule runBareTestRule = (base, description) -> new Statement() {
@@ -160,6 +161,15 @@ public abstract class UsefulTestCase extends TestCase {
       runBare(base::evaluate);
     }
   };
+
+  /**
+   * Use to make the specified rule applied around the base rule.
+   * This may be useful in case you need to access the rule from {@link #setUp()}.
+   */
+  protected @NotNull <R extends TestRule> R asOuterRule(@NotNull R rule) {
+    runBareTestRule = RuleChain.outerRule(rule).around(runBareTestRule);
+    return rule;
+  }
 
   /**
    * Pass here the exception you want to be thrown first

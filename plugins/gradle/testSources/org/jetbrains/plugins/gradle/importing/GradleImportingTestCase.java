@@ -78,8 +78,8 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Rule public TestName name = new TestName();
 
-  @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
-  @Parameterized.Parameter()
+  @Rule public VersionMatcherRule versionMatcherRule = asOuterRule(new VersionMatcherRule());
+  @Parameterized.Parameter
   public @NotNull String gradleVersion;
   private GradleProjectSettings myProjectSettings;
   private String myJdkHome;
