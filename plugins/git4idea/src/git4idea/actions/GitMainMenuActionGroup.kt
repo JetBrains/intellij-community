@@ -9,11 +9,11 @@ import git4idea.GitVcs
 
 class GitMainMenuActionGroup : DefaultActionGroup(), DumbAware {
   override fun update(e: AnActionEvent) {
-    val presentation = e.presentation
-    presentation.isEnabledAndVisible = false
+    e.presentation.isEnabledAndVisible = false
+
     val project = e.project ?: return
     val vcs = ProjectLevelVcsManager.getInstance(project).singleVCS ?: return
-    if (vcs.name == GitVcs.NAME) {
+    if (vcs.keyInstanceMethod == GitVcs.getKey()) {
       e.presentation.isEnabledAndVisible = true
     }
   }
