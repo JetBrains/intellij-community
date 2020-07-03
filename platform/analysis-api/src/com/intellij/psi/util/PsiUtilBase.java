@@ -81,11 +81,11 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 
+    PsiUtilCore.ensureValid(file);
+
     if (file instanceof PsiFileWithOneLanguage) {
       return file;
     }
-
-    PsiUtilCore.ensureValid(file);
 
     final Language language = getLanguageInEditor(caret, project);
 
@@ -97,6 +97,10 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   }
 
   public static PsiFile getPsiFileAtOffset(@NotNull PsiFile file, final int offset) {
+    if (file instanceof PsiFileWithOneLanguage) {
+      return file;
+    }
+
     PsiElement elt = getElementAtOffset(file, offset);
     ensureValid(elt);
     return elt.getContainingFile();
