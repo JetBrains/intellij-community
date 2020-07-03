@@ -97,7 +97,7 @@ public class BytecodeAnalysisConverter {
     String className;
     if (packageName.length() > 0) {
       if (qname.length() < packageName.length() + 1 || !qname.startsWith(packageName)) {
-        LOG.error("Invalid qname/packageName; qname = "+qname+"; packageName = "+packageName);
+        LOG.error("Invalid qname/packageName; qname = "+qname+"; packageName = "+packageName+"; getClass = "+psiClass.getClass().getName());
         return null;
       }
       className = qname.substring(packageName.length() + 1).replace('.', '$');
