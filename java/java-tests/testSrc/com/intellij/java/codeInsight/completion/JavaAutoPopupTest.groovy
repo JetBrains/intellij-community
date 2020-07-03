@@ -1619,8 +1619,8 @@ class Foo {
 
   void "test typing during restart commit document"() {
     def longText = "\nfoo(); bar();" * 100
-    myFixture.configureByText "a.java", "class Foo { void foo(int ab, int abde) { <caret>; $longText }}"
-    myFixture.type('a')
+    myFixture.configureByText "a.java", "class Foo { void foo(int xb, int xbde) { <caret>; $longText }}"
+    myFixture.type('x')
     joinAutopopup()
     myFixture.type('b')
     myTester.joinCommit()
