@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.conversion;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,14 +46,14 @@ public abstract class ProjectConverter {
   /**
    * Override this method if conversion affects some configuration files not covered by provided {@link ConversionProcessor}s
    */
-  public Collection<File> getAdditionalAffectedFiles() {
+  public @NotNull Collection<Path> getAdditionalAffectedFiles() {
     return Collections.emptyList();
   }
 
   /**
    * @return files created during conversion process
    */
-  public Collection<Path> getCreatedFiles() {
+  public @NotNull Collection<Path> getCreatedFiles() {
     return Collections.emptyList();
   }
 

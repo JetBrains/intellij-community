@@ -25,7 +25,7 @@ public interface ConversionContext {
   /**
    * @return .idea directory for directory based storage scheme or {@code null} for file-based scheme
    */
-  File getSettingsBaseDir();
+  @Nullable Path getSettingsBaseDir();
 
   @NotNull ComponentManagerSettings getProjectSettings();
 

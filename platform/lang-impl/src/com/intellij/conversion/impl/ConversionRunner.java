@@ -5,7 +5,6 @@ import com.intellij.conversion.*;
 import com.intellij.openapi.components.StorageScheme;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.AccessMode;
 import java.nio.file.Files;
@@ -120,9 +119,7 @@ public final class ConversionRunner {
       }
     }
 
-    for (File file : myConverter.getAdditionalAffectedFiles()) {
-      affectedFiles.add(file.toPath());
-    }
+    affectedFiles.addAll(myConverter.getAdditionalAffectedFiles());
   }
 
   public void preProcess() throws CannotConvertException {
