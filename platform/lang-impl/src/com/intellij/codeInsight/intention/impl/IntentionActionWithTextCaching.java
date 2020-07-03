@@ -159,7 +159,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     @NotNull
     @Override
     public String getText() {
-      return myAction.getText();
+      return myText;
     }
 
     @Override
