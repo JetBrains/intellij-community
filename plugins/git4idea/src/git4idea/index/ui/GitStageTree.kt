@@ -30,6 +30,7 @@ import git4idea.index.isRenamed
 import git4idea.index.ui.NodeKind.Companion.sortOrder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.annotations.PropertyKey
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
@@ -63,6 +64,8 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
   abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
 
   abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
+
+  abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>);
 
   override fun getComponentWidth(path: TreePath): Int {
     val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return 0
@@ -141,7 +144,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
     fun createKindNode(kind: NodeKind): ChangesBrowserKindNode {
       return parentNodes.getOrPut(kind) {
-        ChangesBrowserKindNode(project, kind).also { insertIntoRootNode(it) }
+        ChangesBrowserKindNode(kind).also { insertIntoRootNode(it) }
       }
     }
 
@@ -185,7 +188,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     }
   }
 
-  private open class ChangesBrowserKindNode(val project: Project, kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
+  private open inner class ChangesBrowserKindNode(kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
     internal val kind: NodeKind
       get() = userObject as NodeKind
 
@@ -202,8 +205,8 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
                         Runnable {
                           val conflictedFiles = getObjectsUnderStream(GitFileStatusNode::class.java).map {
                             it.filePath.virtualFile
-                          }.filter { it != null }.toList()
-                          AbstractVcsHelper.getInstance(project).showMergeDialog(conflictedFiles)
+                          }.filter { it != null }.toList() as List<VirtualFile>
+                          showMergeDialog(conflictedFiles)
                         })
         appendCount(renderer)
       }

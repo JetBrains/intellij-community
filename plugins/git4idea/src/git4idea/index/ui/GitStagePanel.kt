@@ -2,21 +2,17 @@
 package git4idea.index.ui
 
 import com.intellij.ide.DataManager
-import com.intellij.ide.dnd.DnDActionInfo
-import com.intellij.ide.dnd.DnDDragStartBean
-import com.intellij.ide.dnd.DnDEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsRoot
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.ChangesTreeDnDSupport
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
@@ -39,7 +35,10 @@ import git4idea.i18n.GitBundle
 import git4idea.index.CommitListener
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
-import git4idea.index.actions.*
+import git4idea.index.actions.GitAddOperation
+import git4idea.index.actions.GitResetOperation
+import git4idea.index.actions.StagingAreaOperation
+import git4idea.index.actions.performStageOperation
 import git4idea.repo.GitRepository
 import git4idea.status.GitChangeProvider
 import org.jetbrains.annotations.CalledInAwt
@@ -180,6 +179,10 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
         NodeKind.UNSTAGED -> GitResetOperation
         else -> null
       }
+    }
+
+    override fun showMergeDialog(conflictedFiles: List<VirtualFile>) {
+      AbstractVcsHelper.getInstance(project).showMergeDialog(conflictedFiles)
     }
   }
 
