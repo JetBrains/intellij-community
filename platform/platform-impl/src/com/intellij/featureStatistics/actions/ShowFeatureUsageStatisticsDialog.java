@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.text.DateFormatUtil;
@@ -190,6 +191,7 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       }
     });
 
+    ScrollingUtil.ensureSelectionExists(table);
     return splitter;
   }
 
