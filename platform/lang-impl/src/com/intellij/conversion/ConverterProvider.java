@@ -3,22 +3,16 @@ package com.intellij.conversion;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class ConverterProvider {
-  public static final ExtensionPointName<ConverterProvider> EP_NAME = ExtensionPointName.create("com.intellij.project.converterProvider");
+  public static final ExtensionPointName<ConverterProvider> EP_NAME = new ExtensionPointName<>("com.intellij.project.converterProvider");
   private final String myId;
 
   protected ConverterProvider(@NotNull @NonNls String id) {
     myId = id;
-  }
-
-  public String[] getPrecedingConverterIds() {
-    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   public final String getId() {
@@ -32,9 +26,4 @@ public abstract class ConverterProvider {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public abstract ProjectConverter createConverter(@NotNull ConversionContext context);
-
-  @Nullable
-  public String getConversionDialogText(ConversionContext context) {
-    return null;
-  }
 }

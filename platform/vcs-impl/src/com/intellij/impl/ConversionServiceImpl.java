@@ -11,10 +11,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.util.graph.*;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMaps;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
@@ -104,31 +102,9 @@ public final class ConversionServiceImpl extends ConversionService {
     return ref.get();
   }
 
-  @NotNull
-  private static List<ConversionRunner> getConversionRunners(@NotNull ConversionContextImpl context) throws CannotConvertException {
-    final List<ConversionRunner> converters = getSortedConverters(context);
-    final Iterator<ConversionRunner> iterator = converters.iterator();
-
-    Set<String> convertersToRunIds = new HashSet<>();
-    while (iterator.hasNext()) {
-      ConversionRunner runner = iterator.next();
-      boolean conversionNeeded = runner.isConversionNeeded();
-      if (!conversionNeeded) {
-        for (String id : runner.getProvider().getPrecedingConverterIds()) {
-          if (convertersToRunIds.contains(id)) {
-            conversionNeeded = true;
-            break;
-          }
-        }
-      }
-
-      if (conversionNeeded) {
-        convertersToRunIds.add(runner.getProvider().getId());
-      }
-      else {
-        iterator.remove();
-      }
-    }
+  private static @NotNull List<ConversionRunner> getConversionRunners(@NotNull ConversionContextImpl context) throws CannotConvertException {
+    List<ConversionRunner> converters = getSortedConverters(context);
+    converters.removeIf(runner -> !runner.isConversionNeeded());
     return converters;
   }
 
@@ -210,19 +186,6 @@ public final class ConversionServiceImpl extends ConversionService {
         runners.add(new ConversionRunner(provider, context));
       }
     }
-
-    if (runners.isEmpty()) {
-      return runners;
-    }
-
-    final Graph<ConverterProvider> graph = GraphGenerator.generate(CachingSemiGraph.cache(new ConverterProvidersGraph(providers)));
-    final DFSTBuilder<ConverterProvider> builder = new DFSTBuilder<>(graph);
-    if (!builder.isAcyclic()) {
-      Pair<ConverterProvider, ConverterProvider> pair = builder.getCircularDependency();
-      LOG.error("cyclic dependencies between converters: " + Objects.requireNonNull(pair).getFirst().getId() + " and " + pair.getSecond().getId());
-    }
-    final Comparator<ConverterProvider> comparator = builder.comparator();
-    runners.sort((o1, o2) -> comparator.compare(o1.getProvider(), o2.getProvider()));
     return runners;
   }
 
@@ -301,34 +264,6 @@ public final class ConversionServiceImpl extends ConversionService {
     catch (CannotConvertException e) {
       LOG.info(e);
       return false;
-    }
-  }
-
-  private static final class ConverterProvidersGraph implements InboundSemiGraph<ConverterProvider> {
-    private final List<ConverterProvider> myProviders;
-
-    ConverterProvidersGraph(@NotNull List<ConverterProvider> providers) {
-      myProviders = providers;
-    }
-
-    @NotNull
-    @Override
-    public Collection<ConverterProvider> getNodes() {
-      return myProviders;
-    }
-
-    @NotNull
-    @Override
-    public Iterator<ConverterProvider> getIn(ConverterProvider n) {
-      List<ConverterProvider> preceding = new ArrayList<>();
-      for (String id : n.getPrecedingConverterIds()) {
-        for (ConverterProvider provider : myProviders) {
-          if (provider.getId().equals(id)) {
-            preceding.add(provider);
-          }
-        }
-      }
-      return preceding.iterator();
     }
   }
 }

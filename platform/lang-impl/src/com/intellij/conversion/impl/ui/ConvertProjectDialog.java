@@ -51,13 +51,8 @@ public class ConvertProjectDialog extends DialogWrapper {
     myBackupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
     myTextPane.setSize(new Dimension(350, Integer.MAX_VALUE));
     StringBuilder message = new StringBuilder();
-    if (myConversionRunners.size() == 1 && myConversionRunners.get(0).getProvider().getConversionDialogText(context) != null) {
-      message.append(myConversionRunners.get(0).getProvider().getConversionDialogText(context));
-    }
-    else {
-      message.append(IdeBundle.message("conversion.dialog.text.1", context.getProjectFile().getFileName().toString(),
+    message.append(IdeBundle.message("conversion.dialog.text.1", context.getProjectFile().getFileName().toString(),
                                        ApplicationNamesInfo.getInstance().getFullProductName()));
-    }
     message.append(IdeBundle.message("conversion.dialog.text.2", myBackupDir.toString()));
     Messages.configureMessagePaneUi(myTextPane, XmlStringUtil.wrapInHtml(message), null);
 

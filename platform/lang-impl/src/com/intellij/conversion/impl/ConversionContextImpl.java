@@ -53,8 +53,8 @@ public final class ConversionContextImpl implements ConversionContext {
   private final SettingsXmlFile myWorkspaceFile;
   private volatile List<Path> myModuleFiles;
   private final List<Path> myNonExistingModuleFiles = new ArrayList<>();
-  private final Map<Path, ModuleSettingsImpl> myFile2ModuleSettings = new HashMap<>();
-  private final Map<String, ModuleSettingsImpl> myName2ModuleSettings = new HashMap<>();
+  private final Map<Path, ModuleSettingsImpl> fileToModuleSettings = new HashMap<>();
+  private final Map<String, ModuleSettingsImpl> nameToModuleSettings = new HashMap<>();
   private RunManagerSettingsImpl myRunManagerSettings;
   private Path mySettingsBaseDir;
   private ComponentManagerSettings myCompilerManagerSettings;
@@ -462,19 +462,19 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @Override
-  public ModuleSettings getModuleSettings(@NotNull Path moduleFile) throws CannotConvertException {
-    ModuleSettingsImpl settings = myFile2ModuleSettings.get(moduleFile);
+  public @NotNull ModuleSettings getModuleSettings(@NotNull Path moduleFile) throws CannotConvertException {
+    ModuleSettingsImpl settings = fileToModuleSettings.get(moduleFile);
     if (settings == null) {
       settings = new ModuleSettingsImpl(moduleFile, this);
-      myFile2ModuleSettings.put(moduleFile, settings);
-      myName2ModuleSettings.put(settings.getModuleName(), settings);
+      fileToModuleSettings.put(moduleFile, settings);
+      nameToModuleSettings.put(settings.getModuleName(), settings);
     }
     return settings;
   }
 
   @Override
   public ModuleSettings getModuleSettings(@NotNull String moduleName) {
-    if (!myName2ModuleSettings.containsKey(moduleName)) {
+    if (!nameToModuleSettings.containsKey(moduleName)) {
       for (Path moduleFile : myModuleFiles) {
         try {
           getModuleSettings(moduleFile);
@@ -483,7 +483,7 @@ public final class ConversionContextImpl implements ConversionContext {
         }
       }
     }
-    return myName2ModuleSettings.get(moduleName);
+    return nameToModuleSettings.get(moduleName);
   }
 
   public List<Path> getNonExistingModuleFiles() {
