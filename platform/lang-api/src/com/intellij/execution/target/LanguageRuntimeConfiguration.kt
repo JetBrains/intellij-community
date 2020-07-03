@@ -22,7 +22,9 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
   private val volumePaths = mutableMapOf<VolumeType, String>()
 
   fun createUploadRoot(descriptor: VolumeDescriptor, localRootPath: Path): UploadRoot {
-    return UploadRoot(localRootPath, getTargetPath(descriptor))
+    return UploadRoot(localRootPath, getTargetPath(descriptor)).also {
+      it.volumeData = getTargetSpecificData(descriptor)
+    }
   }
 
   fun getTargetSpecificData(volumeDescriptor: VolumeDescriptor): TargetSpecificVolumeData? {
