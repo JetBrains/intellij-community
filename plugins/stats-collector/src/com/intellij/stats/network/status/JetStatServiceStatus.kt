@@ -1,9 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.network.status
 
+import com.intellij.openapi.components.service
 import com.intellij.stats.network.assertNotEDT
+import com.intellij.stats.network.service.RequestService
+import com.intellij.stats.network.status.bean.JetStatSettingsDeserializer
 
-open class JetStatServiceStatus : WebServiceStatus() {
+open class JetStatServiceStatus : WebServiceStatus {
   companion object {
     private const val STATUS_URL = "https://www.jetbrains.com/config/features-service-status.json"
   }
@@ -12,6 +15,8 @@ open class JetStatServiceStatus : WebServiceStatus() {
   private var serverStatus = ""
   @Volatile
   private var dataServerUrl = ""
+
+  private val requestService: RequestService = service()
 
   override val id: String = "JetStat"
 
@@ -24,12 +29,12 @@ open class JetStatServiceStatus : WebServiceStatus() {
     dataServerUrl = ""
 
     assertNotEDT()
-    val response = getRequestService().get(STATUS_URL)
+    val response = requestService.get(STATUS_URL)
     if (response != null && response.isOK()) {
-      val map = parseServerResponse(response.text) ?: return
+      val settings = JetStatSettingsDeserializer.deserialize(response.text) ?: return
 
-      serverStatus = map["status"]?.toString() ?: ""
-      dataServerUrl = map["urlForZipBase64Content"]?.toString() ?: ""
+      serverStatus = settings.status
+      dataServerUrl = settings.urlForZipBase64Content
     }
   }
 }

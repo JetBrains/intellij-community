@@ -17,8 +17,8 @@ import com.jetbrains.completion.ranker.WeakModelProvider
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
-  private const val  SETTINGS_UPDATED_PROPERTY_KEY = "ml.completion.experiment.settings.ranking.updated"
-  private const val  LANGUAGES_RANKING_UPDATED_PROPERTY_KEY = "ml.completion.experiment.languages.ranking.updated"
+  private const val SETTINGS_UPDATED_PROPERTY_KEY = "ml.completion.experiment.settings.ranking.updated"
+  private const val LANGUAGES_RANKING_UPDATED_PROPERTY_KEY = "ml.completion.experiment.languages.ranking.updated"
   private val LOG = logger<RankingSupport>()
   private var enabledInTests: Boolean = false
   private val notificationGroup by lazy {

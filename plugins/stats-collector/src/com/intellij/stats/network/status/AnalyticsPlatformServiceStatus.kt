@@ -1,17 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.network.status
 
-import com.google.gson.internal.LinkedTreeMap
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.stats.network.assertNotEDT
+import com.intellij.stats.network.service.RequestService
+import com.intellij.stats.network.status.bean.AnalyticsPlatformSettingsDeserializer
 
-class AnalyticsPlatformServiceStatus : WebServiceStatus() {
+class AnalyticsPlatformServiceStatus : WebServiceStatus {
+  companion object {
+    private val LOG = logger<AnalyticsPlatformServiceStatus>()
+  }
   private val statusUrl = "https://resources.jetbrains.com/storage/ap/mlcc/config/v1/${productCode()}.json"
-
   @Volatile
   private var isServerOk = false
   @Volatile
   private var dataServerUrl = ""
+
+  private val requestService: RequestService = service()
 
   override val id: String = "AnalyticsPlatform"
 
@@ -24,19 +31,18 @@ class AnalyticsPlatformServiceStatus : WebServiceStatus() {
     dataServerUrl = ""
 
     assertNotEDT()
-    val response = getRequestService().get(statusUrl)
+    val response = requestService.get(statusUrl)
     if (response != null && response.isOK()) {
-      val map = parseServerResponse(response.text) ?: return
+      val settings = AnalyticsPlatformSettingsDeserializer.deserialize(response.text) ?: return
 
-      //TODO: filter endpoints by build numbers
-      for (versionRaw in map["versions"] as List<*>) {
-        val version = versionRaw as LinkedTreeMap<*, *>
-        if (true) {
-          isServerOk = true
-          dataServerUrl = version["endpoint"]?.toString() ?: ""
-          break
-        }
+      val satisfyingEndpoints = settings.versions.filter { it.satisfies() }
+      if (satisfyingEndpoints.isEmpty()) return
+      if (satisfyingEndpoints.size > 1) {
+        LOG.warn("Analytics Platform completion web service status. More than one satisfying endpoints.")
       }
+      val endpointSettings = satisfyingEndpoints.first()
+      isServerOk = true
+      dataServerUrl = endpointSettings.endpoint
     }
   }
 
