@@ -8,12 +8,17 @@ import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ActiveIcon
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
@@ -22,6 +27,7 @@ import com.intellij.ui.ClickListener
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.FontUtil
+import com.intellij.util.containers.isEmpty
 import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
@@ -30,7 +36,6 @@ import git4idea.index.isRenamed
 import git4idea.index.ui.NodeKind.Companion.sortOrder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.annotations.PropertyKey
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
@@ -108,8 +113,11 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
       GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> selectedStatusNodes()
       VcsDataKeys.FILE_PATH_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
       VcsDataKeys.VIRTUAL_FILE_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
+      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
+        .toList().toTypedArray()
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
         .map { OpenFileDescriptor(project, it!!) }.toList().toTypedArray()
+      PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty()) VirtualFileDeleteProvider() else null
       else -> super.getData(dataId)
     }
   }
