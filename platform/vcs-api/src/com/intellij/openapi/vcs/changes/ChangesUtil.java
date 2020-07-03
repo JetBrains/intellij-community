@@ -277,12 +277,12 @@ public final class ChangesUtil {
   public static <T> void processItemsByVcs(@NotNull Collection<? extends T> items,
                                            @NotNull VcsSeparator<? super T> separator,
                                            @NotNull PerVcsProcessor<T> processor) {
-    Map<AbstractVcs, List<T>> changesByVcs = ReadAction.compute(
-      () -> StreamEx.<T>of(items)
+    Map<AbstractVcs, List<T>> changesByVcs = ReadAction.compute(() -> {
+      return StreamEx.<T>of(items)
         .mapToEntry(separator::getVcsFor, identity())
         .nonNullKeys()
-        .grouping()
-    );
+        .grouping();
+    });
 
     changesByVcs.forEach(processor::process);
   }
@@ -296,7 +296,12 @@ public final class ChangesUtil {
   public static void processVirtualFilesByVcs(@NotNull Project project,
                                               @NotNull Collection<? extends VirtualFile> files,
                                               @NotNull PerVcsProcessor<VirtualFile> processor) {
-    processItemsByVcs(files, file -> getVcsForFile(file, project), processor);
+    if (files.isEmpty()) {
+      return;
+    }
+
+    ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
+    processItemsByVcs(files, file -> projectLevelVcsManager.getVcsFor(file), processor);
   }
 
   public static void processFilePathsByVcs(@NotNull Project project,
@@ -311,9 +316,13 @@ public final class ChangesUtil {
   }
 
   public static boolean hasFileChanges(@NotNull Collection<? extends Change> changes) {
-    return changes.stream()
-      .map(ChangesUtil::getFilePath)
-      .anyMatch(path -> !path.isDirectory());
+    for (Change change : changes) {
+      FilePath path = getFilePath(change);
+      if (!path.isDirectory()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static void markInternalOperation(@NotNull Iterable<? extends Change> changes, boolean set) {
