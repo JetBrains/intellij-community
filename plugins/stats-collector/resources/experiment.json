@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "experimentBucketsCount": 8,
+  "groups": [
+    {
+      "id": 7,
+      "description": "Default",
+      "experimentBucket": 3,
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "id": 8,
+      "description": "ML without arrows",
+      "experimentBucket": 4,
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "id": 11,
+      "description": "ML with arrows",
+      "experimentBucket": 5,
+      "useMLRanking": true,
+      "showArrows": true,
+      "calculateFeatures": true
+    },
+    {
+      "id": 12,
+      "description": "Default without calculation features",
+      "experimentBucket": 6,
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": false
+    }
+  ]
+}

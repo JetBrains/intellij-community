@@ -12,4 +12,6 @@ interface ExperimentStatus {
   fun isExperimentOnCurrentIDE(language: Language): Boolean
   fun experimentVersion(language: Language): Int
   fun shouldRank(language: Language): Boolean
+  fun shouldShowArrows(language: Language): Boolean
+  fun shouldCalculateFeatures(language: Language): Boolean
 }

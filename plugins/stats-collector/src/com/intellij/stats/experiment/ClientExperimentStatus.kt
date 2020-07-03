@@ -1,61 +1,54 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.experiment
 
-import com.intellij.completion.settings.CompletionMLRankingSettings
-import com.intellij.ide.util.PropertiesComponent
+import com.google.gson.Gson
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.lang.Language
+import com.intellij.openapi.diagnostic.logger
 
 class ClientExperimentStatus : ExperimentStatus {
-    companion object {
-        const val DEFAULT_EXPERIMENT_VERSION: Int = 2
-        const val GROUP_A_EXPERIMENT_VERSION: Int = 7
-        const val GROUP_B_EXPERIMENT_VERSION: Int = 8
-        const val GROUP_KT_WITH_DIFF_EXPERIMENT_VERSION: Int = 9
-        const val GROUP_PY_WITH_DIFF_EXPERIMENT_VERSION: Int = 10
+  companion object {
+    private const val PATH_TO_EXPERIMENT_CONFIG = "/experiment.json"
+    private val GSON by lazy { Gson() }
+    private val LOG = logger<ClientExperimentStatus>()
+  }
 
-        private val ALL_GROUPS: Set<Int> = setOf(
-          GROUP_A_EXPERIMENT_VERSION,
-          GROUP_B_EXPERIMENT_VERSION,
-          GROUP_KT_WITH_DIFF_EXPERIMENT_VERSION,
-          GROUP_PY_WITH_DIFF_EXPERIMENT_VERSION
-        )
+  private val experimentInfo: ExperimentInfo = loadExperimentInfo()
+  private val experimentBucket: Int = EventLogConfiguration.bucket % experimentInfo.experimentBucketsCount
+  private val experimentGroup: ExperimentGroupInfo? = experimentInfo.groups.find { it.experimentBucket == experimentBucket }
 
-        private val RANKING_GROUPS: Set<Int> = setOf(
-          GROUP_B_EXPERIMENT_VERSION,
-          GROUP_KT_WITH_DIFF_EXPERIMENT_VERSION,
-          GROUP_PY_WITH_DIFF_EXPERIMENT_VERSION
-        )
+  override fun isExperimentOnCurrentIDE(language: Language): Boolean =
+    experimentInfo.groups.any { it.id == experimentVersion(language) }
 
-        const val DIFF_ENABLED_PROPERTY_KEY = "ml.completion.diff.registry.was.enabled"
+  // later it will support excluding group from experiment for some languages
+  override fun experimentVersion(language: Language): Int = experimentGroup?.id ?: experimentInfo.version
+
+  override fun shouldRank(language: Language): Boolean =
+    experimentInfo.groups.any { it.id == experimentVersion(language) && it.useMLRanking }
+
+  override fun shouldShowArrows(language: Language): Boolean =
+    experimentInfo.groups.any { it.id == experimentVersion(language) && it.showArrows }
+
+  override fun shouldCalculateFeatures(language: Language): Boolean =
+    experimentInfo.groups.any { it.id == experimentVersion(language) && it.calculateFeatures }
+
+  private fun loadExperimentInfo(): ExperimentInfo {
+    try{
+      val json = javaClass.getResource(PATH_TO_EXPERIMENT_CONFIG).readText()
+      val experimentInfo = GSON.fromJson(json, ExperimentInfo::class.java)
+      checkExperimentGroups(experimentInfo)
+      return experimentInfo
     }
-
-    private fun enableOnceDiffShowing() {
-        val properties = PropertiesComponent.getInstance()
-        if (!properties.getBoolean(DIFF_ENABLED_PROPERTY_KEY, false)) {
-            CompletionMLRankingSettings.getInstance().isShowDiffEnabled = true
-            properties.setValue(DIFF_ENABLED_PROPERTY_KEY, true)
-        }
+    catch (e: Throwable) {
+      LOG.error("Error on loading ML Completion experiment info", e)
+      return ExperimentInfo.emptyExperiment()
     }
+  }
 
-    override fun isExperimentOnCurrentIDE(language: Language): Boolean = experimentVersion(language) in ALL_GROUPS
-
-    //TODO: use config for versions describing
-    override fun experimentVersion(language: Language): Int {
-        return when (EventLogConfiguration.bucket % 8) {
-            3 -> GROUP_A_EXPERIMENT_VERSION
-            4 -> GROUP_B_EXPERIMENT_VERSION
-            5 -> {
-                if (language.id == "Kotlin") GROUP_KT_WITH_DIFF_EXPERIMENT_VERSION.apply { enableOnceDiffShowing() }
-                else DEFAULT_EXPERIMENT_VERSION
-            }
-            6 -> {
-                if (language.id == "Python") GROUP_PY_WITH_DIFF_EXPERIMENT_VERSION.apply { enableOnceDiffShowing() }
-                else DEFAULT_EXPERIMENT_VERSION
-            }
-            else -> DEFAULT_EXPERIMENT_VERSION
-        }
+  private fun checkExperimentGroups(experimentInfo: ExperimentInfo) {
+    for (group in experimentInfo.groups) {
+      if (group.showArrows) assert(group.useMLRanking) { "Showing arrows requires ML ranking" }
+      if (group.useMLRanking) assert(group.calculateFeatures) { "ML ranking requires calculating features" }
     }
-
-    override fun shouldRank(language: Language): Boolean = experimentVersion(language) in RANKING_GROUPS
+  }
 }
