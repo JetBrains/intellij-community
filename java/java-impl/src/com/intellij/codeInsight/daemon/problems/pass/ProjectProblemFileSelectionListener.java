@@ -96,13 +96,10 @@ final class ProjectProblemFileSelectionListener implements FileEditorManagerList
   private void onHintsDisabled() {
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
     for (FileEditor selectedEditor : editorManager.getSelectedEditors()) {
-      TextEditor textEditor = tryCast(selectedEditor, TextEditor.class);
-      if (textEditor == null) continue;
       VirtualFile virtualFile = selectedEditor.getFile();
       if (virtualFile == null) continue;
       PsiJavaFile psiJavaFile = getJavaFile(myProject, virtualFile);
       if (psiJavaFile == null) continue;
-      textEditor.getEditor();
       FileStateUpdater.setPreviousState(psiJavaFile);
     }
   }
