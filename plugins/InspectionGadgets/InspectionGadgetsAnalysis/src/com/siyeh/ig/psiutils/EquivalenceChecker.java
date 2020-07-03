@@ -46,7 +46,8 @@ public class EquivalenceChecker {
   private static final Comparator<PsiMember> MEMBER_COMPARATOR =
     comparing(PsiMember::getName, nullsFirst(naturalOrder())).thenComparing(PsiMember::getText);
   private static final Comparator<PsiExpression> EXPRESSION_COMPARATOR =
-    comparing(expression -> PsiUtil.skipParenthesizedExprDown(expression), nullsFirst(comparing(PsiExpression::getText)));
+    comparing(expression -> PsiUtil.skipParenthesizedExprDown(expression), 
+              nullsFirst(comparing((PsiExpression expr) -> expr.getClass().getName()).thenComparing(PsiExpression::getText)));
 
   protected EquivalenceChecker() {}
 
