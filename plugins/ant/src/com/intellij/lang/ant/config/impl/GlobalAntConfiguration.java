@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.ide.macro.MacroManager;
@@ -6,11 +6,12 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -29,13 +30,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
-@State(name = "GlobalAntConfiguration", storages = @Storage("other.xml"))
-public class GlobalAntConfiguration implements PersistentStateComponent<Element> {
+@State(name = "GlobalAntConfiguration", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
+public final class GlobalAntConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(GlobalAntConfiguration.class);
 
   public static final StorageProperty FILTERS_TABLE_LAYOUT = new StorageProperty("filtersTableLayout");
   public static final StorageProperty PROPERTIES_TABLE_LAYOUT = new StorageProperty("propertiesTableLayout");
-  static final ListProperty<AntInstallation> ANTS = ListProperty.create("registeredAnts");
+  private static final ListProperty<AntInstallation> ANTS = ListProperty.create("registeredAnts");
   private final ExternalizablePropertyContainer myProperties = new ExternalizablePropertyContainer();
   private final AntInstallation myBundledAnt;
   public final Condition<AntInstallation> IS_USER_ANT = new Condition<AntInstallation>() {
@@ -49,7 +50,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
     "$GlobalAntConfiguration.INSTANCE", null);
   @NonNls public static final String ANT_FILE = "ant";
   @NonNls public static final String LIB_DIR = "lib";
-  @NonNls public static final String ANT_JAR_FILE_NAME = "ant.jar";
+  @NonNls private static final String ANT_JAR_FILE_NAME = "ant.jar";
 
   public GlobalAntConfiguration() {
     myProperties.registerProperty(FILTERS_TABLE_LAYOUT);
@@ -78,9 +79,8 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
     return bundledAnt;
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     Element element = new Element("state");
     myProperties.writeExternal(element);
     return element;
@@ -92,7 +92,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
   }
 
   public static GlobalAntConfiguration getInstance() {
-    return ServiceManager.getService(GlobalAntConfiguration.class);
+    return ApplicationManager.getApplication().getService(GlobalAntConfiguration.class);
   }
 
   public Map<AntReference, AntInstallation> getConfiguredAnts() {
@@ -106,7 +106,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
     return myBundledAnt;
   }
 
-  public AbstractProperty.AbstractPropertyContainer getProperties() {
+  public AbstractProperty.AbstractPropertyContainer<?> getProperties() {
     return myProperties;
   }
 
@@ -129,7 +129,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
     return MacroManager.getInstance();
   }
 
-  public AntBuildTarget findTarget(Project project, String fileUrl, String targetName) {
+  public AntBuildTarget findTarget(@Nullable Project project, String fileUrl, String targetName) {
     if (fileUrl == null || targetName == null || project == null) {
       return null;
     }
