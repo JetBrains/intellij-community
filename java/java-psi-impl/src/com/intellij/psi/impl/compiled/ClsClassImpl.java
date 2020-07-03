@@ -72,7 +72,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   private boolean isLocalClass() {
     PsiClassStub<?> stub = getStub();
     return stub instanceof PsiClassStubImpl &&
-           ((PsiClassStubImpl)stub).isLocalClassInner();
+           ((PsiClassStubImpl<?>)stub).isLocalClassInner();
   }
 
   private boolean isAnonymousOrLocalClass() {
