@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -14,6 +15,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -23,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.roots.*;
 import gnu.trove.THashSet;
@@ -41,6 +44,8 @@ import static com.intellij.util.indexing.FileBasedIndexImpl.getCauseToRebuildInd
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
+  @SuppressWarnings("SSBasedInspection")
+  private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack = ThreadLocal.withInitial(() -> new com.intellij.util.containers.Stack<>());
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
   @ApiStatus.Internal
@@ -476,5 +481,32 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       }
     }
     return true;
+  }
+
+  @Override
+  public @Nullable DumbModeAccessType getCurrentDumbModeAccessType() {
+    Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
+    return dumbModeAccessTypeStack.isEmpty() ? null : dumbModeAccessTypeStack.peek();
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @Override
+  public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
+                                                   @NotNull ThrowableComputable<T, E> computable) throws E {
+    assert ApplicationManager.getApplication().isReadAccessAllowed();
+    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
+      Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
+      dumbModeAccessTypeStack.push(dumbModeAccessType);
+      try {
+        return computable.compute();
+      }
+      finally {
+        DumbModeAccessType type = dumbModeAccessTypeStack.pop();
+        assert dumbModeAccessType == type;
+      }
+    } else {
+      return computable.compute();
+    }
   }
 }

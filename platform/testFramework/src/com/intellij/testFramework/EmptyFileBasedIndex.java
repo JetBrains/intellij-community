@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
@@ -18,14 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 
 public class EmptyFileBasedIndex extends FileBasedIndexEx {
-  private static final ThreadLocal<DumbModeAccessType> ourDumbModeAccessType = new ThreadLocal<>();
 
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
@@ -34,11 +30,6 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
   @Override
   public @Nullable VirtualFile getFileBeingCurrentlyIndexed() {
     return null;
-  }
-
-  @Override
-  public DumbModeAccessType getCurrentDumbModeAccessType() {
-    return ourDumbModeAccessType.get();
   }
 
   @Override
@@ -137,37 +128,6 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
                                         @NotNull Processor<? super VirtualFile> processor,
                                         @NotNull GlobalSearchScope filter) {
     return true;
-  }
-
-  @Override
-  public void ignoreDumbMode(@NotNull Runnable command, @NotNull DumbModeAccessType dumbModeAccessType) {
-    ignoreDumbMode(dumbModeAccessType, () -> {
-      command.run();
-      return null;
-    });
-  }
-
-  @Override
-  public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
-                                                   @NotNull ThrowableComputable<T, E> computable) throws E {
-    boolean setAccessType = true;
-    DumbModeAccessType currentAccessType = ourDumbModeAccessType.get();
-    if (currentAccessType != null) {
-      if (currentAccessType == dumbModeAccessType) {
-        setAccessType = false;
-      }
-      else {
-        throw new AssertionError(
-          "Reentrant dumb mode ignorance. Current mode: " + currentAccessType + ", Requested mode: " + dumbModeAccessType);
-      }
-    }
-    if (setAccessType) ourDumbModeAccessType.set(dumbModeAccessType);
-    try {
-      return computable.compute();
-    }
-    finally {
-      if (setAccessType) ourDumbModeAccessType.set(null);
-    }
   }
 
   @Override
@@ -328,35 +288,5 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
     @Override
     public void dispose() {
     }
-
-    private static final Lock NO_LOCK = new Lock() {
-      @Override
-      public void lock() {
-      }
-
-      @Override
-      public void lockInterruptibly() {
-      }
-
-      @Override
-      public boolean tryLock() {
-        return false;
-      }
-
-      @Override
-      public boolean tryLock(long time, @NotNull TimeUnit unit) {
-        return false;
-      }
-
-      @Override
-      public void unlock() {
-      }
-
-      @NotNull
-      @Override
-      public java.util.concurrent.locks.Condition newCondition() {
-        throw new UnsupportedOperationException();
-      }
-    };
   }
 }

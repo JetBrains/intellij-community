@@ -53,7 +53,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
@@ -92,8 +91,6 @@ import java.util.stream.Stream;
 public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   private static final ThreadLocal<VirtualFile> ourFileToBeIndexed = new ThreadLocal<>();
-  @SuppressWarnings("SSBasedInspection")
-  private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack = ThreadLocal.withInitial(() -> new Stack<>());
   public static final Logger LOG = Logger.getInstance(FileBasedIndexImpl.class);
 
   private volatile RegisteredIndexes myRegisteredIndexes;
@@ -635,27 +632,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final ThreadLocal<Boolean> myReentrancyGuard = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  @Override
-  public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
-                                                   @NotNull ThrowableComputable<T, E> computable) throws E {
-    assert ApplicationManager.getApplication().isReadAccessAllowed();
-    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
-      Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
-      dumbModeAccessTypeStack.push(dumbModeAccessType);
-      try {
-        return computable.compute();
-      }
-      finally {
-        DumbModeAccessType type = dumbModeAccessTypeStack.pop();
-        assert dumbModeAccessType == type;
-      }
-    } else {
-      return computable.compute();
-    }
-  }
-
   @Override
   public <K> boolean ensureUpToDate(@NotNull final ID<K, ?> indexId,
                                     @Nullable Project project,
@@ -673,7 +649,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (filter == GlobalSearchScope.EMPTY_SCOPE) {
       return false;
     }
-    boolean dumbModeAccessRestricted = ourDumbModeAccessTypeStack.get().isEmpty();
+    boolean dumbModeAccessRestricted = getCurrentDumbModeAccessType() == null;
     if (dumbModeAccessRestricted && ActionUtil.isDumbMode(project)) {
       handleDumbMode(project);
     }
@@ -1428,12 +1404,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Override
   public VirtualFile getFileBeingCurrentlyIndexed() {
     return ourIndexedFile.get();
-  }
-
-  @Override
-  public @Nullable DumbModeAccessType getCurrentDumbModeAccessType() {
-    Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
-    return dumbModeAccessTypeStack.isEmpty() ? null : dumbModeAccessTypeStack.peek();
   }
 
   private class VirtualFileUpdateTask extends UpdateTask<VirtualFile> {
