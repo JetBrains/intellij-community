@@ -96,12 +96,20 @@ public abstract class AbstractVcs extends StartedActivated {
     return getDisplayName();
   }
 
+  /**
+   * Allows to hide 'VCS' action group in 'Main Menu' for projects that have configured mappings for this VCS only.
+   *
+   * @return true if 'VCS' group should be hidden.
+   */
   public boolean isWithCustomMenu() {
     return false;
   }
 
+  /**
+   * @return Custom value for {@link com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction} action text.
+   */
   @Nullable
-  public String getCustomDiffActionName() {
+  public String getCompareWithTheSameVersionActionName() {
     return null;
   }
 

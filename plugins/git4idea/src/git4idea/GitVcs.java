@@ -372,7 +372,7 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  public @Nullable String getCustomDiffActionName() {
+  public @Nullable String getCompareWithTheSameVersionActionName() {
     return ActionsBundle.message("action.Diff.ShowDiff.text");
   }
 }

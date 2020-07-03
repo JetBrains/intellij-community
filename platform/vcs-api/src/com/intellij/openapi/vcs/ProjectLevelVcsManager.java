@@ -107,6 +107,9 @@ public abstract class ProjectLevelVcsManager {
    */
   public abstract AbstractVcs @NotNull [] getAllActiveVcss();
 
+  /**
+   * @return VCS configured for the project, if there's only a single one. Return 'null' otherwise.
+   */
   public abstract @Nullable AbstractVcs getSingleVCS();
 
   public abstract boolean hasActiveVcss();

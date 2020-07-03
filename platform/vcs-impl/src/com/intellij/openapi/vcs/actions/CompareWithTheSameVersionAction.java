@@ -27,10 +27,11 @@ public class CompareWithTheSameVersionAction extends AbstractShowDiffAction {
     super.update(vcsContext, presentation);
     Project project = vcsContext.getProject();
     presentation.setText(ActionsBundle.message("action.Compare.SameVersion.text"));
+
     if (project != null) {
       AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getSingleVCS();
       if (vcs != null) {
-        String customDiffName = vcs.getCustomDiffActionName();
+        String customDiffName = vcs.getCompareWithTheSameVersionActionName();
         if (customDiffName != null) {
           presentation.setText(customDiffName);
         }
