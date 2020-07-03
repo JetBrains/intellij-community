@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.vcs.VcsShowToolWindowTabAction
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsLogContentProvider
@@ -18,7 +17,7 @@ class VcsShowLogAction : VcsShowToolWindowTabAction() {
     if (project != null) {
       val providers = VcsProjectLog.getLogProviders(project)
       val vcsName = VcsLogUtil.getVcsDisplayName(project, providers.values)
-      e.presentation.text = VcsLogBundle.message("action.Vcs.Show.Log.text", vcsName)
+      e.presentation.text = VcsLogBundle.message("action.Vcs.Show.Log.text.template", vcsName)
     }
   }
 }
