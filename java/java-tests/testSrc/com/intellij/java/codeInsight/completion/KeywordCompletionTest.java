@@ -207,6 +207,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   }
 
   public void testFinalAfterAnnotationAttributes() { doTest(); }
+  
+  public void testAbstractLocalClass() { doTest(); }
 
   @NeedsIndex.ForStandardLibrary
   public void testTryInExpression() {
