@@ -662,13 +662,7 @@ public final class PyTypeChecker {
         return substitution;
       }
       else if (type instanceof PyUnionType) {
-        final PyUnionType union = (PyUnionType)type;
-        final List<PyType> results = new ArrayList<>();
-        for (PyType t : union.getMembers()) {
-          final PyType subst = substitute(t, substitutions, context);
-          results.add(subst);
-        }
-        return PyUnionType.union(results);
+        return ((PyUnionType)type).map(member -> substitute(member, substitutions, context));
       }
       else if (type instanceof PyCollectionTypeImpl) {
         final PyCollectionTypeImpl collection = (PyCollectionTypeImpl)type;

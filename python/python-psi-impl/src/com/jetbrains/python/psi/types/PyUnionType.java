@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author yole
@@ -128,9 +129,18 @@ public class PyUnionType implements PyType {
     return myMembers.contains(null);
   }
 
+  /**
+   * @see PyTypeUtil#toStream(PyType)
+   * @see PyUnionType#map(Function)
+   */
   @NotNull
   public Collection<PyType> getMembers() {
     return Collections.unmodifiableCollection(myMembers);
+  }
+
+  @Nullable
+  public PyType map(@NotNull Function<@Nullable PyType, @Nullable PyType> mapper) {
+    return union(ContainerUtil.map(getMembers(), t -> mapper.apply(t)));
   }
 
   /**

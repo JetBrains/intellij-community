@@ -1529,17 +1529,7 @@ public final class PyUtil {
     }
 
     if (type instanceof PyUnionType) {
-      final List<PyType> types = new ArrayList<>();
-
-      for (PyType pyType : ((PyUnionType)type).getMembers()) {
-        final PyType returnType = getReturnType(pyType, context);
-
-        if (returnType != null) {
-          types.add(returnType);
-        }
-      }
-
-      return PyUnionType.union(types);
+      return PyTypeUtil.toNonWeakType(((PyUnionType)type).map(member -> getReturnType(member, context)), context);
     }
 
     return null;
