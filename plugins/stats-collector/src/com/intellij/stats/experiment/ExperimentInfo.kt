@@ -5,6 +5,7 @@ data class ExperimentInfo(val version: Int,
                           val experimentBucketsCount: Int,
                           val groups: List<ExperimentGroupInfo>) {
   companion object {
-    fun emptyExperiment(): ExperimentInfo = ExperimentInfo(version = 2, experimentBucketsCount = 1, groups = emptyList())
+    private val EMPTY_EXPERIMENT = ExperimentInfo(version = 2, experimentBucketsCount = 1, groups = emptyList())
+    fun emptyExperiment(): ExperimentInfo = EMPTY_EXPERIMENT
   }
 }

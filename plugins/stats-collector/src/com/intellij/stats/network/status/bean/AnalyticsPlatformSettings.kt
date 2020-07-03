@@ -6,14 +6,14 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 
-data class AnalyticsPlatformSettings(val productCode: String, val versions: List<EndpointSettings>)
+data class AnalyticsPlatformSettings(val productCode: String? = null, val versions: List<EndpointSettings> = emptyList())
 
-data class EndpointSettings(val releaseType: ReleaseType,
-                            val majorBuildVersionBorders: MajorVersionBorders,
-                            val completionLanguage: Language,
-                            val fromBucket: Int,
-                            val toBucket: Int,
-                            val endpoint: String) {
+data class EndpointSettings(val releaseType: ReleaseType = ReleaseType.ALL,
+                            val majorBuildVersionBorders: MajorVersionBorders = MajorVersionBorders(null, null),
+                            val completionLanguage: Language = Language.ANY,
+                            val fromBucket: Int = 0,
+                            val toBucket: Int = 255,
+                            val endpoint: String? = null) {
   fun satisfies(): Boolean {
     val applicationInfo = ApplicationInfo.getInstance()
     val currentReleaseType = if (ApplicationManager.getApplication().isEAP) ReleaseType.EAP else ReleaseType.RELEASE

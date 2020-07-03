@@ -35,14 +35,17 @@ class AnalyticsPlatformServiceStatus : WebServiceStatus {
     if (response != null && response.isOK()) {
       val settings = AnalyticsPlatformSettingsDeserializer.deserialize(response.text) ?: return
 
-      val satisfyingEndpoints = settings.versions.filter { it.satisfies() }
-      if (satisfyingEndpoints.isEmpty()) return
+      val satisfyingEndpoints = settings.versions.filter { it.satisfies() && it.endpoint != null }
+      if (satisfyingEndpoints.isEmpty()) {
+        LOG.warn("Analytics Platform completion web service status. No satisfying endpoints.")
+        return
+      }
       if (satisfyingEndpoints.size > 1) {
-        LOG.warn("Analytics Platform completion web service status. More than one satisfying endpoints.")
+        LOG.warn("Analytics Platform completion web service status. More than one satisfying endpoints. First one will be used.")
       }
       val endpointSettings = satisfyingEndpoints.first()
       isServerOk = true
-      dataServerUrl = endpointSettings.endpoint
+      dataServerUrl = endpointSettings.endpoint!!
     }
   }
 

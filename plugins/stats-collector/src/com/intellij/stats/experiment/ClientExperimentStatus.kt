@@ -11,6 +11,26 @@ class ClientExperimentStatus : ExperimentStatus {
     private const val PATH_TO_EXPERIMENT_CONFIG = "/experiment.json"
     private val GSON by lazy { Gson() }
     private val LOG = logger<ClientExperimentStatus>()
+
+    fun loadExperimentInfo(): ExperimentInfo {
+      try{
+        val json = {}.javaClass.getResource(PATH_TO_EXPERIMENT_CONFIG).readText()
+        val experimentInfo = GSON.fromJson(json, ExperimentInfo::class.java)
+        checkExperimentGroups(experimentInfo)
+        return experimentInfo
+      }
+      catch (e: Throwable) {
+        LOG.error("Error on loading ML Completion experiment info", e)
+        return ExperimentInfo.emptyExperiment()
+      }
+    }
+
+    private fun checkExperimentGroups(experimentInfo: ExperimentInfo) {
+      for (group in experimentInfo.groups) {
+        if (group.showArrows) assert(group.useMLRanking) { "Showing arrows requires ML ranking" }
+        if (group.useMLRanking) assert(group.calculateFeatures) { "ML ranking requires calculating features" }
+      }
+    }
   }
 
   private val experimentInfo: ExperimentInfo = loadExperimentInfo()
@@ -31,24 +51,4 @@ class ClientExperimentStatus : ExperimentStatus {
 
   override fun shouldCalculateFeatures(language: Language): Boolean =
     experimentInfo.groups.any { it.id == experimentVersion(language) && it.calculateFeatures }
-
-  private fun loadExperimentInfo(): ExperimentInfo {
-    try{
-      val json = javaClass.getResource(PATH_TO_EXPERIMENT_CONFIG).readText()
-      val experimentInfo = GSON.fromJson(json, ExperimentInfo::class.java)
-      checkExperimentGroups(experimentInfo)
-      return experimentInfo
-    }
-    catch (e: Throwable) {
-      LOG.error("Error on loading ML Completion experiment info", e)
-      return ExperimentInfo.emptyExperiment()
-    }
-  }
-
-  private fun checkExperimentGroups(experimentInfo: ExperimentInfo) {
-    for (group in experimentInfo.groups) {
-      if (group.showArrows) assert(group.useMLRanking) { "Showing arrows requires ML ranking" }
-      if (group.useMLRanking) assert(group.calculateFeatures) { "ML ranking requires calculating features" }
-    }
-  }
 }
