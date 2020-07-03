@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
@@ -544,17 +545,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         shutdownTracker.registerStopperThread(self);
 
         DumbServiceAppIconProgress.registerForProgress(myProject, (ProgressIndicatorEx)visibleIndicator);
+        ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(visibleIndicator);
 
-        myGuiDumbTaskRunner.processTasksWithProgress(taskIndicator -> {
+        myGuiDumbTaskRunner.processTasksWithProgress(activity, taskIndicator -> {
           suspender.attachToProgress(taskIndicator);
-          taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
-            @Override
-            protected void delegateProgressChange(@NotNull IndicatorAction action) {
-              super.delegateProgressChange(action);
-              action.execute((ProgressIndicatorEx)visibleIndicator);
-            }
-          });
-        }, activity);
+          taskIndicator.addStateDelegate(relayToVisibleIndicator);
+        },
+        taskIndicator -> {
+          ((AbstractProgressIndicatorExBase)taskIndicator).removeStateDelegate(relayToVisibleIndicator);
+        }
+        );
       }
       catch (Throwable unexpected) {
         LOG.error(unexpected);
