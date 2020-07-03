@@ -639,6 +639,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       return false;
     }
 
+    try {
+      JavaPsiFacade.getElementFactory(project).createTypeElementFromText(
+        GenericsUtil.getVariableTypeByExpressionType(originalType).getCanonicalText(), expr);
+    }
+    catch (IncorrectOperationException ignore) {
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("unknown.expression.type"));
+      showErrorMessage(project, editor, message);
+      return false;
+    }
+
     for (PsiPatternVariable variable : JavaPsiPatternUtil.getExposedPatternVariables(expr)) {
       if (VariableAccessUtils.getVariableReferences(variable, variable.getDeclarationScope()).stream()
         .anyMatch(ref -> !PsiTreeUtil.isAncestor(expr, ref, true))) {

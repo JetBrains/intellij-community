@@ -158,6 +158,17 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, "java.util.ArrayList<java.lang.String>"));
   }
 
+  public void testInvalidTypeContainingVarJava11() {
+    try {
+      doTest("temp", true, false, false, "var.X");
+    }
+    catch (Exception e) {
+      assertEquals("Error message:Cannot perform refactoring.\nUnknown expression type.", e.getMessage());
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+
   public void testDeclareTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testLambdaAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testSCR40281() { doTest("temp", false, false, false, "Set<? extends Map<?,java.lang.String>.Entry<?,java.lang.String>>"); }
