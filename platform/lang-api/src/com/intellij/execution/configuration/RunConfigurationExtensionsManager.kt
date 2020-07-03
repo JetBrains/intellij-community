@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configuration
 
 import com.intellij.execution.ExecutionException
@@ -116,7 +116,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
     processApplicableExtensions(configuration) {
       val fragments = it.createFragments(configuration)
       if (fragments != null) {
-        list.addAll(fragments);
+        list.addAll(fragments)
       }
       else {
         val editor = it.createEditor(configuration)

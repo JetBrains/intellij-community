@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,12 +18,13 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
   private Collection<SettingsEditor<Settings>> myEditors;
   private SettingsEditorListener<Settings> myChildSettingsListener;
   private SynchronizationController mySyncController;
-  private boolean myIsDisposed = false;
+  private boolean myIsDisposed;
 
   public CompositeSettingsEditor() {}
 
   public CompositeSettingsEditor(Factory<Settings> factory) {
     super(factory);
+
     if (factory != null) {
       mySyncController = new SynchronizationController();
     }
@@ -47,7 +34,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
 
   @Override
   public void resetEditorFrom(@NotNull Settings settings) {
-    for (final SettingsEditor<Settings> myEditor : myEditors) {
+    for (SettingsEditor<Settings> myEditor : myEditors) {
       try {
         myEditor.resetEditorFrom(settings);
       }
@@ -111,13 +98,20 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
     myIsDisposed = true;
   }
 
-  private class SynchronizationController {
-    private final Set<SettingsEditor> myChangedEditors = new HashSet<>();
-    private final Alarm mySyncAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    private boolean myIsInSync = false;
+  private final class SynchronizationController {
+    private final Set<SettingsEditor<?>> myChangedEditors = new HashSet<>();
+    private final Alarm mySyncAlarm;
+    private boolean myIsInSync;
 
-    public void handleStateChange(SettingsEditor editor) {
-      if (myIsInSync || myIsDisposed) return;
+    private SynchronizationController() {
+      mySyncAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    }
+
+    public void handleStateChange(@NotNull SettingsEditor<?> editor) {
+      if (myIsInSync || myIsDisposed) {
+        return;
+      }
+
       myChangedEditors.add(editor);
       mySyncAlarm.cancelAllRequests();
       mySyncAlarm.addRequest(() -> {
@@ -139,7 +133,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
       }
       catch (ConfigurationException ignored) {
       }
-      finally{
+      finally {
         myChangedEditors.clear();
         myIsInSync = false;
       }
