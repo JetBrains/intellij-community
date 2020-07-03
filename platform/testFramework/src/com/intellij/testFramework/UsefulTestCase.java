@@ -1133,7 +1133,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected boolean annotatedWith(@NotNull Class<? extends Annotation> annotationClass) {
     Class<?> aClass = getClass();
-    String methodName = getName();
+    String methodName = ObjectUtils.notNull(getName(), "");
     boolean methodChecked = false;
     while (aClass != null && aClass != Object.class) {
       if (aClass.getAnnotation(annotationClass) != null) return true;
