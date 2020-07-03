@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -195,6 +196,9 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
 
   public static CompletionPhase getCompletionPhase() {
+    if (!ClientId.isCurrentlyUnderLocalId())
+      return CompletionPhase.NoCompletion;
+
     return ourPhase;
   }
 
