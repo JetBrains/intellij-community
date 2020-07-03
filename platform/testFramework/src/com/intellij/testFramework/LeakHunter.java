@@ -31,7 +31,7 @@ import java.util.function.Supplier;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class LeakHunter {
   @TestOnly
-  public static void checkProjectLeak() {
+  public static void checkProjectLeak() throws AssertionError {
     checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault() && !project.isLight());
   }
 
