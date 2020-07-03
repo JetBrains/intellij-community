@@ -92,7 +92,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
   }
 
   private void addListeners() {
-    MessageBusConnection connection = myProject.getMessageBus().connect();
+    MessageBusConnection connection = myProject.getMessageBus().connect(this);
     for (String rootPath : MvcWatchedRootProvider.getRootsToWatch(myProject)) {
       VirtualFilePointerManager.getInstance().createDirectoryPointer(VfsUtilCore.pathToUrl(rootPath), true, this, new VirtualFilePointerListener() {
         @Override
