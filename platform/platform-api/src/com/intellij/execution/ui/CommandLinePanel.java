@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.*;
 import java.util.List;
 
 public class CommandLinePanel extends JPanel {
@@ -57,6 +59,19 @@ public class CommandLinePanel extends JPanel {
       rowWidth += minWidth;
     }
     add(row);
+  }
+
+  public int getLeftInset() {
+    return Arrays.stream(getComponents()).map(component -> getLeftInset((JComponent)component)).max(Comparator.comparingInt(o -> o))
+      .orElse(0);
+  }
+
+  private static int getLeftInset(JComponent component) {
+    if (component.getBorder() != null) {
+      return component.getBorder().getBorderInsets(component).left;
+    }
+    JComponent wrapped = (JComponent)ContainerUtil.find(component.getComponents(), co -> co.isVisible());
+    return wrapped != null ? getLeftInset(wrapped) : 0;
   }
 
   public static void setMinimumWidth(Component component, int width) {
