@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.*;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
@@ -394,6 +395,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
+    // instantiate StatusBarWidgetsManager and create widgets provided by extensions
+    project.getService(StatusBarWidgetsManager.class);
     PopupHandler.installPopupHandler(Objects.requireNonNull(getStatusBar()), StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
   }
 
