@@ -100,7 +100,7 @@ public class ConvertProjectDialog extends DialogWrapper {
 
       ProjectConversionUtil.backupFiles(myAffectedFiles, myContext.getProjectBaseDir(), myBackupDir);
       for (ConversionRunner runner : myConversionRunners) {
-        if (runner.isConversionNeeded()) {
+        if (runner.isConversionNeeded(myContext.getAppliedConverters())) {
           runner.preProcess();
           runner.process();
           runner.postProcess();

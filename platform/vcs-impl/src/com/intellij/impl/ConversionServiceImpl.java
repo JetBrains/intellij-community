@@ -33,12 +33,12 @@ public final class ConversionServiceImpl extends ConversionService {
   public ConversionResult convertSilently(@NotNull Path projectPath, @NotNull ConversionListener listener) {
     try {
       ConversionContextImpl context = new ConversionContextImpl(projectPath);
-      if (!isConversionNeeded(context)) {
+      List<ConversionRunner> runners = isConversionNeeded(context);
+      if (runners.isEmpty()) {
         return ConversionResultImpl.CONVERSION_NOT_NEEDED;
       }
 
       listener.conversionNeeded();
-      List<ConversionRunner> runners = getConversionRunners(context);
 
       Set<Path> affectedFiles = new HashSet<>();
       for (ConversionRunner runner : runners) {
@@ -52,7 +52,7 @@ public final class ConversionServiceImpl extends ConversionService {
       }
       Path backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
       for (ConversionRunner runner : runners) {
-        if (runner.isConversionNeeded()) {
+        if (runner.isConversionNeeded(Collections.emptySet())) {
           runner.preProcess();
           runner.process();
           runner.postProcess();
@@ -69,19 +69,18 @@ public final class ConversionServiceImpl extends ConversionService {
     return ConversionResultImpl.ERROR_OCCURRED;
   }
 
-  @NotNull
   @Override
-  public ConversionResult convert(@NotNull Path projectPath) throws CannotConvertException {
+  public @NotNull ConversionResult convert(@NotNull Path projectPath) throws CannotConvertException {
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || !ConverterProvider.EP_NAME.hasAnyExtensions() || !Files.exists(projectPath)) {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED;
     }
 
     ConversionContextImpl context = new ConversionContextImpl(projectPath);
-    if (!isConversionNeeded(context)) {
+    List<ConversionRunner> converters = isConversionNeeded(context);
+    if (converters.isEmpty()) {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED;
     }
 
-    List<ConversionRunner> converters = getConversionRunners(context);
     Ref<ConversionResult> ref = new Ref<>(ConversionResultImpl.CONVERSION_CANCELED);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       ConvertProjectDialog dialog = new ConvertProjectDialog(context, converters);
@@ -102,24 +101,58 @@ public final class ConversionServiceImpl extends ConversionService {
     return ref.get();
   }
 
-  private static @NotNull List<ConversionRunner> getConversionRunners(@NotNull ConversionContextImpl context) throws CannotConvertException {
-    List<ConversionRunner> converters = getSortedConverters(context);
-    converters.removeIf(runner -> !runner.isConversionNeeded());
-    return converters;
-  }
-
-  private static boolean isConversionNeeded(@NotNull ConversionContextImpl context) {
+  private static @NotNull List<ConversionRunner> isConversionNeeded(@NotNull ConversionContextImpl context) {
     try {
-      List<ConversionRunner> runners = getSortedConverters(context);
-      if (runners.isEmpty()) {
-        return false;
+      Object2LongMap<String> oldMap = context.getProjectFileTimestamps();
+      boolean changed = false;
+      Object2LongMap<String> newMap;
+      if (oldMap.isEmpty()) {
+        LOG.debug("conversion will be performed because no information about project files");
+        newMap = null;
       }
-      for (ConversionRunner runner : runners) {
-        if (runner.isConversionNeeded()) {
-          return true;
+      else {
+        newMap = context.getAllProjectFiles();
+        LOG.debug("Checking project files");
+        for (ObjectIterator<Object2LongMap.Entry<String>> iterator = Object2LongMaps.fastIterator(newMap); iterator.hasNext(); ) {
+          Object2LongMap.Entry<String> entry = iterator.next();
+          String path = entry.getKey();
+          long oldValue = oldMap.getLong(path);
+          long newValue = entry.getLongValue();
+          if (newValue != oldValue) {
+            LOG.info("conversion will be performed because at least " + path + " is changed (oldLastModified=" + oldValue + ", newLastModified=" + newValue + ")");
+            changed = true;
+            break;
+          }
         }
       }
-      context.saveConversionResult();
+
+      Set<String> performedConversionIds;
+      if (changed) {
+        performedConversionIds = Collections.emptySet();
+      }
+      else {
+        performedConversionIds = context.getAppliedConverters();
+        LOG.debug("Project files are up to date. Applied converters: " + performedConversionIds);
+      }
+
+      List<ConversionRunner> runners = new ArrayList<>();
+      for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensionList()) {
+        if (!performedConversionIds.contains(provider.getId())) {
+          ConversionRunner runner = new ConversionRunner(provider, context);
+          if (runner.isConversionNeeded(Collections.emptySet())) {
+            runners.add(runner);
+          }
+        }
+      }
+
+      if (runners.isEmpty()) {
+        if (newMap != null) {
+          // save only if current project info is computed, otherwise it will be computed and saved on project close
+          context.saveConversionResult(newMap);
+        }
+        return Collections.emptyList();
+      }
+      // do not save current project info - project files maybe modified as result of conversion
     }
     catch (IOException e) {
       LOG.info(e);
@@ -127,61 +160,12 @@ public final class ConversionServiceImpl extends ConversionService {
     catch (CannotConvertException e) {
       LOG.info("Cannot check whether conversion of project files is needed or not, conversion won't be performed", e);
     }
-    return false;
+    return Collections.emptyList();
   }
 
-  private static @NotNull List<ConversionRunner> getSortedConverters(@NotNull ConversionContextImpl context) throws CannotConvertException {
-    Object2LongMap<String> oldMap = context.getProjectFileTimestamps();
-    Object2LongMap<String> newMap = context.getAllProjectFiles();
-    LOG.debug("Checking project files");
-    boolean changed = false;
-    if (LOG.isDebugEnabled()) {
-      for (ObjectIterator<Object2LongMap.Entry<String>> iterator = Object2LongMaps.fastIterator(newMap); iterator.hasNext(); ) {
-        Object2LongMap.Entry<String> entry = iterator.next();
-        String path = entry.getKey();
-        long oldValue = oldMap.getLong(path);
-        if (oldValue <= 0) {
-          LOG.debug(" new file: " + path);
-          changed = true;
-        }
-        else if (entry.getLongValue() != oldValue) {
-          LOG.debug(" changed file: " + path);
-          changed = true;
-        }
-      }
-    }
-    else {
-      // if debug log is not enabled, do not process all entries
-      for (ObjectIterator<Object2LongMap.Entry<String>> iterator = Object2LongMaps.fastIterator(newMap); iterator.hasNext(); ) {
-        Object2LongMap.Entry<String> entry = iterator.next();
-        String path = entry.getKey();
-        long oldValue = oldMap.getLong(path);
-        long newValue = entry.getLongValue();
-        if (newValue != oldValue) {
-          LOG.info("conversion will be performed because at least " + path + " is changed (oldLastModified=" + oldValue + ", newLastModified=" + newValue);
-          changed = true;
-          break;
-        }
-      }
-    }
-
-    Set<String> performedConversionIds;
-    if (changed) {
-      performedConversionIds = Collections.emptySet();
-      LOG.debug("Project files were modified.");
-    }
-    else {
-      performedConversionIds = context.getAppliedConverters();
-      LOG.debug("Project files are up to date. Applied converters: " + performedConversionIds);
-    }
-    return createConversionRunners(context, performedConversionIds);
-  }
-
-  @NotNull
-  private static List<ConversionRunner> createConversionRunners(@NotNull ConversionContextImpl context, @NotNull Set<String> performedConversionIds) {
+  private static @NotNull List<ConversionRunner> createConversionRunners(@NotNull ConversionContextImpl context, @NotNull Set<String> performedConversionIds) {
     List<ConversionRunner> runners = new ArrayList<>();
-    List<ConverterProvider> providers = ConverterProvider.EP_NAME.getExtensionList();
-    for (ConverterProvider provider : providers) {
+    for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensionList()) {
       if (!performedConversionIds.contains(provider.getId())) {
         runners.add(new ConversionRunner(provider, context));
       }

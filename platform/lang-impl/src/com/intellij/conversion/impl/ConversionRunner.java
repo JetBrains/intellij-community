@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public final class ConversionRunner {
   private final ConverterProvider myProvider;
@@ -31,7 +32,7 @@ public final class ConversionRunner {
   private final ConversionProcessor<ProjectLibrariesSettings> myProjectLibrariesConverter;
   private final ConversionProcessor<ArtifactsSettings> myArtifactsConverter;
 
-  public ConversionRunner(ConverterProvider provider, ConversionContextImpl context) {
+  public ConversionRunner(@NotNull ConverterProvider provider, @NotNull ConversionContextImpl context) {
     myProvider = provider;
     myContext = context;
     myConverter = provider.createConverter(context);
@@ -43,8 +44,8 @@ public final class ConversionRunner {
     myArtifactsConverter = myConverter.createArtifactsConverter();
   }
 
-  public boolean isConversionNeeded() throws CannotConvertException {
-    if (myContext.isConversionAlreadyPerformed(myProvider)) {
+  public boolean isConversionNeeded(@NotNull Set<String> appliedConverters) throws CannotConvertException {
+    if (appliedConverters.contains(myProvider.getId())) {
       return false;
     }
 

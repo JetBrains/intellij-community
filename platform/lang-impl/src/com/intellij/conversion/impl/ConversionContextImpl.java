@@ -41,7 +41,10 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 public final class ConversionContextImpl implements ConversionContext {
   private static final Logger LOG = Logger.getInstance(ConversionContextImpl.class);
@@ -90,14 +93,18 @@ public final class ConversionContextImpl implements ConversionContext {
         return CachedConversionResult.load(CachedConversionResult.getConversionInfoFile(myProjectFile.getPath()), myProjectBaseDir);
       }
       catch (Exception e) {
-        LOG.info(e);
+        LOG.error(e);
         return CachedConversionResult.createEmpty();
       }
     });
   }
 
   public void saveConversionResult() throws CannotConvertException, IOException {
-    CachedConversionResult.saveConversionResult(getAllProjectFiles(), CachedConversionResult.getConversionInfoFile(myProjectFile.getPath()), myProjectBaseDir);
+    saveConversionResult(getAllProjectFiles());
+  }
+
+  public void saveConversionResult(@NotNull Object2LongMap<String> allProjectFiles) throws CannotConvertException, IOException {
+    CachedConversionResult.saveConversionResult(allProjectFiles, CachedConversionResult.getConversionInfoFile(myProjectFile.getPath()), myProjectBaseDir);
   }
 
   public @NotNull Object2LongMap<String> getProjectFileTimestamps() {
@@ -121,30 +128,16 @@ public final class ConversionContextImpl implements ConversionContext {
     }
 
     Path dotIdeaDirectory = mySettingsBaseDir;
-    List<Path> dirs = Arrays.asList(dotIdeaDirectory,
+    List<Path> dirs = Arrays.asList(
+      dotIdeaDirectory,
       dotIdeaDirectory.resolve("libraries"),
       dotIdeaDirectory.resolve("artifacts"),
-      dotIdeaDirectory.resolve("runConfigurations"));
+      dotIdeaDirectory.resolve("runConfigurations")
+    );
 
     Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Conversion: Project Files Collecting", 3, false);
     List<CompletableFuture<List<Object2LongMap<String>>>> futures = new ArrayList<>(dirs.size() + 1);
-    futures.add(CompletableFuture.supplyAsync(() -> {
-      List<Path> moduleFiles = myModuleFiles;
-      if (moduleFiles == null) {
-        try {
-          moduleFiles = findModuleFiles(JDOMUtil.load(myModuleListFile));
-        }
-        catch (NoSuchFileException ignore) {
-          moduleFiles = Collections.emptyList();
-        }
-        catch (JDOMException | IOException e) {
-          throw new CompletionException(e);
-        }
-
-        myModuleFiles = moduleFiles;
-      }
-      return moduleFiles;
-    }, executor)
+    futures.add(CompletableFuture.supplyAsync(this::getModulePaths, executor)
     .thenComposeAsync(moduleFiles -> {
       int moduleCount = moduleFiles.size();
       if (moduleCount < 50) {
@@ -231,10 +224,6 @@ public final class ConversionContextImpl implements ConversionContext {
     catch (IOException e) {
       LOG.warn(e);
     }
-  }
-
-  public boolean isConversionAlreadyPerformed(@NotNull ConverterProvider provider) {
-    return getAppliedConverters().contains(provider.getId());
   }
 
   @Override
