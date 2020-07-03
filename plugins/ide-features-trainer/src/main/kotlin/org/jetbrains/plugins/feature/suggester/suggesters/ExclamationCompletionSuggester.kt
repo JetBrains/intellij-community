@@ -7,8 +7,8 @@ import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.cache.UserActionsCache
-import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
+import org.jetbrains.plugins.feature.suggester.cache.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsHistory
 import org.jetbrains.plugins.feature.suggester.changes.*
 
 class ExclamationCompletionSuggester : FeatureSuggester {
@@ -22,7 +22,7 @@ class ExclamationCompletionSuggester : FeatureSuggester {
 
     private class PossibleExclaimingExpression(val action: UserAction, val exprText: String, val startOffset: Int)
 
-    override fun getSuggestion(actions: UserActionsCache, anActions: UserAnActionsCache): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
         updateCompletionStatus()
         when (val lastAction = actions.last()) {
             is ChildAddedAction -> {
@@ -125,7 +125,7 @@ class ExclamationCompletionSuggester : FeatureSuggester {
     private fun isExpressionExclaimed(
         prefixExpr: PsiPrefixExpression,
         expr: PsiExpression,
-        actions: UserActionsCache
+        actions: UserActionsHistory
     ): Boolean {
         if (exclaimingExpression == null) {
             return false

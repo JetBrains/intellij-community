@@ -6,8 +6,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.cache.UserActionsCache
-import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
+import org.jetbrains.plugins.feature.suggester.cache.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsHistory
 import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.changes.ChildRemovedAction
 import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
@@ -28,7 +28,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
         const val DESCRIPTOR_ID = "refactoring.introduceVariable"
     }
 
-    override fun getSuggestion(actions: UserActionsCache, anActions: UserAnActionsCache): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
         val lastAction = actions.last()
         val parent = lastAction.parent
         when (lastAction) {

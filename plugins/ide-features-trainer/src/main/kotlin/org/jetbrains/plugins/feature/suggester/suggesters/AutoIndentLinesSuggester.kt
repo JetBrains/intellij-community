@@ -5,8 +5,8 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.cache.UserActionsCache
-import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
+import org.jetbrains.plugins.feature.suggester.cache.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsHistory
 import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
 
 class AutoIndentLinesSuggester : FeatureSuggester {
@@ -15,7 +15,7 @@ class AutoIndentLinesSuggester : FeatureSuggester {
         const val POPUP_MESSAGE = "Why not use the Auto-Indent feature? (Ctrl + Shift + I)"
     }
 
-    override fun getSuggestion(actions: UserActionsCache, anActions: UserAnActionsCache): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
         val command = CommandProcessor.getInstance().currentCommand
         if (command != null) return NoSuggestion
         val lastAction = actions.last()

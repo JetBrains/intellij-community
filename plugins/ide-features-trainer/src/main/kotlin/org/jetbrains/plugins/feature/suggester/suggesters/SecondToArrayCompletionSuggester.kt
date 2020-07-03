@@ -6,8 +6,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.cache.UserActionsCache
-import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
+import org.jetbrains.plugins.feature.suggester.cache.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsHistory
 import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
 
@@ -19,7 +19,7 @@ class SecondToArrayCompletionSuggester : FeatureSuggester {
         const val DESCRIPTOR_ID = "editing.completion.second.smarttype.toar"
     }
 
-    override fun getSuggestion(actions: UserActionsCache, anActions: UserAnActionsCache): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
         when (val lastAction = actions.last()) {
             is ChildAddedAction -> {
                 if (isMethodCall(lastAction.newChild)) {

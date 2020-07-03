@@ -15,16 +15,16 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.ui.LightweightHint
-import org.jetbrains.plugins.feature.suggester.cache.UserActionsCache
-import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
+import org.jetbrains.plugins.feature.suggester.cache.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsHistory
 import org.jetbrains.plugins.feature.suggester.changes.*
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
 import java.awt.Point
 
 class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener {
     private val MAX_ACTIONS_NUMBER: Int = 100
-    private val actionsCache = UserActionsCache(MAX_ACTIONS_NUMBER)
-    private val anActionsCache = UserAnActionsCache(MAX_ACTIONS_NUMBER)
+    private val actionsCache = UserActionsHistory(MAX_ACTIONS_NUMBER)
+    private val anActionsCache = UserAnActionsHistory(MAX_ACTIONS_NUMBER)
 
     private var psiListenersIsSet: Boolean = false
 

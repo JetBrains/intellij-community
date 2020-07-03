@@ -4,7 +4,7 @@ import org.jetbrains.plugins.feature.suggester.changes.UserAction
 import org.jetbrains.plugins.feature.suggester.changes.UserAnAction
 import java.util.*
 
-open class ChangesCache<EventType>(val maxCacheSize: Int) {
+open class ChangesHistory<EventType>(val maxCacheSize: Int) {
 
     private val cache: MutableList<EventType> = LinkedList<EventType>()
 
@@ -36,6 +36,6 @@ open class ChangesCache<EventType>(val maxCacheSize: Int) {
 }
 
 
-class UserActionsCache(maxCacheSize: Int) : ChangesCache<UserAction>(maxCacheSize)
+class UserActionsHistory(maxCacheSize: Int) : ChangesHistory<UserAction>(maxCacheSize)
 
-class UserAnActionsCache(maxCacheSize: Int) : ChangesCache<UserAnAction>(maxCacheSize)
+class UserAnActionsHistory(maxCacheSize: Int) : ChangesHistory<UserAnAction>(maxCacheSize)

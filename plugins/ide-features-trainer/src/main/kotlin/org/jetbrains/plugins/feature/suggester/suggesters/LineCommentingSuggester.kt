@@ -7,8 +7,8 @@ import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.cache.UserActionsCache
-import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
+import org.jetbrains.plugins.feature.suggester.cache.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsHistory
 import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.changes.ChildRemovedAction
 import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
@@ -24,7 +24,7 @@ class LineCommentingSuggester : FeatureSuggester {
 
     private var uncommentingActionStart: UserAction? = null
 
-    override fun getSuggestion(actions: UserActionsCache, anActions: UserAnActionsCache): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
         val name = CommandProcessor.getInstance().currentCommandName
         if (name != null) {
             return NoSuggestion
