@@ -104,10 +104,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final PyPackage installedSetuptools = refreshAndCheckForSetuptools();
     final PyPackage installedPip = PyPsiPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP);
     if (installedSetuptools == null || VERSION_COMPARATOR.compare(installedSetuptools.getVersion(), SETUPTOOLS_VERSION) < 0) {
-      installManagement(SETUPTOOLS_WHEEL_NAME);
+      installManagement(Objects.requireNonNull(getHelperPath(SETUPTOOLS_WHEEL_NAME)));
     }
     if (installedPip == null || VERSION_COMPARATOR.compare(installedPip.getVersion(), PIP_VERSION) < 0) {
-      installManagement(PIP_WHEEL_NAME);
+      installManagement(Objects.requireNonNull(getHelperPath(PIP_WHEEL_NAME)));
     }
   }
 
@@ -155,8 +155,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     List<String> args = Lists.newArrayList(INSTALL);
     args.addAll(Arrays.asList(pipArgs));
     getPythonProcessResult(pipWheel + mySeparator + PyPackageUtil.PIP, args,
-                           true, true,
-                           PythonHelpersLocator.getHelpersRoot().getAbsolutePath());
+                           true, true, null);
   }
 
   @NotNull
