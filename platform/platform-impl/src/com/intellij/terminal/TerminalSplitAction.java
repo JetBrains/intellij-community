@@ -34,7 +34,7 @@ public abstract class TerminalSplitAction extends TerminalAction {
                              : UIUtil.removeMnemonic(ActionsBundle.message("action.SplitHorizontally.text"));
     return new TerminalSplitAction(new TerminalActionPresentation(text, Collections.emptyList()), vertically) {
       @Override
-      public boolean isEnabled() {
+      public boolean isEnabled(@Nullable KeyEvent e) {
         return listener != null && listener.canSplit(vertically);
       }
 
