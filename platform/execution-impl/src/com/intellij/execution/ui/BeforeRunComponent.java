@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.InplaceButton;
@@ -36,7 +37,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable {
+public final class BeforeRunComponent extends JPanel implements DnDTarget {
   private List<TaskButton> myTags;
   private final InplaceButton myAddButton;
   private final JPanel myAddPanel;
@@ -45,7 +46,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
   private RunConfiguration myConfiguration;
   private final LinkLabel<Object> myAddLabel;
 
-  public BeforeRunComponent() {
+  public BeforeRunComponent(@NotNull Disposable parentDisposable) {
     super(new WrapLayout(FlowLayout.LEADING, 0, 0));
     add(Box.createVerticalStrut(35));
     JBEmptyBorder border = JBUI.Borders.empty(5, 0, 0, 5);
@@ -55,7 +56,16 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
     myAddPanel.add(myAddButton);
     myAddLabel = new LinkLabel<>(ExecutionBundle.message("run.configuration.before.run.add.task"), null, (aSource, aLinkData) -> showPopup());
     myAddLabel.setBorder(border);
-    DnDManager.getInstance().registerTarget(this, this);
+    DnDManager.getInstance().registerTarget(this, this, parentDisposable);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        if (myTags != null) {
+          myTags.forEach(Disposer::dispose);
+          myTags = null;
+        }
+      }
+    });
   }
 
   private List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
@@ -66,12 +76,11 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
   private void createTags() {
     myTags = new ArrayList<>();
     for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : getProviders()) {
-      TaskButton button = new TaskButton(provider, () -> {
+      myTags.add(new TaskButton(provider, () -> {
         myChangeListener.run();
         updateAddLabel();
         myTagListener.accept(provider.getId(), false);
-      });
-      myTags.add(button);
+      }));
     }
   }
 
@@ -139,7 +148,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
     myTagListener.accept(tag.myProvider.getId(), true);
   }
 
-  public void reset(RunnerAndConfigurationSettingsImpl s) {
+  public void reset(@NotNull RunnerAndConfigurationSettingsImpl s) {
     myConfiguration = s.getConfiguration();
     if (myTags == null) {
       createTags();
@@ -210,11 +219,6 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
     return true;
   }
 
-  @Override
-  public void dispose() {
-    DnDManager.getInstance().unregisterTarget(this, this);
-  }
-
   public void setTagListener(BiConsumer<Key<? extends BeforeRunTask<?>>, Boolean> tagListener) {
     myTagListener = tagListener;
   }
@@ -223,8 +227,9 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
     private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
     private BeforeRunTask<?> myTask;
 
-    private TaskButton(BeforeRunTaskProvider<BeforeRunTask<?>> provider, Runnable action) {
+    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, @NotNull Runnable action) {
       super(provider.getName(), action);
+
       myProvider = provider;
       setVisible(false);
       myButton.addMouseListener(new MouseAdapter() {
@@ -236,7 +241,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
           }
         }
       });
-      DnDManager.getInstance().registerSource(this, myButton);
+      DnDManager.getInstance().registerSource(this, myButton, this);
       myButton.setToolTipText(ExecutionBundle.message("run.configuration.before.run.tooltip"));
     }
 
@@ -246,12 +251,6 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
       if (task != null) {
         updateButton(myProvider.getDescription(task), myProvider.getTaskIcon(task));
       }
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      DnDManager.getInstance().unregisterSource(this, myButton);
     }
 
     @Override

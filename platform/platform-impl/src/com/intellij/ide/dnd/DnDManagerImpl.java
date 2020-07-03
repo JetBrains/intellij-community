@@ -2,8 +2,10 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -72,6 +74,17 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   @Override
+  public void registerSource(@NotNull DnDSource source, @NotNull JComponent component, @NotNull Disposable parentDisposable) {
+    registerSource(source, component);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        unregisterSource(source, component);
+      }
+    });
+  }
+
+  @Override
   public void unregisterSource(@NotNull AdvancedDnDSource source) {
     unregisterSource(source, source.getComponent());
   }
@@ -123,6 +136,17 @@ public final class DnDManagerImpl extends DnDManager {
   public void registerTarget(DnDTarget target, JComponent component) {
     component.putClientProperty(TARGET_KEY, target);
     new DropTarget(component, DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
+  }
+
+  @Override
+  public void registerTarget(@NotNull DnDTarget target, @NotNull JComponent component, @NotNull Disposable parentDisposable) {
+    registerTarget(target, component);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        unregisterTarget(target, component);
+      }
+    });
   }
 
   @Override
