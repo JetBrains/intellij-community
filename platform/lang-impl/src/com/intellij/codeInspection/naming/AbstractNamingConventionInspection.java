@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.naming;
 
+import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
@@ -88,7 +90,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
       public void extensionRemoved(@NotNull NamingConvention<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
         unregisterConvention(extension);
       }
-    }, null);
+    }, ExtensionPointUtil.createExtensionDisposable(this, (ExtensionPointName) LocalInspectionEP.LOCAL_INSPECTION));
   }
 
   @Nullable
