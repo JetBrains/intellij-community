@@ -48,6 +48,7 @@ public class ReverseForLoopDirectionIntention extends Intention {
     if (update == null) {
       return;
     }
+    CommentTracker ct = new CommentTracker();
     final PsiExpression updateExpression = update.getExpression();
     final String variableName = variable.getName();
     final StringBuilder newUpdateText = new StringBuilder();
@@ -88,10 +89,10 @@ public class ReverseForLoopDirectionIntention extends Intention {
       }
       final IElementType tokenType = assignmentExpression.getOperationTokenType();
       if (PLUSEQ == tokenType) {
-        newUpdateText.append("-=").append(expression.getText());
+        newUpdateText.append("-=").append(ct.text(expression));
       }
       else if (MINUSEQ == tokenType) {
-        newUpdateText.append("+=").append(expression.getText());
+        newUpdateText.append("+=").append(ct.text(expression));
       }
       else if (EQ == tokenType && expression instanceof PsiBinaryExpression) {
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
@@ -105,14 +106,14 @@ public class ReverseForLoopDirectionIntention extends Intention {
         }
         final IElementType operationTokenType = binaryExpression.getOperationTokenType();
         newUpdateText.append('=');
-        newUpdateText.append(lOperand.getText());
+        newUpdateText.append(ct.text(lOperand));
         if (PLUS == operationTokenType) {
           newUpdateText.append('-');
         }
         else if (MINUS == operationTokenType) {
           newUpdateText.append('+');
         }
-        newUpdateText.append(rOperand.getText());
+        newUpdateText.append(ct.text(rOperand));
       }
       else {
         return;
@@ -139,6 +140,7 @@ public class ReverseForLoopDirectionIntention extends Intention {
       else {
         conditionText.append(initializer.getText());
       }
+      ct.markUnchanged(rhs);
       if (sign == LT) {
         newInitializerText.append(incrementExpression(rhs, false));
       }
@@ -161,6 +163,7 @@ public class ReverseForLoopDirectionIntention extends Intention {
       }
       conditionText.append(negatedSign);
       conditionText.append(variableName);
+      ct.markUnchanged(lhs);
       if (sign == GT) {
         newInitializerText.append(incrementExpression(lhs, false));
       }
@@ -176,10 +179,8 @@ public class ReverseForLoopDirectionIntention extends Intention {
     }
     final PsiExpression newInitializer = factory.createExpressionFromText(newInitializerText.toString(), element);
     variable.setInitializer(newInitializer);
-    final PsiExpression newCondition = factory.createExpressionFromText(conditionText.toString(), element);
-    condition.replace(newCondition);
-    final PsiExpression newUpdate = factory.createExpressionFromText(newUpdateText.toString(), element);
-    updateExpression.replace(newUpdate);
+    ct.replace(condition, conditionText.toString());
+    ct.replaceAndRestoreComments(updateExpression, newUpdateText.toString());
   }
 
   private static String incrementExpression(PsiExpression expression, boolean positive) {

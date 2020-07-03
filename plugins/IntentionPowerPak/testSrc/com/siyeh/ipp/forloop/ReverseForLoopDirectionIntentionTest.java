@@ -11,6 +11,7 @@ public class ReverseForLoopDirectionIntentionTest extends IPPTestCase {
 
   public void testAssignmentUpdate() { doTest(); }
   public void testOperatorAssignment() { doTest(); }
+  public void testComment() { doTest(); }
 
   @Override
   protected String getIntentionName() {
