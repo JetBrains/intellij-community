@@ -1470,6 +1470,11 @@ public abstract class DialogWrapper {
     myPeer.pack();
   }
 
+  @Nullable
+  public Dimension getInitialSize() {
+    return null;
+  }
+
   public Dimension getPreferredSize() {
     return myPeer.getPreferredSize();
   }
