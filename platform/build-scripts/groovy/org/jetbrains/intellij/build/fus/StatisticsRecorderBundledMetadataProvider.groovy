@@ -52,9 +52,8 @@ class StatisticsRecorderBundledMetadataProvider {
   @CompileDynamic
   private static String metadataServiceUri(BuildContext context) {
     def providerUri = appendProductCode(context, context.proprietaryBuildTools.featureUsageStatisticsProperties.metadataProviderUri)
-    context.messages.info("Parsing $providerUri")
-
     def config = download(context, providerUri)
+    context.messages.info("Parsing $providerUri")
     def appInfo = context.applicationInfo
     def settings = EventLogExternalSettings.parseSendSettings(new StringReader(config), "${appInfo.majorVersion}.${appInfo.minorVersion}")
     return settings.getEndpoint("metadata")
