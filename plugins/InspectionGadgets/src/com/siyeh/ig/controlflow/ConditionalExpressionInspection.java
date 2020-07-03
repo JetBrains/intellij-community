@@ -240,7 +240,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
           quickFixOnly = true;
         }
       }
-      final boolean canSurround = CodeBlockSurrounder.canSurround(expression);
+      final boolean canSurround = !PsiType.NULL.equals(expression.getType()) && CodeBlockSurrounder.canSurround(expression);
       if (!canSurround && (ignoreExpressionContext || !isVisibleHighlight(expression))) {
         // quick fix is not built in this case (it will break code) and there will be no warning, so just return
         return;
