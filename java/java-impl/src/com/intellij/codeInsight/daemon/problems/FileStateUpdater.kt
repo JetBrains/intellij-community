@@ -8,7 +8,7 @@ internal typealias Snapshot = Map<SmartPsiElementPointer<PsiMember>, ScopedMembe
 
 internal data class FileState(val snapshot: Snapshot, val changes: Map<PsiMember, ScopedMember?>)
 
-internal class FileStateUpdater(private val prevSnapshot: Snapshot?) : JavaElementVisitor() {
+internal class FileStateUpdater(private val prevState: FileState?) : JavaElementVisitor() {
 
   private val snapshot = mutableMapOf<SmartPsiElementPointer<PsiMember>, ScopedMember>()
   private val changes = mutableMapOf<PsiMember, ScopedMember?>()
@@ -25,11 +25,11 @@ internal class FileStateUpdater(private val prevSnapshot: Snapshot?) : JavaEleme
     val member = ScopedMember.create(psiMember) ?: return
     val pointer = SmartPointerManager.createPointer(psiMember)
     snapshot[pointer] = member
-    if (prevSnapshot == null) return
-    val prevMember = prevSnapshot[pointer]
+    if (prevState == null) return
+    val prevMember = prevState.snapshot[pointer]
     if (prevMember != null && !member.hasChanged(prevMember)) return
     changes[psiMember] = prevMember
-    collectRelatedChanges(psiMember, member, prevMember, changes)
+    collectRelatedChanges(psiMember, member, prevMember, changes, prevState.changes)
   }
 
   companion object {
@@ -48,8 +48,8 @@ internal class FileStateUpdater(private val prevSnapshot: Snapshot?) : JavaEleme
 
     @JvmStatic
     @JvmName("findState")
-    internal fun findState(psiFile: PsiFile, prevSnapshot: Snapshot): FileState {
-      val updater = FileStateUpdater(prevSnapshot)
+    internal fun findState(psiFile: PsiFile, prevSnapshot: Snapshot, prevChanges: Map<PsiMember, ScopedMember?>): FileState {
+      val updater = FileStateUpdater(FileState(prevSnapshot, prevChanges))
       publicApi(psiFile).forEach { it.accept(updater) }
       val snapshot = updater.snapshot
       val changes = updater.changes
@@ -58,7 +58,7 @@ internal class FileStateUpdater(private val prevSnapshot: Snapshot?) : JavaEleme
         val psiMember = memberPointer.element ?: continue
         val member = ScopedMember.create(psiMember) ?: continue
         changes[psiMember] = prevMember
-        collectRelatedChanges(psiMember, member, prevMember, changes)
+        collectRelatedChanges(psiMember, member, prevMember, changes, prevChanges)
       }
       return FileState(snapshot, changes)
     }
@@ -96,25 +96,30 @@ internal class FileStateUpdater(private val prevSnapshot: Snapshot?) : JavaEleme
       psiMember: PsiMember,
       member: ScopedMember,
       prevMember: ScopedMember?,
-      changes: MutableMap<PsiMember, ScopedMember?>
+      changes: MutableMap<PsiMember, ScopedMember?>,
+      prevChanges: Map<PsiMember, ScopedMember?>
     ) {
       when (psiMember) {
         is PsiMethod -> {
           val containingClass = psiMember.containingClass ?: return
           // anonymous classes and lambdas creation might be broken, need to check class usages
-          changes.putIfAbsent(containingClass, null)
+          changes.putIfAbsent(containingClass, prevChanges[containingClass])
         }
         is PsiClass -> {
           val prevClass = prevMember?.member as? Member.Class ?: return
           val curClass = member.member as? Member.Class ?: return
           when {
+            prevClass.name != psiMember.name -> {
+              // some reported problems might be fixed after such change, need to recheck them
+              prevChanges.forEach { changes.putIfAbsent(it.key, it.value) }
+            }
             prevClass.isInterface != psiMember.isInterface -> {
               // members usages might be broken, need to check them all
-              publicApi(psiMember).forEach { changes.putIfAbsent(it, null) }
+              publicApi(psiMember).forEach { changes.putIfAbsent(it, prevChanges[it]) }
             }
             prevClass.extendsList != curClass.extendsList || prevClass.implementsList != curClass.implementsList -> {
               // maybe some parent members were referenced instead of current class overrides
-              publicApi(psiMember).filter { it is PsiMethod && it.isOverride() }.forEach { changes.putIfAbsent(it, null) }
+              publicApi(psiMember).filter { it is PsiMethod && it.isOverride() }.forEach { changes.putIfAbsent(it, prevChanges[it]) }
             }
           }
         }

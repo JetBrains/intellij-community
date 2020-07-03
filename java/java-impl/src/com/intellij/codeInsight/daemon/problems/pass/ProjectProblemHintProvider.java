@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,10 +51,11 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
         Project project = file.getProject();
         FileState prevState = FileStateUpdater.getState(file);
         if (prevState == null) return false;
-        FileState curState = FileStateUpdater.findState(file, prevState.getSnapshot());
+        Map<PsiMember, Set<Problem>> problems = ProjectProblemUtils.getReportedProblems(editor);
+        Map<PsiMember, ScopedMember> prevChanges = getPrevChanges(prevState.getChanges(), problems.keySet());
+        FileState curState = FileStateUpdater.findState(file, prevState.getSnapshot(), prevChanges);
         Map<PsiMember, ScopedMember> changes = curState.getChanges();
         Map<SmartPsiElementPointer<PsiMember>, ScopedMember> snapshot = curState.getSnapshot();
-        Map<PsiMember, Set<Problem>> problems = ProjectProblemUtils.getReportedProblems(editor);
         FileEditorManager editorManager = FileEditorManager.getInstance(project);
         boolean isInSplitEditorMode = editorManager.getSelectedEditors().length > 1;
         collectProblems(changes, prevState.getChanges(), problems, isInSplitEditorMode);
@@ -87,6 +89,14 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
         }, ModalityState.NON_MODAL);
 
         return false;
+      }
+
+      private @NotNull Map<PsiMember, ScopedMember> getPrevChanges(@NotNull Map<PsiMember, ScopedMember> prevChanges,
+                                                                   @NotNull Set<PsiMember> reportedMembers) {
+        if (reportedMembers.isEmpty()) return prevChanges;
+        HashMap<PsiMember, ScopedMember> changes = new HashMap<>(prevChanges);
+        reportedMembers.forEach(m -> changes.putIfAbsent(m, null));
+        return changes;
       }
 
       private @Nullable Editor getSelectedEditor(@NotNull FileEditorManager manager) {
