@@ -124,7 +124,12 @@ public class GuavaConversionUtil {
       final PsiType evaluatedType = evaluator.evaluateType(qualifier);
       final GuavaLambda lambda = GuavaLambda.findJavaAnalogueFor(evaluatedType);
       if (lambda != null) {
-        return adjustLambdaContainingExpression((PsiExpression)expression.replace(qualifier), insertTypeCase, targetType, evaluator);
+        PsiExpression replaced = (PsiExpression)expression.replace(qualifier);
+        if (targetType == null &&
+            lambda.getSamName().equals(((PsiMethodReferenceExpression)expression).getReferenceName())) {
+          return replaced;
+        }
+        return adjustLambdaContainingExpression(replaced, insertTypeCase, targetType, evaluator);
       }
     }
     if (expression instanceof PsiFunctionalExpression) {
