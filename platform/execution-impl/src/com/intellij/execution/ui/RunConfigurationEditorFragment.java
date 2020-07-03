@@ -11,7 +11,7 @@ import javax.swing.*;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
-public abstract class RunConfigurationEditorFragment<Settings, C extends JComponent> extends SettingsEditorFragment<Settings, C>{
+public abstract class RunConfigurationEditorFragment<Settings, C extends JComponent> extends SettingsEditorFragment<Settings, C> {
   public RunConfigurationEditorFragment(String id,
                                         @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                         @Nls(capitalization = Nls.Capitalization.Title) String group,
@@ -25,12 +25,16 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
   public abstract void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s);
 
   public static <Settings> SettingsEditorFragment<Settings, ?> createSettingsTag(String id, String name, String group,
-                                                                                 Predicate<RunnerAndConfigurationSettingsImpl> getter,
-                                                                                 BiConsumer<RunnerAndConfigurationSettingsImpl, Boolean> setter,
+                                                                                 @NotNull Predicate<RunnerAndConfigurationSettingsImpl> getter,
+                                                                                 @NotNull BiConsumer<RunnerAndConfigurationSettingsImpl, Boolean> setter,
                                                                                  int menuPosition) {
     Ref<SettingsEditorFragment<?, ?>> ref = new Ref<>();
     TagButton button = new TagButton(name, () -> ref.get().setSelected(false));
-    RunConfigurationEditorFragment<Settings, ?> fragment = new RunConfigurationEditorFragment<Settings, JComponent>(id, name, group, button, 0) {
+    RunConfigurationEditorFragment<Settings, ?> fragment = new RunConfigurationEditorFragment<Settings, TagButton>(id, name, group, button, 0) {
+      @Override
+      protected void disposeEditor() {
+        Disposer.dispose(myComponent);
+      }
 
       @Override
       public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
@@ -57,7 +61,6 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
         return menuPosition;
       }
     };
-    Disposer.register(fragment, button);
     ref.set(fragment);
     return fragment;
   }

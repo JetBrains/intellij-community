@@ -21,7 +21,7 @@ import java.util.List;
 import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 
-public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEditor<ApplicationConfiguration> {
+public final class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEditor<ApplicationConfiguration> {
   private final Project myProject;
 
   public JavaApplicationSettingsEditor(ApplicationConfiguration configuration) {
@@ -32,7 +32,7 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
   @Override
   protected List<SettingsEditorFragment<ApplicationConfiguration, ?>> createRunFragments() {
     List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments = new ArrayList<>();
-    BeforeRunComponent beforeRunComponent = new BeforeRunComponent();
+    BeforeRunComponent beforeRunComponent = new BeforeRunComponent(this);
     fragments.add(BeforeRunFragment.createBeforeRun(beforeRunComponent, CompileStepBeforeRun.ID));
     fragments.addAll(BeforeRunFragment.createGroup());
 

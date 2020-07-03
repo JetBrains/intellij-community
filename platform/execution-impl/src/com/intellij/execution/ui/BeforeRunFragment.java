@@ -5,7 +5,6 @@ import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -23,7 +22,7 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
   private RunnerAndConfigurationSettingsImpl mySettings;
 
   public static <S extends RunConfigurationBase<?>> List<SettingsEditorFragment<S, ?>> createGroup() {
-    ArrayList<SettingsEditorFragment<S, ?>> list = new ArrayList<>();
+    List<SettingsEditorFragment<S, ?>> list = new ArrayList<>();
     list.add(RunConfigurationEditorFragment.createSettingsTag("before.launch.openToolWindow",
                                                               ExecutionBundle.message("run.configuration.before.run.open.tool.window"),
                                                               ExecutionBundle.message("run.configuration.before.run.group"),
@@ -37,18 +36,16 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     return list;
   }
 
-  public static <S extends RunConfigurationBase<?>> BeforeRunFragment<S> createBeforeRun(BeforeRunComponent component,
-                                                                                         Key<?> key) {
+  public static <S extends RunConfigurationBase<?>> BeforeRunFragment<S> createBeforeRun(@NotNull BeforeRunComponent component, Key<?> key) {
     return new BeforeRunFragment<>(component, key);
   }
 
-  private BeforeRunFragment(BeforeRunComponent component, Key<?> key) {
+  private BeforeRunFragment(@NotNull BeforeRunComponent component, Key<?> key) {
     super("beforeRunTasks", ExecutionBundle.message("run.configuration.before.run.task"),
           ExecutionBundle.message("run.configuration.before.run.group"), wrap(component), -2);
     myComponent = component;
     myKey = key;
     component.myChangeListener = () -> fireEditorStateChanged();
-    Disposer.register(this, component);
   }
 
   @Override
