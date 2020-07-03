@@ -855,10 +855,6 @@ abstract class LineLayout {
       return delegate.offsetToX(startX, 0, getLength());
     }
 
-    float getWidth() {
-      return getEndX() - getStartX();
-    }
-
     // column is expected to be between minLogicalColumn and maxLogicalColumn for this fragment
     int logicalToVisualColumn(int column) {
       return startVisualColumn + delegate.logicalToVisualColumn(startX, getMinLogicalColumn(),
