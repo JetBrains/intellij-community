@@ -61,30 +61,30 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     }
   }
 
-  override fun volumeDescriptors(config: JavaLanguageRuntimeConfiguration) = listOf(APPLICATION_FOLDER_VOLUME,
-                                                                                    CLASS_PATH_VOLUME,
-                                                                                    AGENTS_VOLUME)
+  override fun volumeDescriptors() = listOf(APPLICATION_FOLDER_VOLUME,
+                                            CLASS_PATH_VOLUME,
+                                            AGENTS_VOLUME)
 
   companion object {
     @JvmStatic
     val TYPE_ID = "JavaLanguageRuntime"
 
     @JvmStatic
-    val APPLICATION_FOLDER_VOLUME =
-      VolumeDescriptor(ExecutionBundle.message("java.language.runtime.application.folder.label"),
-                       ExecutionBundle.message("java.language.runtime.application.folder.description"),
-                       "/app")
+    val APPLICATION_FOLDER_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":appFolder",
+                                                     ExecutionBundle.message("java.language.runtime.application.folder.label"),
+                                                     ExecutionBundle.message("java.language.runtime.application.folder.description"),
+                                                     "/app")
 
     @JvmStatic
-    val CLASS_PATH_VOLUME =
-      VolumeDescriptor(ExecutionBundle.message("java.language.runtime.classpath.volume.label"),
-                       ExecutionBundle.message("java.language.runtime.classpath.volume.description"),
-                       "")
+    val CLASS_PATH_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":classPath",
+                                             ExecutionBundle.message("java.language.runtime.classpath.volume.label"),
+                                             ExecutionBundle.message("java.language.runtime.classpath.volume.description"),
+                                             "")
 
     @JvmStatic
-    val AGENTS_VOLUME =
-      VolumeDescriptor(ExecutionBundle.message("java.language.runtime.agents.volume.label"),
-                       ExecutionBundle.message("java.language.runtime.application.folder.description"),
-                       "")
+    val AGENTS_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":agents",
+                                         ExecutionBundle.message("java.language.runtime.agents.volume.label"),
+                                         ExecutionBundle.message("java.language.runtime.application.folder.description"),
+                                         "")
   }
 }

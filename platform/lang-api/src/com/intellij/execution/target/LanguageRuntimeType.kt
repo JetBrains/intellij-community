@@ -48,13 +48,16 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
    */
   open fun createIntrospector(config: C): Introspector? = null
 
-  open fun volumeDescriptors(config: C): List<VolumeDescriptor> = emptyList()
+  open fun volumeDescriptors(): List<VolumeDescriptor> = emptyList()
 
   abstract fun createConfigurable(project: Project, config: C, target: TargetEnvironmentConfiguration): Configurable
 
   companion object {
     @JvmField
     val EXTENSION_NAME = ExtensionPointName.create<LanguageRuntimeType<*>>("com.intellij.executionTargetLanguageRuntimeType")
+
+    fun LanguageRuntimeType<*>.findVolumeDescriptor(type: VolumeType): VolumeDescriptor? =
+      this.volumeDescriptors().firstOrNull { it.type == type }
   }
 
   /**
@@ -70,7 +73,14 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
     fun introspect(subject: Introspectable): CompletableFuture<*>?
   }
 
-  data class VolumeDescriptor(@get:Nls val wizardLabel: String,
+  data class VolumeType(val id: String)
+
+  data class VolumeDescriptor(val type: VolumeType,
+                              @get:Nls val wizardLabel: String,
                               @get:Nls val description: String,
-                              @get:NonNls val defaultPath: String)
+                              @get:NonNls val defaultPath: String) {
+
+    constructor(typeId: String, wizardLabel: String, description: String, defaultPath: String) :
+      this(VolumeType(typeId), wizardLabel, description, defaultPath)
+  }
 }

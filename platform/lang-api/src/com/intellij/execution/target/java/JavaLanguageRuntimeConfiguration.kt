@@ -15,17 +15,14 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
     it.homePath = this.homePath
     it.javaVersionString = this.javaVersionString
 
-    it.saveInState(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME) { path, bit ->
-      applicationFolder = path
-      applicationTargetSpecificBit = bit
+    it.saveInState(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME) { volumeState ->
+      applicationFolder = volumeState
     }
-    it.saveInState(JavaLanguageRuntimeType.CLASS_PATH_VOLUME) { path, bit ->
-      classpathFolder = path
-      classpathTargetSpecificBit = bit
+    it.saveInState(JavaLanguageRuntimeType.CLASS_PATH_VOLUME) { volumeState ->
+      classpathFolder = volumeState
     }
-    it.saveInState(JavaLanguageRuntimeType.AGENTS_VOLUME) { path, bit ->
-      agentFolder = path
-      agentTargetSpecificBit = bit
+    it.saveInState(JavaLanguageRuntimeType.AGENTS_VOLUME) { volumeState ->
+      agentFolder = volumeState
     }
   }
 
@@ -33,32 +30,32 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
     this.homePath = state.homePath ?: ""
     this.javaVersionString = state.javaVersionString ?: ""
 
-    setTargetPath(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME, state.applicationFolder)
-    setTargetPath(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, state.classpathFolder)
-    setTargetPath(JavaLanguageRuntimeType.AGENTS_VOLUME, state.agentFolder)
-
-    state.applicationTargetSpecificBit?.let { setTargetSpecificData(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME, it) }
-    state.classpathTargetSpecificBit?.let { setTargetSpecificData(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, it) }
-    state.agentTargetSpecificBit?.let { setTargetSpecificData(JavaLanguageRuntimeType.AGENTS_VOLUME, it) }
+    loadVolumeState(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME, state.applicationFolder)
+    loadVolumeState(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, state.classpathFolder)
+    loadVolumeState(JavaLanguageRuntimeType.AGENTS_VOLUME, state.agentFolder)
   }
 
-  private fun MyState.saveInState(volumeDescriptor: VolumeDescriptor, doSave: MyState.(String?, BaseState?) -> Unit) {
-    val path = getTargetPathValue(volumeDescriptor)
-    val bit = getTargetSpecificData(volumeDescriptor)
-    doSave(path, bit)
+  private fun MyState.saveInState(volumeDescriptor: VolumeDescriptor, doSave: MyState.(VolumeState?) -> Unit) {
+    val volumeState = VolumeState().also {
+      it.remotePath = getTargetPathValue(volumeDescriptor)
+      it.targetSpecificData = getTargetSpecificData(volumeDescriptor)
+    }
+    doSave(volumeState)
+  }
+
+  private fun loadVolumeState(volumeDescriptor: VolumeDescriptor, volumeState: VolumeState?) {
+    volumeState?.let {
+      setTargetPath(volumeDescriptor, it.remotePath)
+      setTargetSpecificData(volumeDescriptor, it.targetSpecificData)
+    }
   }
 
   class MyState : BaseState() {
     var homePath by string()
     var javaVersionString by string()
 
-    var applicationFolder by string()
-    var applicationTargetSpecificBit by property<BaseState>()
-
-    var classpathFolder by string()
-    var classpathTargetSpecificBit by property<BaseState>()
-
-    var agentFolder by string()
-    var agentTargetSpecificBit by property<BaseState>()
+    var applicationFolder by property<VolumeState>()
+    var classpathFolder by property<VolumeState>()
+    var agentFolder by property<VolumeState>()
   }
 }

@@ -4,7 +4,6 @@ package com.intellij.execution.target
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 import com.intellij.execution.target.TargetEnvironmentType.Companion.EXTENSION_NAME
 import com.intellij.ide.wizard.AbstractWizardStepEx
-import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -46,8 +45,12 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
   interface TargetSpecificVolumeContributionUI {
     fun createComponent(): JComponent
 
-    fun resetFrom(state: BaseState?)
+    fun resetFrom(state: TargetSpecificVolumeData?)
 
-    fun getValueToApply(): BaseState?
+    fun getConfiguredValue(): TargetSpecificVolumeData
+  }
+
+  interface TargetSpecificVolumeData {
+    fun toStorableMap(): Map<String, String>
   }
 }

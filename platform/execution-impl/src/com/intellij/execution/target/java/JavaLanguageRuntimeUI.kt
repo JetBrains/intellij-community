@@ -40,7 +40,7 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
   override fun apply() {
     super.apply()
     targetVolumeContributions.forEach { (volume, contribution) ->
-      config.setTargetSpecificData(volume, contribution.getValueToApply())
+      config.setTargetSpecificData(volume, contribution.getConfiguredValue())
     }
   }
 
