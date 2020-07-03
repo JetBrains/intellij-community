@@ -37,8 +37,7 @@ public class GitRebase extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(getRebasingRepositories(project).size() < getRepositories(project).size());
+      e.getPresentation().setEnabledAndVisible(true);
     }
   }
 
