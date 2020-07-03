@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
-import com.intellij.ide.DataManager
 import com.intellij.ide.dnd.DnDActionInfo
 import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
@@ -22,10 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClickListener
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.FontUtil
-import com.intellij.util.OpenSourceUtil
-import com.intellij.util.Processor
 import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
@@ -61,14 +57,6 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     setCellRenderer(GitStageTreeRenderer(ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, true)))
     addMouseMotionListener(MyMouseMotionListener())
     MyClickListener().installOn(this)
-
-    doubleClickHandler = Processor { e ->
-      if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
-
-      OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true)
-      true
-    }
-
     MyDnDSupport().install(parentDisposable)
   }
 

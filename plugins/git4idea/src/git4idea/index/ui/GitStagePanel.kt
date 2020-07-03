@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.dnd.DnDActionInfo
 import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
@@ -23,6 +24,9 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
+import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.OpenSourceUtil
+import com.intellij.util.Processor
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.showEmptyCommitMessageConfirmation
 import com.intellij.vcs.log.runInEdt
@@ -156,6 +160,15 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     override val state
       get() = this@GitStagePanel.state
     override val operations: List<StagingAreaOperation> = listOf(GitAddOperation, GitResetOperation)
+
+    init {
+      doubleClickHandler = Processor { e ->
+        if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
+
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true)
+        true
+      }
+    }
 
     override fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation) {
       performStageOperation(project, nodes, operation)
