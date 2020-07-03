@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
 import org.apache.http.HttpStatus
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpHead
@@ -23,6 +24,8 @@ import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.impl.retry.Retry
 import org.jetbrains.intellij.build.impl.retry.StopTrying
+
+import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class CompilationOutputsDownloader implements AutoCloseable {
@@ -164,8 +167,17 @@ class CompilationOutputsDownloader implements AutoCloseable {
 
 @CompileStatic
 class GetClient {
+  private int timeout = TimeUnit.MINUTES.toMillis(1).toInteger()
+
+  private final RequestConfig config = RequestConfig.custom()
+    .setConnectionRequestTimeout(timeout)
+    .setConnectTimeout(timeout)
+    .setSocketTimeout(timeout)
+    .build()
+
   private final CloseableHttpClient httpClient = HttpClientBuilder.create()
     .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
+    .setDefaultRequestConfig(config)
     .setMaxConnTotal(10)
     .setMaxConnPerRoute(10)
     .build()
@@ -207,8 +219,6 @@ class GetClient {
         file << response.entity.content
       }
     })
-
-    return
   }
 
   private static void throwDownloadException(CloseableHttpResponse response, DownloadException downloadException) {
