@@ -69,7 +69,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
         addLine(fragment.getComponent());
       }
     }
-    addLine(tagsPanel);
+    addLine(tagsPanel, -getLeftInset((JComponent)tagsPanel.getComponent(0)));
 
     for (SettingsEditorFragment<Settings, ?> group : subGroups) {
       addLine(group.getComponent());
@@ -86,9 +86,15 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     return myPanel;
   }
 
-  private void addLine(Component component) {
+  private void addLine(Component component, int leftInset) {
+    myConstraints.insets = JBUI.insetsLeft(leftInset);
     myPanel.add(component, myConstraints.clone());
     myConstraints.gridy++;
+    myConstraints.insets = JBUI.emptyInsets();
+  }
+
+  private void addLine(Component component) {
+    addLine(component, 0);
   }
 
   private void buildBeforeRun(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
@@ -157,9 +163,15 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     for (SettingsEditorFragment<Settings, ?> fragment : list) {
       fragment.addSettingsEditorListener(editor -> panel.rebuildRows());
     }
-    myConstraints.insets = JBUI.insetsLeft(-panel.getLeftInset());
-    addLine(panel);
-    myConstraints.insets = JBUI.emptyInsets();
+    addLine(panel, -panel.getLeftInset());
+  }
+
+  static int getLeftInset(JComponent component) {
+    if (component.getBorder() != null) {
+      return component.getBorder().getBorderInsets(component).left;
+    }
+    JComponent wrapped = (JComponent)ContainerUtil.find(component.getComponents(), co -> co.isVisible());
+    return wrapped != null ? getLeftInset(wrapped) : 0;
   }
 
   private static class ToggleFragmentAction extends ToggleAction {
