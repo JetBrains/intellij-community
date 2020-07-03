@@ -18,20 +18,20 @@ class SpecialCharacterFragment implements LineFragment {
     new int[] {
         0x00,   0x01,   0x02,   0x03,   0x04,   0x05,   0x06,   0x07,   0x08,                   0x0B,   0x0C,           0x0E,   0x0F,
         0x10,   0x11,   0x12,   0x13,   0x14,   0x15,   0x16,   0x17,   0x18,   0x19,   0x1A,   0x1B,   0x1C,   0x1D,   0x1E,   0x1F,
-        0x7F,
+                                                                                                                                0x7F,
                 0x81,   0x82,   0x83,   0x84,   0x85,   0x86,   0x87,   0x88,   0x89,   0x8A,   0x8B,   0x8C,   0x8D,   0x8E,   0x8F,
         0x90,   0x91,   0x92,   0x93,   0x94,   0x95,   0x96,   0x97,   0x98,   0x99,   0x9A,   0x9B,   0x9C,   0x9D,   0x9E,   0x9F,
         0xA0,                                                                                                   0xAD,
       0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x200B, 0x200C, 0x200D, 0x200E, 0x200F,
                                                                       0x2028, 0x2029, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x202F,
-                                                                                                                              0X205F,
+                                                                                                                              0x205F,
       0x2060, 0x2061, 0x2062, 0x2063, 0x2064,         0x2066, 0x2067, 0x2068, 0x2069, 0x206A, 0x206B, 0x206C, 0x206D, 0x206E, 0x206F,
-      0xFEFF
+                                                                                                                              0xFEFF
     },
     new String[] {
        "NUL",  "SOH",  "STX",  "ETX",  "EOT",  "ENQ",  "ACK",  "BEL",   "BS",                   "VT",   "FF",           "SO",   "SI",
        "DLE",  "DC1",  "DC2",  "DC3",  "DC4",  "NAK",  "SYN",  "ETB",  "CAN",   "EM",  "SUB",  "ESC",   "FS",   "GS",   "RS",   "US",
-       "DEL",
+                                                                                                                               "DEL",
                "HOP",  "BPH",  "NBH",  "IND",  "NEL",  "SSA",  "ESA",  "HTS",  "HTJ",  "VTS",  "PLD",  "PLU",   "RI",  "SS2",  "SS3",
        "DCS",  "PU1",  "PU2",  "STS",  "CCH",   "MW",  "SPA",  "EPA",  "SOS", "SGCI",  "SCI",  "CSI",   "ST",  "OSC",   "PM",  "APC",
       "NBSP",                                                                                                  "SHY",
@@ -39,7 +39,7 @@ class SpecialCharacterFragment implements LineFragment {
                                                                       "LSEP", "PSEP",  "LRE",  "RLE",  "PDF",  "LRO",  "RLO","NNBSP",
                                                                                                                               "MMSP",
         "WJ",  "f()",   "x",    ",",    "+",           "LRI",  "RLI",  "FSI",  "PDI",  "ISS",  "ASS", "IAFS", "AAFS", "NADS", "NODS",
-    "ZWNBSP"
+                                                                                                                            "ZWNBSP"
     }
   // @formatter:on
   );
