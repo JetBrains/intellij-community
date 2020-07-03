@@ -46,10 +46,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Assert;
-import org.junit.AssumptionViolatedException;
-import org.junit.ComparisonFailure;
-import org.junit.Rule;
+import org.junit.*;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -165,6 +162,9 @@ public abstract class UsefulTestCase extends TestCase {
   /**
    * Use to make the specified rule applied around the base rule.
    * This may be useful in case you need to access the rule from {@link #setUp()}.
+   *
+   * NB. Do not annotate the field that you assign the result of an asOuterRule() call to, as @Rule.
+   *     Otherwise the rule is going to be applied twice.
    */
   protected @NotNull <R extends TestRule> R asOuterRule(@NotNull R rule) {
     runBareTestRule = RuleChain.outerRule(rule).around(runBareTestRule);
