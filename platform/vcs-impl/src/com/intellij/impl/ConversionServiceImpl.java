@@ -6,21 +6,18 @@ import com.intellij.conversion.impl.ConversionContextImpl;
 import com.intellij.conversion.impl.ConversionRunner;
 import com.intellij.conversion.impl.ProjectConversionUtil;
 import com.intellij.conversion.impl.ui.ConvertProjectDialog;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.util.graph.*;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import org.jdom.Element;
+import it.unimi.dsi.fastutil.objects.Object2LongMaps;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -65,7 +62,7 @@ public final class ConversionServiceImpl extends ConversionService {
       }
       context.saveFiles(affectedFiles);
       listener.successfullyConverted(backupDir);
-      saveConversionResult(context);
+      context.saveConversionResult();
       return new ConversionResultImpl(runners);
     }
     catch (CannotConvertException | IOException e) {
@@ -97,7 +94,12 @@ public final class ConversionServiceImpl extends ConversionService {
     });
 
     if (!ref.isNull()) {
-      saveConversionResult(context);
+      try {
+        context.saveConversionResult();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
     return ref.get();
   }
@@ -141,7 +143,10 @@ public final class ConversionServiceImpl extends ConversionService {
           return true;
         }
       }
-      saveConversionResult(context);
+      context.saveConversionResult();
+    }
+    catch (IOException e) {
+      LOG.info(e);
     }
     catch (CannotConvertException e) {
       LOG.info("Cannot check whether conversion of project files is needed or not, conversion won't be performed", e);
@@ -151,39 +156,40 @@ public final class ConversionServiceImpl extends ConversionService {
 
   private static @NotNull List<ConversionRunner> getSortedConverters(@NotNull ConversionContextImpl context) throws CannotConvertException {
     Object2LongMap<String> oldMap = context.getProjectFileTimestamps();
-    ObjectLongHashMap<String> newMap = getProjectFilesMap(context);
+    Object2LongMap<String> newMap = context.getAllProjectFiles();
     LOG.debug("Checking project files");
-    boolean changed;
+    boolean changed = false;
     if (LOG.isDebugEnabled()) {
-      Ref<Boolean> changedRef = new Ref<>(false);
-      newMap.forEachEntry((path, newValue) -> {
+      for (ObjectIterator<Object2LongMap.Entry<String>> iterator = Object2LongMaps.fastIterator(newMap); iterator.hasNext(); ) {
+        Object2LongMap.Entry<String> entry = iterator.next();
+        String path = entry.getKey();
         long oldValue = oldMap.getLong(path);
-        if (oldValue == -1) {
+        if (oldValue <= 0) {
           LOG.debug(" new file: " + path);
-          changedRef.set(true);
+          changed = true;
         }
-        else if (newValue != oldValue) {
+        else if (entry.getLongValue() != oldValue) {
           LOG.debug(" changed file: " + path);
-          changedRef.set(true);
+          changed = true;
         }
-        return true;
-      });
-      changed = changedRef.get();
+      }
     }
     else {
       // if debug log is not enabled, do not process all entries
-      changed = !newMap.forEachEntry((path, newValue) -> {
+      for (ObjectIterator<Object2LongMap.Entry<String>> iterator = Object2LongMaps.fastIterator(newMap); iterator.hasNext(); ) {
+        Object2LongMap.Entry<String> entry = iterator.next();
+        String path = entry.getKey();
         long oldValue = oldMap.getLong(path);
-        boolean isFileChangedOrNew = newValue != oldValue;
-        if (isFileChangedOrNew) {
+        long newValue = entry.getLongValue();
+        if (newValue != oldValue) {
           LOG.info("conversion will be performed because at least " + path + " is changed (oldLastModified=" + oldValue + ", newLastModified=" + newValue);
+          changed = true;
+          break;
         }
-        // continue to process only file is not changed
-        return !isFileChangedOrNew;
-      });
+      }
     }
 
-    final Set<String> performedConversionIds;
+    Set<String> performedConversionIds;
     if (changed) {
       performedConversionIds = Collections.emptySet();
       LOG.debug("Project files were modified.");
@@ -193,14 +199,6 @@ public final class ConversionServiceImpl extends ConversionService {
       LOG.debug("Project files are up to date. Applied converters: " + performedConversionIds);
     }
     return createConversionRunners(context, performedConversionIds);
-  }
-
-  @NotNull
-  private static ObjectLongHashMap<String> getProjectFilesMap(@NotNull ConversionContextImpl context) throws CannotConvertException {
-    Activity activity = StartUpMeasurer.startActivity("conversion: project files collecting");
-    ObjectLongHashMap<String> result = context.getAllProjectFiles();
-    activity.end();
-    return result;
   }
 
   @NotNull
@@ -231,36 +229,13 @@ public final class ConversionServiceImpl extends ConversionService {
   @Override
   public void saveConversionResult(@NotNull Path projectPath) {
     try {
-      saveConversionResult(new ConversionContextImpl(projectPath));
-    }
-    catch (CannotConvertException e) {
-      LOG.info(e);
-    }
-  }
-
-  private static void saveConversionResult(@NotNull ConversionContextImpl context) throws CannotConvertException {
-    Element root = new Element("conversion");
-    Element appliedConverters = new Element("applied-converters");
-    root.addContent(appliedConverters);
-    for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensionList()) {
-      appliedConverters.addContent(new Element("converter").setAttribute("id", provider.getId()));
-    }
-
-    Element projectFiles = new Element("project-files");
-    root.addContent(projectFiles);
-
-    ObjectLongHashMap<String> projectFilesMap = getProjectFilesMap(context);
-    projectFilesMap.forEachEntry((key, value) -> {
-      projectFiles.addContent(new Element("file").setAttribute("path", key).setAttribute("timestamp", String.valueOf(value)));
-      return true;
-    });
-
-    Path infoFile = context.getConversionInfoFile();
-    try {
-      JDOMUtil.write(root, infoFile);
+      new ConversionContextImpl(projectPath).saveConversionResult();
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+    catch (CannotConvertException e) {
+      LOG.info(e);
     }
   }
 

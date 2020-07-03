@@ -4,6 +4,8 @@ package com.intellij.conversion.impl;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.conversion.*;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
@@ -23,8 +25,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ObjectLongHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +41,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
+import java.util.concurrent.*;
 
 public final class ConversionContextImpl implements ConversionContext {
   private static final Logger LOG = Logger.getInstance(ConversionContextImpl.class);
@@ -65,15 +64,7 @@ public final class ConversionContextImpl implements ConversionContext {
   private MultiFilesSettings myArtifactsSettings;
   private ComponentManagerSettings myProjectFileVersionSettings;
 
-  private final NotNullLazyValue<CachedConversionResult> conversionResult = NotNullLazyValue.createValue(() -> {
-    try {
-      return CachedConversionResult.load(CachedConversionResult.getConversionInfoFile(getProjectFile()));
-    }
-    catch (Exception e) {
-      LOG.info(e);
-      return CachedConversionResult.createEmpty();
-    }
-  });
+  private final NotNullLazyValue<CachedConversionResult> conversionResult;
 
   private final Path myModuleListFile;
 
@@ -93,6 +84,20 @@ public final class ConversionContextImpl implements ConversionContext {
       myModuleListFile = mySettingsBaseDir.resolve("modules.xml");
       myWorkspaceFile = new SettingsXmlFile(mySettingsBaseDir.resolve("workspace.xml"));
     }
+
+    conversionResult = NotNullLazyValue.createValue(() -> {
+      try {
+        return CachedConversionResult.load(CachedConversionResult.getConversionInfoFile(myProjectFile.getPath()), myProjectBaseDir);
+      }
+      catch (Exception e) {
+        LOG.info(e);
+        return CachedConversionResult.createEmpty();
+      }
+    });
+  }
+
+  public void saveConversionResult() throws CannotConvertException, IOException {
+    CachedConversionResult.saveConversionResult(getAllProjectFiles(), CachedConversionResult.getConversionInfoFile(myProjectFile.getPath()), myProjectBaseDir);
   }
 
   public @NotNull Object2LongMap<String> getProjectFileTimestamps() {
@@ -103,11 +108,12 @@ public final class ConversionContextImpl implements ConversionContext {
     return conversionResult.getValue().appliedConverters;
   }
 
-  @NotNull
-  public ObjectLongHashMap<String> getAllProjectFiles() throws CannotConvertException {
+  public @NotNull Object2LongMap<String> getAllProjectFiles() throws CannotConvertException {
+    Activity activity = StartUpMeasurer.startActivity("conversion: project files collecting");
+
     if (myStorageScheme == StorageScheme.DEFAULT) {
       List<Path> moduleFiles = getModulePaths();
-      ObjectLongHashMap<String> totalResult = new ObjectLongHashMap<>(moduleFiles.size() + 2);
+      Object2LongMap<String> totalResult = new Object2LongOpenHashMap<>(moduleFiles.size() + 2);
       addLastModifiedTme(myProjectFile.getPath(), totalResult);
       addLastModifiedTme(myWorkspaceFile.getPath(), totalResult);
       addLastModifiedTime(moduleFiles, totalResult);
@@ -121,7 +127,7 @@ public final class ConversionContextImpl implements ConversionContext {
       dotIdeaDirectory.resolve("runConfigurations"));
 
     Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Conversion: Project Files Collecting", 3, false);
-    List<CompletableFuture<List<ObjectLongHashMap<String>>>> futures = new ArrayList<>(dirs.size() + 1);
+    List<CompletableFuture<List<Object2LongMap<String>>>> futures = new ArrayList<>(dirs.size() + 1);
     futures.add(CompletableFuture.supplyAsync(() -> {
       List<Path> moduleFiles = myModuleFiles;
       if (moduleFiles == null) {
@@ -152,50 +158,53 @@ public final class ConversionContextImpl implements ConversionContext {
 
     for (Path subDirName : dirs) {
       futures.add(CompletableFuture.supplyAsync(() -> {
-        ObjectLongHashMap<String> result = new ObjectLongHashMap<>();
+        Object2LongMap<String> result = CachedConversionResult.createPathToLastModifiedMap();
         addXmlFilesFromDirectory(subDirName, result);
         return Collections.singletonList(result);
       }, executor));
     }
 
-    ObjectLongHashMap<String> totalResult = new ObjectLongHashMap<>();
+    Object2LongMap<String> totalResult = CachedConversionResult.createPathToLastModifiedMap();
     try {
-      for (CompletableFuture<List<ObjectLongHashMap<String>>> future : futures) {
-        for (ObjectLongHashMap<String> result : future.get()) {
+      for (CompletableFuture<List<Object2LongMap<String>>> future : futures) {
+        for (Object2LongMap<String> result : future.get()) {
           totalResult.putAll(result);
         }
       }
     }
     catch (ExecutionException | InterruptedException e) {
-      throw new CannotConvertException(e.getMessage(), e);
+      throw new CannotConvertException(e);
     }
+
+    activity.end();
     return totalResult;
   }
 
   @NotNull
-  private static CompletableFuture<List<ObjectLongHashMap<String>>> computeModuleFilesTimestamp(@NotNull List<Path> moduleFiles, @NotNull Executor executor) {
+  private static CompletableFuture<List<Object2LongMap<String>>> computeModuleFilesTimestamp(@NotNull List<Path> moduleFiles, @NotNull Executor executor) {
     return CompletableFuture.supplyAsync(() -> {
-      ObjectLongHashMap<String> result = new ObjectLongHashMap<>();
+      Object2LongMap<String> result = new Object2LongOpenHashMap<>(moduleFiles.size());
+      result.defaultReturnValue(-1);
       addLastModifiedTime(moduleFiles, result);
       return Collections.singletonList(result);
     }, executor);
   }
 
-  private static void addLastModifiedTime(@NotNull List<Path> moduleFiles, @NotNull ObjectLongHashMap<String> result) {
+  private static void addLastModifiedTime(@NotNull List<Path> moduleFiles, @NotNull Object2LongMap<String> result) {
     for (Path file : moduleFiles) {
       addLastModifiedTme(file, result);
     }
   }
 
-  private static void addLastModifiedTme(@NotNull Path file, @NotNull ObjectLongHashMap<String> files) {
+  private static void addLastModifiedTme(@NotNull Path file, @NotNull Object2LongMap<String> files) {
     try {
-      files.put(file.toString(), Files.getLastModifiedTime(file).toMillis());
+      files.put(file.toString(), Files.getLastModifiedTime(file).to(TimeUnit.SECONDS));
     }
     catch (IOException ignore) {
     }
   }
 
-  private static void addXmlFilesFromDirectory(@NotNull Path dir, @NotNull ObjectLongHashMap<String> result) {
+  private static void addXmlFilesFromDirectory(@NotNull Path dir, @NotNull Object2LongMap<String> result) {
     try (DirectoryStream<Path> children = Files.newDirectoryStream(dir)) {
       for (Path child : children) {
         String childPath = child.toString();
@@ -214,7 +223,7 @@ public final class ConversionContextImpl implements ConversionContext {
           continue;
         }
 
-        result.put(childPath, attributes.lastModifiedTime().toMillis());
+        result.put(childPath, attributes.lastModifiedTime().to(TimeUnit.SECONDS));
       }
     }
     catch (NotDirectoryException | NoSuchFileException ignore) {
@@ -518,9 +527,5 @@ public final class ConversionContextImpl implements ConversionContext {
                             : new MultiFilesSettings(null, mySettingsBaseDir.resolve("artifacts"), this);
     }
     return myArtifactsSettings;
-  }
-
-  public @NotNull Path getConversionInfoFile() {
-    return CachedConversionResult.getConversionInfoFile(myProjectFile.getPath());
   }
 }
