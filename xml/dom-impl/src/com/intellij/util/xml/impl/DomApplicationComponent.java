@@ -53,6 +53,7 @@ public final class DomApplicationComponent {
     //noinspection deprecation
     addChangeListener(DomFileDescription.EP_NAME, this::extensionsChanged);
     addChangeListener(DomFileMetaData.EP_NAME, this::extensionsChanged);
+    addChangeListener(DomImplementationClassEP.EP_NAME, this::extensionsChanged);
   }
 
   private static <T> void addChangeListener(ExtensionPointName<T> ep, Runnable onChange) {
