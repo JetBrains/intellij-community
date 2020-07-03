@@ -219,17 +219,12 @@ public class NewMappings implements Disposable {
   }
 
   private void refreshMainMenu() {
-
-    WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
-    ProjectFrameHelper frame = windowManager.getFrameHelper(myProject);
-    if (frame != null) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!Disposer.isDisposed(frame)) {
-          frame.updateView();
-        }
-      });
-    }
-
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(myProject);
+      if (frame != null && !Disposer.isDisposed(frame)) {
+        frame.updateView();
+      }
+    });
   }
 
   @NotNull
