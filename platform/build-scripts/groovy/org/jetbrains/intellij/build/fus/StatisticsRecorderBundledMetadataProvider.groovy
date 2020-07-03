@@ -27,11 +27,9 @@ class StatisticsRecorderBundledMetadataProvider {
       if (!list.parentFile.mkdirs() || !list.createNewFile()) {
         context.messages.error("Unable to create $list")
       }
-      list.write new Retry(context.messages).call {
-        download(context, metadataServiceUri(context).with {
-          appendProductCode(context, it)
-        })
-      }
+      list.write download(context, metadataServiceUri(context).with {
+        appendProductCode(context, it)
+      })
       return dir
     }
   }
@@ -42,10 +40,12 @@ class StatisticsRecorderBundledMetadataProvider {
   }
 
   private static String download(BuildContext context, String uri) {
-    HttpClientBuilder.create().build().withCloseable {
-      context.messages.info("Downloading $uri")
-      def response = it.execute(new HttpGet(uri))
-      return EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
+    new Retry(context.messages).call {
+      HttpClientBuilder.create().build().withCloseable {
+        context.messages.info("Downloading $uri")
+        def response = it.execute(new HttpGet(uri))
+        return EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
+      }
     }
   }
 
