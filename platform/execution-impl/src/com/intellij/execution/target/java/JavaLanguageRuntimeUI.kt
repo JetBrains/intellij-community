@@ -2,7 +2,6 @@
 package com.intellij.execution.target.java
 
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
-import com.intellij.execution.target.TargetEnvironment.TargetPath
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType.TargetSpecificVolumeContributionUI
 import com.intellij.execution.target.getRuntimeType
@@ -53,7 +52,7 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
 
   private fun RowBuilder.addVolumeUI(volumeDescriptor: VolumeDescriptor) {
     row(volumeDescriptor.wizardLabel) {
-      textField(getter = { config.getTargetPath(volumeDescriptor).nullize() ?: volumeDescriptor.defaultPath },
+      textField(getter = { config.getTargetPathValue(volumeDescriptor).nullize(true) ?: volumeDescriptor.defaultPath },
                 setter = { config.setTargetPath(volumeDescriptor, it.nullize(true)) })
         .comment(volumeDescriptor.description)
     }
@@ -66,13 +65,6 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
         component()
         largeGapAfter()
       }
-    }
-  }
-
-  companion object {
-    private fun TargetPath.nullize(): String? = when (this) {
-      is TargetPath.Persistent -> this.absolutePath.nullize(true)
-      is TargetPath.Temporary -> null
     }
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.execution.target.TargetEnvironment.TargetPath
 import com.intellij.execution.target.TargetEnvironment.UploadRoot
 import com.intellij.execution.target.TargetEnvironmentType.TargetSpecificVolumeData
 import com.intellij.openapi.components.BaseState
+import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Transient
 import java.nio.file.Path
 
@@ -35,11 +36,11 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
     volumeTargetSpecificBits.putOrClear(volumeDescriptor.type, data)
   }
 
-  protected fun getTargetPathValue(volumeDescriptor: VolumeDescriptor): String? = volumePaths[volumeDescriptor.type]
+  fun getTargetPathValue(volumeDescriptor: VolumeDescriptor): String? = volumePaths[volumeDescriptor.type]
 
   fun getTargetPath(volumeDescriptor: VolumeDescriptor): TargetPath {
-    val path = getTargetPathValue(volumeDescriptor)
-    return if (path.isNullOrEmpty()) TargetPath.Temporary(hint = volumeDescriptor.wizardLabel) else TargetPath.Persistent(path)
+    return TargetPath.Temporary(hint = volumeDescriptor.type.id,
+                                parentDirectory = getTargetPathValue(volumeDescriptor)?.nullize())
   }
 
   fun setTargetPath(volumeDescriptor: VolumeDescriptor, targetPath: String?) {
