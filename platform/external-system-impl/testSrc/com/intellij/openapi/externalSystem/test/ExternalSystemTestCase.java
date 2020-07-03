@@ -168,6 +168,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       () -> myProject = null,
       () -> PathKt.delete(myTestDir.toPath()),
       () -> ExternalSystemProgressNotificationManagerImpl.assertListenersReleased(null),
+      () -> ExternalSystemProgressNotificationManagerImpl.cleanupListeners(),
       () -> super.tearDown(),
       () -> resetClassFields(getClass())
     ).run();
