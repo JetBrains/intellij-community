@@ -7,7 +7,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
@@ -16,7 +15,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.actions.EditAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -26,9 +24,11 @@ public final class ConversionResultImpl implements ConversionResult {
   public static final ConversionResultImpl CONVERSION_NOT_NEEDED = new ConversionResultImpl(false, false, false);
   public static final ConversionResultImpl CONVERSION_CANCELED = new ConversionResultImpl(true, true, false);
   public static final ConversionResultImpl ERROR_OCCURRED = new ConversionResultImpl(true, false, true);
+
   private final boolean myConversionNeeded;
   private final boolean myConversionCanceled;
   private final boolean myErrorOccurred;
+
   private final Set<Path> myChangedFiles = new HashSet<>();
   private final Set<Path> myCreatedFiles = new HashSet<>();
 
@@ -39,7 +39,9 @@ public final class ConversionResultImpl implements ConversionResult {
   }
 
   public ConversionResultImpl(@NotNull List<ConversionRunner> converters) {
-    this(true, false, false);
+    myConversionNeeded = true;
+    myConversionCanceled = false;
+    myErrorOccurred = false;
 
     for (ConversionRunner converter : converters) {
       converter.collectAffectedFiles(myChangedFiles);
@@ -95,11 +97,14 @@ public final class ConversionResultImpl implements ConversionResult {
     return false;
   }
 
-  private static @NotNull List<VirtualFile> findVirtualFiles(@NotNull Collection<Path> ioFiles) {
-    List<VirtualFile> files = new ArrayList<>(ioFiles.size());
-    for (Path file : ioFiles) {
-      ContainerUtil.addIfNotNull(files, LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString())));
+  private static @NotNull List<VirtualFile> findVirtualFiles(@NotNull Collection<Path> files) {
+    List<VirtualFile> result = new ArrayList<>(files.size());
+    for (Path file : files) {
+      VirtualFile element = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+      if (element != null) {
+        result.add(element);
+      }
     }
-    return files;
+    return result;
   }
 }

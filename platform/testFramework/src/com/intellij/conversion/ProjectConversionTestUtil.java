@@ -4,9 +4,7 @@ package com.intellij.conversion;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.util.List;
 
 public final class ProjectConversionTestUtil {
   private ProjectConversionTestUtil() {
@@ -29,7 +27,7 @@ public final class ProjectConversionTestUtil {
     Assert.assertTrue(listener.isConverted());
   }
 
-  public static class MyConversionListener implements ConversionListener {
+  public static final class MyConversionListener implements ConversionListener {
     private boolean myConversionNeeded;
     private boolean myConverted;
 
@@ -39,17 +37,13 @@ public final class ProjectConversionTestUtil {
     }
 
     @Override
-    public void successfullyConverted(@NotNull File backupDir) {
+    public void successfullyConverted(@NotNull Path backupDir) {
       myConverted = true;
     }
 
     @Override
     public void error(@NotNull String message) {
       Assert.fail(message);
-    }
-
-    @Override
-    public void cannotWriteToFiles(@NotNull List<? extends File> readonlyFiles) {
     }
 
     public boolean isConversionNeeded() {

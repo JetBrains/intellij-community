@@ -736,10 +736,10 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }
 
       @Override
-      public void successfullyConverted(@NotNull File backupDir) {
+      public void successfullyConverted(@NotNull Path backupDir) {
         reportMessage(1, InspectionsBundle.message(
           "inspection.application.project.was.succesfully.converted.old.project.files.were.saved.to.0",
-          backupDir.getAbsolutePath()));
+          backupDir.toString()));
       }
 
       @Override
@@ -748,10 +748,10 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }
 
       @Override
-      public void cannotWriteToFiles(@NotNull List<? extends File> readonlyFiles) {
+      public void cannotWriteToFiles(@NotNull List<Path> readonlyFiles) {
         StringBuilder files = new StringBuilder();
-        for (File file : readonlyFiles) {
-          files.append(file.getAbsolutePath()).append("; ");
+        for (Path file : readonlyFiles) {
+          files.append(file.toString()).append("; ");
         }
         reportError(InspectionsBundle
                       .message("inspection.application.cannot.convert.the.project.the.following.files.are.read.only.0", files.toString()));

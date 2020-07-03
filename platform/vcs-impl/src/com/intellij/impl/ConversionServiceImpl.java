@@ -17,7 +17,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.util.graph.*;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -53,7 +52,7 @@ public final class ConversionServiceImpl extends ConversionService {
 
       List<Path> readOnlyFiles = ConversionRunner.getReadOnlyFiles(affectedFiles);
       if (!readOnlyFiles.isEmpty()) {
-        listener.cannotWriteToFiles(ContainerUtil.map(readOnlyFiles, path -> path.toFile()));
+        listener.cannotWriteToFiles(readOnlyFiles);
         return ConversionResultImpl.ERROR_OCCURRED;
       }
       Path backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
@@ -65,7 +64,7 @@ public final class ConversionServiceImpl extends ConversionService {
         }
       }
       context.saveFiles(affectedFiles);
-      listener.successfullyConverted(backupDir.toFile());
+      listener.successfullyConverted(backupDir);
       saveConversionResult(context);
       return new ConversionResultImpl(runners);
     }
