@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.bidi.BidiRegionsSeparator;
 import com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -124,7 +125,7 @@ abstract class LineLayout {
     for (BidiRun run : runs) {
       for (Chunk chunk : run.getChunks(text, 0)) {
         chunk.fragments = new ArrayList<>();
-        addFragments(view, run, chunk, chars, chunk.startOffset, chunk.endOffset, null, ffi);
+        addFragments(view, run, chunk, chars, chunk.startOffset, chunk.endOffset, null, false, ffi);
       }
     }
     return runs;
@@ -257,10 +258,9 @@ abstract class LineLayout {
   }
 
   private static void addFragments(EditorView view, BidiRun run, Chunk chunk, char[] text, int start, int end,
-                                   @Nullable TabFragment tabFragment, FontFallbackIterator it) {
+                                   @Nullable TabFragment tabFragment, boolean showSpecialChars, FontFallbackIterator it) {
     assert start < end;
     int last = start;
-    boolean specialCharsEnabled = view.getEditor().getSettings().isShowingSpecialChars();
     for (int i = start; i < end; i++) {
       char c = text[i];
       LineFragment specialFragment = null;
@@ -268,7 +268,7 @@ abstract class LineLayout {
         assert run.level == 0;
         specialFragment = tabFragment;
       }
-      else if (specialCharsEnabled) {
+      else if (showSpecialChars) {
         // only BMP special chars are supported currently, so there's no need to check for surrogate pairs
         specialFragment = SpecialCharacterFragment.create(view, c, text, i);
       }
@@ -611,17 +611,19 @@ abstract class LineLayout {
       if (fragments != null) return;
       assert isReal();
       fragments = new ArrayList<>();
-      int lineStartOffset = view.getEditor().getDocument().getLineStartOffset(line);
+      EditorImpl editor = view.getEditor();
+      int lineStartOffset = editor.getDocument().getLineStartOffset(line);
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
-      if (LOG.isDebugEnabled()) LOG.debug("Text layout for " + view.getEditor().getVirtualFile() + " (" + start + "-" + end + ")");
-      IterationState it = new IterationState(view.getEditor(), start, end, null, false, true, false, false);
+      if (LOG.isDebugEnabled()) LOG.debug("Text layout for " + editor.getVirtualFile() + " (" + start + "-" + end + ")");
+      IterationState it = new IterationState(editor, start, end, null, false, true, false, false);
 
       FontFallbackIterator ffi = new FontFallbackIterator()
-        .setPreferredFonts(view.getEditor().getColorsScheme().getFontPreferences())
+        .setPreferredFonts(editor.getColorsScheme().getFontPreferences())
         .setFontRenderContext(view.getFontRenderContext());
 
-      char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
+      boolean specialCharsEnabled = editor.getSettings().isShowingSpecialChars();
+      char[] chars = CharArrayUtil.fromSequence(editor.getDocument().getImmutableCharSequence(), start, end);
       int currentFontType = 0;
       Color currentColor = null;
       int currentStart = start;
@@ -631,7 +633,7 @@ abstract class LineLayout {
         if (fontType != currentFontType || !color.equals(currentColor)) {
           int tokenStart = it.getStartOffset();
           if (tokenStart > currentStart) {
-            addFragments(view, run, this, chars, currentStart - start, tokenStart - start, view.getTabFragment(), ffi);
+            addFragments(view, run, this, chars, currentStart - start, tokenStart - start, view.getTabFragment(), specialCharsEnabled, ffi);
           }
           currentStart = tokenStart;
           currentColor = color;
@@ -640,7 +642,7 @@ abstract class LineLayout {
         it.advance();
       }
       if (end > currentStart) {
-        addFragments(view, run, this, chars, currentStart - start, end - start, view.getTabFragment(), ffi);
+        addFragments(view, run, this, chars, currentStart - start, end - start, view.getTabFragment(), specialCharsEnabled, ffi);
       }
       view.getSizeManager().textLayoutPerformed(start, end);
       assert !fragments.isEmpty();
