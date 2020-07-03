@@ -722,14 +722,7 @@ public final class PyTypeChecker {
         final PyParameter param = paramWrapper.getParameter();
         final PyFunction function = as(ScopeUtil.getScopeOwner(param), PyFunction.class);
         if (function != null && function.getModifier() == PyFunction.Modifier.CLASSMETHOD) {
-          final StreamEx<PyType> types;
-          if (actualType instanceof PyUnionType) {
-            types = StreamEx.of(((PyUnionType)actualType).getMembers());
-          }
-          else {
-            types = StreamEx.of(actualType);
-          }
-          actualType = types
+          actualType = PyTypeUtil.toStream(actualType)
             .select(PyClassLikeType.class)
             .map(PyClassLikeType::toClass)
             .select(PyType.class)
@@ -771,7 +764,7 @@ public final class PyTypeChecker {
       substitutions.put(t, t);
     }
     if (qualifierType != null) {
-      for (PyClassType type : toPossibleClassTypes(qualifierType)) {
+      for (PyClassType type : PyTypeUtil.toStream(qualifierType).select(PyClassType.class)) {
         for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
           final PyType genericType = provider.getGenericType(type.getPyClass(), context);
           final Set<PyGenericType> providedTypeGenerics = new LinkedHashSet<>();
@@ -798,19 +791,6 @@ public final class PyTypeChecker {
 
     replaceUnresolvedGenericsWithAny(substitutions);
     return substitutions;
-  }
-
-  @NotNull
-  private static List<PyClassType> toPossibleClassTypes(@NotNull PyType type) {
-    final PyClassType classType = as(type, PyClassType.class);
-    if (classType != null) {
-      return Collections.singletonList(classType);
-    }
-    final PyUnionType unionType = as(type, PyUnionType.class);
-    if (unionType != null) {
-      return StreamEx.of(unionType.getMembers()).nonNull().flatMap(t -> toPossibleClassTypes(t).stream()).toList();
-    }
-    return Collections.emptyList();
   }
 
   private static void replaceUnresolvedGenericsWithAny(@NotNull Map<PyGenericType, PyType> substitutions) {

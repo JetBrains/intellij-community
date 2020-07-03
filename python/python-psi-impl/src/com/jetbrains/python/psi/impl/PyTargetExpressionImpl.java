@@ -250,15 +250,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyWithStatement withStatement = PsiTreeUtil.getParentOfType(item, PyWithStatement.class);
       final boolean isAsync = withStatement != null && withStatement.isAsync();
 
-      if (withType instanceof PyClassType) {
-        return getEnterTypeFromPyClass(withExpression, (PyClassType)withType, isAsync, context);
-      }
-      else if (withType instanceof PyUnionType) {
-        return StreamEx.of(((PyUnionType)withType).getMembers())
-          .select(PyClassType.class)
-          .map(t -> getEnterTypeFromPyClass(withExpression, t, isAsync, context))
-          .collect(PyTypeUtil.toUnion());
-      }
+      return PyTypeUtil
+        .toStream(withType)
+        .select(PyClassType.class)
+        .map(t -> getEnterTypeFromPyClass(withExpression, t, isAsync, context))
+        .collect(PyTypeUtil.toUnion());
     }
     return null;
   }
