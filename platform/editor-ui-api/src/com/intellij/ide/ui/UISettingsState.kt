@@ -74,6 +74,8 @@ class UISettingsState : BaseState() {
   var showMemoryIndicator by property(false)
   @get:OptionTag("SHOW_WRITE_THREAD_INDICATOR")
   var showWriteThreadIndicator by property(false)
+  @get:OptionTag("ALLOW_MERGE_BUTTONS")
+  var allowMergeButtons by property(true)
   @get:OptionTag("SHOW_MAIN_TOOLBAR")
   var showMainToolbar by property(false)
   @get:OptionTag("SHOW_STATUS_BAR")
