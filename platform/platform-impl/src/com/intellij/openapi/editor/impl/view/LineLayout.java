@@ -261,17 +261,6 @@ abstract class LineLayout {
     assert start < end;
     int last = start;
     boolean specialCharsEnabled = view.getEditor().getSettings().isShowingSpecialChars();
-    if (specialCharsEnabled) {
-      for (int i = start; i < end; i++) {
-        char c = text[i];
-        if (c >= 0x80 && !SpecialCharacterFragment.isSpecialCharacter(c)) {
-          // We only enable custom representation in ASCII code.
-          // In complex Unicode texts they can be used to control the appearance of neighbour characters, and we don't want to change that.
-          specialCharsEnabled = false;
-          break;
-        }
-      }
-    }
     for (int i = start; i < end; i++) {
       char c = text[i];
       LineFragment specialFragment = null;
@@ -281,7 +270,7 @@ abstract class LineLayout {
       }
       else if (specialCharsEnabled) {
         // only BMP special chars are supported currently, so there's no need to check for surrogate pairs
-        specialFragment = SpecialCharacterFragment.create(view, c);
+        specialFragment = SpecialCharacterFragment.create(view, c, text, i);
       }
       if (specialFragment != null) {
         addFragmentsNoTabs(run, chunk, text, last, i, it);

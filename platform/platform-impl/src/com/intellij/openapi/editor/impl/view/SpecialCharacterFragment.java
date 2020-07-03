@@ -48,13 +48,28 @@ class SpecialCharacterFragment implements LineFragment {
   private static final int BRACKETS_SIZE = 2;
   private static final int BRACKETS_THICKNESS = 1;
 
-  static boolean isSpecialCharacter(char c) {
-    return SPECIAL_CHAR_CODES.containsKey(c);
-  }
-
-  static @Nullable SpecialCharacterFragment create(@NotNull EditorView view, int c) {
+  static @Nullable SpecialCharacterFragment create(@NotNull EditorView view, int c,  char @Nullable [] text, int pos) {
     String code = SPECIAL_CHAR_CODES.get(c);
-    return code == null ? null : new SpecialCharacterFragment(view, code);
+    if (code == null) return null;
+    if (text != null) {
+      // special cases when we shouldn't render special characters explicitly, as they can impact the rendering of surrounding characters
+      if (c == 0xA0 || c >= 0x2000 && c <= 0x200A || c == 0x202F || c == 0x205F) { // 'special' space characters (having non-zero width)
+        if (pos < text.length - 1 && Character.getType(text[pos + 1]) == Character.NON_SPACING_MARK) {
+          // space characters (NBSP in particular) can be used to display combining marks in isolation
+          return null;
+        }
+      }
+      else if (c == 0x200C /*ZWNJ*/ || c == 0x200D /*ZWJ*/) {
+        // we don't display ZWNJ/ZWJ surrounded by non-ASCII characters, to avoid breaking complex scripts and emoji display
+        if (pos > 0 && text[pos - 1] >= 128) {
+          return null;
+        }
+        if (pos < text.length - 1 && text[pos + 1] >= 128) {
+          return null;
+        }
+      }
+    }
+    return new SpecialCharacterFragment(view, code);
   }
 
   private final EditorView myView;
