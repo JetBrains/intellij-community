@@ -87,6 +87,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
                     @NotNull Editor editor,
                     @NotNull PsiFile file,
                     @NotNull GotoData gotoData) {
+    if (gotoData.isCanceled) return;
+
     PsiElement[] targets = gotoData.targets;
     List<AdditionalAction> additionalActions = gotoData.additionalActions;
 
@@ -284,6 +286,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     @NotNull public final PsiElement source;
     public PsiElement[] targets;
     public final List<AdditionalAction> additionalActions;
+    public boolean isCanceled;
 
     private boolean hasDifferentNames;
     public BackgroundUpdaterTask listUpdaterTask;

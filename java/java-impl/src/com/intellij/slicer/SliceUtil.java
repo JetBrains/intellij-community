@@ -268,7 +268,7 @@ class SliceUtil {
     Collection<PsiMethod> overrides = new THashSet<>();
     SearchScope scope = builder.getSearchScope();
     if (qualifierClass != null && qualifierClass != methodCalled.getContainingClass()) {
-      scope = JavaTargetElementEvaluator.getHierarchyScope(qualifierClass, scope);
+      scope = JavaTargetElementEvaluator.getHierarchyScope(qualifierClass, scope, false);
     }
     overrides.addAll(OverridingMethodsSearch.search(methodCalled, scope, true).findAll());
     overrides.add(methodCalled);
