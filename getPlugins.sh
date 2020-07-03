@@ -1,1 +1,1 @@
-git clone git@github.com:JetBrains/android.git android
+git clone https://github.com/JetBrains/android.git android
