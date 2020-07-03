@@ -69,6 +69,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenCompatibilityTe
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<properties>" +
                   "    <junitVersion>4.0</junitVersion>" +
@@ -108,6 +109,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenCompatibilityTe
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<properties>" +
                   "    <junitVersion>4.0</junitVersion>" +
@@ -142,6 +144,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenCompatibilityTe
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<properties>" +
                   "    <junitVersion>4.0</junitVersion>" +
