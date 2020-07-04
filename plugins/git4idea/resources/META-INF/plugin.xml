@@ -255,6 +255,7 @@
       <reference id="Git.Stage.Reset"/>
       <reference id="Git.Stage.Revert"/>
       <reference ref="$Delete"/>
+      <reference id="Git.Ignore.File"/>
       <reference id="Diff.ShowDiff"/>
       <separator/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
