@@ -9,6 +9,7 @@ import com.intellij.conversion.impl.ui.ConvertProjectDialog;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -18,12 +19,14 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMaps;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class ConversionServiceImpl extends ConversionService {
   private static final Logger LOG = Logger.getInstance(ConversionServiceImpl.class);
@@ -136,20 +139,26 @@ public final class ConversionServiceImpl extends ConversionService {
       }
 
       List<ConversionRunner> runners = new ArrayList<>();
-      for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensionList()) {
-        if (!performedConversionIds.contains(provider.getId())) {
-          ConversionRunner runner = new ConversionRunner(provider, context);
+      ExtensionPointImpl<ConverterProvider> point = (ExtensionPointImpl<ConverterProvider>)ConverterProvider.EP_NAME.getPoint();
+      point.processIdentifiableImplementations((supplier, id) -> {
+        String providerId = getProviderId(supplier, id);
+        if (!performedConversionIds.contains(providerId)) {
+          ConversionRunner runner = new ConversionRunner(providerId, supplier.get(), context);
           if (runner.isConversionNeeded()) {
             runners.add(runner);
           }
         }
-      }
+      });
       return runners;
     }
     catch (CannotConvertException e) {
       LOG.info("Cannot check whether conversion of project files is needed or not, conversion won't be performed", e);
       return Collections.emptyList();
     }
+  }
+
+  private static @NotNull String getProviderId(@NotNull Supplier<ConverterProvider> supplier, @Nullable String id) {
+    return id == null ? supplier.get().getDeprecatedId() : id;
   }
 
   @Override
@@ -171,12 +180,13 @@ public final class ConversionServiceImpl extends ConversionService {
 
     List<ConversionRunner> runners = new ArrayList<>();
     try {
-      for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensionList()) {
-        ConversionRunner runner = new ConversionRunner(provider, context);
+      ExtensionPointImpl<ConverterProvider> point = (ExtensionPointImpl<ConverterProvider>)ConverterProvider.EP_NAME.getPoint();
+      point.processIdentifiableImplementations((supplier, id) -> {
+        ConversionRunner runner = new ConversionRunner(getProviderId(supplier, id), supplier.get(), context);
         if (runner.isModuleConversionNeeded(moduleFile)) {
           runners.add(runner);
         }
-      }
+      });
     }
     catch (CannotConvertException e) {
       LOG.info(e);

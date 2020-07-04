@@ -315,6 +315,19 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
   }
 
+  // null id means that instance was created and extension element cleared
+  public final void processIdentifiableImplementations(@NotNull BiConsumer<@NotNull Supplier<T>, @Nullable String> consumer) {
+    // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
+    for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
+      String id = adapter.getOrderId();
+      // https://github.com/JetBrains/kotlin/pull/3522
+      if (id == null && "org.jetbrains.kotlin.idea.roots.KotlinNonJvmSourceRootConverterProvider".equals(adapter.getAssignableToClassName())) {
+        id = "kotlin-non-jvm-source-roots";
+      }
+      consumer.accept(() -> adapter.createInstance(componentManager), id);
+    }
+  }
+
   private @NotNull List<ExtensionComponentAdapter> getThreadSafeAdapterList(boolean failIfListenerAdded) {
     CHECK_CANCELED.run();
 

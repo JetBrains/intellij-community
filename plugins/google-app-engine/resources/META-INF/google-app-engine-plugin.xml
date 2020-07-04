@@ -14,7 +14,7 @@
     <framework.type implementation="com.intellij.appengine.facet.AppEngineFrameworkType"/>
     <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
     <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
-    <project.converterProvider implementation="com.intellij.appengine.converter.AppEngineFacetConverterProvider"/>
+    <project.converterProvider implementation="com.intellij.appengine.converter.AppEngineFacetConverterProvider" id="google-app-engine-facet"/>
     <framework.detector implementation="com.intellij.appengine.facet.AppEngineFrameworkDetector"/>
     <compileServer.plugin classpath="google-app-engine-jps-plugin.jar;appEngine-runtime.jar"/>
 

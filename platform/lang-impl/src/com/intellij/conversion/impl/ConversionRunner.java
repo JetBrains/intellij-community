@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 public final class ConversionRunner {
+  private final String providerId;
   private final ConverterProvider myProvider;
   private final ConversionContextImpl myContext;
   private final ConversionProcessor<ModuleSettings> myModuleFileConverter;
@@ -32,7 +33,8 @@ public final class ConversionRunner {
   private final ConversionProcessor<ProjectLibrariesSettings> myProjectLibrariesConverter;
   private final ConversionProcessor<ArtifactsSettings> myArtifactsConverter;
 
-  public ConversionRunner(@NotNull ConverterProvider provider, @NotNull ConversionContextImpl context) {
+  public ConversionRunner(@NotNull String providerId, @NotNull ConverterProvider provider, @NotNull ConversionContextImpl context) {
+    this.providerId = providerId;
     myProvider = provider;
     myContext = context;
     myConverter = provider.createConverter(context);
@@ -42,6 +44,10 @@ public final class ConversionRunner {
     myRunConfigurationsConverter = myConverter.createRunConfigurationsConverter();
     myProjectLibrariesConverter = myConverter.createProjectLibrariesConverter();
     myArtifactsConverter = myConverter.createArtifactsConverter();
+  }
+
+  public @NotNull String getProviderId() {
+    return providerId;
   }
 
   public boolean isConversionNeeded() throws CannotConvertException {
@@ -81,7 +87,7 @@ public final class ConversionRunner {
       return myConverter.isConversionNeeded();
     }
     catch (Exception e) {
-      Logger.getInstance(ConversionRunner.class).error("Converter of provider " + myProvider.getId() + " cannot check is conversion needed or not", e);
+      Logger.getInstance(ConversionRunner.class).error("Converter of provider " + providerId + " cannot check is conversion needed or not", e);
       return false;
     }
   }
@@ -209,7 +215,7 @@ public final class ConversionRunner {
     myConverter.postProcessingFinished();
   }
 
-  public ConverterProvider getProvider() {
+  public @NotNull ConverterProvider getProvider() {
     return myProvider;
   }
 

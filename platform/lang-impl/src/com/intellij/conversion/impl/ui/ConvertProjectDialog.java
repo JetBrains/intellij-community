@@ -101,7 +101,7 @@ public class ConvertProjectDialog extends DialogWrapper {
       ProjectConversionUtil.backupFiles(myAffectedFiles, myContext.getProjectBaseDir(), myBackupDir);
       Set<String> appliedConverters = myContext.getAppliedConverters();
       for (ConversionRunner runner : myConversionRunners) {
-        if (!appliedConverters.contains(runner.getProvider().getId()) && runner.isConversionNeeded()) {
+        if (!appliedConverters.contains(runner.getProviderId()) && runner.isConversionNeeded()) {
           runner.preProcess();
           runner.process();
           runner.postProcess();

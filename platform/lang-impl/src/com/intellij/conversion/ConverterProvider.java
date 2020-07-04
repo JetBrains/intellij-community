@@ -9,13 +9,20 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class ConverterProvider {
   public static final ExtensionPointName<ConverterProvider> EP_NAME = new ExtensionPointName<>("com.intellij.project.converterProvider");
-  private final String myId;
+  private String myId;
 
+  /**
+   * @deprecated Set id as part of extension definition.
+   */
+  @Deprecated
   protected ConverterProvider(@NotNull @NonNls String id) {
     myId = id;
   }
 
-  public final String getId() {
+  protected ConverterProvider() {
+  }
+
+  public final String getDeprecatedId() {
     return myId;
   }
 

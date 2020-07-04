@@ -4,6 +4,7 @@ package com.intellij.conversion.impl;
 import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ConverterProvider;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.PathUtil;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -48,9 +49,17 @@ final class CachedConversionResult {
     Element root = new Element("conversion");
     Element appliedConverters = new Element("applied-converters");
     root.addContent(appliedConverters);
-    for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensionList()) {
-      appliedConverters.addContent(new Element("converter").setAttribute("id", provider.getId()));
-    }
+    ExtensionPointImpl<ConverterProvider> point = (ExtensionPointImpl<ConverterProvider>)ConverterProvider.EP_NAME.getPoint();
+    point.processIdentifiableImplementations((supplier, id) -> {
+      String providerId = id;
+      if (providerId == null) {
+        providerId = supplier.get().getDeprecatedId();
+      }
+
+      if (providerId != null) {
+        appliedConverters.addContent(new Element("converter").setAttribute("id", providerId));
+      }
+    });
 
     Element projectFiles = new Element("project-files");
     root.addContent(projectFiles);

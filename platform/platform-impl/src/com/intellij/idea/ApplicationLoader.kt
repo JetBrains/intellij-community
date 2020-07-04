@@ -202,12 +202,6 @@ private fun startApp(app: ApplicationImpl,
       // should be after scheduling all app initialized listeners (because this activity is not important)
       if (!Main.isLightEdit()) {
         NonUrgentExecutor.getInstance().execute {
-          if (starter.commandName == null) {
-            runActivity("project converter provider preloading") {
-              app.extensionArea.getExtensionPoint<Any>("com.intellij.project.converterProvider").extensionList
-            }
-          }
-
           // execute in parallel to component loading - this functionality should be used only by plugin functionality that is used after start-up
           runActivity("system properties setting") {
             SystemPropertyBean.initSystemProperties()
