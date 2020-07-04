@@ -18,7 +18,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.EDT;
-import gnu.trove.TLongObjectHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
-public class RefreshQueueImpl extends RefreshQueue implements Disposable {
+public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance(RefreshQueueImpl.class);
 
   private final Executor myQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", PooledThreadExecutor.INSTANCE, 1, this);
@@ -37,7 +37,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(IdeBundle.message("file.synchronize.progress"));
   private int myBusyThreads;
-  private final TLongObjectHashMap<RefreshSession> mySessions = new TLongObjectHashMap<>();
+  private final Long2ObjectOpenHashMap<RefreshSessionImpl> mySessions = new Long2ObjectOpenHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
 
   public void execute(@NotNull RefreshSessionImpl session) {
@@ -114,7 +114,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private static @NotNull Runnable runAsyncListeners(@NotNull RefreshSessionImpl session) {
-    List<? extends VFileEvent> events = ContainerUtil.filter(session.getEvents(), e -> {
+    List<VFileEvent> events = ContainerUtil.filter(session.getEvents(), e -> {
       VirtualFile file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
       return file == null || file.isValid();
     });
@@ -133,7 +133,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
-  private void updateSessionMap(@NotNull RefreshSession session, boolean add) {
+  private void updateSessionMap(@NotNull RefreshSessionImpl session, boolean add) {
     long id = session.getId();
     if (id != 0) {
       synchronized (mySessions) {
@@ -149,12 +149,12 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   @Override
   public void cancelSession(long id) {
-    RefreshSession session;
+    RefreshSessionImpl session;
     synchronized (mySessions) {
       session = mySessions.get(id);
     }
-    if (session instanceof RefreshSessionImpl) {
-      ((RefreshSessionImpl)session).cancel();
+    if (session != null) {
+      session.cancel();
     }
   }
 
@@ -179,7 +179,9 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   @Override
   public void dispose() {
     synchronized (mySessions) {
-      mySessions.forEachValue(session -> { ((RefreshSessionImpl)session).cancel(); return true; });
+      for (RefreshSessionImpl session : mySessions.values()) {
+        session.cancel();
+      }
     }
   }
 }

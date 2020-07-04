@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.jetbrains.annotations.ApiStatus;
@@ -13,7 +13,7 @@ import java.util.Collection;
 
 public abstract class RefreshQueue {
   public static RefreshQueue getInstance() {
-    return ServiceManager.getService(RefreshQueue.class);
+    return ApplicationManager.getApplication().getService(RefreshQueue.class);
   }
 
   @NotNull

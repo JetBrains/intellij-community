@@ -4,17 +4,13 @@ package com.intellij.util.indexing;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class MapDataExternalizer<Key, Value> implements DataExternalizer<Map<Key, Value>> {
   private final DataExternalizer<Value> myValueExternalizer;
@@ -32,7 +28,7 @@ public final class MapDataExternalizer<Key, Value> implements DataExternalizer<M
     DataInputOutputUtil.writeINT(stream, size);
 
     if (size > 0) {
-      THashMap<Value, List<Key>> values = new THashMap<>();
+      Map<Value, List<Key>> values = new HashMap<>();
       List<Key> keysForNullValue = null;
       for (Map.Entry<Key, Value> e : data.entrySet()) {
         Value value = e.getValue();
@@ -65,7 +61,7 @@ public final class MapDataExternalizer<Key, Value> implements DataExternalizer<M
   public Map<Key, Value> read(@NotNull DataInput in) throws IOException {
     int pairs = DataInputOutputUtil.readINT(in);
     if (pairs == 0) return Collections.emptyMap();
-    Map<Key, Value> result = new THashMap<>(pairs);
+    Map<Key, Value> result = new HashMap<>(pairs);
     while (((InputStream)in).available() > 0) {
       Value value = myValueExternalizer.read(in);
       Collection<Key> keys = myKeysExternalizer.read(in);

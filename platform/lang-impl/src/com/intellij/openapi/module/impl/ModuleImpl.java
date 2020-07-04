@@ -34,13 +34,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -372,7 +372,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     static final class State {
       @Property(surroundWithTag = false)
       @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false, surroundWithTag = false, entryTagName = "option")
-      public final Map<String, String> options = new THashMap<>();
+      public final Map<String, String> options = new HashMap<>();
     }
 
     private State state = new State();

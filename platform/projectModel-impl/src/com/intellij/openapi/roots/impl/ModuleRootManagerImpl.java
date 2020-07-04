@@ -22,7 +22,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ThrowableRunnable;
-import gnu.trove.THashMap;
 import kotlin.NotImplementedError;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -49,7 +48,7 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
   private boolean myIsDisposed;
   private boolean myLoaded;
   private final OrderRootsCache myOrderRootsCache;
-  private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
+  private final Map<RootModelImpl, Throwable> myModelCreations = new HashMap<>();
 
   protected final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
