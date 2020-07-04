@@ -14,19 +14,21 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 
@@ -412,9 +414,9 @@ internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileC
     else {
       projectPathMacroManager
     }
-    val file = File(path)
-    if (!file.isFile) return emptyMap()
-    return loadStorageFile(file, macroManager)
+
+    val file = Paths.get(path)
+    return if (Files.isRegularFile(file)) loadStorageFile(file, macroManager) else emptyMap()
   }
 
   internal class ModulePathMacroManagerBridge(pathMacros: PathMacros, private val moduleFilePath: String) : PathMacroManager(

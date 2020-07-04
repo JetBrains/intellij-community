@@ -8,10 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.openapi.util.text.Strings
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.File
@@ -154,9 +154,9 @@ object JpsProjectEntitiesLoader {
   }
 }
 
-internal fun loadStorageFile(xmlFile: File, pathMacroManager: PathMacroManager): Map<String, Element> {
-  val rootElement = JDOMUtil.load(xmlFile.toPath())
-  if (FileUtil.extensionEquals(xmlFile.path, "iml")) {
+internal fun loadStorageFile(xmlFile: Path, pathMacroManager: PathMacroManager): Map<String, Element> {
+  val rootElement = JDOMUtil.load(xmlFile)
+  if (Strings.endsWith(xmlFile.toString(), ".iml")) {
     val optionElement = Element("component").setAttribute("name", "DeprecatedModuleOptionManager")
     val iterator = rootElement.attributes.iterator()
     for (attribute in iterator) {
