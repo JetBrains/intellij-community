@@ -28,6 +28,8 @@ import java.util.concurrent.TimeUnit;
 
 @ApiStatus.Internal
 final class CachedConversionResult {
+  private static final String RELATIVE_PREFIX = "./";
+
   public final Set<String> appliedConverters;
   public final Object2LongMap<String> projectFilesTimestamps;
 
@@ -58,7 +60,7 @@ final class CachedConversionResult {
       Object2LongMap.Entry<String> entry = iterator.next();
       Element element = new Element("f");
       String path = entry.getKey();
-      element.setAttribute("p", path.startsWith(basePathWithSlash) ? "./" + path.substring(basePathWithSlash.length()) : path);
+      element.setAttribute("p", path.startsWith(basePathWithSlash) ? RELATIVE_PREFIX + path.substring(basePathWithSlash.length()) : path);
       element.setAttribute("t", Long.toString(entry.getLongValue()));
       projectFiles.addContent(element);
     }
@@ -94,9 +96,10 @@ final class CachedConversionResult {
           if (path == null) {
             path = element.getAttributeValue("path");
           }
-          else if (path.startsWith("./")) {
-            path = basePathWithSlash + path;
+          else if (path.startsWith(RELATIVE_PREFIX)) {
+            path = basePathWithSlash + path.substring(RELATIVE_PREFIX.length());
           }
+
           if (path == null || path.isEmpty()) {
             continue;
           }

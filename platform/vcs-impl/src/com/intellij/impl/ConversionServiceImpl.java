@@ -52,7 +52,7 @@ public final class ConversionServiceImpl extends ConversionService {
       }
       Path backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
       for (ConversionRunner runner : runners) {
-        if (runner.isConversionNeeded(Collections.emptySet())) {
+        if (runner.isConversionNeeded()) {
           runner.preProcess();
           runner.process();
           runner.postProcess();
@@ -105,13 +105,11 @@ public final class ConversionServiceImpl extends ConversionService {
     try {
       Object2LongMap<String> oldMap = context.getProjectFileTimestamps();
       boolean changed = false;
-      Object2LongMap<String> newMap;
       if (oldMap.isEmpty()) {
         LOG.debug("conversion will be performed because no information about project files");
-        newMap = null;
       }
       else {
-        newMap = context.getAllProjectFiles();
+        Object2LongMap<String> newMap = context.getAllProjectFiles();
         LOG.debug("Checking project files");
         for (ObjectIterator<Object2LongMap.Entry<String>> iterator = Object2LongMaps.fastIterator(newMap); iterator.hasNext(); ) {
           Object2LongMap.Entry<String> entry = iterator.next();
@@ -132,35 +130,26 @@ public final class ConversionServiceImpl extends ConversionService {
       }
       else {
         performedConversionIds = context.getAppliedConverters();
-        LOG.debug("Project files are up to date. Applied converters: " + performedConversionIds);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Project files are up to date. Applied converters: " + performedConversionIds);
+        }
       }
 
       List<ConversionRunner> runners = new ArrayList<>();
       for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensionList()) {
         if (!performedConversionIds.contains(provider.getId())) {
           ConversionRunner runner = new ConversionRunner(provider, context);
-          if (runner.isConversionNeeded(Collections.emptySet())) {
+          if (runner.isConversionNeeded()) {
             runners.add(runner);
           }
         }
       }
-
-      if (runners.isEmpty()) {
-        if (newMap != null) {
-          // save only if current project info is computed, otherwise it will be computed and saved on project close
-          context.saveConversionResult(newMap);
-        }
-        return Collections.emptyList();
-      }
-      // do not save current project info - project files maybe modified as result of conversion
-    }
-    catch (IOException e) {
-      LOG.info(e);
+      return runners;
     }
     catch (CannotConvertException e) {
       LOG.info("Cannot check whether conversion of project files is needed or not, conversion won't be performed", e);
+      return Collections.emptyList();
     }
-    return Collections.emptyList();
   }
 
   private static @NotNull List<ConversionRunner> createConversionRunners(@NotNull ConversionContextImpl context, @NotNull Set<String> performedConversionIds) {
