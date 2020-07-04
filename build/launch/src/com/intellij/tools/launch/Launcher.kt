@@ -30,7 +30,6 @@ object Launcher {
       "-Didea.config.path=${paths.configFolder.canonicalPath}",
       "-Didea.system.path=${paths.systemFolder.canonicalPath}",
       "-Didea.log.path=${paths.logFolder.canonicalPath}",
-      "-Didea.log.config.file=bin/log.xml",
       "-Didea.is.internal=true",
       "-Didea.debug.mode=true",
       "-Didea.jre.check=true",
