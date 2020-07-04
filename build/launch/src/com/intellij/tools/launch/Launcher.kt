@@ -33,6 +33,7 @@ object Launcher {
       "-Drsch.send.usage.stat=false",
       "-Duse.linux.keychain=false",
       "-Didea.initially.ask.config=force-not",
+      "-Dide.show.tips.on.startup.default.value=false",
       "-Didea.config.path=${paths.configFolder.canonicalPath}",
       "-Didea.system.path=${paths.systemFolder.canonicalPath}",
       "-Didea.log.path=${paths.logFolder.canonicalPath}",
