@@ -6,7 +6,6 @@ import com.intellij.openapi.components.StorageScheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -32,10 +31,6 @@ public interface ConversionContext {
   RunManagerSettings getRunManagerSettings() throws CannotConvertException;
 
   WorkspaceSettings getWorkspaceSettings() throws CannotConvertException;
-
-  default ModuleSettings getModuleSettings(File moduleFile) throws CannotConvertException {
-    return getModuleSettings(moduleFile.toPath());
-  }
 
   ModuleSettings getModuleSettings(@NotNull Path moduleFile) throws CannotConvertException;
 

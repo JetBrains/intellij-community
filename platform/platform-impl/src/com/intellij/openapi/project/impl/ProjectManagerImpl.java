@@ -49,7 +49,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -223,7 +222,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   public boolean openProject(@NotNull Project project) {
     IProjectStore store = project instanceof ProjectStoreOwner ? ((ProjectStoreOwner)project).getComponentStore() : null;
     if (store != null) {
-      Path projectFilePath = store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getDirectoryStorePath() : Paths.get(store.getProjectFilePath());
+      Path projectFilePath = store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getDirectoryStorePath() : store.getProjectFilePath();
       for (Project p : getOpenProjects()) {
         if (ProjectUtil.isSameProject(projectFilePath, p)) {
           GuiUtils.invokeLaterIfNeeded(() -> ProjectUtil.focusProjectWindow(p, false), ModalityState.NON_MODAL);

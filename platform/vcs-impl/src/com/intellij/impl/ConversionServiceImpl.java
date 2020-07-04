@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.project.ProjectStoreOwner;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMaps;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
@@ -22,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public final class ConversionServiceImpl extends ConversionService {
@@ -152,16 +152,6 @@ public final class ConversionServiceImpl extends ConversionService {
     }
   }
 
-  private static @NotNull List<ConversionRunner> createConversionRunners(@NotNull ConversionContextImpl context, @NotNull Set<String> performedConversionIds) {
-    List<ConversionRunner> runners = new ArrayList<>();
-    for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensionList()) {
-      if (!performedConversionIds.contains(provider.getId())) {
-        runners.add(new ConversionRunner(provider, context));
-      }
-    }
-    return runners;
-  }
-
   @Override
   public void saveConversionResult(@NotNull Path projectPath) {
     try {
@@ -176,21 +166,32 @@ public final class ConversionServiceImpl extends ConversionService {
   }
 
   @Override
-  @NotNull
-  public ConversionResult convertModule(@NotNull final Project project, @NotNull final Path moduleFile) {
-    final String url = project.getPresentableUrl();
-    assert url != null : project;
-    final Path projectPath = Paths.get(url);
+  public @NotNull ConversionResult convertModule(@NotNull Project project, @NotNull Path moduleFile) {
+    ConversionContextImpl context = new ConversionContextImpl(((ProjectStoreOwner)project).getComponentStore().getProjectFilePath());
 
-    if (!isConversionNeeded(projectPath, moduleFile)) {
+    List<ConversionRunner> runners = new ArrayList<>();
+    try {
+      for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensionList()) {
+        ConversionRunner runner = new ConversionRunner(provider, context);
+        if (runner.isModuleConversionNeeded(moduleFile)) {
+          runners.add(runner);
+        }
+      }
+    }
+    catch (CannotConvertException e) {
+      LOG.info(e);
+    }
+
+    if (runners.isEmpty()) {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED;
     }
 
-    final int res = Messages.showYesNoDialog(project, IdeBundle.message("message.module.file.has.an.older.format.do.you.want.to.convert.it"),
-                                             IdeBundle.message("dialog.title.convert.module"), Messages.getQuestionIcon());
-    if (res != Messages.YES) {
+    int answer = Messages.showYesNoDialog(project, IdeBundle.message("message.module.file.has.an.older.format.do.you.want.to.convert.it"),
+                                       IdeBundle.message("dialog.title.convert.module"), Messages.getQuestionIcon());
+    if (answer != Messages.YES) {
       return ConversionResultImpl.CONVERSION_CANCELED;
     }
+
     if (!Files.isWritable(moduleFile)) {
       Messages.showErrorDialog(project, IdeBundle.message("error.message.cannot.modify.file.0", moduleFile.toAbsolutePath().toString()),
                                IdeBundle.message("dialog.title.convert.module"));
@@ -198,14 +199,11 @@ public final class ConversionServiceImpl extends ConversionService {
     }
 
     try {
-      ConversionContextImpl context = new ConversionContextImpl(projectPath);
-      List<ConversionRunner> runners = createConversionRunners(context, Collections.emptySet());
       File backupFile = ProjectConversionUtil.backupFile(moduleFile);
       for (ConversionRunner runner : runners) {
-        if (runner.isModuleConversionNeeded(moduleFile)) {
-          runner.convertModule(moduleFile);
-        }
+        runner.convertModule(moduleFile);
       }
+
       context.saveFiles(Collections.singletonList(moduleFile));
       Messages.showInfoMessage(project, IdeBundle.message("message.your.module.was.successfully.converted.br.old.version.was.saved.to.0", backupFile.getAbsolutePath()),
                                IdeBundle.message("dialog.title.convert.module"));
@@ -220,23 +218,6 @@ public final class ConversionServiceImpl extends ConversionService {
     catch (IOException e) {
       LOG.info(e);
       return ConversionResultImpl.ERROR_OCCURRED;
-    }
-  }
-
-  private static boolean isConversionNeeded(Path projectPath, Path moduleFile) {
-    try {
-      ConversionContextImpl context = new ConversionContextImpl(projectPath);
-      final List<ConversionRunner> runners = createConversionRunners(context, Collections.emptySet());
-      for (ConversionRunner runner : runners) {
-        if (runner.isModuleConversionNeeded(moduleFile)) {
-          return true;
-        }
-      }
-      return false;
-    }
-    catch (CannotConvertException e) {
-      LOG.info(e);
-      return false;
     }
   }
 }

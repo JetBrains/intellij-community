@@ -74,34 +74,37 @@ public final class ExistingModuleLoader extends ModuleBuilder {
     }
 
     String moduleFilePath = getModuleFilePath();
-    if (moduleFilePath == null) return false;
-    final Path file = Paths.get(moduleFilePath);
-    if (Files.exists(file)) {
-      try {
-        ConversionService conversionService = ConversionService.getInstance();
-        ConversionResult result = conversionService == null ? null : conversionService.convertModule(project, file);
-        if (result != null && result.openingIsCanceled()) {
-          return false;
-        }
-        final Element root = JDOMUtil.load(file);
-        final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
-        usedMacros.remove(PathMacroUtil.DEPRECATED_MODULE_DIR);
-        usedMacros.removeAll(PathMacros.getInstance().getAllMacroNames());
+    if (moduleFilePath == null) {
+      return false;
+    }
 
-        if (usedMacros.size() > 0) {
-          final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(currentProject, usedMacros);
-          if (!ok) {
-            return false;
-          }
-        }
-      }
-      catch (JDOMException | IOException e) {
-        Messages.showMessageDialog(e.getMessage(), IdeBundle.message("title.error.reading.file"), Messages.getErrorIcon());
-        return false;
-      }
-    } else {
+    Path file = Paths.get(moduleFilePath);
+    if (!Files.exists(file)) {
       Messages.showErrorDialog(currentProject, IdeBundle.message("title.module.file.does.not.exist", moduleFilePath),
                                CommonBundle.getErrorTitle());
+      return false;
+    }
+
+    try {
+      ConversionService conversionService = ConversionService.getInstance();
+      ConversionResult result = conversionService == null ? null : conversionService.convertModule(project, file);
+      if (result != null && result.openingIsCanceled()) {
+        return false;
+      }
+      final Element root = JDOMUtil.load(file);
+      final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
+      usedMacros.remove(PathMacroUtil.DEPRECATED_MODULE_DIR);
+      usedMacros.removeAll(PathMacros.getInstance().getAllMacroNames());
+
+      if (usedMacros.size() > 0) {
+        final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(currentProject, usedMacros);
+        if (!ok) {
+          return false;
+        }
+      }
+    }
+    catch (JDOMException | IOException e) {
+      Messages.showMessageDialog(e.getMessage(), IdeBundle.message("title.error.reading.file"), Messages.getErrorIcon());
       return false;
     }
     return true;

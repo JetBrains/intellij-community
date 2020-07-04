@@ -11,7 +11,6 @@ import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public interface IProjectStore extends IComponentStore {
   @TestOnly
@@ -25,9 +24,7 @@ public interface IProjectStore extends IComponentStore {
   @NotNull
   StorageScheme getStorageScheme();
 
-  @SystemIndependent
-  @NotNull
-  String getProjectFilePath();
+  @NotNull Path getProjectFilePath();
 
   /**
    * `null` for default or non-directory based project.
@@ -55,14 +52,7 @@ public interface IProjectStore extends IComponentStore {
   /**
    * Directory of project configuration files for directory-based project. Or null.
    */
-  default Path getDirectoryStorePath() {
-    String result = getDirectoryStorePath(false);
-    return result == null ? null : Paths.get(result);
-  }
-
-  @NotNull
-  @SystemIndependent
-  String getDirectoryStorePathOrBase();
+  Path getDirectoryStorePath();
 
   void setPath(@NotNull Path path, boolean isRefreshVfsNeeded, @Nullable Project template);
 

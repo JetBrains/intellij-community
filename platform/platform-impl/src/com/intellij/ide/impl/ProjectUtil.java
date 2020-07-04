@@ -440,11 +440,21 @@ public final class ProjectUtil {
     }
 
     if (Files.isDirectory(projectFile)) {
-      return FileUtil.pathsEqual(projectFile.toString(), existingBaseDirPath.toString());
+      try {
+        return Files.isSameFile(projectFile, existingBaseDirPath);
+      }
+      catch (IOException ignore) {
+        return false;
+      }
     }
 
     if (projectStore.getStorageScheme() == StorageScheme.DEFAULT) {
-      return FileUtil.pathsEqual(FileUtil.toSystemIndependentName(projectFile.toString()), projectStore.getProjectFilePath());
+      try {
+        return Files.isSameFile(projectFile, projectStore.getProjectFilePath());
+      }
+      catch (IOException ignore) {
+        return false;
+      }
     }
 
     Path parent = projectFile.getParent();

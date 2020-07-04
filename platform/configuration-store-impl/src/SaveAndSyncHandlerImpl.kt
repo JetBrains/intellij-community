@@ -38,7 +38,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAwt
 import java.beans.PropertyChangeListener
-import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -231,7 +230,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 
           if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
             val stateStore = project.stateStore
-            val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else Paths.get(stateStore.projectFilePath)
+            val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
             // update last modified for all project files that were modified between project open and close
             ConversionService.getInstance()?.saveConversionResult(path)
           }

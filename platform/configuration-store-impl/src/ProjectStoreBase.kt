@@ -17,7 +17,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.Ksuid
@@ -56,7 +55,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     loadPolicy = if (value) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
   }
 
-  final override fun getProjectFilePath() = storageManager.expandMacro(PROJECT_FILE).systemIndependentPath
+  final override fun getProjectFilePath() = storageManager.expandMacro(PROJECT_FILE)
 
   /**
    * `null` for default or non-directory based project.
@@ -262,19 +261,17 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
     val filePath = file.path
     if (!isDirectoryBased) {
-      return filePath == projectFilePath || filePath == workspaceFilePath
+      return filePath == projectFilePath.systemIndependentPath || filePath == workspaceFilePath
     }
 
-    return FileUtil.isAncestor(PathUtil.getParentPath(projectFilePath), filePath, false)
+    return FileUtil.isAncestor(projectFilePath.parent.systemIndependentPath, filePath, false)
   }
 
   override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean): String? {
-    return if (!ignoreProjectStorageScheme && !isDirectoryBased) null else PathUtil.getParentPath(projectFilePath).nullize()
+    return if (!ignoreProjectStorageScheme && !isDirectoryBased) null else projectFilePath.parent.systemIndependentPath.nullize()
   }
 
   final override fun getDirectoryStorePath() = dotIdea
-
-  override fun getDirectoryStorePathOrBase(): String = PathUtil.getParentPath(projectFilePath)
 
   // dummy implementation for Upsource
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) { }

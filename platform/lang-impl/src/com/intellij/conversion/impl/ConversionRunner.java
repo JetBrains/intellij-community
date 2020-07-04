@@ -86,8 +86,8 @@ public final class ConversionRunner {
     }
   }
 
-  public boolean isModuleConversionNeeded(Path moduleFile) throws CannotConvertException {
-    return myModuleFileConverter != null && myModuleFileConverter.isConversionNeeded(myContext.getModuleSettings(moduleFile.toFile()));
+  public boolean isModuleConversionNeeded(@NotNull Path moduleFile) throws CannotConvertException {
+    return myModuleFileConverter != null && myModuleFileConverter.isConversionNeeded(myContext.getModuleSettings(moduleFile));
   }
 
   public @NotNull Collection<Path> getCreatedFiles() {
@@ -138,7 +138,7 @@ public final class ConversionRunner {
     }
 
     for (Path moduleFile : myModulesFilesToProcess) {
-      myModuleFileConverter.preProcess(myContext.getModuleSettings(moduleFile.toFile()));
+      myModuleFileConverter.preProcess(myContext.getModuleSettings(moduleFile));
     }
 
     if (myProcessRunConfigurations) {
@@ -165,7 +165,7 @@ public final class ConversionRunner {
     }
 
     for (Path moduleFile : myModulesFilesToProcess) {
-      myModuleFileConverter.process(myContext.getModuleSettings(moduleFile.toFile()));
+      myModuleFileConverter.process(myContext.getModuleSettings(moduleFile));
     }
 
     if (myProcessRunConfigurations) {
@@ -192,7 +192,7 @@ public final class ConversionRunner {
     }
 
     for (Path moduleFile : myModulesFilesToProcess) {
-      myModuleFileConverter.postProcess(myContext.getModuleSettings(moduleFile.toFile()));
+      myModuleFileConverter.postProcess(myContext.getModuleSettings(moduleFile));
     }
 
     if (myProcessRunConfigurations) {
@@ -229,7 +229,7 @@ public final class ConversionRunner {
   }
 
   public void convertModule(@NotNull Path moduleFile) throws CannotConvertException {
-    final ModuleSettings settings = myContext.getModuleSettings(moduleFile.toFile());
+    final ModuleSettings settings = myContext.getModuleSettings(moduleFile);
     myModuleFileConverter.preProcess(settings);
     myModuleFileConverter.process(settings);
     myModuleFileConverter.postProcess(settings);

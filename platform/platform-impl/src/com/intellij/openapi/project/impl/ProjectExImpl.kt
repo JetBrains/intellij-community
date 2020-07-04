@@ -106,10 +106,10 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   final override fun getStateStore() = componentStore
 
-  final override fun getProjectFilePath() = componentStore.projectFilePath
+  final override fun getProjectFilePath() = componentStore.projectFilePath.systemIndependentPath
 
   final override fun getProjectFile(): VirtualFile? {
-    return LocalFileSystem.getInstance().findFileByPath(componentStore.projectFilePath)
+    return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectFilePath)
   }
 
   final override fun getBaseDir(): VirtualFile? {
@@ -120,7 +120,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   override fun getPresentableUrl(): String? {
     val store = componentStore
-    return if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.systemIndependentPath else store.projectFilePath
+    return if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.systemIndependentPath else store.projectFilePath.systemIndependentPath
   }
 
   override fun getLocationHash(): String {

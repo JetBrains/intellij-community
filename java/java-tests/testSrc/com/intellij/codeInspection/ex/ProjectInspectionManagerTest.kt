@@ -241,7 +241,7 @@ class ProjectInspectionManagerTest {
       currentProfile.profileChanged()
 
       project.stateStore.save()
-      val projectFile = Paths.get((project.stateStore).projectFilePath)
+      val projectFile = project.stateStore.projectFilePath
 
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
 
