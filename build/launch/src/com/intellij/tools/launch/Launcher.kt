@@ -3,6 +3,7 @@ package com.intellij.tools.launch
 import com.intellij.tools.launch.impl.ClassPathBuilder
 import java.net.InetAddress
 import java.net.ServerSocket
+import java.nio.file.Files
 
 object Launcher {
 
@@ -16,10 +17,7 @@ object Launcher {
     val classPathFile = classPathBuilder.build()
 
     // We should create config folder to avoid import settings dialog.
-    //val configFolder = paths.configFolder
-    //if (!configFolder.exists()) {
-    //  configFolder.mkdirs()
-    //}
+    Files.createDirectories(paths.configFolder.toPath())
 
     val cmd = mutableListOf(
       paths.javaExecutable.canonicalPath,
