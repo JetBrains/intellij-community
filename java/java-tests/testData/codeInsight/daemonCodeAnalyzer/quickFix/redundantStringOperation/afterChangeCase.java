@@ -1,12 +1,16 @@
 // "Fix all 'Redundant String operation' problems in file" "true"
 import java.util.Locale;
-public class MainBackup {
+public class Main {
   public static void main(String[] args) {
 
 
     boolean value = args[0].equalsIgnoreCase("foo");
     boolean value2 ="foo".equalsIgnoreCase(args[0]) ;
     boolean value3 = args[0].toLowerCase().equalsIgnoreCase(args[0].toLowerCase());
+
+    boolean value1WithBrackets = (args[0]).equalsIgnoreCase(("foo"));
+    boolean value2WithBrackets = ("foo").equalsIgnoreCase((args[0]));
+    boolean value3WithBrackets = (args[0].toLowerCase()).equalsIgnoreCase((args[0].toLowerCase()));
 
     boolean valueUpperCase1 = args[0].equalsIgnoreCase("foo");
     boolean valueUpperCase2 ="foo".equalsIgnoreCase(args[0]) ;
