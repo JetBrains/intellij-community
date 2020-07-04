@@ -15,8 +15,10 @@ public interface ProjectEx extends Project {
   /**
    * Consider using only and only if {@link com.intellij.configurationStore.SettingsSavingComponent} is not possible to use.
    */
+  @ApiStatus.Internal
   interface ProjectSaved {
-    Topic<ProjectSaved> TOPIC = Topic.create("SaveProjectTopic", ProjectSaved.class);
+    @Topic.ProjectLevel
+    Topic<ProjectSaved> TOPIC = new Topic<>("SaveProjectTopic", ProjectSaved.class, Topic.BroadcastDirection.NONE);
 
     /**
      * Not called in EDT.

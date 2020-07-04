@@ -116,7 +116,6 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
           .appendTo(result)
       }
 
-      val projectSaved = project.messageBus.syncPublisher(ProjectEx.ProjectSaved.TOPIC)
       launch {
         try {
           saveProjectName()
@@ -125,7 +124,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
           LOG.error("Unable to store project name", e)
         }
 
-        projectSaved.duringSave(project)
+        project.messageBus.syncPublisher(ProjectEx.ProjectSaved.TOPIC).duringSave(project)
       }
     }
   }

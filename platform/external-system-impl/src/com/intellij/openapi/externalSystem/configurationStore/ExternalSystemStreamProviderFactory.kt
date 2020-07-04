@@ -23,8 +23,8 @@ import kotlin.concurrent.write
 
 // todo handle module rename
 internal class ExternalSystemStreamProviderFactory(private val project: Project) : StreamProviderFactory {
-  val moduleStorage = ModuleFileSystemExternalSystemStorage(project)
-  val fileStorage = ProjectFileSystemExternalSystemStorage(project)
+  val moduleStorage by lazy { ModuleFileSystemExternalSystemStorage(project) }
+  val fileStorage by lazy { ProjectFileSystemExternalSystemStorage(project) }
 
   private val isReimportOnMissedExternalStorageScheduled = AtomicBoolean(false)
 
