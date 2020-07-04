@@ -1,18 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.sender
 
-import com.intellij.completion.settings.CompletionMLRankingSettings
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.util.Alarm
 import com.intellij.util.Time
 
 private fun isSendAllowed(): Boolean {
-  return StatisticsUploadAssistant.isSendAllowed() && CompletionMLRankingSettings.getInstance().isCompletionLogsSendAllowed
+  return isCompletionLogsSendAllowed() && StatisticsUploadAssistant.isSendAllowed()
+}
+
+internal fun isCompletionLogsSendAllowed(): Boolean {
+  return ApplicationManager.getApplication().isEAP && Registry.`is`("completion.stats.send.logs")
 }
 
 internal class SenderPreloadingActivity : PreloadingActivity() {

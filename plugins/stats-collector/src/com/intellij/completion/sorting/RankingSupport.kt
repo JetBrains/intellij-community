@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.sorting
 
 import com.intellij.completion.settings.CompletionMLRankingSettings
@@ -7,13 +7,12 @@ import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.stats.experiment.EmulatedExperiment
 import com.intellij.stats.experiment.WebServiceStatus
+import com.intellij.stats.sender.isCompletionLogsSendAllowed
 import com.jetbrains.completion.ranker.WeakModelProvider
 import org.jetbrains.annotations.TestOnly
-
 
 object RankingSupport {
   private val LOG = logger<RankingSupport>()
@@ -58,12 +57,12 @@ object RankingSupport {
     val application = ApplicationManager.getApplication()
     val webServiceStatus = WebServiceStatus.getInstance()
     if (application.isUnitTestMode) return enabledInTests
-    val settings = CompletionMLRankingSettings.getInstance()
-    if (application.isEAP && webServiceStatus.isExperimentOnCurrentIDE() && settings.isCompletionLogsSendAllowed) {
+    if (application.isEAP && webServiceStatus.isExperimentOnCurrentIDE() && isCompletionLogsSendAllowed()) {
       // AB experiment
       return EmulatedExperiment.shouldRank(language, webServiceStatus.experimentVersion())
     }
 
+    val settings = CompletionMLRankingSettings.getInstance()
     return settings.isRankingEnabled && settings.isLanguageEnabled(provider.displayNameInSettings)
   }
 

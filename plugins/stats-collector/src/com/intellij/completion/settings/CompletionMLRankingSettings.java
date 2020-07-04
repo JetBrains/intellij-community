@@ -1,27 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.settings;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.stats.sender.SenderPreloadingActivityKt;
 import com.jetbrains.completion.ranker.WeakModelProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-@State(name = "CompletionMLRankingSettings", storages = @Storage("completionMLRanking.xml"))
-public class CompletionMLRankingSettings implements PersistentStateComponent<CompletionMLRankingSettings.State> {
+@State(name = "CompletionMLRankingSettings", storages = @Storage(value = "completionMLRanking.xml", roamingType = RoamingType.DISABLED))
+public final class CompletionMLRankingSettings implements PersistentStateComponent<CompletionMLRankingSettings.State> {
   private static final Logger LOG = Logger.getInstance(CompletionMLRankingSettings.class);
 
-  private static final Collection<String> ENABLED_BY_DEFAULT = WeakModelProvider.enabledByDefault();
-  private final State myState = new State();
+  private final Collection<String> enabledByDefault = WeakModelProvider.enabledByDefault();
+  private final State myState;
+
+  public CompletionMLRankingSettings() {
+    myState = new State();
+    myState.rankingEnabled = !enabledByDefault.isEmpty();
+  }
 
   @NotNull
   public static CompletionMLRankingSettings getInstance() {
@@ -41,15 +41,15 @@ public class CompletionMLRankingSettings implements PersistentStateComponent<Com
   }
 
   public boolean isCompletionLogsSendAllowed() {
-    return ApplicationManager.getApplication().isEAP() && Registry.is("completion.stats.send.logs");
+    return SenderPreloadingActivityKt.isCompletionLogsSendAllowed();
   }
 
   public boolean isLanguageEnabled(@NotNull String languageName) {
-    return myState.language2state.getOrDefault(languageName, ENABLED_BY_DEFAULT.contains(languageName));
+    return myState.language2state.getOrDefault(languageName, enabledByDefault.contains(languageName));
   }
 
   public void setLanguageEnabled(@NotNull String languageName, boolean isEnabled) {
-    boolean defaultValue = ENABLED_BY_DEFAULT.contains(languageName);
+    boolean defaultValue = enabledByDefault.contains(languageName);
     if (defaultValue == isEnabled) {
       myState.language2state.remove(languageName);
     }
@@ -64,9 +64,8 @@ public class CompletionMLRankingSettings implements PersistentStateComponent<Com
     myState.showDiff = isEnabled;
   }
 
-  @Nullable
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
@@ -83,10 +82,10 @@ public class CompletionMLRankingSettings implements PersistentStateComponent<Com
     LOG.info("ML Completion " + (enabled ? "enabled" : "disabled") + " ,show diff " + (showDiff ? "on" : "off") + " for: " + languageName);
   }
 
-  public static class State {
-    public boolean rankingEnabled = !ENABLED_BY_DEFAULT.isEmpty();
-    public boolean showDiff = false;
+  public static final class State {
+    public boolean rankingEnabled;
+    public boolean showDiff;
     // this map stores only different compare to default values to have ability to enable/disable models from build to build
-    public Map<String, Boolean> language2state = new HashMap<>();
+    public final Map<String, Boolean> language2state = new HashMap<>();
   }
 }

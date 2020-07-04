@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.completion.ranker
 
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.Extensions
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import kotlin.streams.asSequence
@@ -29,7 +28,7 @@ interface WeakModelProvider : RankingModelProvider {
   fun canBeUsed(): Boolean
 
   companion object {
-    private val EP_NAME: ExtensionPointName<RankingModelProvider> = ExtensionPointName("com.intellij.completion.ml.model")
+    private val EP_NAME = ExtensionPointName<RankingModelProvider>("com.intellij.completion.ml.model")
 
     @JvmStatic
     fun findProvider(language: Language): RankingModelProvider? {
@@ -70,13 +69,15 @@ interface WeakModelProvider : RankingModelProvider {
 
     @JvmStatic
     fun enabledByDefault(): List<String> {
-      return availableProviders().filter { it.isEnabledByDefault }.map { it.displayNameInSettings }.toList()
+      return availableProviders().asSequence()
+        .filter { it.isEnabledByDefault }
+        .map { it.displayNameInSettings }
+        .toList()
     }
 
     @TestOnly
     fun registerProvider(provider: RankingModelProvider, parentDisposable: Disposable) {
-      val extensionPoint = Extensions.getRootArea().getExtensionPoint(EP_NAME)
-      extensionPoint.registerExtension(provider, parentDisposable)
+      EP_NAME.point.registerExtension(provider, parentDisposable)
     }
   }
 }
