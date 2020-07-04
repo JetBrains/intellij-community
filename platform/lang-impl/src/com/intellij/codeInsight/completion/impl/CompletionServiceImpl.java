@@ -196,9 +196,6 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
 
   public static CompletionPhase getCompletionPhase() {
-    if (!ClientId.isCurrentlyUnderLocalId())
-      return CompletionPhase.NoCompletion;
-
     return ourPhase;
   }
 
