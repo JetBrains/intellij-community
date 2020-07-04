@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.console
 
+import com.intellij.execution.ConsoleFolding
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.vcs.console.VcsConsoleFolding
 import com.intellij.vcs.console.VcsConsoleFolding.Placeholder
+import git4idea.commands.GitImplBase
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -35,5 +37,17 @@ class GitConsoleFolding : VcsConsoleFolding {
   companion object {
     private val CONFIG_OPTIONS_REGEX: Pattern = Pattern.compile("(\\s-c\\s[\\w.]+=[^ ]*)+")
     private val GIT_LINE_REGEX: Pattern = Pattern.compile("\\[.*] git ")
+  }
+}
+
+class GitProgressOutputConsoleFolding : ConsoleFolding() {
+  override fun shouldBeAttachedToThePreviousLine(): Boolean = false
+
+  override fun getPlaceholderText(project: Project, lines: MutableList<String>): String? {
+    return lines.lastOrNull()
+  }
+
+  override fun shouldFoldLine(project: Project, line: String): Boolean {
+    return GitImplBase.looksLikeProgress(line)
   }
 }

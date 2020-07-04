@@ -292,7 +292,8 @@ public abstract class GitImplBase implements Git {
       if (outputType == ProcessOutputTypes.STDOUT) {
         myOutputCollector.outputLineReceived(line);
       }
-      else if (outputType == ProcessOutputTypes.STDERR && !looksLikeProgress(line)) {
+      else if (outputType == ProcessOutputTypes.STDERR &&
+               !suppressStderrLine(line)) {
         myOutputCollector.errorLineReceived(line);
       }
     }
@@ -367,7 +368,6 @@ public abstract class GitImplBase implements Git {
           if (outputType == ProcessOutputTypes.SYSTEM) return;
           if (outputType == ProcessOutputTypes.STDOUT && handler.isStdoutSuppressed()) return;
           if (outputType == ProcessOutputTypes.STDERR && handler.isStderrSuppressed()) return;
-          if (outputType == ProcessOutputTypes.STDERR && looksLikeProgress(line)) return;
 
           List<Pair<String, Key>> lineChunks = new ArrayList<>();
           myAnsiEscapeDecoder.escapeText(line, outputType, (text, key) -> lineChunks.add(Pair.create(text, key)));
@@ -396,21 +396,31 @@ public abstract class GitImplBase implements Git {
     };
   }
 
-  private static boolean looksLikeProgress(@NotNull String line) {
-    String trimmed = StringUtil.trimStart(line, REMOTE_PROGRESS_PREFIX);
-    return ContainerUtil.exists(PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(trimmed, indicator));
+  private static boolean suppressStderrLine(@NotNull String line) {
+    return ContainerUtil.exists(SUPPRESSED_PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(line, indicator));
   }
 
-  public static final String REMOTE_PROGRESS_PREFIX = "remote: ";
+  public static boolean looksLikeProgress(@NotNull String line) {
+    return ContainerUtil.exists(SUPPRESSED_PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(line, indicator)) ||
+           ContainerUtil.exists(PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(line, indicator));
+  }
 
-  public static final String[] PROGRESS_INDICATORS = {
-    "Counting objects:",
-    "Enumerating objects:",
-    "Compressing objects:",
-    "Writing objects:",
-    "Receiving objects:",
-    "Resolving deltas:",
-    "Finding sources:"
+  private static final String[] SUPPRESSED_PROGRESS_INDICATORS = {
+    "remote: Counting objects: ",
+    "remote: Enumerating objects: ",
+    "remote: Compressing objects: ",
+    "remote: Writing objects: ",
+    "remote: Receiving objects: ",
+    "remote: Resolving deltas: ",
+    "remote: Finding sources: ",
+    "Receiving objects: ",
+    "Resolving deltas: ",
+    "Updating files: ",
+    "Checking out files: "
+  };
+
+  private static final String[] PROGRESS_INDICATORS = {
+    "remote: Total "
   };
 
   private static boolean looksLikeError(@NotNull final String text) {
