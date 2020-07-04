@@ -167,5 +167,5 @@ internal fun loadStorageFile(xmlFile: Path, pathMacroManager: PathMacroManager):
     }
     rootElement.addContent(optionElement)
   }
-  return FileStorageCoreUtil.load(rootElement, pathMacroManager)
+  return FileStorageCoreUtil.load(rootElement, pathMacroManager, true)
 }
