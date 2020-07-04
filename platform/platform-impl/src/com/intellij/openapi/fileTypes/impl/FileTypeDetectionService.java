@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -74,7 +73,7 @@ final class FileTypeDetectionService implements Disposable {
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Executor
     reDetectExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool",
-                                                                            PooledThreadExecutor.INSTANCE,
+                                                                            AppExecutorUtil.getAppExecutorService(),
                                                                             1,
                                                                             this);
   private final HashSetQueue<VirtualFile> filesToRedetect = new HashSetQueue<>();

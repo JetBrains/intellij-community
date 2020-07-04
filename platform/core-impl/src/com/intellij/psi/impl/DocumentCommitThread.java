@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.List;
 import java.util.Objects;
@@ -48,7 +47,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   private static final Logger LOG = Logger.getInstance(DocumentCommitThread.class);
   private static final String SYNC_COMMIT_REASON = "Sync commit";
 
-  private final ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Document Committing Pool", PooledThreadExecutor.INSTANCE, 1, this);
+  private final ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Document Committing Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
   private volatile boolean isDisposed;
 
   static DocumentCommitThread getInstance() {

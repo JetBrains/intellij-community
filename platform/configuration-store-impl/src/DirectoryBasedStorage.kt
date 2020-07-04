@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -89,7 +88,7 @@ open class DirectoryBasedStorage(private val dir: Path,
     get() {
       var result = cachedVirtualFile
       if (result == null) {
-        result = LocalFileSystem.getInstance().findFileByPath(dir.systemIndependentPath)
+        result = LocalFileSystem.getInstance().findFileByNioFile(dir)
         cachedVirtualFile = result
       }
       return result

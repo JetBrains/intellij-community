@@ -21,7 +21,6 @@ import com.intellij.util.ui.EDT;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,9 +30,9 @@ import java.util.concurrent.RejectedExecutionException;
 public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance(RefreshQueueImpl.class);
 
-  private final Executor myQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", PooledThreadExecutor.INSTANCE, 1, this);
+  private final Executor myQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
   private final Executor myEventProcessingQueue =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", PooledThreadExecutor.INSTANCE, 1, this);
+    AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", AppExecutorUtil.getAppExecutorService(), 1, this);
 
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(IdeBundle.message("file.synchronize.progress"));
   private int myBusyThreads;

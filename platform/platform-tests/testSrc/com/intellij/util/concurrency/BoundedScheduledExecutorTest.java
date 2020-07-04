@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -23,7 +9,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.TripleFunction;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.List;
 import java.util.Random;
@@ -296,7 +281,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
 
   public void testAwaitTerminationDoesWait() throws InterruptedException {
     for (int maxTasks=1; maxTasks<10;maxTasks++) {
-      ExecutorService executor = createBoundedScheduledExecutor(PooledThreadExecutor.INSTANCE, maxTasks);
+      ExecutorService executor = createBoundedScheduledExecutor(AppExecutorUtil.getAppExecutorService(), maxTasks);
       int N = 100000;
       StringBuffer log = new StringBuffer(N*4);
 
@@ -317,7 +302,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
   }
 
   public void testAwaitTerminationDoesNotCompletePrematurely() throws InterruptedException {
-    ExecutorService executor2 = createBoundedScheduledExecutor(PooledThreadExecutor.INSTANCE, 1);
+    ExecutorService executor2 = createBoundedScheduledExecutor(AppExecutorUtil.getAppExecutorService(), 1);
     Future<?> future = executor2.submit(() -> TimeoutUtil.sleep(10000));
     executor2.shutdown();
     assertFalse(executor2.awaitTermination(1, TimeUnit.SECONDS));
@@ -329,7 +314,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
   }
 
   public void testAwaitTerminationOfScheduledTask() throws InterruptedException {
-    ScheduledExecutorService executor = createBoundedScheduledExecutor(PooledThreadExecutor.INSTANCE, 1);
+    ScheduledExecutorService executor = createBoundedScheduledExecutor(AppExecutorUtil.getAppExecutorService(), 1);
     Future<?> future = executor.schedule(() -> TimeoutUtil.sleep(10000), 100, TimeUnit.MILLISECONDS);
     executor.shutdown();
     assertTrue(future.isDone());

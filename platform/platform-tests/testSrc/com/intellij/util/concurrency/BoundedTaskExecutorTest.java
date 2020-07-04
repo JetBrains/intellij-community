@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -29,9 +15,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,7 +31,7 @@ public class BoundedTaskExecutorTest extends TestCase {
   }
 
   private static final Logger LOG = Logger.getInstance(BoundedTaskExecutorTest.class);
-  
+
   @Override
   protected void tearDown() throws Exception {
     try {
@@ -289,7 +277,7 @@ public class BoundedTaskExecutorTest extends TestCase {
   }
 
   public void testShutdownNowMustCancel() throws InterruptedException {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),PooledThreadExecutor.INSTANCE, 1);
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),AppExecutorUtil.getAppExecutorService(), 1);
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
 
@@ -329,7 +317,7 @@ public class BoundedTaskExecutorTest extends TestCase {
   }
 
   public void testShutdownMustDisableSubmit() throws ExecutionException, InterruptedException {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),PooledThreadExecutor.INSTANCE, 1);
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),AppExecutorUtil.getAppExecutorService(), 1);
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
 
@@ -430,7 +418,7 @@ public class BoundedTaskExecutorTest extends TestCase {
   public void testAwaitTerminationDoesWait() throws InterruptedException {
     for (int maxTasks=1; maxTasks<10; maxTasks++) {
       LOG.debug("maxTasks = " + maxTasks);
-      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),PooledThreadExecutor.INSTANCE, maxTasks);
+      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),AppExecutorUtil.getAppExecutorService(), maxTasks);
       int N = 1000;
       StringBuffer log = new StringBuffer(N*4);
 
@@ -456,7 +444,7 @@ public class BoundedTaskExecutorTest extends TestCase {
   }
 
   public void testAwaitTerminationDoesNotCompletePrematurely() throws InterruptedException {
-    ExecutorService executor2 = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),PooledThreadExecutor.INSTANCE, 1);
+    ExecutorService executor2 = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),AppExecutorUtil.getAppExecutorService(), 1);
     Future<?> future = executor2.submit(() -> TimeoutUtil.sleep(10000));
     executor2.shutdown();
     assertFalse(executor2.awaitTermination(1, TimeUnit.SECONDS));
@@ -468,7 +456,7 @@ public class BoundedTaskExecutorTest extends TestCase {
   }
 
   public void testErrorsThrownInFiredAndForgottenTaskMustBeLogged() {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),PooledThreadExecutor.INSTANCE, 1);
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),AppExecutorUtil.getAppExecutorService(), 1);
     LoggedErrorProcessor oldInstance = LoggedErrorProcessor.getInstance();
     try {
       List<Throwable> errors = Collections.synchronizedList(new ArrayList<>());

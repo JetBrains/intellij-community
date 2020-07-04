@@ -66,7 +66,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -164,7 +163,7 @@ public class UsageViewImpl implements UsageViewEx {
   private Usage myOriginUsage;
   @Nullable private Action myRerunAction;
   private boolean myDisposeSmartPointersOnClose = true;
-  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("Usage View Update Requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
+  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("Usage View Update Requests", AppExecutorUtil.getAppExecutorService(), JobSchedulerImpl.getJobPoolParallelism(), this);
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
   private Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses = new HashSet<>();
 

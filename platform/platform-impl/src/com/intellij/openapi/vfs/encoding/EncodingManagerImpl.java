@@ -36,7 +36,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -89,7 +88,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
 
   private final ExecutorService changedDocumentExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-    "EncodingManagerImpl Document Pool", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
+    "EncodingManagerImpl Document Pool", AppExecutorUtil.getAppExecutorService(), JobSchedulerImpl.getJobPoolParallelism(), this);
 
   private final AtomicBoolean myDisposed = new AtomicBoolean();
 
