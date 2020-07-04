@@ -3,6 +3,7 @@ package com.intellij.conversion.impl;
 
 import com.intellij.conversion.*;
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -73,12 +74,21 @@ public final class ConversionRunner {
     myArtifacts = myArtifactsConverter != null
                   && myArtifactsConverter.isConversionNeeded(myContext.getArtifactsSettings());
 
-    return myProcessProjectFile ||
-           myProcessWorkspaceFile ||
-           myProcessRunConfigurations ||
-           myProcessProjectLibraries ||
-           !myModulesFilesToProcess.isEmpty() ||
-           myConverter.isConversionNeeded();
+    if (myProcessProjectFile ||
+        myProcessWorkspaceFile ||
+        myProcessRunConfigurations ||
+        myProcessProjectLibraries ||
+        !myModulesFilesToProcess.isEmpty()) {
+      return true;
+    }
+
+    try {
+      return myConverter.isConversionNeeded();
+    }
+    catch (Exception e) {
+      Logger.getInstance(ConversionRunner.class).error("Converter of provider " + myProvider.getId() + " cannot check is conversion needed or not", e);
+      return false;
+    }
   }
 
   public boolean isModuleConversionNeeded(Path moduleFile) throws CannotConvertException {
