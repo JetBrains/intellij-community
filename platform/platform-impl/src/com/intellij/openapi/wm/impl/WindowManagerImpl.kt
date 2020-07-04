@@ -12,6 +12,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -21,7 +22,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.EventDispatcher
@@ -50,10 +50,7 @@ private const val FRAME_ELEMENT = "frame"
 @State(
   name = "WindowManager",
   defaultStateAsResource = true,
-  storages = [
-    Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED),
-    Storage(value = "window.manager.xml", roamingType = RoamingType.DISABLED, deprecated = true)
-  ]
+  storages = [Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)]
 )
 class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModificationTracker<Element> {
   private var alphaModeSupported: Boolean? = null

@@ -87,7 +87,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
 @State(
   name = "ToolWindowManager",
   defaultStateAsResource = true,
-  storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)]
+  storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)]
 )
 open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), PersistentStateComponent<Element?> {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
