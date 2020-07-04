@@ -11,6 +11,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.util.EntityUtils
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.retry.Retry
+import org.jetbrains.intellij.build.impl.retry.StopTrying
 
 /**
  * Download a default version of feature usage statistics metadata to be bundled with IDE.
@@ -46,8 +47,12 @@ class StatisticsRecorderBundledMetadataProvider {
         context.messages.info("Downloading $uri")
         def response = it.execute(new HttpGet(uri))
         def content = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
-        if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-          throw new RuntimeException("${response.statusLine.statusCode}: $content")
+        def responseCode = response.statusLine.statusCode
+        if (responseCode != HttpStatus.SC_OK) {
+          def error = new RuntimeException("$responseCode: $content")
+          // server error, will retry
+          if (responseCode >= HttpStatus.SC_INTERNAL_SERVER_ERROR) throw error
+          throw new StopTrying(error)
         }
         return content
       }
