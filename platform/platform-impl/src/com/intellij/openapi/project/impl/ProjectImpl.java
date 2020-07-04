@@ -52,7 +52,7 @@ public abstract class ProjectImpl extends ComponentManagerImpl implements Projec
 
   protected abstract IProjectStore getStateStore();
 
-  public void init(@Nullable ProgressIndicator indicator) {
+  public void init(boolean preloadServices, @Nullable ProgressIndicator indicator) {
   }
 
   @Override

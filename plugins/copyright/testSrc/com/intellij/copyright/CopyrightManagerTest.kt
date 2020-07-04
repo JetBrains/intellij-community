@@ -15,7 +15,7 @@ internal class CopyrightManagerTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule = ProjectRule(runPostStartUpActivities = false)
+    val projectRule = ProjectRule(runPostStartUpActivities = false, preloadServices = false)
   }
 
   @JvmField

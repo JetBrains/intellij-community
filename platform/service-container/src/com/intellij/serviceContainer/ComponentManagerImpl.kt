@@ -818,6 +818,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
             try {
               adapter.getInstance<Any>(this, null)
             }
+            catch (ignore: AlreadyDisposedException) {
+            }
             catch (e: StartupAbortedException) {
               isServicePreloadingCancelled = true
               throw e

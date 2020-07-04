@@ -156,7 +156,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     val project = instantiateProject(projectFile, options)
     try {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
-      initProject(projectFile, project, options.isRefreshVfsNeeded, template, ProgressManager.getInstance().progressIndicator)
+      initProject(projectFile, project, options.isRefreshVfsNeeded, options.preloadServices, template, ProgressManager.getInstance().progressIndicator)
       return project
     }
     catch (t: Throwable) {
@@ -194,7 +194,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       removeProjectDirContentOrFile(projectStoreBaseDir)
       project = instantiateProject(projectStoreBaseDir, options)
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
-      initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, template, indicator)
+      initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, options.preloadServices, template, indicator)
     }
     else {
       var conversionResult: ConversionResult? = null
@@ -214,7 +214,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
 
       project = instantiateProject(projectStoreBaseDir, options)
       // template as null here because it is not a new project
-      initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, null, indicator)
+      initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, options.preloadServices, null, indicator)
       if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
         StartupManager.getInstance(project).runAfterOpened {
           conversionResult.postStartupActivity(project)

@@ -35,7 +35,7 @@ final class LightEditProjectImpl extends ProjectExImpl implements LightEditCompa
     ProjectLoadHelper.registerComponents(this);
     customizeRegisteredComponents();
     getStateStore().setPath(projectPath, false, null);
-    init(null);
+    init(true, null);
   }
 
   private void customizeRegisteredComponents() {
@@ -57,7 +57,7 @@ final class LightEditProjectImpl extends ProjectExImpl implements LightEditCompa
   }
 
   @Override
-  public void init(@Nullable ProgressIndicator indicator) {
+  public void init(boolean preloadServices, @Nullable ProgressIndicator indicator) {
     createComponents(null);
   }
 

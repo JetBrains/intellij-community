@@ -88,7 +88,9 @@ class ProjectTrackingRule : TestRule {
  * Encouraged using as a ClassRule to avoid project creating for each test.
  * Project created on request, so, could be used as a bare (only application).
  */
-class ProjectRule(private val runPostStartUpActivities: Boolean = true, private val projectDescriptor: LightProjectDescriptor = LightProjectDescriptor()) : ApplicationRule() {
+class ProjectRule(private val runPostStartUpActivities: Boolean = true,
+                  private val preloadServices: Boolean = true,
+                  private val projectDescriptor: LightProjectDescriptor = LightProjectDescriptor()) : ApplicationRule() {
   companion object {
     @JvmStatic
     fun withoutRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = false)
@@ -118,7 +120,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = true, private 
 
   private fun createProject(): ProjectEx {
     val projectFile = TemporaryDirectory.generateTemporaryPath("project_${testClassName}${ProjectFileType.DOT_DEFAULT_EXTENSION}")
-    val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities)
+    val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities).copy(preloadServices = preloadServices)
     val project = (ProjectManager.getInstance() as TestProjectManager).openProject(projectFile, options) as ProjectEx
     virtualFilePointerTracker = VirtualFilePointerTracker()
     return project

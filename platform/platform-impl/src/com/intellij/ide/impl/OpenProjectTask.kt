@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.projectImport.ProjectOpenedCallback
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.function.Predicate
 
 data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
@@ -38,6 +39,8 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                            internal val projectWorkspaceId: String? = null,
                            internal val isProjectCreatedWithWizard: Boolean = false,
                            internal val sendFrameBack: Boolean = false,
+                           @TestOnly
+                           internal val preloadServices: Boolean = true,
                            internal val beforeInit: ((Project) -> Unit)? = null,
                            /**
                             * Ignored if project is explicitly set.

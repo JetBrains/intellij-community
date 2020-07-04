@@ -155,6 +155,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   protected static void initProject(@NotNull Path file,
                                     @NotNull ProjectImpl project,
                                     boolean isRefreshVfsNeeded,
+                                    boolean preloadServices,
                                     @Nullable Project template,
                                     @Nullable ProgressIndicator indicator) {
     LOG.assertTrue(!project.isDefault());
@@ -173,7 +174,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
       ProjectLoadHelper.registerComponents(project);
       project.getStateStore().setPath(file, isRefreshVfsNeeded, template);
-      project.init(indicator);
+      project.init(preloadServices, indicator);
       succeed = true;
     }
     finally {
@@ -186,7 +187,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   @Override
   public @NotNull Project loadProject(@NotNull Path file) {
     ProjectImpl project = new ProjectExImpl(file, null);
-    initProject(file, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().getProgressIndicator());
+    initProject(file, project, /* isRefreshVfsNeeded = */ true, true, null, ProgressManager.getInstance().getProgressIndicator());
     return project;
   }
 

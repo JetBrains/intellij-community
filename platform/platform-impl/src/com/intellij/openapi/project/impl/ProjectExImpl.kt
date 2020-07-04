@@ -32,7 +32,6 @@ import com.intellij.util.messages.impl.MessageBusEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
 private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE")
@@ -137,16 +136,14 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
   @ApiStatus.Internal
   final override fun activityNamePrefix() = "project "
 
-  override fun init(indicator: ProgressIndicator?) {
+  override fun init(preloadServices: Boolean, indicator: ProgressIndicator?) {
     val app = ApplicationManager.getApplication()
 
-    // before components
-    val servicePreloadingFuture: CompletableFuture<*>
     // for light project preload only services that are essential (await means "project component loading activity is completed only when all such services are completed")
-    servicePreloadingFuture = preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this, activityPrefix = "project ",
-                                              onlyIfAwait = isLight())
+    val servicePreloadingFuture = if (preloadServices) preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this, activityPrefix = "project ",
+                                              onlyIfAwait = isLight) else null
     createComponents(indicator)
-    servicePreloadingFuture.join()
+    servicePreloadingFuture?.join()
 
     var activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("projectComponentCreated event handling") else null
     @Suppress("DEPRECATION")
