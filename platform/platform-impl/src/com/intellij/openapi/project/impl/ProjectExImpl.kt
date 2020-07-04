@@ -10,8 +10,6 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -114,14 +112,6 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     servicePreloadingFuture = preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this, activityPrefix = "project ", onlyIfAwait = isLight())
     createComponents(indicator)
     servicePreloadingFuture.join()
-    if (indicator != null && !app.isHeadlessEnvironment) {
-      val moduleManager = ModuleManager.getInstance(this) as? ModuleManagerImpl ?: return
-      val toDistribute = 1 - indicator.fraction
-      val moduleCount = moduleManager.modulePathsCount
-      if (moduleCount != 0) {
-        moduleManager.setProgressStep(toDistribute / moduleCount)
-      }
-    }
     if (myName == null) {
       myName = componentStore.projectName
     }

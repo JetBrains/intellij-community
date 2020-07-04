@@ -266,6 +266,8 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
 
+    double progressStep = (1 - progressIndicator.getFraction()) / myModulePathsToLoad.size();
+
     boolean isParallel = Registry.is("parallel.modules.loading") && !ApplicationManager.getApplication().isDispatchThread();
     ExecutorService service = isParallel ? AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", Math.min(2, Runtime.getRuntime().availableProcessors()))
                                          : ConcurrencyUtil.newSameThreadExecutorService();
@@ -282,7 +284,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       }
 
       tasks.add(new Pair<>(service.submit(() -> {
-        progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
+        progressIndicator.setFraction(progressIndicator.getFraction() + progressStep);
         return ProgressManager.getInstance().runProcess(() -> {
           try {
             return myProject.isDisposed() ? null : loadModuleInternal(Paths.get(path), this);
@@ -389,12 +391,6 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
   public boolean areModulesLoaded() {
     return myModulesLoaded;
-  }
-
-  private double myProgressStep;
-
-  public void setProgressStep(double step) {
-    myProgressStep = step;
   }
 
   protected boolean isUnknownModuleType(@NotNull Module module) {
