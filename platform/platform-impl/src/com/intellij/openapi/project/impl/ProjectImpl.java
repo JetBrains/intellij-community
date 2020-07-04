@@ -4,17 +4,12 @@ package com.intellij.openapi.project.impl;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.idea.ApplicationLoader;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -29,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public abstract class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   protected static final Logger LOG = Logger.getInstance(ProjectImpl.class);
@@ -96,48 +89,11 @@ public abstract class ProjectImpl extends ComponentManagerImpl implements Projec
   protected abstract IProjectStore getStateStore();
 
   public void init(@Nullable ProgressIndicator indicator) {
-    Application application = ApplicationManager.getApplication();
-
-    // before components
-    CompletableFuture<?> servicePreloadingFuture;
-    //noinspection rawtypes
-    List plugins = PluginManagerCore.getLoadedPlugins();
-    // for light project preload only services that are essential (await means "project component loading activity is completed only when all such services are completed")
-    //noinspection TestOnlyProblems,unchecked
-    servicePreloadingFuture = ApplicationLoader
-      .preloadServices(plugins, this, /* activityPrefix = */ "project ", /* onlyIfAwait = */ isLight());
-
-    createComponents(indicator);
-
-    servicePreloadingFuture.join();
-
-    if (indicator != null && !application.isHeadlessEnvironment()) {
-      distributeProgress(indicator);
-    }
-
-    if (myName == null) {
-      myName = getStateStore().getProjectName();
-    }
-
-    ProjectLoadHelper.notifyThatComponentCreated(this);
   }
 
   @Override
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
     indicator.setFraction(getPercentageOfComponentsLoaded() / (ourClassesAreLoaded ? 10 : 2));
-  }
-
-  private void distributeProgress(@NotNull ProgressIndicator indicator) {
-    ModuleManager moduleManager = ModuleManager.getInstance(this);
-    if (!(moduleManager instanceof ModuleManagerImpl)) {
-      return;
-    }
-
-    double toDistribute = 1 - indicator.getFraction();
-    int modulesCount = ((ModuleManagerImpl)moduleManager).getModulePathsCount();
-    if (modulesCount != 0) {
-      ((ModuleManagerImpl)moduleManager).setProgressStep(toDistribute / modulesCount);
-    }
   }
 
   @Override

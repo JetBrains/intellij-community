@@ -32,7 +32,6 @@ import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
 import com.intellij.workspaceModel.storage.*
@@ -289,7 +288,7 @@ private fun getStorageSpec(filePath: String, project: Project): Storage? {
       collapsedPath = parentFileName
       splitterClass = FakeDirectoryBasedStateSplitter::class.java
       if (PathUtil.getFileName(grandParentPath) != Project.DIRECTORY_STORE_FOLDER) {
-        val providerFactory = StreamProviderFactory.EP_NAME.getExtensionList(project).firstOrNull() ?: return null
+        val providerFactory = StreamProviderFactory.EP_NAME.getExtensions(project).firstOrNull() ?: return null
         if (parentFileName == "project") {
           if (fileName == "libraries.xml" || fileName == "artifacts.xml") {
             val inProjectStorage = FileStorageAnnotation(FileUtil.getNameWithoutExtension(fileName), false, splitterClass)

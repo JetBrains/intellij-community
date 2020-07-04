@@ -15,7 +15,6 @@ import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.isDirectory
@@ -49,21 +48,20 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
 
   override fun getProjectName(): String {
     if (!isDirectoryBased) {
-      return PathUtilRt.getFileName(projectFilePath).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+      return storageManager.expandMacro(PROJECT_FILE).fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
 
-    val projectDir = nameFile.parent
+    val projectDir = directoryStorePath!!
     val storedName = JpsPathUtil.readProjectName(projectDir)
     if (storedName != null) {
       lastSavedProjectName = storedName
       return storedName
     }
 
-    val computedName = ProjectNameProvider.EP_NAME.iterable.asSequence()
-      .map { LOG.runAndLogException { it.getDefaultName(project) } }
-      .find { it != null }
-
-    return computedName ?: JpsPathUtil.getDefaultProjectName(projectDir)
+    for (projectNameProvider in ProjectNameProvider.EP_NAME.iterable) {
+      LOG.runAndLogException { projectNameProvider.getDefaultName(project)?.let { return it } }
+    }
+    return JpsPathUtil.getDefaultProjectName(projectDir)
   }
 
   private suspend fun saveProjectName() {

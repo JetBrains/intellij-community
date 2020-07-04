@@ -1,11 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.preloadServices
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.ModuleManagerImpl
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -23,6 +30,7 @@ import com.intellij.util.messages.impl.MessageBusEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
 private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE")
@@ -97,6 +105,38 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
   @ApiStatus.Internal
   final override fun activityNamePrefix() = "project "
 
+  override fun init(indicator: ProgressIndicator?) {
+    val app = ApplicationManager.getApplication()
+
+    // before components
+    val servicePreloadingFuture: CompletableFuture<*>
+    // for light project preload only services that are essential (await means "project component loading activity is completed only when all such services are completed")
+    servicePreloadingFuture = preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this, activityPrefix = "project ", onlyIfAwait = isLight())
+    createComponents(indicator)
+    servicePreloadingFuture.join()
+    if (indicator != null && !app.isHeadlessEnvironment) {
+      val moduleManager = ModuleManager.getInstance(this) as? ModuleManagerImpl ?: return
+      val toDistribute = 1 - indicator.fraction
+      val moduleCount = moduleManager.modulePathsCount
+      if (moduleCount != 0) {
+        moduleManager.setProgressStep(toDistribute / moduleCount)
+      }
+    }
+    if (myName == null) {
+      myName = componentStore.projectName
+    }
+
+    var activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("projectComponentCreated event handling") else null
+    @Suppress("DEPRECATION")
+    app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this)
+
+    activity = activity?.endAndStart("projectComponentCreated")
+    runOnlyCorePluginExtensions((app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")) {
+      it.serviceCreated(this)
+    }
+    activity?.end()
+  }
+
   @TestOnly
   fun setTemporarilyDisposed(value: Boolean) {
     if (isTemporarilyDisposed == value) {
@@ -148,8 +188,8 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   private fun createEarlyDisposableError(error: String): RuntimeException {
     return IllegalStateException("$error for ${toString()}\n---begin of dispose trace--" +
-                                getUserData(DISPOSE_EARLY_DISPOSABLE_TRACE) +
-                                "}---end of dispose trace---\n")
+                                 getUserData(DISPOSE_EARLY_DISPOSABLE_TRACE) +
+                                 "}---end of dispose trace---\n")
   }
 
   final override fun isDisposed(): Boolean {

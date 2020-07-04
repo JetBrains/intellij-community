@@ -30,7 +30,7 @@ internal open class ModuleStoreImpl(module: Module) : ModuleStoreBase() {
       return result
     }
 
-    for (provider in StreamProviderFactory.EP_NAME.getExtensionList(project)) {
+    for (provider in StreamProviderFactory.EP_NAME.getExtensions(project)) {
       LOG.runAndLogException {
         provider.customizeStorageSpecs(component, storageManager, stateSpec, result, operation)?.let {
           return it

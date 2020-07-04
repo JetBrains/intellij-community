@@ -6,8 +6,9 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PathUtilRt;
@@ -63,7 +64,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
     if (path == null) return;
 
     String macro = '$' + macroName + '$';
-    path = Strings.trimEnd(FileUtil.toSystemIndependentName(path), "/");
+    path = Strings.trimEnd(FileUtilRt.toSystemIndependentName(path), "/");
     boolean overwrite = true;
     while (Strings.isNotEmpty(path) && path.contains("/") && !"/".equals(path)) {
       result.addReplacement(path, macro, overwrite);
@@ -112,7 +113,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
     if (Strings.isEmpty(text)) {
       return text;
     }
-    return getExpandMacroMap().substitute(text, SystemInfo.isFileSystemCaseSensitive);
+    return getExpandMacroMap().substitute(text, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   @Contract("null, _ -> null; !null, _ -> !null")
@@ -121,12 +122,12 @@ public class PathMacroManager implements PathMacroSubstitutor {
     if (Strings.isEmpty(text)) {
       return text;
     }
-    return getReplacePathMap().substitute(text, SystemInfo.isFileSystemCaseSensitive, recursively).toString();
+    return getReplacePathMap().substitute(text, SystemInfoRt.isFileSystemCaseSensitive, recursively).toString();
   }
 
   @Override
   public void expandPaths(@NotNull Element element) {
-    getExpandMacroMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
+    getExpandMacroMap().substitute(element, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   @Override
@@ -135,7 +136,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
   }
 
   public static void collapsePaths(@NotNull Element element, boolean recursively, @NotNull ReplacePathToMacroMap map) {
-    map.substitute(element, SystemInfo.isFileSystemCaseSensitive, recursively, Holder.createFilter());
+    map.substitute(element, SystemInfoRt.isFileSystemCaseSensitive, recursively, Holder.createFilter());
   }
 
   @NotNull
@@ -148,6 +149,6 @@ public class PathMacroManager implements PathMacroSubstitutor {
 
   protected static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
     return path1 != null && path2 != null &&
-           FileUtil.pathsEqual(FileUtil.toSystemIndependentName(path1), FileUtil.toSystemIndependentName(path2));
+           FileUtil.pathsEqual(FileUtilRt.toSystemIndependentName(path1), FileUtilRt.toSystemIndependentName(path2));
   }
 }

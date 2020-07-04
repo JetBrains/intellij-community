@@ -2,7 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ProjectExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface StreamProviderFactory {
   companion object {
-    val EP_NAME = ExtensionPointName<StreamProviderFactory>("com.intellij.streamProviderFactory")
+    val EP_NAME = ProjectExtensionPointName<StreamProviderFactory>("com.intellij.streamProviderFactory")
   }
 
   fun createProvider(componentManager: ComponentManager, storageManager: StateStorageManager): StreamProvider? = null

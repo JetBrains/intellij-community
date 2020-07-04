@@ -8,6 +8,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -378,11 +379,13 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     }
   }
 
-  private void reportError(@NotNull List<? super ModuleLoadingErrorDescription> errors, @NotNull ModulePath modulePath, @NotNull Exception e) {
+  private void reportError(@NotNull List<ModuleLoadingErrorDescription> errors, @NotNull ModulePath modulePath, @NotNull Exception e) {
     errors.add(new ModuleLoadingErrorDescription(ProjectModelBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
   }
 
-  public int getModulePathsCount() { return myModulePathsToLoad == null ? 0 : myModulePathsToLoad.size(); }
+  public int getModulePathsCount() {
+    return myModulePathsToLoad == null ? 0 : myModulePathsToLoad.size();
+  }
 
   public boolean areModulesLoaded() {
     return myModulesLoaded;
@@ -390,7 +393,9 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
   private double myProgressStep;
 
-  public void setProgressStep(double step) { myProgressStep = step; }
+  public void setProgressStep(double step) {
+    myProgressStep = step;
+  }
 
   protected boolean isUnknownModuleType(@NotNull Module module) {
     return false;
@@ -428,7 +433,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules, oldNames::get);
   }
 
-  private void onModuleLoadErrors(@NotNull ModuleModelImpl moduleModel, @NotNull List<? extends ModuleLoadingErrorDescription> errors) {
+  private void onModuleLoadErrors(@NotNull ModuleModelImpl moduleModel, @NotNull List<ModuleLoadingErrorDescription> errors) {
     if (errors.isEmpty()) return;
 
     moduleModel.myModulesCache = null;
@@ -443,12 +448,12 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     fireModuleLoadErrors(errors);
   }
 
-  private static void disposeModuleLater(@NotNull Module module) {
+  private static void disposeModuleLater(@NotNull ComponentManager module) {
     ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(module), module.getDisposed());
   }
 
   // overridden in Upsource
-  protected void fireModuleLoadErrors(@NotNull List<? extends ModuleLoadingErrorDescription> errors) {
+  protected void fireModuleLoadErrors(@NotNull List<ModuleLoadingErrorDescription> errors) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(errors.get(0).getDescription());
     }
@@ -1180,7 +1185,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       else {
         Module module = findModuleByName(name);
         if (module != null) {
-          LoadedModuleDescriptionImpl description = new LoadedModuleDescriptionImpl(module);
+          ModuleDescription description = new LoadedModuleDescriptionImpl(module);
           ModuleSaveItem saveItem = new ModuleSaveItem(module, this);
           ModulePath modulePath = new ModulePath(saveItem.getModuleFilePath(), saveItem.getGroupPathString());
           VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();

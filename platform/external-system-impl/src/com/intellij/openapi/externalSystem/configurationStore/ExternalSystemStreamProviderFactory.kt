@@ -104,9 +104,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
 
   override fun getOrCreateStorageSpec(fileSpec: String, inProjectStateSpec: State?): Storage {
     return storageSpecLock.read { storages.get(fileSpec) } ?: return storageSpecLock.write {
-      storages.getOrPut(fileSpec) {
-        ExternalStorageSpec(fileSpec, inProjectStateSpec)
-      }
+      storages.computeIfAbsent(fileSpec) { ExternalStorageSpec(fileSpec, inProjectStateSpec) }
     }
   }
 

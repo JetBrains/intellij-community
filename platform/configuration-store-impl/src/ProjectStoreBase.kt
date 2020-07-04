@@ -29,7 +29,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.streams.asSequence
 
 internal const val PROJECT_FILE = "\$PROJECT_FILE$"
 internal const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
@@ -108,7 +107,6 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     dirOrFile = file
 
     val storageManager = storageManager
-    val fs = LocalFileSystem.getInstance()
     val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
     val macros = ArrayList<Macro>(5)
     if (file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
@@ -118,6 +116,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
 
       if (isRefreshVfsNeeded) {
+        val fs = LocalFileSystem.getInstance()
         VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByNioFile(file), fs.refreshAndFindFileByNioFile(workspacePath))
       }
 
@@ -150,6 +149,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       }
 
       if (isRefreshVfsNeeded) {
+        val fs = LocalFileSystem.getInstance()
         VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByNioFile(dotIdea))
       }
     }
@@ -188,14 +188,13 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     }
 
     if (isDirectoryBased) {
-      var result: MutableList<Storage>? = null
-
       if (storages.size == 2 && ApplicationManager.getApplication().isUnitTestMode &&
           isSpecialStorage(storages.first()) &&
           storages[1].path == StoragePathMacros.WORKSPACE_FILE) {
         return listOf(storages.first())
       }
 
+      var result: MutableList<Storage>? = null
       for (storage in storages) {
         if (storage.path != PROJECT_FILE) {
           if (result == null) {
@@ -211,10 +210,12 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       else {
         result!!.sortWith(deprecatedComparator)
         if (isDirectoryBased) {
-          StreamProviderFactory.EP_NAME.extensions(project).asSequence()
-            .map { LOG.runAndLogException { it.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation) } }
-            .find { it != null }
-            ?.let { return it }  // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
+          for (providerFactory in StreamProviderFactory.EP_NAME.getExtensions(project)) {
+            LOG.runAndLogException {
+              // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
+              providerFactory.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation)?.let { return it }
+            }
+          }
         }
 
         // if we create project from default, component state written not to own storage file, but to project file,

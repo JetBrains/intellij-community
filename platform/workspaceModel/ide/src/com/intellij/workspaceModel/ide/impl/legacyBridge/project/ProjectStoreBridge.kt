@@ -109,7 +109,7 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
     val moduleFileName = FileUtil.getNameWithoutExtension(moduleFilePath.fileName.toString())
     val externalComponents = externalModuleComponents[moduleFileName]
     if (externalComponents != null) {
-      val providerFactory = StreamProviderFactory.EP_NAME.getExtensionList(project).firstOrNull()
+      val providerFactory = StreamProviderFactory.EP_NAME.getExtensions(project).firstOrNull()
       if (providerFactory != null) {
         val storageSpec = providerFactory.getOrCreateStorageSpec(StoragePathMacros.MODULE_FILE)
         commitToStorage(storageSpec, externalComponents)
