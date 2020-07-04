@@ -458,6 +458,8 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void setDiffPreview(boolean force) {
+      if (myDisposed) return;
+
       boolean isEditorPreview = isCommitToolWindow(myProject) || isEditorDiffPreview.asBoolean();
       if (!force) {
         if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
