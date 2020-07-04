@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.fus
 import com.intellij.internal.statistic.config.EventLogExternalSettings
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.apache.http.HttpStatus
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.entity.ContentType
 import org.apache.http.impl.client.HttpClientBuilder
@@ -44,7 +45,11 @@ class StatisticsRecorderBundledMetadataProvider {
       HttpClientBuilder.create().build().withCloseable {
         context.messages.info("Downloading $uri")
         def response = it.execute(new HttpGet(uri))
-        return EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
+        def content = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
+        if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+          throw new RuntimeException("${response.statusLine.statusCode}: $content")
+        }
+        return content
       }
     }
   }
