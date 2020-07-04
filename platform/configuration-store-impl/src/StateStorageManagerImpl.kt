@@ -250,12 +250,11 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   // open for upsource
-  protected open fun createDirectoryBasedStorage(path: Path, collapsedPath: String, @Suppress("DEPRECATION") splitter: StateSplitter): StateStorage {
-    return MyDirectoryStorage(this, path, splitter)
+  protected open fun createDirectoryBasedStorage(file: Path, collapsedPath: String, @Suppress("DEPRECATION") splitter: StateSplitter): StateStorage {
+    return object : DirectoryBasedStorage(file, splitter, macroSubstitutor), StorageVirtualFileTracker.TrackedStorage {
+      override val storageManager = this@StateStorageManagerImpl
+    }
   }
-
-  private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: Path, @Suppress("DEPRECATION") splitter: StateSplitter) :
-    DirectoryBasedStorage(file, splitter, storageManager.macroSubstitutor), StorageVirtualFileTracker.TrackedStorage
 
   protected open class MyFileStorage(override val storageManager: StateStorageManagerImpl,
                                      file: Path,

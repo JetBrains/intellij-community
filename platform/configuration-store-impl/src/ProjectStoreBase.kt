@@ -279,5 +279,6 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
 private fun isSpecialStorage(storage: Storage) = isSpecialStorage(storage.path)
 
-internal fun isSpecialStorage(collapsedPath: String): Boolean =
-  collapsedPath == StoragePathMacros.CACHE_FILE || collapsedPath == StoragePathMacros.PRODUCT_WORKSPACE_FILE
+internal fun isSpecialStorage(collapsedPath: String): Boolean {
+  return collapsedPath == StoragePathMacros.CACHE_FILE || collapsedPath == StoragePathMacros.PRODUCT_WORKSPACE_FILE
+}
