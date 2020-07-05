@@ -893,4 +893,13 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     assertEquals(progressIndicator.getText(), progressIndicatorWatcher1.getText());
     assertEquals(progressIndicator.getText(), progressIndicatorWatcher2.getText());
   }
+
+  public void testProgressWrapperDoesWrapWrappers() {
+    EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+    ProgressWrapper wrapper = ProgressWrapper.wrap(indicator);
+    assertNotNull(wrapper);
+    ProgressWrapper wrapper2 = ProgressWrapper.wrap(wrapper);
+    assertNotSame(wrapper2, wrapper);
+    assertSame(wrapper, wrapper2.getOriginalProgressIndicator());
+  }
 }
