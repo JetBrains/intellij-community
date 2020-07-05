@@ -218,7 +218,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)})
    * ProgressIndicator should progress with {@link GlobalInspectionContext#incrementJobDoneAmount(JobDescriptor, String)}
    */
-  public JobDescriptor @Nullable [] getAdditionalJobs(GlobalInspectionContext context) {
+  public JobDescriptor @Nullable [] getAdditionalJobs(@NotNull GlobalInspectionContext context) {
     return getAdditionalJobs();
   }
 
