@@ -662,6 +662,7 @@
     <statistics.counterUsagesCollector groupId="ide.update.dialog" version="1"/>
 
     <statistics.counterUsagesCollector groupId="light.edit" version="1"/>
+    <statistics.counterUsagesCollector groupId="editor.typing" version="1"/>
 
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
 
@@ -1018,6 +1019,8 @@
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.openapi.fileTypes.StdFileTypes$StdFileTypesUpdater" activeInHeadlessMode="true" activeInTestMode="false"
               topic="com.intellij.openapi.fileTypes.FileTypeListener" />
+    <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger" activeInHeadlessMode="true" activeInTestMode="false"
+              topic="com.intellij.openapi.command.CommandListener"/>
   </applicationListeners>
   <projectListeners>
   </projectListeners>
