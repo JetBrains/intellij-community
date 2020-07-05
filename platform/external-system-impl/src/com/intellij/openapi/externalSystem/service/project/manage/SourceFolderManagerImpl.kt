@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -38,7 +39,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private var isDisposed = false
   private val mutex = Any()
   private var sourceFolders = PathPrefixTreeMap<SourceFolderModel>()
-  private var sourceFoldersByModule = CollectionFactory.createSmallMemoryFootprintMap<String, ModuleModel>()
+  private var sourceFoldersByModule = HashMap<String, ModuleModel>()
   @TestOnly
   @Volatile
   var bulkOperationState: Future<*>? = null
@@ -209,7 +210,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
         return
       }
       sourceFolders = PathPrefixTreeMap()
-      sourceFoldersByModule = CollectionFactory.createSmallMemoryFootprintMap()
+      sourceFoldersByModule = HashMap()
 
       val moduleManager = ModuleManager.getInstance(project)
 
@@ -256,7 +257,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 }
 
-data class SourceFolderManagerState(val sourceFolders: Collection<SourceFolderModelState>) {
+data class SourceFolderManagerState(@get:XCollection(style = XCollection.Style.v2) val sourceFolders: Collection<SourceFolderModelState>) {
   constructor() : this(mutableListOf())
 }
 
