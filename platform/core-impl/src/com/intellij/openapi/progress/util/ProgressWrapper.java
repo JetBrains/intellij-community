@@ -141,7 +141,7 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static ProgressWrapper wrap(@Nullable ProgressIndicator indicator) {
-    return indicator == null || indicator instanceof ProgressWrapper ? (ProgressWrapper)indicator : new ProgressWrapper(indicator);
+    return indicator == null ? null : new ProgressWrapper(indicator);
   }
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
