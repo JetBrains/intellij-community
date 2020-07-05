@@ -127,7 +127,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
 
   @Override
   @NotNull
-  public List<TextEditorHighlightingPass> instantiatePasses(@NotNull final PsiFile psiFile, @NotNull final Editor editor, final int @NotNull [] passesToIgnore) {
+  public List<TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile, @NotNull Editor editor, int @NotNull [] passesToIgnore) {
     synchronized (this) {
       if (!checkedForCycles) {
         checkedForCycles = true;
@@ -135,7 +135,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       }
     }
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    final Document document = editor.getDocument();
+    Document document = editor.getDocument();
     PsiFile fileFromDoc = documentManager.getPsiFile(document);
     if (!(fileFromDoc instanceof PsiCompiledElement)) {
       assert fileFromDoc == psiFile : "Files are different: " + psiFile + ";" + fileFromDoc;
@@ -197,7 +197,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       PassConfig passConfig = myRegisteredPassFactories.get(passId);
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
       if (factory instanceof MainHighlightingPassFactory) {
-        final TextEditorHighlightingPass pass = ((MainHighlightingPassFactory)factory).createMainHighlightingPass(psiFile, document, highlightInfoProcessor);
+        TextEditorHighlightingPass pass = ((MainHighlightingPassFactory)factory).createMainHighlightingPass(psiFile, document, highlightInfoProcessor);
         if (pass != null) {
           ids.add(pass);
           pass.setId(passId);
@@ -208,7 +208,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   }
 
   private void checkForCycles() {
-    final TIntObjectHashMap<TIntHashSet> transitivePredecessors = new TIntObjectHashMap<>();
+    TIntObjectHashMap<TIntHashSet> transitivePredecessors = new TIntObjectHashMap<>();
 
     for (ObjectIterator<Int2ObjectMap.Entry<PassConfig>> iterator = myRegisteredPassFactories.int2ObjectEntrySet().fastIterator(); iterator.hasNext(); ) {
       Int2ObjectMap.Entry<PassConfig> entry = iterator.next();

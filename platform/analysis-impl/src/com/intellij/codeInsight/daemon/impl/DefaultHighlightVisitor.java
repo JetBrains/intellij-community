@@ -65,15 +65,15 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   @Override
-  public boolean suitableForFile(@NotNull final PsiFile file) {
+  public boolean suitableForFile(@NotNull PsiFile file) {
     return true;
   }
 
   @Override
-  public boolean analyze(@NotNull final PsiFile file,
-                         final boolean updateWholeFile,
-                         @NotNull final HighlightInfoHolder holder,
-                         @NotNull final Runnable action) {
+  public boolean analyze(@NotNull PsiFile file,
+                         boolean updateWholeFile,
+                         @NotNull HighlightInfoHolder holder,
+                         @NotNull Runnable action) {
     myDumb = myDumbService.isDumb();
     myHolder = holder;
 

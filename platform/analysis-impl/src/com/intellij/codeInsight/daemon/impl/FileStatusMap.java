@@ -108,7 +108,7 @@ public final class FileStatusMap implements Disposable {
       return true;
     }
 
-    private void combineScopesWith(@NotNull final TextRange scope, final int fileLength, @NotNull final Document document) {
+    private void combineScopesWith(@NotNull TextRange scope, int fileLength, @NotNull Document document) {
       dirtyScopes.transformValues(oldScope -> {
         RangeMarker newScope = combineScopes(oldScope, scope, fileLength, document);
         if (newScope != oldScope && oldScope != null) {
@@ -120,7 +120,7 @@ public final class FileStatusMap implements Disposable {
 
     @Override
     public String toString() {
-      @NonNls final StringBuilder s = new StringBuilder();
+      @NonNls StringBuilder s = new StringBuilder();
       s.append("defensivelyMarked = ").append(defensivelyMarked);
       s.append("; wolfPassFinfished = ").append(wolfPassFinished);
       s.append("; errorFound = ").append(errorFound);

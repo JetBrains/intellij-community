@@ -81,10 +81,10 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
   @Override
   public void checkFile(@NotNull PsiFile originalFile,
-                        @NotNull final InspectionManager manager,
+                        @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
-                        @NotNull final GlobalInspectionContext globalContext,
-                        @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+                        @NotNull GlobalInspectionContext globalContext,
+                        @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     for (Pair<PsiFile, HighlightInfo> pair : runGeneralHighlighting(originalFile, highlightErrorElements, runAnnotators)) {
       PsiFile file = pair.first;
       HighlightInfo info = pair.second;
@@ -137,13 +137,13 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     }
 
     @Override
-    public void visitFile(@NotNull final PsiFile file) {
-      final VirtualFile virtualFile = file.getVirtualFile();
+    public void visitFile(@NotNull PsiFile file) {
+      VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile == null) {
         return;
       }
 
-      final Project project = file.getProject();
+      Project project = file.getProject();
       Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (document == null) return;
       ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
@@ -152,7 +152,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
       TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
       List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
       List<GeneralHighlightingPass> gpasses = ContainerUtil.filterIsInstance(passes, GeneralHighlightingPass.class);
-      for (final GeneralHighlightingPass gpass : gpasses) {
+      for (GeneralHighlightingPass gpass : gpasses) {
         gpass.setHighlightVisitorProducer(() -> {
           gpass.incVisitorUsageCount(1);
 

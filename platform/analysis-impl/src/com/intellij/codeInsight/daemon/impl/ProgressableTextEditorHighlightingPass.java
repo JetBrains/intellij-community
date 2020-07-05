@@ -45,7 +45,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   HighlightingSession myHighlightingSession;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
-                                                   @NotNull final Document document,
+                                                   @NotNull Document document,
                                                    @NotNull String presentableName,
                                                    @Nullable PsiFile file,
                                                    @Nullable Editor editor,
@@ -73,7 +73,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   }
 
   @Override
-  public final void doCollectInformation(@NotNull final ProgressIndicator progress) {
+  public final void doCollectInformation(@NotNull ProgressIndicator progress) {
     GlobalInspectionContextBase.assertUnderDaemonProgress();
     myFinished = false;
     if (myFile != null) {
@@ -158,7 +158,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     }
 
     @Override
-    public void doCollectInformation(@NotNull final ProgressIndicator progress) {
+    public void doCollectInformation(@NotNull ProgressIndicator progress) {
     }
 
     @Override

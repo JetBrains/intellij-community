@@ -20,7 +20,7 @@ public final class IdentifierUtil {
         element.getContainingFile() != null &&
         element.getTextRange() != null) {
       // Quite hacky way to get name identifier. Depends on getTextOffset overriden properly.
-      final PsiElement potentialIdentifier = element.findElementAt(element.getTextOffset() - element.getTextRange().getStartOffset());
+      PsiElement potentialIdentifier = element.findElementAt(element.getTextOffset() - element.getTextRange().getStartOffset());
       if (potentialIdentifier != null && Comparing.equal(potentialIdentifier.getText(), ((PsiNamedElement)element).getName(), false)) {
         return potentialIdentifier;
       }

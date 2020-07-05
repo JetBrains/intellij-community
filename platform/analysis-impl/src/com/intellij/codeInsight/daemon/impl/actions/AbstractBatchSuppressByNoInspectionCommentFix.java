@@ -30,7 +30,6 @@ import java.util.List;
 
 /**
  * @author Roman.Chernyatchik
- * @date Aug 13, 2009
  */
 public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements ContainerBasedSuppressQuickFix, InjectionAwareSuppressQuickFix, Iconable {
   @NotNull protected final String myID;
@@ -39,14 +38,14 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
 
   @Override
   @Nullable
-  public abstract PsiElement getContainer(final PsiElement context);
+  public abstract PsiElement getContainer(PsiElement context);
 
   /**
    * @param ID                         Inspection ID
    * @param replaceOtherSuppressionIds Merge suppression policy. If false new tool id will be append to the end
    *                                   otherwise replace other ids
    */
-  public AbstractBatchSuppressByNoInspectionCommentFix(@NotNull String ID, final boolean replaceOtherSuppressionIds) {
+  public AbstractBatchSuppressByNoInspectionCommentFix(@NotNull String ID, boolean replaceOtherSuppressionIds) {
     myID = ID;
     myReplaceOtherSuppressionIds = replaceOtherSuppressionIds;
   }
@@ -102,7 +101,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     return SuppressionUtil.ALL.equalsIgnoreCase(myID);
   }
 
-  protected final void replaceSuppressionComment(@NotNull final PsiElement comment) {
+  protected final void replaceSuppressionComment(@NotNull PsiElement comment) {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(comment)) return;
     WriteAction.run(() -> SuppressionUtil.replaceSuppressionComment(comment, myID, myReplaceOtherSuppressionIds, getCommentLanguage(comment)));
   }
@@ -124,11 +123,11 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
+  public boolean isAvailable(@NotNull Project project, @NotNull PsiElement context) {
     return context.isValid() && getContainer(context) != null;
   }
 
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!isAvailable(project, element)) return;
     PsiElement container = getContainer(element);
     PsiFile file = element.getContainingFile();
@@ -141,7 +140,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
   }
 
   protected boolean replaceSuppressionComments(PsiElement container) {
-    final List<? extends PsiElement> comments = getCommentsFor(container);
+    List<? extends PsiElement> comments = getCommentsFor(container);
     if (comments != null) {
       for (PsiElement comment : comments) {
         if (comment instanceof PsiComment && SuppressionUtil.isSuppressionComment(comment)) {
@@ -154,8 +153,8 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
   }
 
   @Nullable
-  protected List<? extends PsiElement> getCommentsFor(@NotNull final PsiElement container) {
-    final PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(container);
+  protected List<? extends PsiElement> getCommentsFor(@NotNull PsiElement container) {
+    PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(container);
     if (prev == null) {
       return null;
     }
@@ -166,7 +165,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
   @Override
   @NotNull
   public String getFamilyName() {
-    final String text = getText();
+    String text = getText();
     return StringUtil.isEmpty(text) ? AnalysisBundle.message("suppress.inspection.family") : text;
   }
 }
