@@ -355,3 +355,5 @@ fun isDirectory(attributes: BasicFileAttributes?): Boolean {
 fun isSymbolicLink(attributes: BasicFileAttributes?): Boolean {
   return attributes != null && attributes.isSymbolicLink
 }
+
+fun Path.isAncestor(child: Path) : Boolean = child.startsWith(this)

@@ -29,7 +29,7 @@ import java.util.zip.ZipInputStream
 // the class is open for Rider purpose
 open class ImportSettingsAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = isImportExportActionApplicable()
+    e.presentation.isEnabled = true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -53,7 +53,8 @@ open class ImportSettingsAction : AnAction(), DumbAware {
       }
   }
 
-  protected open fun getExportableComponents(relativePaths: Set<String>): Map<Path, List<ExportableItem>> = getExportableComponentsMap(false, true, onlyPaths = relativePaths)
+  protected open fun getExportableComponents(relativePaths: Set<String>): Map<FileSpec, List<ExportableItem>> =
+    getExportableComponentsMap(true). filterKeys { relativePaths.contains(it.relativePath) }
 
   protected open fun getMarkedComponents(components: Set<ExportableItem>): Set<ExportableItem> = components
 
@@ -139,9 +140,8 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
   private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
     val result = CollectionFactory.createSmallMemoryFootprintSet<String>()
-    val root = PathManager.getConfigDir()
     for (item in chosenComponents) {
-      result.add(root.relativize(item.file).systemIndependentPath)
+      result.add(item.fileSpec.relativePath)
     }
 
     result.add(PluginManager.INSTALLED_TXT)
@@ -157,11 +157,11 @@ fun getPaths(input: InputStream): Set<String> {
   zipIn.use {
     while (true) {
       val entry = zipIn.nextEntry ?: break
-      var path = entry.name
+      var path = entry.name.trimEnd('/')
       result.add(path)
       while (true) {
         path = getParentPath(path) ?: break
-        result.add("$path/")
+        result.add(path)
       }
     }
   }
