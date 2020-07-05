@@ -15,8 +15,9 @@ import java.nio.file.Path
 
 /**
  * Base class for configuration instances contributed by the ["com.intellij.executionTargetLanguageRuntimeType"][EXTENSION_NAME] extension point.
- *
- * Since different language configurations do not share any common bits, this is effectively a marker.
+ * <p/>
+ * Language configurations may define separate volume types to group together several related file transfers, and allow user to configure the
+ * target-specific remote paths for each group, along with the target-specific options for every transfer.
  */
 abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigurationBase(typeId, EXTENSION_NAME) {
   private val volumeTargetSpecificBits = mutableMapOf<VolumeType, TargetSpecificVolumeData>()
@@ -58,6 +59,9 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
     }
   }
 
+  /**
+   * Default serialization format for the volume data, including both the target path and target specific data configured by the user
+   */
   class VolumeState : BaseState() {
     var remotePath by string()
     var targetSpecificBits by map<String, String>()

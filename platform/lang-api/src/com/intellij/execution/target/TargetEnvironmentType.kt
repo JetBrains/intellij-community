@@ -35,6 +35,9 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
 
   abstract fun createConfigurable(project: Project, config: C): Configurable
 
+  /**
+   * The optional target-specific contribution to all the volumes configurables defined by the respected
+   */
   open fun createVolumeContributionUI(): TargetSpecificVolumeContributionUI? = null
 
   companion object {
@@ -42,6 +45,16 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
     val EXTENSION_NAME = ExtensionPointName.create<TargetEnvironmentType<*>>("com.intellij.executionTargetType")
   }
 
+  /**
+   * Editor for the target specific volume data. The language runtime is expected to create separate editor instance for each of its
+   * [LanguageRuntimeType.volumeDescriptors] descriptors. The data configured by the user will be stored in the
+   * [LanguageRuntimeConfiguration.getTargetSpecificData], and will be made available for the target via the [TargetEnvironmentRequest].
+   * <p/>
+   * Currently, only [TargetEnvironment.UploadRoot.volumeData] is actually supported.
+   *
+   * The [TargetSpecificVolumeData] configured by the user in this editor,
+   * will be passed at the time of the TargetEnviron
+   */
   interface TargetSpecificVolumeContributionUI {
     fun createComponent(): JComponent
 
@@ -50,7 +63,15 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
     fun getConfiguredValue(): TargetSpecificVolumeData
   }
 
+  /**
+   * Marker interface for all the target specific data that has to be configured by the user for each volume, defined in the language runtime.
+   * E.g, the docker target may request user to define whether particular path has to be mounted as volume, or copied to target via `docker cp`.
+   * <p/>
+   */
   interface TargetSpecificVolumeData {
+    /**
+     * Defines serialization format for the
+     */
     fun toStorableMap(): Map<String, String>
   }
 }

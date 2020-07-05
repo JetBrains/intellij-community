@@ -48,6 +48,9 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
    */
   open fun createIntrospector(config: C): Introspector? = null
 
+  /**
+   * List of all the volume types defined in the volume runtime
+   */
   open fun volumeDescriptors(): List<VolumeDescriptor> = emptyList()
 
   abstract fun createConfigurable(project: Project, config: C, target: TargetEnvironmentConfiguration): Configurable
@@ -73,8 +76,18 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
     fun introspect(subject: Introspectable): CompletableFuture<*>?
   }
 
+  /**
+   * When launching of the application on target requires the grouping of the transferred files in the target, the
+   * [VolumeType] defines an unique ID to identify the specific group.
+   * <p/>
+   * Language runtime should allow user to configure the remote locations for volume roots along with the target-specific properties for
+   * the transfer.
+   */
   data class VolumeType(val id: String)
 
+  /**
+   * Volume descriptor is identified by its [type] and defines the UI properties to explain user the semantic of the volume.
+   */
   data class VolumeDescriptor(val type: VolumeType,
                               @get:Nls val wizardLabel: String,
                               @get:Nls val description: String,
