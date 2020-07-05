@@ -5,10 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistGroupRulesStorage;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,7 +48,7 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginIn
  *       See: {@link RegexpValidationRule}
  *     </li>
  *     <li>
- *       <b>Custom rule</b>: class which inherits {@link CustomWhiteListRule} and validates dynamic data like action id or file type, e.g.
+ *       <b>Custom rule</b>: class which inherits {@link CustomValidationRule} and validates dynamic data like action id or file type, e.g.
  *       <i>"{util#class_name}"</i> checks that the value is a class name from platform, JB plugin or a plugin from JB plugin repository.<br/>
  *       See: {@link com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator}
  *     </li>
@@ -104,6 +101,7 @@ public class SensitiveDataValidator {
   protected final @NotNull WhitelistGroupRulesStorage myWhiteListStorage;
 
   static {
+    CustomValidationRule.EP_NAME.addChangeListener(ourInstances::clear, null);
     CustomWhiteListRule.EP_NAME.addChangeListener(ourInstances::clear, null);
   }
 

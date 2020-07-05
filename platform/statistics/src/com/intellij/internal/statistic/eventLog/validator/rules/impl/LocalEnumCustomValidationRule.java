@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class LocalEnumCustomValidationRule extends CustomWhiteListRule {
+public abstract class LocalEnumCustomValidationRule extends CustomValidationRule {
   private final String myRule;
   private final Class<? extends Enum> myEnumClass;
 

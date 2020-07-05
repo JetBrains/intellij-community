@@ -3,7 +3,7 @@ package com.intellij.internal.statistics.whitelist.validator
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistic.utils.findPluginTypeByValue
 import org.junit.Assert
@@ -80,7 +80,7 @@ class FeatureUsageCustomValidatorsUtilTest {
   }
 
   private fun doAcceptTest(fromJBPlugin: Boolean, context: EventContext) {
-    val rule = TestCheckPluginTypeCustomWhiteListRule(fromJBPlugin)
+    val rule = TestCheckPluginTypeCustomValidationRule(fromJBPlugin)
     Assert.assertEquals(ValidationResultType.ACCEPTED, rule.validate("data", context))
   }
 
@@ -90,7 +90,7 @@ class FeatureUsageCustomValidatorsUtilTest {
   }
 
   private fun doRejectTest(fromJBPlugin: Boolean, context: EventContext) {
-    val rule = TestCheckPluginTypeCustomWhiteListRule(fromJBPlugin)
+    val rule = TestCheckPluginTypeCustomValidationRule(fromJBPlugin)
     Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("data", context))
   }
 }
@@ -102,7 +102,7 @@ private fun newContext(plugin_type: String?, plugin: String?): EventContext {
   return EventContext.create("data", data)
 }
 
-class TestCheckPluginTypeCustomWhiteListRule(private val fromJBPlugin: Boolean) : CustomWhiteListRule() {
+class TestCheckPluginTypeCustomValidationRule(private val fromJBPlugin: Boolean) : CustomValidationRule() {
   override fun acceptRuleId(ruleId: String?): Boolean = true
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {

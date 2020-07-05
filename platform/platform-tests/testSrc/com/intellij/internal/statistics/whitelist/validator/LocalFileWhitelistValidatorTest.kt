@@ -4,7 +4,7 @@ package com.intellij.internal.statistics.whitelist.validator
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalFileCustomValidationRule
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
@@ -12,17 +12,17 @@ import org.junit.Test
 
 class LocalFileWhitelistValidatorTest : LightPlatformTestCase() {
 
-  private fun doValidateEventId(validator: CustomWhiteListRule, eventId: String, eventData: FeatureUsageData) {
+  private fun doValidateEventId(validator: CustomValidationRule, eventId: String, eventData: FeatureUsageData) {
     val context = EventContext.create(eventId, eventData.build())
     doTest(ValidationResultType.ACCEPTED, validator, eventId, context)
   }
 
-  private fun doRejectEventId(validator: CustomWhiteListRule, eventId: String, eventData: FeatureUsageData) {
+  private fun doRejectEventId(validator: CustomValidationRule, eventId: String, eventData: FeatureUsageData) {
     val context = EventContext.create(eventId, eventData.build())
     doTest(ValidationResultType.REJECTED, validator, eventId, context)
   }
 
-  private fun doTest(expected: ValidationResultType, validator: CustomWhiteListRule, data: String, context: EventContext) {
+  private fun doTest(expected: ValidationResultType, validator: CustomValidationRule, data: String, context: EventContext) {
     TestCase.assertEquals(expected, validator.validate(data, context))
   }
 

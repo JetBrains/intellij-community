@@ -3,9 +3,9 @@ package com.intellij.internal.statistic.collectors.fus
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 
-class PluginInfoValidationRule : CustomWhiteListRule() {
+class PluginInfoValidationRule : CustomValidationRule() {
   override fun acceptRuleId(ruleId: String?) = ruleId in acceptedRules
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
