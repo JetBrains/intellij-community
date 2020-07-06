@@ -16,13 +16,12 @@ import java.util.Set;
 @State(name = "Git.Rebase.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class GitRebaseSettings implements PersistentStateComponent<GitRebaseSettings.State> {
 
-  private final static Set<RebaseOption> DEFAULT_OPTIONS = EnumSet.of(RebaseOption.INTERACTIVE);
   private final static Set<RebaseOption> NO_OPTIONS = EnumSet.noneOf(RebaseOption.class);
 
   private State myState = new State();
 
   public static class State {
-    public Set<RebaseOption> OPTIONS = DEFAULT_OPTIONS;
+    public Set<RebaseOption> OPTIONS = NO_OPTIONS;
     public String NEW_BASE = null;
   }
 
