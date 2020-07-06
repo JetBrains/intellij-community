@@ -14,8 +14,10 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,32 +33,24 @@ public class JavaFilePasteProvider implements PasteProvider {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null) return;
-    final PsiJavaFile javaFile = createJavaFileFromClipboardContent(project);
-    if (javaFile == null) return;
-    final PsiClass[] classes = javaFile.getClasses();
-    if (classes.length < 1) return;
+    String fileText = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    String className = detectClassName(project, fileText);
+    if (className == null) return;
+    assert fileText != null;
     final PsiDirectory targetDir = ideView.getOrChooseDirectory();
     if (targetDir == null) return;
-    PsiClass publicClass = classes[0];
-    for (PsiClass aClass : classes) {
-      if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-        publicClass = aClass;
-        break;
-      }
-    }
-    final PsiClass mainClass = publicClass;
     WriteCommandAction.writeCommandAction(project).withName(
-      JavaBundle.message("paste.class.command.name", mainClass.getName())).run(() -> {
+      JavaBundle.message("paste.class.command.name", className)).run(() -> {
       PsiFile file;
       try {
-        file = targetDir.createFile(mainClass.getName() + ".java");
+        file = targetDir.createFile(className + ".java");
       }
       catch (IncorrectOperationException e) {
         return;
       }
       final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (document != null) {
-        document.setText(javaFile.getText());
+        document.setText(fileText);
         PsiDocumentManager.getInstance(project).commitDocument(document);
       }
       if (file instanceof PsiJavaFile) {
@@ -106,16 +100,26 @@ public class JavaFilePasteProvider implements PasteProvider {
     if (project == null || ideView == null || ideView.getDirectories().length == 0) {
       return false;
     }
-    PsiJavaFile file = createJavaFileFromClipboardContent(project);
-    return file != null && file.getClasses().length >= 1;
+    return getPastedClasses(project, CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor)).length >= 1;
   }
 
   @Nullable
-  private static PsiJavaFile createJavaFileFromClipboardContent(final Project project) {
-    String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    if (text == null) return null;
-    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("A.java", JavaLanguage.INSTANCE,
-                                                                             StringUtil.convertLineSeparators(text));
-    return psiFile instanceof PsiJavaFile ? (PsiJavaFile)psiFile : null;
+  static String detectClassName(Project project, String fileText) {
+    final PsiClass[] classes = getPastedClasses(project, fileText);
+    if (classes.length < 1) return null;
+    for (PsiClass aClass : classes) {
+      if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return aClass.getName();
+      }
+    }
+    return classes[0].getName();
+  }
+
+  private static PsiClass @NotNull [] getPastedClasses(@NotNull Project project, @Nullable String pasteText) {
+    if (pasteText == null) return PsiClass.EMPTY_ARRAY;
+    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
+      "A.java", JavaLanguage.INSTANCE, StringUtil.convertLineSeparators(pasteText), false, false);
+    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_15_PREVIEW); // to parse records
+    return psiFile instanceof PsiJavaFile ? ((PsiJavaFile)psiFile).getClasses() : PsiClass.EMPTY_ARRAY;
   }
 }
