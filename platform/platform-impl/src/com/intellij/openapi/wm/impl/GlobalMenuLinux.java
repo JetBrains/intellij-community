@@ -217,18 +217,15 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       };
 
-      // JCEF/JBR11 is not compliant with JFX
-      if (!JBCefApp.isEnabled()) {
-        // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
-        try {
-          PlatformImpl.startup(() -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
-        }
-        catch (Throwable e) {
-          LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
-          final Thread glibMain = new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
-                                             "GlobalMenuLinux loop");
-          glibMain.start();
-        }
+      // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
+      try {
+        PlatformImpl.startup(() -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
+      }
+      catch (Throwable e) {
+        LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
+        final Thread glibMain = new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
+                                           "GlobalMenuLinux loop");
+        glibMain.start();
       }
     }
   }
