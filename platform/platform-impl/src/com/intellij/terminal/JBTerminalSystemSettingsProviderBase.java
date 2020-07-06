@@ -80,22 +80,20 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @Override
   public @NotNull TerminalActionPresentation getCopyActionPresentation() {
-    List<KeyStroke> strokes = union(getKeyStrokesByActionId("Terminal.CopySelectedText"),
-                                    getKeyStrokesByActionId(IdeActions.ACTION_COPY));
+    List<KeyStroke> strokes = getKeyStrokesByActionId("Terminal.CopySelectedText");
+    if (strokes.isEmpty()) {
+      strokes = getKeyStrokesByActionId(IdeActions.ACTION_COPY);
+    }
     return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$Copy.text")), strokes);
   }
 
   @Override
   public @NotNull TerminalActionPresentation getPasteActionPresentation() {
-    List<KeyStroke> strokes = union(getKeyStrokesByActionId("Terminal.Paste"),
-                                    getKeyStrokesByActionId(IdeActions.ACTION_PASTE));
+    List<KeyStroke> strokes = getKeyStrokesByActionId("Terminal.Paste");
+    if (strokes.isEmpty()) {
+      strokes = getKeyStrokesByActionId(IdeActions.ACTION_PASTE);
+    }
     return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$Paste.text")), strokes);
-  }
-
-  private static @NotNull List<KeyStroke> union(@NotNull List<KeyStroke> strokes1, @NotNull List<KeyStroke> strokes2) {
-    if (strokes1.isEmpty()) return strokes2;
-    if (strokes2.isEmpty()) return strokes1;
-    return new ArrayList<>(new LinkedHashSet<>(ContainerUtil.concat(strokes1, strokes2)));
   }
 
   @Override

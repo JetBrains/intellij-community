@@ -50,11 +50,11 @@
     </action>
     <action id="Terminal.CopySelectedText" class="org.jetbrains.plugins.terminal.action.TerminalCopySelectedTextAction">
       <keyboard-shortcut first-keystroke="control C" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="control shift C" keymap="Default for XWin" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="control shift C" keymap="Default for XWin"/>
     </action>
     <action id="Terminal.Paste" class="org.jetbrains.plugins.terminal.action.TerminalPasteAction">
       <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin"/>
     </action>
     <action id="Terminal.SmartCommandExecution.Run" class="com.intellij.terminal.TerminalRunSmartCommandAction">
       <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
