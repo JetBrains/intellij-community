@@ -60,6 +60,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -1326,13 +1327,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     });
   }
 
-  public static class DefaultIgnoredFileProvider implements IgnoredFileProvider {
-
+  public static final class DefaultIgnoredFileProvider implements IgnoredFileProvider {
     @Override
     public boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath) {
       IProjectStore store = ProjectKt.getStateStore(project);
       return (!ProjectKt.isDirectoryBased(project) && FileUtilRt.extensionEquals(filePath.getPath(), WorkspaceFileType.DEFAULT_EXTENSION))
-             || StringsKt.equals(filePath.getPath(), store.getWorkspaceFilePath(), !SystemInfo.isFileSystemCaseSensitive)
+             || StringsKt.equals(filePath.getPath(), FileUtil.toSystemIndependentName(store.getWorkspacePath().toString()), !SystemInfo.isFileSystemCaseSensitive)
              || isShelfDirOrInsideIt(filePath, project);
     }
 
@@ -1349,11 +1349,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
       String shelfPath = ShelveChangesManager.getShelfPath(project);
       ignored.add(IgnoredBeanFactory.ignoreUnderDirectory(shelfPath, project));
 
-      String workspaceFilePath = ProjectKt.getStateStore(project).getWorkspaceFilePath();
-      if (workspaceFilePath != null) {
-        ignored.add(IgnoredBeanFactory.ignoreFile(workspaceFilePath, project));
-      }
-
+      Path workspaceFile = ProjectKt.getStateStore(project).getWorkspacePath();
+      ignored.add(IgnoredBeanFactory.ignoreFile(workspaceFile.toString().replace(File.separatorChar, '/'), project));
       return ContainerUtil.unmodifiableOrEmptySet(ignored);
     }
 

@@ -67,7 +67,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
   }
 
   private static void unshelveMultipleShelveChangeLists(@NotNull final Project project,
-                                                        @NotNull final List<? extends ShelvedChangeList> changeLists,
+                                                        @NotNull final List<ShelvedChangeList> changeLists,
                                                         @NotNull List<? extends ShelvedBinaryFile> binaryFiles,
                                                         @NotNull List<? extends ShelvedChange> changes) {
     String suggestedName = changeLists.get(0).DESCRIPTION;
@@ -100,7 +100,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     MyUnshelveDialog(@NotNull Project project,
                      @NotNull VirtualFile patchFile,
                      @NotNull ShelvedChangeList changeList,
-                     @NotNull List<? extends ShelvedBinaryFilePatch> binaryShelvedPatches,
+                     @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches,
                      Change @Nullable [] preselectedChanges) {
       super(project, new UnshelvePatchDefaultExecutor(project, changeList), Collections.emptyList(), ApplyPatchMode.UNSHELVE, patchFile,
             null, getPredefinedChangeList(changeList, ChangeListManager.getInstance(project)), binaryShelvedPatches,

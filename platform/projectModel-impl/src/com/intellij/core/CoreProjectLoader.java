@@ -63,11 +63,10 @@ public final class CoreProjectLoader {
       ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).loadState(projectRootManagerState);
     }
 
-    VirtualFile libraries = dotIdea.findChild("libraries");
-    if (libraries != null) {
-      Map<String, Element> data = DirectoryStorageUtil.loadFrom(libraries, PathMacroManager.getInstance(project));
+    Map<String, Element> data = DirectoryStorageUtil.loadFrom(dotIdea.toNioPath().resolve("libraries"), PathMacroManager.getInstance(project));
+    if (!data.isEmpty()) {
       Element libraryTable = DefaultStateSerializerKt.deserializeState(DirectoryStorageUtil.getCompositeState(data, new LibraryStateSplitter()), Element.class, null);
-      ((LibraryTableBase) LibraryTablesRegistrar.getInstance().getLibraryTable(project)).loadState(libraryTable);
+      ((LibraryTableBase)LibraryTablesRegistrar.getInstance().getLibraryTable(project)).loadState(libraryTable);
     }
 
     moduleManager.loadModules();

@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.project.ProjectKt;
@@ -141,12 +142,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
    *
    * @return path to default shelf directory e.g. {@code "<Project>/.idea/shelf"}
    */
-  @NotNull
-  public static String getDefaultShelfPath(@NotNull Project project) {
+  public static @NotNull Path getDefaultShelfPath(@NotNull Project project) {
     IProjectStore store = ProjectKt.getStateStore(project);
-    return store.getDirectoryStorePath(true) +
-           "/" +
-           (ProjectKt.isDirectoryBased(project) ? SHELVE_MANAGER_DIR_PATH : "." + SHELVE_MANAGER_DIR_PATH);
+    return store.getProjectFilePath().getParent().resolve(ProjectKt.isDirectoryBased(project) ? SHELVE_MANAGER_DIR_PATH : "." + SHELVE_MANAGER_DIR_PATH);
   }
 
   /**
@@ -154,13 +152,12 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
    *
    * @return path to custom shelf directory if set. Otherwise return default shelf directory e.g. {@code "<Project>/.idea/shelf"}
    */
-  @NotNull
-  public static String getShelfPath(@NotNull Project project) {
+  public static @NotNull String getShelfPath(@NotNull Project project) {
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
     if (vcsConfiguration.USE_CUSTOM_SHELF_PATH) {
       return requireNonNull(vcsConfiguration.CUSTOM_SHELF_PATH);
     }
-    return getDefaultShelfPath(project);
+    return getDefaultShelfPath(project).toString().replace(File.separatorChar, '/');
   }
 
   private final Project myProject;
@@ -779,7 +776,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       patches.add(new ShelvedBinaryFilePatch(shelvedBinaryFile));
     }
 
-    PatchApplier patchApplier = new PatchApplier(myProject, myProject.getBaseDir(),
+    VirtualFile baseDir = LocalFileSystem.getInstance().findFileByNioFile(ProjectKt.getStateStore(myProject).getProjectBasePath());
+    PatchApplier patchApplier = new PatchApplier(myProject, baseDir,
                                                  patches, targetChangeList, commitContext, reverse, leftConflictTitle,
                                                  rightConflictTitle);
     patchApplier.execute(showSuccessNotification, systemOperation);
@@ -793,8 +791,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   @NotNull
   @CalledInAwt
-  Map<ShelvedChangeList, Date> deleteShelves(@NotNull List<? extends ShelvedChangeList> shelvedListsToDelete,
-                                             @NotNull List<? extends ShelvedChangeList> shelvedListsFromChanges,
+  Map<ShelvedChangeList, Date> deleteShelves(@NotNull List<ShelvedChangeList> shelvedListsToDelete,
+                                             @NotNull List<ShelvedChangeList> shelvedListsFromChanges,
                                              @NotNull List<? extends ShelvedChange> changesToDelete,
                                              @NotNull List<? extends ShelvedBinaryFile> binariesToDelete) {
     // filter changes
@@ -1018,7 +1016,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   public void unshelveSilentlyAsynchronously(@NotNull final Project project,
-                                             @NotNull final List<? extends ShelvedChangeList> selectedChangeLists,
+                                             @NotNull final List<ShelvedChangeList> selectedChangeLists,
                                              @NotNull final List<? extends ShelvedChange> selectedChanges,
                                              @NotNull final List<? extends ShelvedBinaryFile> selectedBinaryChanges,
                                              @Nullable final LocalChangeList forcePredefinedOneChangelist) {
@@ -1027,7 +1025,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   private void unshelveSilentlyAsynchronously(@NotNull final Project project,
-                                              @NotNull final List<? extends ShelvedChangeList> selectedChangeLists,
+                                              @NotNull final List<ShelvedChangeList> selectedChangeLists,
                                               @NotNull final List<? extends ShelvedChange> selectedChanges,
                                               @NotNull final List<? extends ShelvedBinaryFile> selectedBinaryChanges,
                                               @Nullable final LocalChangeList forcePredefinedOneChangelist, boolean removeFilesFromShelf) {
@@ -1236,7 +1234,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     clearShelvedLists(getRecycledShelvedChangeLists(), true);
   }
 
-  void clearShelvedLists(@NotNull List<? extends ShelvedChangeList> shelvedLists, boolean updateView) {
+  void clearShelvedLists(@NotNull List<ShelvedChangeList> shelvedLists, boolean updateView) {
     if (shelvedLists.isEmpty()) return;
     for (ShelvedChangeList list : shelvedLists) {
       deleteResources(list);

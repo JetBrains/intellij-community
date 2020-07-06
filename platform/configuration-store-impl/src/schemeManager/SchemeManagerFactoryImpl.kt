@@ -148,7 +148,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.ope
         return Paths.get("__not_existent_path__")
       }
 
-      val projectFileDir = (project.stateStore as? IProjectStore)?.projectConfigDir
+      val projectFileDir = (project.stateStore as? IProjectStore)?.directoryStorePath
       if (projectFileDir == null) {
         return Paths.get(project.basePath!!, ".$path")
       }

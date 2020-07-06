@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.ArrayUtil;
@@ -58,7 +57,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
       @NotNull
       @Override
       public String getTemplatesDir() {
-        return FileUtilRt.toSystemDependentName(ProjectKt.getStateStore(project).getDirectoryStorePath(false) + "/" + TEMPLATES_DIR);
+        return ProjectKt.getStateStore(project).getProjectFilePath().getParent().resolve(TEMPLATES_DIR).toString();
       }
 
       @NotNull

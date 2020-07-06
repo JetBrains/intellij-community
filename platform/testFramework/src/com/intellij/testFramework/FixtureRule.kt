@@ -344,7 +344,7 @@ suspend fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryD
 }
 
 fun refreshProjectConfigDir(project: Project) {
-  LocalFileSystem.getInstance().findFileByNioFile(project.stateStore.projectConfigDir!!)!!.refresh(false, true)
+  LocalFileSystem.getInstance().findFileByNioFile(project.stateStore.directoryStorePath!!)!!.refresh(false, true)
 }
 
 suspend fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: suspend () -> T): T {

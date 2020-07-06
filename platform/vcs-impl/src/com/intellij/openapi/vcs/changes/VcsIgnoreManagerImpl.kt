@@ -105,7 +105,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
   private fun removeConfigurationFromVcsIgnore(project: Project, configurationName: String) {
     val projectFileOrConfigDir =
       if (project.isDirectoryBased) {
-        VfsUtil.findFile(project.stateStore.projectConfigDir!!, true)!!
+        VfsUtil.findFile(project.stateStore.directoryStorePath!!, true)!!
       }
       else {
         project.projectFile!!
@@ -134,7 +134,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
 
   private fun checkConfigurationVcsIgnored(project: Project, configurationFileName: String): IgnoredCheckResult {
     return if (project.isDirectoryBased) {
-      val projectConfigDir = VfsUtil.findFile(project.stateStore.projectConfigDir!!, true)!!
+      val projectConfigDir = VfsUtil.findFile(project.stateStore.directoryStorePath!!, true)!!
       val checkForIgnore = virtualToIoFile(projectConfigDir)
         .resolve(RUN_CONFIGURATIONS_DIRECTORY)
         .resolve("$configurationFileName*.xml")

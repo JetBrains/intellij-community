@@ -23,9 +23,9 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
                                          protected val pathMacroSubstitutor: PathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
   protected var componentName: String? = null
 
-  protected abstract val virtualFile: VirtualFile?
+  protected abstract val dir: Path
 
-  public override fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
+  public override fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(dir, pathMacroSubstitutor))
 
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
 
@@ -75,7 +75,7 @@ interface DirectoryBasedSaveSessionProducer : SaveSessionProducer {
   fun setFileState(fileName: String, componentName: String, element: Element?)
 }
 
-open class DirectoryBasedStorage(private val dir: Path,
+open class DirectoryBasedStorage(override val dir: Path,
                                  @Suppress("DEPRECATION") splitter: com.intellij.openapi.components.StateSplitter,
                                  pathMacroSubstitutor: PathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
   override val isUseVfsForWrite: Boolean
@@ -84,15 +84,14 @@ open class DirectoryBasedStorage(private val dir: Path,
   @Volatile
   private var cachedVirtualFile: VirtualFile? = null
 
-  override val virtualFile: VirtualFile?
-    get() {
-      var result = cachedVirtualFile
-      if (result == null) {
-        result = LocalFileSystem.getInstance().findFileByNioFile(dir)
-        cachedVirtualFile = result
-      }
-      return result
+  private fun getVirtualFile(): VirtualFile? {
+    var result = cachedVirtualFile
+    if (result == null) {
+      result = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir)
+      cachedVirtualFile = result
     }
+    return result
+  }
 
   internal fun setVirtualDir(dir: VirtualFile?) {
     cachedVirtualFile = dir
@@ -170,7 +169,7 @@ open class DirectoryBasedStorage(private val dir: Path,
       val stateMap = StateMap.fromMap(copiedStorageData!!)
 
       if (copiedStorageData!!.isEmpty()) {
-        val dir = storage.virtualFile
+        val dir = storage.getVirtualFile()
         if (dir != null && dir.exists()) {
           dir.delete(this)
         }
@@ -182,7 +181,7 @@ open class DirectoryBasedStorage(private val dir: Path,
         saveStates(stateMap)
       }
       if (isSomeFileRemoved) {
-        val dir = storage.virtualFile
+        val dir = storage.getVirtualFile()
         if (dir != null && dir.exists()) {
           deleteFiles(dir)
         }
@@ -201,7 +200,7 @@ open class DirectoryBasedStorage(private val dir: Path,
         val element = states.getElement(fileName) ?: continue
 
         if (dir == null || !dir.exists()) {
-          dir = storage.virtualFile
+          dir = storage.getVirtualFile()
           if (dir == null || !dir.exists()) {
             dir = createDir(storage.dir, this)
             storage.cachedVirtualFile = dir
@@ -241,7 +240,7 @@ open class DirectoryBasedStorage(private val dir: Path,
     storageDataRef.set(newStates)
   }
 
-  override fun toString() = "${javaClass.simpleName}(file=${virtualFile?.path}, componentName=$componentName)"
+  override fun toString() = "${javaClass.simpleName}(dir=${dir}, componentName=$componentName)"
 }
 
 private fun getOrDetectLineSeparator(file: VirtualFile): LineSeparator? {

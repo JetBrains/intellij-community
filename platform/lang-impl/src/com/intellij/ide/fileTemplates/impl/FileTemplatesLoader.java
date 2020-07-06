@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -160,8 +159,7 @@ class FileTemplatesLoader implements Disposable {
       configDir = PathManager.getConfigDir().resolve(TEMPLATES_DIR);
     }
     else {
-      String storeDirPath = Objects.requireNonNull(ProjectKt.getStateStore(project).getDirectoryStorePath(true));
-      configDir = Paths.get(storeDirPath, TEMPLATES_DIR);
+      configDir = ProjectKt.getStateStore(project).getProjectFilePath().getParent().resolve(TEMPLATES_DIR);
     }
 
     FileTemplateLoadResult result = loadDefaultTemplates(new ArrayList<>(MANAGER_TO_DIR.values()));

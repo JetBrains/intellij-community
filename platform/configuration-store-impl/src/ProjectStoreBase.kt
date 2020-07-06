@@ -57,12 +57,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
   final override fun getProjectFilePath() = storageManager.expandMacro(PROJECT_FILE)
 
-  /**
-   * `null` for default or non-directory based project.
-   */
-  override fun getProjectConfigDir() = dotIdea
-
-  final override fun getWorkspaceFilePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE).systemIndependentPath
+  final override fun getWorkspacePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
 
   final override fun clearStorages() = storageManager.clearStorages()
 
@@ -79,7 +74,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
         moveComponentConfiguration(defaultProject, element,
                                    storagePathResolver = { /* doesn't matter, any path will be resolved as projectFilePath (see fileResolver below) */ PROJECT_FILE }) {
           if (it == "workspace.xml") {
-            Paths.get(workspaceFilePath)
+            workspacePath
           }
           else {
             dirOrFile!!
@@ -209,7 +204,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       else {
         result!!.sortWith(deprecatedComparator)
         if (isDirectoryBased) {
-          for (providerFactory in StreamProviderFactory.EP_NAME.getExtensions(project)) {
+          for (providerFactory in StreamProviderFactory.EP_NAME.getIterable(project)) {
             LOG.runAndLogException {
               // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
               providerFactory.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation)?.let { return it }
@@ -261,15 +256,12 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
     val filePath = file.path
     if (!isDirectoryBased) {
-      return filePath == projectFilePath.systemIndependentPath || filePath == workspaceFilePath
+      return filePath == projectFilePath.systemIndependentPath || filePath == workspacePath.systemIndependentPath
     }
-
     return FileUtil.isAncestor(projectFilePath.parent.systemIndependentPath, filePath, false)
   }
 
-  override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean): String? {
-    return if (!ignoreProjectStorageScheme && !isDirectoryBased) null else projectFilePath.parent.systemIndependentPath.nullize()
-  }
+  override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = dotIdea?.systemIndependentPath.nullize()
 
   final override fun getDirectoryStorePath() = dotIdea
 

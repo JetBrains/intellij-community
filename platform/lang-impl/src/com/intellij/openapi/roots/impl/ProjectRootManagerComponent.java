@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
@@ -44,7 +45,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -215,13 +216,11 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     Set<String> recursivePathsToWatch = CollectionFactory.createFilePathSet();
     Set<String> flatPaths = CollectionFactory.createFilePathSet();
 
-    String projectFilePath = myProject.getProjectFilePath();
-    if (projectFilePath != null && !Project.DIRECTORY_STORE_FOLDER.equals(new File(projectFilePath).getParentFile().getName())) {
-      flatPaths.add(FileUtil.toSystemIndependentName(projectFilePath));
-      String wsFilePath = ProjectKt.getStateStore(myProject).getWorkspaceFilePath();  // may not exist yet
-      if (wsFilePath != null) {
-        flatPaths.add(FileUtil.toSystemIndependentName(wsFilePath));
-      }
+    IProjectStore store = ProjectKt.getStateStore(myProject);
+    Path projectFilePath = store.getProjectFilePath();
+    if (!Project.DIRECTORY_STORE_FOLDER.equals(projectFilePath.getParent().getFileName().toString())) {
+      flatPaths.add(FileUtil.toSystemIndependentName(projectFilePath.toString()));
+      flatPaths.add(FileUtil.toSystemIndependentName(store.getWorkspacePath().toString()));
     }
 
     for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
@@ -257,8 +256,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener
     collectModuleWatchRoots(recursivePathsToWatch, flatPaths);
-
-    return Pair.create(recursivePathsToWatch, flatPaths);
+    return new Pair<>(recursivePathsToWatch, flatPaths);
   }
 
   private void collectModuleWatchRoots(@NotNull Set<? super String> recursivePaths, @NotNull Set<? super String> flatPaths) {

@@ -66,7 +66,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
   }
 
   private fun registerVfsListenerIfNeeded(): Boolean {
-    val projectConfigDirPath = project.stateStore.projectConfigDir
+    val projectConfigDirPath = project.stateStore.directoryStorePath
     if (projectConfigDirPath == null) {
       LOG.warn("Project config dir path not found. Project is default or not directory based.")
       needGenerate.set(false)
@@ -106,7 +106,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
   private fun generateGitignoreInStoreDirIfNeeded() {
     if (!needGenerate.compareAndSet(true, false)) return
 
-    val projectConfigDirPath = project.stateStore.projectConfigDir
+    val projectConfigDirPath = project.stateStore.directoryStorePath
     if (projectConfigDirPath == null) {
       LOG.warn("Project config dir path not found. Project is default or not directory based.")
       return

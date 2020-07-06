@@ -398,8 +398,7 @@ public final class PathsVerifier {
       return true;
     }
 
-    @Nullable
-    protected VirtualFile getMappedFile(String path) {
+    protected @Nullable VirtualFile getMappedFile(String path) {
       return PathMerger.getFile(myBaseDirectory, path);
     }
 
@@ -478,8 +477,7 @@ public final class PathsVerifier {
     return file;*/
   }
 
-  @Nullable
-  private VirtualFile makeSureParentPathExists(final String[] pieces) throws IOException {
+  private @Nullable VirtualFile makeSureParentPathExists(@NotNull String[] pieces) throws IOException {
     VirtualFile child = myBaseDirectory;
 
     final int size = pieces.length - 1;

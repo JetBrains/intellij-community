@@ -44,6 +44,6 @@ class VcsIgnoreFilesChecker : ProjectManagerListener {
   }
 
   private fun Project.getProjectConfigDirOrProjectFile() =
-    if (isDirectoryBased) stateStore.projectConfigDir?.let(LocalFileSystem.getInstance()::findFileByNioFile)
+    if (isDirectoryBased) stateStore.directoryStorePath?.let(LocalFileSystem.getInstance()::findFileByNioFile)
     else projectFile
 }

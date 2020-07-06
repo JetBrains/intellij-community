@@ -128,7 +128,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
   }
 
   final override fun getWorkspaceFile(): VirtualFile? {
-    return LocalFileSystem.getInstance().findFileByPath(componentStore.workspaceFilePath ?: return null)
+    return LocalFileSystem.getInstance().findFileByNioFile(componentStore.workspacePath)
   }
 
   final override fun isLight() = isLight

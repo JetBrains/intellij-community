@@ -28,7 +28,7 @@ import java.nio.file.AccessDeniedException
 import java.nio.file.Path
 
 internal val IProjectStore.nameFile: Path
-  get() = directoryStorePath.resolve(ProjectEx.NAME_FILE)
+  get() = directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
 
 @ApiStatus.Internal
 open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {

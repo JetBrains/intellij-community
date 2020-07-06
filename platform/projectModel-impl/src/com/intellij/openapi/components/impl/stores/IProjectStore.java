@@ -18,24 +18,17 @@ public interface IProjectStore extends IComponentStore {
 
   @NotNull Path getProjectBasePath();
 
-  @NotNull
-  String getProjectName();
+  @NotNull String getProjectName();
 
-  @NotNull
-  StorageScheme getStorageScheme();
+  @NotNull StorageScheme getStorageScheme();
 
+  /**
+   * The path to project configuration file - `misc.xml` for directory-based and `*.ipr` for file-based.
+   * @return
+   */
   @NotNull Path getProjectFilePath();
 
-  /**
-   * `null` for default or non-directory based project.
-   */
-  @Nullable Path getProjectConfigDir();
-
-  /**
-   * System-independent path.
-   */
-  @Nullable
-  String getWorkspaceFilePath();
+  @NotNull Path getWorkspacePath();
 
   void clearStorages();
 
@@ -45,17 +38,19 @@ public interface IProjectStore extends IComponentStore {
 
   boolean isProjectFile(@NotNull VirtualFile file);
 
-  @Nullable
+  /**
+   * @deprecated Use {@link #getDirectoryStorePath()} or {@link Path#getParent()} of {@link #getProjectFilePath()}.
+   */
   @SystemIndependent
-  String getDirectoryStorePath(boolean ignoreProjectStorageScheme);
+  @Deprecated
+  @Nullable String getDirectoryStorePath(boolean ignoreProjectStorageScheme);
 
   /**
-   * Directory of project configuration files for directory-based project. Or null.
+   * The directory of project configuration files for directory-based project or null for file-based.
    */
-  Path getDirectoryStorePath();
+  @Nullable Path getDirectoryStorePath();
 
   void setPath(@NotNull Path path, boolean isRefreshVfsNeeded, @Nullable Project template);
 
-  @Nullable
-  String getProjectWorkspaceId();
+  @Nullable String getProjectWorkspaceId();
 }

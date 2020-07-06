@@ -339,7 +339,7 @@ class ExternalSystemStorageTest {
     runBlocking {
       createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true, useDefaultProjectSettings = false) { project ->
         ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(storeExternally)
-        val projectDir = project.stateStore.directoryStorePath.parent
+        val projectDir = project.stateStore.directoryStorePath!!.parent
         val cacheDir = ExternalProjectsDataStorage.getProjectConfigurationDir(project)
         cacheDir.delete()
         Disposer.register(disposableRule.disposable, Disposable { cacheDir.delete() })

@@ -163,7 +163,7 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
   private fun Project.getProjectConfigDir(): VirtualFile? {
     if (!isDirectoryBased || isDefault) return null
 
-    val projectConfigDir = stateStore.projectConfigDir?.let(LocalFileSystem.getInstance()::findFileByNioFile)
+    val projectConfigDir = stateStore.directoryStorePath?.let(LocalFileSystem.getInstance()::findFileByNioFile)
     if (projectConfigDir == null) {
       LOG.warn("Cannot find project config directory for non-default and non-directory based project ${name}")
     }

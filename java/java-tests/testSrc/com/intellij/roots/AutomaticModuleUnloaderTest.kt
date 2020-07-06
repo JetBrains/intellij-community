@@ -181,7 +181,7 @@ class AutomaticModuleUnloaderTest {
 
   private fun reloadProjectWithNewModules(project: Project, moduleFiles: List<Path>, beforeReload: () -> Unit = {}): Project {
     saveAndCloseProject(project)
-    val modulesXmlFile = (project as ProjectStoreOwner).componentStore.getDirectoryStorePath().resolve("modules.xml")
+    val modulesXmlFile = (project as ProjectStoreOwner).componentStore.getDirectoryStorePath()!!.resolve("modules.xml")
     val rootElement = JDOMUtil.load(modulesXmlFile)
     val moduleRootComponent = JDomSerializationUtil.findComponent(rootElement, JpsProjectLoader.MODULE_MANAGER_COMPONENT)
     val modulesTag = moduleRootComponent!!.getChild("modules")!!
