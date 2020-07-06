@@ -23,12 +23,6 @@ object RankingSupport {
   private const val LANGUAGES_RANKING_UPDATED_PROPERTY_KEY = "ml.completion.experiment.languages.ranking.updated"
   private val LOG = logger<RankingSupport>()
   private var enabledInTests: Boolean = false
-  private val notificationGroup by lazy {
-    NotificationGroup(
-      displayId = "ML Completion Experiment",
-      displayType = NotificationDisplayType.STICKY_BALLOON,
-      title = "ML Completion Experiment")
-  }
 
   fun getRankingModel(language: Language): RankingModelWrapper? {
     val provider = findProviderSafe(language)
@@ -71,17 +65,19 @@ object RankingSupport {
     if (application.isUnitTestMode) return enabledInTests
     if (application.isEAP && experimentStatus.isExperimentOnCurrentIDE(language) && isCompletionLogsSendAllowed()) {
       // AB experiment
-      updateSettingsOnce(experimentStatus.shouldRank(language), experimentStatus.shouldShowArrows(language), provider.displayNameInSettings)
+      updateSettingsOnce(experimentStatus, language, provider.displayNameInSettings)
     }
 
     val settings = CompletionMLRankingSettings.getInstance()
     return settings.isRankingEnabled && settings.isLanguageEnabled(provider.displayNameInSettings)
   }
 
-  private fun updateSettingsOnce(shouldRank: Boolean, shouldShowArrows: Boolean, languageName: String) {
+  private fun updateSettingsOnce(experimentStatus: ExperimentStatus, language: Language, languageName: String) {
+    val shouldRank = experimentStatus.shouldRank(language)
+    val shouldShowArrows = experimentStatus.shouldShowArrows(language)
     val settings = CompletionMLRankingSettings.getInstance()
     val properties = PropertiesComponent.getInstance()
-    if (!properties.getBoolean(SETTINGS_UPDATED_PROPERTY_KEY, false)) {
+    if (!properties.getBoolean(SETTINGS_UPDATED_PROPERTY_KEY, false) || experimentStatus.experimentChanged()) {
       settings.isRankingEnabled = shouldRank
       val languages = availableLanguages()
       languages.forEach { settings.setLanguageEnabled(it, shouldRank) }
@@ -101,7 +97,11 @@ object RankingSupport {
   }
 
   private fun showNotificationAboutArrows() {
-    notificationGroup.createNotification(type = NotificationType.INFORMATION)
+    NotificationGroup(
+        displayId = "ML Completion Experiment",
+        displayType = NotificationDisplayType.STICKY_BALLOON,
+        title = "ML Completion Experiment")
+      .createNotification(type = NotificationType.INFORMATION)
       .setTitle("Machine Learning-Assisted Completion")
       .setContent("Position changes will be shown in completion popup")
       .addAction(object : NotificationAction("OK") {

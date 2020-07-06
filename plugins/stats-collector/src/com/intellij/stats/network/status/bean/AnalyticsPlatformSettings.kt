@@ -19,7 +19,7 @@ data class EndpointSettings(val releaseType: ReleaseType = ReleaseType.ALL,
     val applicationInfo = ApplicationInfo.getInstance()
     val currentReleaseType = if (ApplicationManager.getApplication().isEAP) ReleaseType.EAP else ReleaseType.RELEASE
     if (releaseType != ReleaseType.ALL && releaseType != currentReleaseType) return false
-    val version = Version.parseVersion(applicationInfo.majorVersion)
+    val version = Version.parseVersion(applicationInfo.fullVersion)
     if (version == null || !majorBuildVersionBorders.satisfies(version)) return false
     val bucket = EventLogConfiguration.bucket
     if (bucket < fromBucket || bucket > toBucket) return false

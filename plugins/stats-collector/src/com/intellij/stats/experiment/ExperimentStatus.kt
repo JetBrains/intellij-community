@@ -14,4 +14,5 @@ interface ExperimentStatus {
   fun shouldRank(language: Language): Boolean
   fun shouldShowArrows(language: Language): Boolean
   fun shouldCalculateFeatures(language: Language): Boolean
+  fun experimentChanged(): Boolean
 }
