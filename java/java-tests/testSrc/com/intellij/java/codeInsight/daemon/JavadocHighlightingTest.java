@@ -7,10 +7,13 @@ import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.paths.UrlReference;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiReferenceBase;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -131,8 +134,15 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
       configureByFile(getTestName(false) + ".java");
       List<String> expected = ContainerUtil.newArrayList(
         "http://example.com/ABC-1123", "http://example.com/ABC-2", "http://example.com/ABC-22", "http://example.com/ABC-11");
-      List<UrlReference> refs = PlatformTestUtil.collectUrlReferences(getFile());
-      assertEquals(expected, ContainerUtil.map(refs, UrlReference::getUrl));
+      if (Registry.is("ide.symbol.url.references")) {
+        List<UrlReference> refs = PlatformTestUtil.collectUrlReferences(getFile());
+        assertEquals(expected, ContainerUtil.map(refs, UrlReference::getUrl));
+      }
+      else {
+        List<WebReference> refs = PlatformTestUtil.collectWebReferences(getFile());
+        assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
+        assertEquals(expected, ContainerUtil.map(refs, WebReference::getUrl));
+      }
     }
     finally {
       navigationConfiguration.setLinks(oldLinks);
@@ -146,8 +156,15 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
       "http://docs.oracle.com/javase/7/docs/tech-notes/guides/lang/cl-mt.html",
       "https://youtrack.jetbrains.com/issue/IDEA-131621",
       "mailto:webmaster@jetbrains.com");
-    List<UrlReference> refs = PlatformTestUtil.collectUrlReferences(getFile());
-    assertEquals(expected, refs.stream().map(PsiSymbolReference::getReferenceText).collect(Collectors.toSet()));
+    if (Registry.is("ide.symbol.url.references")) {
+      List<UrlReference> refs = PlatformTestUtil.collectUrlReferences(getFile());
+      assertEquals(expected, refs.stream().map(PsiSymbolReference::getReferenceText).collect(Collectors.toSet()));
+    }
+    else {
+      List<WebReference> refs = PlatformTestUtil.collectWebReferences(getFile());
+      assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
+      assertEquals(expected, refs.stream().map(PsiReferenceBase::getCanonicalText).collect(Collectors.toSet()));
+    }
   }
 
   private void doTest() {
