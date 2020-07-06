@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.OpenProjectTaskBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Paths;
@@ -18,8 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractTestFrameworkCompilingIntegrationTest extends AbstractTestFrameworkIntegrationTest {
   @Override
-  protected boolean isCreateProjectFileExplicitly() {
-    return false;
+  protected @NotNull OpenProjectTaskBuilder getOpenProjectOptions() {
+    return super.getOpenProjectOptions().componentStoreLoadingEnabled(false);
   }
 
   private CompilerTester myCompilerTester;

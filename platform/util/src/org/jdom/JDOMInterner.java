@@ -20,6 +20,9 @@ public final class JDOMInterner {
   private final ObjectOpenCustomHashSet<Element> myElements = new ObjectOpenCustomHashSet<>(new Hash.Strategy<Element>() {
     @Override
     public int hashCode(Element e) {
+      if (e == null) {
+        return 0;
+      }
       int result = e.getName().hashCode() * 31;
       result += computeAttributesHashCode(e);
       List<Content> content = e.getContent();

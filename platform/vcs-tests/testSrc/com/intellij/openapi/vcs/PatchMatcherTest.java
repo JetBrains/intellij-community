@@ -4,19 +4,18 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.vcs.changes.patch.AbstractFilePatchInProgress;
 import com.intellij.openapi.vcs.changes.patch.MatchPatchPaths;
+import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.io.PathKt;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
 public class PatchMatcherTest extends HeavyPlatformTestCase {
   public void testMatchPathAboveProject() {
-    Path ioFile = Paths.get(myProject.getBasePath()).getParent().resolve("file.txt");
+    Path ioFile = ProjectKt.getStateStore(myProject).getProjectBasePath().getParent().resolve("file.txt");
     PathKt.createFile(ioFile);
-    myFilesToDelete.add(ioFile);
     TextFilePatch patch = PatchAutoInitTest.create("../file.txt");
 
     MatchPatchPaths iterator = new MatchPatchPaths(myProject);

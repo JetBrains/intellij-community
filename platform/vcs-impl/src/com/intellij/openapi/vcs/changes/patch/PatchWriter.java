@@ -20,29 +20,31 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public final class PatchWriter {
-
-  public static void writePatches(@NotNull final Project project,
-                                  @NotNull String fileName,
+  public static void writePatches(@NotNull Project project,
+                                  @NotNull Path file,
                                   @NotNull String basePath,
                                   @NotNull List<? extends FilePatch> patches,
                                   @Nullable CommitContext commitContext,
                                   @NotNull Charset charset) throws IOException {
-    writePatches(project, fileName, basePath, patches, commitContext, charset, false);
+    writePatches(project, file, basePath, patches, commitContext, charset, false);
   }
 
-  public static void writePatches(@NotNull final Project project,
-                                  @NotNull String fileName,
+  public static void writePatches(@NotNull Project project,
+                                  @NotNull Path file,
                                   @Nullable String basePath,
                                   @NotNull List<? extends FilePatch> patches,
                                   @Nullable CommitContext commitContext,
                                   @NotNull Charset charset, boolean includeBinaries) throws IOException {
-    try (Writer writer = new OutputStreamWriter(new FileOutputStream(fileName), charset)) {
+    Files.createDirectories(file.getParent());
+    try (Writer writer = new OutputStreamWriter(Files.newOutputStream(file), charset)) {
       write(project, writer, basePath, patches, commitContext, includeBinaries);
     }
   }
@@ -52,9 +54,8 @@ public final class PatchWriter {
                             @Nullable String basePath,
                             @NotNull List<? extends FilePatch> patches,
                             @Nullable CommitContext commitContext, boolean includeBinaries) throws IOException {
-    final String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
-    UnifiedDiffWriter
-      .write(project, basePath, patches, writer, lineSeparator, PatchEP.EP_NAME.getExtensions(project), commitContext);
+    String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
+    UnifiedDiffWriter.write(project, basePath, patches, writer, lineSeparator, PatchEP.EP_NAME.getExtensions(project), commitContext);
     if (includeBinaries) {
       BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer);
     }
@@ -69,8 +70,7 @@ public final class PatchWriter {
     CopyPasteManager.getInstance().setContents(new StringSelection(writer.toString()));
   }
 
-  @NotNull
-  public static VirtualFile calculateBaseForWritingPatch(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
+  public static @NotNull VirtualFile calculateBaseForWritingPatch(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     File commonAncestor = ChangesUtil.findCommonAncestor(changes);
     boolean multiVcs = ChangesUtil.getAffectedVcses(changes, project).size() != 1;
     if (multiVcs || commonAncestor == null) return project.getBaseDir();

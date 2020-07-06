@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -30,7 +30,7 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
     Map<String, Object> dataId2data = new THashMap<>();
     dataId2data.put(CommonDataKeys.PROJECT.getName(), project);
     dataId2data.put(CommonDataKeys.VIRTUAL_FILE.getName(), file);
-    dataId2data.put(PlatformDataKeys.PROJECT_FILE_DIRECTORY.getName(), PlatformTestUtil.getOrCreateProjectTestBaseDir(project));
+    dataId2data.put(PlatformDataKeys.PROJECT_FILE_DIRECTORY.getName(), PlatformTestUtil.getOrCreateProjectBaseDir(project));
     return SimpleDataContext.getSimpleContext(dataId2data, null);
   }
 

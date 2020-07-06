@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
 import com.intellij.execution.RunManager;
@@ -74,7 +74,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     assertEquals("pkg2.Application", configuration.getMainClassName());
   }
 
-  public void testRenameJUnitPackage() {
+  public void testRenameJUnitPackage() throws IOException {
     PsiPackage psiPackage = mySource.createPackage("pkg");
     JUnitConfiguration configuration = createJUnitConfiguration(psiPackage, AllInPackageConfigurationProducer.class, new MapDataContext());
     rename(psiPackage, "pkg2");
@@ -190,7 +190,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     new MoveMembersProcessor(myProject, null, options).run();
   }
 
-  private void initModule() {
+  private void initModule() throws IOException {
     mySource.initModule();
     mySource.copyJdkFrom(myModule);
     IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
@@ -201,7 +201,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     }
   }
 
-  private void move(final PsiElement psiElement, String packageName) {
+  private void move(final PsiElement psiElement, String packageName) throws IOException {
     VirtualFile pkgFile = mySource.createPackageDir(packageName);
     final PsiDirectory toDir = PsiManager.getInstance(myProject).findDirectory(pkgFile);
     assertNotNull(toDir);
@@ -219,7 +219,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    mySource = new TestSources(myProject, myFilesToDelete);
+    mySource = new TestSources(myProject, getTempDir());
     initModule();
   }
 

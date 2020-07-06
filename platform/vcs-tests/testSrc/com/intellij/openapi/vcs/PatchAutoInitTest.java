@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diff.impl.patch.PatchHunk;
@@ -33,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,15 +29,13 @@ import java.util.List;
 public class PatchAutoInitTest extends HeavyPlatformTestCase {
   private static final String BINARY_FILENAME = "binary.png";
 
-  @NotNull
   @Override
-  protected Path getProjectDirOrFile() {
+  protected @NotNull Path getProjectDirOrFile(boolean isDirectoryBasedProject) {
     try {
       // create extra space for test with files above `getBaseDir`
-      File root = createTempDir("project");
-      File projectRoot = new File(root, "test/test/test/root");
-      assert projectRoot.mkdirs();
-      return projectRoot.toPath();
+      Path projectRoot = getTempDir().newPath().resolve("test/test/test/root");
+      Files.createDirectories(projectRoot);
+      return projectRoot;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -58,7 +43,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testSimple() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
     final VirtualFile dir = createChildDirectory(root, "dir");
     createChildData(dir, "somefile.txt");
 
@@ -96,7 +81,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
 
   // 1. several files with different bases; one can be matched to 2 bases
   public void testDiffBases() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
 
@@ -134,7 +119,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testBestBinaryVariant() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
     VirtualFile a = createChildDirectory(root, "a");
@@ -154,7 +139,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     final MatchPatchPaths matchPatchPaths = new MatchPatchPaths(myProject);
     final List<AbstractFilePatchInProgress> resultProjectBase = matchPatchPaths.execute(Collections.singletonList(shelvedBinaryPatch));
     checkPath(resultProjectBase, cBinary, Arrays.asList(root, b, f), 0);
-    assertEquals(resultProjectBase.get(0).getBase(), myProject.getBaseDir());
+    assertEquals(resultProjectBase.get(0).getBase(), getOrCreateProjectBaseDir());
   }
 
   @NotNull
@@ -182,7 +167,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   private void checkSingleFileOperationAmongSimilarFolders(final String filePath, final TextFilePatch patch){
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
     PsiTestUtil.addContentRoot(myModule, root);
     VfsTestUtil.createFile(root, "platform/platform-impl/src/com/intellij/util/io/A.java");
     VfsTestUtil.createFile(root, "platform/platform-impl/src/io/B.java");
@@ -202,7 +187,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
 
   // inspired by IDEA-118644
   public void testFileAdditionToNonexistentSubfolder() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
     PsiTestUtil.addContentRoot(myModule, root);
     VfsTestUtil.createDir(root, "platform/editor-ui-ex/src/com/intellij/openapi/editor/colors");
     VfsTestUtil.createDir(root, "plugins/properties/src/com/intellij/openapi/options/colors");
@@ -219,7 +204,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testFileAdditionGeneratedFromSuperRoot() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
     PsiTestUtil.addContentRoot(myModule, root);
     VfsTestUtil.createDir(root, "editor-ui-ex/src/com/intellij/openapi/editor/colors");
     VfsTestUtil.createDir(root, "platform-api/src/com/intellij/openapi/editor/colors");
@@ -235,7 +220,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testFileAdditionWithMultipleSimilarModules() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
     PsiTestUtil.addContentRoot(myModule, root);
     VfsTestUtil.createDir(root, "module-1/src/com/intellij/openapi/colors");
     VfsTestUtil.createDir(root, "module-2/src/com/intellij/openapi/editor");
@@ -250,7 +235,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testFileModificationWithMultipleSimilarModules() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
     PsiTestUtil.addContentRoot(myModule, root);
     VfsTestUtil.createFile(root, "module-1/.idea/module.xml", "1\n2\n3\n4\n5\n6\n");
     VfsTestUtil.createFile(root, "module-2/.idea/module.xml", "1\n2\n3\n4\n5\n6\n");
@@ -271,7 +256,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testFileModificationAboveProjectDir() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
     VirtualFile grandRoot = root.getParent().getParent();
 
     PsiTestUtil.addContentRoot(myModule, root);
@@ -293,7 +278,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testBinaryModificationWithMultipleSimilarModules() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
     PsiTestUtil.addContentRoot(myModule, root);
     VfsTestUtil.createFile(root, "module-1/.idea/module.bin");
     VfsTestUtil.createFile(root, "module-2/.idea/module.bin");
@@ -328,7 +313,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
 
   // 2. files can be for 1 dir and 1 strip distance
   public void testOneBaseAndStrip() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
 
@@ -359,7 +344,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
 
   // 3. files can be with 2 base dirs and 1-one distance, 2-different distances
   public void testOneBaseAndDifferentStrips() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
 
@@ -395,7 +380,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testPreviousFirstVariantAlsoMatches() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
 
@@ -420,7 +405,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testDefaultStrategyWorks() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
 
@@ -448,7 +433,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testExactWins() {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
 
@@ -486,7 +471,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testFindByContext() throws Exception {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
 
@@ -560,7 +545,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testFindByContext2() throws Exception {
-    final VirtualFile root = myProject.getBaseDir();
+    final VirtualFile root = getOrCreateProjectBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
 
@@ -632,7 +617,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testFindProjectDirBasedOrAccordingContext() throws Exception {
-    VirtualFile root = myProject.getBaseDir();
+    VirtualFile root = getOrCreateProjectBaseDir();
     PsiTestUtil.addContentRoot(myModule, root);
 
     createChildData(root, "fff1.txt");

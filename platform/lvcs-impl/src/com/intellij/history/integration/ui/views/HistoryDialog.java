@@ -55,6 +55,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
@@ -442,9 +443,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         showNotification("Patch copied to clipboard");
       }
       else {
-        PatchWriter.writePatches(myProject, p.getFileName(), base, patches, null, p.getEncoding());
+        Path file = Paths.get(p.getFileName());
+        PatchWriter.writePatches(myProject, file, base, patches, null, p.getEncoding());
         showNotification(message("message.patch.created"));
-        RevealFileAction.openFile(new File(p.getFileName()));
+        RevealFileAction.openFile(file);
       }
     }
     catch (VcsException | IOException e) {

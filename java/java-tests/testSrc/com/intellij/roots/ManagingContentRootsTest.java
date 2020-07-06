@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -22,16 +8,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.io.PathKt;
 import org.jdom.Element;
 
-import java.io.File;
-import java.io.IOException;
+import java.nio.file.Path;
 
 public class ManagingContentRootsTest extends JavaProjectTestCase {
   private VirtualFile dir;
@@ -39,15 +23,7 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      try {
-        LocalFileSystem fs = LocalFileSystem.getInstance();
-        dir = fs.refreshAndFindFileByIoFile(createTempDirectory());
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    });
+    dir = getTempDir().createVirtualDir();
   }
 
   public void testCreationOfContentRootWithFile() {
@@ -55,8 +31,6 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
     String url = root.getUrl();
 
     PsiTestUtil.addContentRoot(myModule, root);
-
-
     assertEquals(root, findContentEntry(url).getFile());
 
     delete(root);
@@ -111,19 +85,19 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
     ModuleRootModificationUtil.updateModel(myModule, model -> findContentEntry(dir.getUrl(), model).addExcludePattern("exc"));
     StoreUtil.saveDocumentsAndProjectSettings(myProject);
 
-    Element root = JDOMUtil.load(new File(myModule.getModuleFilePath()));
-    String elementText = "<content url=\"file://$MODULE_DIR$/idea_test_\">\n" +
+    Element root = JDOMUtil.load(myModule.getModuleNioFile());
+    String elementText = "<content url=\"file://$MODULE_DIR$/" + dir.getNameSequence() + "\">\n" +
                          "  <excludePattern pattern=\"exc\" />\n" +
                          "</content>";
     assertEquals(elementText, JDOMUtil.writeElement(root.getChild("component").getChild("content")));
   }
 
   public void testExcludePatternDeserialization() throws Exception {
-    File dir = createTempDir("module");
-    String dirUrl = VfsUtilCore.fileToUrl(dir);
+    Path dir = getTempDir().createDir();
+    String dirUrl = VfsUtilCore.pathToUrl(dir.toString());
 
-    File iml = new File(dir, "module.iml");
-    FileUtil.writeToFile(
+    Path iml = dir.resolve("module.iml");
+    PathKt.write(
       iml,
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
@@ -134,7 +108,7 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
       "  </component>\n" +
       "</module>");
 
-    Module module = WriteAction.computeAndWait(() -> ModuleManager.getInstance(myProject).loadModule(iml.getPath()));
+    Module module = WriteAction.computeAndWait(() -> ModuleManager.getInstance(myProject).loadModule(iml));
     assertEquals("exc", assertOneElement(findContentEntry(dirUrl, ModuleRootManager.getInstance(module)).getExcludePatterns()));
   }
 

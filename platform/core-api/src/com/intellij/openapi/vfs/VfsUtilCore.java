@@ -7,11 +7,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -363,7 +364,7 @@ public class VfsUtilCore {
    * Returns {@code true} if given virtual file represents broken or recursive symbolic link.
    */
   public static boolean isInvalidLink(@NotNull VirtualFile link) {
-    final VirtualFile target = link.getCanonicalFile();
+    VirtualFile target = link.getCanonicalFile();
     return target == null || target.equals(link) || isAncestor(target, link, true);
   }
 
@@ -373,7 +374,7 @@ public class VfsUtilCore {
 
   public static @NotNull String loadText(@NotNull VirtualFile file, int length) throws IOException {
     try (InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset())) {
-      return StringFactory.createShared(FileUtil.loadText(reader, length));
+      return StringFactory.createShared(FileUtilRt.loadText(reader, length));
     }
   }
 
@@ -442,7 +443,7 @@ public class VfsUtilCore {
       String prefix = url.substring(0, index);
       String suffix = url.substring(index + 2);
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         return prefix + URLUtil.SCHEME_SEPARATOR + suffix;
       }
       else if (removeLocalhostPrefix && prefix.equals(URLUtil.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
@@ -453,7 +454,7 @@ public class VfsUtilCore {
         return prefix + ":///" + suffix;
       }
     }
-    if (SystemInfo.isWindows && index + 3 < url.length() && url.charAt(index + 3) == '/' &&
+    if (SystemInfoRt.isWindows && index + 3 < url.length() && url.charAt(index + 3) == '/' &&
         url.regionMatches(0, StandardFileSystems.FILE_PROTOCOL_PREFIX, 0, StandardFileSystems.FILE_PROTOCOL_PREFIX.length())) {
       // file:///C:/test/file.js -> file://C:/test/file.js
       for (int i = index + 4; i < url.length(); i++) {
@@ -493,7 +494,7 @@ public class VfsUtilCore {
         throw new RuntimeException(new IOException(CoreBundle.message("url.parse.error", url.toExternalForm())));
       }
     }
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       while (!path.isEmpty() && path.charAt(0) == '/') {
         path = path.substring(1);
       }
@@ -551,15 +552,14 @@ public class VfsUtilCore {
   }
 
   public static @NotNull String fixIDEAUrl(@NotNull String ideaUrl) {
-    final String ideaProtocolMarker = "://";
+    String ideaProtocolMarker = "://";
     int idx = ideaUrl.indexOf(ideaProtocolMarker);
-    if( idx >= 0 ) {
+    if (idx >= 0) {
       String s = ideaUrl.substring(0, idx);
-
       if (s.equals(StandardFileSystems.JAR_PROTOCOL)) {
         s = "jar:file";
       }
-      final String urlWithoutProtocol = ideaUrl.substring(idx + ideaProtocolMarker.length());
+      String urlWithoutProtocol = ideaUrl.substring(idx + ideaProtocolMarker.length());
       ideaUrl = s + ":" + (urlWithoutProtocol.startsWith("/") ? "" : "/") + urlWithoutProtocol;
     }
 
@@ -577,23 +577,29 @@ public class VfsUtilCore {
 
     if (uri.startsWith("file:///")) {
       uri = uri.substring("file:///".length());
-      if (!SystemInfo.isWindows) uri = "/" + uri;
+      if (!SystemInfoRt.isWindows) {
+        uri = "/" + uri;
+      }
     }
     else if (uri.startsWith("file:/")) {
       uri = uri.substring("file:/".length());
-      if (!SystemInfo.isWindows) uri = "/" + uri;
+      if (!SystemInfoRt.isWindows) {
+        uri = "/" + uri;
+      }
     }
-    else uri = StringUtil.trimStart(uri, "file:");
+    else {
+      uri = StringUtil.trimStart(uri, "file:");
+    }
 
     VirtualFile file = null;
 
     if (uri.startsWith("jar:file:/")) {
       uri = uri.substring("jar:file:/".length());
-      if (!SystemInfo.isWindows) uri = "/" + uri;
+      if (!SystemInfoRt.isWindows) uri = "/" + uri;
       file = VirtualFileManager.getInstance().findFileByUrl(StandardFileSystems.JAR_PROTOCOL_PREFIX + uri);
     }
-    else if (!SystemInfo.isWindows && StringUtil.startsWithChar(uri, '/') ||
-             SystemInfo.isWindows && uri.length() >= 2 && Character.isLetter(uri.charAt(0)) && uri.charAt(1) == ':') {
+    else if (!SystemInfoRt.isWindows && StringUtil.startsWithChar(uri, '/') ||
+             SystemInfoRt.isWindows && uri.length() >= 2 && Character.isLetter(uri.charAt(0)) && uri.charAt(1) == ':') {
       file = StandardFileSystems.local().findFileByPath(uri);
     }
 
@@ -605,9 +611,15 @@ public class VfsUtilCore {
     }
 
     if (file == null) {
-      if (base == null) return StandardFileSystems.local().findFileByPath(uri);
-      if (!base.isDirectory()) base = base.getParent();
-      if (base == null) return StandardFileSystems.local().findFileByPath(uri);
+      if (base == null) {
+        return StandardFileSystems.local().findFileByPath(uri);
+      }
+      if (!base.isDirectory()) {
+        base = base.getParent();
+      }
+      if (base == null) {
+        return StandardFileSystems.local().findFileByPath(uri);
+      }
       file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + "/" + uri);
     }
 
@@ -615,7 +627,7 @@ public class VfsUtilCore {
   }
 
   public static boolean processFilesRecursively(final @NotNull VirtualFile root, final @NotNull Processor<? super VirtualFile> processor) {
-    final Ref<Boolean> result = Ref.create(true);
+    Ref<Boolean> result = new Ref<>(true);
     visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
       @Override
       public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
@@ -702,7 +714,7 @@ public class VfsUtilCore {
   public static @Nullable VirtualFile findContainingDirectory(@NotNull VirtualFile file, @NotNull CharSequence name) {
     VirtualFile parent = file.isDirectory() ? file: file.getParent();
     while (parent != null) {
-      if (Comparing.equal(parent.getNameSequence(), name, SystemInfo.isFileSystemCaseSensitive)) {
+      if (StringUtilRt.equal(parent.getNameSequence(), name, SystemInfoRt.isFileSystemCaseSensitive)) {
         return parent;
       }
       parent = parent.getParent();
@@ -713,7 +725,7 @@ public class VfsUtilCore {
   /**
    * this collection will keep only distinct files/folders, e.g. C:\foo\bar will be removed when C:\foo is added
    */
-  public static class DistinctVFilesRootsCollection extends DistinctRootsCollection<VirtualFile> {
+  public static final class DistinctVFilesRootsCollection extends DistinctRootsCollection<VirtualFile> {
     public DistinctVFilesRootsCollection(@NotNull Collection<? extends VirtualFile> virtualFiles) {
       super(virtualFiles);
     }
@@ -731,7 +743,9 @@ public class VfsUtilCore {
   public static @NotNull VirtualFile getRootFile(@NotNull VirtualFile file) {
     while (true) {
       VirtualFile parent = file.getParent();
-      if (parent == null) break;
+      if (parent == null) {
+        break;
+      }
       file = parent;
     }
     return file;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,8 +24,8 @@ public class VcsExcludedFileProcessingTest extends HeavyPlatformTestCase {
     myVcsManager.waitForInitialized();
   }
 
-  public void testFileUnderExcludedRoot() throws IOException {
-    VirtualFile root = getVirtualFile(createTempDir("content"));
+  public void testFileUnderExcludedRoot() {
+    VirtualFile root = getTempDir().createVirtualDir();
     myVcsManager.setDirectoryMapping(root.getPath(), myVcs.getName());
     PsiTestUtil.addContentRoot(myModule, root);
     VirtualFile excludedDir = createChildDirectory(root, "excluded");
@@ -35,7 +34,7 @@ public class VcsExcludedFileProcessingTest extends HeavyPlatformTestCase {
 
     assertEquals(root, myVcsManager.getVcsRootFor(excludedFile));
 
-    final List<VirtualFile> processed = new ArrayList<>();
+    List<VirtualFile> processed = new ArrayList<>();
     myVcsManager.iterateVcsRoot(root, path -> {
       processed.add(path.getVirtualFile());
       return true;

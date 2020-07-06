@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy
 
 import com.intellij.openapi.util.io.FileUtil
@@ -14,7 +14,7 @@ class GroovyRtPathsTest {
       dir("intellij.groovy.constants.rt") {}
       dir("intellij.groovy.jps") {}
       dir("intellij.groovy.rt") {}
-    }.generateInTempDir()
+    }.generateInTempDir().toFile()
     val roots = GroovyBuilder.getGroovyRtRoots(File(out, "intellij.groovy.jps"))
     assertSameFiles(roots, File(out, "intellij.groovy.rt"), File(out, "intellij.groovy.constants.rt"))
   }
@@ -25,7 +25,7 @@ class GroovyRtPathsTest {
       file("groovy-jps-plugin.jar")
       file("groovy-rt-constants.jar")
       file("groovy_rt.jar")
-    }.generateInTempDir()
+    }.generateInTempDir().toFile()
     val roots = GroovyBuilder.getGroovyRtRoots(File(lib, "groovy-jps-plugin.jar"))
     assertSameFiles(roots, File(lib, "groovy_rt.jar"), File(lib, "groovy-rt-constants.jar"))
   }
@@ -36,7 +36,7 @@ class GroovyRtPathsTest {
       file("groovy-constants-rt-193.239.jar")
       file("groovy-rt-193.239.jar")
       file("groovy-jps-193.239.jar")
-    }.generateInTempDir()
+    }.generateInTempDir().toFile()
     val roots = GroovyBuilder.getGroovyRtRoots(File(lib, "groovy-jps-193.239.jar"))
     assertSameFiles(roots, File(lib, "groovy-rt-193.239.jar"), File(lib, "groovy-constants-rt-193.239.jar"))
   }
@@ -61,7 +61,7 @@ class GroovyRtPathsTest {
           }
         }
       }
-    }.generateInTempDir()
+    }.generateInTempDir().toFile()
     val roots = GroovyBuilder.getGroovyRtRoots(File(repo, "com/jetbrains/intellij/groovy/groovy-jps/193.239/groovy-jps-193.239.jar"))
     assertSameFiles(roots, File(repo, "com/jetbrains/intellij/groovy/groovy-rt/193.239/groovy-rt-193.239.jar"),
                     File(repo, "com/jetbrains/intellij/groovy/groovy-constants-rt/193.239/groovy-constants-rt-193.239.jar"))

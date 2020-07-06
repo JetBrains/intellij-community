@@ -1,28 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsTestUtil.assertEqualCollections
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.VfsTestUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import java.io.File
 import java.util.Collections.emptyList
 
 class VcsRootDetectorTest : VcsRootBaseTest() {
-
   fun `test no roots`() {
     expect(emptyList())
   }
 
   fun `test project dir is the only root`() {
-    projectRoot.initRepository()
+    initRepository(projectRoot)
     expect(projectRoot)
   }
 
@@ -37,65 +32,61 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
   }
 
   fun `test vcs root above project`() {
-    testRoot.initRepository()
-    expect(testRootFile)
+    initRepository(testRoot)
+    expect(testRoot)
   }
 
   fun `test one main and two nested sibling roots`() {
-    projectRoot.initRepository()
+    initRepository(projectRoot)
     val roots = createVcsRoots("community", "contrib")
     expect(roots + projectRoot)
   }
 
   fun `test one above and one under`() {
-    testRoot.initRepository()
+    VfsTestUtil.createDir(testRoot, DOT_MOCK)
     val roots = createVcsRoots("subroot")
-    expect(roots + testRootFile)
+    expect(roots + testRoot)
   }
 
   fun `test one above and one for project should show only project root`() {
-    testRoot.initRepository()
-    projectRoot.initRepository()
+    initRepository(testRoot)
+    initRepository(projectRoot)
     expect(projectRoot)
   }
 
   fun `test dont detect above if project is ignored there`() {
     rootChecker.setIgnored(projectRoot)
-    testRoot.initRepository()
+    initRepository(testRoot)
     expect(emptyList())
   }
 
   fun `test one above and several under project`() {
-    testRoot.initRepository()
-    projectRoot.initRepository()
+    initRepository(testRoot)
+    initRepository(projectRoot)
     val roots = createVcsRoots("community", "contrib")
     expect(roots + projectRoot)
   }
 
   fun `test unrelated root should not be detected`() {
-    val file = File(testRoot, "another")
-    assertTrue(file.mkdir())
-    file.initRepository()
+    initRepository(VfsTestUtil.createDir(testRoot, "another"))
     expect(emptyList())
   }
 
   fun `test linked source root alone should be detected`() {
-    val linkedRoot = File(testRoot, "linked_root").mkd()
-    val vf = linkedRoot.toVirtualFile()
-    linkedRoot.initRepository()
-    PsiTestUtil.addContentRoot(rootModule, vf)
-    expect(vf)
+    val linkedRoot = VfsTestUtil.createDir(testRoot, "linked_root")
+    initRepository(linkedRoot)
+    PsiTestUtil.addContentRoot(rootModule, linkedRoot)
+    expect(linkedRoot)
   }
 
   fun `test linked source root and project root should be detected`() {
-    val linkedRoot = File(testRoot, "linked_root").mkd()
-    val vf = linkedRoot.toVirtualFile()
-    linkedRoot.initRepository()
-    PsiTestUtil.addContentRoot(rootModule, vf)
+    val linkedRoot = VfsTestUtil.createDir(testRoot, "linked_root")
+    initRepository(linkedRoot)
+    PsiTestUtil.addContentRoot(rootModule, linkedRoot)
 
-    projectRoot.initRepository()
+    initRepository(projectRoot)
 
-    expect(listOf(vf, projectRoot))
+    expect(listOf(linkedRoot, projectRoot))
   }
 
   fun `test two nested roots`() {
@@ -167,23 +158,25 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
   }
 
   fun `test dont scan inside vendor folder`() {
-    projectRoot.initRepository()
+    initRepository(projectRoot)
     createVcsRoots("vendor", "vendor/child/child")
 
     expect(projectRoot)
   }
 
-  private fun createVcsRoots(vararg relativePaths: String, registerContentRoot: Boolean = true) =
-    createVcsRoots(listOf(*relativePaths), registerContentRoot)
+  private fun createVcsRoots(vararg relativePaths: String, registerContentRoot: Boolean = true): List<VirtualFile> {
+    return createVcsRoots(listOf(*relativePaths), registerContentRoot)
+  }
 
   private fun createVcsRoots(relativePaths: Collection<String>, registerContentRoot: Boolean = true): List<VirtualFile> {
+    val projectDir = projectRoot
     return relativePaths.map {
-      val file = File(projectPath, it)
-      assertTrue(file.mkdirs())
-      file.initRepository()
-      val vf = file.toVirtualFile()
-      if (registerContentRoot) PsiTestUtil.addContentRoot(rootModule, vf)
-      vf
+      val childDir = VfsTestUtil.createDir(projectDir, it)
+      initRepository(childDir)
+      if (registerContentRoot) {
+        PsiTestUtil.addContentRoot(rootModule, childDir)
+      }
+      childDir
     }
   }
 
@@ -193,20 +186,8 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     val detectedRoots = project.service<VcsRootDetector>().detect().map { it.path }
     assertEqualCollections(detectedRoots, expectedRoots)
   }
+}
 
-  private fun File.toVirtualFile() = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this)!!
-
-  private fun VirtualFile.initRepository() = VfsUtil.virtualToIoFile(this).initRepository()
-
-  private fun File.initRepository() : VirtualFile {
-    val file = File(this, DOT_MOCK)
-    assertTrue(file.mkdir())
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
-  }
-
-  private fun File.mkd() : File {
-    assertTrue(this.mkdir())
-    return this
-  }
-
+private fun initRepository(virtualFile: VirtualFile): VirtualFile {
+  return VfsTestUtil.createDir(virtualFile, DOT_MOCK)
 }

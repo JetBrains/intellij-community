@@ -41,7 +41,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
   override fun setUpModule() {
     runWriteAction {
       myModule = createMainModule()
-      moduleContentRoot = myModule.moduleFile!!.parent
+      moduleContentRoot = getOrCreateProjectBaseDir()
       myModule.addContentRoot(moduleContentRoot)
     }
   }

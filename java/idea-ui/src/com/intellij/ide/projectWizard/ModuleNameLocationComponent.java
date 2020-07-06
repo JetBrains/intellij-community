@@ -175,11 +175,11 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
       setImlFileLocation(namePathComponent.getPath());
     }
     else {
-      final Project project = myWizardContext.getProject();
+      Project project = myWizardContext.getProject();
       assert project != null;
-      VirtualFile baseDir = project.getBaseDir();
-      if (baseDir != null) { //e.g. was deleted
-        final String baseDirPath = baseDir.getPath();
+      String baseDirPath = project.getBasePath();
+      //e.g. was deleted
+      if (baseDirPath != null) {
         String moduleName = ProjectWizardUtil.findNonExistingFileName(baseDirPath, myWizardContext.getDefaultModuleName(), "");
         String contentRoot = baseDirPath + "/" + moduleName;
         if (!Comparing.strEqual(project.getName(), myWizardContext.getProjectName()) &&
@@ -217,8 +217,8 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
   }
 
   private boolean validateModulePaths() throws ConfigurationException {
-    final String moduleName = getModuleName();
-    final String moduleFileDirectory = myModuleFileLocation.getText();
+    String moduleName = getModuleName();
+    String moduleFileDirectory = myModuleFileLocation.getText();
     if (moduleFileDirectory.isEmpty()) {
       throw new ConfigurationException("Enter module file location");
     }

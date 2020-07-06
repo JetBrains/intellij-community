@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -42,6 +41,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -138,7 +138,15 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
    * (note that not all platforms support highlighting).
    */
   public static void openFile(@NotNull File file) {
-    File parent = file.getAbsoluteFile().getParentFile();
+    openFile(file.toPath());
+  }
+
+  /**
+   * Opens a system file manager with given file's parent directory open and the file highlighted in it
+   * (note that not all platforms support highlighting).
+   */
+  public static void openFile(@NotNull Path file) {
+    Path parent = file.toAbsolutePath().getParent();
     if (parent != null) {
       doOpen(parent, file);
     }
@@ -151,12 +159,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
    * Opens a system file manager with given directory open in it.
    */
   public static void openDirectory(@NotNull File directory) {
-    doOpen(directory.getAbsoluteFile(), null);
+    doOpen(directory.toPath(), null);
   }
 
-  private static void doOpen(@NotNull File _dir, @Nullable File _toSelect) {
-    String dir = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_dir.getPath()));
-    String toSelect = _toSelect != null ? FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_toSelect.getPath())) : null;
+  private static void doOpen(@NotNull Path _dir, @Nullable Path _toSelect) {
+    String dir = _dir.toAbsolutePath().normalize().toString();
+    String toSelect = _toSelect != null ? _toSelect.toAbsolutePath().normalize().toString() : null;
     String fmApp;
 
     if (SystemInfo.isWindows) {

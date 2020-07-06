@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,9 +85,5 @@ public abstract class TestSourceBasedTestCase extends JavaProjectTestCase {
 
   protected final PsiDirectory getContentDirectory() {
     return getPsiManager().findDirectory(getContentRoot());
-  }
-
-  protected String getRootFiles() {
-    return " " + PathUtil.getFileName(myModule.getModuleFilePath()) + "\n";
   }
 }

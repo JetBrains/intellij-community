@@ -2,7 +2,6 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
@@ -63,17 +62,20 @@ public abstract class ModuleManager extends SimpleModificationTracker {
   }
 
   /**
+   * @deprecated Use {@link #loadModule(Path)}
+   */
+  @Deprecated
+  public abstract @NotNull Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists;
+
+  /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
    *
-   * @param filePath the path to load the module from.
+   * @param file the path to load the module from.
    * @return the module instance.
-   * @throws InvalidDataException        if the data in the .iml file is semantically incorrect.
    * @throws IOException                 if an I/O error occurred when loading the module file.
-   * @throws JDOMException               if the file contains invalid XML data.
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */
-  @NotNull
-  public abstract Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists;
+  public abstract @NotNull Module loadModule(@NotNull Path file) throws IOException, ModuleWithNameAlreadyExists;
 
   /**
    * Disposes of the specified module and removes it from the project.

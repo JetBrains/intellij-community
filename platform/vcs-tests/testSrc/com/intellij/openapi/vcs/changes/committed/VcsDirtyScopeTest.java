@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,7 +73,7 @@ public class VcsDirtyScopeTest extends FileBasedTest {
     mappings.add(new VcsDirectoryMapping(data.dir1.getPath(), another.getKeyInstanceMethod().getName()));
     myVcsManager.setDirectoryMappings(mappings);
 
-    myVcsManager.iterateVcsRoot(myProject.getBaseDir(), path -> {
+    myVcsManager.iterateVcsRoot(PlatformTestUtil.getOrCreateProjectBaseDir(myProject), path -> {
       Assert.assertFalse(String.format("data dir: %s - file: %s", data.dir1.getPath(), path.getVirtualFile().getPath()),
                          VfsUtilCore.isAncestor(data.dir1, path.getVirtualFile(), false));
       Assert.assertEquals(myVcsManager.getVcsFor(path), myVcs);
@@ -103,7 +103,7 @@ public class VcsDirtyScopeTest extends FileBasedTest {
 
   private Data createData() throws IOException {
     final Data data = new Data();
-    data.baseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(myProjectFixture.getProject());
+    data.baseDir = PlatformTestUtil.getOrCreateProjectBaseDir(myProjectFixture.getProject());
     final IOException[] exc = new IOException[1];
     final File ioFile = new File(data.baseDir.getPath());
     final File[] files = ioFile.listFiles();

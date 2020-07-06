@@ -58,7 +58,7 @@ public abstract class ImportFromSourcesTestCase extends HeavyPlatformTestCase {
 
   protected void importFromSources(File dir) {
     myRootDir = dir;
-    myProject = doCreateAndOpenProject(getProjectDirOrFile());
+    myProject = doCreateAndOpenProject();
     myBuilder.setBaseProjectPath(dir.getAbsolutePath());
     List<DetectedRootData> list = RootDetectionProcessor.detectRoots(dir);
     MultiMap<ProjectStructureDetector, DetectedProjectRoot> map = RootDetectionProcessor.createRootsMap(list);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -51,7 +51,7 @@ public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
   }
 
   public void testNotScope() {
-    VirtualFile moduleRoot = getTempDir().createTempVDir();
+    VirtualFile moduleRoot = getTempDir().createVirtualDir();
     ModuleRootModificationUtil.addContentRoot(getModule(), moduleRoot.getPath());
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
@@ -71,7 +71,7 @@ public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
     assertFalse(notAllScope.contains(moduleRoot));
   }
 
-  public void testIntersectionPreservesOrderInCaseClientsWantToPutCheaperChecksFirst() throws IOException {
+  public void testIntersectionPreservesOrderInCaseClientsWantToPutCheaperChecksFirst() {
     AtomicInteger targetCalled = new AtomicInteger();
     GlobalSearchScope alwaysTrue = new DelegatingGlobalSearchScope(new EverythingGlobalScope()) {
       @Override
@@ -88,8 +88,8 @@ public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
     };
     GlobalSearchScope trueIntersection = target.intersectWith(alwaysTrue);
 
-    VirtualFile file1 = getVirtualFile(createTempFile("file1", ""));
-    VirtualFile file2 = getVirtualFile(createTempFile("file2", ""));
+    VirtualFile file1 = getTempDir().createVirtualFile("file1");
+    VirtualFile file2 = getTempDir().createVirtualFile("file2");
 
     assertTrue(trueIntersection.contains(file2));
     assertEquals(1, targetCalled.get());
@@ -111,10 +111,10 @@ public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
   }
 
   public void testUnionWithEmptyScopeMustNotAffectCompare() {
-    VirtualFile moduleRoot = getTempDir().createTempVDir();
+    VirtualFile moduleRoot = getTempDir().createVirtualDir();
     assertNotNull(moduleRoot);
     PsiTestUtil.addSourceRoot(getModule(), moduleRoot);
-    VirtualFile moduleRoot2 = getTempDir().createTempVDir();
+    VirtualFile moduleRoot2 = getTempDir().createVirtualDir();
     assertNotNull(moduleRoot2);
     PsiTestUtil.addSourceRoot(getModule(), moduleRoot2);
 

@@ -70,13 +70,14 @@ public final class PsiTestUtil {
     return vDir;
   }
 
-  @NotNull
-  public static VirtualFile createTestProjectStructure(@NotNull String tempName,
-                                                       @Nullable Module module,
-                                                       String rootPath,
-                                                       @NotNull Collection<Path> filesToDelete,
-                                                       boolean addProjectRoots) {
-    return HeavyTestHelper.createTestProjectStructure(tempName, module, rootPath, filesToDelete, addProjectRoots);
+  public static @NotNull VirtualFile createTestProjectStructure(@NotNull String tempName,
+                                                                @Nullable Module module,
+                                                                String rootPath,
+                                                                @NotNull Collection<Path> filesToDelete,
+                                                                boolean addProjectRoots) {
+    Path dir = HeavyTestHelper.createTempDirectoryForTempDirTestFixture(null, tempName);
+    filesToDelete.add(dir);
+    return HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, addProjectRoots);
   }
 
   public static void removeAllRoots(@NotNull Module module, Sdk jdk) {
@@ -143,7 +144,6 @@ public final class PsiTestUtil {
         if (entry instanceof ContentEntryImpl) {
           Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
         }
-
         return entry;
       }
     }

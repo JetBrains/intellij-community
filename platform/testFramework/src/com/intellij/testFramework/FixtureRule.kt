@@ -368,7 +368,7 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
     tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = false)
   }
   else {
-    val dir = tempDirManager.newVirtualDirectory()
+    val dir = tempDirManager.createVirtualDir()
     withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
       runNonUndoableWriteAction(dir) {
         projectCreator(dir)

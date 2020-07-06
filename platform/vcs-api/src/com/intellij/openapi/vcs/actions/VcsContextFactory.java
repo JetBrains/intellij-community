@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public interface VcsContextFactory {
-
   @NotNull
   VcsContext createCachedContextOn(@NotNull AnActionEvent event);
 
@@ -99,7 +98,7 @@ public interface VcsContextFactory {
     }
 
     public static VcsContextFactory getInstance() {
-      return ServiceManager.getService(VcsContextFactory.class);
+      return ApplicationManager.getApplication().getService(VcsContextFactory.class);
     }
   }
 }

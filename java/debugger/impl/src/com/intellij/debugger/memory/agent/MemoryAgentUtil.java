@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.agent;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -211,20 +211,19 @@ public class MemoryAgentUtil {
     return Bitness.x32.equals(versionInfo.bitness) ? AgentExtractor.AgentLibraryType.WINDOWS32 : AgentExtractor.AgentLibraryType.WINDOWS64;
   }
 
-  @NotNull
-  private static File getAgentDirectory() {
+  private static @NotNull Path getAgentDirectory() {
     String agentDirectory = System.getProperty(MEMORY_AGENT_EXTRACT_DIRECTORY);
     if (agentDirectory != null) {
       File file = new File(agentDirectory);
       if (file.exists() || file.mkdirs()) {
-        return file;
+        return file.toPath();
       }
 
       LOG.info("Directory specified in property \"" + MEMORY_AGENT_EXTRACT_DIRECTORY +
                "\" not found. Default tmp directory will be used");
     }
 
-    return new File(FileUtil.getTempDirectory());
+    return Paths.get(FileUtil.getTempDirectory());
   }
 
   /**

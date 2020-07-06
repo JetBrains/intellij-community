@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -113,13 +113,11 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return myCreatedProject;
   }
 
-  @Nullable
-  protected Module createModuleFromTemplate(String group, String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
+  protected @Nullable Module createModuleFromTemplate(String group, String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
     return createModuleFromTemplate(group, name, getProject(), adjuster);
   }
 
-  @Nullable
-  protected Module createModuleFromTemplate(String group, String name, @NotNull Project project, @Nullable Consumer<? super Step> adjuster)
+  protected @Nullable Module createModuleFromTemplate(String group, String name, @NotNull Project project, @Nullable Consumer<? super Step> adjuster)
     throws IOException {
     runWizard(group, name, project, adjuster);
     return createModuleFromWizard(project);
@@ -130,9 +128,9 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   private void runWizard(@NotNull String group,
-                         @Nullable final String name,
+                         @Nullable String name,
                          @Nullable Project project,
-                         @Nullable final Consumer<? super Step> adjuster) throws IOException {
+                         @Nullable Consumer<? super Step> adjuster) throws IOException {
     createWizard(project);
     ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
     if (!step.setSelectedTemplate(group, name)) {
@@ -144,7 +142,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         ((ChooseTemplateStep)step1).setSelectedTemplate(name);
       }
       if (adjuster != null) {
-        adjuster.consume(step1);
+        adjuster.accept(step1);
       }
     });
   }
@@ -156,7 +154,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   private static class CancelWizardException extends RuntimeException {
   }
 
-  private void runWizard(@Nullable java.util.function.Consumer<? super Step> adjuster) {
+  private void runWizard(@Nullable Consumer<? super Step> adjuster) {
     while (true) {
       ModuleWizardStep currentStep = myWizard.getCurrentStepObject();
       if (adjuster != null) {
@@ -188,7 +186,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }
 
-  protected Project createProject(java.util.function.Consumer<? super Step> adjuster) throws IOException {
+  protected Project createProject(Consumer<? super Step> adjuster) throws IOException {
     createWizard(null);
     runWizard(adjuster);
     myCreatedProject = NewProjectUtil.createFromWizard(myWizard);
@@ -217,7 +215,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return importFrom(path, getProject(), null, provider);
   }
 
-  protected Module importProjectFrom(String path, java.util.function.Consumer<? super Step> adjuster, ProjectImportProvider... providers) {
+  protected Module importProjectFrom(String path, Consumer<? super Step> adjuster, ProjectImportProvider... providers) {
     Module module = importFrom(path, null, adjuster, providers);
     if (module != null) {
       myCreatedProject = module.getProject();
@@ -227,12 +225,12 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   private Module importFrom(String path,
                             @Nullable Project project,
-                            java.util.function.Consumer<? super Step> adjuster,
+                            Consumer<? super Step> adjuster,
                             ProjectImportProvider... providers) {
     return computeInWriteSafeContext(() -> doImportModule(path, project, adjuster, providers));
   }
 
-  private Module doImportModule(String path, @Nullable Project project, java.util.function.Consumer<? super Step> adjuster, ProjectImportProvider[] providers) {
+  private Module doImportModule(String path, @Nullable Project project, Consumer<? super Step> adjuster, ProjectImportProvider[] providers) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
     assertTrue(providers[0].canImport(file, project));

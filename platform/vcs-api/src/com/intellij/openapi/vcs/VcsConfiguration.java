@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
@@ -21,16 +21,14 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-@State(
-  name = "VcsManagerConfiguration",
-  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-)
+@State(name = "VcsManagerConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
   private static final Logger LOG = Logger.getInstance(VcsConfiguration.class);
   public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
@@ -296,8 +294,10 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     return DEFAULT_PATCH_EXTENSION;
   }
 
-  public void acceptLastCreatedPatchName(final String string) {
-    if (StringUtil.isEmptyOrSpaces(string)) return;
+  public void acceptLastCreatedPatchName(@Nullable String string) {
+    if (StringUtil.isEmptyOrSpaces(string)) {
+      return;
+    }
     if (FileUtilRt.extensionEquals(string, DIFF)) {
       DEFAULT_PATCH_EXTENSION = DIFF;
     }

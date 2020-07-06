@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.history.integration.patches;
 
 import com.intellij.openapi.diff.impl.patch.FilePatch;
@@ -12,6 +11,7 @@ import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,6 +20,6 @@ public final class PatchCreator {
     throws IOException, VcsException {
     String basePath = Objects.requireNonNull(p.getBasePath());
     List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(p, changes, basePath, isReverse);
-    PatchWriter.writePatches(p, filePath, basePath, patches, commitContext, Charset.defaultCharset());
+    PatchWriter.writePatches(p, Paths.get(filePath), basePath, patches, commitContext, Charset.defaultCharset());
   }
 }

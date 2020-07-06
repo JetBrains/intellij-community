@@ -10,7 +10,7 @@ import com.intellij.util.ui.UIUtil
 
 class AdditionalLibraryRootsProviderRegistrationTest : HeavyPlatformTestCase() {
   fun `test register and unregister provider`() {
-    val file = getVirtualFile(createTempFile("a.txt", ""))
+    val file = tempDir.createVirtualFile("a.txt")
     val index = ProjectFileIndex.getInstance(myProject)
     assertFalse(index.isInLibrarySource(file))
     val disposable = Disposer.newDisposable()

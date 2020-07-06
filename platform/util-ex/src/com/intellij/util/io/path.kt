@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
 import java.io.File
@@ -10,9 +11,12 @@ import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.channels.Channels
+import java.nio.charset.Charset
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.FileTime
+import java.util.function.Predicate
 import kotlin.math.min
 
 operator fun Path.div(x: String): Path = resolve(x)
@@ -121,6 +125,13 @@ private fun deleteFile(file: Path) {
     Files.deleteIfExists(file)
   }
   catch (e: IOException) {
+    if (SystemInfoRt.isWindows && e is AccessDeniedException) {
+      val view = Files.getFileAttributeView(file, DosFileAttributeView::class.java)
+      if (view != null && view.readAttributes().isReadOnly) {
+        view.setReadOnly(false)
+      }
+    }
+
     // repeated delete is required for bad OS like Windows
     FileUtilRt.doIOOperation(FileUtilRt.RepeatableIOOperation<Boolean, IOException> { lastAttempt ->
       try {
@@ -210,7 +221,6 @@ fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
 }
 
 @JvmOverloads
-@Throws(IOException::class)
 fun Path.write(data: CharSequence, createParentDirs: Boolean = true): Path {
   if (data is String) {
     if (createParentDirs) {
@@ -221,6 +231,11 @@ fun Path.write(data: CharSequence, createParentDirs: Boolean = true): Path {
   else {
     write(Charsets.UTF_8.encode(CharBuffer.wrap(data)), createParentDirs)
   }
+  return this
+}
+
+fun Path.write(data: CharSequence, charset: Charset): Path {
+  write(charset.encode(CharBuffer.wrap(data)), createParentDirs = true)
   return this
 }
 
@@ -292,13 +307,13 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
 private val illegalChars = HashSet(listOf('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':'))
 
 // https://github.com/parshap/node-sanitize-filename/blob/master/index.js
-fun sanitizeFileName(name: String, replacement: String? = "_", truncateIfNeeded: Boolean = true, isSpaceAllowed: Boolean = true): String {
+fun sanitizeFileName(name: String, replacement: String? = "_", truncateIfNeeded: Boolean = true, extraIllegalChars: Predicate<Char>? = null): String {
   var result: StringBuilder? = null
   var last = 0
   val length = name.length
   for (i in 0 until length) {
     val c = name[i]
-    if (!illegalChars.contains(c) && !c.isISOControl() && (isSpaceAllowed || c != ' ')) {
+    if (!illegalChars.contains(c) && !c.isISOControl() && (extraIllegalChars == null || !extraIllegalChars.test(c))) {
       continue
     }
 

@@ -135,7 +135,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
   }
 
   protected static ArtifactRepositoryManager getRepoManager() {
-    final File localRepo = new File(SystemProperties.getUserHome(), ".m2/repository");
+    File localRepo = new File(SystemProperties.getUserHome(), ".m2/repository");
     return new ArtifactRepositoryManager(
       localRepo,
       Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "https://repo.labs.intellij.net/repo1")),
@@ -148,7 +148,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     );
   }
 
-  public static class ProcessOutput {
+  public static final class ProcessOutput {
     public List<String> out = new ArrayList<>();
     public List<String> err = new ArrayList<>();
     public List<String> sys = new ArrayList<>();

@@ -34,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.zip.JBZipFile;
 import com.intellij.util.messages.MessageBusConnection;
@@ -46,6 +47,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -550,8 +553,11 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
                 new VFileDeleteEvent(this, testTxt, false));
   }
 
-  @NotNull
-  private static VirtualFile find(File file) {
+  private static @NotNull VirtualFile find(@NotNull Path file) {
+    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file));
+  }
+
+  private static @NotNull VirtualFile find(@NotNull File file) {
     return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
@@ -681,16 +687,15 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
 
   public void testRenameInBackgroundDoesntLeadToDuplicateFilesError() throws IOException {
     IoTestUtil.assumeWindows();
-    File temp = createTempDir("", false);
-    File file = new File(temp, "rename.txt");
-    FileUtil.createParentDirs(file);
-    FileUtil.writeToFile(file, "x");
+    Path temp = getTempDir().newPath();
+    Path file = temp.resolve("rename.txt");
+    PathKt.write(file, "x");
     VirtualFile vfile = find(file);
-    VirtualDirectoryImpl vtemp = (VirtualDirectoryImpl)vfile.getParent();
-    assertFalse(vtemp.allChildrenLoaded());
-    VfsUtil.markDirty(true, false, vtemp);
-    assertTrue(file.renameTo(new File(temp, file.getName().toUpperCase())));
-    VirtualFile[] newChildren = vtemp.getChildren();
+    VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)vfile.getParent();
+    assertFalse(vTemp.allChildrenLoaded());
+    VfsUtil.markDirty(true, false, vTemp);
+    Files.move(file, temp.resolveSibling(file.getFileName().toString().toUpperCase()));
+    VirtualFile[] newChildren = vTemp.getChildren();
     assertOneElement(newChildren);
   }
 
@@ -733,7 +738,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
 
     for (int i=0; i<10; i++) {
-      File temp = createTempDir("", false);
+      File temp = getTempDir().createDir().toFile();
       File file = new File(temp, "file.txt");
       FileUtil.createParentDirs(file);
       FileUtil.writeToFile(file, "x");
@@ -747,7 +752,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
       List<? extends ChildInfo> children2 = f2.get();
       int[] nameIds1 = children1.stream().mapToInt(n -> n.getNameId()).toArray();
       int[] nameIds2 = children2.stream().mapToInt(n -> n.getNameId()).toArray();
-      
+
       // there can be one or two children, depending on whether the VFS refreshed in time or not.
       // but in any case, there must not be duplicate ids (i.e. files with the same name but different getId())
       for (int i1 = 0; i1 < nameIds1.length; i1++) {
@@ -765,7 +770,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
   public void testMustNotDuplicateIdsOnRenameWithCaseChanged() throws IOException {
     PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
 
-    File temp = createTempDir("", false);
+    File temp = getTempDir().createDir().toFile();
     File file = new File(temp, "file.txt");
     FileUtil.createParentDirs(file);
     FileUtil.writeToFile(file, "x");
@@ -807,8 +812,8 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, JarFileSystemTestWrapper.class.getClassLoader());
 
     try {
-      File testDir = createTempDir("zip-test", false);
-      File generationDir = createTempDir("generation", false);
+      File testDir = getTempDir().createDir().toFile();
+      File generationDir = getTempDir().createDir().toFile();
 
       String jarName = "test.jar";
       String entryName = "Some.java";

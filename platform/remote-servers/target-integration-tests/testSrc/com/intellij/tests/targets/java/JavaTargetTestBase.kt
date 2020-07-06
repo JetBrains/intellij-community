@@ -79,14 +79,14 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
 
   @Test
   fun `test can read file at target`(): Unit = runBlocking {
-    val cwd = tempDir.createTempDir()
+    val cwd = tempDir.createDir()
     val executor = DefaultRunExecutor.getRunExecutorInstance()
     val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       ExecutionEnvironmentBuilder(project, executor)
         .runProfile(
           ApplicationConfiguration("CatRunConfiguration", project).also { conf ->
             conf.setModule(module)
-            conf.workingDirectory = cwd.absolutePath
+            conf.workingDirectory = cwd.toString()
             conf.mainClassName = "Cat"
             conf.programParameters = targetFilePath
             conf.defaultTargetName = targetName
@@ -115,14 +115,14 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
 
   @Test
   fun `test java debugger`(): Unit = runBlocking {
-    val cwd = tempDir.createTempDir()
+    val cwd = tempDir.createDir()
     val executor = DefaultDebugExecutor.getDebugExecutorInstance()
     val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       ExecutionEnvironmentBuilder(project, executor)
         .runProfile(
           ApplicationConfiguration("CatRunConfiguration", project).also { conf ->
             conf.setModule(module)
-            conf.workingDirectory = cwd.absolutePath
+            conf.workingDirectory = cwd.toString()
             conf.mainClassName = "Cat"
             conf.programParameters = targetFilePath
             conf.defaultTargetName = targetName
