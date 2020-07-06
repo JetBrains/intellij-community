@@ -170,6 +170,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
         myStateDelegates = ArrayUtil.append(stateDelegates, delegate, ProgressIndicatorEx.class);
       }
     }
+    onProgressChange();
   }
 
   public final void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
@@ -178,6 +179,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
       if (delegates == null) return;
       myStateDelegates = ArrayUtil.remove(delegates, delegate);
     }
+    onProgressChange();
   }
 
   protected final void removeAllStateDelegates() {

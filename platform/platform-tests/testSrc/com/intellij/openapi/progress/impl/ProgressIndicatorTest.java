@@ -926,5 +926,12 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     indicator.setIndeterminate(false);
     indicator.setFraction(1);
     assertEquals(1.0, ui.getFraction());
+
+    try {
+      new RelayUiToDelegateIndicator(ui).addStateDelegate(new ProgressIndicatorBase());
+      fail("Must not allow to call addStateDelegate()");
+    }
+    catch (IllegalStateException ignored) {
+    }
   }
 }
