@@ -40,7 +40,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * @author Eugene Zhuravlev
+ * Downloads missing Maven repository libraries on which a module depends. IDE should download them automatically when the project is opened,
+ * so this builder does nothing in normal cases. However it's needed when the build process is started in standalone mode (not from IDE) or
+ * if build is triggered before IDE downloads all required dependencies.
  */
 public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   private static final Logger LOG = Logger.getInstance(DependencyResolvingBuilder.class);
