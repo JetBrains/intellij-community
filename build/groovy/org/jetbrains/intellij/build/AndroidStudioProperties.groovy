@@ -444,11 +444,15 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       @Override
       @CompileDynamic
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+        def root = "$context.paths.communityHome/../.."
+        context.ant.copy(todir: "$targetDirectory/bin/clang/win") {
+          fileset(dir: "$root/prebuilts/tools/clion/bin/clang/win")
+        }
+
         if (context.options.studioSdk) {
           return
         }
 
-        def root = "$context.paths.communityHome/../.."
         context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
           fileset(dir: "$root/prebuilts/tools/windows-x86_64/offline-sdk")
         }
@@ -499,10 +503,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
             exclude(name: "win/BUILD")
           }
         }
-
-        context.ant.copy(todir: "$targetDirectory/bin/clang/win") {
-          fileset(dir: "$root/prebuilts/tools/clion/bin/clang/win")
-        }
       }
     }
   }
@@ -522,11 +522,18 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       @Override
       @CompileDynamic
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+        def root = "$context.paths.communityHome/../.."
+
+        context.ant.copy(todir: "$targetDirectory/bin/clang/linux") {
+          fileset(dir: "$root/prebuilts/tools/clion/bin/clang/linux")
+        }
+        extraExecutables.add("bin/clang/linux/clangd")
+        extraExecutables.add("bin/clang/linux/clang-tidy")
+
         if (context.options.studioSdk) {
           return
         }
 
-        def root = "$context.paths.communityHome/../.."
         context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
           fileset(dir: "$root/prebuilts/tools/linux-x86_64/offline-sdk")
         }
@@ -578,12 +585,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
             exclude(name: "linux/BUILD")
           }
         }
-
-        context.ant.copy(todir: "$targetDirectory/bin/clang/linux") {
-          fileset(dir: "$root/prebuilts/tools/clion/bin/clang/linux")
-        }
-        extraExecutables.add("bin/clang/linux/clangd")
-        extraExecutables.add("bin/clang/linux/clang-tidy")
       }
     }
   }
@@ -619,6 +620,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       context.ant.replace(file: "$targetDirectory/_codesign/filelist") {
         replaceFilter(token: "@@bundle@@", value: bundleName)
       }
+
+      context.ant.copy(todir: "$targetDirectory/bin/clang/mac") {
+        fileset(dir: "$root/prebuilts/tools/clion/bin/clang/mac")
+      }
+      extraExecutables.add("bin/clang/mac/clangd")
+      extraExecutables.add("bin/clang/mac/clang-tidy")
 
       if (context.options.studioSdk) {
         return
@@ -657,12 +664,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
           exclude(name: "mac/BUILD")
         }
       }
-
-      context.ant.copy(todir: "$targetDirectory/bin/clang/mac") {
-        fileset(dir: "$root/prebuilts/tools/clion/bin/clang/mac")
-      }
-      extraExecutables.add("bin/clang/mac/clangd")
-      extraExecutables.add("bin/clang/mac/clang-tidy")
     }
   }
 
