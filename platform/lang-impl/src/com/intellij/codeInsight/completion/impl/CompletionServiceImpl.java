@@ -197,8 +197,6 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   }
 
   public static CompletionPhase getCompletionPhase() {
-    if (isForeignClientOnServer()) return CompletionPhase.NoCompletion;
-
     return ourPhase;
   }
 
