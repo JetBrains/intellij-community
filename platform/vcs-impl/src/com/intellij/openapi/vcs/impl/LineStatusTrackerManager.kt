@@ -546,17 +546,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
 
     private fun handleCanceled(document: Document) {
-      val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
-
-      val state = synchronized(LOCK) {
-        fileStatesAwaitingRefresh.remove(virtualFile) ?: return
-      }
-
-      val tracker = getLineStatusTracker(document)
-      if (tracker is ChangelistsLocalLineStatusTracker) {
-        tracker.restoreState(state)
-        log("Loading canceled: state restored", virtualFile)
-      }
+      restorePendingTrackerState(document)
     }
 
     private fun handleError(document: Document) {
@@ -590,12 +580,20 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       tracker.setBaseRevision(refreshData.text)
       log("Loading finished: success", virtualFile)
 
+      restorePendingTrackerState(document)
+    }
+
+    private fun restorePendingTrackerState(document: Document) {
+      val tracker = getLineStatusTracker(document)
       if (tracker is ChangelistsLocalLineStatusTracker) {
-        val state = fileStatesAwaitingRefresh.remove(tracker.virtualFile)
-        if (state != null) {
-          tracker.restoreState(state)
-          log("Loading finished: state restored", virtualFile)
+        val virtualFile = tracker.virtualFile
+
+        val state = synchronized(LOCK) {
+          fileStatesAwaitingRefresh.remove(virtualFile) ?: return
         }
+
+        val success = tracker.restoreState(state)
+        log("Pending state restored. success - $success", virtualFile)
       }
     }
   }
@@ -956,59 +954,29 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
           if (!canCreatePartialTrackerFor(virtualFile)) continue
 
-          val oldData = trackers[document]
-          val oldTracker = oldData?.tracker
-          if (oldTracker is ChangelistsLocalLineStatusTracker) {
-            val stateRestored = state is ChangelistsLocalLineStatusTracker.FullState &&
-                                oldTracker.restoreState(state)
-            if (stateRestored) {
-              log("Tracker restore: reused, full restored", virtualFile)
-            }
-            else {
-              val isLoading = loader.hasRequest(RefreshRequest(document))
-              if (isLoading) {
-                fileStatesAwaitingRefresh.put(state.virtualFile, state)
-                log("Tracker restore: reused, restore scheduled", virtualFile)
-              }
-              else {
-                oldTracker.restoreState(state)
-                log("Tracker restore: reused, restored", virtualFile)
-              }
-            }
+          val oldTracker = trackers[document]?.tracker
+          if (oldTracker !is ChangelistsLocalLineStatusTracker) {
+            releaseTracker(document)
+            installTracker(virtualFile, document)
+          }
+
+          val tracker = trackers[document]?.tracker
+          if (tracker !is ChangelistsLocalLineStatusTracker) continue
+
+          val isLoading = loader.hasRequest(RefreshRequest(document))
+          if (isLoading) {
+            fileStatesAwaitingRefresh.put(state.virtualFile, state)
+            log("State restoration scheduled", virtualFile)
           }
           else {
-            val tracker = ChangelistsLocalLineStatusTracker.createTracker(project, document, virtualFile, getTrackingMode())
-
-            val data = TrackerData(tracker)
-            val replacedData = trackers.put(document, data)
-            LOG.assertTrue(replacedData == oldData)
-
-            if (oldTracker != null) {
-              eventDispatcher.multicaster.onTrackerRemoved(tracker)
-              unregisterTrackerInCLM(oldData)
-              oldTracker.release()
-              log("Tracker restore: removed existing", virtualFile)
-            }
-
-            registerTrackerInCLM(data)
-            refreshTracker(tracker)
-            eventDispatcher.multicaster.onTrackerAdded(tracker)
-
-            val stateRestored = state is ChangelistsLocalLineStatusTracker.FullState &&
-                                tracker.restoreState(state)
-            if (stateRestored) {
-              log("Tracker restore: created, full restored", virtualFile)
-            }
-            else {
-              fileStatesAwaitingRefresh.put(state.virtualFile, state)
-              log("Tracker restore: created, restore scheduled", virtualFile)
-            }
+            val success = tracker.restoreState(state)
+            log("State restored. success - $success", virtualFile)
           }
         }
 
         loader.addAfterUpdateRunnable(Runnable {
           synchronized(LOCK) {
-            log("Tracker restore: finished", null)
+            log("State restoration finished", null)
             fileStatesAwaitingRefresh.clear()
           }
         })
