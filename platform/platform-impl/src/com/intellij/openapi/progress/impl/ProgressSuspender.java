@@ -128,14 +128,14 @@ public final class ProgressSuspender implements AutoCloseable {
   }
 
   private boolean freezeIfNeeded(ProgressIndicator current) {
-    if (isCurrentThreadHoldingKnownLocks()) {
-      return false;
-    }
-
     if (current == null) {
       current = ProgressIndicatorProvider.getGlobalProgressIndicator();
     }
     if (current == null || !myProgresses.contains(current)) {
+      return false;
+    }
+
+    if (isCurrentThreadHoldingKnownLocks()) {
       return false;
     }
 
