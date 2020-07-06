@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFileManagerListener
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
@@ -59,7 +58,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
       return@Runnable
     }
 
-    val projectsToReload = CollectionFactory.createSmallMemoryFootprintSet<Project>()
+    val projectsToReload = HashSet<Project>()
     processOpenedProjects { project ->
       val changedSchemes = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
       val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)

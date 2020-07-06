@@ -4,7 +4,6 @@ package com.intellij.openapi.project.impl;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -38,11 +37,6 @@ public abstract class ProjectImpl extends ComponentManagerImpl implements Projec
   public boolean isOpen() {
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();
     return projectManager != null && projectManager.isProjectOpened(this);
-  }
-
-  @Override
-  public boolean isInitialized() {
-    return getComponentCreated() && !isDisposed() && isOpen() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
   }
 
   @Override

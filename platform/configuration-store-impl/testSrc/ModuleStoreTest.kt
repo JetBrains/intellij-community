@@ -110,21 +110,16 @@ class ModuleStoreTest {
     val nameToCount = Object2IntOpenHashMap<String>()
     val root = tempDirManager.newPath(refreshVfs = true)
 
-    suspend fun Module.addContentRoot() {
-      val moduleName = name
-      var batchUpdateCount = 0
-      nameToCount.put(moduleName, batchUpdateCount)
-
-      messageBus.connect().subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
+    fun addContentRoot(module: Module) {
+      val moduleName = module.name
+      module.project.messageBus.connect(module).subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
         override fun onBatchUpdateStarted() {
           nameToCount.put(moduleName, ++batchUpdateCount)
         }
       })
 
-      //
-      ModuleRootModificationUtil.addContentRoot(this, root.resolve(moduleName).systemIndependentPath)
-      assertThat(contentRootUrls).hasSize(1)
-      project.stateStore.save()
+      ModuleRootModificationUtil.addContentRoot(module, root.resolve(moduleName).systemIndependentPath)
+      assertThat(module.contentRootUrls).hasSize(1)
     }
 
     fun removeContentRoot(module: Module) {
@@ -133,7 +128,7 @@ class ModuleStoreTest {
 
       val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(moduleFile)!!
       val oldText = moduleFile.readText()
-      val newText = oldText.replace("<content url=\"file://\$MODULE_DIR$/${module.name}\" />\n", "")
+      val newText = oldText.replace("""<content url="file://${"$"}MODULE_DIR$/${module.name}" />""", "")
       assertThat(oldText).isNotEqualTo(newText)
       runWriteAction {
         virtualFile.setBinaryContent(newText.toByteArray())
@@ -154,8 +149,11 @@ class ModuleStoreTest {
       }
     })
 
-    m1.addContentRoot()
-    m2.addContentRoot()
+    addContentRoot(m1)
+    addContentRoot(m2)
+    runBlocking {
+      projectRule.project.stateStore.save()
+    }
 
     removeContentRoot(m1)
     removeContentRoot(m2)

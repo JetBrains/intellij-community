@@ -3,7 +3,7 @@ package com.intellij.testFramework
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.project.TestProjectManager
+import com.intellij.openapi.project.impl.ProjectExImpl
 import com.intellij.util.ThreeState
 
 /**
@@ -34,7 +34,7 @@ class OpenProjectTaskBuilder {
 
     return options.copy(beforeInit = { project ->
       if (!runPostStartUpActivities) {
-        project.putUserData(TestProjectManager.RUN_START_UP_ACTIVITIES, false)
+        project.putUserData(ProjectExImpl.RUN_START_UP_ACTIVITIES, false)
       }
       if (componentStoreLoadingEnabled != ThreeState.UNSURE) {
         project.putUserData(IProjectStore.COMPONENT_STORE_LOADING_ENABLED, componentStoreLoadingEnabled.toBoolean())
@@ -64,7 +64,7 @@ fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true): Open
                              useDefaultProjectAsTemplate = false)
   if (!runPostStartUpActivities) {
     task = task.copy(beforeInit = {
-      it.putUserData(TestProjectManager.RUN_START_UP_ACTIVITIES, false)
+      it.putUserData(ProjectExImpl.RUN_START_UP_ACTIVITIES, false)
     })
   }
   return task

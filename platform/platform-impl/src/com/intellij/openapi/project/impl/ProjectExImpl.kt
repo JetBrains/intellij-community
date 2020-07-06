@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.idea.preloadServices
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -10,6 +11,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -38,6 +40,11 @@ private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DIS
 
 @ApiStatus.Internal
 open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(ApplicationManager.getApplication() as ComponentManagerImpl), ProjectStoreOwner {
+  companion object {
+    @ApiStatus.Internal
+    val RUN_START_UP_ACTIVITIES = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
+  }
+
   private val earlyDisposable = AtomicReference<Disposable?>(Disposer.newDisposable())
 
   @Volatile
@@ -64,6 +71,20 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     //noinspection TestOnlyProblems
     // light project may be changed later during test, so we need to remember its initial state
     isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
+  }
+
+  override fun isInitialized(): Boolean {
+    val containerState = containerState.get()
+    if ((containerState < ContainerState.COMPONENT_CREATED || containerState >= ContainerState.DISPOSE_IN_PROGRESS) || isTemporarilyDisposed || !isOpen) {
+      return false
+    }
+    else if (ApplicationManager.getApplication().isUnitTestMode && getUserData(RUN_START_UP_ACTIVITIES) == false) {
+      // if test asks to not run RUN_START_UP_ACTIVITIES, it means "ignore start-up activities", but project considered as initialized
+      return true
+    }
+    else {
+      return (serviceIfCreated<StartupManager>() as StartupManagerEx?)?.startupActivityPassed() == true
+    }
   }
 
   override fun getName(): String {
@@ -140,8 +161,9 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     val app = ApplicationManager.getApplication()
 
     // for light project preload only services that are essential (await means "project component loading activity is completed only when all such services are completed")
-    val servicePreloadingFuture = if (preloadServices) preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this, activityPrefix = "project ",
-                                              onlyIfAwait = isLight) else null
+    val servicePreloadingFuture = if (preloadServices) preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this,
+                                                                       activityPrefix = "project ",
+                                                                       onlyIfAwait = isLight) else null
     createComponents(indicator)
     servicePreloadingFuture?.join()
 

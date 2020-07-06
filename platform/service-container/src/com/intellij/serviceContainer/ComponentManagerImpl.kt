@@ -51,7 +51,7 @@ internal val LOG = logger<ComponentManagerImpl>()
 abstract class ComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManagerImpl?,
                                                               setExtensionsRootArea: Boolean = parent == null) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase() {
   protected enum class ContainerState {
-    ACTIVE, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
+    PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
 
   companion object {
@@ -82,7 +82,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   internal val picoContainer: DefaultPicoContainer = DefaultPicoContainer(parent?.picoContainer)
-  private val containerState = AtomicReference(ContainerState.ACTIVE)
+  protected val containerState = AtomicReference(ContainerState.PRE_INIT)
 
   protected val containerStateName: String
     get() = containerState.get().name
@@ -102,9 +102,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   @Suppress("LeakingThis")
   internal val serviceParentDisposable = Disposer.newDisposable("services of ${javaClass.name}@${System.identityHashCode(this)}")
-
-  var componentCreated = false
-    private set
 
   private val lightServices: ConcurrentMap<Class<*>, Any>? = when {
     parent == null || parent.picoContainer.parent == null -> ConcurrentHashMap()
@@ -242,7 +239,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   protected fun createComponents(indicator: ProgressIndicator?) {
-    LOG.assertTrue(!componentCreated)
+    LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
 
     if (indicator != null) {
       indicator.isIndeterminate = false
@@ -261,7 +258,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     activity?.end()
 
-    componentCreated = true
+    LOG.assertTrue(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
   @TestOnly
@@ -843,7 +840,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     ApplicationManager.getApplication().assertIsWriteThread()
 
-    if (!containerState.compareAndSet(ContainerState.ACTIVE, ContainerState.DISPOSE_IN_PROGRESS)) {
+    if (!containerState.compareAndSet(ContainerState.COMPONENT_CREATED, ContainerState.DISPOSE_IN_PROGRESS) ||
+        !containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.DISPOSE_IN_PROGRESS)) {
       // disposed in a recommended way using ProjectManager
       return
     }

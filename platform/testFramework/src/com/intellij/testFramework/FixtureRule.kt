@@ -88,9 +88,9 @@ class ProjectTrackingRule : TestRule {
  * Encouraged using as a ClassRule to avoid project creating for each test.
  * Project created on request, so, could be used as a bare (only application).
  */
-class ProjectRule(private val runPostStartUpActivities: Boolean = true,
-                  private val preloadServices: Boolean = true,
-                  private val projectDescriptor: LightProjectDescriptor = LightProjectDescriptor()) : ApplicationRule() {
+class ProjectRule(private val runPostStartUpActivities: Boolean = false,
+                  private val preloadServices: Boolean = false,
+                  private val projectDescriptor: LightProjectDescriptor? = null) : ApplicationRule() {
   companion object {
     @JvmStatic
     fun withoutRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = false)
@@ -170,7 +170,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = true,
       var result = sharedModule
       if (result == null) {
         runInEdtAndWait {
-          projectDescriptor.setUpProject(project, object : LightProjectDescriptor.SetupHandler {
+          (projectDescriptor ?: LightProjectDescriptor()).setUpProject(project, object : LightProjectDescriptor.SetupHandler {
             override fun moduleCreated(module: Module) {
               result = module
               sharedModule = module

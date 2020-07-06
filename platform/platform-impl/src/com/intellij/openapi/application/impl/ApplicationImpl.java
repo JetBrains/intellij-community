@@ -1426,4 +1426,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   void disableEventsUntil(@NotNull Disposable disposable) {
     myDispatcher.neuterMultiCasterWhilePerformanceTestIsRunningUntil(disposable);
   }
+
+  @ApiStatus.Internal
+  public boolean getComponentCreated() {
+    return getContainerState().get().compareTo(ContainerState.COMPONENT_CREATED) >= 0;
+  }
 }
