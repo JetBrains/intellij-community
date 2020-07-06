@@ -392,8 +392,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
   @Override
   public void saveSettings() {
+    Window window = myDialog.getWindow();
+    if (!window.isShowing()) return;
     DimensionService.getInstance().setSize(SERVICE_KEY, myDialog.getSize(), myHelper.getProject() );
-    DimensionService.getInstance().setLocation(SERVICE_KEY, myDialog.getWindow().getLocationOnScreen(), myHelper.getProject() );
+    DimensionService.getInstance().setLocation(SERVICE_KEY, window.getLocationOnScreen(), myHelper.getProject() );
     FindSettings findSettings = FindSettings.getInstance();
     myScopeUI.applyTo(findSettings, mySelectedScope);
     myHelper.updateFindSettings();
