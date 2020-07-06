@@ -19,7 +19,6 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,7 +36,7 @@ public class PluginInstallOperation {
   private final PluginManagerMain.PluginEnabler myPluginEnabler;
   private final ProgressIndicator myIndicator;
   private boolean mySuccess = true;
-  private final Set<PluginNode> myDependant = new HashSet<>();
+  private final Set<PluginInstallCallbackData> myDependant = new HashSet<>();
   private boolean myAllowInstallWithoutRestart = false;
   private final List<PendingDynamicPluginInstall> myPendingDynamicPluginInstalls = new ArrayList<>();
   private boolean myRestartRequired = false;
@@ -87,7 +86,7 @@ public class PluginInstallOperation {
     return mySuccess;
   }
 
-  public Set<PluginNode> getInstalledDependentPlugins() {
+  public Set<PluginInstallCallbackData> getInstalledDependentPlugins() {
     return myDependant;
   }
 
@@ -160,16 +159,53 @@ public class PluginInstallOperation {
 
 
   private boolean prepareToInstall(PluginNode pluginNode, List<PluginId> pluginIds) throws IOException {
-    myDependant.add(pluginNode);
+    Ref<IdeaPluginDescriptor> toDisable = checkDependenciesAndReplacements(pluginNode, pluginIds);
+    if (toDisable == null) return false;
 
+    myShownErrors = false;
+
+    PluginDownloader downloader = PluginDownloader.createDownloader(pluginNode, pluginNode.getRepositoryName(), null);
+
+    IdeaPluginDescriptorImpl descriptor = downloader.prepareToInstallAndLoadDescriptor(myIndicator);
+    if (descriptor != null) {
+      boolean allowNoRestart = myAllowInstallWithoutRestart && DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor);
+      if (allowNoRestart) {
+        myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile(), descriptor));
+        InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
+        if (state != null) {
+          state.onPluginInstall(downloader.getDescriptor(), false, false);
+        }
+      }
+      else {
+        myRestartRequired = true;
+        synchronized (PluginInstaller.ourLock) {
+          downloader.install();
+        }
+      }
+      myDependant.add(new PluginInstallCallbackData(downloader.getFile(), descriptor, !allowNoRestart));
+      pluginNode.setStatus(PluginNode.Status.DOWNLOADED);
+      if (!toDisable.isNull()) {
+        myPluginEnabler.disablePlugins(Collections.singleton(toDisable.get()));
+      }
+    }
+    else {
+      myShownErrors = downloader.isShownErrors();
+      return false;
+    }
+
+    return true;
+  }
+
+  @Nullable
+  public Ref<IdeaPluginDescriptor> checkDependenciesAndReplacements(IdeaPluginDescriptor pluginNode, @Nullable List<PluginId> pluginIds) {
     // check for dependent plugins at first.
-    if (pluginNode.getDepends() != null && !pluginNode.getDepends().isEmpty()) {
+    List<IdeaPluginDependency> dependencies = pluginNode.getDependencies();
+    if (!dependencies.isEmpty()) {
       // prepare plugins list for install
-      final PluginId[] optionalDependentPluginIds = pluginNode.getOptionalDependentPluginIds();
       final List<PluginNode> depends = new ArrayList<>();
       final List<PluginNode> optionalDeps = new ArrayList<>();
-      for (int i = 0; i < pluginNode.getDepends().size(); i++) {
-        PluginId depPluginId = pluginNode.getDepends().get(i);
+      for (IdeaPluginDependency dependency : dependencies) {
+        PluginId depPluginId = dependency.getPluginId();
 
         if (PluginManagerCore.isModuleDependency(depPluginId)) {
           PluginId pluginIdByModule = PluginModulesHelper.getInstance().getMarketplacePluginIdByModule(depPluginId);
@@ -194,7 +230,7 @@ public class PluginInstallOperation {
         }
 
         if (depPluginDescriptor != null) {
-          if (ArrayUtil.indexOf(optionalDependentPluginIds, depPluginId) != -1) {
+          if (dependency.isOptional()) {
             optionalDeps.add(depPlugin);
           }
           else {
@@ -215,10 +251,10 @@ public class PluginInstallOperation {
           }, ModalityState.any());
         }
         catch (Exception e) {
-          return false;
+          return null;
         }
         if (!proceed[0] || !prepareToInstall(depends)) {
-          return false;
+          return null;
         }
       }
 
@@ -234,10 +270,10 @@ public class PluginInstallOperation {
           }, ModalityState.any());
         }
         catch (Exception e) {
-          return false;
+          return null;
         }
         if (proceed[0] && !prepareToInstall(optionalDeps)) {
-          return false;
+          return null;
         }
       }
     }
@@ -262,37 +298,7 @@ public class PluginInstallOperation {
         }, ModalityState.any());
       }
     }
-
-    myShownErrors = false;
-
-    PluginDownloader downloader = PluginDownloader.createDownloader(pluginNode, pluginNode.getRepositoryName(), null);
-
-    IdeaPluginDescriptorImpl descriptor = downloader.prepareToInstallAndLoadDescriptor(myIndicator);
-    if (descriptor != null) {
-      if (myAllowInstallWithoutRestart && DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
-        myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile(), descriptor));
-        InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
-        if (state != null) {
-          state.onPluginInstall(downloader.getDescriptor(), false, false);
-        }
-      }
-      else {
-        myRestartRequired = true;
-        synchronized (PluginInstaller.ourLock) {
-          downloader.install();
-        }
-      }
-      pluginNode.setStatus(PluginNode.Status.DOWNLOADED);
-      if (!toDisable.isNull()) {
-        myPluginEnabler.disablePlugins(Collections.singleton(toDisable.get()));
-      }
-    }
-    else {
-      myShownErrors = downloader.isShownErrors();
-      return false;
-    }
-
-    return true;
+    return toDisable;
   }
 
   @NotNull

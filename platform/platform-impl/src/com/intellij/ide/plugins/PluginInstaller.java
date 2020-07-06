@@ -25,8 +25,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -230,10 +230,10 @@ public final class PluginInstaller {
     PluginStateManager.addStateListener(listener);
   }
 
-  public static boolean install(@NotNull InstalledPluginsTableModel model,
-                                @NotNull File file,
-                                @NotNull Consumer<? super PluginInstallCallbackData> callback,
-                                @Nullable Component parent) {
+  public static boolean installFromDisk(@NotNull InstalledPluginsTableModel model,
+                                        @NotNull File file,
+                                        @NotNull Consumer<? super PluginInstallCallbackData> callback,
+                                        @Nullable Component parent) {
     try {
       IdeaPluginDescriptorImpl pluginDescriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(file.toPath(), null);
       if (pluginDescriptor == null) {
@@ -273,19 +273,55 @@ public final class PluginInstaller {
         return false;
       }
 
+      PluginManagerMain.PluginEnabler pluginEnabler = model instanceof PluginManagerMain.PluginEnabler
+                                                      ? (PluginManagerMain.PluginEnabler)model
+                                                      : new PluginManagerMain.PluginEnabler.HEADLESS();
+      Ref<Boolean> cancel = Ref.create(false);
+      Ref<IdeaPluginDescriptor> toDisable = new Ref<>();
+      Ref<Boolean> dependenciesRequireRestart = Ref.create(false);
+      Set<PluginInstallCallbackData> installedDependencies = new HashSet<>();
+      boolean success = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        PluginInstallOperation dependencyInstallOperation = new PluginInstallOperation(
+          Collections.emptyList(),
+          CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins(),
+          pluginEnabler,
+          ProgressManager.getInstance().getProgressIndicator());
+        dependencyInstallOperation.setAllowInstallWithoutRestart(true);
+        Ref<IdeaPluginDescriptor> ref = dependencyInstallOperation.checkDependenciesAndReplacements(pluginDescriptor, null);
+        if (ref == null) {
+          cancel.set(true);
+        }
+        else {
+          dependenciesRequireRestart.set(dependencyInstallOperation.isRestartRequired());
+          installedDependencies.addAll(dependencyInstallOperation.getInstalledDependentPlugins());
+          toDisable.set(ref.get());
+        }
+      }, IdeBundle.message("progress.title.checking.plugin.dependencies"), true, null, (JComponent) parent);
+
+      if (!success || cancel.get()) return false;
+
       Path oldFile = null;
       if (installedPlugin != null && !installedPlugin.isBundled()) {
         oldFile = installedPlugin.getPluginPath();
       }
 
-      boolean installWithoutRestart = oldFile == null && DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor);
+      boolean installWithoutRestart = oldFile == null && DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor) && !dependenciesRequireRestart.get();
       if (!installWithoutRestart) {
         installAfterRestart(file, false, oldFile, pluginDescriptor);
       }
-
       ourState.onPluginInstall(pluginDescriptor, installedPlugin != null, !installWithoutRestart);
-      checkInstalledPluginDependencies(model, pluginDescriptor, parent);
+      if (!toDisable.isNull()) {
+        // TODO[yole] unload and check for restart
+        pluginEnabler.disablePlugins(Collections.singleton(toDisable.get()));
+      }
+      checkInstalledPluginDependencies(model, pluginDescriptor, parent,
+                                       ContainerUtil.map2Set(installedDependencies, (callbackData) -> callbackData.getPluginDescriptor().getPluginId()));
       callback.consume(new PluginInstallCallbackData(file, pluginDescriptor, !installWithoutRestart));
+      for (PluginInstallCallbackData callbackData: installedDependencies) {
+        if (!callbackData.getPluginDescriptor().getPluginId().equals(pluginDescriptor.getPluginId())) {
+          callback.consume(callbackData);
+        }
+      }
       return true;
     }
     catch (IOException ex) {
@@ -309,13 +345,14 @@ public final class PluginInstaller {
 
   private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,
                                                        @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
-                                                       @Nullable Component parent) {
+                                                       @Nullable Component parent,
+                                                       Set<PluginId> installedDependencies) {
     final Set<PluginId> notInstalled = new HashSet<>();
     final Set<PluginId> disabledIds = new HashSet<>();
-    final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
-    final PluginId[] optionalDependentPluginIds = pluginDescriptor.getOptionalDependentPluginIds();
-    for (PluginId id : dependentPluginIds) {
-      if (ArrayUtilRt.find(optionalDependentPluginIds, id) > -1) continue;
+    for (IdeaPluginDependency dep : pluginDescriptor.getDependencies()) {
+      if (dep.isOptional()) continue;
+      PluginId id = dep.getPluginId();
+      if (installedDependencies.contains(id)) continue;
       final boolean disabled = model.isDisabled(id);
       final boolean enabled = model.isEnabled(id);
       if (!enabled && !disabled && !PluginManagerCore.isModuleDependency(id)) {
@@ -364,7 +401,7 @@ public final class PluginInstaller {
     FileChooser.chooseFile(descriptor, null, parent, toSelect, virtualFile -> {
       File file = VfsUtilCore.virtualToIoFile(virtualFile);
       PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH, FileUtil.toSystemIndependentName(file.getParent()));
-      install(model, file, callback, parent);
+      installFromDisk(model, file, callback, parent);
     });
   }
 }
