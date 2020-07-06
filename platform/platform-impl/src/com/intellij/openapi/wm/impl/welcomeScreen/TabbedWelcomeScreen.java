@@ -6,6 +6,7 @@ import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.CardLayoutPanel;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -35,11 +36,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     DefaultListModel<WelcomeScreenTab> mainListModel = new DefaultListModel<>();
     WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList().forEach(it -> mainListModel.addElement(it.createWelcomeTab(this)));
 
-    JBList<WelcomeScreenTab> tabList = new JBList<>(mainListModel);
-    tabList.setBackground(getMainTabListBackground());
-    tabList.setBorder(JBUI.Borders.emptyLeft(16));
-    tabList.setFixedCellHeight(JBUI.scale(32));
-    tabList.setCellRenderer(new MyCellRenderer());
+    JBList<WelcomeScreenTab> tabList = createListWithTabs(mainListModel);
     tabList.addListSelectionListener(e -> centralPanel.select(tabList.getSelectedValue(), true));
 
     JComponent logoComponent = createSmallLogo();
@@ -60,6 +57,21 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       UiNotifyConnector.doWhenFirstShown(firstShownPanel, () -> IdeFocusManager.getGlobalInstance()
         .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(firstShownPanel), true));
     }
+  }
+
+  @NotNull
+  private static JBList<WelcomeScreenTab> createListWithTabs(@Nullable DefaultListModel<WelcomeScreenTab> mainListModel) {
+    JBList<WelcomeScreenTab> tabList = new JBList<WelcomeScreenTab>(mainListModel) {
+      @Override
+      public int locationToIndex(Point location) {
+        int i = super.locationToIndex(location);
+        return (i == -1 || !getCellBounds(i, i).contains(location)) ? -1 : i;
+      }
+    };
+    tabList.setBackground(getMainTabListBackground());
+    tabList.setBorder(JBUI.Borders.emptyLeft(16));
+    tabList.setCellRenderer(new MyCellRenderer());
+    return tabList;
   }
 
   @NotNull
@@ -113,7 +125,8 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     private JComponent myAssociatedComponent;
 
     public DefaultWelcomeScreenTab(@NotNull @Nls String tabName) {
-      myKeyComponent = JBUI.Panels.simplePanel().addToLeft(new JLabel(tabName)).withBackground(getMainTabListBackground());
+      myKeyComponent = JBUI.Panels.simplePanel().addToLeft(new JBLabel(tabName)).withBackground(getMainTabListBackground())
+        .withBorder(JBUI.Borders.empty(8, 0));
     }
 
     @Override
