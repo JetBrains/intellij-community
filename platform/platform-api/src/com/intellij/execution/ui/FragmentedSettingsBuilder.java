@@ -31,6 +31,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(5), 0, 0);
   private final Collection<SettingsEditorFragment<Settings, ?>> myFragments;
   private final SettingsEditorFragment<Settings, ?> myMain;
+  static final int TOP_INSET = 5;
   private LinkLabel<?> myLinkLabel;
 
   FragmentedSettingsBuilder(Collection<SettingsEditorFragment<Settings, ?>> fragments, SettingsEditorFragment<Settings, ?> main) {
@@ -69,7 +70,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
         addLine(fragment.getComponent());
       }
     }
-    addLine(tagsPanel, -getLeftInset((JComponent)tagsPanel.getComponent(0)));
+    addLine(tagsPanel, TOP_INSET + 10, -getLeftInset((JComponent)tagsPanel.getComponent(0)), 0);
 
     for (SettingsEditorFragment<Settings, ?> group : subGroups) {
       addLine(group.getComponent());
@@ -86,21 +87,21 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     return myPanel;
   }
 
-  private void addLine(Component component, int leftInset) {
-    myConstraints.insets = JBUI.insetsLeft(leftInset);
+  private void addLine(Component component, int top, int left, int bottom) {
+    myConstraints.insets = JBUI.insets(top, left, bottom, 0);
     myPanel.add(component, myConstraints.clone());
     myConstraints.gridy++;
-    myConstraints.insets = JBUI.emptyInsets();
+    myConstraints.insets = JBUI.insetsTop(top);
   }
 
   private void addLine(Component component) {
-    addLine(component, 0);
+    addLine(component, TOP_INSET, 0, 0);
   }
 
   private void buildBeforeRun(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
     SettingsEditorFragment<Settings, ?> beforeRun = ContainerUtil.find(fragments, fragment -> fragment.getCommandLinePosition() == -2);
     if (beforeRun != null) {
-      addLine(beforeRun.getComponent());
+      addLine(beforeRun.getComponent(), TOP_INSET, 0, 10);
       fragments.remove(beforeRun);
     }
   }
@@ -163,7 +164,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     for (SettingsEditorFragment<Settings, ?> fragment : list) {
       fragment.addSettingsEditorListener(editor -> panel.rebuildRows());
     }
-    addLine(panel, -panel.getLeftInset());
+    addLine(panel, TOP_INSET, -panel.getLeftInset(), 15);
   }
 
   static int getLeftInset(JComponent component) {
