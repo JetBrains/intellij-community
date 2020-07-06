@@ -5,7 +5,9 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -100,6 +102,14 @@ public class JavaTypingTest extends BasePlatformTestCase {
   
   public void testInsertPairedBraceForLambdaBody() {
     doTest('{');
+  }
+  
+  public void testInsertPairedBraceForLocalClass() {
+    doTest('{');
+  }
+  
+  public void testInsertPairedBraceForLocalRecord() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15_PREVIEW, () -> doTest('{'));
   }
 
   public void testSemicolonInStringLiteral() {

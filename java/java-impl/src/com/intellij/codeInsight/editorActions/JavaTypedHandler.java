@@ -167,6 +167,12 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         return Result.CONTINUE;
       }
 
+      if (prevLeaf instanceof PsiIdentifier && prevLeaf.getParent() instanceof PsiClass ||
+          PsiUtil.isJavaToken(prevLeaf, JavaTokenType.RPARENTH) && prevLeaf.getParent() instanceof PsiRecordHeader) {
+        // Local class/record declaration
+        return Result.CONTINUE;
+      }
+
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
         EditorModificationUtil.insertStringAtCaret(editor, "{");
         TypedHandler.indentOpenedBrace(project, editor);
