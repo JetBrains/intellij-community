@@ -25,6 +25,7 @@ import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveParameterQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveStatementQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyRemoveExceptionTargetQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -394,14 +395,23 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {
             continue;
           }
+
           final PyForStatement forStatement = PyForStatementNavigator.getPyForStatementByIterable(element);
           if (forStatement != null) {
             if (!myIgnoreRangeIterationVariables || !isRangeIteration(forStatement)) {
               registerProblem(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name),
                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new ReplaceWithWildCard());
             }
+            continue;
           }
-          else if (!myIgnoreVariablesStartingWithUnderscore || !name.startsWith(PyNames.UNDERSCORE)) {
+
+          if (!myIgnoreVariablesStartingWithUnderscore || !name.startsWith(PyNames.UNDERSCORE)) {
+            final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(element);
+            if (exceptPart != null) {
+              registerWarning(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveExceptionTargetQuickFix());
+              continue;
+            }
+
             registerWarning(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveStatementQuickFix());
           }
         }

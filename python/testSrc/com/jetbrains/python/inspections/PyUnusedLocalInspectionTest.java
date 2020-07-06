@@ -110,6 +110,13 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
     doTest(inspection);
   }
 
+  // PY-20893
+  public void testExceptionTargetStartingWithUnderscore() {
+    final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    inspection.ignoreVariablesStartingWithUnderscore = true;
+    doTest(inspection);
+  }
+
   // PY-16419, PY-26417
   public void testPotentiallySuppressedExceptions() {
     doTestByText(
