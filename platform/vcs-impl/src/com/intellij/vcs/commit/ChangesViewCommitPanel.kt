@@ -63,6 +63,7 @@ private val CTRL_ENTER = KeyboardShortcut(getKeyStroke(KeyEvent.VK_ENTER, InputE
 private val META_ENTER = KeyboardShortcut(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK), null)
 private val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet =
   if (isMac) CustomShortcutSet(CTRL_ENTER, META_ENTER) else CustomShortcutSet(CTRL_ENTER)
+fun getDefaultCommitShortcut() = DEFAULT_COMMIT_ACTION_SHORTCUT
 
 private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layout)
 

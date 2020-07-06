@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.CheckboxAction
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
@@ -85,6 +86,15 @@ abstract class GitCommitPanel(private val project: Project,
   protected abstract fun rootsToCommit(): Collection<VcsRoot>
 
   protected abstract fun isFocused(): Boolean
+
+  internal fun createCommitAction(): AnAction {
+    return object: DumbAwareAction() {
+      override fun actionPerformed(e: AnActionEvent) = performCommit()
+      override fun update(e: AnActionEvent) {
+        e.presentation.isEnabledAndVisible = rootsToCommit().isNotEmpty()
+      }
+    }
+  }
 
   private fun getButtonPanelBorder(): Border =
     EmptyBorder(0, JBUI.scale(4), 0, 0)

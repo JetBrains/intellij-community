@@ -24,6 +24,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.commit.getDefaultCommitShortcut
 import com.intellij.vcs.commit.showEmptyCommitMessageConfirmation
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
@@ -63,7 +64,9 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
 
   init {
     tree = MyChangesTree(project)
+
     commitPanel = MyGitCommitPanel()
+    commitPanel.createCommitAction().registerCustomShortcutSet(getDefaultCommitShortcut(), this)
 
     val toolbarGroup = DefaultActionGroup()
     toolbarGroup.add(ActionManager.getInstance().getAction("Git.Stage.Toolbar"))
