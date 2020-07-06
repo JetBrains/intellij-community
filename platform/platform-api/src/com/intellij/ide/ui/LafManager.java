@@ -19,7 +19,7 @@ public abstract class LafManager {
   public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
 
   @ApiStatus.Internal
-  public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel(@NotNull ModelType type);
+  public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel();
 
   @ApiStatus.Internal
   public abstract UIManager.LookAndFeelInfo findLaf(LafReference reference);

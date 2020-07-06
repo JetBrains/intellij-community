@@ -72,7 +72,6 @@ import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.FontUtil.enableKerning;
 
@@ -81,6 +80,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static final Logger LOG = Logger.getInstance(LafManager.class);
 
   @NonNls private static final String ELEMENT_LAF = "laf";
+  @NonNls private static final String ELEMENT_PREFERRED_LIGHT_LAF = "preferred-light-laf";
+  @NonNls private static final String ELEMENT_PREFERRED_DARK_LAF = "preferred-dark-laf";
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
   @NonNls private static final String ATTRIBUTE_THEME_NAME = "themeId";
 
@@ -108,11 +109,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return infos;
   });
 
-  private final UIManager.LookAndFeelInfo myDefaultLightTheme = getDefaultLightTheme();
-  private final UIManager.LookAndFeelInfo myDefaultDarkTheme = new DarculaLookAndFeelInfo();
+  private final UIManager.LookAndFeelInfo myDefaultLightLaf = getDefaultLightTheme();
+  private final UIManager.LookAndFeelInfo myDefaultDarkLaf = new DarculaLookAndFeelInfo();
   private final UIDefaults ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
 
   private UIManager.LookAndFeelInfo myCurrentLaf;
+  private UIManager.LookAndFeelInfo myPreferredLightLaf;
+  private UIManager.LookAndFeelInfo myPreferredDarkLaf;
+
   private final Map<LafReference, HashMap<String, Object>> myStoredDefaults = new HashMap<>();
 
   // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
@@ -121,7 +125,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static final Map<String, String> ourLafClassesAliases = new HashMap<>();
   private static final Map<String, Integer> lafNameOrder = new HashMap<>();
 
-  private CollectionComboBoxModel<LafReference> myLafComboBoxModel;
+  private final CollectionComboBoxModel<LafReference> myLafComboBoxModel = new CollectionComboBoxModel<>();
 
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
@@ -154,8 +158,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @NotNull
   private List<UIManager.LookAndFeelInfo> computeLafList() {
     List<UIManager.LookAndFeelInfo> lafList = new ArrayList<>();
-    lafList.add(myDefaultLightTheme);
-    lafList.add(myDefaultDarkTheme);
+    lafList.add(myDefaultLightLaf);
+    lafList.add(myDefaultDarkLaf);
 
     if (!SystemInfo.isMac) {
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
@@ -184,6 +188,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     });
     sortThemes(lafList);
+    updateLafComboboxModel();
     return lafList;
   }
 
@@ -244,7 +249,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     updateUI();
 
     UIThemeProvider.EP_NAME.addExtensionPointListener(new UIThemeEPListener(), this);
-//    LafProvider.EP_NAME.addExtensionPointListener(new LafProviderEPListener(), this);
 
     MessageBus bus = ApplicationManager.getApplication().getMessageBus();
     bus.connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
@@ -274,7 +278,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       SystemDarkThemeDetector.getInstance().check(systemDark -> {
         if (currentDark != systemDark) {
-          QuickChangeLookAndFeel.switchLafAndUpdateUI(LafManager.getInstance(), systemDark ? myDefaultDarkTheme : myDefaultLightTheme, true);
+          QuickChangeLookAndFeel.switchLafAndUpdateUI(LafManager.getInstance(), systemDark ? myPreferredDarkLaf : myPreferredLightLaf, true);
         }
         return Unit.INSTANCE;
       });
@@ -301,18 +305,24 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void loadState(@NotNull Element element) {
+    myCurrentLaf = loadLafState(element, ELEMENT_LAF, getDefaultLaf());
+    myPreferredLightLaf = loadLafState(element, ELEMENT_PREFERRED_LIGHT_LAF, myDefaultLightLaf);
+    myPreferredDarkLaf = loadLafState(element, ELEMENT_PREFERRED_DARK_LAF, myDefaultDarkLaf);
+  }
+
+  private UIManager.LookAndFeelInfo loadLafState(@NotNull Element element, @NonNls String attrName, UIManager.LookAndFeelInfo defaultValue) {
     UIManager.LookAndFeelInfo laf = null;
-    Element lafElement = element.getChild(ELEMENT_LAF);
+    Element lafElement = element.getChild(attrName);
     if (lafElement != null) {
       laf = findLaf(lafElement.getAttributeValue(ATTRIBUTE_CLASS_NAME), lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME));
     }
 
     // If LAF is undefined (wrong class name or something else) we have set default LAF anyway.
     if (laf == null) {
-      laf = getDefaultLaf();
+      laf = defaultValue;
     }
 
-    myCurrentLaf = laf;
+    return laf;
   }
 
   @Nullable
@@ -342,7 +352,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public Element getState() {
     Element element = new Element("state");
-    UIManager.LookAndFeelInfo laf = myCurrentLaf;
+    return element;
+  }
+
+  private void getLafState(@NotNull Element element, @NonNls String attrName, UIManager.LookAndFeelInfo laf) {
     if (laf instanceof TempUIThemeBasedLookAndFeelInfo) {
       laf = ((TempUIThemeBasedLookAndFeelInfo)laf).getPreviousLaf();
     }
@@ -358,7 +371,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         element.addContent(child);
       }
     }
-    return element;
   }
 
   @Override
@@ -367,14 +379,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public CollectionComboBoxModel<LafReference> getLafComboBoxModel(@NotNull ModelType type) {
-    CollectionComboBoxModel<LafReference> model = myModelCache.get(type);
-    if (model == null) {
-      model = new CollectionComboBoxModel<>(getLafReferences(type));
-      myModelCache.put(type, model);
-    }
+  public CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
+    return myLafComboBoxModel;
+  }
 
-    return model;
+  private void updateLafComboboxModel() {
+    myLafComboBoxModel.replaceAll(getLafReferences(ModelType.ALL));
+  }
+
+  private void selectComboboxModel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    myLafComboBoxModel.setSelectedItem(createLafReference(lookAndFeelInfo));
   }
 
   private List<LafReference> getLafReferences(ModelType type) {
@@ -413,10 +427,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   public LafReference getLookAndFeelReference(@NotNull LafType type) {
     switch (type) {
       case PREFERRED_LIGHT:
-        return createLafReference(myDefaultLightTheme);
+        return createLafReference(myPreferredLightLaf);
 
       case PREFERRED_DARK:
-        return createLafReference(myDefaultDarkTheme);
+        return createLafReference(myPreferredDarkLaf);
 
       case CURRENT:
       default:
@@ -454,11 +468,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Nullable
   private UIManager.LookAndFeelInfo findLaf(@NotNull String className) {
-    if (myDefaultLightTheme.getClassName().equals(className)) {
-      return myDefaultLightTheme;
+    if (myDefaultLightLaf.getClassName().equals(className)) {
+      return myDefaultLightLaf;
     }
-    if (myDefaultDarkTheme.getClassName().equals(className)) {
-      return myDefaultDarkTheme;
+    if (myDefaultDarkLaf.getClassName().equals(className)) {
+      return myDefaultDarkLaf;
     }
 
     for (UIManager.LookAndFeelInfo l : myLaFs.getValue()) {
@@ -581,6 +595,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
+    selectComboboxModel(myCurrentLaf);
 
     if (!myFirstSetup) {
       if (!lockEditorScheme) {
@@ -1020,7 +1035,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.put("EditorPane.font", textFont);
   }
 
-
   private static class OurPopupFactory extends PopupFactory {
     public static final int WEIGHT_LIGHT = 0;
     public static final int WEIGHT_MEDIUM = 1;
@@ -1152,15 +1166,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       newLaFs.add(newTheme);
       sortThemes(newLaFs);
       myLaFs.setValue(newLaFs);
-      if (myLafComboBoxModel != null) {
-        myLafComboBoxModel.replaceAll(getLafReferences());
-      }
+
+      updateLafComboboxModel();
+
       // When updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
       if (!myThemesInUpdatedPlugin.contains(theme.getId())) {
         setCurrentLookAndFeel(newTheme);
-        if (myLafComboBoxModel != null) {
-          myLafComboBoxModel.setSelectedItem(createLafReference(newTheme));
-        }
         JBColor.setDark(newTheme.getTheme().isDark());
         updateUI();
       }
@@ -1175,7 +1186,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeel).getTheme();
           if (theme.getId().equals(provider.id)) {
             if (lookAndFeel == getCurrentLookAndFeel()) {
-              switchLafTo = theme.isDark() ? myDefaultDarkTheme : myDefaultLightTheme;
+              switchLafTo = theme.isDark() ? myDefaultDarkLaf : myDefaultLightLaf;
             }
             else if (myUpdatingPlugin) {
               myThemesInUpdatedPlugin.add(theme.getId());
@@ -1187,89 +1198,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         list.add(lookAndFeel);
       }
       myLaFs.setValue(list);
-      if (myLafComboBoxModel != null) {
-        myLafComboBoxModel.replaceAll(getLafReferences());
-      }
-      if (switchLafTo != null) {
-        setLookAndFeelImpl(switchLafTo, false, true);
-        if (myLafComboBoxModel != null) {
-          myLafComboBoxModel.setSelectedItem(createLafReference(switchLafTo));
-        }
-        JBColor.setDark(switchLafTo == myDefaultDarkTheme);
-        updateUI();
-      }
-    }
-  }
-
-  private class LafProviderEPListener implements ExtensionPointListener<LafProvider> {
-    @Override
-    public void extensionAdded(@NotNull LafProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-      PluggableLafInfo newLaf = extension.getLookAndFeelInfo();
-      List<UIManager.LookAndFeelInfo> lafList = myLaFs.getValue();
-      for (UIManager.LookAndFeelInfo lafInfo : lafList) {
-        if (lafInfo.getName().equals(newLaf.getName()) && lafInfo.getClassName().equals(newLaf.getClassName())) {
-          return;
-        }
-      }
-
-      List<UIManager.LookAndFeelInfo> newLaFs = new ArrayList<>(lafList.size() + 1);
-      newLaFs.addAll(lafList);
-      newLaFs.add(newLaf);
-
-      sortThemes(newLaFs);
-
-      myLaFs.setValue(newLaFs);
-      if (myLafComboBoxModel != null) {
-        myLafComboBoxModel.replaceAll(getLafReferences());
-      }
-
-      if (!myThemesInUpdatedPlugin.contains(newLaf.getName())) {
-        setCurrentLookAndFeel(newLaf);
-        if (myLafComboBoxModel != null) {
-          myLafComboBoxModel.setSelectedItem(newLaf);
-        }
-        JBColor.setDark(newLaf.isDark());
-        updateUI();
-      }
-    }
-
-    @Override
-    public void extensionRemoved(@NotNull LafProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-      UIManager.LookAndFeelInfo switchLafTo = null;
-      List<UIManager.LookAndFeelInfo> list = new ArrayList<>();
-
-      PluggableLafInfo removedLafInfo = extension.getLookAndFeelInfo();
-
-      for (UIManager.LookAndFeelInfo lafInfo : getInstalledLookAndFeels()) {
-        if (lafInfo instanceof PluggableLafInfo) {
-          PluggableLafInfo pluggableLafInfo = (PluggableLafInfo)lafInfo;
-          if (StringUtil.equals(pluggableLafInfo.getName(), removedLafInfo.getName()) &&
-              StringUtil.equals(pluggableLafInfo.getClassName(), removedLafInfo.getClassName())) {
-
-            if (lafInfo == getCurrentLookAndFeel()) {
-              switchLafTo = pluggableLafInfo.isDark() ? myDefaultDarkTheme : myDefaultLightTheme;
-            }
-            else if (myUpdatingPlugin) {
-              myThemesInUpdatedPlugin.add(pluggableLafInfo.getName());
-            }
-            continue;
-          }
-        }
-
-        list.add(lafInfo);
-      }
-
-      myLaFs.setValue(list);
-      if (myLafComboBoxModel != null) {
-        myLafComboBoxModel.replaceAll(getLafReferences());
-      }
+      updateLafComboboxModel();
 
       if (switchLafTo != null) {
         setLookAndFeelImpl(switchLafTo, false, true);
-        if (myLafComboBoxModel != null) {
-          myLafComboBoxModel.setSelectedItem(switchLafTo);
-        }
-        JBColor.setDark(switchLafTo == myDefaultDarkTheme);
+        JBColor.setDark(switchLafTo == myDefaultDarkLaf);
         updateUI();
       }
     }

@@ -94,13 +94,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           titledRow(message("label.preferred.theme")) {
             fullRow {
               label(message("combobox.preferred.light.laf"))
-              comboBox(lafManager.lafComboBoxModel,
+              comboBox(lafManager.getLafComboBoxModel(LafManager.ModelType.LIGHT),
                        { lafManager.getLookAndFeelReference(LafManager.LafType.PREFERRED_LIGHT) },
                        { })
 
               label(message("combobox.preferred.dark.laf")).withLargeLeftGap()
-
-              comboBox(lafManager.lafComboBoxModel,
+              comboBox(lafManager.getLafComboBoxModel(LafManager.ModelType.DARK),
                        { lafManager.getLookAndFeelReference(LafManager.LafType.PREFERRED_DARK) },
                        { })
             }.largeGapAfter()
