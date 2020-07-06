@@ -13,13 +13,15 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.task.*;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "JavaAutoRunManager",
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
-public class JavaAutoRunManager extends AbstractAutoTestManager {
+public class JavaAutoRunManager extends AbstractAutoTestManager implements Disposable {
   public static @NotNull JavaAutoRunManager getInstance(Project project) {
     return ServiceManager.getService(project, JavaAutoRunManager.class);
   }
@@ -41,12 +43,13 @@ public class JavaAutoRunManager extends AbstractAutoTestManager {
         }
 
         myEventDisposable = Disposer.newDisposable();
-        Disposer.register(project, myEventDisposable);
-        project.getMessageBus().connect(myEventDisposable).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
+        Disposer.register(JavaAutoRunManager.this, myEventDisposable);
+        MessageBusConnection connection = project.getMessageBus().connect(myEventDisposable);
+        connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
           private boolean myFoundFilesToMake = false;
 
           @Override
-          public void compilationFinished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
+          public void automakeCompilationFinished(int errors, int warnings, @NotNull CompileContext compileContext) {
             if (!myFoundFilesToMake) return;
             if (errors == 0) {
               restartAllAutoTests(0);
@@ -56,13 +59,30 @@ public class JavaAutoRunManager extends AbstractAutoTestManager {
           }
 
           @Override
-          public void automakeCompilationFinished(int errors, int warnings, @NotNull CompileContext compileContext) {
-            compilationFinished(false, errors, warnings, compileContext);
+          public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
+            myFoundFilesToMake = true;
+          }
+        });
+        connection.subscribe(ProjectTaskListener.TOPIC, new ProjectTaskListener() {
+          @Override
+          public void started(@NotNull ProjectTaskContext context) {
+            context.enableCollectionOfGeneratedFiles();
           }
 
           @Override
-          public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
-            myFoundFilesToMake = true;
+          public void finished(ProjectTaskManager.@NotNull Result result) {
+            if (result.anyTaskMatches((task, state) -> !hasCompilationErrors(task, state))) {
+              if (result.getContext().getGeneratedFilesRoots().isEmpty()) return;
+              restartAllAutoTests(0);
+            }
+          }
+
+          private boolean hasCompilationErrors(ProjectTask task, ProjectTaskState state) {
+            if (task instanceof ModuleBuildTask) {
+              myHasErrors = state.isFailed();
+              return state.isSkipped() || state.isFailed();
+            }
+            return true;
           }
         });
       }
@@ -82,4 +102,7 @@ public class JavaAutoRunManager extends AbstractAutoTestManager {
       }
     };
   }
+
+  @Override
+  public void dispose() { }
 }
