@@ -411,6 +411,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myIncomplete = incomplete;
   }
 
+  public boolean detailsLoaded() {
+    return externalPluginId == null || externalUpdateId == null || description != null;
+  }
+
   @Override
   public boolean equals(Object o) {
     return this == o || o instanceof PluginNode && id == ((PluginNode)o).id;
