@@ -30,20 +30,32 @@ class RemoveEmptyClassBodyIntention : SelfTargetingOffsetIndependentIntention<Kt
     override fun applyTo(element: KtClassBody, editor: Editor?) {
         val parent = element.parent
         element.delete()
-        addSemicolonAfterEmptyCompanion(parent, editor)
+        addSemicolonIfNeeded(parent, editor)
     }
 
-    private fun addSemicolonAfterEmptyCompanion(element: PsiElement, editor: Editor?) {
-        if (element !is KtObjectDeclaration) return
-        if (!element.isCompanion() || element.nameIdentifier != null) return
-
+    private fun addSemicolonIfNeeded(element: PsiElement, editor: Editor?) {
         val next = element.getNextSiblingIgnoringWhitespaceAndComments() ?: return
         if (next.node.elementType == KtTokens.SEMICOLON) return
-        val firstChildNode = next.firstChild?.node ?: return
-        if (firstChildNode.elementType in KtTokens.KEYWORDS) return
+        when (element) {
+            is KtObjectDeclaration -> {
+                if (!element.isCompanion() || element.nameIdentifier != null) return
+                val firstChildNode = next.firstChild?.node ?: return
+                if (firstChildNode.elementType in KtTokens.KEYWORDS) return
+                element.addSemicolon()
+                editor?.caretModel?.moveToOffset(element.endOffset + 1)
+            }
+            is KtEnumEntry -> {
+                val children = element.parent.children
+                val isLastChild = element === children.lastOrNull()
+                val isLastEnumEntry = element == children.filterIsInstance<KtEnumEntry>().lastOrNull()
+                if (isLastChild || !isLastEnumEntry) return
+                element.addSemicolon()
+            }
+        }
+    }
 
-        element.parent.addAfter(KtPsiFactory(element).createSemicolon(), element)
-        editor?.caretModel?.moveToOffset(element.endOffset + 1)
+    private fun PsiElement.addSemicolon() {
+        parent.addAfter(KtPsiFactory(this).createSemicolon(), this)
     }
 
     override fun isApplicableTo(element: KtClassBody): Boolean {

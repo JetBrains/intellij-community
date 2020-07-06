@@ -13764,9 +13764,29 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeEmptyClassBody/emptyInterface.kt");
         }
 
+        @TestMetadata("enumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("testData/intentions/removeEmptyClassBody/enumEntry.kt");
+        }
+
         @TestMetadata("innerClass.kt")
         public void testInnerClass() throws Exception {
             runTest("testData/intentions/removeEmptyClassBody/innerClass.kt");
+        }
+
+        @TestMetadata("lastEnumEntry.kt")
+        public void testLastEnumEntry() throws Exception {
+            runTest("testData/intentions/removeEmptyClassBody/lastEnumEntry.kt");
+        }
+
+        @TestMetadata("lastEnumEntry2.kt")
+        public void testLastEnumEntry2() throws Exception {
+            runTest("testData/intentions/removeEmptyClassBody/lastEnumEntry2.kt");
+        }
+
+        @TestMetadata("lastEnumEntry3.kt")
+        public void testLastEnumEntry3() throws Exception {
+            runTest("testData/intentions/removeEmptyClassBody/lastEnumEntry3.kt");
         }
 
         @TestMetadata("nestedAnonymous.kt")
