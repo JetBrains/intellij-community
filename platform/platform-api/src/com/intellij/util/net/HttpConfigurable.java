@@ -41,10 +41,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -85,9 +85,12 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   private transient final NotNullLazyValue<Properties> myProxyCredentials = NotNullLazyValue.createValue(() -> {
     try {
+      if (!Files.exists(PROXY_CREDENTIALS_FILE)) {
+        return new Properties();
+      }
+
       return myEncryptionSupport.load(PROXY_CREDENTIALS_FILE);
     }
-    catch (FileNotFoundException ignored) { }
     catch (Throwable th) {
       LOG.info(th);
     }

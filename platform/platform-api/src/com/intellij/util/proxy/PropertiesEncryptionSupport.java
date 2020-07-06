@@ -37,10 +37,8 @@ public final class PropertiesEncryptionSupport {
   @NotNull
   public Properties load(@NotNull Path file) throws Exception {
     Properties props = new Properties();
-    if (Files.exists(file)) {
-      byte[] bytes = decrypt(Files.readAllBytes(file));
-      props.load(new ByteArrayInputStream(bytes));
-    }
+    byte[] bytes = decrypt(Files.readAllBytes(file));
+    props.load(new ByteArrayInputStream(bytes));
     return props;
   }
 
