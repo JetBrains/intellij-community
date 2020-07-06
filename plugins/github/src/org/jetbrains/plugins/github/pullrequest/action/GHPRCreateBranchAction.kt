@@ -32,6 +32,21 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     val project = e.getData(CommonDataKeys.PROJECT)
     val repository = e.getData(GHPRActionKeys.GIT_REPOSITORY)
     val selection = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+    if (repository != null) {
+      val loadedDetails = selection?.detailsData?.loadedDetails
+      val headRefName = loadedDetails?.headRefName
+      val httpUrl = loadedDetails?.headRepository?.url
+      val sshUrl = loadedDetails?.headRepository?.sshUrl
+      val isFork = loadedDetails?.headRepository?.isFork ?: false
+      val remote = GithubGitHelper.getInstance().findRemote(repository, httpUrl, sshUrl)
+      if (remote != null) {
+        val localBranch = GithubGitHelper.getInstance().findLocalBranch(repository, remote, isFork, headRefName)
+        if (repository.currentBranchName == localBranch) {
+          e.presentation.isEnabled = false
+          return
+        }
+      }
+    }
     e.presentation.isEnabled = project != null && !project.isDefault && selection != null && repository != null
   }
 
