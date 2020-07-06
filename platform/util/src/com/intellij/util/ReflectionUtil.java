@@ -321,7 +321,15 @@ public final class ReflectionUtil {
   @Nullable
   public static Class<?> getMethodDeclaringClass(@NotNull Class<?> instanceClass, @NonNls @NotNull String methodName, Class<?> @NotNull ... parameters) {
     Method method = getMethod(instanceClass, methodName, parameters);
-    return method == null ? null : method.getDeclaringClass();
+    if (method != null) return method.getDeclaringClass();
+
+    while (instanceClass != null) {
+      method = getDeclaredMethod(instanceClass, methodName, parameters);
+      if (method != null) return method.getDeclaringClass();
+
+      instanceClass = instanceClass.getSuperclass();
+    }
+    return null;
   }
 
   public static <T> T getField(@NotNull Class<?> objectClass, @Nullable Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {

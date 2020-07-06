@@ -28,6 +28,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -146,17 +147,9 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = VolatileNotNullLazyValue.createValue(() -> {
-    Class<?> aClass = this.getClass();
-    while (!TemplateDataElementType.class.equals(aClass)) {
-      try {
-        aClass.getDeclaredMethod("appendCurrentTemplateToken", StringBuilder.class, CharSequence.class, Lexer.class, RangeCollector.class);
-        return true;
-      }
-      catch (NoSuchMethodException e) {
-        aClass = aClass.getSuperclass();
-      }
-    }
-    return false;
+    Class<?> implementationClass = ReflectionUtil.getMethodDeclaringClass(
+      getClass(), "appendCurrentTemplateToken", StringBuilder.class, CharSequence.class, Lexer.class, RangeCollector.class);
+    return implementationClass != TemplateDataElementType.class;
   });
 
   private CharSequence oldCreateTemplateText(@NotNull CharSequence sourceCode,
