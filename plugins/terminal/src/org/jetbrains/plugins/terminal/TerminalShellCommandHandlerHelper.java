@@ -70,7 +70,7 @@ public final class TerminalShellCommandHandlerHelper {
   }
 
   private void scheduleCommandHighlighting() {
-    myAlarm.addRequest(() -> { highlightMatchedCommand(myWidget.getProject()); }, 50);
+    myAlarm.addRequest(() -> { highlightMatchedCommand(myWidget.getProject()); }, 250);
   }
 
   public static boolean isFeatureEnabled() {
