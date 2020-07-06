@@ -22,6 +22,8 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
+
 /**
  * @author peter
  */
@@ -194,8 +196,9 @@ public final class CompletionServiceImpl extends BaseCompletionService {
            !(phase instanceof CompletionPhase.ItemsCalculated);
   }
 
-
   public static CompletionPhase getCompletionPhase() {
+    if (isForeignClientOnServer()) return CompletionPhase.NoCompletion;
+
     return ourPhase;
   }
 
