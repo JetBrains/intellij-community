@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
@@ -252,11 +253,8 @@ internal class ModifiableModuleModelBridge(
   override fun hasModuleGroups(): Boolean = ModuleManagerComponentBridge.hasModuleGroups(entityStorageOnDiff)
 
   override fun setModuleGroupPath(module: Module, groupPath: Array<out String>?) {
-    val moduleId = (module as ModuleBridge).moduleEntityId
-
     val storage = entityStorageOnDiff.current
-
-    val moduleEntity = storage.resolve(moduleId) ?: error("Could not resolve module by moduleId: $moduleId")
+    val moduleEntity = storage.findModuleEntity(module as ModuleBridge) ?: error("Could not resolve module entity for $module")
     val moduleGroupEntity = moduleEntity.groupPath
     val groupPathList = groupPath?.toList()
 

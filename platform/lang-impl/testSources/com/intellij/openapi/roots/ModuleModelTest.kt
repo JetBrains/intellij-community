@@ -321,6 +321,38 @@ class ModuleModelTest {
     assertThat(modules[0].name).isEqualTo(gradleModuleName)
   }
 
+  @Test
+  fun `set and remove module group`() {
+    val module = projectModel.createModule()
+    assertThat(projectModel.moduleManager.hasModuleGroups()).isFalse()
+    edit { model ->
+      assertThat(model.hasModuleGroups()).isFalse()
+      model.setModuleGroupPath(module, arrayOf("foo", "bar"))
+      assertThat(model.hasModuleGroups()).isTrue()
+    }
+    assertThat(projectModel.moduleManager.hasModuleGroups()).isTrue()
+    assertThat(projectModel.moduleManager.getModuleGroupPath(module)).containsExactly("foo", "bar")
+    edit { model ->
+      assertThat(model.hasModuleGroups()).isTrue()
+      model.setModuleGroupPath(module, null)
+      assertThat(model.hasModuleGroups()).isFalse()
+    }
+    assertThat(projectModel.moduleManager.hasModuleGroups()).isFalse()
+    assertThat(projectModel.moduleManager.getModuleGroupPath(module)).isNull()
+  }
+
+  @Test
+  fun `set module group after changing module name`() {
+    val module = projectModel.createModule("foo")
+    edit { model ->
+      model.renameModule(module, "bar")
+      model.setModuleGroupPath(module, arrayOf("group"))
+      assertThat(model.hasModuleGroups()).isTrue()
+    }
+    assertThat(projectModel.moduleManager.hasModuleGroups()).isTrue()
+    assertThat(projectModel.moduleManager.getModuleGroupPath(module)).containsExactly("group")
+  }
+
   class ModifiableModuleModelAccessor(private val moduleModel: ModifiableModuleModel) : RootConfigurationAccessor() {
     override fun getModule(module: Module?, moduleName: String): Module? {
       return module ?: moduleModel.findModuleByName(moduleName)
