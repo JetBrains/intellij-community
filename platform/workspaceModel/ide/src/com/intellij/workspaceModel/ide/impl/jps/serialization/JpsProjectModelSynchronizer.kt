@@ -12,7 +12,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.module.impl.AutomaticModuleUnloader
-import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.module.impl.UnloadedModuleDescriptionImpl
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
@@ -22,12 +21,14 @@ import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.*
@@ -35,6 +36,8 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -139,7 +142,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     val builder = WorkspaceEntityStorageBuilder.create()
 
     childActivity = childActivity.endAndStart("(wm) Load state of unloaded modules")
-    loadStateOfUnloadedModules(serializers.getAllModulePaths())
+    loadStateOfUnloadedModules(serializers)
 
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity.endAndStart("(wm) Read serializers")
@@ -156,13 +159,26 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     activity.end()
   }
 
-  // Logic from com.intellij.openapi.module.impl.ModuleManagerImpl.loadState(java.util.Set<com.intellij.openapi.module.impl.ModulePath>)
-  private fun loadStateOfUnloadedModules(modulePaths: List<ModulePath>) {
+  private fun loadStateOfUnloadedModules(serializers: JpsProjectSerializers) {
     val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
 
-    val (unloadedModulePaths, modulePathsToLoad) = modulePaths.partition { it.moduleName in unloadedModuleNames }
+    serializers as JpsProjectSerializersImpl
+    val (unloadedModulePaths, modulePathsToLoad) = serializers.getAllModulePaths().partition { it.moduleName in unloadedModuleNames }
 
-    val unloaded = UnloadedModuleDescriptionImpl.createFromPaths(unloadedModulePaths, project).toMutableList()
+    val tmpBuilder = WorkspaceEntityStorageBuilder.create()
+    val unloaded = unloadedModulePaths.map { modulePath ->
+      serializers.fileSerializersByUrl.get(VfsUtilCore.pathToUrl(modulePath.path)).first()
+        .loadEntities(tmpBuilder, fileContentReader, virtualFileManager)
+
+      val moduleEntity = tmpBuilder.resolve(ModuleId(modulePath.moduleName)) ?: return@map null
+      val pointerManager = VirtualFilePointerManager.getInstance()
+      val contentRoots = moduleEntity.contentRoots.sortedBy { contentEntry -> contentEntry.url.url }
+        .map { contentEntry -> pointerManager.create(contentEntry.url.url, this, null) }.toMutableList()
+      val dependencyModuleNames = moduleEntity.dependencies.filterIsInstance(ModuleDependencyItem.Exportable.ModuleDependency::class.java)
+        .map { moduleDependency -> moduleDependency.module.name }
+
+      UnloadedModuleDescriptionImpl(modulePath, dependencyModuleNames, contentRoots)
+    }.filterNotNull().toMutableList()
 
     if (unloaded.isNotEmpty()) {
       val changeUnloaded = AutomaticModuleUnloader.getInstance(project).processNewModules(modulePathsToLoad.toSet(), unloaded)
