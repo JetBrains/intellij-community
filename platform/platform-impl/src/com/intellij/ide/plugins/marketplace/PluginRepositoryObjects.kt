@@ -56,7 +56,14 @@ data class IntellijUpdateMetadata(
     pluginNode.version = version
     pluginNode.url = url
     pluginNode.size = size.toString()
-    for (dep in dependencies) pluginNode.addDepends(dep)
+    for (dep in dependencies) {
+      if (dep.startsWith("(optional)")) {
+        pluginNode.addDepends(dep.removePrefix("(optional)").trim(), true)
+      }
+      else {
+        pluginNode.addDepends(dep, false)
+      }
+    }
     return pluginNode
   }
 }

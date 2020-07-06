@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +35,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String vendorUrl;
   private String url;
   private long date = Long.MAX_VALUE;
-  private List<PluginId> myDependencies;
-  private PluginId[] myOptionalDependencies;
+  private List<IdeaPluginDependency> myDependencies = new ArrayList<>();
   private Status myStatus = Status.UNKNOWN;
   private boolean myLoaded;
   private String myDownloadUrl;
@@ -267,18 +267,39 @@ public final class PluginNode implements IdeaPluginDescriptor {
   public long getDate() {
     return date;
   }
-
-  public List<PluginId> getDepends() {
-    return myDependencies;
+  
+  /**
+   * @deprecated Use {@link #setDependencies(List)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  public void setDepends(@NotNull List<? extends PluginId> depends, PluginId @Nullable [] optionalDependencies) {
+    myDependencies = new ArrayList<>();
+    for (PluginId id : depends) {
+      myDependencies.add(new PluginNodeDependency(id, false));
+    }
+    if (optionalDependencies != null) {
+      for (PluginId dependency : optionalDependencies) {
+        myDependencies.add(new PluginNodeDependency(dependency, true));
+      }
+    }
   }
 
-  public void setDepends(@NotNull List<? extends PluginId> depends, PluginId @Nullable [] optionalDependencies) {
-    myDependencies = new ArrayList<>(depends);
-    myOptionalDependencies = optionalDependencies;
+  public void setDependencies(@NotNull List<IdeaPluginDependency> dependencies) {
+    myDependencies = new ArrayList<>(dependencies);
   }
 
   public void addDepends(@NotNull String id) {
-    (myDependencies != null ? myDependencies : (myDependencies = new ArrayList<>())).add(PluginId.getId(id));
+    addDepends(id, false);
+  }
+
+  public void addDepends(@NotNull String id, boolean optional) {
+    myDependencies.add(new PluginNodeDependency(PluginId.getId(id), optional));
+  }
+
+  @Override
+  public @NotNull List<IdeaPluginDependency> getDependencies() {
+    return myDependencies;
   }
 
   public List<String> getTags() {
@@ -314,7 +335,13 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   @Override
   public PluginId @NotNull [] getOptionalDependentPluginIds() {
-    return myOptionalDependencies != null ? myOptionalDependencies : PluginId.EMPTY_ARRAY;
+    List<PluginId> result = new ArrayList<>();
+    for (IdeaPluginDependency dependency : myDependencies) {
+      if (dependency.isOptional()) {
+        result.add(dependency.getPluginId());
+      }
+    }
+    return result.toArray(PluginId.EMPTY_ARRAY);
   }
 
   @Override
@@ -395,5 +422,25 @@ public final class PluginNode implements IdeaPluginDescriptor {
   @Override
   public String toString() {
     return getName();
+  }
+
+  private static class PluginNodeDependency implements IdeaPluginDependency {
+    private final PluginId myPluginId;
+    private final boolean myOptional;
+
+    private PluginNodeDependency(PluginId id, boolean optional) {
+      myPluginId = id;
+      myOptional = optional;
+    }
+
+    @Override
+    public PluginId getPluginId() {
+      return myPluginId;
+    }
+
+    @Override
+    public boolean isOptional() {
+      return myOptional;
+    }
   }
 }

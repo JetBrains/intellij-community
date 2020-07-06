@@ -3,9 +3,9 @@ package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -39,7 +39,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   private ClassLoader[] myParents;
-  private final IdeaPluginDescriptor myPluginDescriptor;
+  private final PluginDescriptor myPluginDescriptor;
   private final List<String> myLibDirectories;
 
   private final AtomicLong edtTime = new AtomicLong();
@@ -53,14 +53,14 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader @NotNull [] parents,
-                           @NotNull IdeaPluginDescriptor pluginDescriptor,
+                           @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot) {
     this(build().urls(urls).allowLock().useCache(), parents, pluginDescriptor, pluginRoot);
   }
 
   public PluginClassLoader(@NotNull Builder builder,
                            @NotNull ClassLoader @NotNull [] parents,
-                           @NotNull IdeaPluginDescriptor pluginDescriptor,
+                           @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot) {
     super(builder);
 
@@ -384,7 +384,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     return pluginId;
   }
 
-  public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
+  public @NotNull PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
   }
 

@@ -354,7 +354,7 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
     }
     else {
       pluginNode = new PluginNode(actionDescriptor.getPluginId(), actionDescriptor.getName(), "-1");
-      pluginNode.setDepends(Arrays.asList(actionDescriptor.getDependentPluginIds()), actionDescriptor.getOptionalDependentPluginIds());
+      pluginNode.setDependencies(actionDescriptor.getDependencies());
       pluginNode.setRepositoryName(PluginInstaller.UNKNOWN_HOST_MARKER);
     }
     List<PluginNode> pluginsToInstall = ContainerUtil.newArrayList(pluginNode);

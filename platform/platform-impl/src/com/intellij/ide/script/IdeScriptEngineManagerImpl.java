@@ -102,7 +102,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       .toMap(factory -> {
         Class<? extends ScriptEngineFactory> aClass = factory.getClass();
         ClassLoader classLoader = aClass.getClassLoader();
-        IdeaPluginDescriptor plugin = classLoader instanceof PluginClassLoader ? ((PluginClassLoader)classLoader).getPluginDescriptor() : null;
+        PluginDescriptor plugin = classLoader instanceof PluginClassLoader ? ((PluginClassLoader)classLoader).getPluginDescriptor() : null;
         return new EngineInfo(factory.getEngineName(),
                               factory.getEngineVersion(),
                               factory.getLanguageName(),
