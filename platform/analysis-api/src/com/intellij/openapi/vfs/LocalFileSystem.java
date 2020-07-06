@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -97,36 +95,10 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     boolean isToWatchRecursively();
   }
 
-  /**
-   * Same as {@link #addRootToWatch(String, boolean)}, but additionally removes watch when {@code disposal} is disposed.
-   */
-  @Nullable
-  public final WatchRequest addRootToWatch(@NotNull String rootPath, boolean watchRecursively, @NotNull Disposable disposable) {
-    WatchRequest request = addRootToWatch(rootPath, watchRecursively);
-    if (request != null) {
-      Disposer.register(disposable, () -> removeWatchedRoot(request));
-    }
-    return request;
-  }
-
   @Nullable
   public WatchRequest addRootToWatch(@NotNull String rootPath, boolean watchRecursively) {
     Set<WatchRequest> result = addRootsToWatch(singleton(rootPath), watchRecursively);
     return result.size() == 1 ? result.iterator().next() : null;
-  }
-
-  /**
-   * Same as {@link #addRootsToWatch(Collection, boolean)}, but additionally removes watch when {@code disposal} is disposed.
-   */
-  @NotNull
-  public final Set<WatchRequest> addRootsToWatch(@NotNull Collection<String> rootPaths,
-                                                 boolean watchRecursively,
-                                                 @NotNull Disposable disposable) {
-    Set<WatchRequest> requests = addRootsToWatch(rootPaths, watchRecursively);
-    if (!requests.isEmpty()) {
-      Disposer.register(disposable, () -> removeWatchedRoots(requests));
-    }
-    return requests;
   }
 
   @NotNull
