@@ -1090,9 +1090,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                                    ? ConsoleFolding.EP_NAME.getByKey(lastFoldingFqn, ConsoleViewImpl.class,
                                                                      consoleFolding -> consoleFolding.getClass().getName())
                                    : null;
-      int lastStartLine = lastFolding == null ? Integer.MAX_VALUE :
-                          existingRegion.getStartOffset() == 0 ? 0 :
-                          document.getLineNumber(existingRegion.getStartOffset()) + 1;
+      int lastStartLine = Integer.MAX_VALUE;
+      if (lastFolding != null) {
+        int offset = existingRegion.getStartOffset();
+        if (offset == 0) {
+          lastStartLine = 0;
+        }
+        else {
+          lastStartLine = document.getLineNumber(offset);
+          if (document.getLineStartOffset(lastStartLine) != offset) lastStartLine++;
+        }
+      }
 
       for (int line = startLine; line <= endLine; line++) {
         /*
