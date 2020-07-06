@@ -57,8 +57,7 @@ public final class ConflictsUtil {
       }
     }
 
-    if (method != null && method.getManager().areElementsEquivalent(method, refactoredMethod) &&
-        !isStaticInterfaceMethods(aClass, refactoredMethod, method)) {
+    if (method != null && method != refactoredMethod && !isStaticInterfaceMethods(aClass, refactoredMethod, method)) {
       if (aClass.equals(method.getContainingClass())) {
         final String classDescr = aClass instanceof PsiAnonymousClass ?
                                   JavaRefactoringBundle.message("current.class") :

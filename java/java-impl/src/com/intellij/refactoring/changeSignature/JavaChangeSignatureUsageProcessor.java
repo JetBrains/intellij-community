@@ -815,8 +815,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
     PsiParameterList list = method.getParameterList();
     PsiClass aClass = method.getContainingClass();
-    boolean isRecordCanonicalConstructor = 
-      aClass != null && method.getManager().areElementsEquivalent(method, JavaPsiRecordUtil.findCanonicalConstructor(aClass));
+    boolean isRecordCanonicalConstructor = aClass != null && method.equals(JavaPsiRecordUtil.findCanonicalConstructor(aClass));
     boolean shouldChangeParameters = !isRecordCanonicalConstructor || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method);
     int newParamsLength = getNewParametersCount(changeInfo, baseMethod, list);
 
