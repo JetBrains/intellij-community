@@ -3,7 +3,6 @@ package com.intellij.util.io
 
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.util.containers.ContainerUtil
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -231,7 +230,7 @@ fun Path.write(data: ByteBuffer, createParentDirs: Boolean = true): Path {
     parent?.createDirectories()
   }
 
-  Files.newByteChannel(this, setOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)).use {
+  Files.newByteChannel(this, HashSet(listOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))).use {
     it.write(data)
   }
   return this
@@ -290,16 +289,16 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
   return null
 }
 
-private val illegalChars = ContainerUtil.set('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':')
+private val illegalChars = HashSet(listOf('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':'))
 
 // https://github.com/parshap/node-sanitize-filename/blob/master/index.js
-fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boolean = true): String {
+fun sanitizeFileName(name: String, replacement: String? = "_", truncateIfNeeded: Boolean = true, isSpaceAllowed: Boolean = true): String {
   var result: StringBuilder? = null
   var last = 0
   val length = name.length
   for (i in 0 until length) {
     val c = name[i]
-    if (!illegalChars.contains(c) && !c.isISOControl()) {
+    if (!illegalChars.contains(c) && !c.isISOControl() && (isSpaceAllowed || c != ' ')) {
       continue
     }
 
@@ -316,17 +315,17 @@ fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boole
     last = i + 1
   }
 
-  fun String.truncateFileName() = if (isTruncate) substring(0, min(length, 255)) else this
+  fun truncateFileName(s: String) = if (truncateIfNeeded) s.substring(0, min(length, 255)) else s
 
   if (result == null) {
-    return name.truncateFileName()
+    return truncateFileName(name)
   }
 
   if (last < length) {
     result.append(name, last, length)
   }
 
-  return result.toString().truncateFileName()
+  return truncateFileName(result.toString())
 }
 
 val Path.isWritable: Boolean

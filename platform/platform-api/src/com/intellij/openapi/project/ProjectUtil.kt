@@ -165,7 +165,7 @@ private fun getProjectCacheFileName(presentableUrl: String?,
       PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
   }
-  return doGetProjectFileName(presentableUrl, sanitizeFileName(name, isTruncate = false), hashSeparator, extensionWithDot)
+  return doGetProjectFileName(presentableUrl, sanitizeFileName(name, truncateIfNeeded = false), hashSeparator, extensionWithDot)
 }
 
 @ApiStatus.Internal

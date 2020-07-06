@@ -50,7 +50,7 @@ class TemporaryDirectory : ExternalResource() {
   }
 
   override fun apply(base: Statement, description: Description): Statement {
-    sanitizedName = sanitizeFileName(description.methodName)
+    sanitizedName = sanitizeFileName(description.methodName, isSpaceAllowed = false)
     return super.apply(base, description)
   }
 
