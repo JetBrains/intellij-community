@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -114,19 +113,10 @@ public class PluginManagerConfigurable
   private final JLabel myUpdateCounter = new CountComponent();
   private final CountIcon myCountIcon = new CountIcon();
 
-  private final MyPluginModel myPluginModel = new MyPluginModel() {
-    @Override
-    @NotNull
-    public Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
-      return getCustomRepositoryPlugins();
-    }
-  };
+  private final MyPluginModel myPluginModel = new MyPluginModel();
 
   private PluginUpdatesService myPluginUpdatesService;
 
-  private Collection<IdeaPluginDescriptor> myCustomRepositoryPluginsList;
-  private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoryPluginsMap;
-  private final Object myRepositoriesLock = new Object();
   private List<String> myTagsSorted;
   private List<String> myVendorsSorted;
 
@@ -321,10 +311,7 @@ public class PluginManagerConfigurable
   }
 
   private void resetPanels() {
-    synchronized (myRepositoriesLock) {
-      myCustomRepositoryPluginsList = null;
-      myCustomRepositoryPluginsMap = null;
-    }
+    CustomPluginRepositoryService.getInstance().clearCache();
 
     myTagsSorted = null;
     myVendorsSorted = null;
@@ -387,7 +374,7 @@ public class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           try {
-            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = loadCustomRepositoryPlugins();
+            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
             try {
               addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true",
                                          "/sortBy:featured");
@@ -479,7 +466,7 @@ public class PluginManagerConfigurable
               case TAG:
                 if (ContainerUtil.isEmpty(myTagsSorted)) { // XXX
                   Set<String> allTags = new HashSet<>();
-                  for (IdeaPluginDescriptor descriptor : getCustomRepositoryPlugins()) {
+                  for (IdeaPluginDescriptor descriptor : CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()) {
                     if (descriptor instanceof PluginNode) {
                       List<String> tags = ((PluginNode)descriptor).getTags();
                       if (!ContainerUtil.isEmpty(tags)) {
@@ -669,7 +656,7 @@ public class PluginManagerConfigurable
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
-                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = loadCustomRepositoryPlugins();
+                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
 
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
 
@@ -1555,62 +1542,6 @@ public class PluginManagerConfigurable
       panel.initialSelection();
     }
     return pane;
-  }
-
-  @NotNull
-  private Collection<IdeaPluginDescriptor> getCustomRepositoryPlugins() {
-    synchronized (myRepositoriesLock) {
-      if (myCustomRepositoryPluginsList != null) {
-        return myCustomRepositoryPluginsList;
-      }
-    }
-    LOG.info("PluginManagerConfigurable#getCustomRepoPlugins() has been called before PluginManagerConfigurable#createMarketplaceTab()"); // XXX
-    return ContainerUtil.emptyList();
-  }
-
-  @NotNull
-  private Map<String, List<IdeaPluginDescriptor>> loadCustomRepositoryPlugins() {
-    synchronized (myRepositoriesLock) {
-      if (myCustomRepositoryPluginsMap != null) {
-        return myCustomRepositoryPluginsMap;
-      }
-    }
-    Map<PluginId, IdeaPluginDescriptor> latestCustomPluginsAsMap = new HashMap<>();
-    Map<String, List<IdeaPluginDescriptor>> customRepositoryPluginsMap = new HashMap<>();
-    for (String host : RepositoryHelper.getPluginHosts()) {
-      try {
-        if (host != null) {
-          List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, null);
-          for (IdeaPluginDescriptor descriptor : descriptors) {
-            PluginId pluginId = descriptor.getPluginId();
-            IdeaPluginDescriptor savedDescriptor = latestCustomPluginsAsMap.get(pluginId);
-            if (savedDescriptor == null) {
-              latestCustomPluginsAsMap.put(pluginId, descriptor);
-            } else {
-              if (StringUtil.compareVersionNumbers(descriptor.getVersion(), savedDescriptor.getVersion()) > 0) {
-                latestCustomPluginsAsMap.put(pluginId, descriptor);
-              }
-            }
-          }
-          customRepositoryPluginsMap.put(host, descriptors);
-        }
-      }
-      catch (IOException e) {
-        LOG.info(host, e);
-      }
-    }
-
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
-    });
-
-    synchronized (myRepositoriesLock) {
-      if (myCustomRepositoryPluginsMap == null) {
-        myCustomRepositoryPluginsMap = customRepositoryPluginsMap;
-        myCustomRepositoryPluginsList = latestCustomPluginsAsMap.values();
-      }
-      return myCustomRepositoryPluginsMap;
-    }
   }
 
   private void addGroup(
