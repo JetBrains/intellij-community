@@ -7,7 +7,9 @@ import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.WrappedProgressIndicator;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -50,8 +52,7 @@ public class JobLauncherImpl extends JobLauncher {
     List<ApplierCompleter<T>> failedSubTasks = Collections.synchronizedList(new ArrayList<>());
     ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, failFastOnAcquireReadAction, wrapper, things, processor, 0, things.size(), failedSubTasks, null);
     try {
-      ProgressIndicator existing = pm.getProgressIndicator();
-      if (existing == progress) {
+      if (progress != null && isAlreadyUnder(progress)) {
         // there must be nested invokeConcurrentlies.
         // In this case, try to avoid placing tasks to the FJP queue because extra applier.get() or pool.invoke() can cause pool over-compensation with too many workers
         applier.compute();
@@ -103,12 +104,21 @@ public class JobLauncherImpl extends JobLauncher {
     return applier.completeTaskWhichFailToAcquireReadAction();
   }
 
-  private static <T> Processor<? super T> wrapWithIgnoringDumbMode(Processor<? super T> processor) {
+  private static boolean isAlreadyUnder(@NotNull ProgressIndicator progress) {
+    progress = ProgressWrapper.unwrapAll(progress);
+    ProgressIndicator existing = ProgressManager.getGlobalProgressIndicator();
+    while (existing != null) {
+      if (existing == progress) return true;
+      if (!(existing instanceof WrappedProgressIndicator)) return false;
+      existing = ProgressWrapper.unwrap(existing);
+    }
+    return false;
+  }
+
+  private static <T> Processor<? super T> wrapWithIgnoringDumbMode(@NotNull Processor<? super T> processor) {
     DumbModeAccessType dumbModeAccessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType();
     if (dumbModeAccessType == null) return processor;
-    return (t) -> {
-      return FileBasedIndex.getInstance().ignoreDumbMode(dumbModeAccessType, () -> processor.process(t));
-    };
+    return t -> FileBasedIndex.getInstance().ignoreDumbMode(dumbModeAccessType, () -> processor.process(t));
   }
 
   // if {@code things} are too few to be processed in the real pool, returns TRUE if processed successfully, FALSE if not
