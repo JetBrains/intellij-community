@@ -196,7 +196,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
       else {
         val changes = CHANGED_FILES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_FILES_KEY, linkedMapOf())
         synchronized(changes) {
-          changes.getOrPut(componentManager.stateStore as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
+          changes.computeIfAbsent(componentManager.stateStore as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
         }
       }
 
@@ -217,7 +217,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
     val changes = CHANGED_SCHEMES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_SCHEMES_KEY, linkedMapOf())
     synchronized(changes) {
-      changes.getOrPut(schemeFileTracker) { LinkedHashSet() }.addAll(events)
+      changes.computeIfAbsent(schemeFileTracker) { LinkedHashSet() }.addAll(events)
     }
 
     scheduleProcessingChangedFiles()

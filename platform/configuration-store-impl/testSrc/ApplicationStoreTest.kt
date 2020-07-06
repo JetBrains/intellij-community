@@ -390,7 +390,7 @@ internal class ApplicationStoreTest {
       getMap(roamingType)[fileSpec] = String(content, 0, size, Charsets.UTF_8)
     }
 
-    private fun getMap(roamingType: RoamingType): MutableMap<String, String> = data.getOrPut(roamingType) { HashMap() }
+    private fun getMap(roamingType: RoamingType): MutableMap<String, String> = data.computeIfAbsent(roamingType) { HashMap() }
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
       val data = getMap(roamingType)[fileSpec]

@@ -108,7 +108,7 @@ internal fun moveComponentConfiguration(defaultProject: Project,
         // ignore - this data should be not copied
         ignoredComponentNames.add(stateAnnotation.name)
       }
-      else -> storageNameToComponentNames.getOrPut(storagePathResolver(storagePath)) { HashSet() }.add(stateAnnotation.name)
+      else -> storageNameToComponentNames.computeIfAbsent(storagePathResolver(storagePath)) { HashSet() }.add(stateAnnotation.name)
     }
   }
 
@@ -136,13 +136,13 @@ internal fun moveComponentConfiguration(defaultProject: Project,
 
     for ((storageName, componentNames) in storageNameToComponentNames) {
       if (componentNames.contains(name)) {
-        storagePathToComponentStates.getOrPut(fileResolver(storageName)) { SmartList() }.add(componentElement)
+        storagePathToComponentStates.computeIfAbsent(fileResolver(storageName)) { SmartList() }.add(componentElement)
         continue@cI
       }
     }
 
     // ok, just save it to misc.xml
-    storagePathToComponentStates.getOrPut(fileResolver("misc.xml")) { SmartList() }.add(componentElement)
+    storagePathToComponentStates.computeIfAbsent(fileResolver("misc.xml")) { SmartList() }.add(componentElement)
   }
 
   for ((storageFile, componentStates) in storagePathToComponentStates) {

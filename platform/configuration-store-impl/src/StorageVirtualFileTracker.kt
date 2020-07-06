@@ -113,7 +113,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
             if (storageEvents == null) {
               storageEvents = LinkedHashMap()
             }
-            storageEvents.getOrPut(componentManager) { LinkedHashSet() }.add(storage)
+            storageEvents.computeIfAbsent(componentManager) { LinkedHashSet() }.add(storage)
           }
         }
 
