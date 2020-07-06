@@ -61,13 +61,12 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     GeneralCommandLine commandLine = parameters.toCommandLine();
 
     OSProcessHandler process = new OSProcessHandler(commandLine);
-    final SearchForTestsTask searchForTestsTask = state.createSearchingForTestsTask();
+    SearchForTestsTask searchForTestsTask = state.createSearchingForTestsTask();
     if (searchForTestsTask != null) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-                                                                          searchForTestsTask.run(new EmptyProgressIndicator());
-                                                                          ApplicationManager.getApplication().invokeLater(() -> searchForTestsTask.onSuccess());
-                                                                        },
-                                                                        "", false, project, null);
+        searchForTestsTask.run(new EmptyProgressIndicator());
+        ApplicationManager.getApplication().invokeLater(() -> searchForTestsTask.onSuccess());
+      }, "", false, project, null);
     }
 
     ProcessOutput processOutput = new ProcessOutput();
@@ -114,7 +113,6 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
 
     return processOutput;
   }
-
 
   protected static void addMavenLibs(Module module,
                                      JpsMavenRepositoryLibraryDescriptor descriptor) throws Exception {

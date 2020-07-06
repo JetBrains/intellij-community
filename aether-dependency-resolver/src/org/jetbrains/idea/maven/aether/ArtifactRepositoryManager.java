@@ -49,7 +49,7 @@ import java.util.*;
  * instance of this component should be managed by the code which requires dependency resolution functionality
  * all necessary params like path to local repo should be passed in constructor
  */
-public class ArtifactRepositoryManager {
+public final class ArtifactRepositoryManager {
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactRepositoryManager.class);
@@ -90,11 +90,11 @@ public class ArtifactRepositoryManager {
     this(localRepositoryPath, createDefaultRemoteRepositories(), progressConsumer);
   }
 
-  public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull final ProgressConsumer progressConsumer) {
+  public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull ProgressConsumer progressConsumer) {
     this(localRepositoryPath, remoteRepositories, progressConsumer, false);
   }
 
-  public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull final ProgressConsumer progressConsumer, boolean offline) {
+  public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull ProgressConsumer progressConsumer, boolean offline) {
     myRemoteRepositories.addAll(remoteRepositories);
     final DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
     if (progressConsumer != ProgressConsumer.DEAF) {
@@ -115,7 +115,7 @@ public class ArtifactRepositoryManager {
         }
 
         @Override
-        public void transferCorrupted(TransferEvent event) throws TransferCancelledException {
+        public void transferCorrupted(TransferEvent event) {
         }
 
         @Override
@@ -176,11 +176,19 @@ public class ArtifactRepositoryManager {
     );
   }
 
-  public Collection<File> resolveDependency(String groupId, String artifactId, String version, boolean includeTransitiveDependencies,
-                                            List<String> excludedDependencies) throws Exception {
-    final List<File> files = new ArrayList<>();
-    for (Artifact artifact : resolveDependencyAsArtifact(groupId, artifactId, version, EnumSet.of(ArtifactKind.ARTIFACT), includeTransitiveDependencies,
-                                                         excludedDependencies)) {
+  public @NotNull Collection<File> resolveDependency(String groupId,
+                                                     String artifactId,
+                                                     String version,
+                                                     boolean includeTransitiveDependencies,
+                                                     List<String> excludedDependencies) throws Exception {
+    Collection<Artifact> artifacts = resolveDependencyAsArtifact(groupId, artifactId, version, EnumSet.of(ArtifactKind.ARTIFACT),
+                                                                 includeTransitiveDependencies, excludedDependencies);
+    if (artifacts.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<File> files = new ArrayList<>(artifacts.size());
+    for (Artifact artifact : artifacts) {
       files.add(artifact.getFile());
     }
     return files;

@@ -21,7 +21,6 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import static com.intellij.execution.testframework.TestSearchScope.SINGLE_MODULE;
 
 public class TestNGModuleInfoIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
-
   @Override
   protected String getTestContentRoot() {
     return VfsUtilCore
