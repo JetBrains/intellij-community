@@ -158,8 +158,17 @@ class GitRebaseDialog(private val project: Project,
     rebaseSettings.options.forEach { option -> selectedOptions += option }
     val newBase = rebaseSettings.newBase
     if (!newBase.isNullOrEmpty() && isValidRevision(newBase)) {
-      upstreamField.selectedItem = newBase
+      findRef(newBase)?.let { ref ->
+        upstreamField.item = ref
+      }
     }
+  }
+
+  private fun findRef(refName: String): GitReference? {
+    val predicate: (GitReference) -> Boolean = { ref -> ref.fullName == refName }
+    return localBranches.find(predicate)
+           ?: remoteBranches.find(predicate)
+           ?: tags.find(predicate)
   }
 
   private fun validateNewBase(): ValidationInfo? {
