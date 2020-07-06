@@ -66,15 +66,4 @@ class AnalyticsPlatformSettingsTest : TestCase() {
     assertThat(result.versions[0].majorBuildVersionBorders.majorVersionTo).isNull()
     assertThat(result.versions[0].endpoint).isEqualTo(endpoint)
   }
-
-  fun `test major versions comparison`() {
-    val version1 = MajorVersion("2020.1")
-    val version2 = MajorVersion("2020.1.12")
-    val version3 = MajorVersion("2020.2")
-    val version4 = MajorVersion("2020.2.SNAPSHOT")
-
-    assertThat(version1).isLessThan(version2)
-    assertThat(version2).isLessThan(version3)
-    assertThat(version3).isLessThan(version4)
-  }
 }

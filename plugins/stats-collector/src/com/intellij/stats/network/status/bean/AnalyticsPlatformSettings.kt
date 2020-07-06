@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Version
 
 data class AnalyticsPlatformSettings(val productCode: String? = null, val versions: List<EndpointSettings> = emptyList())
 
@@ -18,7 +19,8 @@ data class EndpointSettings(val releaseType: ReleaseType = ReleaseType.ALL,
     val applicationInfo = ApplicationInfo.getInstance()
     val currentReleaseType = if (ApplicationManager.getApplication().isEAP) ReleaseType.EAP else ReleaseType.RELEASE
     if (releaseType != ReleaseType.ALL && releaseType != currentReleaseType) return false
-    if (!majorBuildVersionBorders.satisfies(MajorVersion(applicationInfo.majorVersion))) return false
+    val version = Version.parseVersion(applicationInfo.majorVersion)
+    if (version == null || !majorBuildVersionBorders.satisfies(version)) return false
     val bucket = EventLogConfiguration.bucket
     if (bucket < fromBucket || bucket > toBucket) return false
     return true
@@ -29,25 +31,9 @@ enum class ReleaseType {
   EAP, RELEASE, ALL
 }
 
-data class MajorVersionBorders(val majorVersionFrom: MajorVersion?, val majorVersionTo: MajorVersion?) {
-  fun satisfies(majorVersion: MajorVersion): Boolean {
+data class MajorVersionBorders(val majorVersionFrom: Version?, val majorVersionTo: Version?) {
+  fun satisfies(majorVersion: Version): Boolean {
     return (majorVersionFrom == null || majorVersion >= majorVersionFrom) &&
            (majorVersionTo == null || majorVersion <= majorVersionTo)
-  }
-}
-
-data class MajorVersion(val version: String) : Comparable<MajorVersion> {
-  private val versionParts: List<Int?> = version.split(".").map { it.toIntOrNull() }
-
-  override fun compareTo(other: MajorVersion): Int {
-    val commonPartsCount = minOf(versionParts.size, other.versionParts.size)
-    for (i in 0 until commonPartsCount) {
-      if (versionParts[i] == other.versionParts[i]) continue
-      if (versionParts[i] == null) return -1
-      if (other.versionParts[i] == null) return 1
-      return versionParts[i]!! - other.versionParts[i]!!
-    }
-    if (versionParts.size == other.versionParts.size) return 0
-    return versionParts.size - other.versionParts.size
   }
 }

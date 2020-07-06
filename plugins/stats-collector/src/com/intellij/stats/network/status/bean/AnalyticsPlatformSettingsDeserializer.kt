@@ -4,6 +4,7 @@ package com.intellij.stats.network.status.bean
 import com.google.gson.*
 import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Version
 import java.lang.reflect.Type
 
 object AnalyticsPlatformSettingsDeserializer {
@@ -17,10 +18,11 @@ object AnalyticsPlatformSettingsDeserializer {
           return Language.findLanguageByID(value) ?: throw JsonSyntaxException("No language with id: $value")
         }
       })
-      .registerTypeAdapter(MajorVersion::class.java, object : JsonDeserializer<MajorVersion> {
-        override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): MajorVersion {
+      .registerTypeAdapter(Version::class.java, object : JsonDeserializer<Version> {
+        override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Version {
           if (!json.isJsonPrimitive) throw JsonSyntaxException("No string field for major version")
-          return MajorVersion(json.asString)
+          val value = json.asString
+          return Version.parseVersion(value) ?:  throw JsonSyntaxException("Couldn't parse major version: $value")
         }
       })
       .create()
