@@ -161,19 +161,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         return Result.STOP;
       }
 
-      PsiElement prevLeaf = leaf == null ? null : PsiTreeUtil.prevVisibleLeaf(leaf);
-      if (PsiUtil.isJavaToken(prevLeaf, JavaTokenType.ARROW) || 
-          PsiTreeUtil.getParentOfType(prevLeaf, PsiNewExpression.class, true, PsiCodeBlock.class, PsiMember.class) != null) {
-        return Result.CONTINUE;
-      }
-
-      if (prevLeaf instanceof PsiIdentifier && prevLeaf.getParent() instanceof PsiClass ||
-          PsiUtil.isJavaToken(prevLeaf, JavaTokenType.RPARENTH) && prevLeaf.getParent() instanceof PsiRecordHeader) {
-        // Local class/record declaration
-        return Result.CONTINUE;
-      }
-
-      if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
+      if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null && !shouldInsertPairedBrace(leaf)) {
         EditorModificationUtil.insertStringAtCaret(editor, "{");
         TypedHandler.indentOpenedBrace(project, editor);
         return Result.STOP; // use case: manually wrapping part of method's code in 'if', 'while', etc
@@ -181,6 +169,19 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
 
     return Result.CONTINUE;
+  }
+
+  private static boolean shouldInsertPairedBrace(@NotNull PsiElement leaf) {
+    PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(leaf);
+    // lambda
+    if (PsiUtil.isJavaToken(prevLeaf, JavaTokenType.ARROW)) return true;
+    // anonymous class
+    if (PsiTreeUtil.getParentOfType(prevLeaf, PsiNewExpression.class, true, PsiCodeBlock.class, PsiMember.class) != null) return true;
+    // local class
+    if (prevLeaf instanceof PsiIdentifier && prevLeaf.getParent() instanceof PsiClass) return true;
+    // local record
+    if (PsiUtil.isJavaToken(prevLeaf, JavaTokenType.RPARENTH) && prevLeaf.getParent() instanceof PsiRecordHeader) return true;
+    return false;
   }
 
   private static boolean shouldInsertStatementBody(@NotNull PsiElement statement, @NotNull Document doc, @Nullable PsiElement prev) {
