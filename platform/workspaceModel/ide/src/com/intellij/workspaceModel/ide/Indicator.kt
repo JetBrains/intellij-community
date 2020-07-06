@@ -13,11 +13,12 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLife
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
+@Suppress("HardCodedStringLiteral")
 class WorkspaceModelIndicator : StatusBarWidgetFactory {
   override fun getId(): String = "WorkspaceModelIndicator"
 
   override fun getDisplayName(): String {
-    return "Workspace model"
+    return "Workspace Model"
   }
 
   override fun isAvailable(project: Project): Boolean {
@@ -31,13 +32,14 @@ class WorkspaceModelIndicator : StatusBarWidgetFactory {
       }
 
       override fun install(statusBar: StatusBar) {
+        statusBar.updateWidget(ID())
       }
 
       override fun dispose() {
       }
 
       override fun getTooltipText(): String? {
-        return if (LegacyBridgeProjectLifecycleListener.enabled(project)) "Enabled" else "disabled"
+        return "Workspace model is ${if (LegacyBridgeProjectLifecycleListener.enabled(project)) "enabled" else "disabled"}"
       }
 
       override fun getIcon(): Icon? {
