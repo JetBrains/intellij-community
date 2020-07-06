@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,4 +61,6 @@ public interface SMTRunnerEventsListener {
   void onSuiteTreeNodeAdded(SMTestProxy testProxy);
   void onSuiteTreeStarted(SMTestProxy suite);
 
+  default void onTestOutput(@NotNull SMTestProxy proxy, @NotNull TestOutputEvent event) {}
+  default void onUncapturedOutput(@NotNull SMTestProxy activeProxy, String text, Key type) { }
 }
