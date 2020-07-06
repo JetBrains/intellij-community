@@ -14,7 +14,7 @@ class ExperimentInfoTest : LightIdeaTestCase() {
     Assertions.assertThat(experimentInfo.experimentBucketsCount).isNotNull()
     Assertions.assertThat(experimentInfo.groups.size).isNotEqualTo(0)
     for (group in experimentInfo.groups) {
-      Assertions.assertThat(group.id).isNotNull()
+      Assertions.assertThat(group.number).isNotNull()
       Assertions.assertThat(group.experimentBucket).isNotNull()
     }
   }

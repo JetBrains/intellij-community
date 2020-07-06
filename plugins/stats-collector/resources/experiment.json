@@ -3,7 +3,7 @@
   "experimentBucketsCount": 8,
   "groups": [
     {
-      "id": 7,
+      "number": 7,
       "description": "Default",
       "experimentBucket": 3,
       "useMLRanking": false,
@@ -11,7 +11,7 @@
       "calculateFeatures": true
     },
     {
-      "id": 8,
+      "number": 8,
       "description": "ML without arrows",
       "experimentBucket": 4,
       "useMLRanking": true,
@@ -19,7 +19,7 @@
       "calculateFeatures": true
     },
     {
-      "id": 11,
+      "number": 11,
       "description": "ML with arrows",
       "experimentBucket": 5,
       "useMLRanking": true,
@@ -27,7 +27,7 @@
       "calculateFeatures": true
     },
     {
-      "id": 12,
+      "number": 12,
       "description": "Default without calculation features",
       "experimentBucket": 6,
       "useMLRanking": false,

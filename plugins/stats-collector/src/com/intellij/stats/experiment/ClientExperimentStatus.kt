@@ -14,7 +14,7 @@ class ClientExperimentStatus : ExperimentStatus {
 
     fun loadExperimentInfo(): ExperimentInfo {
       try{
-        val json = {}.javaClass.getResource(PATH_TO_EXPERIMENT_CONFIG).readText()
+        val json = ClientExperimentStatus::class.java.getResource(PATH_TO_EXPERIMENT_CONFIG).readText()
         val experimentInfo = GSON.fromJson(json, ExperimentInfo::class.java)
         checkExperimentGroups(experimentInfo)
         return experimentInfo
@@ -38,17 +38,17 @@ class ClientExperimentStatus : ExperimentStatus {
   private val experimentGroup: ExperimentGroupInfo? = experimentInfo.groups.find { it.experimentBucket == experimentBucket }
 
   override fun isExperimentOnCurrentIDE(language: Language): Boolean =
-    experimentInfo.groups.any { it.id == experimentVersion(language) }
+    experimentInfo.groups.any { it.number == experimentVersion(language) }
 
   // later it will support excluding group from experiment for some languages
-  override fun experimentVersion(language: Language): Int = experimentGroup?.id ?: experimentInfo.version
+  override fun experimentVersion(language: Language): Int = experimentGroup?.number ?: experimentInfo.version
 
   override fun shouldRank(language: Language): Boolean =
-    experimentInfo.groups.any { it.id == experimentVersion(language) && it.useMLRanking }
+    experimentInfo.groups.any { it.number == experimentVersion(language) && it.useMLRanking }
 
   override fun shouldShowArrows(language: Language): Boolean =
-    experimentInfo.groups.any { it.id == experimentVersion(language) && it.showArrows }
+    experimentInfo.groups.any { it.number == experimentVersion(language) && it.showArrows }
 
   override fun shouldCalculateFeatures(language: Language): Boolean =
-    experimentInfo.groups.any { it.id == experimentVersion(language) && it.calculateFeatures }
+    experimentInfo.groups.any { it.number == experimentVersion(language) && it.calculateFeatures }
 }

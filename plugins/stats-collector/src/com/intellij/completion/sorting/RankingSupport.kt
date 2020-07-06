@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.sorting
 
+import com.intellij.application.options.CodeCompletionOptions
 import com.intellij.completion.settings.CompletionMLRankingSettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.ml.completion.RankingModelProvider
@@ -10,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.stats.sender.isCompletionLogsSendAllowed
 import com.intellij.stats.experiment.ExperimentStatus
@@ -107,9 +109,15 @@ object RankingSupport {
           notification.expire()
         }
       })
-      .addAction(object : NotificationAction("Cancel") {
+      .addAction(object : NotificationAction("Disable") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           CompletionMLRankingSettings.getInstance().isShowDiffEnabled = false
+          notification.expire()
+        }
+      })
+      .addAction(object : NotificationAction("Open settings...") {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionOptions::class.java)
           notification.expire()
         }
       }).notify(null)
