@@ -47,12 +47,11 @@ public class CommandLinePanel extends JPanel {
       int minWidth = component.getMinimumSize().width;
       if (rowWidth + minWidth > parentWidth) {
         add(row);
-        add(Box.createVerticalStrut(2));
+        add(Box.createVerticalStrut(FragmentedSettingsBuilder.TOP_INSET));
         row = new JPanel(new GridBagLayout());
         rowWidth = 0;
         c.gridx = 0;
       }
-//      c.weightx = minWidth;
       row.add(component, c.clone());
       c.gridx++;
       rowWidth += minWidth;
