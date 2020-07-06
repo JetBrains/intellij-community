@@ -20,6 +20,8 @@ import java.util.Set;
  * @author amarch
  */
 public class JBTableWithRowHeaders extends JBTable {
+  private static final int AUTO_RESIZE_MAX_COLUMN_WIDTH = 200;
+
   private final JBScrollPane myScrollPane;
   private boolean myAutoResize;
   private final RowHeaderTable myRowHeaderTable;
@@ -64,7 +66,7 @@ public class JBTableWithRowHeaders extends JBTable {
     TableColumn tableColumn = table.getColumnModel().getColumn(column);
     int headerWidth = new ColumnHeaderRenderer().getTableCellRendererComponent(table, tableColumn.getHeaderValue(), false, false, -1, column).getPreferredSize().width + 4;
     int newWidth = Math.max(width, headerWidth) + 2 * table.getIntercellSpacing().width;
-    tableColumn.setPreferredWidth(Math.max(newWidth, tableColumn.getPreferredWidth()));
+    tableColumn.setPreferredWidth(Math.min(Math.max(newWidth, tableColumn.getPreferredWidth()), AUTO_RESIZE_MAX_COLUMN_WIDTH));
     return newWidth;
   }
 
