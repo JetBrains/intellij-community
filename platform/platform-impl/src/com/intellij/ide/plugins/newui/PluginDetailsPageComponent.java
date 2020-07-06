@@ -401,12 +401,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
       IdeaPluginDescriptor descriptor = component.getPluginDescriptor();
       if (descriptor instanceof PluginNode) {
         PluginNode node = (PluginNode)descriptor;
-        if (node.getDescription() == null && node.getExternalPluginId() != null && node.getExternalUpdateId() != null) {
+        if (!node.detailsLoaded()) {
           syncLoading = false;
           startLoading();
           ProcessIOExecutorService.INSTANCE.execute(() -> {
-            PluginNode meta = MarketplaceRequests.getInstance()
-              .loadPluginDescriptor(node.getPluginId().getIdString(), node.getExternalPluginId(), node.getExternalUpdateId());
+            PluginNode meta = MarketplaceRequests.getInstance().loadPluginDetails(node);
             meta.setRating(node.getRating());
             meta.setDownloads(node.getDownloads());
             component.myPlugin = meta;

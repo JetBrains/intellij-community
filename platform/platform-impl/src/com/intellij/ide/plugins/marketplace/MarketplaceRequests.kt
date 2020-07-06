@@ -232,9 +232,12 @@ open class MarketplaceRequests {
   }
 
 
-  fun loadPluginDescriptor(xmlId: String, externalPluginId: String, externalUpdateId: String): PluginNode {
+  fun loadPluginDetails(pluginNode: PluginNode): PluginNode {
+    val externalPluginId = pluginNode.externalPluginId
+    val externalUpdateId = pluginNode.externalUpdateId
+    if (externalPluginId == null || externalUpdateId == null) return pluginNode
     val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
-    return loadPluginDescriptor(xmlId, ideCompatibleUpdate)
+    return loadPluginDescriptor(pluginNode.pluginId.idString, ideCompatibleUpdate)
   }
 
   @Throws(IOException::class)
