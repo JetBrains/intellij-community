@@ -21,6 +21,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.propertyBased.CompletionPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +64,11 @@ class JavaCompletionPolicy extends CompletionPolicy {
       if (target instanceof PsiDirectory && ((PsiDirectory)target).getName().endsWith(".jar") && ((PsiDirectory)target).getParentDirectory() == null) {
         return false; // IDEA-178629
       }
+    }
+    if (refElement instanceof PsiNameValuePair &&
+        PsiUtil.isAnnotationMethod(target) &&
+        PsiType.BOOLEAN.equals(((PsiMethod)target).getReturnType())) {
+      return false; // they're suggested, but with true/false value text (IDEA-121071)
     }
     return super.shouldSuggestReferenceText(ref, target);
   }
