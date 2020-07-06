@@ -23,6 +23,6 @@
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.StoreReloadManagerBridge"
                         overrides="true"/>
 
-    <statusBarWidgetFactory implementation="com.intellij.workspaceModel.ide.WorkspaceModelIndicator"/>
+    <statusBarWidgetFactory implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelIndicator"/>
   </extensions>
 </idea-plugin>
