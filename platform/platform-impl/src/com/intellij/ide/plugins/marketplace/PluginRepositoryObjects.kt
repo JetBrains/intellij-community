@@ -105,3 +105,13 @@ data class FeatureImpl(
   val implementationName: String? = null,
   val bundled: Boolean = false
 )
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+class MarketplaceBrokenPlugin(
+  val id: String = "",
+  val version: String = "",
+  val since: String? = null,
+  val until: String? = null,
+  val originalSince: String? = null,
+  val originalUntil: String? = null
+)

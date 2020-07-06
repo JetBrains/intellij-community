@@ -86,6 +86,8 @@ open class MarketplaceRequests {
 
   private fun getUpdatesMetadataFilesDirectory() = File(PathManager.getPluginsPath()).resolve("meta")
 
+  internal fun getBrokenPluginsFile() = File(PathManager.getPluginsPath()).resolve("brokenPlugins.json")
+
   private fun getUpdateMetadataFile(update: IdeCompatibleUpdate) = getUpdatesMetadataFilesDirectory().resolve(
     update.externalUpdateId + ".json")
 
@@ -99,6 +101,8 @@ open class MarketplaceRequests {
   private fun createFeatureUrl(param: Map<String, String>) = Urls.newFromEncoded(
     "${PLUGIN_MANAGER_URL}/feature/getImplementations"
   ).addParameters(param)
+
+  private val BROKEN_PLUGIN_PATH = "${PLUGIN_MANAGER_URL}/files/brokenPlugins.json"
 
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> = try {
     if (param.isEmpty()) emptyList()
@@ -178,6 +182,23 @@ open class MarketplaceRequests {
     emptyList()
   }
 
+  fun getBrokenPlugins(): List<MarketplaceBrokenPlugin> {
+    return try {
+      readOrUpdateFile(
+        getBrokenPluginsFile(),
+        BROKEN_PLUGIN_PATH,
+        null,
+        "",
+        ::parseBrokenPlugins
+      )
+    }
+    catch (e: Exception) {
+      logWarnOrPrintIfDebug("Can not get broken plugins file from Marketplace", e)
+      emptyList()
+    }
+  }
+
+
   fun getAllPluginsTags(): List<String> = try {
     HttpRequests
       .request(MARKETPLACE_TAGS_URL)
@@ -227,12 +248,12 @@ open class MarketplaceRequests {
     val eTag = if (file != null) loadEtagForFile(file) else null
     return HttpRequests
       .request(url)
-      .tuner { connection -> eTag?.also { connection.setRequestProperty("If-None-Match", it) } }
+      .tuner { connection -> connection.setUpETag(eTag) }
       .productNameAsUserAgent()
       .connect { request ->
         indicator?.checkCanceled()
         val connection = request.connection
-        if (file != null && file.length() > 0 && connection is HttpURLConnection && connection.responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
+        if (file != null && connection.isNotModified(file)) {
           return@connect file.bufferedReader().use(parser)
         }
         if (indicator != null) {
@@ -305,6 +326,11 @@ open class MarketplaceRequests {
     logWarnOrPrintIfDebug("Can not get compatible update by module from Marketplace", e)
     emptyList()
   }
+
+  private fun parseBrokenPlugins(reader: Reader) = objectMapper.readValue(
+    reader,
+    object : TypeReference<List<MarketplaceBrokenPlugin>>() {}
+  )
 
   private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<List<String>>() {})
 
@@ -388,6 +414,13 @@ open class MarketplaceRequests {
     }
     return fileName
   }
+
+  private fun URLConnection.setUpETag(eTag: String?) {
+    eTag?.also { this.setRequestProperty("If-None-Match", it) }
+  }
+
+  private fun URLConnection.isNotModified(file: File?): Boolean =
+    file != null && file.length() > 0 && this is HttpURLConnection && this.responseCode == HttpURLConnection.HTTP_NOT_MODIFIED
 
   private data class CompatibleUpdateRequest(val build: String, val pluginXMLIds: List<String>)
   private data class CompatibleUpdateForModuleRequest(val build: String, val module: String)
