@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 /**
  * @author Alexander Lobas
  */
-public abstract class MyPluginModel extends InstalledPluginsTableModel implements PluginManagerMain.PluginEnabler {
+public class MyPluginModel extends InstalledPluginsTableModel implements PluginManagerMain.PluginEnabler {
   private static final Logger LOG = Logger.getInstance(MyPluginModel.class);
 
   private final List<ListPluginComponent> myInstalledPluginComponents = new ArrayList<>();
@@ -76,7 +76,7 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
 
   private final Set<PluginId> myErrorPluginsToDisable = new HashSet<>();
 
-  protected MyPluginModel() {
+  public MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
     myStatusBar = getStatusBar(window);
     if (myStatusBar == null && window != null) {
@@ -1039,7 +1039,9 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
   }
 
   @NotNull
-  abstract protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins();
+  protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
+    return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
+  }
 
   @NotNull
   private List<IdeaPluginDescriptor> dependent(@NotNull IdeaPluginDescriptor rootDescriptor) {
