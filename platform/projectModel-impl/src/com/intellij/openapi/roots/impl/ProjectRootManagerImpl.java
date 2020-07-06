@@ -123,8 +123,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @Override
   @NotNull
   public List<String> getContentRootUrls() {
-    final List<String> result = new ArrayList<>();
-    for (Module module : getModuleManager().getModules()) {
+    Module[] modules = getModuleManager().getModules();
+    List<String> result = new ArrayList<>(modules.length);
+    for (Module module : modules) {
       ContainerUtil.addAll(result, ModuleRootManager.getInstance(module).getContentRootUrls());
     }
     return result;
@@ -132,8 +133,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public VirtualFile @NotNull [] getContentRoots() {
-    final List<VirtualFile> result = new ArrayList<>();
     Module[] modules = getModuleManager().getModules();
+    List<VirtualFile> result = new ArrayList<>(modules.length);
     for (Module module : modules) {
       VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       if (modules.length == 1) {
@@ -147,10 +148,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public VirtualFile @NotNull [] getContentSourceRoots() {
-    final List<VirtualFile> result = new ArrayList<>();
-    for (Module module : getModuleManager().getModules()) {
-      final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-      ContainerUtil.addAll(result, sourceRoots);
+    Module[] modules = getModuleManager().getModules();
+    List<VirtualFile> result = new ArrayList<>(modules.length);
+    for (Module module : modules) {
+      ContainerUtil.addAll(result, ModuleRootManager.getInstance(module).getSourceRoots());
     }
     return VfsUtilCore.toVirtualFileArray(result);
   }
@@ -158,8 +159,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @NotNull
   @Override
   public List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
-    List<VirtualFile> roots = new ArrayList<>();
-    for (Module module : getModuleManager().getModules()) {
+    Module[] modules = getModuleManager().getModules();
+    List<VirtualFile> roots = new ArrayList<>(modules.length);
+    for (Module module : modules) {
       roots.addAll(ModuleRootManager.getInstance(module).getSourceRoots(rootTypes));
     }
     return roots;
@@ -179,8 +181,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public VirtualFile @NotNull [] getContentRootsFromAllModules() {
-    List<VirtualFile> result = new ArrayList<>();
-    for (Module module : getModuleManager().getSortedModules()) {
+    Module[] modules = getModuleManager().getSortedModules();
+    List<VirtualFile> result = new ArrayList<>(modules.length + 1);
+    for (Module module : modules) {
       Collections.addAll(result, ModuleRootManager.getInstance(module).getContentRoots());
     }
     ContainerUtil.addIfNotNull(result, myProject.getBaseDir());

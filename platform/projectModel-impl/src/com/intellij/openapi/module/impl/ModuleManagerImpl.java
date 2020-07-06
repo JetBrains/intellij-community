@@ -38,7 +38,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.graph.*;
@@ -197,7 +196,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     Module[] existingModules = model.getModules();
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
-    Map<String, ModulePath> modulePathMap = CollectionFactory.createSmallMemoryFootprintMap(myModulePathsToLoad.size());
+    Map<String, ModulePath> modulePathMap = new HashMap<>(myModulePathsToLoad.size());
     for (ModulePath modulePath : myModulePathsToLoad) {
       modulePathMap.put(modulePath.getPath(), modulePath);
     }
@@ -340,8 +339,9 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
     Application app = ApplicationManager.getApplication();
     if (app.isInternal() || app.isEAP() || ApplicationInfo.getInstance().getBuild().isSnapshot()) {
-      Map<String, Module> track = CollectionFactory.createSmallMemoryFootprintMap();
-      for (Module module : moduleModel.getModules()) {
+      Module[] modules = moduleModel.getModules();
+      Map<String, Module> track = new HashMap<>(modules.length);
+      for (Module module : modules) {
         for (String url : ModuleRootManager.getInstance(module).getContentRootUrls()) {
           Module oldModule = track.put(url, module);
           if (oldModule != null) {
@@ -596,7 +596,8 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     deliverPendingEvents();
     Module[] sortedModules = myCachedSortedModules;
     if (sortedModules == null) {
-      myCachedSortedModules = sortedModules = myModuleModel.getSortedModules();
+      sortedModules = myModuleModel.getSortedModules();
+      myCachedSortedModules = sortedModules;
     }
     return sortedModules;
   }
@@ -700,7 +701,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
 
   final static class ModuleModelImpl implements ModifiableModuleModel {
-    final Map<String, Module> myModules = Collections.synchronizedMap(new LinkedHashMap<>());
+    final Map<String, Module> myModules;
     private volatile Module[] myModulesCache;
 
     private final List<Module> myModulesToDispose = new ArrayList<>();
@@ -714,16 +715,16 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     private ModuleModelImpl(@NotNull ModuleManagerImpl manager) {
       myManager = manager;
       myIsWritable = false;
+      myModules = Collections.synchronizedMap(new LinkedHashMap<>());
     }
 
     @SuppressWarnings("CopyConstructorMissesField")
     private ModuleModelImpl(@NotNull ModuleModelImpl that) {
       myManager = that.myManager;
-      myModules.putAll(that.myModules);
-      final Map<Module, String[]> groupPath = that.myModuleGroupPath;
-      if (groupPath != null){
-        myModuleGroupPath = CollectionFactory.createSmallMemoryFootprintMap();
-        myModuleGroupPath.putAll(that.myModuleGroupPath);
+      myModules = Collections.synchronizedMap(new LinkedHashMap<>(that.myModules));
+      Map<Module, String[]> groupPath = that.myModuleGroupPath;
+      if (groupPath != null) {
+        myModuleGroupPath = new HashMap<>(that.myModuleGroupPath);
       }
       myIsWritable = true;
     }
@@ -737,14 +738,17 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       Module[] cache = myModulesCache;
       if (cache == null) {
         Collection<Module> modules = myModules.values();
-        myModulesCache = cache = modules.toArray(Module.EMPTY_ARRAY);
+        cache = modules.toArray(Module.EMPTY_ARRAY);
+        myModulesCache = cache;
       }
       return cache;
     }
 
     private Module @NotNull [] getSortedModules() {
       Module[] allModules = getModules().clone();
-      Arrays.sort(allModules, moduleDependencyComparator());
+      if (allModules.length > 1) {
+        Arrays.sort(allModules, moduleDependencyComparator());
+      }
       return allModules;
     }
 
@@ -1010,7 +1014,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     @Override
     public void setModuleGroupPath(@NotNull Module module, String @Nullable("null means remove") [] groupPath) {
       if (myModuleGroupPath == null) {
-        myModuleGroupPath = CollectionFactory.createSmallMemoryFootprintMap();
+        myModuleGroupPath = new HashMap<>();
       }
       if (groupPath == null) {
         myModuleGroupPath.remove(module);
