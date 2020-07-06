@@ -123,6 +123,7 @@ internal class ProjectLibraryTableBridgeImpl(
       val libraries = entityStorage.current
         .entities(LibraryEntity::class.java)
         .filter { it.tableId is LibraryTableId.ProjectLibraryTableId }
+        .filter { entityStorage.current.libraryMap.getDataByEntity(it) == null }
         .map { libraryEntity ->
           Pair(libraryEntity, LibraryBridgeImpl(
             libraryTable = this@ProjectLibraryTableBridgeImpl,
@@ -134,16 +135,14 @@ internal class ProjectLibraryTableBridgeImpl(
         }
         .toList()
       if (libraries.isNotEmpty()) {
-        val addedLibs = ArrayList<Library>()
         runWriteAction {
           WorkspaceModel.getInstance(project).updateProjectModelSilent {
             libraries.forEach { (entity, library) ->
-              val added = it.mutableLibraryMap.addIfAbsent(entity, library)
-              if (added) addedLibs.add(library)
+              it.mutableLibraryMap.addIfAbsent(entity, library)
             }
           }
         }
-        addedLibs.forEach { library ->
+        libraries.forEach { (_, library) ->
           dispatcher.multicaster.afterLibraryAdded(library)
         }
       }
