@@ -1247,7 +1247,16 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   public void testCantPassFieldAsParameter() {
     try {
       doTestPassFieldsAsParams();
-      fail("Field was modified inside. Make static should be disabled");
+      fail("Field was modified inside. Make static should be disabled.");
+    }
+    catch (PrepareFailedException ignore) {
+    }
+  }
+
+  public void testCantMakeStatic() {
+    try {
+      doTestPassFieldsAsParams();
+      fail("Local method is used. Make static should be disabled.");
     }
     catch (PrepareFailedException ignore) {
     }

@@ -8,7 +8,6 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.GenericsUtil
-import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
@@ -18,7 +17,6 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getExpressionType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessName
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.hasExplicitModifier
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.haveReferenceToScope
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.normalizedAnchor
@@ -90,15 +88,16 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 
   val targetClass = PsiTreeUtil.getParentOfType(ExtractMethodHelper.getValidParentOf(elements.first()), PsiClass::class.java)!!
 
-  val fieldUsages = analyzer.findLocalFieldUsages(targetClass, elements)
-  val finalFieldsWrites = fieldUsages.filter { fieldsUsage -> fieldsUsage.isWrite && fieldsUsage.field.hasExplicitModifier(PsiModifier.FINAL) }
-  val finalFields = finalFieldsWrites.map { it.field }.distinct()
-  val field = finalFields.singleOrNull()
+  val localWriteViolations = analyzer.findLocalUsages(targetClass, elements)
+    .filter { localUsage -> PsiUtil.isAccessedForWriting(localUsage.reference) && localUsage.member.hasModifierProperty(PsiModifier.FINAL) }
+
+  val fieldViolations = localWriteViolations.mapNotNull { it.member as? PsiField }.distinct()
+  val field = fieldViolations.singleOrNull()
   extractOptions = when {
-    finalFields.isEmpty() -> extractOptions
+    fieldViolations.isEmpty() -> extractOptions
     field != null && extractOptions.dataOutput is EmptyOutput ->
       extractOptions.copy(dataOutput = VariableOutput(field.type, field, false), requiredVariablesInside = listOf(field))
-    else -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.finals"), finalFieldsWrites.map { it.classMemberReference })
+    else -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.finals"), localWriteViolations.map { it.reference })
   }
 
   checkLocalClass(extractOptions)

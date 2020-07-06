@@ -13,13 +13,13 @@ import com.intellij.psi.controlFlow.ControlFlow
 import com.intellij.psi.controlFlow.ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor
+import com.intellij.refactoring.util.classMembers.ElementNeedsThis
 import com.siyeh.ig.psiutils.VariableAccessUtils
 import it.unimi.dsi.fastutil.ints.IntArrayList
 
 data class ExitDescription(val statements: List<PsiStatement>, val numberOfExits: Int, val hasSpecialExits: Boolean)
 data class ExternalReference(val variable: PsiVariable, val references: List<PsiReferenceExpression>)
-data class FieldUsage(val field: PsiField, val classMemberReference: PsiReferenceExpression, val isWrite: Boolean)
+data class LocalUsage(val member: PsiMember, val reference: PsiReferenceExpression)
 
 class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
@@ -117,18 +117,19 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     return declaredVariables.intersect(externallyWrittenVariables).toList()
   }
 
-  fun findLocalFieldUsages(targetClass: PsiClass, elements: List<PsiElement>): List<FieldUsage> {
-    val usedFields = ArrayList<FieldUsage>()
-    val visitor = object : ClassMemberReferencesVisitor(targetClass) {
+  fun findLocalUsages(targetClass: PsiClass, elements: List<PsiElement>): List<LocalUsage> {
+    val usedFields = ArrayList<LocalUsage>()
+    val visitor: ElementNeedsThis = object : ElementNeedsThis(targetClass) {
       override fun visitClassMemberReferenceElement(classMember: PsiMember, classMemberReference: PsiJavaCodeReferenceElement) {
-        val expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiExpression::class.java, false)
-        if (classMember is PsiField && expression != null && classMemberReference is PsiReferenceExpression) {
-          usedFields += FieldUsage(classMember, classMemberReference, PsiUtil.isAccessedForWriting(expression))
+        val expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiReferenceExpression::class.java, false)
+        if (expression != null && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
+          usedFields += LocalUsage(classMember, expression)
         }
+        super.visitClassMemberReferenceElement(classMember, classMemberReference)
       }
     }
     elements.forEach { it.accept(visitor) }
-    return usedFields.distinct().filterNot { usage -> usage.field.modifierList?.hasModifierProperty(PsiModifier.STATIC) == true }
+    return usedFields.distinct()
   }
 
   private fun lastGotoPointFrom(instructionOffset: Int): Int {
