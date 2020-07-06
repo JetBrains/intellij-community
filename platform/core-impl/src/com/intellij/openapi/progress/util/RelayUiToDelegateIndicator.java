@@ -38,12 +38,10 @@ public class RelayUiToDelegateIndicator extends AbstractProgressIndicatorExBase 
 
   @Override
   public void pushState() {
-    myDelegate.pushState();
   }
 
   @Override
   public void popState() {
-    myDelegate.popState();
   }
 
   @Override

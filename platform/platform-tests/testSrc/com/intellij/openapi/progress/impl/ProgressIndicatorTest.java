@@ -902,4 +902,29 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     assertNotSame(wrapper2, wrapper);
     assertSame(wrapper, wrapper2.getOriginalProgressIndicator());
   }
+
+  public void testRelayUiToDelegateIndicatorMustNotPassChangeStateToDelegate() {
+    ProgressIndicatorEx ui = new ProgressIndicatorBase();
+    ProgressIndicatorEx indicator = new ProgressIndicatorBase();
+    indicator.pushState();
+    indicator.addStateDelegate(new RelayUiToDelegateIndicator(ui));
+    indicator.popState(); // should not cause NPE
+  }
+  public void testRelayUiToDelegate() {
+    ProgressIndicatorEx ui = new ProgressIndicatorBase();
+    ProgressIndicatorEx indicator = new ProgressIndicatorBase();
+
+    indicator.addStateDelegate(new RelayUiToDelegateIndicator(ui));
+
+    assertNull(ui.getText());
+    indicator.setText("A");
+    assertEquals("A", ui.getText());
+    assertNull(ui.getText2());
+    indicator.setText2("B");
+    assertEquals("B", ui.getText2());
+    assertEquals(0.0, ui.getFraction());
+    indicator.setIndeterminate(false);
+    indicator.setFraction(1);
+    assertEquals(1.0, ui.getFraction());
+  }
 }
