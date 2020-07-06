@@ -45,6 +45,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
   @NotNull
   public static ToggleToolbarAction createToolWindowAction(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
+    updateToolbarsVisibility(toolWindow, properties);
     toolWindow.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentAdded(@NotNull ContentManagerEvent event) {
@@ -57,10 +58,21 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
           contentManager.addContentManagerListener(this);
         }
       }
+
+      @Override
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
+        if (event.getOperation() != ContentManagerEvent.ContentOperation.remove) {
+          updateToolbarsVisibility(toolWindow, properties);
+        }
+      }
     });
     return new ToggleToolbarAction(properties, getShowToolbarProperty(toolWindow), () -> {
       return Collections.singletonList(toolWindow.getContentManager().getComponent());
     });
+  }
+
+  public static void updateToolbarsVisibility(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
+    setToolbarVisible(Collections.singletonList(toolWindow.getComponent()), isToolbarVisible(toolWindow, properties));
   }
 
   public static void setToolbarVisible(@NotNull ToolWindow toolWindow,
