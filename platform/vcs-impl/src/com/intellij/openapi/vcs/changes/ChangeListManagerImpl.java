@@ -92,6 +92,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   private FileHolderComposite myComposite;
   private final ChangeListWorker myWorker;
 
+  private boolean myInitialUpdate = true;
   private VcsException myUpdateException;
   private Factory<JComponent> myAdditionalInfo;
   private volatile boolean myShowLocalChangesInvalidated;
@@ -485,7 +486,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
         myChangesViewManager.scheduleRefresh();
 
         SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
-        invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
+        if (!myInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
         try {
           ProgressManager.getInstance().executeProcessUnderProgress(() -> {
             iterateScopes(dataHolder, scopes, vcsIndicator);
@@ -500,6 +501,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
           wasCancelled = vcsIndicator.isCanceled();
           takeChanges = myUpdateException == null && !wasCancelled;
         }
+        myInitialUpdate = false;
 
         // for the case of project being closed we need a read action here -> to be more consistent
         ApplicationManager.getApplication().runReadAction(() -> {
