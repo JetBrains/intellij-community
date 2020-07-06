@@ -215,7 +215,8 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
             containingClass != null && !TestUtils.testInstancePerClass(containingClass)) {
           holder.registerProblem(attributeValue, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.static", providerName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 QuickFixFactory.getInstance().createModifierListFix(sourceProvider, PsiModifier.STATIC, true, false))
+                                 QuickFixFactory.getInstance().createModifierListFix(sourceProvider, PsiModifier.STATIC, true, false),
+          AddTestInstanceAnnotationFix(containingClass))
         }
         else if (sourceProvider.parameterList.parametersCount != 0) {
           holder.registerProblem(getElementToHighlight(attributeValue, method), JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.no.params", providerName))
@@ -357,6 +358,28 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
   }
 }
 
+class AddTestInstanceAnnotationFix(aClass : PsiClass): LocalQuickFixAndIntentionActionOnPsiElement(aClass) {
+ override fun getFamilyName(): String = JUnitBundle.message("junit5.malformed.parameterized.fix.add.lifecycle.per.class")
+
+  override fun getText(): String = JUnitBundle.message("junit5.malformed.parameterized.fix.add.lifecycle.per.class")
+
+  override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+    val TEST_INSTANCE_PER_CLASS_ANNOTATION = "@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)"
+    val annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText(TEST_INSTANCE_PER_CLASS_ANNOTATION, startElement)
+    val aClass : PsiClass? = startElement as? PsiClass
+    val modifierList: PsiModifierList? = aClass?.modifierList
+    val element = modifierList?.firstChild
+
+    if (element != null) {
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addBefore(annotation, element))
+    }
+    else {
+      if (modifierList != null) {
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.add(annotation))
+      }
+    }
+  }
+}
 
 class ChangeAnnotationFix(testAnnotation: PsiAnnotation, private val targetAnnotation: String) : LocalQuickFixAndIntentionActionOnPsiElement(testAnnotation) {
   override fun getFamilyName(): String = JUnitBundle.message("junit5.malformed.parameterized.fix.family.name")
