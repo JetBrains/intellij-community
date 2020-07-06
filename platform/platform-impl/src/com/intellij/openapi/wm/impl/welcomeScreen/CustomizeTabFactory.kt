@@ -71,11 +71,11 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     ideFontProperty.afterChange({
                                   settings.overrideLafFonts = true
                                   settings.fontSize = it
-                                  updateFontSettings()
+                                  updateFontSettingsLater()
                                 }, parentDisposable)
     editorFontProperty.afterChange({
                                      fontOptions.setSize(fontOptions.fontFamily, it)
-                                     updateFontSettings()
+                                     updateFontSettingsLater()
                                    }, parentDisposable)
     keymapProperty.afterChange({ keymapManager.activeKeymap = it }, parentDisposable)
     adjustColorsProperty.afterChange({ updateColorBlindness() }, parentDisposable)
@@ -99,9 +99,11 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     })
   }
 
-  private fun updateFontSettings() {
-    laf.updateUI()
-    settings.fireUISettingsChanged()
+  private fun updateFontSettingsLater() {
+    ApplicationManager.getApplication().invokeLater {
+      laf.updateUI()
+      settings.fireUISettingsChanged()
+    }
   }
 
   private fun <T> updateProperty(property: GraphProperty<T>, settingGetter: () -> T) {
