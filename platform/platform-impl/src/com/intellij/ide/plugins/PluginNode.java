@@ -267,14 +267,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return date;
   }
 
-  public List<PluginId> getDepends() {
-    List<PluginId> depends = new ArrayList<>();
-    for (IdeaPluginDependency dependency : myDependencies) {
-      depends.add(dependency.getPluginId());
-    }
-    return depends;
-  }
-
   public void setDepends(@NotNull List<? extends PluginId> depends, PluginId @Nullable [] optionalDependencies) {
     myDependencies = new ArrayList<>();
     for (PluginId id : depends) {
