@@ -6,8 +6,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.SmartList
-import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.toHeadAndTail
 import org.jetbrains.annotations.ApiStatus
 
@@ -124,11 +124,12 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
         add(PartiallyKnownString(pending))
       }
 
-      fun rangeForSubElement(psiElement: PsiElement?, partRange: TextRange): TextRange =
-        psiElement.castSafelyTo<PsiLanguageInjectionHost>()?.let { host ->
-          val rangeOfTheHostContent = this.getRangeOfTheHostContent(host) ?: return@let null
-          mapRangeToHostRange(host, partRange.shiftRight(rangeOfTheHostContent.startOffset))
-        } ?: partRange.shiftRight(head.range.startOffset)
+      fun rangeForSubElement(partRange: TextRange): TextRange =
+        head.rangeAlignedToHost
+          ?.let { (host, hostRange) ->
+            mapRangeToHostRange(host, hostRange, partRange)?.shiftLeft(head.sourcePsi!!.startOffset - host.startOffset)
+          }
+        ?: partRange.shiftRight(head.range.startOffset)
 
       when (head) {
         is StringEntry.Unknown -> return collectPaths(result, pending.apply { add(head) }, tail)
@@ -145,14 +146,14 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
                 add(PartiallyKnownString(
                   pending.apply {
                     add(StringEntry.Known(stringParts.first().substring(value), head.sourcePsi,
-                                          rangeForSubElement(head.sourcePsi, stringParts.first())))
+                                          rangeForSubElement(stringParts.first())))
                   }))
                 addAll(stringParts.subList(1, stringParts.size - 1).map {
-                  PartiallyKnownString(it.substring(value), head.sourcePsi, rangeForSubElement(head.sourcePsi, it))
+                  PartiallyKnownString(it.substring(value), head.sourcePsi, rangeForSubElement(it))
                 })
               },
               mutableListOf(StringEntry.Known(stringParts.last().substring(value), head.sourcePsi,
-                                              rangeForSubElement(head.sourcePsi, stringParts.last()))),
+                                              rangeForSubElement(stringParts.last()))),
               tail
             )
           }
@@ -166,12 +167,17 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
   }
 
+  fun mapRangeToHostRange(host: PsiLanguageInjectionHost, rangeInPks: TextRange): TextRange? =
+    mapRangeToHostRange(host, ElementManipulators.getValueTextRange(host), rangeInPks)
+
   /**
    * @return the range in the given [host] (encoder-aware) that corresponds to the [rangeInPks] in the [valueIfKnown]
+   * @param rangeInHost - range in the [host] if the only the part of the [host] should be considered.
+   *                      useful if [host] corresponds to multiple [PartiallyKnownString]
    *
    * NOTE: currently supports only single-segment [rangeInPks]
    */
-  fun mapRangeToHostRange(host: PsiLanguageInjectionHost, rangeInPks: TextRange): TextRange? {
+  fun mapRangeToHostRange(host: PsiLanguageInjectionHost, rangeInHost: TextRange, rangeInPks: TextRange): TextRange? {
 
     fun getHostRangeEscapeAware(segmentRange: TextRange, inSegmentStart: Int, inSegmentEnd: Int): TextRange {
       val escaper = host.createLiteralTextEscaper()
@@ -193,6 +199,10 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
     var accumulated = 0
     for (segment in segments) {
       if (segment !is StringEntry.Known) continue
+
+      val (segmentHost, segmentRangeInHost) = segment.rangeAlignedToHost ?: continue
+      if (segmentHost != host || !rangeInHost.contains(segmentRangeInHost)) continue // we don't support partial intersections
+
       val segmentEnd = accumulated + segment.value.length
 
       // assume that all content fits into one segment
@@ -200,14 +210,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
         val inSegmentStart = rangeInPks.startOffset - accumulated
         val inSegmentEnd = rangeInPks.endOffset - accumulated
 
-        val sourcePsi = segment.sourcePsi
-        if (sourcePsi == host) {
-          return getHostRangeEscapeAware(segment.range, inSegmentStart, inSegmentEnd)
-        }
-        if (sourcePsi?.parent == host) { // The Kotlin case
-          return getHostRangeEscapeAware(segment.range.shiftRight(sourcePsi.startOffsetInParent), inSegmentStart, inSegmentEnd)
-        }
-        else return null // no idea what to do, feel free to extend
+        return getHostRangeEscapeAware(segmentRangeInHost, inSegmentStart, inSegmentEnd)
       }
       accumulated = segmentEnd
     }
@@ -257,6 +260,10 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 @ApiStatus.Experimental
 sealed class StringEntry {
   abstract val sourcePsi: PsiElement? // maybe it should be PsiLanguageInjectionHost and only for `Known` values
+
+  /**
+   * A range in the [sourcePsi] that corresponds to the content of this segment
+   */
   abstract val range: TextRange
 
   class Known(val value: String, override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
