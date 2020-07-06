@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.LabelUI;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -277,7 +279,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
                                               boolean isCommentBelow,
                                               int maxLineLength,
                                               boolean allowAutoWrapping) {
-    return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, maxLineLength, allowAutoWrapping);
+    return createCommentComponent(() -> new CommentLabel(""), commentText, isCommentBelow, maxLineLength, allowAutoWrapping);
   }
 
   private static JLabel createCommentComponent(@NotNull Supplier<? extends JBLabel> labelSupplier,
@@ -291,8 +293,6 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
-    component.setForeground(UIUtil.getContextHelpForeground());
-    setCommentFont(component);
 
     if (isCopyable) {
       setCommentText(component, commentText, isCommentBelow, maxLineLength);
@@ -304,10 +304,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   public static JLabel createNonWrappingCommentComponent(@NotNull @NlsContexts.DetailedDescription String commentText) {
-    JBLabel component = new JBLabel(commentText);
-    component.setForeground(UIUtil.getContextHelpForeground());
-    setCommentFont(component);
-    return component;
+    return new CommentLabel(commentText);
   }
 
   private static void setCommentText(@NotNull JLabel component,
@@ -332,12 +329,22 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
   }
 
-  private static void setCommentFont(@NotNull JLabel component) {
-    if (SystemInfo.isMac) {
-      Font font = component.getFont();
-      float size = font.getSize2D();
-      Font smallFont = font.deriveFont(size - 2.0f);
-      component.setFont(smallFont);
+  private static class CommentLabel extends JBLabel {
+    private CommentLabel(@NotNull @NlsContexts.Label String text) {
+      super(text);
+      setForeground(UIUtil.getContextHelpForeground());
+    }
+
+    @Override
+    public void setUI(LabelUI ui) {
+      super.setUI(ui);
+
+      if (SystemInfo.isMac) {
+        Font font = getFont();
+        float size = font.getSize2D();
+        font = new FontUIResource(font.deriveFont(size - JBUIScale.scale(2))); // Allow to reset the font by UI
+        setFont(font);
+      }
     }
   }
 
