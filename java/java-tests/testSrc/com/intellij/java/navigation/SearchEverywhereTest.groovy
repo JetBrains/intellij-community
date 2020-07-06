@@ -179,7 +179,7 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       myFixture.openFileInEditor(file5.getOriginalFile().getVirtualFile())
       myFixture.openFileInEditor(wrongFile.getOriginalFile().getVirtualFile())
       future = ui.findElementsForPattern("appfile")
-      assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [file4, file5, file3, file2, file1, file6]
+      assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [file4, file3, file5, file2, file1, file6]
     })
   }
 
