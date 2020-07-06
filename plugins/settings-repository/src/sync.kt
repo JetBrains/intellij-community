@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.ComponentStoreImpl
+import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.configurationStore.XmlElementStorage
+import com.intellij.configurationStore.askToRestart
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -14,7 +17,6 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
@@ -134,12 +136,10 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
       }
 
       if (updateResult != null) {
-        restartApplication = runBlocking {
-          val app = ApplicationManager.getApplication()
-          updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus,
-                                           reloadAllSchemes = syncType == SyncType.OVERWRITE_LOCAL)
+        val app = ApplicationManager.getApplication()
+        restartApplication = updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult!!,
+                                                              reloadAllSchemes = syncType == SyncType.OVERWRITE_LOCAL)
 
-        }
       }
     }
 
@@ -176,7 +176,7 @@ internal fun updateCloudSchemes(icsManager: IcsManager, indicator: ProgressIndic
 }
 
 
-internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager, store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus, reloadAllSchemes: Boolean = false): Boolean {
+internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager, store: ComponentStoreImpl, updateResult: UpdateResult, reloadAllSchemes: Boolean = false): Boolean {
   val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted, ::toIdeaPath)
 
   val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
@@ -218,9 +218,7 @@ internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager, st
     val notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
     val changedStorageSet = CollectionFactory.createSmallMemoryFootprintSet<StateStorage>(changed)
     changedStorageSet.addAll(deleted)
-    runBatchUpdate(messageBus) {
-      store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
-    }
+    store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
     return@withContext !notReloadableComponents.isEmpty() && askToRestart(store, notReloadableComponents, null, true)
   }
 }

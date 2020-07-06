@@ -22,10 +22,10 @@ import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.messages.MessageBus
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -267,6 +267,12 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
   // dummy implementation for Upsource
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) { }
+
+  final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+    runBatchUpdate(project) {
+      reinitComponents(componentNames)
+    }
+  }
 }
 
 private fun isSpecialStorage(storage: Storage) = isSpecialStorage(storage.path)

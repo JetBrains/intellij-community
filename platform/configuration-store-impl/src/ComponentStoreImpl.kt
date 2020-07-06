@@ -524,10 +524,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     return notReloadableComponents ?: emptySet()
   }
 
-  final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
-    runBatchUpdate(messageBus) {
-      reinitComponents(componentNames)
-    }
+  override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+    reinitComponents(componentNames)
   }
 
   final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.io.exists
+import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -38,6 +39,12 @@ internal open class ModuleStoreImpl(module: Module) : ModuleStoreBase() {
       }
     }
     return result
+  }
+
+  final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+    runBatchUpdate(project) {
+      reinitComponents(componentNames)
+    }
   }
 }
 

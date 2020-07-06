@@ -17,10 +17,8 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
-import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.io.parentSystemIndependentPath
 import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -63,7 +61,7 @@ class ModuleStoreTest {
       assertThat(getOptionValue("foo")).isEqualTo("bar")
 
       setOption("foo", "not bar")
-      project.stateStore.save()
+      stateStore.save()
     }
 
     projectRule.loadModule(moduleFile).useAndDispose {
@@ -71,7 +69,7 @@ class ModuleStoreTest {
 
       setOption("foo", "not bar")
       // ensure that save the same data will not lead to any problems (like "Content equals, but it must be handled not on this level")
-      project.stateStore.save()
+      stateStore.save()
     }
   }
 
@@ -90,7 +88,7 @@ class ModuleStoreTest {
     // we must not use VFS here, file must not be created
     val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
     projectRule.createModule(moduleFile).useAndDispose {
-      ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
+      ModuleRootModificationUtil.addContentRoot(this, moduleFile.parent.systemIndependentPath)
       project.stateStore.save()
       assertThat(moduleFile).isRegularFile
       assertThat(moduleFile.readText()).startsWith("""
@@ -106,15 +104,15 @@ class ModuleStoreTest {
   }
 
   @Test
-  fun `one batch update session if several modules changed`() = runBlocking<Unit> {
+  fun `one batch update session if several modules changed`() {
     val nameToCount = Object2IntOpenHashMap<String>()
-    val root = tempDirManager.newPath(refreshVfs = true)
+    val root = tempDirManager.newPath()
 
     fun addContentRoot(module: Module) {
       val moduleName = module.name
       module.project.messageBus.connect(module).subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
         override fun onBatchUpdateStarted() {
-          nameToCount.put(moduleName, ++batchUpdateCount)
+          nameToCount.addTo(moduleName, 1)
         }
       })
 
@@ -142,10 +140,9 @@ class ModuleStoreTest {
     val m1 = projectRule.createModule(root.resolve("m1.iml"))
     val m2 = projectRule.createModule(root.resolve("m2.iml"))
 
-    var projectBatchUpdateCount = 0
     projectRule.project.messageBus.connect(m1).subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
       override fun onBatchUpdateStarted() {
-        nameToCount.put("p", ++projectBatchUpdateCount)
+        nameToCount.addTo("p", 1)
       }
     })
 
@@ -158,7 +155,9 @@ class ModuleStoreTest {
     removeContentRoot(m1)
     removeContentRoot(m2)
 
-    StoreReloadManager.getInstance().reloadChangedStorageFiles()
+    runBlocking {
+      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+    }
 
     assertChangesApplied(m1)
     assertChangesApplied(m2)

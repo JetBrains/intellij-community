@@ -67,7 +67,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
         return@processOpenedProjects
       }
 
-      runBatchUpdate(project.messageBus) {
+      runBatchUpdate(project) {
         // reload schemes first because project file can refer to scheme (e.g. inspection profile)
         if (changedSchemes != null) {
           for ((tracker, files) in changedSchemes) {
