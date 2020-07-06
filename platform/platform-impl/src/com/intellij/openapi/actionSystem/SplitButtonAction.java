@@ -201,6 +201,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
         @Override
         protected void processPresentation(Presentation presentation) {
+          super.processPresentation(presentation);
           if (presentation != null &&
               StringUtil.defaultIfEmpty(presentation.getText(), "").equals(myPresentation.getText()) &&
               StringUtil.defaultIfEmpty(presentation.getDescription(), "").equals(myPresentation.getDescription())) {

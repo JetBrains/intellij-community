@@ -191,6 +191,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(place, actionGroup, new MenuItemPresentationFactory() {
       @Override
       protected void processPresentation(Presentation presentation) {
+        super.processPresentation(presentation);
         if (myNoIconsInPopup) {
           presentation.setIcon(null);
           presentation.setHoveredIcon(null);
