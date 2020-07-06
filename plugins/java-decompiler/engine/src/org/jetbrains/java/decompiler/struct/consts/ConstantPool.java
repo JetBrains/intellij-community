@@ -64,6 +64,8 @@ public class ConstantPool implements NewClassNameBuilder {
         case CodeConstants.CONSTANT_Class:
         case CodeConstants.CONSTANT_String:
         case CodeConstants.CONSTANT_MethodType:
+        case CodeConstants.CONSTANT_Module:
+        case CodeConstants.CONSTANT_Package:
           pool.add(new PrimitiveConstant(tag, in.readUnsignedShort()));
           nextPass[0].set(i);
           break;

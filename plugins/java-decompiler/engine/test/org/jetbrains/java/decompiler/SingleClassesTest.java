@@ -74,6 +74,7 @@ public class SingleClassesTest {
            "pkg/TestShadowingSuperClass"); }
   @Test public void testStringConcat() { doTest("pkg/TestStringConcat"); }
   @Test public void testJava9StringConcat() { doTest("java9/TestJava9StringConcat"); }
+  @Test public void testJava9ModuleInfo() { doTest("java9/module-info"); }
   @Test public void testJava11StringConcat() { doTest("java11/TestJava11StringConcat"); }
   @Test public void testMethodReferenceSameName() { doTest("pkg/TestMethodReferenceSameName"); }
   @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
