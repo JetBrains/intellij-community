@@ -57,7 +57,6 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
    * @see com.intellij.util.FileContentUtilCore#reparseFiles
    * @see PsiManager#dropPsiCaches()
    */
-  @ApiStatus.Internal
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void incCounter() {
@@ -65,7 +64,15 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
     incCountersInner();
   }
 
+  /**
+   * @deprecated use higher-level ways of dropping caches
+   * @see com.intellij.util.FileContentUtilCore#reparseFiles
+   * @see PsiManager#dropPsiCaches()
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void incOutOfCodeBlockModificationCounter() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     incCountersInner();
   }
 
