@@ -200,8 +200,8 @@ internal class ModifiableModuleModelBridge(
     val storage = entityStorageOnDiff.current
 
     for (moduleToDispose in myModulesToDispose.values) {
-      val moduleEntity = storage.resolve(moduleToDispose.moduleEntityId)
-                         ?: error("Could not find module to remove by id: ${moduleToDispose.moduleEntityId}")
+      val moduleEntity = storage.findModuleEntity(moduleToDispose)
+                         ?: error("Could not find module to remove by $moduleToDispose")
       diff.removeEntity(moduleEntity)
     }
 
@@ -222,7 +222,6 @@ internal class ModifiableModuleModelBridge(
 
     removeUnloadedModule(newName)
     val oldName = uncommittedOldName ?: module.name
-    val oldId = if (uncommittedOldName != null) ModuleId(uncommittedOldName) else module.moduleEntityId
     if (oldName != newName) { // if renaming to itself, forget it altogether
       val moduleToAdd = myModulesToAdd.remove(oldName)
       if (moduleToAdd != null) {
@@ -232,7 +231,7 @@ internal class ModifiableModuleModelBridge(
       else {
         myNewNameToModule[newName] = module
       }
-      val entity = entityStorageOnDiff.current.resolve(oldId) ?: error("Unable to resolve module by id: $oldId")
+      val entity = entityStorageOnDiff.current.findModuleEntity(module) ?: error("Unable to find module entity for $module")
       diff.modifyEntity(ModifiableModuleEntity::class.java, entity) {
         name = newName
       }

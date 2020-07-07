@@ -596,11 +596,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
 
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {
-      val moduleId = (module as ModuleBridge).moduleEntityId
-
-      val storage = entityStorage.current
-      val moduleEntity = storage.resolve(moduleId) ?: return null
-
+      val moduleEntity = entityStorage.current.findModuleEntity(module as ModuleBridge) ?: return null
       return moduleEntity.groupPath?.path?.toTypedArray()
     }
 

@@ -21,6 +21,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.externalSystem.External
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
@@ -95,7 +96,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun getOptionValue(key: String): String? {
-    val moduleEntity = entityStorage.current.resolve(moduleEntityId)
+    val moduleEntity = entityStorage.current.findModuleEntity(this)
     if (key == Module.ELEMENT_TYPE) {
       return moduleEntity?.type
     }
@@ -129,7 +130,7 @@ internal class ModuleBridgeImpl(
 
     val diff = diff
     if (diff != null) {
-      val entity = entityStorage.current.resolve(moduleEntityId)
+      val entity = entityStorage.current.findModuleEntity(this)
       if (entity != null) {
         updateOptionInEntity(diff, entity)
       }
@@ -137,7 +138,7 @@ internal class ModuleBridgeImpl(
     else {
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-          val entity = builder.resolve(moduleEntityId)
+          val entity = builder.findModuleEntity(this)
           if (entity != null) {
             updateOptionInEntity(builder, entity)
           }

@@ -22,6 +22,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.subFacets
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 
 internal class ModifiableFacetModelBridge(private val initialStorage: WorkspaceEntityStorage,
@@ -35,7 +36,7 @@ internal class ModifiableFacetModelBridge(private val initialStorage: WorkspaceE
     populateFrom(facetManager.model)
   }
 
-  private fun getModuleEntity() = initialStorage.resolve(moduleBridge.moduleEntityId)!!
+  private fun getModuleEntity() = initialStorage.findModuleEntity(moduleBridge)!!
 
   override fun addFacet(facet: Facet<*>) {
     addFacet(facet, null)
