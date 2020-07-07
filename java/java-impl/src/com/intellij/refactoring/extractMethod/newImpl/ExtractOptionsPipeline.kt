@@ -211,7 +211,7 @@ object ExtractMethodPipeline {
   fun withForcedStatic(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
     val targetClass = PsiTreeUtil.getParentOfType(extractOptions.anchor, PsiClass::class.java)!!
     if (PsiUtil.isLocalOrAnonymousClass(targetClass) || PsiUtil.isInnerClass(targetClass)) return null
-    val localUsages = analyzer.findLocalUsages(targetClass, extractOptions.elements)
+    val localUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
     val (violatedUsages, fieldUsages) = localUsages
       .partition { localUsage -> PsiUtil.isAccessedForWriting(localUsage.reference) || localUsage.member !is PsiField }
 
@@ -237,7 +237,7 @@ object ExtractMethodPipeline {
     val firstStatement = method.body?.statements?.firstOrNull() ?: return false
     val startsOnBegin = firstStatement.textRange in TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
     val outStatements = method.body?.statements.orEmpty().dropWhile { it.textRange.endOffset <= elements.last().textRange.endOffset }
-    val hasOuterFinalFieldAssignments = analyzer.findLocalUsages(holderClass, outStatements)
+    val hasOuterFinalFieldAssignments = analyzer.findInstanceMemberUsages(holderClass, outStatements)
       .any { localUsage -> localUsage.member.hasModifierProperty(PsiModifier.FINAL) && PsiUtil.isAccessedForWriting(localUsage.reference) }
     return method.isConstructor && startsOnBegin && !hasOuterFinalFieldAssignments && analyzer.findOutputVariables().isEmpty()
   }

@@ -88,7 +88,7 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 
   val targetClass = PsiTreeUtil.getParentOfType(ExtractMethodHelper.getValidParentOf(elements.first()), PsiClass::class.java)!!
 
-  val localWriteViolations = analyzer.findLocalUsages(targetClass, elements)
+  val localWriteViolations = analyzer.findInstanceMemberUsages(targetClass, elements)
     .filter { localUsage -> PsiUtil.isAccessedForWriting(localUsage.reference) && localUsage.member.hasModifierProperty(PsiModifier.FINAL) }
 
   val fieldViolations = localWriteViolations.mapNotNull { it.member as? PsiField }.distinct()

@@ -19,7 +19,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 
 data class ExitDescription(val statements: List<PsiStatement>, val numberOfExits: Int, val hasSpecialExits: Boolean)
 data class ExternalReference(val variable: PsiVariable, val references: List<PsiReferenceExpression>)
-data class LocalUsage(val member: PsiMember, val reference: PsiReferenceExpression)
+data class MemberUsage(val member: PsiMember, val reference: PsiReferenceExpression)
 
 class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
@@ -117,13 +117,13 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     return declaredVariables.intersect(externallyWrittenVariables).toList()
   }
 
-  fun findLocalUsages(targetClass: PsiClass, elements: List<PsiElement>): List<LocalUsage> {
-    val usedFields = ArrayList<LocalUsage>()
+  fun findInstanceMemberUsages(targetClass: PsiClass, elements: List<PsiElement>): List<MemberUsage> {
+    val usedFields = ArrayList<MemberUsage>()
     val visitor: ElementNeedsThis = object : ElementNeedsThis(targetClass) {
       override fun visitClassMemberReferenceElement(classMember: PsiMember, classMemberReference: PsiJavaCodeReferenceElement) {
         val expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiReferenceExpression::class.java, false)
         if (expression != null && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
-          usedFields += LocalUsage(classMember, expression)
+          usedFields += MemberUsage(classMember, expression)
         }
         super.visitClassMemberReferenceElement(classMember, classMemberReference)
       }
