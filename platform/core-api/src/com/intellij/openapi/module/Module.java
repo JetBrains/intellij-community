@@ -7,10 +7,7 @@ import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -31,18 +28,28 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @NonNls String ELEMENT_TYPE = "type";
 
   /**
-   * Returns the {@code VirtualFile} for the module .iml file.
-   *
-   * @return the virtual file instance.
+   * Returns the {@code VirtualFile} for the module .iml file. Note that location if .iml file may not be related to location of the module
+   * files, it may be stored in a different directory, under .idea/modules or doesn't exist at all if the module configuration is imported
+   * from external project system (e.g. Gradle). So only internal subsystems which deal with serialization are supposed to use this method.
+   * If you need to find a directory (directories) where source files for the module are located, get its {@link com.intellij.openapi.roots.ModuleRootModel#getContentRoots() content roots}.
+   * If you need to get just some directory near to module files (e.g. to select by default in a file chooser), use {@link com.intellij.openapi.module.ModuleUtil#suggestBaseDirectory}.
    */
-  @Nullable
-  VirtualFile getModuleFile();
+  @ApiStatus.Internal
+  @Nullable VirtualFile getModuleFile();
 
+  /**
+   * Returns path to the module .iml file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
+   */
+  @ApiStatus.Internal
   @SystemIndependent
   default @NotNull String getModuleFilePath() {
     return getModuleNioFile().toString().replace(File.separatorChar, '/');
   }
 
+  /**
+   * Returns path to the module .iml file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
+   */
+  @ApiStatus.Internal
   @NotNull Path getModuleNioFile();
 
   /**

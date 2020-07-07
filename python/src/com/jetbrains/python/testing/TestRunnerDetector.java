@@ -39,7 +39,7 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     String testRunner = ReadAction.compute(() -> detectTestRunnerFromSetupPy(module));
     assert testRunner != null : "detectTestRunnerFromSetupPy can't return null";
     if (!testRunner.isEmpty()) {
-      LOG.debug("Test runner '" + testRunner + "' was discovered from setup.py in the module '" + module.getModuleNioFile() + "'");
+      LOG.debug("Test runner '" + testRunner + "' was discovered from setup.py in the module '" + module.getName() + "'");
       return new TestRunnerService.ServiceState(testRunner);
     }
 
