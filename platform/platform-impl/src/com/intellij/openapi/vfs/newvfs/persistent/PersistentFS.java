@@ -29,12 +29,13 @@ public abstract class PersistentFS extends ManagingFS {
   static final int IS_SYMLINK = 0x10;
   static final int IS_SPECIAL = 0x20;
   static final int IS_HIDDEN = 0x40;
+  static final int MUST_RELOAD_LENGTH = 0x80;
 
-  @MagicConstant(flags = {CHILDREN_CACHED_FLAG, IS_DIRECTORY_FLAG, IS_READ_ONLY, MUST_RELOAD_CONTENT, IS_SYMLINK, IS_SPECIAL, IS_HIDDEN})
+  @MagicConstant(flags = {CHILDREN_CACHED_FLAG, IS_DIRECTORY_FLAG, IS_READ_ONLY, MUST_RELOAD_CONTENT, MUST_RELOAD_LENGTH, IS_SYMLINK, IS_SPECIAL, IS_HIDDEN})
   public @interface Attributes { }
 
   static final int ALL_VALID_FLAGS =
-    CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT | IS_SYMLINK | IS_SPECIAL | IS_HIDDEN;
+    CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT | MUST_RELOAD_LENGTH | IS_SYMLINK | IS_SPECIAL | IS_HIDDEN;
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static PersistentFS getInstance() {
