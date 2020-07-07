@@ -402,6 +402,7 @@ public class AllIcons {
     /** 2x19 */ public static final @NotNull Icon Divider = load("/general/divider.svg");
     /** 16x16 */ public static final @NotNull Icon Dropdown = load("/general/dropdown.svg");
     /** 13x13 */ public static final @NotNull Icon DropdownGutter = load("/general/dropdownGutter.svg");
+    /** 2x20 */ public static final @NotNull Icon DropPlace = load("/general/dropPlace.svg");
     /** 9x9 */ public static final @NotNull Icon Ellipsis = load("/general/ellipsis.svg");
     /** 16x16 */ public static final @NotNull Icon Error = load("/general/error.svg");
     /** 32x32 */ public static final @NotNull Icon ErrorDialog = load("/general/errorDialog.svg");
