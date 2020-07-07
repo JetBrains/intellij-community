@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -214,13 +215,16 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   private static void processEditorConfig(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull MyContext context)
     throws EditorConfigException {
     try {
-      String filePath = Utils.getFilePath(project, psiFile.getVirtualFile());
+      final VirtualFile file = psiFile.getVirtualFile();
+      String filePath = Utils.getFilePath(project, file);
       if (filePath != null) {
         final Set<String> rootDirs = SettingsProviderComponent.getInstance().getRootDirs(project);
         context.setOptions(new EditorConfig().getProperties(filePath, rootDirs, context));
       }
       else {
-        LOG.error("No file path for " + psiFile.getName());
+        if (VfsUtilCore.isBrokenLink(file)) {
+          LOG.warn(file.getPresentableUrl() +  " is a broken link");
+        }
       }
     }
     catch (ParsingException pe) {
