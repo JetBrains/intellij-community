@@ -361,13 +361,21 @@ def is_test_item_or_set_up_caller(trace):
         if frame.f_code.co_name in ('pytest_pyfunc_call', 'call_fixture_func', '_eval_scope_callable', '_teardown_yield_fixture'):
             return True
     else:
+        import unittest
+        test_case_obj = frame.f_locals.get('self')
+
+        # Check for `_FailedTest` is important to detect cases when tests cannot be run on the first place,
+        # e.g. there was an import error in the test module. Can happen both in Python 3.8 and earlier versions.
+        if isinstance(test_case_obj, getattr(getattr(unittest, 'loader', None), '_FailedTest', None)):
+            return False
+
         if frame.f_code.co_name in ('_callTestMethod', 'runTest', 'subTest'):
             # unittest and nose
             return True
-        elif not IS_PY38_OR_GREATER and frame.f_code.co_name == 'run':
-            # unittest for Python versions < 3.8
-            import unittest
-            return isinstance(frame.f_locals.get('self'), unittest.TestCase)
+        elif frame.f_code.co_name == 'run':
+            if not IS_PY38_OR_GREATER:
+                # unittest for Python versions < 3.8
+                return isinstance(test_case_obj, unittest.TestCase)
 
     return False
 
