@@ -250,7 +250,11 @@ class CommunityRepositoryModules {
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
     },
-    plugin("intellij.jps.cache")
+    plugin("intellij.jps.cache"),
+    plugin("intellij.space") {
+      withProjectLibrary("space-idea-sdk")
+      withProjectLibrary("jackson-datatype-joda")
+    }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
