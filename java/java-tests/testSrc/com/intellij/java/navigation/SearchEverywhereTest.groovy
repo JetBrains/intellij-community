@@ -39,7 +39,7 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     def strBuffer = myFixture.addClass("class StrBuffer{ }")
     def stringBuffer = myFixture.findClass("java.lang.StringBuffer")
 
-    def ui = createTestUI([ChooseByNameTest.createClassContributor(project)])
+    def ui = createTestUI([ChooseByNameTest.createClassContributor(project, testRootDisposable)])
 
     def future = ui.findElementsForPattern("StrBuffer")
     assert waitForFuture(future, SEARCH_TIMEOUT) == [strBuffer]
@@ -55,8 +55,8 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def testFile = myFixture.addFileToProject("testClass.txt", "")
 
       def ui = createTestUI([
-        ChooseByNameTest.createClassContributor(project),
-        ChooseByNameTest.createFileContributor(project)
+        ChooseByNameTest.createClassContributor(project, testRootDisposable),
+        ChooseByNameTest.createFileContributor(project, testRootDisposable)
       ])
 
       def future = ui.findElementsForPattern("TestClass")
@@ -96,8 +96,8 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def class2 = myFixture.addClass("class AnotherImaginaryAction{}")
 
       def ui = createTestUI([
-        ChooseByNameTest.createClassContributor(project),
-        GotoActionTest.createActionContributor(project)
+        ChooseByNameTest.createClassContributor(project, testRootDisposable),
+        GotoActionTest.createActionContributor(project, testRootDisposable)
       ])
 
       def actions = ["ia1": action1, "ia2": action2]
@@ -128,8 +128,8 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def class2 = myFixture.addClass("class AnotherImaginaryAction{}")
 
       def ui = createTestUI([
-        ChooseByNameTest.createClassContributor(project),
-        GotoActionTest.createActionContributor(project),
+        ChooseByNameTest.createClassContributor(project, testRootDisposable),
+        GotoActionTest.createActionContributor(project, testRootDisposable),
         new TopHitSEContributor(project, null, null)
       ])
 
@@ -165,9 +165,9 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def wrongFile = myFixture.addFileToProject("wrong.txt", "")
 
       def recentFilesContributor = new RecentFilesSEContributor(ChooseByNameTest.createEvent(project))
-      Disposer.register(project, recentFilesContributor)
+      Disposer.register(testRootDisposable, recentFilesContributor)
       def ui = createTestUI([
-        ChooseByNameTest.createFileContributor(project),
+        ChooseByNameTest.createFileContributor(project, testRootDisposable),
         recentFilesContributor
       ])
 

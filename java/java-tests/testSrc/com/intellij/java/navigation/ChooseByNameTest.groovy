@@ -11,6 +11,7 @@ import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContribut
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.mock.MockProgressIndicator
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -196,10 +197,10 @@ class Intf {
     def fooContext = addEmptyFile("foo/context.html")
     def barContext = addEmptyFile("bar/context.html")
 
-    def contributor = createFileContributor(project, fooContext)
+    def contributor = createFileContributor(project, testRootDisposable, fooContext)
     assert calcContributorElements(contributor, "index") == [fooIndex, barIndex]
 
-    contributor = createFileContributor(project, barContext)
+    contributor = createFileContributor(project, testRootDisposable, barContext)
     assert calcContributorElements(contributor, "index") == [barIndex, fooIndex]
   }
 
@@ -223,7 +224,7 @@ class Intf {
     PsiFile fooIndex = addEmptyFile("foo/index.html")
     PsiFile barIndex = addEmptyFile("bar.txt/bar.txt")
 
-    def contributor = createFileContributor(project, fooIndex)
+    def contributor = createFileContributor(project, testRootDisposable, fooIndex)
 
     def fooDir = fooIndex.containingDirectory
     def barDir = barIndex.containingDirectory
@@ -250,7 +251,7 @@ class Intf {
     def fooFile = addEmptyFile('dir/fooFile.txt')
     def fooDir = addEmptyFile('foo/barFile.txt').containingDirectory
 
-    def contributor = createFileContributor(project)
+    def contributor = createFileContributor(project, testRootDisposable)
     def popupElements = calcContributorElements(contributor, 'foo')
 
     assert popupElements == [fooFile, fooDir]
@@ -364,7 +365,7 @@ class Intf {
     def wanted = myFixture.addClass('class XFile {}')
     def smth1 = myFixture.addClass('class xfilterExprOwner {}')
     def smth2 = myFixture.addClass('class xfile_baton_t {}')
-    def contributor = createClassContributor(project)
+    def contributor = createClassContributor(project, testRootDisposable)
     def popupElements = calcContributorElements(contributor, 'xfile')
 
     assert popupElements == [wanted, smth2, smth1]
@@ -373,7 +374,7 @@ class Intf {
   void "test prefer prefix match"() {
     def wanted = myFixture.addClass('class PsiClassImpl {}')
     def smth = myFixture.addClass('class DroolsPsiClassImpl {}')
-    def contributor = createClassContributor(project)
+    def contributor = createClassContributor(project, testRootDisposable)
     def popupElements = calcContributorElements(contributor, 'PsiCl')
 
     assert popupElements == [wanted, smth]
@@ -389,7 +390,7 @@ class Intf {
     def foo = myFixture.addClass('package foo; class List {}')
     def bar = myFixture.addClass('package bar; class List {}')
 
-    def contributor = createClassContributor(project, myFixture.addClass('class Context {}').containingFile)
+    def contributor = createClassContributor(project, testRootDisposable, myFixture.addClass('class Context {}').containingFile)
     assert calcContributorElements(contributor, "List") == [bar, foo]
 
     JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, 'bar')
@@ -538,15 +539,15 @@ class Intf {
   }
 
   private List<Object> gotoClass(String text, boolean checkboxState = false, PsiElement context = null) {
-    return getContributorElements(createClassContributor(project, context, checkboxState), text)
+    return getContributorElements(createClassContributor(project, testRootDisposable, context, checkboxState), text)
   }
 
   private List<Object> gotoSymbol(String text, boolean checkboxState = false, PsiElement context = null) {
-    return getContributorElements(createSymbolContributor(project, context, checkboxState), text)
+    return getContributorElements(createSymbolContributor(project, testRootDisposable, context, checkboxState), text)
   }
 
   private List<Object> gotoFile(String text, boolean checkboxState = false, PsiElement context = null) {
-    return getContributorElements(createFileContributor(project, context, checkboxState), text)
+    return getContributorElements(createFileContributor(project, testRootDisposable, context, checkboxState), text)
   }
 
   private static List<Object> getContributorElements(SearchEverywhereContributor<?> contributor, String text) {
@@ -557,24 +558,33 @@ class Intf {
     return contributor.search(text, new MockProgressIndicator(), ELEMENTS_LIMIT).items
   }
 
-  static SearchEverywhereContributor<Object> createClassContributor(Project project, PsiElement context = null, boolean everywhere = false) {
+  static SearchEverywhereContributor<Object> createClassContributor(Project project,
+                                                                    Disposable parentDisposable,
+                                                                    PsiElement context = null,
+                                                                    boolean everywhere = false) {
     def res = new TestClassContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
-    Disposer.register(project, res)
+    Disposer.register(parentDisposable, res)
     return res
   }
 
-  static SearchEverywhereContributor<Object> createFileContributor(Project project, PsiElement context = null, boolean everywhere = false) {
+  static SearchEverywhereContributor<Object> createFileContributor(Project project,
+                                                                   Disposable parentDisposable,
+                                                                   PsiElement context = null,
+                                                                   boolean everywhere = false) {
     def res = new TestFileContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
-    Disposer.register(project, res)
+    Disposer.register(parentDisposable, res)
     return res
   }
 
-  static SearchEverywhereContributor<Object> createSymbolContributor(Project project, PsiElement context = null, boolean everywhere = false) {
+  static SearchEverywhereContributor<Object> createSymbolContributor(Project project,
+                                                                     Disposable parentDisposable,
+                                                                     PsiElement context = null,
+                                                                     boolean everywhere = false) {
     def res = new TestSymbolContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
-    Disposer.register(project, res)
+    Disposer.register(parentDisposable, res)
     return res
   }
 

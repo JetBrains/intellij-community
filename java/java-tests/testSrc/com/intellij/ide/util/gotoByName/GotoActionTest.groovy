@@ -10,12 +10,14 @@ import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchMode
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.java.navigation.ChooseByNameTest
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -175,7 +177,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   void "test same action is not reported twice"() {
     def patterns = ["Patch", "Add", "Delete", "Show", "Toggle", "New", "New Class"]
 
-    def contributor = createActionContributor(project)
+    def contributor = createActionContributor(project, testRootDisposable)
     patterns.forEach { String pattern ->
       def result = ChooseByNameTest.calcContributorElements(contributor, pattern)
       def actions = result.findResults {
@@ -273,7 +275,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void "test navigable settings options appear in results"() {
-    def contributor = createActionContributor(project)
+    def contributor = createActionContributor(project, testRootDisposable)
     def patterns = [
       "support screen readers",
       "show line numbers",
@@ -292,22 +294,22 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
 
-  private static List<ActionWrapper> getSortedActionsFromPopup(Project project, String pattern) {
-    def wrappers = getActionsFromPopup(project, pattern)
+  private List<ActionWrapper> getSortedActionsFromPopup(Project project, String pattern) {
+    def wrappers = getActionsFromPopup(project, testRootDisposable, pattern)
     wrappers.every { it.getPresentation() } // update best group name
     wrappers.sort()
     return wrappers
   }
 
-  private static String getPresentableGroupName(Project project, String pattern, String testActionId, boolean passFlag) {
+  private String getPresentableGroupName(Project project, String pattern, String testActionId, boolean passFlag) {
     def action = ActionManager.instance.getAction(testActionId)
     assert action != null
     return getPresentableGroupName(project, pattern, action, passFlag)
   }
 
-  private static String getPresentableGroupName(Project project, String pattern, AnAction testAction, boolean passFlag) {
+  private String getPresentableGroupName(Project project, String pattern, AnAction testAction, boolean passFlag) {
     return computeWithCustomDataProvider(passFlag) {
-      def result = getActionsFromPopup(project, pattern)
+      def result = getActionsFromPopup(project, testRootDisposable, pattern)
       def matches = result.findAll { it.action == testAction }
       if (matches.size() != 1) {
         fail("Matches: " + matches + "\nPopup actions:  " + result.size() + " - " + result)
@@ -357,8 +359,8 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
-  private static List<ActionWrapper> getActionsFromPopup(Project project, String pattern) {
-    def contributor = createActionContributor(project)
+  private static List<ActionWrapper> getActionsFromPopup(Project project, Disposable parentDisposable, String pattern) {
+    def contributor = createActionContributor(project, parentDisposable)
     return ChooseByNameTest.calcContributorElements(contributor, pattern).findResults {
       if (it instanceof MatchedValue && it.value instanceof ActionWrapper) {
         return it.value as ActionWrapper
@@ -422,9 +424,11 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     return new MatchedValue(option, pattern)
   }
 
-  public static SearchEverywhereContributor<?> createActionContributor(Project project) {
+  static SearchEverywhereContributor<?> createActionContributor(Project project, Disposable parentDisposable) {
     def res = new TestActionContributor(project, null, null)
     res.setShowDisabled(true)
+    Disposer.register(parentDisposable, res)
+
     return res
   }
 
