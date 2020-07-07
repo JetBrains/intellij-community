@@ -168,6 +168,10 @@ public class PluginInstallOperation {
 
     IdeaPluginDescriptorImpl descriptor = downloader.prepareToInstallAndLoadDescriptor(myIndicator);
     if (descriptor != null) {
+      if (pluginNode.getDependencies().isEmpty() && !descriptor.getDependencies().isEmpty()) {  // installing from custom plugins repo
+        if (!checkMissingDependencies(descriptor, pluginIds)) return false;
+      }
+
       boolean allowNoRestart = myAllowInstallWithoutRestart && DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor);
       if (allowNoRestart) {
         myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile(), descriptor));
@@ -198,6 +202,32 @@ public class PluginInstallOperation {
 
   @Nullable
   public Ref<IdeaPluginDescriptor> checkDependenciesAndReplacements(IdeaPluginDescriptor pluginNode, @Nullable List<PluginId> pluginIds) {
+    if (!checkMissingDependencies(pluginNode, pluginIds)) return null;
+
+    Ref<IdeaPluginDescriptor> toDisable = Ref.create(null);
+    PluginReplacement pluginReplacement = ContainerUtil.find(PluginReplacement.EP_NAME.getExtensions(),
+                                                             r -> r.getNewPluginId().equals(pluginNode.getPluginId().getIdString()));
+    if (pluginReplacement != null) {
+      IdeaPluginDescriptor oldPlugin = PluginManagerCore.getPlugin(pluginReplacement.getOldPluginDescriptor().getPluginId());
+      if (oldPlugin == null) {
+        LOG.warn("Plugin with id '" + pluginReplacement.getOldPluginDescriptor().getPluginId() + "' not found");
+      }
+      else if (!myPluginEnabler.isDisabled(oldPlugin.getPluginId())) {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          String title = IdeBundle.message("plugin.manager.obsolete.plugins.detected.title");
+          String message = pluginReplacement.getReplacementMessage(oldPlugin, pluginNode);
+          if (Messages
+                .showYesNoDialog(message, title, IdeBundle.message("button.disable"), Messages.getNoButton(), Messages.getWarningIcon()) ==
+              Messages.YES) {
+            toDisable.set(oldPlugin);
+          }
+        }, ModalityState.any());
+      }
+    }
+    return toDisable;
+  }
+
+  private boolean checkMissingDependencies(IdeaPluginDescriptor pluginNode, @Nullable List<PluginId> pluginIds) {
     // check for dependent plugins at first.
     List<IdeaPluginDependency> dependencies = pluginNode.getDependencies();
     if (!dependencies.isEmpty()) {
@@ -251,10 +281,10 @@ public class PluginInstallOperation {
           }, ModalityState.any());
         }
         catch (Exception e) {
-          return null;
+          return false;
         }
         if (!proceed[0] || !prepareToInstall(depends)) {
-          return null;
+          return false;
         }
       }
 
@@ -270,35 +300,14 @@ public class PluginInstallOperation {
           }, ModalityState.any());
         }
         catch (Exception e) {
-          return null;
+          return false;
         }
         if (proceed[0] && !prepareToInstall(optionalDeps)) {
-          return null;
+          return false;
         }
       }
     }
-
-    Ref<IdeaPluginDescriptor> toDisable = Ref.create(null);
-    PluginReplacement pluginReplacement = ContainerUtil.find(PluginReplacement.EP_NAME.getExtensions(),
-                                                             r -> r.getNewPluginId().equals(pluginNode.getPluginId().getIdString()));
-    if (pluginReplacement != null) {
-      IdeaPluginDescriptor oldPlugin = PluginManagerCore.getPlugin(pluginReplacement.getOldPluginDescriptor().getPluginId());
-      if (oldPlugin == null) {
-        LOG.warn("Plugin with id '" + pluginReplacement.getOldPluginDescriptor().getPluginId() + "' not found");
-      }
-      else if (!myPluginEnabler.isDisabled(oldPlugin.getPluginId())) {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          String title = IdeBundle.message("plugin.manager.obsolete.plugins.detected.title");
-          String message = pluginReplacement.getReplacementMessage(oldPlugin, pluginNode);
-          if (Messages
-                .showYesNoDialog(message, title, IdeBundle.message("button.disable"), Messages.getNoButton(), Messages.getWarningIcon()) ==
-              Messages.YES) {
-            toDisable.set(oldPlugin);
-          }
-        }, ModalityState.any());
-      }
-    }
-    return toDisable;
+    return true;
   }
 
   @NotNull
