@@ -1528,6 +1528,11 @@
                      key="use.of.obsolete.date.time.api.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.maturity.UseOfObsoleteDateTimeApiInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CommentedOutCode" bundle="messages.InspectionGadgetsBundle"
+                     key="inspection.commented.out.code.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.maturity.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.maturity.CommentedOutCodeInspection"/>
+
 
     <!--group.names.memory.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AnonymousInnerClassMayBeStatic" bundle="messages.InspectionGadgetsBundle"
