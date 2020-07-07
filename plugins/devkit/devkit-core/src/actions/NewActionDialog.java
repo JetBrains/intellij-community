@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.ActionData;
 import org.jetbrains.idea.devkit.util.ActionType;
 
@@ -81,14 +83,19 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     init();
     setTitle(DevKitBundle.message("new.action.dialog.title"));
     ActionManager actionManager = ActionManager.getInstance();
+
     List<String> actionIds = actionManager.getActionIdList("");
     actionIds.sort(null);
     List<ActionGroup> actionGroups = new ArrayList<>();
-    for(String actionId: actionIds) {
+    for (String actionId : actionIds) {
       if (actionManager.isGroup(actionId)) {
         AnAction anAction = actionManager.getAction(actionId);
         if (anAction instanceof DefaultActionGroup) {
-          actionGroups.add((ActionGroup) anAction);
+          boolean hasDefinedId = !IdeaPluginRegistrationIndex.processGroup(project, actionId, GlobalSearchScope.allScope(project),
+                                                                           group -> false);
+          if (hasDefinedId) {
+            actionGroups.add((ActionGroup)anAction);
+          }
         }
       }
     }
