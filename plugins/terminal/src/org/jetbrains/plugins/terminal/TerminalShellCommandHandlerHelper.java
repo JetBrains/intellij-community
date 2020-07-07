@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.TerminalDebugSmartCommandAction;
 import com.intellij.terminal.TerminalExecutorAction;
@@ -25,6 +26,7 @@ import com.jediterm.terminal.SubstringFinder;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.CharBuffer;
+import com.jediterm.terminal.model.TerminalModelListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +38,7 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class TerminalShellCommandHandlerHelper {
   private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandler.class);
@@ -53,6 +56,7 @@ public final class TerminalShellCommandHandlerHelper {
   private PropertiesComponent myPropertiesComponent;
   private final SingletonNotificationManager mySingletonNotificationManager =
     new SingletonNotificationManager(ourToolWindowGroup, NotificationType.INFORMATION, null);
+  private final AtomicBoolean myKeyPressed = new AtomicBoolean(false);
 
   TerminalShellCommandHandlerHelper(@NotNull ShellTerminalWidget widget) {
     myWidget = widget;
@@ -60,17 +64,26 @@ public final class TerminalShellCommandHandlerHelper {
 
     ApplicationManager.getApplication().getMessageBus().connect(myWidget).subscribe(
       TerminalCommandHandlerCustomizer.Companion.getTERMINAL_COMMAND_HANDLER_TOPIC(), () -> scheduleCommandHighlighting());
+
+    TerminalModelListener listener = () -> {
+      if (myKeyPressed.compareAndSet(true, false)) {
+        scheduleCommandHighlighting();
+      }
+    };
+    widget.getTerminalTextBuffer().addModelListener(listener);
+    Disposer.register(myWidget, () -> widget.getTerminalTextBuffer().removeModelListener(listener));
   }
 
   public void processKeyPressed() {
     if (isFeatureEnabled()) {
-      myAlarm.cancelAllRequests();
+      myKeyPressed.set(true);
       scheduleCommandHighlighting();
     }
   }
 
   private void scheduleCommandHighlighting() {
-    myAlarm.addRequest(() -> { highlightMatchedCommand(myWidget.getProject()); }, 250);
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(() -> { highlightMatchedCommand(myWidget.getProject()); }, 0);
   }
 
   public static boolean isFeatureEnabled() {
