@@ -65,7 +65,8 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
     val file = LightVirtualFile("LSTTestFile", PlainTextFileType.INSTANCE, parseInput(text))
     val document = FileDocumentManager.getInstance().getDocument(file)!!
     val tracker = runWriteAction {
-      val tracker = SimpleLocalLineStatusTracker.createTracker(getProject(), document, file, Mode(true, true, smart))
+      val tracker = SimpleLocalLineStatusTracker.createTracker(getProject(), document, file)
+      tracker.mode = Mode(true, true, smart)
       tracker.setBaseRevision(parseInput(vcsText))
       tracker
     }

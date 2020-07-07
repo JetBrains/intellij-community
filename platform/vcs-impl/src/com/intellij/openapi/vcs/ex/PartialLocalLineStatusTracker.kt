@@ -92,9 +92,8 @@ class LocalRange(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRang
 
 class ChangelistsLocalLineStatusTracker(project: Project,
                                         document: Document,
-                                        virtualFile: VirtualFile,
-                                        mode: LocalLineStatusTracker.Mode
-) : LocalLineStatusTrackerImpl<LocalRange>(project, document, virtualFile, mode),
+                                        virtualFile: VirtualFile
+) : LocalLineStatusTrackerImpl<LocalRange>(project, document, virtualFile),
     PartialLocalLineStatusTracker,
     ChangeListWorker.PartialChangeTracker {
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
@@ -890,9 +889,8 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     @JvmStatic
     fun createTracker(project: Project,
                       document: Document,
-                      virtualFile: VirtualFile,
-                      mode: LocalLineStatusTracker.Mode): ChangelistsLocalLineStatusTracker {
-      return ChangelistsLocalLineStatusTracker(project, document, virtualFile, mode)
+                      virtualFile: VirtualFile): ChangelistsLocalLineStatusTracker {
+      return ChangelistsLocalLineStatusTracker(project, document, virtualFile)
     }
   }
 }

@@ -58,12 +58,11 @@ interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
 
 abstract class LocalLineStatusTrackerImpl<R : Range> constructor(override val project: Project,
                                                                  document: Document,
-                                                                 override val virtualFile: VirtualFile,
-                                                                 mode: LocalLineStatusTracker.Mode
+                                                                 override val virtualFile: VirtualFile
 ) : LineStatusTrackerBase<R>(project, document), LocalLineStatusTracker<R> {
   abstract override val renderer: LocalLineStatusMarkerRenderer
 
-  override var mode: LocalLineStatusTracker.Mode = mode
+  override var mode: LocalLineStatusTracker.Mode = LocalLineStatusTracker.Mode(true, true, false)
     set(value) {
       if (value == mode) return
       field = value
