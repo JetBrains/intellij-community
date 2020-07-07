@@ -133,6 +133,7 @@ object DynamicPlugins {
   fun checkCanUnloadWithoutRestart(
     descriptor: IdeaPluginDescriptorImpl,
     baseDescriptor: IdeaPluginDescriptorImpl? = null,
+    optionalDependencyPluginId: PluginId? = null,
     context: List<IdeaPluginDescriptorImpl> = emptyList(),
     checkImplementationDetailDependencies: Boolean = true
   ): String? {
@@ -201,11 +202,11 @@ object DynamicPlugins {
           ?: anyModule?.extensionArea?.getExtensionPointIfRegistered<Any>(epName)
         if (ep != null) {
           if (!ep.isDynamic) {
-            if (baseDescriptor != null) {
-              return "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it"
+            if (optionalDependencyPluginId != null) {
+              return "Plugin ${baseDescriptor?.pluginId} is not unload-safe because of use of non-dynamic EP $epName in plugin $optionalDependencyPluginId that optionally depends on it"
             }
             else {
-              return "Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
+              return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
             }
           }
           continue
@@ -245,7 +246,7 @@ object DynamicPlugins {
 
     descriptor.pluginDependencies?.forEach { dependency ->
       if (isPluginOrModuleLoaded(dependency.id)) {
-        val message = checkCanUnloadWithoutRestart(dependency.subDescriptor ?: return@forEach, descriptor, context)
+        val message = checkCanUnloadWithoutRestart(dependency.subDescriptor ?: return@forEach, baseDescriptor ?: descriptor, null, context)
         if (message != null) {
           return message
         }
@@ -255,9 +256,9 @@ object DynamicPlugins {
     var dependencyMessage: String? = null
     // if not a sub plugin descriptor, then check that any dependent plugin also reloadable
     if (descriptor.pluginId != null) {
-      processOptionalDependenciesOnPlugin(descriptor.pluginId) { _, subDescriptor ->
+      processOptionalDependenciesOnPlugin(descriptor.pluginId) { mainDescriptor, subDescriptor ->
         if (subDescriptor != null) {
-          dependencyMessage = checkCanUnloadWithoutRestart(subDescriptor, descriptor, context)
+          dependencyMessage = checkCanUnloadWithoutRestart(subDescriptor, descriptor, mainDescriptor.pluginId, context)
         }
         dependencyMessage == null
       }
@@ -463,11 +464,7 @@ object DynamicPlugins {
             }
           }
 
-          pluginDescriptor.pluginDependencies?.forEach { dependency ->
-            if (isPluginOrModuleLoaded(dependency.id)) {
-              unloadPluginDescriptor(dependency.subDescriptor ?: return@forEach, loadedPluginDescriptor)
-            }
-          }
+          unloadDependencyDescriptors(pluginDescriptor, loadedPluginDescriptor)
           unloadPluginDescriptor(pluginDescriptor, loadedPluginDescriptor)
 
           for (project in ProjectUtil.getOpenProjects()) {
@@ -556,6 +553,17 @@ object DynamicPlugins {
       FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", eventId, fuData)
 
       return classLoaderUnloaded
+    }
+  }
+
+  private fun unloadDependencyDescriptors(pluginDescriptor: IdeaPluginDescriptorImpl,
+                                          loadedPluginDescriptor: IdeaPluginDescriptorImpl) {
+    pluginDescriptor.pluginDependencies?.forEach { dependency ->
+      if (isPluginOrModuleLoaded(dependency.id)) {
+        val subDescriptor = dependency.subDescriptor ?: return@forEach
+        unloadPluginDescriptor(subDescriptor, loadedPluginDescriptor)
+        unloadDependencyDescriptors(subDescriptor, loadedPluginDescriptor)
+      }
     }
   }
 
@@ -735,11 +743,7 @@ object DynamicPlugins {
                                    fullyLoadedBaseDescriptor: IdeaPluginDescriptorImpl,
                                    app: ComponentManagerImpl) {
     val pluginsToLoad = mutableListOf(DescriptorToLoad(fullyLoadedBaseDescriptor, baseDescriptor))
-    fullyLoadedBaseDescriptor.pluginDependencies?.forEach { dependency ->
-      if (isPluginOrModuleLoaded(dependency.id)) {
-        pluginsToLoad.add(DescriptorToLoad(dependency.subDescriptor ?: return@forEach, baseDescriptor))
-      }
-    }
+    collectDescriptorsToLoad(fullyLoadedBaseDescriptor, baseDescriptor, pluginsToLoad)
 
     val listenerCallbacks = mutableListOf<Runnable>()
     app.registerComponents(pluginsToLoad, listenerCallbacks)
@@ -755,6 +759,18 @@ object DynamicPlugins {
       actionManager.registerPluginActions(baseDescriptor, descriptorToLoad.descriptor.actionDescriptionElements, false)
     }
     listenerCallbacks.forEach(Runnable::run)
+  }
+
+  private fun collectDescriptorsToLoad(descriptor: IdeaPluginDescriptorImpl,
+                                       baseDescriptor: IdeaPluginDescriptorImpl,
+                                       pluginsToLoad: MutableList<DescriptorToLoad>) {
+    descriptor.pluginDependencies?.forEach { dependency ->
+      val subDescriptor = dependency.subDescriptor ?: return@forEach
+      if (isPluginOrModuleLoaded(dependency.id)) {
+        pluginsToLoad.add(DescriptorToLoad(subDescriptor, baseDescriptor))
+        collectDescriptorsToLoad(subDescriptor, baseDescriptor, pluginsToLoad)
+      }
+    }
   }
 
   private fun isPluginOrModuleLoaded(pluginId: PluginId?): Boolean {
