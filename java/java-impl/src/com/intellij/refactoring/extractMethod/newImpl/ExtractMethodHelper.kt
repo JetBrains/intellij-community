@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
@@ -60,18 +61,9 @@ object ExtractMethodHelper {
 
   fun normalizedAnchor(anchor: PsiMember): PsiMember {
     return if (anchor is PsiField) {
-      findLastFieldInDeclaration(anchor)
+      MultipleFieldDeclarationHelper.findLastFieldInGroup(anchor.node).psi as? PsiField ?: anchor
     } else {
       anchor
-    }
-  }
-
-  private fun findLastFieldInDeclaration(field: PsiField): PsiField {
-    val nextSibling = PsiTreeUtil.skipWhitespacesForward(field)
-    return if (PsiUtil.getElementType(nextSibling) == JavaTokenType.COMMA) {
-      PsiTreeUtil.skipWhitespacesForward(nextSibling) as PsiField
-    } else {
-      field
     }
   }
 
