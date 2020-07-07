@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
@@ -44,15 +43,16 @@ class GithubGitHelper {
 
   private fun isRemoteUrlAccessible(url: String) = GithubAuthenticationManager.getInstance().getAccounts().find { it.server.matches(url) } != null
 
-  fun getPossibleRepositories(repository: GitRepository): Set<GHRepositoryCoordinates> {
+  fun getPossibleRepositories(repository: GitRepository): Set<GHGitRepositoryMapping> {
     val knownServers = getKnownGithubServers()
-    return repository.getRemoteUrls().mapNotNull { url ->
-      knownServers.find { it.matches(url) }
-        ?.let { server -> GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GHRepositoryCoordinates(server, it) } }
+    return repository.remotes.flatMap { remote ->
+      remote.urls.mapNotNull { url ->
+        knownServers.find { it.matches(url) }?.let { GHGitRepositoryMapping.create(it, GitRemoteUrlCoordinates(url, remote, repository)) }
+      }
     }.toSet()
   }
 
-  fun getPossibleRemoteUrlCoordinates(project: Project): Set<GitRemoteUrlCoordinates> {
+  fun getPossibleRepositories(project: Project): Set<GHGitRepositoryMapping> {
     val repositories = project.service<GitRepositoryManager>().repositories
     if (repositories.isEmpty()) return emptySet()
 
@@ -61,7 +61,7 @@ class GithubGitHelper {
     return repositories.flatMap { repo ->
       repo.remotes.flatMap { remote ->
         remote.urls.mapNotNull { url ->
-          if (knownServers.any { it.matches(url) }) GitRemoteUrlCoordinates(url, remote, repo) else null
+          knownServers.find { it.matches(url) }?.let { GHGitRepositoryMapping.create(it, GitRemoteUrlCoordinates(url, remote, repo)) }
         }
       }
     }.toSet()
@@ -83,12 +83,6 @@ class GithubGitHelper {
   }
 
   private fun GitRepository.getRemoteUrls() = remotes.map { it.urls }.flatten()
-
-  fun findRemoteUrlsForRepository(project: Project, repository: GHRepositoryCoordinates): List<GitRemoteUrlCoordinates> {
-    return getPossibleRemoteUrlCoordinates(project).filter {
-      repository.serverPath.matches(it.url) && GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(it.url) == repository.repositoryPath
-    }
-  }
 
   companion object {
     @JvmStatic

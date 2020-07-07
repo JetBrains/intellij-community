@@ -14,7 +14,7 @@ data class GHRepositoryCoordinates(val serverPath: GithubServerPath, val reposit
     if (this === other) return true
     if (other !is GHRepositoryCoordinates) return false
 
-    if (serverPath != other.serverPath) return false
+    if (!serverPath.equals(other.serverPath, true)) return false
     if (repositoryPath != other.repositoryPath) return false
 
     return true

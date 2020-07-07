@@ -23,7 +23,6 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.util.CollectionDelta
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import kotlin.properties.Delegates.observable
 
@@ -36,9 +35,9 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
 
     var muted = false
 
-    override fun tabDisposed(remoteUrl: GitRemoteUrlCoordinates) {
+    override fun tabDisposed(repository: GHRepositoryCoordinates) {
       if (!muted) {
-        if (gitHelper.getPossibleRemoteUrlCoordinates(project).contains(remoteUrl)) settings.addHiddenUrl(remoteUrl.url)
+        if (gitHelper.getPossibleRepositories(project).any { it.repository == repository }) settings.addHiddenUrl(repository.toUrl())
         updateTabs()
       }
     }
@@ -52,47 +51,38 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
     }
 
   @CalledInAwt
-  fun isAvailable(): Boolean = getRemoteUrls().isNotEmpty()
+  fun isAvailable(): Boolean = getRepositories().isNotEmpty()
 
   @CalledInAwt
-  fun showTab(remoteUrl: GitRemoteUrlCoordinates, onShown: ((GHPRToolWindowTabComponentController?) -> Unit)? = null) {
-    settings.removeHiddenUrl(remoteUrl.url)
+  fun showTab(repository: GHRepositoryCoordinates, onShown: ((GHPRToolWindowTabComponentController?) -> Unit)? = null) {
+    settings.removeHiddenUrl(repository.toUrl())
     updateTabs {
       ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID)?.show {
-        contentManager?.focusTab(remoteUrl, onShown)
+        contentManager?.focusTab(repository, onShown)
       }
     }
   }
 
-  @CalledInAwt
-  fun showTab(repository: GHRepositoryCoordinates, onShown: ((GHPRToolWindowTabComponentController?) -> Unit)? = null) {
-    val remoteUrl = gitHelper.findRemoteUrlsForRepository(project, repository).firstOrNull() ?: return
-    showTab(remoteUrl, onShown)
-  }
-
   private fun updateTabs(afterUpdate: (() -> Unit)? = null) {
-    val currentUrls = getRemoteUrls()
-
-    ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID)?.setAvailable(currentUrls.isNotEmpty()) {
+    val repositories = getRepositories().associateBy({ it.repository }, { it.remote })
+    ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID)?.setAvailable(repositories.isNotEmpty()) {
       val contentManager = contentManager
       if (contentManager != null) {
-        val delta = CollectionDelta(contentManager.currentTabs, currentUrls)
+        val delta = CollectionDelta(contentManager.currentTabs, repositories.keys)
         for (item in delta.removedItems) {
           contentManager.removeTab(item)
         }
         for (item in delta.newItems) {
-          contentManager.addTab(item)
+          contentManager.addTab(item, repositories.getValue(item))
         }
       }
       afterUpdate?.invoke()
     }
   }
 
-  private fun getRemoteUrls(): Set<GitRemoteUrlCoordinates> {
-    return gitHelper.getPossibleRemoteUrlCoordinates(project).filter {
-      !settings.getHiddenUrls().contains(it.url)
-    }.toSet()
-  }
+  private fun getRepositories() = gitHelper.getPossibleRepositories(project).filter {
+    !settings.getHiddenUrls().contains(it.repository.toUrl())
+  }.toSet()
 
   class RemoteUrlsListener(private val project: Project)
     : VcsRepositoryMappingListener, GitRepositoryChangeListener {

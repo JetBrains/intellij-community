@@ -31,7 +31,7 @@ class GHOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation)
     val revisionHash = annotation.getLineRevisionNumber(myLineNumber)?.asString()
     if (revisionHash == null) return null
 
-    return accessibleRepositories.map { Data.Revision(project, it, revisionHash) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, revisionHash) }
   }
 
   override fun consume(integer: Int) {

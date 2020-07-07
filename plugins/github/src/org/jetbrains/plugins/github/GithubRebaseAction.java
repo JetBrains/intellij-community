@@ -31,10 +31,7 @@ import org.jetbrains.plugins.github.api.data.GithubRepo;
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
-import org.jetbrains.plugins.github.util.GithubGitHelper;
-import org.jetbrains.plugins.github.util.GithubNotifications;
-import org.jetbrains.plugins.github.util.GithubUrlUtil;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -56,21 +53,15 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
   @Override
   public void actionPerformed(@NotNull AnActionEvent e,
                               @NotNull Project project,
-                              @NotNull GitRepository repository,
-                              @NotNull GitRemote remote,
-                              @NotNull String remoteUrl,
+                              @NotNull GHGitRepositoryMapping repository,
                               @NotNull GithubAccount account) {
     FileDocumentManager.getInstance().saveAllDocuments();
     GithubApiRequestExecutor executor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, project);
     if (executor == null) return;
 
-    GHRepositoryPath repoPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
-    if (repoPath == null) {
-      GithubNotifications
-        .showError(project, GithubBundle.message("rebase.error"), GithubBundle.message("rebase.error.invalid.remote", remoteUrl));
-      return;
-    }
-    new RebaseTask(project, executor, Git.getInstance(), account.getServer(), repository, repoPath).queue();
+    new RebaseTask(project, executor, Git.getInstance(), account.getServer(),
+                   repository.getRemote().getRepository(),
+                   repository.getRepository().getRepositoryPath()).queue();
   }
 
   private static class RebaseTask extends Task.Backgroundable {

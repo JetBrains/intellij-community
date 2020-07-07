@@ -89,7 +89,7 @@ open class GHOpenInBrowserActionGroup
     val accessibleRepositories = service<GithubGitHelper>().getPossibleRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories.map { Data.Revision(project, it, fileRevision.revisionNumber.asString()) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, fileRevision.revisionNumber.asString()) }
   }
 
   private fun getDataFromLog(project: Project, dataContext: DataContext): List<Data>? {
@@ -106,7 +106,7 @@ open class GHOpenInBrowserActionGroup
     val accessibleRepositories = service<GithubGitHelper>().getPossibleRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories.map { Data.Revision(project, it, commit.hash.asString()) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, commit.hash.asString()) }
   }
 
   private fun getDataFromVirtualFile(project: Project, dataContext: DataContext): List<Data>? {
@@ -123,7 +123,7 @@ open class GHOpenInBrowserActionGroup
 
     val change = changeListManager.getChange(virtualFile)
     return if (change != null && change.type == Change.Type.NEW) null
-    else accessibleRepositories.map { Data.File(project, it, repository.root, virtualFile) }
+    else accessibleRepositories.map { Data.File(project, it.repository, repository.root, virtualFile) }
   }
 
   protected sealed class Data(val project: Project) {
