@@ -13,7 +13,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.task.*;
+import com.intellij.task.ModuleBuildTask;
+import com.intellij.task.ProjectTaskContext;
+import com.intellij.task.ProjectTaskListener;
+import com.intellij.task.ProjectTaskManager;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,18 +74,13 @@ public class JavaAutoRunManager extends AbstractAutoTestManager implements Dispo
 
           @Override
           public void finished(ProjectTaskManager.@NotNull Result result) {
-            if (result.anyTaskMatches((task, state) -> !hasCompilationErrors(task, state))) {
+            if (result.anyTaskMatches((task, state) -> task instanceof ModuleBuildTask)) {
               if (result.getContext().getGeneratedFilesRoots().isEmpty()) return;
-              restartAllAutoTests(0);
+              myHasErrors = result.hasErrors() || result.isAborted();
+              if (!result.hasErrors() && !result.isAborted()) {
+                restartAllAutoTests(0);
+              }
             }
-          }
-
-          private boolean hasCompilationErrors(ProjectTask task, ProjectTaskState state) {
-            if (task instanceof ModuleBuildTask) {
-              myHasErrors = state.isFailed();
-              return state.isSkipped() || state.isFailed();
-            }
-            return true;
           }
         });
       }
