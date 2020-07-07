@@ -35,6 +35,8 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
   var knownRepositories by observableField(emptySet<GHGitRepositoryMapping>(), eventDispatcher)
     private set
 
+  private val serversFromDiscovery = HashSet<GithubServerPath>()
+
   init {
     updateRepositories()
   }
@@ -68,25 +70,58 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     }
     LOG.debug("Found remotes: $remotes")
 
-    val defaultServer = GithubServerPath.DEFAULT_SERVER
-    val serverFromMigration = GithubAccountsMigrationHelper.getInstance().getOldServer()
-    val serversFromAccounts = service<GithubAccountManager>().accounts.map { it.server }
+    val servers = mutableListOf<GithubServerPath>().apply {
+      add(GithubServerPath.DEFAULT_SERVER)
+      GithubAccountsMigrationHelper.getInstance().getOldServer()?.let { add(it) }
+      addAll(service<GithubAccountManager>().accounts.map { it.server })
+      addAll(serversFromDiscovery)
+    }
 
     val repositories = HashSet<GHGitRepositoryMapping>()
     for (remote in remotes) {
-      val repository = when {
-        defaultServer.matches(remote.url) ->
-          GHGitRepositoryMapping.create(defaultServer, remote)
-        serverFromMigration != null && serverFromMigration.matches(remote.url) ->
-          GHGitRepositoryMapping.create(serverFromMigration, remote)
-        else -> serversFromAccounts.find { it.matches(remote.url) }?.let {
-          GHGitRepositoryMapping.create(it, remote)
-        }
-      }
+      val repository = servers.find { it.matches(remote.url) }?.let { GHGitRepositoryMapping.create(it, remote) }
       if (repository != null) repositories.add(repository)
+      else {
+        scheduleEnterpriseServerDiscovery(remote)
+      }
     }
     LOG.debug("New list of known repos: $repositories")
     knownRepositories = repositories
+  }
+
+  @CalledInAwt
+  private fun scheduleEnterpriseServerDiscovery(remote: GitRemoteUrlCoordinates) {
+    val uri = GithubUrlUtil.getUriFromRemoteUrl(remote.url)
+    LOG.debug("Extracted URI $uri from remote ${remote.url}")
+    if (uri == null) return
+
+    val path = uri.path ?: return
+    val pathParts = path.removePrefix("/").split('/').takeIf { it.size >= 2 } ?: return
+    val serverSuffix = if (pathParts.size == 2) null else pathParts.subList(0, pathParts.size - 2).joinToString("/", "/")
+
+    val server = GithubServerPath(false, uri.host, null, serverSuffix)
+    val serverHttp = GithubServerPath(true, uri.host, null, serverSuffix)
+    val server8080 = GithubServerPath(true, uri.host, 8080, serverSuffix)
+    LOG.debug("Scheduling GHE server discovery for $server, $serverHttp and $server8080")
+
+    val serverManager = service<GHEnterpriseServerMetadataLoader>()
+    serverManager.loadMetadata(server).successOnEdt {
+      LOG.debug("Found GHE server at $server")
+      serversFromDiscovery.add(server)
+      doUpdateRepositories()
+    }.errorOnEdt {
+      serverManager.loadMetadata(serverHttp).successOnEdt {
+        LOG.debug("Found GHE server at $serverHttp")
+        serversFromDiscovery.add(serverHttp)
+        doUpdateRepositories()
+      }.errorOnEdt {
+        serverManager.loadMetadata(server8080).successOnEdt {
+          LOG.debug("Found GHE server at $server8080")
+          serversFromDiscovery.add(server8080)
+          doUpdateRepositories()
+        }
+      }
+    }
   }
 
   fun addRepositoryListChangedListener(disposable: Disposable, listener: () -> Unit) =
