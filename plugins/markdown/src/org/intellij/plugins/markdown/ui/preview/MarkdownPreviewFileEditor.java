@@ -38,6 +38,7 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -294,7 +295,9 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
         Messages.getErrorIcon()
       );
 
-      provider = MarkdownHtmlPanelProvider.getProviders()[0];
+      provider = Objects.requireNonNull(
+        Arrays.stream(MarkdownHtmlPanelProvider.getProviders()).filter(
+          p -> p.isAvailable() == MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE).findFirst().orElse(null));
     }
 
     myLastPanelProviderInfo = settings.getMarkdownPreviewSettings().getHtmlPanelProviderInfo();
