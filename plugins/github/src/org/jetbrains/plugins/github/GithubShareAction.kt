@@ -54,10 +54,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.GithubShareDialog
-import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper
-import org.jetbrains.plugins.github.util.GithubGitHelper
-import org.jetbrains.plugins.github.util.GithubNotifications
-import org.jetbrains.plugins.github.util.GithubUtil
+import org.jetbrains.plugins.github.util.*
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
@@ -117,7 +114,9 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       val gitHelper = service<GithubGitHelper>()
       val git = service<Git>()
 
-      val possibleRemotes = gitRepository?.let(gitHelper::getAccessibleRemoteUrls).orEmpty()
+      val possibleRemotes = gitRepository
+        ?.let(project.service<GHProjectRepositoriesManager>()::findKnownRepositories)
+        ?.map { it.remote.url }.orEmpty()
       if (possibleRemotes.isNotEmpty()) {
         val existingRemotesDialog = GithubExistingRemotesDialog(project, possibleRemotes)
         DialogManager.show(existingRemotesDialog)
