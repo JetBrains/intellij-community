@@ -5,11 +5,14 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DirectoryIndexLightTest extends BasePlatformTestCase {
@@ -29,11 +32,19 @@ public class DirectoryIndexLightTest extends BasePlatformTestCase {
       }
     });
 
+    List<LightVirtualFile> filesWithoutId = Arrays.asList(new MyVirtualFile1(), new MyVirtualFile2(), new MyVirtualFile3());
+
     ProjectFileIndex index = ProjectFileIndex.getInstance(getProject());
 
     PlatformTestUtil.startPerformanceTest("Directory index query", 2500, () -> {
       for (int i = 0; i < 100; i++) {
         assertFalse(index.isInContent(fsRoot));
+        for (LightVirtualFile file : filesWithoutId) {
+          assertFalse(file instanceof VirtualFileWithId);
+          assertFalse(index.isInContent(file));
+          assertFalse(index.isInSource(file));
+          assertFalse(index.isInLibrary(file));
+        }
         for (VirtualFile file : files) {
           assertTrue(index.isInContent(file));
           assertTrue(index.isInSource(file));
@@ -41,6 +52,15 @@ public class DirectoryIndexLightTest extends BasePlatformTestCase {
         }
       }
     }).reattemptUntilJitSettlesDown().assertTiming();
+  }
+
+  private static class MyVirtualFile1 extends LightVirtualFile {
+  }
+
+  private static class MyVirtualFile2 extends LightVirtualFile {
+  }
+
+  private static class MyVirtualFile3 extends LightVirtualFile {
   }
 
 }
