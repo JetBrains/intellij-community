@@ -1965,3 +1965,11 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/org/tukaani/xz/1.8:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/tukaani/xz/1.8:jar"],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "xml-apis",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/xml-apis/xml-apis/1.3.04:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/xml-apis/xml-apis/1.3.04:jar"],
+)

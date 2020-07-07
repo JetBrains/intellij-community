@@ -128,5 +128,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Java_Compatibility",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:batik-codec",
+        "//tools/idea/.idea/libraries:xml-apis",
     ],
 )

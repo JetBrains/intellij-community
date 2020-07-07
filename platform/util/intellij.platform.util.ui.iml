@@ -17,5 +17,6 @@
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="batik-codec" level="project" />
+    <orderEntry type="library" name="xml-apis" level="project" />
   </component>
 </module>
