@@ -9,7 +9,7 @@ class ExperimentInfoTest : LightIdeaTestCase() {
   fun `test experiment info is correct`() {
     val experimentInfo = ClientExperimentStatus.loadExperimentInfo()
 
-    Assertions.assertThat(experimentInfo).isNotEqualTo(ExperimentInfo.emptyExperiment())
+    Assertions.assertThat(experimentInfo).isNotEqualTo(ExperimentInfo.disabledExperiment())
     Assertions.assertThat(experimentInfo.version).isNotNull()
     Assertions.assertThat(experimentInfo.experimentBucketsCount).isNotNull()
     Assertions.assertThat(experimentInfo.groups.size).isNotEqualTo(0)

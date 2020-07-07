@@ -2,14 +2,18 @@
 package com.intellij.stats.network.status
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 
 object WebServiceStatusManager {
+  private const val USE_ANALYTICS_PLATFORM_REGISTRY = "stats.collector.analytics.platform.send"
   private val LOG = logger<WebServiceStatusManager>()
   private val statuses: MutableMap<String, WebServiceStatus> = mutableMapOf()
 
   init {
     register(JetStatServiceStatus())
-    register(AnalyticsPlatformServiceStatus())
+    if (Registry.`is`(USE_ANALYTICS_PLATFORM_REGISTRY, false)) {
+      register(AnalyticsPlatformServiceStatus())
+    }
   }
 
   fun getAllStatuses(): List<WebServiceStatus> = statuses.values.toList()

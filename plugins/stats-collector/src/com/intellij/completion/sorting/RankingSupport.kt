@@ -2,6 +2,7 @@
 package com.intellij.completion.sorting
 
 import com.intellij.application.options.CodeCompletionOptions
+import com.intellij.completion.StatsCollectorBundle
 import com.intellij.completion.settings.CompletionMLRankingSettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.ml.completion.RankingModelProvider
@@ -19,9 +20,9 @@ import com.jetbrains.completion.ranker.WeakModelProvider
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
-  private const val SETTINGS_UPDATED_PROPERTY_KEY = "ml.completion.experiment.settings.ranking.updated"
   private const val LANGUAGES_RANKING_UPDATED_PROPERTY_KEY = "ml.completion.experiment.languages.ranking.updated"
   private val LOG = logger<RankingSupport>()
+  private val properties = PropertiesComponent.getInstance()
   private var enabledInTests: Boolean = false
 
   fun getRankingModel(language: Language): RankingModelWrapper? {
@@ -64,31 +65,20 @@ object RankingSupport {
     val experimentStatus = ExperimentStatus.getInstance()
     if (application.isUnitTestMode) return enabledInTests
     if (application.isEAP && experimentStatus.isExperimentOnCurrentIDE(language) && isCompletionLogsSendAllowed()) {
-      // AB experiment
-      updateSettingsOnce(experimentStatus, language, provider.displayNameInSettings)
+      configureSettingsInExperiment(experimentStatus, language, provider.displayNameInSettings)
     }
 
     val settings = CompletionMLRankingSettings.getInstance()
     return settings.isRankingEnabled && settings.isLanguageEnabled(provider.displayNameInSettings)
   }
 
-  private fun updateSettingsOnce(experimentStatus: ExperimentStatus, language: Language, languageName: String) {
+  private fun configureSettingsInExperiment(experimentStatus: ExperimentStatus, language: Language, languageName: String) {
     val shouldRank = experimentStatus.shouldRank(language)
     val shouldShowArrows = experimentStatus.shouldShowArrows(language)
     val settings = CompletionMLRankingSettings.getInstance()
-    val properties = PropertiesComponent.getInstance()
-    if (!properties.getBoolean(SETTINGS_UPDATED_PROPERTY_KEY, false) || experimentStatus.experimentChanged()) {
-      settings.isRankingEnabled = shouldRank
-      val languages = availableLanguages()
-      languages.forEach { settings.setLanguageEnabled(it, shouldRank) }
-      settings.isShowDiffEnabled = shouldShowArrows
-      if (shouldShowArrows) {
-        showNotificationAboutArrows()
-      }
-      properties.setValues(LANGUAGES_RANKING_UPDATED_PROPERTY_KEY, languages.toTypedArray())
-      properties.setValue(SETTINGS_UPDATED_PROPERTY_KEY, true)
+    if (experimentStatus.experimentChanged()) {
+      updateSettingsOnce(settings, shouldRank, shouldShowArrows)
     }
-
     val languages = properties.getValues(LANGUAGES_RANKING_UPDATED_PROPERTY_KEY) ?: emptyArray()
     if (languageName !in languages) {
       settings.setLanguageEnabled(languageName, shouldRank)
@@ -96,15 +86,24 @@ object RankingSupport {
     }
   }
 
+  private fun updateSettingsOnce(settings: CompletionMLRankingSettings, shouldRank: Boolean, shouldShowArrows: Boolean) {
+    settings.isRankingEnabled = shouldRank
+    val languages = availableLanguages()
+    languages.forEach { settings.setLanguageEnabled(it, shouldRank) }
+    settings.isShowDiffEnabled = shouldShowArrows
+    if (shouldShowArrows) {
+      showNotificationAboutArrows()
+    }
+    properties.setValues(LANGUAGES_RANKING_UPDATED_PROPERTY_KEY, languages.toTypedArray())
+  }
+
   private fun showNotificationAboutArrows() {
-    NotificationGroup(
-        displayId = "ML Completion Experiment",
-        displayType = NotificationDisplayType.STICKY_BALLOON,
-        title = "ML Completion Experiment")
-      .createNotification(type = NotificationType.INFORMATION)
-      .setTitle("Machine Learning-Assisted Completion")
-      .setContent("Position changes will be shown in completion popup")
-      .addAction(object : NotificationAction("OK") {
+    Notification(
+      StatsCollectorBundle.message("ml.completion.show.diff.notification.groupId"),
+      StatsCollectorBundle.message("ml.completion.show.diff.notification.title"),
+      StatsCollectorBundle.message("ml.completion.show.diff.notification.content"),
+      NotificationType.INFORMATION
+    ).addAction(object : NotificationAction("OK") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           notification.expire()
         }

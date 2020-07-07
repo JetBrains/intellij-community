@@ -41,7 +41,7 @@ class AnalyticsPlatformServiceStatus : WebServiceStatus {
         return
       }
       if (satisfyingEndpoints.size > 1) {
-        LOG.warn("Analytics Platform completion web service status. More than one satisfying endpoints. First one will be used.")
+        LOG.error("Analytics Platform completion web service status. More than one satisfying endpoints. First one will be used.")
       }
       val endpointSettings = satisfyingEndpoints.first()
       isServerOk = true
