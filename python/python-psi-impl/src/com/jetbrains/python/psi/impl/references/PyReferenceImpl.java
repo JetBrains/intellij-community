@@ -116,7 +116,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         final PsiElement element = rrr.getElement();
         if (element instanceof PyClass) {
           final PyClass cls = (PyClass)element;
-          final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myElement.getProject());
+          final TypeEvalContext context = myContext.getTypeEvalContext();
           final Collection<? extends PsiElement> constructors = PyCallExpressionHelper.resolveConstructors(cls, myElement, context, false);
           if (!constructors.isEmpty()) {
             iterator.remove();
