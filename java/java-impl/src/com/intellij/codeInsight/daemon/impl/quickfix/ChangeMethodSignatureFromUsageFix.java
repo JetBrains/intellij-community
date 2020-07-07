@@ -90,7 +90,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     if (aClass != null && aClass.findMethodsByName(targetMethodName, true).length == 1) {
       JavaElementKind parameter = JavaElementKind.PARAMETER;
       JavaElementKind method = JavaElementKind.fromElement(myTargetMethod);
-      if (JavaPsiRecordUtil.findCanonicalConstructor(aClass) == myTargetMethod) {
+      if (JavaPsiRecordUtil.isCanonicalConstructor(myTargetMethod)) {
         parameter = JavaElementKind.RECORD_COMPONENT;
         method = JavaElementKind.RECORD;
       }
