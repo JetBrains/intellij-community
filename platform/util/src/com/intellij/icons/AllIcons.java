@@ -34,6 +34,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CheckMulticaret = load("/actions/CheckMulticaret.svg");
     /** 16x16 */ public static final @NotNull Icon CheckOut = load("/actions/checkOut.svg");
     /** 16x16 */ public static final @NotNull Icon Close = load("/actions/close.svg");
+    /** 16x16 */ public static final @NotNull Icon CloseDarkGrey = load("/actions/closeDarkGrey.svg");
     /** 16x16 */ public static final @NotNull Icon CloseHovered = load("/actions/closeHovered.svg");
     /** 16x16 */ public static final @NotNull Icon Collapseall = load("/actions/collapseall.svg");
     /** 16x16 */ public static final @NotNull Icon Colors = load("/actions/colors.svg");
