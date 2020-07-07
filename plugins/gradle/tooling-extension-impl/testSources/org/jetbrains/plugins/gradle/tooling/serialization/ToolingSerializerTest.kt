@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization
 
 import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencies
@@ -26,6 +26,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.function.Consumer
+import kotlin.random.Random
 
 /**
  * @author Vladislav.Soroka
@@ -39,7 +40,8 @@ class ToolingSerializerTest {
     myRandomParameters = EasyRandomParameters()
     myRandom = EasyRandom(myRandomParameters)
     myRandomParameters
-      .collectionSizeRange(0, 3)
+      .seed(Random.nextLong())
+      .collectionSizeRange(Random.nextInt(0, 2), 3)
       .objectPoolSize(5)
       .overrideDefaultInitialization(true)
       .scanClasspathForConcreteTypes(true)
