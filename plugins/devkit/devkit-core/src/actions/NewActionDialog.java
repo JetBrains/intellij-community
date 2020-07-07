@@ -10,6 +10,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiNameHelper;
@@ -346,7 +347,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     protected void customizeCellRenderer(@NotNull JList list, AnAction value, int index, boolean selected, boolean hasFocus) {
       append(ActionManager.getInstance().getId(value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       String text = value.getTemplatePresentation().getText();
-      if (text != null) {
+      if (StringUtil.isNotEmpty(text)) {
         append(" (" + text + ")", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
