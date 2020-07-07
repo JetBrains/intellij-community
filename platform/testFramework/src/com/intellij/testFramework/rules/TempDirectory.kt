@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * An improved variant of [org.junit.rules.TemporaryFolder] with lazy init, no symlinks in a temporary directory path, better directory name,
  * and more convenient [newFile], [newDirectory] methods.
  */
-class TempDirectory : ExternalResource() {
+open class TempDirectory : ExternalResource() {
   private var name: String? = null
   private val nextDirNameSuffix = AtomicInteger()
   private var myRoot: File? = null
