@@ -196,7 +196,7 @@ public final class EditorFragmentComponent extends JPanel {
       startLine++;
     }
 
-    int endLine = Math.min(document.getLineNumber(range.getEndOffset()) + 1, document.getLineCount() - 1);
+    int endLine = document.getLineNumber(range.getEndOffset()) + 1;
 
     if (startLine >= endLine) return null;
 
