@@ -8,11 +8,14 @@ import com.intellij.stats.network.assertNotEDT
 import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.network.status.bean.AnalyticsPlatformSettingsDeserializer
 
-class AnalyticsPlatformServiceStatus : WebServiceStatus {
+class AnalyticsPlatformServiceStatus(private val statusUrl: String) : WebServiceStatus {
   companion object {
     private val LOG = logger<AnalyticsPlatformServiceStatus>()
+    private fun productCode(): String = ApplicationInfo.getInstance().build.productCode
+
+    fun withDefaultUrl(): AnalyticsPlatformServiceStatus =
+      AnalyticsPlatformServiceStatus("https://resources.jetbrains.com/storage/ap/mlcc/config/v1/${productCode()}.json")
   }
-  private val statusUrl = "https://resources.jetbrains.com/storage/ap/mlcc/config/v1/${productCode()}.json"
   @Volatile
   private var isServerOk = false
   @Volatile
@@ -48,6 +51,4 @@ class AnalyticsPlatformServiceStatus : WebServiceStatus {
       dataServerUrl = endpointSettings.endpoint!!
     }
   }
-
-  private fun productCode(): String = ApplicationInfo.getInstance().build.productCode
 }

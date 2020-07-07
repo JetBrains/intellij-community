@@ -14,7 +14,7 @@ object JetStatSettingsDeserializer {
       return GSON.fromJson(json, JetStatSettings::class.java)
     }
     catch (e: JsonSyntaxException) {
-      LOG.warn("Could not parse JetStat settings")
+      LOG.error("Could not parse JetStat settings")
       return null
     }
   }
