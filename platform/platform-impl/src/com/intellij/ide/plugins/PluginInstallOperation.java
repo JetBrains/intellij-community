@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -288,7 +289,7 @@ public class PluginInstallOperation {
         }
       }
 
-      if (!optionalDeps.isEmpty()) {
+      if (!optionalDeps.isEmpty() && Registry.is("ide.plugins.suggest.install.optional.dependencies")) {
         final boolean[] proceed = new boolean[1];
         try {
           ApplicationManager.getApplication().invokeAndWait(() -> {
