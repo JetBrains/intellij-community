@@ -2,7 +2,9 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -18,6 +20,9 @@ open class SaveAllAction : AnAction(), DumbAware, LightEditCompatible {
 
     val project = CommonDataKeys.PROJECT.getData(e.dataContext)
     FileDocumentManager.getInstance().saveAllDocuments()
+    if (LightEdit.owns(project)) {
+      LightEditService.getInstance().saveNewDocuments();
+    }
     (SaveAndSyncHandler.getInstance()).scheduleSave(SaveAndSyncHandler.SaveTask(onlyProject = project, forceSavingAllSettings = true, saveDocuments = false), forceExecuteImmediately = true)
   }
 }

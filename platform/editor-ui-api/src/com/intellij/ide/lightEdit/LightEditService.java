@@ -46,4 +46,9 @@ public interface LightEditService {
   FileEditor getSelectedFileEditor();
 
   void updateFileStatus(@NotNull Collection<VirtualFile> files);
+
+  /**
+   * Prompt a user to save all new documents which haven't been written to files yet.
+   */
+  void saveNewDocuments();
 }

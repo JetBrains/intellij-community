@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -434,5 +435,14 @@ public final class LightEditServiceImpl implements LightEditService,
     }
     Disposer.dispose(myEditorManager);
     myLightEditProjectManager.close();
+  }
+
+  @Override
+  public void saveNewDocuments() {
+    for(VirtualFile virtualFile : myEditorManager.getOpenFiles()) {
+      if (virtualFile instanceof LightVirtualFile) {
+        saveToAnotherFile(virtualFile);
+      }
+    }
   }
 }
