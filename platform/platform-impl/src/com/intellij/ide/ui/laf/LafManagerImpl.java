@@ -445,6 +445,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
+        LOG.error(e);
         return;
       }
     }
@@ -460,6 +461,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
+        LOG.error(e);
         return;
       }
     }
@@ -491,6 +493,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
+        LOG.error(e);
         return;
       }
     }
@@ -505,6 +508,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
+        LOG.error(e);
         return;
       }
     }
