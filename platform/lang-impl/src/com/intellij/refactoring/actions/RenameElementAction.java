@@ -51,7 +51,6 @@ public class RenameElementAction extends AnAction implements UpdateInBackground 
     if (!PsiDocumentManager.getInstance(project).commitAllDocumentsUnderProgress()) {
       return;
     }
-    IdeEventQueue.getInstance().setEventCount(eventCount);
 
     List<Renamer> renamers = getAvailableRenamers(dataContext).collect(Collectors.toList());
     if (renamers.isEmpty()) {

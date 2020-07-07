@@ -95,7 +95,6 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     if (!PsiDocumentManager.getInstance(project).commitAllDocumentsUnderProgress()) {
       return;
     }
-    IdeEventQueue.getInstance().setEventCount(eventCount);
 
     RefactoringActionHandler handler;
     try {
