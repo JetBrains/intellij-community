@@ -9,7 +9,9 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -35,6 +37,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch.SearchParameters;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -245,17 +248,26 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static PsiFunctionalExpression getNonPhysicalCopy(Map<TextRange, PsiFile> fragmentCache,
                                                             JavaFunctionalExpressionIndex.IndexEntry entry,
                                                             PsiFunctionalExpression expression) {
+    PsiFile file = expression.getContainingFile();
+    FileViewProvider viewProvider = file.getViewProvider();
     try {
       PsiMember member = Objects.requireNonNull(PsiTreeUtil.getStubOrPsiParentOfType(expression, PsiMember.class));
       PsiFile fragment = fragmentCache.computeIfAbsent(TextRange.create(entry.contextStart, entry.contextEnd),
                                                        range -> createMemberCopyFromText(member, range));
-      return Objects.requireNonNull(findPsiByAST(fragment, entry.exprStart - entry.contextStart));
+      PsiFunctionalExpression psi = findPsiByAST(fragment, entry.exprStart - entry.contextStart);
+      if (psi == null) {
+        StubTextInconsistencyException.checkStubTextConsistency(file);
+        throw new RuntimeExceptionWithAttachments(
+          "No functional expression at " + entry + ", file will be indexed",
+          new Attachment(viewProvider.getVirtualFile().getPath(), viewProvider.getContents().toString()));
+      }
+      return psi;
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
-      FileBasedIndex.getInstance().requestReindex(expression.getContainingFile().getViewProvider().getVirtualFile());
+      FileBasedIndex.getInstance().requestReindex(viewProvider.getVirtualFile());
       LOG.error(e);
       return expression;
     }

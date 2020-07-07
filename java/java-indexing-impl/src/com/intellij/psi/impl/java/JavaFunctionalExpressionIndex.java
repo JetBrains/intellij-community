@@ -497,6 +497,16 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     }
 
     @Override
+    public String toString() {
+      return "IndexEntry{" +
+             "exprStart=" + exprStart +
+             ", exprIndex=" + exprIndex +
+             ", contextStart=" + contextStart +
+             ", contextEnd=" + contextEnd +
+             '}';
+    }
+
+    @Override
     public int hashCode() {
       return Objects.hash(exprStart, exprIndex, contextStart, contextEnd, occurrence);
     }
