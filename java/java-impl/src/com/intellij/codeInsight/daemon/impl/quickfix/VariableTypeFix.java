@@ -14,13 +14,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,41 +105,59 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   }
 
   private boolean changeMethodSignatureIfNeeded(PsiVariable myVariable) {
+    PsiParameter myParameter = null;
+    PsiMethod method = null;
     if (myVariable instanceof PsiParameter) {
-      final PsiElement scope = ((PsiParameter)myVariable).getDeclarationScope();
-      if (scope instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)scope;
-        final PsiMethod psiMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
-        if (psiMethod == null) return true;
-        final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter)myVariable);
-        if (!FileModificationService.getInstance().prepareFileForWrite(psiMethod.getContainingFile())) return true;
-        final ArrayList<ParameterInfoImpl> infos = new ArrayList<>();
-        int i = 0;
-        for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
-          final boolean changeType = i == parameterIndex;
-          infos.add(ParameterInfoImpl.create(i++)
-                      .withName(parameter.getName())
-                      .withType(changeType ? getReturnType() : parameter.getType()));
+      myParameter = (PsiParameter)myVariable;
+      method = ObjectUtils.tryCast(((PsiParameter)myVariable).getDeclarationScope(), PsiMethod.class);
+    }
+    else if (myVariable instanceof PsiField) {
+      PsiRecordComponent component = JavaPsiRecordUtil.getComponentForField((PsiField)myVariable);
+      PsiClass aClass = ((PsiField)myVariable).getContainingClass();
+      if (component != null && aClass != null) {
+        method = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+        if (method != null) {
+          int index = ArrayUtil.indexOf(aClass.getRecordComponents(), component);
+          PsiParameter parameter = method.getParameterList().getParameter(index);
+          if (parameter != null && parameter.getName().equals(myVariable.getName())) {
+            myParameter = parameter;
+          }
         }
-
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          final JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(psiMethod.getProject(), psiMethod, false, myVariable);
-          dialog.setParameterInfos(infos);
-          dialog.show();
-        }
-        else {
-          ChangeSignatureProcessor processor = new ChangeSignatureProcessor(psiMethod.getProject(),
-                                                                            psiMethod,
-                                                                            false, null,
-                                                                            psiMethod.getName(),
-                                                                            psiMethod.getReturnType(),
-                                                                            infos.toArray(new ParameterInfoImpl[0]));
-          processor.run();
-        }
-        return true;
       }
     }
-    return false;
+    if (method == null || myParameter == null) return false;
+    changeSignature(myVariable, myParameter, method);
+    return true;
+  }
+
+  private void changeSignature(PsiVariable myVariable, PsiParameter myParameter, PsiMethod method) {
+    final PsiMethod psiMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+    if (psiMethod == null) return;
+    final int parameterIndex = method.getParameterList().getParameterIndex(myParameter);
+    if (!FileModificationService.getInstance().prepareFileForWrite(psiMethod.getContainingFile())) return;
+    final ArrayList<ParameterInfoImpl> infos = new ArrayList<>();
+    int i = 0;
+    for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
+      final boolean changeType = i == parameterIndex;
+      infos.add(ParameterInfoImpl.create(i++)
+                  .withName(parameter.getName())
+                  .withType(changeType ? getReturnType() : parameter.getType()));
+    }
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      final JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(psiMethod.getProject(), psiMethod, false, myVariable);
+      dialog.setParameterInfos(infos);
+      dialog.show();
+    }
+    else {
+      ChangeSignatureProcessor processor = new ChangeSignatureProcessor(psiMethod.getProject(),
+                                                                        psiMethod,
+                                                                        false, null,
+                                                                        psiMethod.getName(),
+                                                                        psiMethod.getReturnType(),
+                                                                        infos.toArray(new ParameterInfoImpl[0]));
+      processor.run();
+    }
   }
 
   protected PsiType getReturnType() {
