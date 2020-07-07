@@ -81,7 +81,7 @@ public final class EditorSettingsExternalizable implements PersistentStateCompon
     public boolean IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = true;
 
     public boolean RENAME_VARIABLES_INPLACE = true;
-    public boolean PRESELECT_RENAME = false;
+    public boolean PRESELECT_RENAME = true;
     public boolean SHOW_INLINE_DIALOG = true;
 
     public boolean REFRAIN_FROM_SCROLLING = false;
