@@ -48,7 +48,7 @@ public class ProgressSuspender implements AutoCloseable {
   @Nullable private String myTempReason;
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
-  private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
+  private final CoreProgressManager.CheckCanceledHook myHook = this::doFreezeIfNeeded;
   private final Set<ProgressIndicator> myProgresses = ContainerUtil.newConcurrentSet();
   private boolean myClosed;
 
@@ -141,7 +141,14 @@ public class ProgressSuspender implements AutoCloseable {
     myPublisher.suspendedStatusChanged(this);
   }
 
-  private boolean freezeIfNeeded(ProgressIndicator current) {
+  public static void freezeIfNeeded(ProgressIndicator current) {
+    ProgressSuspender suspender = getSuspender(current);
+    if (suspender != null) {
+      suspender.doFreezeIfNeeded(current);
+    }
+  }
+
+  private boolean doFreezeIfNeeded(ProgressIndicator current) {
     if (current == null) {
       current = ProgressIndicatorProvider.getGlobalProgressIndicator();
     }
