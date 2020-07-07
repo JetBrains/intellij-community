@@ -55,7 +55,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public boolean handlesElement(final PsiElement element) {
-    return element instanceof PsiClass || element instanceof PsiMethod ||
+    return element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiRecordComponent ||
            element instanceof PsiField || element instanceof PsiParameter || element instanceof PsiLocalVariable || element instanceof PsiPackage;
   }
 
@@ -381,7 +381,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         final PsiMethod method = parameterHierarchyUsageInfo.getCalledMethod();
         final PsiParameter parameter = parameterHierarchyUsageInfo.getReferencedElement();
         final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
-        final AbstractJavaMemberCallerChooser chooser = new SafeDeleteJavaCallerChooser(method, project, result) {
+        final AbstractJavaMemberCallerChooser<?> chooser = new SafeDeleteJavaCallerChooser(method, project, result) {
           @Override
           protected ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> getTopLevelItems() {
             return delegatingParams;
@@ -415,7 +415,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       else {
         final PsiMember member = calleesSafeToDelete.get(0).getCallerMember();
         final ArrayList<UsageInfo> list = new ArrayList<>();
-        AbstractJavaMemberCallerChooser chooser = new SafeDeleteJavaCalleeChooser(member, project, list) {
+        AbstractJavaMemberCallerChooser<?> chooser = new SafeDeleteJavaCalleeChooser(member, project, list) {
           @Override
           protected ArrayList<SafeDeleteMemberCalleeUsageInfo> getTopLevelItems() {
             return calleesSafeToDelete;
@@ -779,7 +779,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     if (!constructor.getParameterList().isEmpty()) return false;
     final PsiCodeBlock body = constructor.getBody();
     if (body != null && !body.isEmpty()) return false;
-    return constructor.getContainingClass().getConstructors().length == 1;
+    PsiClass aClass = constructor.getContainingClass();
+    if (aClass == null) return false;
+    return aClass.getConstructors().length == 1;
   }
 
   private static Set<PsiMethod> validateOverridingMethods(PsiMethod originalMethod, final Collection<? extends PsiReference> originalReferences,
@@ -977,17 +979,15 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     //search for refs to current method only, do not search for refs to overriding methods, they'll be searched separately
     ReferencesSearch.search(method).forEach(reference -> {
       PsiElement element = reference.getElement();
-      if (element != null) {
-        final JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
-        if (safeDeleteDelegate != null) {
-          safeDeleteDelegate.createUsageInfoForParameter(reference, usages, parameter, method);
-        }
-        if (!parameter.isVarArgs() && !JavaPsiConstructorUtil.isSuperConstructorCall(element.getParent())) {
-          final PsiParameter paramInCaller = SafeDeleteJavaCallerChooser.isTheOnlyOneParameterUsage(element.getParent(), parameterIndex, method);
-          if (paramInCaller != null) {
-            final PsiMethod callerMethod = (PsiMethod)paramInCaller.getDeclarationScope();
-            usages.add(createParameterCallHierarchyUsageInfo( method, parameter, callerMethod, paramInCaller));
-          }
+      final JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
+      if (safeDeleteDelegate != null) {
+        safeDeleteDelegate.createUsageInfoForParameter(reference, usages, parameter, method);
+      }
+      if (!parameter.isVarArgs() && !JavaPsiConstructorUtil.isSuperConstructorCall(element.getParent())) {
+        final PsiParameter paramInCaller = SafeDeleteJavaCallerChooser.isTheOnlyOneParameterUsage(element.getParent(), parameterIndex, method);
+        if (paramInCaller != null) {
+          final PsiMethod callerMethod = (PsiMethod)paramInCaller.getDeclarationScope();
+          usages.add(createParameterCallHierarchyUsageInfo( method, parameter, callerMethod, paramInCaller));
         }
       }
       return true;
