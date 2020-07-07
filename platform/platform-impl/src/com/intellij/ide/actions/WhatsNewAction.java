@@ -239,9 +239,22 @@ public class WhatsNewAction extends AnAction implements DumbAware {
            "                padding-top: 1px;\n" +
            "                background: #fff;\n" +
            "            }\n" +
+           "\n" +
+           "            .theme-dark, .theme-dark .section {\n" +
+           "                background: #27282c;\n" +
+           "            }\n" +
+           "            .theme-dark .title {\n" +
+           "                color: #fff;\n" +
+           "            }\n" +
+           "            .theme-dark .text {\n" +
+           "                color: rgba(255, 255, 255, 0.60);\n" +
+           "            }\n" +
+           "            .theme-dark .link {\n" +
+           "                color: rgb(76, 166, 255);\n" +
+           "            }\n" +
            "        </style>\n" +
            "    </head>\n" +
-           "    <body>\n" +
+           "    <body class=\"" + (UIUtil.isUnderDarcula() ? "theme-dark" : "") + "\">\n" +
            "        <section class=\"section\">\n" +
            "            <div class=\"container\">\n" +
            "                <div class=\"content\">\n" +
