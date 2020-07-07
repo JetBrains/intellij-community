@@ -167,20 +167,20 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     val components = mutableListOf<String>()
     analyzePluginFile(ideaPlugin, analysisErrors, components, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
 
-    for (dependency in ideaPlugin.dependencies) {
-      val configFileName = dependency.configFile.stringValue ?: continue
-      val depIdeaPlugin = resolvePluginDependency(dependency)
-      if (depIdeaPlugin == null) {
-        analysisErrors.add("Failed to resolve dependency descriptor file $configFileName")
-        continue
-      }
-      for (nestedDependency in depIdeaPlugin.dependencies) {
-        if (nestedDependency.configFile.stringValue != null) {
-          analysisErrors.add("Unsupported nested dependency on " + nestedDependency.value?.id + " in " + configFileName)
+    fun analyzeDependencies(ideaPlugin: IdeaPlugin) {
+      for (dependency in ideaPlugin.dependencies) {
+        val configFileName = dependency.configFile.stringValue ?: continue
+        val depIdeaPlugin = resolvePluginDependency(dependency)
+        if (depIdeaPlugin == null) {
+          analysisErrors.add("Failed to resolve dependency descriptor file $configFileName")
+          continue
         }
+        analyzePluginFile(depIdeaPlugin, analysisErrors, components, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
+        analyzeDependencies(depIdeaPlugin)
       }
-      analyzePluginFile(depIdeaPlugin, analysisErrors, components, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
     }
+
+    analyzeDependencies(ideaPlugin)
 
     val componentsInOptionalDependencies = mutableListOf<String>()
     val nonDynamicEPsInOptionalDependencies = mutableMapOf<String, MutableSet<String>>()
