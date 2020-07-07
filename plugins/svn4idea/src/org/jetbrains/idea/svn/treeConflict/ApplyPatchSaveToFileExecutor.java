@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -72,7 +71,7 @@ public final class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<Te
     VirtualFile newPatchBase = notNull(myNewPatchBase, myProject.getBaseDir());
     try {
       List<FilePatch> textPatches = toOnePatchGroup(patchGroups, newPatchBase);
-      PatchWriter.writePatches(myProject, targetFile.getFile().toPath(), newPatchBase.getPath(), textPatches, new CommitContext(), StandardCharsets.UTF_8);
+      PatchWriter.writePatches(myProject, targetFile.getFile().toPath(), newPatchBase.toNioPath(), textPatches, new CommitContext());
     }
     catch (IOException e) {
       LOG.info(e);

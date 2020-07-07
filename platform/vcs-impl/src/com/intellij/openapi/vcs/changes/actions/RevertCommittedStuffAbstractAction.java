@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -73,13 +73,13 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           List<Change> preprocessed = ChangesPreprocess.preprocessChangesRemoveDeletedForDuplicateMoved(changesList);
-          List<FilePatch> patches =
-            new ArrayList<>(IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.getPresentableUrl(), myReverse));
+          List<FilePatch> patches = new ArrayList<>(IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.toNioPath(), myReverse, false));
           new PatchApplier(project, baseDir, patches, chooser.getSelectedList(), null).execute();
         }
         catch (final VcsException ex) {
-          WaitForProgressToShow
-            .runOrInvokeLaterAboveProgress(() -> Messages.showErrorDialog(project, errorPrefix + ex.getMessage(), title), null, project);
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
+            Messages.showErrorDialog(project, errorPrefix + ex.getMessage(), title);
+          }, null, project);
           indicator.cancel();
         }
       }

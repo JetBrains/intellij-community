@@ -72,7 +72,6 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -433,9 +432,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private PatchReader loadPatches(@NotNull VirtualFile patchFile) {
     PatchReader reader;
     try {
-      reader = ReadAction.compute(() -> PatchVirtualFileReader.create(patchFile));
+      reader = ReadAction.compute(() -> new PatchReader(patchFile.toNioPath()));
     }
-    catch (IOException e) {
+    catch (Exception e) {
       addNotificationAndWarn(VcsBundle.message("patch.apply.cannot.read.patch", patchFile.getPresentableName(), e.getMessage()));
       return null;
     }

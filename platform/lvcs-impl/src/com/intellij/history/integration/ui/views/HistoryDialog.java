@@ -40,6 +40,7 @@ import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.project.ProjectKt;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -52,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -436,15 +436,15 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       p.setCommonParentPath(ChangesUtil.findCommonAncestor(myModel.getChanges()));
       if (!showAsDialog(p)) return;
 
-      String base = p.getBaseDirName();
-      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, myModel.getChanges(), base, p.isReversePatch());
+      Path base = Paths.get(p.getBaseDirName());
+      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, myModel.getChanges(), base, p.isReversePatch(), false);
       if (p.isToClipboard()) {
         writeAsPatchToClipboard(myProject, patches, base, new CommitContext());
         showNotification("Patch copied to clipboard");
       }
       else {
         Path file = Paths.get(p.getFileName());
-        PatchWriter.writePatches(myProject, file, base, patches, null, p.getEncoding());
+        PatchWriter.writePatches(myProject, file, base, patches, null, p.getEncoding(), false);
         showNotification(message("message.patch.created"));
         RevealFileAction.openFile(file);
       }
@@ -455,7 +455,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private @NotNull Path getDefaultPatchFile() {
-    return FileUtil.findSequentNonexistentFile(new File(myProject.getBasePath()), "local_history", "patch").toPath();
+    return FileUtil.findSequentNonexistentFile(ProjectKt.getStateStore(myProject).getProjectBasePath().toFile(), "local_history", "patch").toPath();
   }
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {

@@ -7,11 +7,13 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.PathKt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,6 +47,10 @@ public final class PatchReader {
 
   public PatchReader(CharSequence patchContent) {
     this(patchContent, true);
+  }
+
+  public PatchReader(@NotNull Path file) {
+    this(PathKt.readChars(file), true);
   }
 
   public PatchReader(CharSequence patchContent, boolean saveHunks) {

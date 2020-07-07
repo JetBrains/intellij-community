@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -30,16 +31,15 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 public final class PatchWriter {
   public static void writePatches(@NotNull Project project,
                                   @NotNull Path file,
-                                  @NotNull String basePath,
+                                  @NotNull Path basePath,
                                   @NotNull List<? extends FilePatch> patches,
-                                  @Nullable CommitContext commitContext,
-                                  @NotNull Charset charset) throws IOException {
-    writePatches(project, file, basePath, patches, commitContext, charset, false);
+                                  @Nullable CommitContext commitContext) throws IOException {
+    writePatches(project, file, basePath, patches, commitContext, StandardCharsets.UTF_8, false);
   }
 
   public static void writePatches(@NotNull Project project,
                                   @NotNull Path file,
-                                  @Nullable String basePath,
+                                  @Nullable Path basePath,
                                   @NotNull List<? extends FilePatch> patches,
                                   @Nullable CommitContext commitContext,
                                   @NotNull Charset charset, boolean includeBinaries) throws IOException {
@@ -51,7 +51,7 @@ public final class PatchWriter {
 
   private static void write(@NotNull Project project,
                             @NotNull Writer writer,
-                            @Nullable String basePath,
+                            @Nullable Path basePath,
                             @NotNull List<? extends FilePatch> patches,
                             @Nullable CommitContext commitContext, boolean includeBinaries) throws IOException {
     String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
@@ -63,7 +63,7 @@ public final class PatchWriter {
 
   public static void writeAsPatchToClipboard(@NotNull Project project,
                                              @NotNull List<? extends FilePatch> patches,
-                                             @NotNull String basePath,
+                                             @NotNull Path basePath,
                                              @Nullable CommitContext commitContext) throws IOException {
     StringWriter writer = new StringWriter();
     write(project, writer, basePath, patches, commitContext, true);

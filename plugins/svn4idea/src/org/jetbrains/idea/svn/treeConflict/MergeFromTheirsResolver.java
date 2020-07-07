@@ -4,6 +4,7 @@ package org.jetbrains.idea.svn.treeConflict;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
@@ -46,7 +47,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder.buildPatch;
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
@@ -211,7 +211,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void createPatches() throws VcsException {
-    List<FilePatch> patches = buildPatch(myVcs.getProject(), myTheirsChanges, Objects.requireNonNull(myBaseForPatch).getPath(), false);
+    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myVcs.getProject(), myTheirsChanges, Objects.requireNonNull(myBaseForPatch).toNioPath(), false);
     myTextPatches = map(patches, TextFilePatch.class::cast);
   }
 

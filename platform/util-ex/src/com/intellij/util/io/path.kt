@@ -196,13 +196,12 @@ fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 @Throws(IOException::class)
 fun Path.readText(): String = readBytes().toString(Charsets.UTF_8)
 
-@Throws(IOException::class)
 fun Path.readChars(): CharSequence {
   // channel is used to avoid Files.size() call
   Files.newByteChannel(this).use { channel ->
     val size = channel.size().toInt()
     Channels.newReader(channel, Charsets.UTF_8.newDecoder(), size).use { reader ->
-      return reader.readCharSequence(channel.size().toInt())
+      return reader.readCharSequence(size)
     }
   }
 }

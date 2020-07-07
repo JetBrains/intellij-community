@@ -8,18 +8,29 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
+import com.intellij.project.ProjectKt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
 
 public final class PatchCreator {
+  /**
+   * @deprecated Use {@link #create(Project, List, Path, boolean, CommitContext)}
+   */
+  @Deprecated
   public static void create(Project p, List<? extends Change> changes, String filePath, boolean isReverse, CommitContext commitContext)
     throws IOException, VcsException {
-    String basePath = Objects.requireNonNull(p.getBasePath());
-    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(p, changes, basePath, isReverse);
-    PatchWriter.writePatches(p, Paths.get(filePath), basePath, patches, commitContext, Charset.defaultCharset());
+    create(p, changes, Paths.get(filePath), isReverse, commitContext);
+  }
+
+  public static void create(@NotNull Project project, @NotNull List<? extends Change> changes, @NotNull Path file, boolean isReverse, @Nullable CommitContext commitContext)
+    throws IOException, VcsException {
+    Path basePath = ProjectKt.getStateStore(project).getProjectBasePath();
+    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, basePath, isReverse, false);
+    PatchWriter.writePatches(project, file, basePath, patches, commitContext);
   }
 }

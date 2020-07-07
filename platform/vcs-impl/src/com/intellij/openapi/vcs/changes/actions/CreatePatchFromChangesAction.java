@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -159,7 +160,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
                                           @NotNull CommitContext commitContext) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
-        String baseDir = calculateBaseForWritingPatch(project, changes).getPath();
+        Path baseDir = calculateBaseForWritingPatch(project, changes).toNioPath();
         CreatePatchCommitExecutor.writePatchToClipboard(project, baseDir, changes, false, false, patchBuilder, commitContext);
       }
       catch (IOException | VcsException exception) {

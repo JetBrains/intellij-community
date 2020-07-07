@@ -117,7 +117,7 @@ public final class PathsVerifier {
     List<FilePatch> failedToApply = new ArrayList<>();
     myDelayedPrecheckContext = new DelayedPrecheckContext(myProject);
     for (FilePatch patch : myPatches) {
-      final CheckPath checker = getChecker(patch);
+      CheckPath checker = getChecker(patch);
       if (!checker.canBeApplied(myDelayedPrecheckContext)) {
         ContainerUtil.addIfNotNull(failedMessages, checker.getErrorMessage());
         failedToApply.add(patch);
@@ -126,7 +126,7 @@ public final class PathsVerifier {
     if (!failedMessages.isEmpty()) {
       PatchApplier.showError(myProject, StringUtil.join(failedMessages, "\n"));
     }
-    final Collection<FilePatch> skipped = myDelayedPrecheckContext.doDelayed();
+    Collection<? extends FilePatch> skipped = myDelayedPrecheckContext.doDelayed();
     mySkipped.addAll(skipped);
     myPatches.removeAll(skipped);
     myPatches.removeAll(failedToApply);
@@ -137,11 +137,11 @@ public final class PathsVerifier {
     return mySkipped;
   }
 
-  List<FilePatch> execute() {
+  final @NotNull List<FilePatch> execute() {
     List<String> failedMessages = new ArrayList<>();
     List<FilePatch> failedPatches = new ArrayList<>();
     for (FilePatch patch : myPatches) {
-      final CheckPath checker = getChecker(patch);
+      CheckPath checker = getChecker(patch);
       if (!checker.check()) {
         ContainerUtil.addIfNotNull(failedMessages, checker.getErrorMessage());
         failedPatches.add(checker.getPatch());
@@ -154,9 +154,9 @@ public final class PathsVerifier {
     return failedPatches;
   }
 
-  private CheckPath getChecker(final FilePatch patch) {
-    final String beforeFileName = patch.getBeforeName();
-    final String afterFileName = patch.getAfterName();
+  private @NotNull CheckPath getChecker(@NotNull FilePatch patch) {
+    String beforeFileName = patch.getBeforeName();
+    String afterFileName = patch.getAfterName();
 
     if (beforeFileName == null || patch.isNewFile()) {
       return new CheckAdded(patch);
@@ -253,7 +253,7 @@ public final class PathsVerifier {
   }
 
   private final class CheckAdded extends CheckPath {
-    private CheckAdded(final FilePatch path) {
+    private CheckAdded(@NotNull FilePatch path) {
       super(path);
     }
 
@@ -267,8 +267,8 @@ public final class PathsVerifier {
 
     @Override
     public boolean check() {
-      final String[] pieces = RelativePathCalculator.split(myAfterName);
-      final VirtualFile parent;
+      String[] pieces = RelativePathCalculator.split(myAfterName);
+      VirtualFile parent;
       try {
         parent = makeSureParentPathExists(pieces);
       }
@@ -353,7 +353,7 @@ public final class PathsVerifier {
     protected final FilePatch myPatch;
     private String myErrorMessage;
 
-    CheckPath(final FilePatch path) {
+    CheckPath(@NotNull FilePatch path) {
       myPatch = path;
       myBeforeName = path.getBeforeName();
       myAfterName = path.getAfterName();
@@ -457,7 +457,7 @@ public final class PathsVerifier {
     return result.get();*/
   }
 
-  private static VirtualFile moveFile(final VirtualFile file, final VirtualFile newParent) throws IOException {
+  private static VirtualFile moveFile(VirtualFile file, VirtualFile newParent) throws IOException {
     file.move(FilePatch.class, newParent);
     return file;
     /*final Ref<IOException> ioExceptionRef = new Ref<IOException>();
@@ -607,7 +607,7 @@ public final class PathsVerifier {
     }
 
     // returns those to be skipped
-    public Collection<FilePatch> doDelayed() {
+    public @NotNull Collection<? extends FilePatch> doDelayed() {
       final List<FilePatch> result = new ArrayList<>();
       if (!myOverrideExisting.isEmpty()) {
         ApplicationManager.getApplication().invokeAndWait(() -> {

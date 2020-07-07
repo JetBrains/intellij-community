@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.GitPatchWriter;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -39,12 +41,12 @@ public final class UnifiedDiffWriter {
   }
 
   public static void write(@Nullable Project project, Collection<? extends FilePatch> patches, Writer writer, final String lineSeparator,
-                           final List<? extends PatchEP> extensions, final CommitContext commitContext) throws IOException {
-    write(project, project == null ? null : project.getBasePath(), patches, writer, lineSeparator, extensions, commitContext);
+                           List<? extends PatchEP> extensions, CommitContext commitContext) throws IOException {
+    write(project, project == null ? null : ProjectKt.getStateStore(project).getProjectBasePath(), patches, writer, lineSeparator, extensions, commitContext);
   }
 
   public static void write(@Nullable Project project,
-                           @Nullable String basePath,
+                           @Nullable Path basePath,
                            Collection<? extends FilePatch> patches,
                            Writer writer,
                            final String lineSeparator,
@@ -63,7 +65,7 @@ public final class UnifiedDiffWriter {
       @Nullable String t = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
       String path = Objects.requireNonNull(t);
       String pathRelatedToProjectDir =
-        project == null ? path : getPathRelatedToDir(Objects.requireNonNull(project.getBasePath()), basePath, path);
+        project == null ? path : getPathRelatedToDir(Objects.requireNonNull(project.getBasePath()), basePath == null ? null : basePath.toString(), path);
       final Map<String, CharSequence> additionalMap = new HashMap<>();
       for (PatchEP extension : extensions) {
         final CharSequence charSequence = extension.provideContent(pathRelatedToProjectDir, commitContext);
@@ -108,7 +110,9 @@ public final class UnifiedDiffWriter {
 
   @NotNull
   private static String getPathRelatedToDir(@NotNull String newBaseDir, @Nullable String basePath, @NotNull String path) {
-    if (basePath == null) return path;
+    if (basePath == null) {
+      return path;
+    }
     String result = FileUtil.getRelativePath(new File(newBaseDir), new File(basePath, path));
     return result == null ? path : result;
   }
@@ -151,7 +155,7 @@ public final class UnifiedDiffWriter {
     writer.write(lineSeparator);
   }
 
-  private static void writeHunkStart(Writer writer, int startLine1, int endLine1, int startLine2, int endLine2,
+  private static void writeHunkStart(Appendable writer, int startLine1, int endLine1, int startLine2, int endLine2,
                                      final String lineSeparator)
     throws IOException {
     StringBuilder builder = new StringBuilder("@@ -");
