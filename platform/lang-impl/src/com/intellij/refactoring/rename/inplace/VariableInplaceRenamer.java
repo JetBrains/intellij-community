@@ -263,8 +263,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilCore.toPsiElementArray(renamer.getElements()))) return;
             final ThrowableRunnable<RuntimeException> performAutomaticRename = () -> {
               CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
-              final UsageInfo[] usageInfos = usages.toArray(UsageInfo.EMPTY_ARRAY);
-              final MultiMap<PsiElement, UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
+              MultiMap<PsiElement, UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usages);
               for (final PsiNamedElement element : renamer.getElements()) {
                 final String newElementName = renamer.getNewName(element);
                 if (newElementName != null) {

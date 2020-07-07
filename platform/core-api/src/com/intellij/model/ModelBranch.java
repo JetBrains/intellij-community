@@ -60,6 +60,13 @@ public interface ModelBranch {
    */
   <T extends PsiElement> @NotNull T obtainPsiCopy(@NotNull T original);
 
+  /**
+   * Finds or creates a non-physical copy of the given PSI reference in this branch.
+   * This may only be called for references which occur in {@link PsiElement#getReferences()},
+   * and the corresponding document should be committed.
+   */
+  <T extends PsiSymbolReference> @NotNull T obtainReferenceCopy(@NotNull T original);
+
 
 
   // ----------------- find originals by branched model

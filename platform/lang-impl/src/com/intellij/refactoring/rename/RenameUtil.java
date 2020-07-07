@@ -219,9 +219,7 @@ public final class RenameUtil {
     }
   }
 
-  public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
-                              @Nullable final RefactoringElementListener listener) throws IncorrectOperationException{
-    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
+  static void registerUndoableRename(PsiElement element, @Nullable RefactoringElementListener listener) {
     final String fqn = element instanceof PsiFile ? ((PsiFile)element).getVirtualFile().getPath() : CopyReferenceAction.elementToFqn(element);
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {
@@ -236,8 +234,14 @@ public final class RenameUtil {
         public void redo() {
         }
       };
-      UndoManager.getInstance(project).undoableActionPerformed(action);
+      UndoManager.getInstance(element.getProject()).undoableActionPerformed(action);
     }
+  }
+
+  public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
+                              @Nullable final RefactoringElementListener listener) throws IncorrectOperationException{
+    registerUndoableRename(element, listener);
+    RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
     processor.renameElement(element, newName, usages, listener);
   }
 

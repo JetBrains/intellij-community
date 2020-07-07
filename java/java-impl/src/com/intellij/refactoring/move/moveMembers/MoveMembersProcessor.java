@@ -187,7 +187,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     PsiClass targetCopy = branch.obtainPsiCopy(targetClass);
     Set<PsiMember> membersToMove = new LinkedHashSet<>(ContainerUtil.map(myMembersToMove, branch::obtainPsiCopy));
-    List<MoveMembersUsageInfo> usages = ContainerUtil.map(originalUsages, u -> ((MoveMembersUsageInfo)u).branched(branch));
+    List<MoveMembersUsageInfo> usages = ContainerUtil.map(originalUsages, u -> (MoveMembersUsageInfo)((MoveMembersUsageInfo)u).branched(branch));
 
     Map<PsiMember, SmartPsiElementPointer<PsiMember>> movedMembers = performMove(targetCopy, membersToMove, usages);
 
@@ -421,17 +421,5 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       reference = element;
     }
 
-    @NotNull
-    MoveMembersProcessor.MoveMembersUsageInfo branched(ModelBranch branch) {
-      PsiElement element = branch.obtainPsiCopy(reference);
-      PsiElement highlightElement = getElement();
-      PsiReference psiReference = getReference();
-      return new MoveMembersUsageInfo(
-        branch.findPsiCopy(member),
-        element,
-        qualifierClass == null ? null : branch.findPsiCopy(qualifierClass),
-        highlightElement == null ? null : branch.findPsiCopy(highlightElement),
-        psiReference == null ? null : branch.findReferenceCopy(psiReference));
-    }
   }
 }

@@ -13,9 +13,11 @@ import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -130,14 +133,30 @@ public final class ModelBranchImpl implements ModelBranch {
   }
 
   @Override
+  @NotNull
+  public <T extends PsiSymbolReference> T obtainReferenceCopy(@NotNull T original) {
+    PsiElement psiCopy = obtainPsiCopy(original.getElement());
+    TextRange range = original.getRangeInElement();
+    PsiReference[] refs = psiCopy.getReferences();
+    T found = findSimilarReference(original, range, refs);
+    if (found == null) throw new AssertionError("Cannot find " + original +
+                                                " of " + original.getClass() +
+                                                " at " + range +
+                                                " in the copy, where references are " + Arrays.toString(refs));
+    return found;
+  }
+
+  @Override
   @Nullable
   public <T extends PsiSymbolReference> T findReferenceCopy(@NotNull T original) {
     PsiElement psiCopy = findPsiCopy(original.getElement());
-    if (psiCopy == null) return null;
+    return psiCopy == null ? null : findSimilarReference(original, original.getRangeInElement(), psiCopy.getReferences());
+  }
 
-    TextRange range = original.getRangeInElement();
+  @Nullable
+  private static <T> T findSimilarReference(@NotNull T original, TextRange range, PsiReference[] references) {
     //noinspection unchecked
-    return (T)ContainerUtil.find(psiCopy.getReferences(), r -> r.getClass() == original.getClass() && range.equals(r.getRangeInElement()));
+    return (T)ContainerUtil.find(references, r -> r.getClass() == original.getClass() && range.equals(r.getRangeInElement()));
   }
 
   @Override
@@ -170,6 +189,20 @@ public final class ModelBranchImpl implements ModelBranch {
   private void mergeBack() {
     assert !myMerged;
     myMerged = true;
+
+    for (Map.Entry<VirtualFile, VirtualFile> entry : myVFileCopies.entrySet()) {
+      VirtualFile original = entry.getKey();
+      String copyName = entry.getValue().getName();
+      if (!original.getName().equals(copyName)) {
+        PsiFileImplUtil.saveDocumentIfFileWillBecomeBinary(original, copyName);
+        try {
+          original.rename(this, copyName);
+        }
+        catch (IOException e) {
+          throw new IncorrectOperationException(e);
+        }
+      }
+    }
 
     for (Document document : myDocumentChanges.keySet()) {
       VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));

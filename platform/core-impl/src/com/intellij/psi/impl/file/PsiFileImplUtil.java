@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -19,20 +20,26 @@ public final class PsiFileImplUtil {
   private PsiFileImplUtil() {
   }
 
+  // before the file becomes non-openable in the editor, save it to prevent data loss
+  @ApiStatus.Internal
+  public static void saveDocumentIfFileWillBecomeBinary(VirtualFile vFile, @NotNull String newName) {
+    final FileType newFileType = FileTypeRegistry.getInstance().getFileTypeByFileName(newName);
+    if (UnknownFileType.INSTANCE.equals(newFileType) || newFileType.isBinary()) {
+      final FileDocumentManager fdm = FileDocumentManager.getInstance();
+      final Document doc = fdm.getCachedDocument(vFile);
+      if (doc != null) {
+        fdm.saveDocumentAsIs(doc);
+      }
+    }
+  }
+
+
   public static PsiFile setName(@NotNull PsiFile file, @NotNull String newName) throws IncorrectOperationException {
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
 
     try{
-      final FileType newFileType = FileTypeRegistry.getInstance().getFileTypeByFileName(newName);
-      if (UnknownFileType.INSTANCE.equals(newFileType) || newFileType.isBinary()) {
-        // before the file becomes unknown or a binary (thus, not openable in the editor), save it to prevent data loss
-        final FileDocumentManager fdm = FileDocumentManager.getInstance();
-        final Document doc = fdm.getCachedDocument(vFile);
-        if (doc != null) {
-          fdm.saveDocumentAsIs(doc);
-        }
-      }
+      saveDocumentIfFileWillBecomeBinary(vFile, newName);
 
       vFile.rename(manager, newName);
     }
