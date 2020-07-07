@@ -66,6 +66,7 @@ class BuildContextImpl extends BuildContext {
     systemSelector = productProperties.getSystemSelector(applicationInfo)
 
     bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
+    dependenciesProperties = new DependenciesProperties(this)
   }
 
   private String readSnapshotBuildNumber() {

@@ -7,20 +7,14 @@ import org.jetbrains.intellij.build.BuildContext
 @CompileStatic
 class DependenciesProperties {
   private final BuildContext context
+  private final File directory
+  private final File propertiesFile
 
   DependenciesProperties(BuildContext context) {
     this.context = context
+    this.directory = new File(context.paths.communityHome, 'build/dependencies')
+    this.propertiesFile = new File(directory, 'build/dependencies.properties')
   }
-
-  @Lazy
-  private File directory = {
-    new File(context.paths.communityHome, 'build/dependencies')
-  }()
-
-  @Lazy
-  private File propertiesFile = {
-    new File(directory, 'build/dependencies.properties')
-  }()
 
   @Lazy
   File file = {
