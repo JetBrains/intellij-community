@@ -178,7 +178,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.DontUseNewPairInspection"/>
     <!--suppress PluginXmlCapitalization -->
-    <localInspection language="JAVA" shortName="UseVirtualFileEquals" displayName="Use VirtualFile.equals"
+    <localInspection language="UAST" shortName="UseVirtualFileEquals" displayName="Use VirtualFile.equals"
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseVirtualFileEqualsInspection"/>
