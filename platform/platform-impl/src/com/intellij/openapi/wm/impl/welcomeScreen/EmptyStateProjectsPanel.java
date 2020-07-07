@@ -30,7 +30,7 @@ public class EmptyStateProjectsPanel extends JPanel {
   public EmptyStateProjectsPanel() {
     setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
     JPanel mainPanel = new NonOpaquePanel(new VerticalFlowLayout());
-    mainPanel.setBorder(JBUI.Borders.emptyTop(130));
+    mainPanel.setBorder(JBUI.Borders.emptyTop(103));
 
     mainPanel.add(createTitle());
     mainPanel.add(createCommentLabel(IdeBundle.message("welcome.screen.empty.projects.create.comment")));
@@ -60,7 +60,7 @@ public class EmptyStateProjectsPanel extends JPanel {
   static ActionToolbarImpl createActionsToolbar(ActionGroup actionGroup) {
     ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, actionGroup, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    actionToolbar.setBorder(JBUI.Borders.emptyTop(50));
+    actionToolbar.setBorder(JBUI.Borders.emptyTop(27));
     actionToolbar.setOpaque(false);
     return actionToolbar;
   }
@@ -88,7 +88,7 @@ public class EmptyStateProjectsPanel extends JPanel {
     titleLabel.setOpaque(false);
     Font componentFont = titleLabel.getFont();
     titleLabel.setFont(componentFont.deriveFont(componentFont.getSize() + (float)JBUIScale.scale(13)).deriveFont(Font.BOLD));
-    titleLabel.setBorder(JBUI.Borders.emptyBottom(20));
+    titleLabel.setBorder(JBUI.Borders.emptyBottom(17));
     return titleLabel;
   }
 
