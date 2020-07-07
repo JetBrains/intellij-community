@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -158,6 +159,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // run in current thread
   @Override
   public void runProcess(@NotNull Runnable process, @Nullable ProgressIndicator progress) {
+    if (progress != null) {
+      assertNoOtherThreadUnder(progress);
+    }
     executeProcessUnderProgress(() -> {
       try {
         try {
@@ -182,6 +186,23 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         }
       }
     }, progress);
+  }
+
+  private static void assertNoOtherThreadUnder(@NotNull ProgressIndicator progress) {
+    synchronized (threadsUnderIndicator) {
+      Collection<Thread> threads = threadsUnderIndicator.get(progress);
+      Thread other = threads == null || threads.isEmpty() ? null : threads.iterator().next();
+      if (other != null) {
+        if (other == Thread.currentThread()) {
+          LOG.error("This thread is already running under this indicator, starting/stopping it here might be a data race");
+        }
+        else {
+          StringWriter dump = new StringWriter();
+          ThreadDumper.dumpCallStack(other, dump, other.getStackTrace());
+          LOG.error("Other thread is already running under this indicator, starting/stopping it here might be a data race. Its thread dump:\n" + dump);
+        }
+      }
+    }
   }
 
   // run in the current thread (?)

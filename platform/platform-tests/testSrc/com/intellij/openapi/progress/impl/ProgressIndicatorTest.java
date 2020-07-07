@@ -934,4 +934,47 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     catch (IllegalStateException ignored) {
     }
   }
+
+  public void testRunProcessWithIndicatorAlreadyUsedInTheThisThreadMustBeWarned() {
+    ProgressIndicatorEx p = new ProgressIndicatorBase();
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      boolean allowed = true;
+      try {
+        ProgressManager.getInstance().runProcess(() -> {}, p);
+      }
+      catch (Throwable ignored) {
+        allowed = false;
+      }
+      assertFalse("pm.runProcess() with the progress already used in the other thread must be prohibited", allowed);
+    }, p);
+  }
+  public void testRunProcessWithIndicatorAlreadyUsedInTheOtherThreadMustBeWarned() throws Exception {
+    ProgressIndicatorEx p = new ProgressIndicatorBase();
+    CountDownLatch run = new CountDownLatch(1);
+    CountDownLatch exit = new CountDownLatch(1);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ProgressManager.getInstance().runProcess(() -> {
+        try {
+          run.countDown();
+          exit.await();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }, p);
+    });
+    run.await();
+    boolean allowed = true;
+    try {
+      ProgressManager.getInstance().runProcess(() -> { }, p);
+    }
+    catch (Throwable ignored) {
+      allowed = false;
+    }
+    finally {
+      exit.countDown();
+      future.get();
+    }
+    assertFalse("pm.runProcess() with the progress already used in the other thread must be prohibited", allowed);
+  }
 }

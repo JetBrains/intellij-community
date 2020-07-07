@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -180,16 +179,21 @@ class MultiThreadSearcher implements SESearcher {
         do {
           ProgressIndicator wrapperIndicator = new SensitiveProgressWrapper(myIndicator);
           try {
-            Runnable runnable = (myContributor instanceof WeightedSearchEverywhereContributor)
-                                ? () -> ((WeightedSearchEverywhereContributor<Item>)myContributor).fetchWeightedElements(myPattern, wrapperIndicator,
-                                                                                                                         descriptor -> processFoundItem(descriptor.getItem(), descriptor.getWeight(), wrapperIndicator))
-                                : () -> myContributor.fetchElements(myPattern, wrapperIndicator,
-                                                                    element -> {
-                                                                      int priority = myContributor.getElementPriority(Objects.requireNonNull(element), myPattern);
-                                                                      return processFoundItem(element, priority, wrapperIndicator);
-                                                                    });
-
-            ProgressManager.getInstance().runProcess(runnable, wrapperIndicator);
+            if (myContributor instanceof WeightedSearchEverywhereContributor) {
+              ((WeightedSearchEverywhereContributor<Item>)myContributor).fetchWeightedElements(myPattern, wrapperIndicator,
+                                                                                               descriptor -> processFoundItem(
+                                                                                                 descriptor.getItem(),
+                                                                                                 descriptor.getWeight(),
+                                                                                                 wrapperIndicator));
+            }
+            else {
+              myContributor.fetchElements(myPattern, wrapperIndicator,
+                                          element -> {
+                                            int priority = myContributor
+                                              .getElementPriority(Objects.requireNonNull(element), myPattern);
+                                            return processFoundItem(element, priority, wrapperIndicator);
+                                          });
+            }
           }
           catch (ProcessCanceledException ignore) {}
           repeat = !myIndicator.isCanceled() && wrapperIndicator.isCanceled();

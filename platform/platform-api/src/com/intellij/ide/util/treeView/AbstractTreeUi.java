@@ -3399,7 +3399,7 @@ public class AbstractTreeUi {
       @Override
       public void perform() {
         try {
-          if (myProgress != null) {
+          if (myProgress != null && ProgressManager.getGlobalProgressIndicator() != myProgress) {
             ProgressManager.getInstance().runProcess(pooledThreadWithProgressRunnable, myProgress);
           }
           else {
