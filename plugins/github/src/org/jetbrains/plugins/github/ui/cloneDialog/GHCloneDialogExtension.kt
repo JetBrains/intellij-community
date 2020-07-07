@@ -49,7 +49,7 @@ class GHCloneDialogExtension : BaseCloneDialogExtension() {
     GHCloneDialogExtensionComponent(project)
 }
 
-private class GHCloneDialogExtensionComponent(project: Project) : BaseCloneDialogExtensionComponent(
+private class GHCloneDialogExtensionComponent(project: Project) : GHCloneDialogExtensionComponentBase(
   project,
   GithubAuthenticationManager.getInstance(),
   GithubApiRequestExecutorManager.getInstance(),

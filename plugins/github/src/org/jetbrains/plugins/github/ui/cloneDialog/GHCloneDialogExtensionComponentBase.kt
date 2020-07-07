@@ -67,7 +67,7 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import kotlin.properties.Delegates
 
-internal abstract class BaseCloneDialogExtensionComponent(
+internal abstract class GHCloneDialogExtensionComponentBase(
   private val project: Project,
   private val authenticationManager: GithubAuthenticationManager,
   private val executorManager: GithubApiRequestExecutorManager,
