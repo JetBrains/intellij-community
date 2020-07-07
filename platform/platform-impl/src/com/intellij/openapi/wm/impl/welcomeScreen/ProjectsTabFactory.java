@@ -149,6 +149,7 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
           }
         };
         toolbar.setOpaque(false);
+        toolbar.setReservePlaceAutoPopupIcon(false);
         return toolbar;
       }
 
