@@ -24,7 +24,6 @@ public final class GithubIcons {
   /** 16x16 */ public static final @NotNull Icon IssueOpened = load("/org/jetbrains/plugins/github/issueOpened.svg");
   /** 16x16 */ public static final @NotNull Icon PullRequestClosed = load("/org/jetbrains/plugins/github/pullRequestClosed.svg");
   /** 16x16 */ public static final @NotNull Icon PullRequestDraft = load("/org/jetbrains/plugins/github/pullRequestDraft.svg");
-  /** 16x16 */ public static final @NotNull Icon PullRequestDrafted = load("/org/jetbrains/plugins/github/pullRequestDrafted.svg");
   /** 16x16 */ public static final @NotNull Icon PullRequestMerged = load("/org/jetbrains/plugins/github/pullRequestMerged.svg");
   /** 16x16 */ public static final @NotNull Icon PullRequestOpen = load("/org/jetbrains/plugins/github/pullRequestOpen.svg");
   /** 13x13 */ public static final @NotNull Icon PullRequestsToolWindow = load("/org/jetbrains/plugins/github/pullRequestsToolWindow.svg");

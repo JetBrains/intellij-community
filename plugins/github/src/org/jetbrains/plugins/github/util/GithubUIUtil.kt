@@ -39,7 +39,7 @@ object GithubUIUtil {
   val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
 
   fun getPullRequestStateIcon(state: GHPullRequestState, isDraft: Boolean): Icon =
-    if (isDraft) GithubIcons.PullRequestDrafted
+    if (isDraft) GithubIcons.PullRequestDraft
     else when (state) {
       GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
       GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
