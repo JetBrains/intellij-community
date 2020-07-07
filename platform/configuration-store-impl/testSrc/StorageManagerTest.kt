@@ -34,8 +34,8 @@ internal class StorageManagerTest {
 
   @Test
   fun `collapse macro`() {
-    assertThat(storageManager.collapseMacros("/temp/m1/foo")).isEqualTo("$MACRO/foo")
-    assertThat(storageManager.collapseMacros("\\temp\\m1\\foo")).isEqualTo("/temp/m1/foo")
+    assertThat(storageManager.collapseMacro("/temp/m1/foo")).isEqualTo("$MACRO/foo")
+    assertThat(storageManager.collapseMacro("\\temp\\m1\\foo")).isEqualTo("/temp/m1/foo")
   }
 
   @Test

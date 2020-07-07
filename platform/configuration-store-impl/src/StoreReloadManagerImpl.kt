@@ -124,7 +124,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
   override fun saveChangedProjectFile(file: VirtualFile, project: Project) {
     val storageManager = (project.stateStore as ComponentStoreImpl).storageManager as? StateStorageManagerImpl ?: return
-    storageManager.getCachedFileStorages(listOf(storageManager.collapseMacros(file.path))).firstOrNull()?.let {
+    storageManager.getCachedFileStorages(listOf(storageManager.collapseMacro(file.path))).firstOrNull()?.let {
       // if empty, so, storage is not yet loaded, so, we don't have to reload
       storageFilesChanged(mapOf(project to listOf(it)))
     }

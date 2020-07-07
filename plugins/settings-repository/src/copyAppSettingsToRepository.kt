@@ -25,12 +25,12 @@ fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager
     var fileSpec: String
     try {
       val absolutePath = file.toAbsolutePath().systemIndependentPath
-      fileSpec = removeMacroIfStartsWith(storageManager.collapseMacros(absolutePath), ROOT_CONFIG)
+      fileSpec = removeMacroIfStartsWith(storageManager.collapseMacro(absolutePath), ROOT_CONFIG)
       if (fileSpec == absolutePath) {
         // we have not experienced such problem yet, but we are just aware
         val canonicalPath = file.toRealPath().systemIndependentPath
         if (canonicalPath != absolutePath) {
-          fileSpec = removeMacroIfStartsWith(storageManager.collapseMacros(canonicalPath), ROOT_CONFIG)
+          fileSpec = removeMacroIfStartsWith(storageManager.collapseMacro(canonicalPath), ROOT_CONFIG)
         }
       }
     }

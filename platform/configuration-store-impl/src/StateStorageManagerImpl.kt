@@ -222,8 +222,8 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
 
     val app = ApplicationManager.getApplication()
-    if (app != null && !app.isHeadlessEnvironment && !filePath.fileName.toString().contains('.')) {
-      throw IllegalArgumentException("Extension is missing for storage file: $filePath")
+    if (app != null && !app.isHeadlessEnvironment && !collapsedPath.endsWith('$') && !collapsedPath.contains('.')) {
+      throw IllegalArgumentException("Extension is missing for storage file: $collapsedPath")
     }
 
     val storage = createFileBasedStorage(filePath, collapsedPath, effectiveRoamingType, if (exclusive) null else rootTagName)
@@ -340,12 +340,15 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     throw IllegalStateException("Cannot resolve $collapsedPath in $macros")
   }
 
-  fun collapseMacros(path: String): String {
-    var result = path
+  fun collapseMacro(path: String): String {
     for ((key, value) in macros) {
-      result = result.replace(value.systemIndependentPath, key)
+      @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+      val result = (path as java.lang.String).replace(value.systemIndependentPath, key)
+      if (result !== path) {
+        return result
+      }
     }
-    return normalizeFileSpec(result)
+    return normalizeFileSpec(path)
   }
 
   final override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
@@ -356,12 +359,10 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null
 }
 
-private fun String.startsWithMacro(macro: String): Boolean {
+fun removeMacroIfStartsWith(path: String, macro: String): String {
   val i = macro.length
-  return getOrNull(i) == '/' && startsWith(macro)
+  return if (path.getOrNull(i) == '/' && path.startsWith(macro)) path.substring(i + 1) else path
 }
-
-fun removeMacroIfStartsWith(path: String, macro: String): String = if (path.startsWithMacro(macro)) path.substring(macro.length + 1) else path
 
 @Suppress("DEPRECATION")
 internal val Storage.path: String
