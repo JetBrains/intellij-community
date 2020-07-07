@@ -7,6 +7,7 @@ import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -58,5 +59,7 @@ final class PyCharmCorePluginConfigurator implements ApplicationInitializedListe
     }
 
     ActionManager.getInstance().unregisterAction("RunAnything");
+
+    Experiments.getInstance().setFeatureEnabled("terminal.shell.command.handling", false);
   }
 }
