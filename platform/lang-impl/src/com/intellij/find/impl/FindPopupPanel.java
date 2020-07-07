@@ -166,6 +166,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private AnAction myRegexAction;
   private AnAction myResetFiltersAction;
   private boolean mySuggestRegexHintForEmptyResults = true;
+  private JBSplitter myPreviewSplitter;
 
   FindPopupPanel(@NotNull FindUIHelper helper) {
     myHelper = helper;
@@ -707,6 +708,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myUsagePreviewTitle = new SimpleColoredComponent();
     myUsagePreviewTitle.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
     myUsageViewPresentation = new UsageViewPresentation();
+    myUsageViewPresentation.setUsagesWord(FindBundle.message("result"));
     myUsagePreviewPanel = new UsagePreviewPanel(myProject, myUsageViewPresentation, Registry.is("ide.find.as.popup.editable.code")) {
       @Override
       public Dimension getPreferredSize() {
@@ -729,6 +731,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       }
       myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selection.size()));
       FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
+      myUsageViewPresentation.setUsagesWord(FindBundle.message("result"));
       myUsagePreviewPanel.updateLayout(selection);
       myUsagePreviewTitle.clear();
       if (myUsagePreviewPanel.getCannotPreviewMessage(selection) == null && file != null) {
@@ -766,9 +769,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     mySearchRescheduleOnCancellationsAlarm = new Alarm();
 
-    JBSplitter splitter = new OnePixelSplitter(true, .33f);
-    splitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
-    splitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
+    myPreviewSplitter = new OnePixelSplitter(true, .33f);
+    myPreviewSplitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
+    myPreviewSplitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
     JBScrollPane scrollPane = new JBScrollPane(myResultsPreviewTable) {
       @Override
       public Dimension getMinimumSize() {
@@ -778,7 +781,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       }
     };
     scrollPane.setBorder(JBUI.Borders.empty());
-    splitter.setFirstComponent(scrollPane);
+    myPreviewSplitter.setFirstComponent(scrollPane);
     JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4 4 4 4, fillx, hidemode 3, gap 0"));
     bottomPanel.add(tabOptionsButton);
     myOKHintLabel = new JBLabel("");
@@ -800,7 +803,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     JPanel previewPanel = new JPanel(new BorderLayout());
     previewPanel.add(myUsagePreviewTitle, BorderLayout.NORTH);
     previewPanel.add(myCodePreviewComponent, BorderLayout.CENTER);
-    splitter.setSecondComponent(previewPanel);
+    myPreviewSplitter.setSecondComponent(previewPanel);
     JPanel scopesPanel = new JPanel(new MigLayout("flowx, gap 26, ins 0"));
     scopesPanel.add(myScopeSelectionToolbar.getComponent());
     scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
@@ -837,7 +840,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
                          JBUI.Borders.empty(1, 0, 2, 0)));
     add(myReplaceTextArea, "pushx, growx, sx 10, pad 0 -4 0 4, wrap");
     add(scopesPanel, "sx 10, pushx, growx, ax left, wrap, gaptop 4, gapbottom 4");
-    add(splitter, "pushx, growx, growy, pushy, sx 10, wrap, pad -4 -4 4 4");
+    add(myPreviewSplitter, "pushx, growx, growy, pushy, sx 10, wrap, pad -4 -4 4 4");
     add(bottomPanel, "pushx, growx, dock south, sx 10");
 
     MnemonicHelper.init(this);
@@ -1195,6 +1198,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     final AtomicInteger resultsCount = new AtomicInteger();
     final AtomicInteger resultsFilesCount = new AtomicInteger();
     FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findModel);
+    myUsageViewPresentation.setUsagesWord(FindBundle.message("result"));
 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
       @Override
@@ -1230,6 +1234,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
               onStop(hash);
               return;
             }
+            myPreviewSplitter.getSecondComponent().setVisible(true);
             DefaultTableModel model = (DefaultTableModel)myResultsPreviewTable.getModel();
             if (!merged) {
               model.addRow(new Object[]{usage});
@@ -1303,6 +1308,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     ((DefaultTableModel)myResultsPreviewTable.getModel()).getDataVector().clear();
     ((DefaultTableModel)myResultsPreviewTable.getModel()).fireTableDataChanged();
     myResultsPreviewTable.getSelectionModel().clearSelection();
+    myPreviewSplitter.getSecondComponent().setVisible(false);
     myInfoLabel.setText(null);
   }
 
@@ -1381,14 +1387,12 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
           sb.append(optionText);
         }
         emptyText.appendLine(sb.toString());
-        emptyText.appendLine(" ");
         emptyText.appendLine(FindBundle.message("message.nothingFound.clearAll"), LINK_PLAIN_ATTRIBUTES,
                              __ -> resetAllFilters()).appendText(" " + getOptionText(myResetFiltersAction, true));
       }
       else {
         Object option = usedOptions.get(0);
         emptyText.appendLine(FindBundle.message("message.nothingFound.used.option", getOptionText(option, false)));
-        emptyText.appendLine(" ");
         emptyText.appendLine(FindBundle.message("message.nothingFound.clearOption"), LINK_PLAIN_ATTRIBUTES,
                              __ -> resetAllFilters()).appendText(" " + getOptionText(myResetFiltersAction, true));
       }
