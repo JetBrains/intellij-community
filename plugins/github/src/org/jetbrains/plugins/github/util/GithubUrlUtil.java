@@ -1,10 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util;
 
+import com.intellij.util.UriUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GHRepositoryPath;
 import org.jetbrains.plugins.github.api.GithubServerPath;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * @author Aleksey Pivovarov
@@ -89,6 +94,21 @@ public class GithubUrlUtil {
       return url.substring(0, url.length() - DOT_GIT.length());
     }
     return url;
+  }
+
+  @Nullable
+  public static URI getUriFromRemoteUrl(@NotNull String remoteUrl) {
+    String fixed = removeEndingDotGit(UriUtil.trimTrailingSlashes(remoteUrl));
+    try {
+      if (!fixed.contains(URLUtil.SCHEME_SEPARATOR)) {
+        //scp-style
+        return new URI(URLUtil.HTTPS_PROTOCOL + URLUtil.SCHEME_SEPARATOR + removeProtocolPrefix(fixed).replace(':', '/'));
+      }
+      return new URI(fixed);
+    }
+    catch (URISyntaxException e) {
+      return null;
+    }
   }
 
   //region Deprecated
