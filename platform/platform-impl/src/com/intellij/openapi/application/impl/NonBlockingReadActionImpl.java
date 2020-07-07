@@ -449,6 +449,15 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
             throw new IllegalStateException("Constraint " + unsatisfiedConstraint + " cannot be satisfied");
           }
         } else {
+          if (myProgressIndicator != null) {
+            try {
+              //Give ProgressSuspender a chance to suspend now, it can't do it under a read-action
+              myProgressIndicator.checkCanceled();
+            }
+            catch (ProcessCanceledException e) {
+              return false;
+            }
+          }
           success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(runnable, indicator);
         }
         return success && unsatisfiedConstraint.isNull();
