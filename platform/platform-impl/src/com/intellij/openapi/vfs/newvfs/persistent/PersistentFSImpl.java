@@ -1044,6 +1044,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void fireAfterEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
+    CachedFileType.clearCache();
     ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend);
     publisher.after(toSend);
   }

@@ -712,7 +712,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void unregisterFileTypeWithoutNotification(@NotNull FileType fileType) {
-    CachedFileType.remove(fileType);
     myPatternsTable.removeAllAssociations(fileType);
     myInitialAssociations.removeAllAssociations(fileType);
     mySchemeManager.removeScheme(fileType);
@@ -809,6 +808,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private void fireFileTypesChanged(@Nullable FileType addedFileType, @Nullable FileType removedFileType) {
     myDetectionService.clearCaches();
+    CachedFileType.clearCache();
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this, addedFileType, removedFileType));
   }
 

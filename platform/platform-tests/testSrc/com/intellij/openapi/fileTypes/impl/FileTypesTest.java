@@ -930,13 +930,17 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.fileNames = ".prettierrc";
     bean.implementationClass = MyTestFileType.class.getName();
     Disposable disposable = registerFileType(bean);
-    CachedFileType.clearCache();   // normally this is done by PsiModificationTracker.Listener but it's not fired in this test
+    clearFileTypeCache();
 
     assertEquals(MyTestFileType.NAME, FileTypeManager.getInstance().getFileTypeByFileName(".prettierrc").getName());
     assertEquals(MyTestFileType.NAME, vFile.getFileType().getName());
 
     ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
     assertNull(FileTypeManager.getInstance().findFileTypeByName(MyTestFileType.NAME));
+  }
+
+  private static void clearFileTypeCache() {
+    WriteAction.run(() -> CachedFileType.clearCache());   // normally this is done by PsiModificationTracker.Listener but it's not fired in this test
   }
 
   public void testRegisterAdditionalExtensionForExistingFileType() throws IOException {
@@ -948,7 +952,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.name = "XML";
     bean.fileNames = ".prettierrc";
     Disposable disposable = registerFileType(bean);
-    CachedFileType.clearCache();   // normally this is done by PsiModificationTracker.Listener but it's not fired in this test
+    clearFileTypeCache();
 
     assertEquals("XML", FileTypeManager.getInstance().getFileTypeByFileName(".prettierrc").getName());
     assertEquals("XML", vFile.getFileType().getName());

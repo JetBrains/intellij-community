@@ -485,7 +485,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     FileType type = cache == null ? null : cache.getUpToDateOrNull();
     if (type == null) {
       type = super.getFileType();
-      myFileType = CachedFileType.forType(type);
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+        myFileType = CachedFileType.forType(type);
+      }
     }
     return type;
   }
