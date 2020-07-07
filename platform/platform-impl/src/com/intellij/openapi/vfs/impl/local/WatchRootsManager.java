@@ -11,10 +11,8 @@ import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -131,26 +129,42 @@ final class WatchRootsManager {
   }
 
   private void updateFileWatcher() {
-    Iterable<@SystemDependent String> flatWatchRootsIterable;
-    NavigableSet<@SystemDependent String> recursiveWatchRoots = WatchRootsUtil.createFileNavigableSet();
-    MultiMap<@SystemDependent String, @SystemDependent String> initialMappings = MultiMap.create();
+    myFileWatcher.setWatchRoots(() -> {
+      synchronized (myLock) {
+        if (!myWatcherRequiresUpdate) return null;
+        myWatcherRequiresUpdate = false;
+        return createCanonicalPathMap(myFlatWatchRoots.navigableKeySet(), myOptimizedRecursiveWatchRoots,
+                                      myPathMappings, File.separatorChar == '\\');
+      }
+    });
+  }
+
+  static CanonicalPathMap createCanonicalPathMap(NavigableSet<String> flatWatchRoots,
+                                                 NavigableSet<String> optimizedRecursiveWatchRoots,
+                                                 MultiMap<String, String> pathMappings,
+                                                 boolean convertToForwardSlashes) {
+    NavigableSet<@SystemDependent String> optimizedRecursiveWatchRootsCopy = WatchRootsUtil.createFileNavigableSet();
+    MultiMap<@SystemDependent String, @SystemDependent String> initialMappings = MultiMap.createConcurrentSet();
 
     // Ensure paths are system dependent
-    if (File.separatorChar == '/') {
-      flatWatchRootsIterable = myFlatWatchRoots.navigableKeySet();
-      recursiveWatchRoots.addAll(myOptimizedRecursiveWatchRoots);
-      initialMappings.putAllValues(myPathMappings);
-    } else {
-      Function<String, String> pathMapper = path -> path.replace('/', File.separatorChar);
-      flatWatchRootsIterable = JBIterable.from(myFlatWatchRoots.navigableKeySet()).map(pathMapper);
-      JBIterable.from(myOptimizedRecursiveWatchRoots).map(pathMapper).addAllTo(recursiveWatchRoots);
-      for (Map.Entry<String, Collection<String>> entry: myPathMappings.entrySet()) {
-        initialMappings.putValues(pathMapper.fun(entry.getKey()), ContainerUtil.map(entry.getValue(), pathMapper));
+    if (!convertToForwardSlashes) {
+      optimizedRecursiveWatchRootsCopy.addAll(optimizedRecursiveWatchRoots);
+      initialMappings.putAllValues(pathMappings);
+    }
+    else {
+      for (String recursiveWatchRoot: optimizedRecursiveWatchRoots) {
+        optimizedRecursiveWatchRootsCopy.add(recursiveWatchRoot.replace('/', '\\'));
+      }
+      for (Map.Entry<String, Collection<String>> entry : pathMappings.entrySet()) {
+        Collection<String> values = initialMappings.getModifiable(entry.getKey().replace('/', '\\'));
+        for (String mapping: entry.getValue()) {
+          values.add(mapping.replace('/', '\\'));
+        }
       }
     }
-    NavigableSet<@SystemDependent String> flatWatchRoots = WatchRootsUtil.optimizeFlatRoots(flatWatchRootsIterable, recursiveWatchRoots);
-    myFileWatcher.setWatchRoots(new CanonicalPathMap(recursiveWatchRoots, flatWatchRoots, initialMappings));
-    myWatcherRequiresUpdate = false;
+    NavigableSet<@SystemDependent String> optimizedFlatWatchRoots =
+      WatchRootsUtil.optimizeFlatRoots(flatWatchRoots, optimizedRecursiveWatchRootsCopy, convertToForwardSlashes);
+    return new CanonicalPathMap(optimizedRecursiveWatchRootsCopy, optimizedFlatWatchRoots, initialMappings);
   }
 
   private void updateWatchRoots(Collection<String> rootsToAdd,
