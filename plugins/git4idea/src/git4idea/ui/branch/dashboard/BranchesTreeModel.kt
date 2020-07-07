@@ -79,7 +79,7 @@ internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchN
     var curParent: BranchNodeDescriptor = if (branch.isLocal) localRootNodeDescriptor else remoteRootNodeDescriptor
 
     if (!useGrouping) {
-      addChild(curParent, BranchNodeDescriptor(NodeType.BRANCH, branch))
+      addChild(curParent, BranchNodeDescriptor(NodeType.BRANCH, branch, parent = curParent))
       return
     }
 
