@@ -37,6 +37,43 @@ class FeatureEventRateThrottleTest {
     assertDeny(throttle.tryPass(119))
   }
 
+  @Test
+  fun `test counter dont reach limit`() {
+    val throttle = EventsRateWindowThrottle(3, 10, 100)
+    assertAccept(throttle.tryPass(100))
+    assertAccept(throttle.tryPass(105))
+
+    assertAccept(throttle.tryPass(110))
+    assertAccept(throttle.tryPass(113))
+    assertAccept(throttle.tryPass(118))
+
+    assertAccept(throttle.tryPass(128))
+
+    assertAccept(throttle.tryPass(136))
+
+    assertAccept(throttle.tryPass(144))
+    assertAccept(throttle.tryPass(145))
+    assertAccept(throttle.tryPass(146))
+    assertDenyAndReport(throttle.tryPass(147))
+  }
+
+
+  @Test
+  fun `test period skipped dont reach limit`() {
+    val throttle = EventsRateWindowThrottle(3, 10, 100)
+    assertAccept(throttle.tryPass(100))
+    assertAccept(throttle.tryPass(105))
+
+    assertAccept(throttle.tryPass(120))
+    assertAccept(throttle.tryPass(123))
+    assertAccept(throttle.tryPass(128))
+
+    assertAccept(throttle.tryPass(144))
+    assertAccept(throttle.tryPass(145))
+    assertAccept(throttle.tryPass(146))
+    assertDenyAndReport(throttle.tryPass(147))
+  }
+
   private fun assertAccept(result: EventRateThrottleResult) {
     assertEquals(EventRateThrottleResult.ACCEPT, result)
   }
