@@ -4,6 +4,7 @@ package com.siyeh.ig.testFrameworks;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -22,7 +23,7 @@ public class MaskedAssertionInspection extends BaseInspection {
 
   @Override
   protected @NotNull @InspectionMessage String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("masked.assertion.problem.description");
+    return InspectionGadgetsBundle.message("masked.assertion.problem.description", infos[0]);
   }
 
   @Override
@@ -37,7 +38,7 @@ public class MaskedAssertionInspection extends BaseInspection {
       super.visitTryStatement(statement);
       PsiElement lastPsiElement = getLastPsiElementInsideTryBlock(statement);
       if (lastPsiElement instanceof PsiAssertStatement) {
-        registerError(lastPsiElement);
+        registerError(lastPsiElement, "assert");
       }
       else if (lastPsiElement instanceof PsiExpressionStatement) {
         PsiExpression psiExpr = ((PsiExpressionStatement)lastPsiElement).getExpression();
@@ -52,8 +53,8 @@ public class MaskedAssertionInspection extends BaseInspection {
 
         String methodRefName = psiMethodCallExpr.getMethodExpression().getReferenceName();
         if (methodRefName == null) return;
-        if (methodRefName.equals("fail") || methodRefName.startsWith("assert") || methodRefName.startsWith("assume")) {
-          registerError(psiExpr);
+        if (methodRefName.equals("fail") || methodRefName.startsWith("assert")) {
+          registerError(psiExpr, methodRefName + "()");
         }
       }
     }
@@ -84,7 +85,7 @@ public class MaskedAssertionInspection extends BaseInspection {
           else {
             catchExceptionPsiTypes = Collections.singletonList(catchType);
           }
-          if (catchExceptionPsiTypes.stream().anyMatch(cet -> cet.equalsToText(exceptionQn))) {
+          if (ContainerUtil.exists(catchExceptionPsiTypes, cet -> cet.equalsToText(exceptionQn))) {
             return ControlFlowUtils.isEmptyCodeBlock(section.getCatchBlock());
           }
         }
