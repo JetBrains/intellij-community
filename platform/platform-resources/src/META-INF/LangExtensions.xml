@@ -1303,5 +1303,9 @@
   <applicationListeners>
     <listener class="com.intellij.ide.script.IdeStartupScripts" topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
+  <projectListeners>
+    <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"
+              topic="com.intellij.ide.ui.VirtualFileAppearanceListener"/>
+  </projectListeners>
 </idea-plugin>
 

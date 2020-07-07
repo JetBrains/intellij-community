@@ -5,12 +5,14 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -42,6 +44,12 @@ public class IconDeferrerImpl extends IconDeferrer {
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
+        clear();
+      }
+    });
+    connection.subscribe(VirtualFileAppearanceListener.TOPIC, new VirtualFileAppearanceListener() {
+      @Override
+      public void virtualFileAppearanceChanged(@NotNull VirtualFile virtualFile) {
         clear();
       }
     });

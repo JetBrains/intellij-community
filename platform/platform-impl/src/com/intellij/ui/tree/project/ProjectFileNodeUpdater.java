@@ -2,6 +2,7 @@
 package com.intellij.ui.tree.project;
 
 import com.intellij.ide.scratch.RootType;
+import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -108,6 +109,12 @@ public abstract class ProjectFileNodeUpdater {
       }
     }, invoker);
     RootType.ROOT_EP.addChangeListener(this::updateFromRoot, project);
+    connection.subscribe(VirtualFileAppearanceListener.TOPIC, new VirtualFileAppearanceListener() {
+      @Override
+      public void virtualFileAppearanceChanged(@NotNull VirtualFile virtualFile) {
+        updateFromFile(virtualFile);
+      }
+    });
   }
 
   /**

@@ -42,6 +42,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -93,6 +94,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private Component myContextComponent;
 
   private final NavBarUpdateQueue myUpdateQueue;
+  private final Set<PsiFile> myForcedFileUpdateQueue = new HashSet<>();
 
   private NavBarItem myContextObject;
   private boolean myDisposed = false;
@@ -408,6 +410,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       for (NavBarItem eachLabel : myList) {
         Object eachElement = myModel.get(index);
         if (eachLabel.getObject() == null || !eachLabel.getObject().equals(eachElement)) {
+          return true;
+        }
+
+        if (eachLabel.getObject() instanceof PsiFile && myForcedFileUpdateQueue.remove(eachLabel.getObject())) {
           return true;
         }
 
@@ -928,5 +934,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   boolean isUpdating() {
     return myUpdateQueue.isUpdating();
+  }
+
+  void queueFileUpdate(PsiFile psiFile) {
+    myForcedFileUpdateQueue.add(psiFile);
   }
 }
