@@ -13,6 +13,7 @@ public class RelayUiToDelegateIndicator extends AbstractProgressIndicatorExBase 
   private @NotNull final ProgressIndicator myDelegate;
 
   public RelayUiToDelegateIndicator(@NotNull ProgressIndicator delegate) {
+    super(true);
     myDelegate = delegate;
   }
 
