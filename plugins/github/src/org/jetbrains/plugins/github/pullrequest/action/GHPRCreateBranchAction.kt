@@ -92,7 +92,8 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
                                                          GithubBundle.message("pull.request.branch.checkout.create.dialog.title",
                                                                               pullRequestNumber),
-                                                         generateSuggestedBranchName(pullRequestNumber, dataProvider), true) ?: return
+                                                         generateSuggestedBranchName(repository, pullRequestNumber,
+                                                                                     dataProvider), true) ?: return
 
     if (!options.checkout) {
       object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.create.task.title"), true) {
@@ -134,8 +135,19 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     }
   }
 
-  private fun generateSuggestedBranchName(pullRequestNumber: Long, dataProvider: GHPRDataProvider): String =
-    dataProvider.detailsData.loadedDetails?.headRefName ?: "pull/${pullRequestNumber}"
+  private fun generateSuggestedBranchName(repository: GitRepository, pullRequestNumber: Long, dataProvider: GHPRDataProvider): String =
+    dataProvider.detailsData.loadedDetails.let { ghPullRequest ->
+      val login = ghPullRequest?.headRepository?.owner?.login
+      val headRefName = ghPullRequest?.headRefName
+      when {
+        headRefName == null || login == null -> "pull/${pullRequestNumber}"
+        repository.branchWithTrackingExist(headRefName) -> "${login}_${headRefName}"
+        else -> headRefName
+      }
+    }
+
+  private fun GitRepository.branchWithTrackingExist(branchName: String) =
+    branches.findLocalBranch(branchName)?.findTrackedBranch(this) != null
 
   private fun trySetTrackingUpstreamBranch(git: Git,
                                            repository: GitRepository,
