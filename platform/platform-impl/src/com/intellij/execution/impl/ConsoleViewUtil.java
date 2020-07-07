@@ -70,6 +70,7 @@ public final class ConsoleViewUtil {
       editorSettings.setAdditionalLinesCount(0);
       editorSettings.setRightMarginShown(false);
       editorSettings.setCaretRowShown(false);
+      editorSettings.setShowingSpecialChars(false);
       editor.getGutterComponentEx().setPaintBackground(false);
 
       final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
