@@ -1,6 +1,7 @@
 <html>
 <body>
-Reports redundant <b>assert</b> statements and <b>assertXXX()</b> method calls.
+Reports assert statements and test framework assertions that are masked via catch blocks.
+Such assertions will never fail, as the thrown AssertionError will be caught and silently ignored.
 Examples:<br>
 <code><pre>
 void javaAssertion() {

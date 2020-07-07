@@ -3,10 +3,10 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import com.siyeh.ig.testFrameworks.RedundantAssertionInspection;
+import com.siyeh.ig.testFrameworks.MaskedAssertionInspection;
 import org.jetbrains.annotations.Nullable;
 
-public class RedundantAssertionInspectionTest extends LightJavaInspectionTestCase {
+public class MaskedAssertionInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected String[] getEnvironmentClasses() {
@@ -70,21 +70,21 @@ public class RedundantAssertionInspectionTest extends LightJavaInspectionTestCas
     };
   }
 
-  public void testRedundantAssertion() {
+  public void testMaskedAssertion() {
     doTest();
   }
 
-  public void testRedundantAssertionAssertJ() {
+  public void testMaskedAssertionAssertJ() {
     doTest();
   }
 
   @Override
-  protected @Nullable InspectionProfileEntry getInspection () {
-    return new RedundantAssertionInspection();
+  protected @Nullable InspectionProfileEntry getInspection() {
+    return new MaskedAssertionInspection();
   }
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/redundant_assertion";
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/masked_assertion";
   }
 }

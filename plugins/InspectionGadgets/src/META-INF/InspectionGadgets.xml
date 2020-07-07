@@ -1351,10 +1351,10 @@
                      groupKey="group.names.test.frameworks.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.testFrameworks.AssertBetweenInconvertibleTypesInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.AssertBetweenInconvertibleTypesMerger"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RedundantAssertion" bundle="messages.InspectionGadgetsBundle"
-                     key="redundant.assertion.display.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="MaskedAssertion" bundle="messages.InspectionGadgetsBundle"
+                     key="masked.assertion.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.test.frameworks.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.testFrameworks.RedundantAssertionInspection"/>
+                     implementationClass="com.siyeh.ig.testFrameworks.MaskedAssertionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AssertEqualsMayBeAssertSame" bundle="messages.InspectionGadgetsBundle"
                      key="assertequals.may.be.assertsame.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
