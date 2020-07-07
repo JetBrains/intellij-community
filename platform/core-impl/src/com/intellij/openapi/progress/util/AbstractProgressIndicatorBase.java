@@ -37,7 +37,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   private volatile boolean myCanceled;
   private volatile boolean myRunning;
-  private volatile boolean myFinished;
+  private volatile boolean myStopped;
 
   private volatile boolean myIndeterminate = Registry.is("ide.progress.indeterminate.by.default", true);
   private volatile MacUtil.Activity myMacActivity;
@@ -56,14 +56,14 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void start() {
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
-      if (myFinished) {
+      if (myStopped) {
         if (myCanceled && !isReuseable()) {
           if (ourReportedReuseExceptions.add(getClass())) {
             LOG.error("Attempt to start ProgressIndicator which is cancelled and already stopped:" + this + "," + getClass());
           }
         }
         myCanceled = false;
-        myFinished = false;
+        myStopped = false;
       }
 
       myText = "";
@@ -85,7 +85,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     synchronized (getLock()) {
       LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
       myRunning = false;
-      myFinished = true;
+      myStopped = true;
       stopSystemActivity();
     }
   }
