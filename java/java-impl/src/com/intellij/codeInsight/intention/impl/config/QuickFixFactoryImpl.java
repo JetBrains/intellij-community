@@ -700,6 +700,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new DeleteElementFix(element);
   }
 
+  @Override
+  public @NotNull IntentionAction createDeleteFix(@NotNull PsiElement @NotNull ... elements) {
+    return new DeleteElementFix.DeleteMultiFix(elements);
+  }
+
   @NotNull
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element, @Nls @NotNull String text) {
