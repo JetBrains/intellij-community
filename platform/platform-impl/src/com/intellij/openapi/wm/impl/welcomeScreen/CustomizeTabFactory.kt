@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
@@ -41,6 +42,8 @@ import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
+import javax.swing.plaf.FontUIResource
+import javax.swing.plaf.LabelUI
 
 private val settings get() = UISettings.instance
 private val fontOptions get() = AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl
@@ -184,8 +187,17 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
 
   private fun Row.header(@Nls title: String) {
     fullRow {
-      label(title).apply { component.font = component.font.deriveFont(JBUIScale.scale(16)).deriveFont(Font.BOLD) }
+      component(HeaderLabel(title))
     }.largeGapAfter()
+  }
+
+  private class HeaderLabel(@Nls title: String) : JBLabel(title) {
+    override fun setUI(ui: LabelUI?) {
+      super.setUI(ui)
+      if (font != null) {
+        font = FontUIResource(font.deriveFont(font.size2D + JBUIScale.scale(3)).deriveFont(Font.BOLD))
+      }
+    }
   }
 
   private fun Cell.fontComboBox(fontProperty: GraphProperty<Int>): CellBuilder<ComboBox<Int>> {
