@@ -49,7 +49,7 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
   }
 
   private void doIncCounter() {
-    ApplicationManager.getApplication().runWriteAction(() -> incCounter());
+    ApplicationManager.getApplication().runWriteAction(() -> incCountersInner());
   }
 
   /**
