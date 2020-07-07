@@ -194,7 +194,7 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection"/>
-    <localInspection language="JAVA" shortName="UsePrimitiveTypes" displayName="Use .equals with primitive types"
+    <localInspection language="UAST" shortName="UsePrimitiveTypes" displayName="Use .equals with primitive types"
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesInspection"/>
