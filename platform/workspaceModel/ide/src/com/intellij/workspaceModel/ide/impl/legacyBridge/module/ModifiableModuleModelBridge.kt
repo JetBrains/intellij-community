@@ -225,7 +225,7 @@ internal class ModifiableModuleModelBridge(
     if (oldName != newName) { // if renaming to itself, forget it altogether
       val moduleToAdd = myModulesToAdd.remove(oldName)
       if (moduleToAdd != null) {
-        moduleToAdd.rename(newName, false)
+        moduleToAdd.rename(newName, true)
         myModulesToAdd[newName] = moduleToAdd
       }
       else {
