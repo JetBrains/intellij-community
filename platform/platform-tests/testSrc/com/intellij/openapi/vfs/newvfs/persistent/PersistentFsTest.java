@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.plugins.DynamicPluginsTestUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,11 +12,13 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -32,9 +35,11 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.io.zip.JBZipFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -46,9 +51,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.JarFile;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class PersistentFsTest extends HeavyPlatformTestCase {
   public void testAccessingFileByID() throws Exception {
@@ -793,5 +800,102 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     for (Future<?> future : futures) {
       PlatformTestUtil.waitForFuture(future, 10_000);
     }
+  }
+
+  public void testReadOnlyFsCachesLength() throws IOException {
+    String text = "<virtualFileSystem implementationClass=\"" + JarFileSystemTestWrapper.class.getName() + "\" key=\"jarwrapper\" physical=\"true\"/>";
+    Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, JarFileSystemTestWrapper.class.getClassLoader());
+
+    try {
+      File testDir = createTempDir("zip-test", false);
+      File generationDir = createTempDir("generation", false);
+
+      String jarName = "test.jar";
+      String entryName = "Some.java";
+
+      String content0 = "class Some {}";
+      String content1 = "class Some { void m() {} }";
+      String content2 = "class Some { void mmm() {} }";
+
+      File zipFile = createZipWithEntry(jarName, entryName, content0, testDir, generationDir);
+      assertTrue(zipFile.exists());
+
+      VfsUtil.markDirtyAndRefresh(false, true, true, zipFile);
+
+      String url = "jarwrapper://" + FileUtil.toSystemIndependentName(zipFile.getPath()) + "!/" + entryName;
+
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+      file.refresh(false, false);
+      JarFileSystemTestWrapper fs = (JarFileSystemTestWrapper)file.getFileSystem();
+
+      assertTrue(file.isValid());
+      assertEquals(content0, new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+
+      zipFile = createZipWithEntry(jarName, entryName, content1, testDir, generationDir);
+      VfsUtil.markDirtyAndRefresh(false, true, true, zipFile);
+      int attrCallCount = fs.getAttributeCallCount();
+
+      file.refresh(false, false);
+      assertTrue(file.isValid());
+      assertEquals(content1, new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+
+      zipFile = createZipWithEntry(jarName, entryName, content2, testDir, generationDir);
+      VfsUtil.markDirtyAndRefresh(false, true, true, zipFile);
+
+      // we should read length from physical FS
+      assertNotEquals(attrCallCount, fs.getAttributeCallCount());
+      file.refresh(false, false);
+      assertTrue(file.isValid());
+      assertEquals(content2, new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+
+      attrCallCount = fs.getAttributeCallCount();
+      file.getLength();
+      assertEquals(attrCallCount, fs.getAttributeCallCount());
+
+      // ensure it's cached
+      file.getLength();
+      assertEquals(attrCallCount, fs.getAttributeCallCount());
+
+      // ensure it's cached
+      file.getLength();
+      assertEquals(attrCallCount, fs.getAttributeCallCount());
+    } finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+  public static class JarFileSystemTestWrapper extends JarFileSystemImpl {
+    private final AtomicInteger myAttributeCallCount = new AtomicInteger();
+    @Override
+    public @Nullable FileAttributes getAttributes(@NotNull VirtualFile file) {
+      myAttributeCallCount.incrementAndGet();
+      return super.getAttributes(file);
+    }
+
+    private int getAttributeCallCount() {
+      return myAttributeCallCount.get();
+    }
+
+    @Override
+    public @NotNull String getProtocol() {
+      return "jarwrapper";
+    }
+  }
+
+  @NotNull
+  private static File createZipWithEntry(@NotNull String fileName,
+                                 @NotNull String entryName,
+                                 @NotNull String entryContent,
+                                 @NotNull File outputPath,
+                                 @NotNull File generationDir) throws IOException {
+    File zipFile = new File(generationDir, fileName);
+    try (JBZipFile zip = new JBZipFile(zipFile)) {
+      zip.getOrCreateEntry(entryName).setData(entryContent.getBytes(StandardCharsets.UTF_8));
+    }
+
+    File outputFile = new File(outputPath, fileName);
+    FileUtil.copy(zipFile, outputFile);
+
+    return outputFile;
   }
 }

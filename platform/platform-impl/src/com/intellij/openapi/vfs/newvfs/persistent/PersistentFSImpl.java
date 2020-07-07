@@ -537,7 +537,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     synchronized (myInputLock) {
       fileId = getFileId(file);
       length = getLengthIfUpToDate(file);
-      outdated = length == -1;
+      outdated = length == -1 || mustReloadContent(file);
       reloadFromDelegate = outdated || (contentStream = readContent(file)) == null;
     }
 
@@ -548,13 +548,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (outdated) {
         // in this case, file can have out-of-date length. so, update it first (it's needed for correct contentsToByteArray() work)
         // see IDEA-90813 for possible bugs
-        FSRecords.setLength(fileId, delegate.getLength(file));
+        setLength(fileId, delegate.getLength(file));
         content = delegate.contentsToByteArray(file);
       }
       else {
         // a bit of optimization
         content = delegate.contentsToByteArray(file);
-        FSRecords.setLength(fileId, content.length);
+        setLength(fileId, content.length);
       }
 
       Application application = ApplicationManager.getApplication();
@@ -594,7 +594,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
     synchronized (myInputLock) {
       InputStream contentStream;
-      if (getLengthIfUpToDate(file) == -1 || FileUtilRt.isTooLarge(file.getLength()) || (contentStream = readContent(file)) == null) {
+      if (getLengthIfUpToDate(file) == -1 || mustReloadContent(file) || FileUtilRt.isTooLarge(file.getLength()) || (contentStream = readContent(file)) == null) {
         NewVirtualFileSystem delegate = getDelegate(file);
         long len = reloadLengthFromDelegate(file, delegate);
         InputStream nativeStream = delegate.getInputStream(file);
@@ -606,10 +606,20 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
+  private static boolean mustReloadContent(@NotNull VirtualFile file) {
+    return BitUtil.isSet(FSRecords.getFlags(getFileId(file)), MUST_RELOAD_CONTENT);
+  }
+
   private static long reloadLengthFromDelegate(@NotNull VirtualFile file, @NotNull FileSystemInterface delegate) {
     final long len = delegate.getLength(file);
-    FSRecords.setLength(getFileId(file), len);
+    int fileId = getFileId(file);
+    setLength(fileId, len);
     return len;
+  }
+
+  private static void setLength(int fileId, long len) {
+    FSRecords.setLength(fileId, len);
+    setFlag(fileId, MUST_RELOAD_LENGTH, false);
   }
 
   @NotNull
@@ -641,9 +651,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (bytesLength == fileLength) {
         writeContent(file, new ByteArraySequence(bytes, 0, bytesLength), readOnly);
         setFlag(file, MUST_RELOAD_CONTENT, false);
+        setFlag(file, MUST_RELOAD_LENGTH, false);
       }
       else {
-        setFlag(file, MUST_RELOAD_CONTENT, true);
+        doCleanPersistedContent(getFileId(file));
       }
     }
   }
@@ -655,7 +666,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   // returns last recorded length or -1 if must reload from delegate
   private static long getLengthIfUpToDate(@NotNull VirtualFile file) {
     int fileId = getFileId(file);
-    return BitUtil.isSet(FSRecords.getFlags(fileId), MUST_RELOAD_CONTENT) ? -1 : FSRecords.getLength(fileId);
+    return BitUtil.isSet(FSRecords.getFlags(fileId), MUST_RELOAD_LENGTH) ? -1 : FSRecords.getLength(fileId);
   }
 
   @Override
@@ -1521,7 +1532,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     int fileId = getFileId(file);
-    FSRecords.setLength(fileId, newLength);
+    setLength(fileId, newLength);
     FSRecords.setTimestamp(fileId, newTimestamp);
 
     ((VirtualFileSystemEntry)file).setModificationStamp(newModificationStamp);
@@ -1581,6 +1592,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static void doCleanPersistedContent(int id) {
     setFlag(id, MUST_RELOAD_CONTENT, true);
+    setFlag(id, MUST_RELOAD_LENGTH, true);
   }
 
   @Override
