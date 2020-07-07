@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Unless stated otherwise, all paths are {@link SystemDependent @SystemDependent}.
@@ -158,12 +159,11 @@ public final class FileWatcher {
     return result != null ? result : Collections.emptyList();
   }
 
-  /**
-   * Clients should take care of not calling this method in parallel.
-   */
-  void setWatchRoots(@NotNull CanonicalPathMap pathMap) {
+  void setWatchRoots(@NotNull Supplier<CanonicalPathMap> pathMapSupplier) {
     Future<?> prevTask = myLastTask.getAndSet(myFileWatcherExecutor.submit(() -> {
       try {
+        CanonicalPathMap pathMap = pathMapSupplier.get();
+        if (pathMap == null) return;
         myPathMap = pathMap;
         myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
 

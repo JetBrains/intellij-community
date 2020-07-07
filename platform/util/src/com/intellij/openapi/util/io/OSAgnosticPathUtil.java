@@ -28,24 +28,30 @@ public final class OSAgnosticPathUtil {
     if (path1 == null) return -1;
     if (path2 == null) return 1;
 
-    int start = 0;
-    while (true) {
-      int next1 = separatorIndex(path1, start), next2 = separatorIndex(path2, start);
+    int length1 = path1.length();
+    int length2 = path2.length();
 
-      if (next1 != start || next2 != start) {
-        int end1 = next1 >= 0 ? next1 : path1.length(), end2 = next2 >= 0 ? next2 : path2.length(), minEnd = Math.min(end1, end2);
-        for (int i = start; i < minEnd; i++) {
-          int diff = StringUtil.compare(path1.charAt(i), path2.charAt(i), !SystemInfo.isFileSystemCaseSensitive);
-          if (diff != 0) return diff;
-        }
-        if (next1 != next2 || next1 < 0) {
-          int diff = end1 - end2;
-          return diff != 0 ? diff : path1.length() - path2.length();
-        }
+    for (int pos = 0; pos < length1 && pos < length2; pos++) {
+      char ch1 = path1.charAt(pos);
+      char ch2 = path2.charAt(pos);
+      if (ch1 == ch2) continue;
+      if (ch1 == '/') {
+        if (ch2 == '\\') continue;
+        return -1;
       }
-
-      start = next1 + 1;
+      else if (ch1 == '\\') {
+        if (ch2 == '/') continue;
+        return -1;
+      }
+      else if (ch2 == '/' || ch2 == '\\') {
+        return 1;
+      }
+      int diff = StringUtil.compare(ch1, ch2, !SystemInfo.isFileSystemCaseSensitive);
+      if (diff != 0) {
+        return diff;
+      }
     }
+    return Integer.compare(length1, length2);
   };
 
   /**
@@ -57,6 +63,40 @@ public final class OSAgnosticPathUtil {
     return path.length() > 2 && path.charAt(1) == ':' && isSlash(path.charAt(2)) && isDriveLetter(path.charAt(0)) ||
            path.length() > 1 && isSlash(path.charAt(0)) && path.charAt(1) == path.charAt(0) ||
            path.startsWith("/");
+  }
+
+
+  public static boolean startsWith(@NotNull String path, @NotNull String prefix) {
+    int pathLength = path.length(), prefixLength = prefix.length();
+    if (prefixLength == 0) return true;
+    if (prefixLength > pathLength) return false;
+    for (int pos = 0; pos < pathLength && pos < prefixLength; pos++) {
+      char ch1 = path.charAt(pos);
+      char ch2 = prefix.charAt(pos);
+      if (ch1 == ch2) continue;
+      if (ch1 == '/') {
+        if (ch2 == '\\') continue;
+        return false;
+      }
+      else if (ch1 == '\\') {
+        if (ch2 == '/') continue;
+        return false;
+      }
+      else if (ch2 == '/' || ch2 == '\\') {
+        return false;
+      }
+      if (StringUtil.compare(ch1, ch2, !SystemInfo.isFileSystemCaseSensitive) != 0) return false;
+    }
+    if (pathLength == prefixLength) {
+      return true;
+    }
+    char lastPrefixChar = prefix.charAt(prefixLength - 1);
+    int slashOrSeparatorIdx = prefixLength;
+    if (lastPrefixChar == '/' || lastPrefixChar == '\\') {
+      slashOrSeparatorIdx = prefixLength - 1;
+    }
+    char next = path.charAt(slashOrSeparatorIdx);
+    return next == '/' || next == '\\';
   }
 
   /**
@@ -99,13 +139,6 @@ public final class OSAgnosticPathUtil {
 
   public static boolean isDriveLetter(char c) {
     return 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z';
-  }
-
-  private static int separatorIndex(String s, int from) {
-    for (int i = from, l = s.length(); i < l; i++) {
-      if (isSlash(s.charAt(i))) return i;
-    }
-    return -1;
   }
 
   private static int lastSeparatorIndex(String s, int from) {

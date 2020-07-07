@@ -22,7 +22,7 @@ import static com.intellij.util.PathUtil.getParentPath;
  */
 final class CanonicalPathMap {
   static CanonicalPathMap empty() {
-    return new CanonicalPathMap(Collections.emptyNavigableSet(), Collections.emptyNavigableSet(), MultiMap.empty());
+    return new CanonicalPathMap(Collections.emptyNavigableSet(), Collections.emptyNavigableSet(), MultiMap.createConcurrentSet());
   }
 
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots;
@@ -34,8 +34,9 @@ final class CanonicalPathMap {
                    @NotNull MultiMap<String, String> initialPathMappings) {
     myOptimizedRecursiveWatchRoots = optimizedRecursiveWatchRoots;
     myOptimizedFlatWatchRoots = optimizedFlatWatchRoots;
-    myPathMappings = MultiMap.createConcurrentSet();
-    myPathMappings.putAllValues(initialPathMappings);
+    myPathMappings = initialPathMappings;
+    assert myPathMappings.getClass() == MultiMap.createConcurrentSet().getClass()
+      : "initialPathMappings must be created with MultiMap.createConcurrentSet()";
   }
 
   @NotNull Pair<List<String>, List<String>> getCanonicalWatchRoots() {
