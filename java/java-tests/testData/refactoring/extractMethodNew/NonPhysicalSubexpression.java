@@ -1,5 +1,5 @@
 class Test {
     void test(){
-        System.out.println(<selection>1 + 2</selection> + 3);
+        System.out.println(1 + <selection>2 + 3</selection>);
     }
 }

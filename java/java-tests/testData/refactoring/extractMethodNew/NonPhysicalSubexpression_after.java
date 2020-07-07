@@ -1,9 +1,9 @@
 class Test {
     void test(){
-        System.out.println(newMethod() + 3);
+        System.out.println(1 + newMethod());
     }
 
     private int newMethod() {
-        return 1 + 2;
+        return 2 + 3;
     }
 }
