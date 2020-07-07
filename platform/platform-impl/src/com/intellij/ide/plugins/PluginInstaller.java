@@ -314,8 +314,15 @@ public final class PluginInstaller {
         // TODO[yole] unload and check for restart
         pluginEnabler.disablePlugins(Collections.singleton(toDisable.get()));
       }
-      checkInstalledPluginDependencies(model, pluginDescriptor, parent,
-                                       ContainerUtil.map2Set(installedDependencies, (callbackData) -> callbackData.getPluginDescriptor().getPluginId()));
+
+      List<IdeaPluginDescriptor> installedPlugins = new ArrayList<>();
+      installedPlugins.add(pluginDescriptor);
+      for (PluginInstallCallbackData plugin : installedDependencies) {
+        installedPlugins.add(plugin.getPluginDescriptor());
+      }
+      checkInstalledPluginDependencies(model, pluginDescriptor, parent, ContainerUtil.map2Set(installedPlugins, (descriptor) -> descriptor.getPluginId()));
+      PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginEnabler, installedPlugins);
+
       callback.consume(new PluginInstallCallbackData(file, pluginDescriptor, !installWithoutRestart));
       for (PluginInstallCallbackData callbackData: installedDependencies) {
         if (!callbackData.getPluginDescriptor().getPluginId().equals(pluginDescriptor.getPluginId())) {
@@ -348,7 +355,6 @@ public final class PluginInstaller {
                                                        @Nullable Component parent,
                                                        Set<PluginId> installedDependencies) {
     final Set<PluginId> notInstalled = new HashSet<>();
-    final Set<PluginId> disabledIds = new HashSet<>();
     for (IdeaPluginDependency dep : pluginDescriptor.getDependencies()) {
       if (dep.isOptional()) continue;
       PluginId id = dep.getPluginId();
@@ -358,29 +364,12 @@ public final class PluginInstaller {
       if (!enabled && !disabled && !PluginManagerCore.isModuleDependency(id)) {
         notInstalled.add(id);
       }
-      else if (disabled) {
-        disabledIds.add(id);
-      }
     }
     if (!notInstalled.isEmpty()) {
       String deps = StringUtil.join(notInstalled, PluginId::toString, ", ");
       String message =
         IdeBundle.message("dialog.message.plugin.depends.on.unknown.plugin", pluginDescriptor.getName(), notInstalled.size(), deps);
       MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
-    }
-    if (!disabledIds.isEmpty()) {
-      final Set<IdeaPluginDescriptor> dependencies = new HashSet<>();
-      for (IdeaPluginDescriptor ideaPluginDescriptor : model.getAllPlugins()) {
-        if (disabledIds.contains(ideaPluginDescriptor.getPluginId())) {
-          dependencies.add(ideaPluginDescriptor);
-        }
-      }
-      String deps = StringUtil.join(dependencies, IdeaPluginDescriptor::getName, ", ");
-      String message = IdeBundle.message("dialog.message.plugin.depends.on.enable", pluginDescriptor.getName(), dependencies.size(), deps);
-      if (Messages.showOkCancelDialog(message, IdeBundle.message("dialog.title.install.plugin"), IdeBundle.message("button.install"),
-                                      CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) == Messages.OK) {
-        model.enableRows(dependencies.toArray(new IdeaPluginDescriptor[0]), Boolean.TRUE);
-      }
     }
   }
 

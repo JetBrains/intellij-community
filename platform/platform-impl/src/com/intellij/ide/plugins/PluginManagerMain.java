@@ -245,10 +245,10 @@ public abstract class PluginManagerMain {
     return descriptionSet.isEmpty();
   }
 
-  public static boolean suggestToEnableInstalledDependantPlugins(@NotNull PluginEnabler pluginEnabler, @NotNull List<PluginNode> list) {
+  public static boolean suggestToEnableInstalledDependantPlugins(@NotNull PluginEnabler pluginEnabler, @NotNull List<? extends IdeaPluginDescriptor> list) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
     Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
-    for (PluginNode node : list) {
+    for (IdeaPluginDescriptor node : list) {
       PluginId pluginId = node.getPluginId();
       if (pluginEnabler.isDisabled(pluginId)) {
         disabled.add(node);
