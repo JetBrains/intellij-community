@@ -10,6 +10,7 @@ import com.intellij.util.io.Ksuid
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.throwIfNotEmpty
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -65,7 +66,7 @@ class TemporaryDirectory : ExternalResource() {
     }
 
     paths.clear()
-    errors.throwIfNotEmpty()
+    throwIfNotEmpty(errors)
   }
 
   fun newPath(suffix: String? = null, refreshVfs: Boolean = false): Path {

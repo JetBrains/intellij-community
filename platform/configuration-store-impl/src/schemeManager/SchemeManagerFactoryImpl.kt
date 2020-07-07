@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.throwIfNotEmpty
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -98,7 +98,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.ope
         errors.add(e)
       }
     }
-    CompoundRuntimeException.throwIfNotEmpty(errors)
+    throwIfNotEmpty(errors)
   }
 
   @Suppress("unused")

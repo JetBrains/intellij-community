@@ -54,8 +54,8 @@ import com.intellij.ui.UiInterceptors
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
-import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.ref.GCUtil
+import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeTestFrameworkUtils
 import junit.framework.AssertionFailedError
@@ -246,7 +246,7 @@ fun tearDownProjectAndApp(project: Project) {
     }
   }
 
-  l.throwIfNotEmpty()
+  throwIfNotEmpty(l)
 }
 
 /**
@@ -304,7 +304,7 @@ fun disposeApplicationAndCheckForLeaks() {
     }
   }
 
-  CompoundRuntimeException.throwIfNotEmpty(l)
+  throwIfNotEmpty(l)
 }
 
 @ReviseWhenPortedToJDK("9")

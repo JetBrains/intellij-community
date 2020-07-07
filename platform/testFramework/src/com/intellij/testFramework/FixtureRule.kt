@@ -29,6 +29,7 @@ import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.throwIfNotEmpty
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -136,7 +137,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
       sharedProject = null
       sharedModule = null
     }
-    l.throwIfNotEmpty()
+    throwIfNotEmpty(l)
   }
 
   /**

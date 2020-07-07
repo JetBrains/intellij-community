@@ -14,9 +14,3 @@ inline fun MutableList<Throwable>.catchAndStoreExceptions(executor: () -> Unit) 
     add(e)
   }
 }
-
-fun List<Throwable>.throwIfNotEmpty() {
-  if (isNotEmpty()) {
-    throw if (size == 1) first() else CompoundRuntimeException(this)
-  }
-}
