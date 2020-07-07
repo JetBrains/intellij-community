@@ -30,7 +30,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +37,7 @@ import java.net.URI;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public class FileReference implements PsiFileReference, FileReferenceOwner, PsiPolyVariantReference,
@@ -129,7 +129,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       LOG.error("Recursion occurred for " + getClass() + " on " + getElement().getText());
       return ResolveResult.EMPTY_ARRAY;
     }
-    final Collection<ResolveResult> result = new THashSet<>();
+    Collection<ResolveResult> result = new LinkedHashSet<>();
     for (final PsiFileSystemItem context : contexts) {
       innerResolveInContext(referenceText, context, result, caseSensitive);
     }
