@@ -754,4 +754,53 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 2, notified = false, event = "project reload")
     }
   }
+
+  @Test
+  fun `test settings files modification partition`() {
+    simpleTest {
+      assertState(refresh = 1, notified = false, event = "register project without cache")
+
+      val settingsFile1 = createSettingsVirtualFile("settings1.groovy")
+      val settingsFile2 = createSettingsVirtualFile("settings2.groovy")
+      val settingsFile3 = createSettingsVirtualFile("settings3.groovy")
+      assertState(refresh = 1, notified = true, event = "settings files creation")
+
+      onceDuringRefresh {
+        assertFalse(it.hasUndefinedModifications)
+        assertEquals(pathsOf(), it.settingsFilesContext.updated)
+        assertEquals(pathsOf(settingsFile1, settingsFile2, settingsFile3), it.settingsFilesContext.created)
+        assertEquals(pathsOf(), it.settingsFilesContext.deleted)
+      }
+      refreshProject()
+      assertState(refresh = 2, notified = false, event = "project reload")
+
+      settingsFile1.delete()
+      settingsFile2.appendLine("println 'hello'")
+      settingsFile3.appendLine("")
+      assertState(refresh = 2, notified = true, event = "settings files modification")
+
+      onceDuringRefresh {
+        assertFalse(it.hasUndefinedModifications)
+        assertEquals(pathsOf(settingsFile2), it.settingsFilesContext.updated)
+        assertEquals(pathsOf(), it.settingsFilesContext.created)
+        assertEquals(pathsOf(settingsFile1), it.settingsFilesContext.deleted)
+      }
+      refreshProject()
+      assertState(refresh = 3, notified = false, event = "project reload")
+
+      settingsFile2.delete()
+      settingsFile3.delete()
+      markDirty()
+      assertState(refresh = 3, notified = true, event = "settings files deletion")
+
+      onceDuringRefresh {
+        assertTrue(it.hasUndefinedModifications)
+        assertEquals(pathsOf(), it.settingsFilesContext.updated)
+        assertEquals(pathsOf(), it.settingsFilesContext.created)
+        assertEquals(pathsOf(settingsFile2, settingsFile3), it.settingsFilesContext.deleted)
+      }
+      refreshProject()
+      assertState(refresh = 4, notified = false, event = "project reload")
+    }
+  }
 }

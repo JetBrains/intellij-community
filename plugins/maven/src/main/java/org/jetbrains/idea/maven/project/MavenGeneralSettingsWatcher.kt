@@ -29,7 +29,7 @@ class MavenGeneralSettingsWatcher private constructor(
 
   private fun fireSettingsChange() {
     embeddersManager.reset()
-    watcher.scheduleUpdateAll(true, false)
+    watcher.scheduleUpdateAll(true, true)
   }
 
   private fun fireSettingsXmlChange() {

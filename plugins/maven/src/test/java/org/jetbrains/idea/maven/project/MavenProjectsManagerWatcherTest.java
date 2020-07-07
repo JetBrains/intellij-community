@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,6 +16,9 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
@@ -22,6 +26,7 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
   private MavenProjectsManager myProjectsManager;
   private ProjectNotificationAware myNotificationAware;
   private ExternalSystemProjectTracker myProjectTracker;
+  private MavenProjectTreeTracker myProjectsTreeTracker;
 
   @Override
   protected void setUp() throws Exception {
@@ -29,8 +34,11 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
     myNotificationAware = ProjectNotificationAware.getInstance(myProject);
     myProjectTracker = ExternalSystemProjectTracker.getInstance(myProject);
-    myProjectsManager.initForTests();
-    myProjectsManager.enableAutoImportInTests();
+    myProjectsTreeTracker = new MavenProjectTreeTracker();
+
+    myProjectsManager.addProjectsTreeListener(myProjectsTreeTracker, getTestRootDisposable());
+
+    initProjectsManager(true);
 
     createProjectPom(createPomContent("test", "project"));
     addManagedFiles(myProjectPom);
@@ -80,6 +88,48 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     assertModules("project");
   }
 
+  public void testIncrementalAutoReload() {
+    assertRootProjects("project");
+    assertFalse(myNotificationAware.isNotificationVisible());
+
+    VirtualFile module1 = createModulePom("module1", createPomContent("test", "module1"));
+    VirtualFile module2 = createModulePom("module2", createPomContent("test", "module2"));
+
+    assertRootProjects("project");
+    assertFalse(myNotificationAware.isNotificationVisible());
+
+    addManagedFiles(module1);
+    addManagedFiles(module2);
+
+    assertRootProjects("project", "module1", "module2");
+    assertFalse(myNotificationAware.isNotificationVisible());
+
+    replaceDocumentString(module1, "test", "group.id");
+
+    myProjectsTreeTracker.reset();
+    scheduleProjectImportAndWait();
+    assertEquals(0, myProjectsTreeTracker.getProjectStatus("project").updateCounter);
+    assertEquals(1, myProjectsTreeTracker.getProjectStatus("module1").updateCounter);
+    assertEquals(0, myProjectsTreeTracker.getProjectStatus("module2").updateCounter);
+
+    replaceDocumentString(module2, "test", "group.id");
+
+    myProjectsTreeTracker.reset();
+    scheduleProjectImportAndWait();
+    assertEquals(0, myProjectsTreeTracker.getProjectStatus("project").updateCounter);
+    assertEquals(0, myProjectsTreeTracker.getProjectStatus("module1").updateCounter);
+    assertEquals(1, myProjectsTreeTracker.getProjectStatus("module2").updateCounter);
+
+    replaceDocumentString(module1, "group.id", "test");
+    replaceDocumentString(module2, "group.id", "test");
+
+    myProjectsTreeTracker.reset();
+    scheduleProjectImportAndWait();
+    assertEquals(0, myProjectsTreeTracker.getProjectStatus("project").updateCounter);
+    assertEquals(1, myProjectsTreeTracker.getProjectStatus("module1").updateCounter);
+    assertEquals(1, myProjectsTreeTracker.getProjectStatus("module2").updateCounter);
+  }
+
   private void scheduleProjectImportAndWait() {
     assertTrue(myNotificationAware.isNotificationVisible());
     myProjectTracker.scheduleProjectRefresh();
@@ -117,6 +167,37 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
       int endOffset = startOffset + oldString.length();
       document.replaceString(startOffset, endOffset, newString);
     });
+  }
+
+  static class MavenProjectTreeTracker implements MavenProjectsTree.Listener {
+    private final Map<String, MavenProjectStatus> projects = new HashMap<>();
+
+    public MavenProjectStatus getProjectStatus(String artifactId) {
+      return projects.computeIfAbsent(artifactId, __ -> new MavenProjectStatus());
+    }
+
+    public void reset() {
+      projects.clear();
+    }
+
+    @Override
+    public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
+      for (Pair<MavenProject, MavenProjectChanges> it : updated) {
+        String artifactId = it.first.getMavenId().getArtifactId();
+        MavenProjectStatus projectStatus = getProjectStatus(artifactId);
+        projectStatus.updateCounter++;
+      }
+      for (MavenProject mavenProject : deleted) {
+        String artifactId = mavenProject.getMavenId().getArtifactId();
+        MavenProjectStatus projectStatus = getProjectStatus(artifactId);
+        projectStatus.deleteCounter++;
+      }
+    }
+  }
+
+  static class MavenProjectStatus {
+    int updateCounter = 0;
+    int deleteCounter = 0;
   }
 }
 

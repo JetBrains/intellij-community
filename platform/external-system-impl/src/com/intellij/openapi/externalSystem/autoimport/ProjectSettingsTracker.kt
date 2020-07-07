@@ -37,11 +37,11 @@ class ProjectSettingsTracker(
 
   private val status = ProjectStatus(debugName = "Settings ${projectAware.projectId.readableName}")
 
-  private val settingsFilesCRC = AtomicReference(emptyMap<String, Long>())
+  private val settingsFilesStatus = AtomicReference(SettingsFilesStatus())
 
   private val applyChangesOperation = AnonymousParallelOperationTrace(debugName = "Apply changes operation")
 
-  private fun collectSettingsFiles() = projectAware.settingsFiles + settingsFilesCRC.get().keys
+  private fun collectSettingsFiles() = projectAware.settingsFiles + settingsFilesStatus.get().oldCRC.keys
 
   private fun calculateSettingsFilesCRC(): Map<String, Long> {
     val localFileSystem = LocalFileSystem.getInstance()
@@ -62,10 +62,17 @@ class ProjectSettingsTracker(
 
   fun getModificationType() = status.getModificationType()
 
-  private fun hasChanges(newSettingsFilesCRC: Map<String, Long>): Boolean {
-    val oldSettingsFilesCRC = settingsFilesCRC.get()
-    if (newSettingsFilesCRC.size != oldSettingsFilesCRC.size) return true
-    return newSettingsFilesCRC.any { it.value != oldSettingsFilesCRC[it.key] }
+  fun getSettingsContext(): ExternalSystemSettingsFilesReloadContext = settingsFilesStatus.get()
+
+  private fun createSettingsFilesStatus(
+    oldSettingsFilesCRC: Map<String, Long>,
+    newSettingsFilesCRC: Map<String, Long>
+  ): SettingsFilesStatus {
+    val updatedFiles = oldSettingsFilesCRC.keys.intersect(newSettingsFilesCRC.keys)
+      .filterTo(HashSet()) { oldSettingsFilesCRC[it] != newSettingsFilesCRC[it] }
+    val createdFiles = newSettingsFilesCRC.keys.minus(oldSettingsFilesCRC.keys)
+    val deletedFiles = oldSettingsFilesCRC.keys.minus(newSettingsFilesCRC.keys)
+    return SettingsFilesStatus(oldSettingsFilesCRC, newSettingsFilesCRC, updatedFiles, createdFiles, deletedFiles)
   }
 
   /**
@@ -77,7 +84,7 @@ class ProjectSettingsTracker(
     applyChangesOperation.startTask()
     submitSettingsFilesRefresh {
       submitSettingsFilesCRCCalculation { newSettingsFilesCRC ->
-        settingsFilesCRC.set(newSettingsFilesCRC)
+        settingsFilesStatus.set(SettingsFilesStatus(newSettingsFilesCRC))
         status.markSynchronized(currentTime())
         applyChangesOperation.finishTask()
       }
@@ -92,8 +99,10 @@ class ProjectSettingsTracker(
     applyChangesOperation.startTask()
     submitSettingsFilesRefresh {
       submitSettingsFilesCRCCalculation { newSettingsFilesCRC ->
-        settingsFilesCRC.updateAndGet { newSettingsFilesCRC + it }
-        if (!hasChanges(newSettingsFilesCRC)) {
+        val settingsFilesStatus = settingsFilesStatus.updateAndGet {
+          createSettingsFilesStatus(newSettingsFilesCRC + it.oldCRC, newSettingsFilesCRC)
+        }
+        if (!settingsFilesStatus.hasChanges()) {
           status.markSynchronized(currentTime())
         }
         applyChangesOperation.finishTask()
@@ -104,7 +113,10 @@ class ProjectSettingsTracker(
   fun refreshChanges() {
     submitSettingsFilesRefresh {
       submitSettingsFilesCRCCalculation { newSettingsFilesCRC ->
-        when (hasChanges(newSettingsFilesCRC)) {
+        val settingsFilesStatus = settingsFilesStatus.updateAndGet {
+          createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
+        }
+        when (settingsFilesStatus.hasChanges()) {
           true -> status.markDirty(currentTime(), EXTERNAL)
           else -> status.markReverted(currentTime())
         }
@@ -113,11 +125,11 @@ class ProjectSettingsTracker(
     }
   }
 
-  fun getState() = State(status.isDirty(), settingsFilesCRC.get().toMap())
+  fun getState() = State(status.isDirty(), settingsFilesStatus.get().oldCRC.toMap())
 
   fun loadState(state: State) {
     if (state.isDirty) status.markDirty(currentTime(), EXTERNAL)
-    settingsFilesCRC.set(state.settingsFiles.toMap())
+    settingsFilesStatus.set(SettingsFilesStatus(state.settingsFiles.toMap()))
   }
 
   private fun isAsyncAllowed() = projectTracker.isAsyncChangesProcessing
@@ -191,6 +203,18 @@ class ProjectSettingsTracker(
 
   data class State(var isDirty: Boolean = true, var settingsFiles: Map<String, Long> = emptyMap())
 
+  private data class SettingsFilesStatus(
+    val oldCRC: Map<String, Long> = emptyMap(),
+    val newCRC: Map<String, Long> = emptyMap(),
+    override val updated: Set<String> = emptySet(),
+    override val created: Set<String> = emptySet(),
+    override val deleted: Set<String> = emptySet()
+  ) : ExternalSystemSettingsFilesReloadContext {
+    constructor(CRC: Map<String, Long>) : this(oldCRC = CRC)
+
+    fun hasChanges() = updated.isNotEmpty() || created.isNotEmpty() || deleted.isNotEmpty()
+  }
+
   private inner class ProjectSettingsListener : FilesChangesListener {
     private var hasRelevantChanges = false
 
@@ -212,7 +236,10 @@ class ProjectSettingsTracker(
     override fun apply() {
       if (hasRelevantChanges) {
         submitSettingsFilesCRCCalculation { newSettingsFilesCRC ->
-          if (!hasChanges(newSettingsFilesCRC)) {
+          val settingsFilesStatus = settingsFilesStatus.updateAndGet {
+            createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
+          }
+          if (!settingsFilesStatus.hasChanges()) {
             status.markReverted(currentTime())
           }
           projectTracker.scheduleChangeProcessing()

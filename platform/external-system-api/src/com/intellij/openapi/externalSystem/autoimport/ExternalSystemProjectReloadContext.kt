@@ -12,4 +12,17 @@ interface ExternalSystemProjectReloadContext {
    * Expected, project will be reloaded explicitly if this parameter is `true`
    */
   val isExplicitReload: Boolean
+
+  /**
+   * Project has undefined modification
+   *
+   * Expected, project will fully reloaded uf this parameter is `true`
+   */
+  val hasUndefinedModifications: Boolean
+
+  /**
+   * Reload context that describes modifications in settings files
+   * @see [ExternalSystemProjectAware.settingsFiles] for details
+   */
+  val settingsFilesContext: ExternalSystemSettingsFilesReloadContext
 }

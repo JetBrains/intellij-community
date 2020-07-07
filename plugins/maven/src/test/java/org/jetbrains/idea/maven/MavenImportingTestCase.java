@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,6 +92,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       actualNames.add(m.getName());
     }
 
+    assertUnorderedElementsAreEqual(actualNames, expectedNames);
+  }
+
+  protected void assertRootProjects(String... expectedNames) {
+    List<MavenProject> rootProjects = myProjectsTree.getRootProjects();
+    List<String> actualNames = ContainerUtil.map(rootProjects, it -> it.getMavenId().getArtifactId());
     assertUnorderedElementsAreEqual(actualNames, expectedNames);
   }
 
