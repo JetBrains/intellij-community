@@ -13,6 +13,8 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
+import org.jetbrains.plugins.github.util.GHGitRepositoryMapping;
+import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates;
 
 /**
  * @author Aleksey Pivovarov
@@ -27,11 +29,10 @@ public class GithubCreatePullRequestAction extends AbstractAuthenticatingGithubU
   @Override
   public void actionPerformed(@NotNull AnActionEvent e,
                               @NotNull Project project,
-                              @NotNull GitRepository repository,
-                              @NotNull GitRemote remote,
-                              @NotNull String remoteUrl,
+                              @NotNull GHGitRepositoryMapping repository,
                               @NotNull GithubAccount account) {
-    createPullRequest(project, repository, remote, remoteUrl, account);
+    GitRemoteUrlCoordinates remoteCoordinates = repository.getRemote();
+    createPullRequest(project, remoteCoordinates.getRepository(), remoteCoordinates.getRemote(), remoteCoordinates.getUrl(), account);
   }
 
   static void createPullRequest(@NotNull Project project,

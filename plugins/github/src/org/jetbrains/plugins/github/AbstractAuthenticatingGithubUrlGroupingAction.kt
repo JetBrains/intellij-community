@@ -5,13 +5,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import git4idea.DialogManager
-import git4idea.repo.GitRemote
-import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -24,33 +23,30 @@ abstract class AbstractAuthenticatingGithubUrlGroupingAction(dynamicText: Suppli
                                                              icon: Icon?)
   : AbstractGithubUrlGroupingAction(dynamicText, dynamicDescription, icon) {
 
-  override fun actionPerformed(e: AnActionEvent, project: Project, repository: GitRepository, remote: GitRemote, remoteUrl: String) {
+  override fun actionPerformed(e: AnActionEvent, project: Project, repository: GHGitRepositoryMapping) {
     if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
-    val account = getAccount(project, remoteUrl) ?: return
-    actionPerformed(e, project, repository, remote, remoteUrl, account)
+    val account = getAccount(project, repository) ?: return
+    actionPerformed(e, project, repository, account)
   }
 
-  private fun getAccount(project: Project, remoteUrl: String): GithubAccount? {
+  private fun getAccount(project: Project, repository: GHGitRepositoryMapping): GithubAccount? {
     val authenticationManager = service<GithubAuthenticationManager>()
-    val accounts = authenticationManager.getAccounts().filter { it.server.matches(remoteUrl) }
-    //only possible when remote is on github.com
+    val accounts = authenticationManager.getAccounts().filter { it.server == repository.repository.serverPath }
     if (accounts.isEmpty()) {
-      if (!GithubServerPath.DEFAULT_SERVER.matches(remoteUrl))
-        throw IllegalArgumentException("Remote $remoteUrl does not match ${GithubServerPath.DEFAULT_SERVER}")
-      return authenticationManager.requestNewAccountForServer(GithubServerPath.DEFAULT_SERVER, project)
+      return authenticationManager.requestNewAccountForServer(repository.repository.serverPath, project)
     }
 
     return accounts.singleOrNull()
            ?: accounts.find { it == authenticationManager.getDefaultAccount(project) }
-           ?: chooseAccount(project, authenticationManager, remoteUrl, accounts)
+           ?: chooseAccount(project, authenticationManager, repository.repository.serverPath, accounts)
   }
 
   private fun chooseAccount(project: Project, authenticationManager: GithubAuthenticationManager,
-                            remoteUrl: String, accounts: List<GithubAccount>): GithubAccount? {
+                            server: GithubServerPath, accounts: List<GithubAccount>): GithubAccount? {
     val dialog = GithubChooseAccountDialog(project,
                                            null,
                                            accounts,
-                                           GithubBundle.message("account.choose.for", remoteUrl),
+                                           GithubBundle.message("account.choose.for", server),
                                            false,
                                            true)
     DialogManager.show(dialog)
@@ -62,8 +58,6 @@ abstract class AbstractAuthenticatingGithubUrlGroupingAction(dynamicText: Suppli
 
   protected abstract fun actionPerformed(e: AnActionEvent,
                                          project: Project,
-                                         repository: GitRepository,
-                                         remote: GitRemote,
-                                         remoteUrl: String,
+                                         repository: GHGitRepositoryMapping,
                                          account: GithubAccount)
 }

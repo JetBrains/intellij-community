@@ -13,9 +13,9 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
-import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -38,7 +38,8 @@ import javax.swing.JPanel
 import kotlin.properties.Delegates
 
 internal class GHPRToolWindowTabComponentFactory(private val project: Project,
-                                                 private val remoteUrl: GitRemoteUrlCoordinates,
+                                                 private val repository: GHRepositoryCoordinates,
+                                                 private val remote: GitRemoteUrlCoordinates,
                                                  private val parentDisposable: Disposable) {
   private val dataContextRepository = GHPRDataContextRepository.getInstance(project)
 
@@ -75,7 +76,7 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
     private fun update() {
       val authManager = GithubAuthenticationManager.getInstance()
       if (selectedAccount == null) {
-        val accounts = authManager.getAccounts().filter { it.server.matches(remoteUrl.url) }
+        val accounts = authManager.getAccounts().filter { it.server == repository.serverPath }
 
         if (accounts.size == 1) {
           selectedAccount = accounts.single()
@@ -126,14 +127,7 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
     }
 
     private fun requestNewAccount() {
-      //TODO: parse remoteUrl
-      if (GithubServerPath.DEFAULT_SERVER.matches(remoteUrl.url)) {
-        GithubAuthenticationManager.getInstance().requestNewAccountForServer(GithubServerPath.DEFAULT_SERVER, project)
-      }
-      else {
-        //impossible scenario really
-        GithubAuthenticationManager.getInstance().requestNewAccount(project)
-      }
+      GithubAuthenticationManager.getInstance().requestNewAccountForServer(repository.serverPath, project)
       update()
       GithubUIUtil.focusPanel(panel)
     }
@@ -205,18 +199,18 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
       val uiDisposable = Disposer.newDisposable()
       Disposer.register(disposable, Disposable {
         Disposer.dispose(uiDisposable)
-        dataContextRepository.clearContext(remoteUrl)
+        dataContextRepository.clearContext(repository)
       })
 
       val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(uiDisposable).apply {
-        future = dataContextRepository.acquireContext(remoteUrl, account, requestExecutor)
+        future = dataContextRepository.acquireContext(repository, remote, account, requestExecutor)
       }
 
       return GHLoadingPanelFactory(loadingModel, null, GithubBundle.message("cannot.load.data.from.github"),
                                    GHLoadingErrorHandlerImpl(project, account) {
                                      val contextRepository = dataContextRepository
-                                     contextRepository.clearContext(remoteUrl)
-                                     loadingModel.future = contextRepository.acquireContext(remoteUrl, account, requestExecutor)
+                                     contextRepository.clearContext(repository)
+                                     loadingModel.future = contextRepository.acquireContext(repository, remote, account, requestExecutor)
                                    }).create { parent, result ->
         val wrapper = Wrapper()
         ComponentController(result, wrapper, disposable).also {

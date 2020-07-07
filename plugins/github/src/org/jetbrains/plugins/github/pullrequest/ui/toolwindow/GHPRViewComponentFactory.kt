@@ -138,7 +138,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }.apply {
       setDataProvider { dataId ->
         when {
-          GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> dataContext.gitRepositoryCoordinates.repository
+          GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> dataContext.gitRemoteCoordinates.repository
           GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> this@GHPRViewComponentFactory.dataProvider
           GHPRChangesDiffHelper.DATA_KEY.`is`(dataId) -> diffHelper
           else -> null

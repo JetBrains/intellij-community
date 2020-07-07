@@ -11,6 +11,7 @@ import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentFactory
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
@@ -21,8 +22,8 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
 
   private val tabDisposalEventDispatcher = EventDispatcher.create(TabDisposalListener::class.java)
 
-  val currentTabs: Set<GitRemoteUrlCoordinates>
-    get() = contentManager.contents.mapNotNull { it.remoteUrl }.toSet()
+  val currentTabs: Set<GHRepositoryCoordinates>
+    get() = contentManager.contents.mapNotNull { it.repository }.toSet()
 
   init {
     contentManager.addContentManagerListener(ContentInitializer())
@@ -35,7 +36,9 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
       val content = event.content
       if (content.getUserData(INIT_DONE_KEY) != null) return
 
-      content.component = GHPRToolWindowTabComponentFactory(project, content.remoteUrl ?: return,
+      content.component = GHPRToolWindowTabComponentFactory(project,
+                                                            content.repository ?: return,
+                                                            content.remote ?: return,
                                                             content.disposer ?: return).createComponent()
       IJSwingUtilities.updateComponentTreeUI(content.component)
       content.putUserData(INIT_DONE_KEY, Any())
@@ -43,49 +46,51 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
   }
 
   @CalledInAwt
-  internal fun addTab(remoteUrl: GitRemoteUrlCoordinates) {
-    val content = createContent(remoteUrl)
+  internal fun addTab(repository: GHRepositoryCoordinates, remote: GitRemoteUrlCoordinates) {
+    val content = createContent(repository, remote)
     contentManager.addContent(content)
     updateTabNames()
   }
 
   @CalledInAwt
-  internal fun removeTab(remoteUrl: GitRemoteUrlCoordinates) {
-    val content = contentManager.contents.firstOrNull { it.remoteUrl == remoteUrl } ?: return
+  internal fun removeTab(repository: GHRepositoryCoordinates) {
+    val content = contentManager.contents.firstOrNull { it.repository == repository } ?: return
     contentManager.removeContent(content, true)
   }
 
   @CalledInAwt
-  internal fun focusTab(remoteUrl: GitRemoteUrlCoordinates, onFocused: ((GHPRToolWindowTabComponentController?) -> Unit)? = null) {
-    val content = contentManager.contents.firstOrNull { it.remoteUrl == remoteUrl } ?: return
+  internal fun focusTab(repository: GHRepositoryCoordinates, onFocused: ((GHPRToolWindowTabComponentController?) -> Unit)? = null) {
+    val content = contentManager.contents.firstOrNull { it.repository == repository } ?: return
     contentManager.setSelectedContent(content, true)
 
     val controller = UIUtil.getClientProperty(content.component, GHPRToolWindowTabComponentController.KEY)
     onFocused?.invoke(controller)
   }
 
-  private fun createContent(remoteUrl: GitRemoteUrlCoordinates): Content {
+  private fun createContent(repository: GHRepositoryCoordinates,
+                            remote: GitRemoteUrlCoordinates): Content {
     val disposable = Disposer.newDisposable()
     Disposer.register(disposable, Disposable {
       updateTabNames()
-      tabDisposalEventDispatcher.multicaster.tabDisposed(remoteUrl)
+      tabDisposalEventDispatcher.multicaster.tabDisposed(repository)
     })
 
-    val content = ContentFactory.SERVICE.getInstance().createContent(JPanel(null), remoteUrl.remote.name, false)
+    val content = ContentFactory.SERVICE.getInstance().createContent(JPanel(null), remote.remote.name, false)
     content.isCloseable = true
-    content.description = remoteUrl.url
-    content.remoteUrl = remoteUrl
+    content.description = remote.url
+    content.repository = repository
+    content.remote = remote
     content.setDisposer(disposable)
     return content
   }
 
   private fun updateTabNames() {
-    val contents = contentManager.contents.filter { it.remoteUrl != null }
+    val contents = contentManager.contents.filter { it.remote != null }
 
     // prefix with root name if there are duplicate remote names
-    val prefixRoot = contents.map { it.remoteUrl!!.remote }.groupBy { it.name }.values.any { it.size > 1 }
+    val prefixRoot = contents.map { it.remote!!.remote }.groupBy { it.name }.values.any { it.size > 1 }
     for (content in contents) {
-      val remoteUrl = content.remoteUrl!!
+      val remoteUrl = content.remote!!
       if (prefixRoot) {
         val shortRootName = VcsImplUtil.getShortVcsRootName(project, remoteUrl.repository.root)
         content.displayName = "$shortRootName/${remoteUrl.remote.name}"
@@ -100,18 +105,25 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
 
   fun removeTabDisposalEventListener(listener: TabDisposalListener) = tabDisposalEventDispatcher.removeListener(listener)
 
-  private var Content.remoteUrl
-    get() = getUserData(REMOTE_URL)
+  private var Content.repository
+    get() = getUserData(REPOSITORY)
     set(value) {
-      putUserData(REMOTE_URL, value)
+      putUserData(REPOSITORY, value)
+    }
+
+  private var Content.remote
+    get() = getUserData(REMOTE)
+    set(value) {
+      putUserData(REMOTE, value)
     }
 
   interface TabDisposalListener : EventListener {
-    fun tabDisposed(remoteUrl: GitRemoteUrlCoordinates)
+    fun tabDisposed(repository: GHRepositoryCoordinates)
   }
 
   companion object {
     private val INIT_DONE_KEY = Key<Any>("GHPR_CONTENT_INIT_DONE")
-    private val REMOTE_URL = Key<GitRemoteUrlCoordinates>("GHPR_REMOTE_URL")
+    private val REPOSITORY = Key<GHRepositoryCoordinates>("GHPR_REPOSITORY")
+    private val REMOTE = Key<GitRemoteUrlCoordinates>("GHPR_REMOTE")
   }
 }

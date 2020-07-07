@@ -6,8 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import git4idea.repo.GitRemote
-import git4idea.repo.GitRepository
+import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubUrlUtil
 import java.util.function.Supplier
@@ -34,13 +33,13 @@ abstract class AbstractGithubUrlGroupingAction(dynamicText: Supplier<String?>, d
   final override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.getData(CommonDataKeys.PROJECT) ?: return AnAction.EMPTY_ARRAY
 
-    val coordinates = service<GithubGitHelper>().getPossibleRemoteUrlCoordinates(project)
+    val coordinates = service<GithubGitHelper>().getPossibleRepositories(project)
 
     return if (coordinates.size > 1) {
       coordinates.map {
-        object : DumbAwareAction(it.remote.name + ": " + GithubUrlUtil.removeProtocolPrefix(it.url)) {
+        object : DumbAwareAction(it.remote.remote.name + ": " + GithubUrlUtil.removeProtocolPrefix(it.remote.url)) {
           override fun actionPerformed(e: AnActionEvent) {
-            actionPerformed(e, project, it.repository, it.remote, it.url)
+            actionPerformed(e, project, it)
           }
         }
       }.toTypedArray()
@@ -51,16 +50,15 @@ abstract class AbstractGithubUrlGroupingAction(dynamicText: Supplier<String?>, d
   final override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
 
-    val coordinates = service<GithubGitHelper>().getPossibleRemoteUrlCoordinates(project)
-    coordinates.singleOrNull()?.let { actionPerformed(e, project, it.repository, it.remote, it.url) }
+    service<GithubGitHelper>().getPossibleRepositories(project).singleOrNull()?.let { actionPerformed(e, project, it) }
   }
 
-  abstract fun actionPerformed(e: AnActionEvent, project: Project, repository: GitRepository, remote: GitRemote, remoteUrl: String)
+  abstract fun actionPerformed(e: AnActionEvent, project: Project, repository: GHGitRepositoryMapping)
 
   final override fun canBePerformed(context: DataContext): Boolean {
     val project = context.getData(CommonDataKeys.PROJECT) ?: return false
 
-    val coordinates = service<GithubGitHelper>().getPossibleRemoteUrlCoordinates(project)
+    val coordinates = service<GithubGitHelper>().getPossibleRepositories(project)
     return coordinates.size == 1
   }
 
