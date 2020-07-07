@@ -17,6 +17,7 @@ package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -124,6 +125,9 @@ public class ProgressSuspender implements AutoCloseable {
     }
 
     myPublisher.suspendedStatusChanged(this);
+
+    // Give running NonBlockingReadActions a chance to suspend
+    ApplicationManager.getApplication().invokeLater(() -> { WriteAction.run(() -> {}); });
   }
 
   public void resumeProcess() {
