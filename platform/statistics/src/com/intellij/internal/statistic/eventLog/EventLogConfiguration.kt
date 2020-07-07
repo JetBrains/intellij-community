@@ -91,5 +91,6 @@ object EventLogConfiguration {
 
   fun getEventLogDataPath(): Path = Paths.get(PathManager.getSystemPath()).resolve("event-log-data")
 
+  @JvmStatic
   fun getEventLogSettingsPath(): Path = getEventLogDataPath().resolve("settings")
 }
