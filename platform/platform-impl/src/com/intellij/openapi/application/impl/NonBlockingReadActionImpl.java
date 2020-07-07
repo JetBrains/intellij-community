@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -452,10 +451,6 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
             throw new IllegalStateException("Constraint " + unsatisfiedConstraint + " cannot be satisfied");
           }
         } else {
-          if (myProgressIndicator != null) {
-            // Give ProgressSuspender a chance to suspend now, it can't do it under a read-action
-            ProgressSuspender.freezeIfNeeded(myProgressIndicator);
-          }
           success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(runnable, indicator);
         }
         return success && unsatisfiedConstraint.isNull();
