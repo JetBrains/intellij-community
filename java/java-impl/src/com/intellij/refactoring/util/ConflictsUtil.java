@@ -5,6 +5,7 @@ package com.intellij.refactoring.util;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.MethodSignature;
@@ -57,7 +58,8 @@ public final class ConflictsUtil {
       }
     }
 
-    if (method != null && method != refactoredMethod && !isStaticInterfaceMethods(aClass, refactoredMethod, method)) {
+    if (method != null && method != refactoredMethod && !isStaticInterfaceMethods(aClass, refactoredMethod, method)
+        && (!(method instanceof LightRecordCanonicalConstructor) || !(refactoredMethod instanceof LightRecordCanonicalConstructor))) {
       if (aClass.equals(method.getContainingClass())) {
         final String classDescr = aClass instanceof PsiAnonymousClass ?
                                   JavaRefactoringBundle.message("current.class") :
