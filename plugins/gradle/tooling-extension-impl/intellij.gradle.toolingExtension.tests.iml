@@ -15,12 +15,25 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module-library" scope="TEST">
+      <library name="io.github.classgraph:classgraph:4.8.87" type="repository">
+        <properties maven-id="io.github.classgraph:classgraph:4.8.87" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.87/classgraph-4.8.87.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
       <library name="org.jeasy:easy-random-core:4.2.0" type="repository">
-        <properties maven-id="org.jeasy:easy-random-core:4.2.0" />
+        <properties maven-id="org.jeasy:easy-random-core:4.2.0">
+          <exclude>
+            <dependency maven-id="io.github.classgraph:classgraph" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jeasy/easy-random-core/4.2.0/easy-random-core-4.2.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.1/objenesis-3.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.65/classgraph-4.8.65.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
