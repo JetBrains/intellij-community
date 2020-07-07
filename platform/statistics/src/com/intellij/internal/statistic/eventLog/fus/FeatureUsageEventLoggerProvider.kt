@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import java.util.concurrent.TimeUnit
 
-internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProvider("FUS", 50, sendFrequencyMs = TimeUnit.MINUTES.toMillis(15)) {
+internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProvider("FUS", 52, sendFrequencyMs = TimeUnit.MINUTES.toMillis(15)) {
   override fun isRecordEnabled(): Boolean {
     return !ApplicationManager.getApplication().isHeadlessEnvironment &&
            StatisticsUploadAssistant.isCollectAllowed()
