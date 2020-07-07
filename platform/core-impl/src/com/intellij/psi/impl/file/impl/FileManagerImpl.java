@@ -172,7 +172,7 @@ public final class FileManagerImpl implements FileManager {
     ApplicationManager.getApplication().runWriteAction(this::clearViewProviders);
 
     myVFileToPsiDirMap.set(null);
-    ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
+    myManager.dropPsiCaches();
   }
 
   @Override

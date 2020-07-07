@@ -70,7 +70,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ThreeState;
@@ -358,13 +357,13 @@ public final class DaemonListeners implements Disposable {
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
+        PsiManager.getInstance(myProject).dropPsiCaches();
         stopDaemonAndRestartAllFiles("Plugin installed");
       }
 
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
+        PsiManager.getInstance(myProject).dropPsiCaches();
         stopDaemon(false, "Plugin will be uninstalled");
         removeHighlightersOnPluginUnload(pluginDescriptor);
         myDaemonCodeAnalyzer.clearProgressIndicator();
@@ -381,7 +380,7 @@ public final class DaemonListeners implements Disposable {
         PsiFile file = root.getContainingFile();
         if (file != null) {
           // force clearing all PSI caches, including those in WholeFileInspectionFactory
-          ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
+          PsiManager.getInstance(myProject).dropPsiCaches();
         }
       }));
   }

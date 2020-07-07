@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,11 +20,11 @@ import java.util.List;
  * @author peter
  */
 public abstract class SdkHomeSettings implements PersistentStateComponentWithModificationTracker<SdkHomeBean> {
-  private final PsiModificationTrackerImpl myTracker;
+  private final PsiManager myManager;
   private SdkHomeBean mySdkHome = null;
 
   protected SdkHomeSettings(@NotNull Project project) {
-    myTracker = (PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker();
+    myManager = PsiManager.getInstance(project);
   }
 
   @Override
@@ -45,7 +44,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponentWithMod
     mySdkHome = state;
     // do not increment on a first load
     if (oldState != null && !StringUtil.equals(oldState.getSdkHome(), state.getSdkHome())) {
-      myTracker.incCounter();
+      myManager.dropPsiCaches();
     }
   }
 

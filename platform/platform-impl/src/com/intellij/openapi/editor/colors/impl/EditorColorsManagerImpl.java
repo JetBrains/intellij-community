@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
@@ -41,7 +40,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.ObjectUtils;
@@ -315,9 +313,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public void schemeChangedOrSwitched(@Nullable EditorColorsScheme newScheme) {
     // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      DaemonCodeAnalyzer.getInstance(project).restart();
-      // force highlighting caches to rebuild
-      ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+      PsiManager.getInstance(project).dropPsiCaches();
     }
 
     // we need to push events to components that use editor font, e.g. HTML editor panes

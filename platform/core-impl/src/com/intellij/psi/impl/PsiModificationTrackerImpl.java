@@ -52,7 +52,16 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
     ApplicationManager.getApplication().runWriteAction(() -> incCounter());
   }
 
+  /**
+   * @deprecated use higher-level ways of dropping caches
+   * @see com.intellij.util.FileContentUtilCore#reparseFiles
+   * @see PsiManager#dropPsiCaches()
+   */
+  @ApiStatus.Internal
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void incCounter() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     incCountersInner();
   }
 
