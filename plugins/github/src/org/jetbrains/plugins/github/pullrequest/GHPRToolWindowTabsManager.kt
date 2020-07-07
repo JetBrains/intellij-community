@@ -1,34 +1,26 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.wm.ToolWindowManager
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryChangeListener
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener
-import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.util.CollectionDelta
-import org.jetbrains.plugins.github.util.GithubGitHelper
+import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import kotlin.properties.Delegates.observable
 
 @Service
-internal class GHPRToolWindowTabsManager(private val project: Project) {
-  private val gitHelper = GithubGitHelper.getInstance()
+internal class GHPRToolWindowTabsManager(private val project: Project) : Disposable {
+  private val repositoryManager = project.service<GHProjectRepositoriesManager>()
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
 
   private val tabDisposalListener = object : GHPRToolWindowTabsContentManager.TabDisposalListener {
@@ -37,7 +29,7 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
 
     override fun tabDisposed(repository: GHRepositoryCoordinates) {
       if (!muted) {
-        if (gitHelper.getPossibleRepositories(project).any { it.repository == repository }) settings.addHiddenUrl(repository.toUrl())
+        if (repositoryManager.knownRepositories.any { it.repository == repository }) settings.addHiddenUrl(repository.toUrl())
         updateTabs()
       }
     }
@@ -49,6 +41,12 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
       newManager?.addTabDisposalEventListener(tabDisposalListener)
       updateTabs()
     }
+
+  init {
+    repositoryManager.addRepositoryListChangedListener(this) {
+      updateTabs()
+    }
+  }
 
   @CalledInAwt
   fun isAvailable(): Boolean = getRepositories().isNotEmpty()
@@ -80,26 +78,8 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
     }
   }
 
-  private fun getRepositories() = gitHelper.getPossibleRepositories(project).filter {
+  private fun getRepositories() = repositoryManager.knownRepositories.filter {
     !settings.getHiddenUrls().contains(it.repository.toUrl())
-  }.toSet()
-
-  class RemoteUrlsListener(private val project: Project)
-    : VcsRepositoryMappingListener, GitRepositoryChangeListener {
-
-    override fun mappingChanged() = runInEdt(project) { updateRemotes(project) }
-    override fun repositoryChanged(repository: GitRepository) = runInEdt(project) { updateRemotes(project) }
-  }
-
-  class AccountsListener : AccountRemovedListener, AccountTokenChangedListener {
-    override fun accountRemoved(removedAccount: GithubAccount) = updateRemotes()
-    override fun tokenChanged(account: GithubAccount) = updateRemotes()
-
-    private fun updateRemotes() = runInEdt {
-      for (project in ProjectManager.getInstance().openProjects) {
-        updateRemotes(project)
-      }
-    }
   }
 
   class BeforePluginUnloadListener(private val project: Project) : DynamicPluginListener {
@@ -115,16 +95,11 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
   }
 
   companion object {
-    private inline fun runInEdt(project: Project, crossinline runnable: () -> Unit) {
-      val application = ApplicationManager.getApplication()
-      if (application.isDispatchThread) runnable()
-      else application.invokeLater({ runnable() }) { project.isDisposed }
-    }
-
-    private fun updateRemotes(project: Project) = project.service<GHPRToolWindowTabsManager>().updateTabs()
-
     private fun muteTabDisposalListener(project: Project) {
       project.service<GHPRToolWindowTabsManager>().tabDisposalListener.muted = true
     }
+  }
+
+  override fun dispose() {
   }
 }

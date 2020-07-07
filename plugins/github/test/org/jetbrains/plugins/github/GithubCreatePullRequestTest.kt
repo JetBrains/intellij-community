@@ -13,6 +13,7 @@ import git4idea.test.git
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.test.GithubGitRepoTest
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog
+import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubSettings
 
 class GithubCreatePullRequestTest : GithubGitRepoTest() {
@@ -41,7 +42,7 @@ class GithubCreatePullRequestTest : GithubGitRepoTest() {
     createChanges()
     repository.update()
 
-    val coordinatesSet = gitHelper.getPossibleRepositories(myProject)
+    val coordinatesSet = myProject.service<GHProjectRepositoriesManager>().knownRepositories
     assertSize(1, coordinatesSet)
     val coordinates = coordinatesSet.first().remote
 
@@ -63,7 +64,7 @@ class GithubCreatePullRequestTest : GithubGitRepoTest() {
     cloneRepo(fork)
     createChanges()
 
-    val coordinatesSet = gitHelper.getPossibleRepositories(myProject)
+    val coordinatesSet = myProject.service<GHProjectRepositoriesManager>().knownRepositories
     assertSize(1, coordinatesSet)
     val coordinates = coordinatesSet.first().remote
 
