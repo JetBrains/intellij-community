@@ -140,21 +140,38 @@ class GitRebaseDialog(private val project: Project,
   }
 
   private fun validateUpstream(): ValidationInfo? {
-    if (!validateRevision(getTextField(upstreamField).text)) {
-      return ValidationInfo(GitBundle.message("rebase.dialog.error.invalid.from"), upstreamField)
+    val upstream = getTextField(upstreamField).text
+
+    if (upstream.isNullOrEmpty()) {
+      return if (RebaseOption.ONTO in selectedOptions)
+        ValidationInfo(GitBundle.message("rebase.dialog.error.upstream.not.selected"), upstreamField)
+      else
+        ValidationInfo(GitBundle.message("rebase.dialog.error.base.not.selected"), upstreamField)
     }
+
+    if (!isValidRevision(upstream)) {
+      return ValidationInfo(GitBundle.message("rebase.dialog.error.branch.or.tag.not.exist"), upstreamField)
+    }
+
     return null
   }
 
   private fun validateOnto(): ValidationInfo? {
-    if (RebaseOption.ONTO in selectedOptions
-        && !validateRevision(getTextField(ontoField).text)) {
-      return ValidationInfo(GitBundle.message("rebase.dialog.error.invalid.onto"), ontoField)
+    if (RebaseOption.ONTO in selectedOptions) {
+      val newBase = getTextField(ontoField).text
+
+      if (newBase.isNullOrEmpty()) {
+        return ValidationInfo(GitBundle.message("rebase.dialog.error.base.not.selected"), ontoField)
+      }
+
+      if (!isValidRevision(newBase)) {
+        return ValidationInfo(GitBundle.message("rebase.dialog.error.branch.or.tag.not.exist"), ontoField)
+      }
     }
     return null
   }
 
-  private fun validateRevision(revision: String): Boolean {
+  private fun isValidRevision(revision: String): Boolean {
     var result = false
     try {
       val task = ThrowableComputable<GitRevisionNumber, VcsException> { GitRevisionNumber.resolve(project, gitRoot(), revision) }
