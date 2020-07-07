@@ -217,6 +217,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testFieldGroupAnchor2() throws Exception {
+    doTest();
+  }
+
   public void testSCR27887() throws Exception {
     doTest();
   }
