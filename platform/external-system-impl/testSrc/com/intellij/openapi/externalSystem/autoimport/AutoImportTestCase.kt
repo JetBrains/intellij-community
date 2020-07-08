@@ -450,7 +450,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     }
 
     fun waitForProjectRefresh(action: () -> Unit) {
-      Disposer.newDisposable().use {
+      Disposer.newDisposable(testDisposable, "waitForProjectRefresh").use {
         val promise = AsyncPromise<ExternalSystemRefreshStatus>()
         projectAware.subscribe(object : ExternalSystemProjectRefreshListener {
           override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
