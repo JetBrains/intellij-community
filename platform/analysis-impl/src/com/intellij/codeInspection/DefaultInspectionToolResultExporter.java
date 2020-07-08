@@ -444,6 +444,11 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     }
   }
 
+  @Override
+  public RefEntity getElement(@NotNull CommonProblemDescriptor descriptor) {
+    return myProblemElements.getKeyFor(descriptor);
+  }
+
   @Contract("null -> null")
   private static VirtualFile ensureNotInjectedFile(VirtualFile file) {
     return file instanceof VirtualFileWindow ? ((VirtualFileWindow)file).getDelegate() : file;
