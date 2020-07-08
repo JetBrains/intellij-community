@@ -154,6 +154,33 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     })
   }
 
+  void "test abbreviations on top"() {
+    def abbreviationManager = AbbreviationManager.getInstance()
+    def actionManager = ActionManager.getInstance()
+    def ui = createTestUI([GotoActionTest.createActionContributor(project, testRootDisposable)])
+
+    try {
+      abbreviationManager.register("cp", "CloseProject")
+      def future = ui.findElementsForPattern("cp")
+      def firstItem = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)[0]
+      assert firstItem.value.action == actionManager.getAction("CloseProject")
+    }
+    finally {
+      abbreviationManager.remove("cp", "CloseProject")
+    }
+
+    try {
+      abbreviationManager.register("cp", "ScanSourceCommentsAction")
+      def future = ui.findElementsForPattern("cp")
+      def res = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
+      def firstItem = res[0]
+      assert firstItem.value.action == actionManager.getAction("ScanSourceCommentsAction")
+    }
+    finally {
+      abbreviationManager.remove("cp", "ScanSourceCommentsAction")
+    }
+  }
+
   void "test recent files at the top of results"() {
     withMixingEnabled({
       def file1 = myFixture.addFileToProject("ApplicationFile.txt", "")
