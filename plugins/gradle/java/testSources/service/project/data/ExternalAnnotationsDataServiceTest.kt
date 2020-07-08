@@ -76,6 +76,7 @@ class ExternalAnnotationsDataServiceTest: LightIdeaTestCase() {
   override fun tearDown() {
     RunAll(
       ThrowableRunnable { modelsProvider.dispose() },
+      ThrowableRunnable { GradleSettings.getInstance(project).unlinkExternalProject(projectData.linkedExternalProjectPath) },
       ThrowableRunnable { super.tearDown() }
     ).run()
   }
