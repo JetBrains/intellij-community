@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.nio.charset.Charset;
 
-class ChangeLargeFileEncodingAction extends com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction {
+class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
 
   private static final Logger logger = Logger.getInstance(ChangeLargeFileEncodingAction.class);
 
@@ -46,9 +47,9 @@ class ChangeLargeFileEncodingAction extends com.intellij.openapi.vfs.encoding.Ch
   }
 
   private void updateWidget() {
-    StatusBarWidget widget = statusBar.getWidget(EncodingWidget.WIDGET_ID);
-    if (widget instanceof EncodingWidget) {
-      ((EncodingWidget)widget).requestUpdate();
+    StatusBarWidget widget = statusBar.getWidget(LargeFileEncodingWidget.WIDGET_ID);
+    if (widget instanceof LargeFileEncodingWidget) {
+      ((LargeFileEncodingWidget)widget).requestUpdate();
     }
     else {
       logger.warn("[LargeFileEditorSubsystem] ChangeFileEncodingAction.updateWidget(): "

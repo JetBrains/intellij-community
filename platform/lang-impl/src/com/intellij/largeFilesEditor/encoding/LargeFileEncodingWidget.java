@@ -23,10 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 
-public class EncodingWidget extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
-  public static final String WIDGET_ID = "lfeEncoding";
+public class LargeFileEncodingWidget extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
+  public static final String WIDGET_ID = "largeFileEncodingWidget";
 
-  private static final Logger logger = Logger.getInstance(EncodingWidget.class);
+  private static final Logger logger = Logger.getInstance(LargeFileEncodingWidget.class);
 
   private final TextPanel myComponent;
   private Alarm myUpdateAlarm;
@@ -35,7 +35,7 @@ public class EncodingWidget extends EditorBasedWidget implements StatusBarWidget
 
   private boolean myActionEnabled;
 
-  public EncodingWidget(@NotNull final Project project, LargeFileEditorAccessor largeFileEditorAccessor) {
+  public LargeFileEncodingWidget(@NotNull final Project project, LargeFileEditorAccessor largeFileEditorAccessor) {
     super(project);
     myLargeFileEditorAccessor = largeFileEditorAccessor;
     myComponent = new TextPanel.WithIconAndArrows();
@@ -54,7 +54,7 @@ public class EncodingWidget extends EditorBasedWidget implements StatusBarWidget
 
   @Override
   public StatusBarWidget copy() {
-    return new EncodingWidget(getProject(), myLargeFileEditorAccessor);
+    return new LargeFileEncodingWidget(getProject(), myLargeFileEditorAccessor);
   }
 
   @Override
@@ -91,7 +91,7 @@ public class EncodingWidget extends EditorBasedWidget implements StatusBarWidget
       showPopup(largeFileEditorAccess);
     }
     else {
-      logger.warn("[LargeFileEditorSubsystem] EncodingWidget.tryShowPopup():" +
+      logger.warn("[LargeFileEditorSubsystem] LargeFileEncodingWidget.tryShowPopup():" +
                   " this method was called while LargeFileEditor is not available as active text editor");
       requestUpdate();
     }
@@ -104,10 +104,6 @@ public class EncodingWidget extends EditorBasedWidget implements StatusBarWidget
                                          where);
     RelativePoint pos = JBPopupFactory.getInstance().guessBestPopupLocation(where);
     popup.showInScreenCoordinates(where, pos.getScreenPoint());
-  }
-
-  public Project _getProject() {
-    return getProject();
   }
 
   public void requestUpdate() {
@@ -145,7 +141,7 @@ public class EncodingWidget extends EditorBasedWidget implements StatusBarWidget
       myStatusBar.updateWidget(ID());
     }
     else {
-      logger.warn("[LargeFileEditorSubsystem] EncodingWidget.requestUpdate(): myStatusBar is null!!!)");
+      logger.warn("[LargeFileEditorSubsystem] LargeFileEncodingWidget.requestUpdate(): myStatusBar is null!!!)");
     }
   }
 
