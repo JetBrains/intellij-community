@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal
 
+import com.intellij.execution.Executor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -17,7 +18,7 @@ interface TerminalShellCommandHandler {
    * Launches matched command, see {@see #matches}.
    * Returns true if command has been successfully executed, false if failed.
    */
-  fun execute(project: Project, workingDirectory: String?, localSession: Boolean, @NonNls command: String, executorAction: TerminalExecutorAction): Boolean
+  fun execute(project: Project, workingDirectory: String?, localSession: Boolean, @NonNls command: String, executor: Executor?): Boolean
 
   companion object {
     private val LOG = Logger.getInstance(TerminalShellCommandHandler::class.java)
@@ -27,10 +28,10 @@ interface TerminalShellCommandHandler {
       return EP.extensionList.any { it.matches(project, workingDirectory, localSession, command) }
     }
 
-    fun executeShellCommandHandler(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executorAction: TerminalExecutorAction) {
+    fun executeShellCommandHandler(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor?) {
       EP.extensionList
         .find { it.matches(project, workingDirectory, localSession, command) }
-        ?.execute(project, workingDirectory, localSession, command, executorAction)
+        ?.execute(project, workingDirectory, localSession, command, executor)
       ?: LOG.warn("Executing non matched command: $command")
     }
   }
