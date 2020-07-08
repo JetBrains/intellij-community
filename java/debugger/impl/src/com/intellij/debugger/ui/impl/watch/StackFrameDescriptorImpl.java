@@ -35,7 +35,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private int myUiIndex;
   private String myName = null;
   private Location myLocation;
-  private ReferenceType myDeclaringType;
   private MethodsTracker.MethodOccurrence myMethodOccurrence;
   private boolean myIsSynthetic;
   private boolean myIsInLibraryContent;
@@ -50,7 +49,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     try {
       myUiIndex = frame.getFrameIndex();
       myLocation = frame.location();
-      myDeclaringType = frame.getDeclaringType();
       if (!getValueMarkers().isEmpty()) {
         getThisObject(); // init this object for markup
       }
@@ -63,7 +61,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     catch (InternalException | EvaluateException e) {
       LOG.info(e);
       myLocation = null;
-      myDeclaringType = null;
       myMethodOccurrence = tracker.getMethodOccurrence(0, null);
       myIsSynthetic = false;
       myIsInLibraryContent = false;
@@ -197,11 +194,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   @Nullable
   public Location getLocation() {
     return myLocation;
-  }
-
-  @Nullable
-  public ReferenceType getDeclaringType() {
-    return myDeclaringType;
   }
 
   public SourcePosition getSourcePosition() {

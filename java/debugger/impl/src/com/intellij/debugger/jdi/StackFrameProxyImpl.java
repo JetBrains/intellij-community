@@ -249,16 +249,6 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return myThisReference;
   }
 
-  /**
-   * Returns true if a variable with this name should not be shown in the debugger.
-   * This is useful for tool generated variables that are of no use to the user.
-   */
-  protected boolean isHiddenVariable(@NotNull String name) {
-    // https://b/30673627
-    // dx & jack sometimes produces locals with a null name. These locals are not reported by the VM on API 23, but API 24 returns these.
-    return name.isEmpty();
-  }
-
   @NotNull
   public List<LocalVariableProxyImpl> visibleVariables() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -269,9 +259,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         final List<LocalVariableProxyImpl> locals = new ArrayList<>(list.size());
         for (LocalVariable localVariable : list) {
           LOG.assertTrue(localVariable != null);
-          if (!isHiddenVariable(localVariable.name())) {
-            locals.add(new LocalVariableProxyImpl(this, localVariable));
-          }
+          locals.add(new LocalVariableProxyImpl(this, localVariable));
         }
         return locals;
       }
@@ -300,10 +288,6 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   }
 
   protected LocalVariable visibleVariableByNameInt(String name) throws EvaluateException  {
-    if (isHiddenVariable(name)) {
-      return null;
-    }
-
     DebuggerManagerThreadImpl.assertIsManagerThread();
     InvalidStackFrameException error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
@@ -454,9 +438,6 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
   public boolean isLocalVariableVisible(LocalVariableProxyImpl var) throws EvaluateException {
     try {
-      if (isHiddenVariable(var.name())) {
-        return false;
-      }
       return var.getVariable().isVisible(getStackFrame());
     }
     catch (IllegalArgumentException ignored) {
@@ -479,15 +460,6 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
   public int getIndexFromBottom() {
     return myFrameFromBottomIndex;
-  }
-
-  @Nullable
-  public ReferenceType getDeclaringType() throws EvaluateException {
-    Location location = location();
-    if (location != null) {
-      return location.declaringType();
-    }
-    return null;
   }
 }
 

@@ -67,8 +67,6 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           final XValueChildrenList children = new XValueChildrenList();
 
-          DebuggerExtension extension = DebuggerExtension.EP_NAME.findExtension(DebuggerExtension.class);
-
           final ReferenceType refType = myStaticDescriptor.getType();
           List<Field> fields = refType.allFields();
 
@@ -77,9 +75,6 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
             if (field.isStatic()) {
               boolean isSynthetic = DebuggerUtils.isSynthetic(field);
               if (!classRenderer.SHOW_SYNTHETICS && isSynthetic) {
-                continue;
-              }
-              if (extension != null && extension.filterStaticVariable(refType, field, isSynthetic)) {
                 continue;
               }
               final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myStaticDescriptor, null, field);

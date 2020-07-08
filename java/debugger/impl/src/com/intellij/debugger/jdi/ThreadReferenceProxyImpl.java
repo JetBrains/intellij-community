@@ -6,7 +6,6 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebuggerExtension;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -279,15 +278,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
       int index = myFramesFromBottom.size() + 1;
       for (ListIterator<StackFrame> iterator = frames.listIterator(frameCount - myFramesFromBottom.size()); iterator.hasPrevious();) {
-
-        StackFrameProxyImpl proxy;
-        DebuggerExtension modifier = DebuggerExtension.EP_NAME.findExtension(DebuggerExtension.class);
-        if (modifier != null) {
-          proxy = modifier.createProxy(this, iterator.previous(), index);
-        } else {
-          proxy = new StackFrameProxyImpl(this, iterator.previous(), index);
-        }
-        myFramesFromBottom.add(proxy);
+        myFramesFromBottom.add(new StackFrameProxyImpl(this, iterator.previous(), index));
         index++;
       }
     }

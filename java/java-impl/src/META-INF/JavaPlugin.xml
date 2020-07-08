@@ -279,8 +279,6 @@
 
     <extensionPoint qualifiedName="com.intellij.library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
 
-    <!-- Android Studio: Added extension point for variable manipulation used by Instant Run and Profiler. Should be upstreamed. -->
-    <extensionPoint qualifiedName="com.intellij.debuggerExtension" interface="com.intellij.debugger.engine.DebuggerExtension"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
