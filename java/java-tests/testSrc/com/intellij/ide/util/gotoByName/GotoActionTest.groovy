@@ -18,10 +18,12 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import com.intellij.psi.codeStyle.WordPrefixMatcher
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.CollectConsumer
+import com.intellij.util.text.Matcher
 import gnu.trove.Equality
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
@@ -132,7 +134,21 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
     def consumer = new CollectConsumer<Object>()
     provider.consumeTopHits("/testprovider CamelCase", consumer, project)
-    assert consumer.getResult() == [options[0], options[1], options[3], options[4]]
+    assert consumer.getResult() == [options[0], options[3]]
+  }
+
+  void "test TopHit CamelCase actions found in lower case"() {
+    def action1 = createAction("CamelCase Name", "none")
+    def action2 = createAction("Simple Name", "CamelCase description")
+    def action3 = createAction("Prefix-CamelCase Name", "none")
+    def action4 = createAction("Non Camel Case Name", "none")
+    def action5 = createAction("Look4CamelCase Name", "none")
+    def pattern = "camelcase"
+    assert actionMatches(pattern, action1, new WordPrefixMatcher(pattern)) == MatchMode.NAME
+    assert actionMatches(pattern, action2, new WordPrefixMatcher(pattern)) == MatchMode.DESCRIPTION
+    assert actionMatches(pattern, action3, new WordPrefixMatcher(pattern)) == MatchMode.NAME
+    assert actionMatches(pattern, action4, new WordPrefixMatcher(pattern)) == MatchMode.NONE
+    assert actionMatches(pattern, action5, new WordPrefixMatcher(pattern)) == MatchMode.NAME
   }
 
   private static class TestBooleanOption extends BooleanOptionDescription {
@@ -369,8 +385,8 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     } as List<ActionWrapper>
   }
 
-  private def actionMatches(String pattern, AnAction action) {
-    return new GotoActionModel(project, null, null).actionMatches(pattern, GotoActionItemProvider.buildMatcher(pattern), action)
+  private def actionMatches(String pattern, AnAction action, Matcher matcher = GotoActionItemProvider.buildMatcher(pattern)) {
+    return new GotoActionModel(project, null, null).actionMatches(pattern, matcher, action)
   }
 
   private MatchedValue matchedAction(String text, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
@@ -388,12 +404,17 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     new MatchedValue(wrapper, pattern)
   }
 
-  private static AnAction createAction(String text) {
-    new AnAction(text) {
+  private static AnAction createAction(String text, String description = null) {
+    def action = new AnAction(text) {
       @Override
       void actionPerformed(@NotNull AnActionEvent e) {
       }
     }
+    if (description != null) {
+      action.getTemplatePresentation().setDescription(description)
+    }
+
+    return action
   }
 
   private static DefaultActionGroup createActionGroup(String text, boolean hideByDefault) {

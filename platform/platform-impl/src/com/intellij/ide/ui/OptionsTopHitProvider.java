@@ -95,7 +95,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
   @NotNull
   private static Matcher buildMatcher(String pattern) {
-    return pattern.contains(" ") ? new WordPrefixMatcher(pattern) : NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    return new WordPrefixMatcher(pattern);
   }
 
   private static @Nullable String checkPattern(@NotNull String pattern) {
