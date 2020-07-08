@@ -150,7 +150,7 @@ public class JsonSchemaInfo {
       return text;
     }
 
-    String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(file.toString()), project.getBasePath(), '/');
+    String relativePath = FileUtil.getRelativePath(project.getBasePath(), FileUtil.toSystemIndependentName(file.toString()), '/');
     if (relativePath != null) {
       return relativePath;
     }
