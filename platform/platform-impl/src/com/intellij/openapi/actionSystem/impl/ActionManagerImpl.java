@@ -1531,6 +1531,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
+  public void fireAfterEditorTyping(char c, @NotNull DataContext dataContext) {
+    for (AnActionListener listener : myActionListeners) {
+      listener.afterEditorTyping(c, dataContext);
+    }
+    publisher().afterEditorTyping(c, dataContext);
+  }
+
+  @Override
   public String getLastPreformedActionId() {
     return myLastPreformedActionId;
   }

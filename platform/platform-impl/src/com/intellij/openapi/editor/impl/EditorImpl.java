@@ -1304,6 +1304,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, context);
     EditorUIUtil.hideCursorInEditor(this);
     processKeyTypedNormally(c, context);
+    ActionManagerEx.getInstanceEx().fireAfterEditorTyping(c, context);
 
     return true;
   }
