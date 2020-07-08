@@ -284,7 +284,7 @@ public class WindowsDefenderChecker {
         String canonical = path.toRealPath().toString();
         boolean found = false;
         for (Pattern pattern : excludedPatterns) {
-          if (pattern.matcher(canonical).matches()) {
+          if (pattern.matcher(canonical).matches() || pattern.matcher(path.toString()).matches()) {
             found = true;
             result.put(path, true);
             break;
