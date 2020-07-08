@@ -242,11 +242,6 @@ public abstract class CodeBlockSurrounder {
       return null;
     }
     if (parent instanceof PsiField) {
-      PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parent);
-      PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(parent);
-      boolean multipleFieldsDeclaration = prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.COMMA ||
-                                          next instanceof PsiJavaToken && ((PsiJavaToken)next).getTokenType() == JavaTokenType.COMMA;
-      if (multipleFieldsDeclaration) return null;
       return new ExtractFieldInitializerSurrounder(expression, (PsiField)parent);
     }
 
@@ -387,6 +382,7 @@ public abstract class CodeBlockSurrounder {
 
     @Override
     @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
+      myField.normalizeDeclaration();
       PsiClassInitializer initializer =
         ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(myField), PsiClassInitializer.class);
       boolean isStatic = myField.hasModifierProperty(PsiModifier.STATIC);
