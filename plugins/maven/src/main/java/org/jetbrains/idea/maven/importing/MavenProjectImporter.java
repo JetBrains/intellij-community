@@ -30,6 +30,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.impl.artifacts.ArtifactManagerImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactModelImpl;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
@@ -263,6 +264,10 @@ public class MavenProjectImporter {
         }
       });
 
+      if (projectsHaveChanges) {
+        setMavenizedModules(ContainerUtil.map(myProjectsToImportWithChanges.keySet(),
+                                              mavenProject -> myMavenProjectToModule.get(mavenProject)), true);
+      }
 
       List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
 
@@ -584,7 +589,6 @@ public class MavenProjectImporter {
     }
 
     configFacets(tasks, importers);
-    setMavenizedModules(modulesToMavenize, true);
   }
 
   private void configFacets(List<MavenProjectsProcessorTask> tasks, List<MavenModuleImporter> importers) {
