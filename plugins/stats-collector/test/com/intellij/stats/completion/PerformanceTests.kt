@@ -37,13 +37,13 @@ class Test {
     }
 
     override fun tearDown() {
-        CompletionTrackerInitializer.isEnabledInTests = false
         try {
-            super.tearDown()
-        } finally {
+            CompletionTrackerInitializer.isEnabledInTests = false
             CompletionLoggerProvider.getInstance().dispose()
             val statsDir = pathProvider.getStatsDataDirectory()
             statsDir.deleteRecursively()
+        } finally {
+            super.tearDown()
         }
     }
 
