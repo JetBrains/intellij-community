@@ -13,6 +13,8 @@ import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -54,14 +56,18 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   private final Map<String, PluginId> optionalConfigNames;
 
-  String bundledPluginsPath = PathManager.getPreInstalledPluginsPath();
-  boolean loadBundledPlugins = !PluginManagerCore.isUnitTestMode;
+  private final Path bundledPluginsPath;
+  final boolean loadBundledPlugins;
 
   public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
     return new DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null));
   }
 
   DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult result) {
+    this(flags, disabledPlugins, result, null);
+  }
+
+  DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult result, @Nullable Path bundledPluginsPath) {
     this.result = result;
     this.disabledPlugins = disabledPlugins;
     ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
@@ -88,6 +94,13 @@ final class DescriptorListLoadingContext implements AutoCloseable {
       PluginXmlFactory factory = new PluginXmlFactory();
       xmlFactorySupplier = () -> factory;
     }
+
+    loadBundledPlugins = bundledPluginsPath != null || !PluginManagerCore.isUnitTestMode;
+    this.bundledPluginsPath = bundledPluginsPath;
+  }
+
+  @NotNull Path getBundledPluginsPath() {
+    return bundledPluginsPath == null ? Paths.get(PathManager.getPreInstalledPluginsPath()) : bundledPluginsPath;
   }
 
   boolean isPluginDisabled(@NotNull PluginId id) {
