@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
+final class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   private static final String OUTPUT_TAG = "output";
   private static final String URL = "url";
 
@@ -28,19 +28,19 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
   private final Project myProject;
 
-  public CompilerProjectExtensionImpl(@NotNull Project project) {
+  CompilerProjectExtensionImpl(@NotNull Project project) {
     myProject = project;
   }
 
-  private void readExternal(Element element) {
+  private void readExternal(@NotNull Project project, @NotNull Element element) {
     Element pathElement = element.getChild(OUTPUT_TAG);
     if (pathElement != null) {
       String outputPath = pathElement.getAttributeValue(URL);
-      myCompilerOutput = outputPath != null ? VirtualFilePointerManager.getInstance().create(outputPath, myProject, null) : null;
+      myCompilerOutput = outputPath != null ? VirtualFilePointerManager.getInstance().create(outputPath, project, null) : null;
     }
   }
 
-  private void writeExternal(Element element) {
+  private void writeExternal(@NotNull Element element) {
     if (myCompilerOutput != null) {
       Element pathElement = new Element(OUTPUT_TAG);
       pathElement.setAttribute(URL, myCompilerOutput.getUrl());
@@ -112,16 +112,16 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     return (CompilerProjectExtensionImpl)CompilerProjectExtension.getInstance(project);
   }
 
-  public static class MyProjectExtension extends ProjectExtension {
+  final static class MyProjectExtension extends ProjectExtension {
     private final Project myProject;
 
-    public MyProjectExtension(Project project) {
+    MyProjectExtension(Project project) {
       myProject = project;
     }
 
     @Override
     public void readExternal(@NotNull Element element) {
-      getImpl(myProject).readExternal(element);
+      getImpl(myProject).readExternal(myProject, element);
     }
 
     @Override
@@ -130,16 +130,15 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     }
   }
 
-  public static class MyWatchedRootsProvider implements WatchedRootsProvider {
+  final static class MyWatchedRootsProvider implements WatchedRootsProvider {
     private final Project myProject;
 
-    public MyWatchedRootsProvider(Project project) {
+    MyWatchedRootsProvider(Project project) {
       myProject = project;
     }
 
     @Override
-    @NotNull
-    public Set<String> getRootsToWatch() {
+    public @NotNull Set<String> getRootsToWatch() {
       return CompilerProjectExtensionImpl.getRootsToWatch(myProject);
     }
   }

@@ -9,6 +9,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -60,6 +61,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private static final Logger LOG = Logger.getInstance(ProjectRootManagerComponent.class);
   private static final boolean LOG_CACHES_UPDATE =
     ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode();
+
+  private final static ExtensionPointName<WatchedRootsProvider> WATCHED_ROOTS_PROVIDER_EP_NAME = new ExtensionPointName<>("com.intellij.roots.watchedRootsProvider");
 
   private final ExecutorService myExecutor = ApplicationManager.getApplication().isUnitTestMode()
                                              ? ConcurrencyUtil.newSameThreadExecutorService()
@@ -223,14 +226,14 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       flatPaths.add(FileUtil.toSystemIndependentName(store.getWorkspacePath().toString()));
     }
 
-    for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
+    for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Collection<VirtualFile> toWatch = extension.getRootsToWatch(myProject);
       if (!toWatch.isEmpty()) {
         recursivePathsToWatch.addAll(ContainerUtil.map(toWatch, VirtualFile::getPath));
       }
     }
 
-    for (WatchedRootsProvider extension : WatchedRootsProvider.EP_NAME.getExtensions(myProject)) {
+    for (WatchedRootsProvider extension : WATCHED_ROOTS_PROVIDER_EP_NAME.getExtensionList(myProject)) {
       Set<String> toWatch = extension.getRootsToWatch();
       if (!toWatch.isEmpty()) {
         recursivePathsToWatch.addAll(ContainerUtil.map(toWatch, FileUtil::toSystemIndependentName));
@@ -239,7 +242,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     Set<String> excludedUrls = CollectionFactory.createSmallMemoryFootprintSet();
     // changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
-    for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
+    for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensionList(myProject)) {
       Collections.addAll(excludedUrls, excludePolicy.getExcludeUrlsForProject());
     }
 
