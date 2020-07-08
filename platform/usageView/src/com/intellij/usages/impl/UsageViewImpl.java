@@ -2134,19 +2134,23 @@ public class UsageViewImpl implements UsageViewEx {
       if (myCannotMakeString != null && myChangesDetected) {
         String title = UsageViewBundle.message("changes.detected.error.title");
         if (canPerformReRun()) {
-          String[] options = {UsageViewBundle.message("action.description.rerun"), UsageViewBundle.message("usage.view.cancel.button")};
+          String[] options = {UsageViewBundle.message("action.description.rerun"), UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("usage.view.cancel.button")};
           String message = myCannotMakeString + "\n\n" + UsageViewBundle.message("dialog.rerun.search");
-          int answer = Messages.showOkCancelDialog(myProject, message, title, options[0], options[1], Messages.getErrorIcon());
-          if (answer == Messages.OK) {
+          int answer = Messages.showYesNoCancelDialog(myProject, message, title, options[0], options[1], options[2], Messages.getErrorIcon());
+          if (answer == Messages.YES) {
             refreshUsages();
           }
+          else if (answer == Messages.CANCEL) {
+            return;
+          }
+          //continue as is
         }
         else {
           Messages.showMessageDialog(myProject, myCannotMakeString, title, Messages.getErrorIcon());
           //todo[myakovlev] request focus to tree
           //myUsageView.getTree().requestFocus();
+          return;
         }
-        return;
       }
 
       // can't dispose pointers because refactoring might want to re-use the usage infos from the preview
