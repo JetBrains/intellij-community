@@ -833,10 +833,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myLineToGutterRenderers = new Int2ObjectOpenHashMap<>();
     processRangeHighlighters(0, myEditor.getDocument().getTextLength(), highlighter -> {
       GutterMark renderer = highlighter.getGutterIconRenderer();
-      if (renderer == null) {
-        return;
-      }
-      if (!areIconsShown() && !(renderer instanceof NonHideableIconGutterMark)) {
+      if (!shouldBeShown(renderer)) {
         return;
       }
       if (!isHighlighterVisible(highlighter)) {
@@ -861,6 +858,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       // don't allow more than 4 icons per line
       entry.setValue(ContainerUtil.getFirstItems(newValue, 4));
     }
+  }
+
+  private boolean shouldBeShown(@Nullable GutterMark gutterIconRenderer) {
+    return gutterIconRenderer != null && (areIconsShown() || gutterIconRenderer instanceof NonHideableIconGutterMark);
   }
 
   private void calcLineMarkerAreaWidth(boolean canShrink) {
@@ -896,7 +897,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myHasInlaysWithGutterIcons = false;
     myEditor.getInlayModel().getBlockElementsInRange(0, myEditor.getDocument().getTextLength()).forEach(inlay -> {
       GutterIconRenderer iconRenderer = inlay.getGutterIconRenderer();
-      if (iconRenderer != null && checkDumbAware(iconRenderer) && !EditorUtil.isInlayFolded(inlay)) {
+      if (shouldBeShown(iconRenderer) && checkDumbAware(iconRenderer) && !EditorUtil.isInlayFolded(inlay)) {
         Icon icon = scaleIcon(iconRenderer.getIcon());
         if (icon.getIconHeight() <= inlay.getHeightInPixels()) {
           myHasInlaysWithGutterIcons = true;
@@ -1005,7 +1006,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private void paintInlayIcon(Inlay inlay, Graphics2D g, int y) {
     GutterIconRenderer iconRenderer = inlay.getGutterIconRenderer();
-    if (iconRenderer != null && checkDumbAware(iconRenderer)) {
+    if (shouldBeShown(iconRenderer) && checkDumbAware(iconRenderer)) {
       Icon icon = scaleIcon(iconRenderer.getIcon());
       if (icon.getIconHeight() <= inlay.getHeightInPixels()) {
         int iconWidth = icon.getIconWidth();
@@ -2224,7 +2225,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Nullable
   private PointInfo getPointInfo(@NotNull Inlay inlay, int inlayY, int x, int y) {
     GutterIconRenderer renderer = inlay.getGutterIconRenderer();
-    if (renderer == null || !checkDumbAware(renderer)) return null;
+    if (!shouldBeShown(renderer) || !checkDumbAware(renderer)) return null;
     Icon icon = scaleIcon(renderer.getIcon());
     int iconHeight = icon.getIconHeight();
     if ((y - inlayY) >= Math.max(iconHeight, myEditor.getLineHeight()) || iconHeight > inlay.getHeightInPixels()) return null;
