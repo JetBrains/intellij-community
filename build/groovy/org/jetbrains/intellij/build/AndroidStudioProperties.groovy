@@ -372,7 +372,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     // Instant run
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/installer") {
-      fileset(dir: "$root/bazel-bin/tools/base/deploy/installer/android-installer")
+      fileset(dir: "$root/bazel-bin/tools/base/deploy/installer/android-installer") {
+        exclude(name: "test-installer")
+      }
     }
 
     // Asset Studio
