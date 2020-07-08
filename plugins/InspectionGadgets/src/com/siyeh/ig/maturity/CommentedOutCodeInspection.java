@@ -155,26 +155,31 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
   }
 
   private static boolean isInvalidCode(PsiElement element) {
-    final PsiElement child = element.getFirstChild();
-    if (child instanceof PsiComment) {
-      final PsiElement lastChild = element.getLastChild();
-      if (child == lastChild) {
+    final PsiElement firstChild = element.getFirstChild();
+    final PsiElement lastChild = element.getLastChild();
+    final boolean strict = firstChild == lastChild && firstChild instanceof PsiExpressionStatement;
+    if (firstChild instanceof PsiComment) {
+      if (firstChild == lastChild) {
         return true;
       }
-      final PsiElement sibling = child.getNextSibling();
+      final PsiElement sibling = firstChild.getNextSibling();
       if (sibling instanceof PsiWhiteSpace && sibling == lastChild) {
         return true;
       }
     }
-    final CodeVisitor visitor = new CodeVisitor();
+    final CodeVisitor visitor = new CodeVisitor(strict);
     element.accept(visitor);
     return visitor.isInvalidCode();
   }
 
   private static class CodeVisitor extends JavaRecursiveElementWalkingVisitor {
+    private final boolean myStrict;
     private boolean invalidCode = false;
     private boolean codeFound = false;
 
+    private CodeVisitor(boolean strict) {
+      myStrict = strict;
+    }
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
@@ -224,6 +229,18 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
       if (statement.getStatement() == null || name.equals("https") || name.equals("http")) {
         invalidCode = true;
         stopWalking();
+      }
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (myStrict && expression.getParent() instanceof PsiExpressionStatement) {
+        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+        if (methodExpression.getQualifierExpression() == null && expression.resolveMethod() == null) {
+          invalidCode = true;
+          stopWalking();
+        }
       }
     }
 

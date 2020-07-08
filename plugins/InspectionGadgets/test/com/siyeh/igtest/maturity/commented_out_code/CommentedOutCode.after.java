@@ -1,4 +1,5 @@
 import java.util.*;
+import java.io.*;
 
 class CommentedOutCode /* extends Object */ {
   // https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
@@ -23,7 +24,7 @@ class CommentedOutCode /* extends Object */ {
   }
   void l(List<String> l) {
     //noinspection one,two
-    System.out.println();
+    System.out.println(); // Smiles("[C+]");
     // "DROP VIEW $viewName$";
   }
 

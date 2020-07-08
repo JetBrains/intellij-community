@@ -31,7 +31,7 @@ class CommentedOutCode /* extends Object */ {
   }
   void l(List<String> l) {
     //noinspection one,two
-    System.out.println();
+    System.out.println(); // Smiles("[C+]");
     // "DROP VIEW $viewName$";
   }
 
