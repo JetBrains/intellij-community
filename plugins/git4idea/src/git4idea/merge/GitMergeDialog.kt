@@ -170,7 +170,10 @@ class GitMergeDialog(private val project: Project,
     ProgressManager.getInstance().run(
       object : Task.Backgroundable(project, GitBundle.message("merge.branch.loading.branches.progress"), true) {
         override fun run(indicator: ProgressIndicator) {
-          val sortedRoots = mutableSetOf(defaultRoot).apply { addAll(roots) }
+          val sortedRoots = LinkedHashSet<VirtualFile>(roots.size).apply {
+            add(defaultRoot)
+            addAll(roots)
+          }
 
           sortedRoots.forEach { root ->
             loadUnmergedBranches(root)?.let { branches ->
