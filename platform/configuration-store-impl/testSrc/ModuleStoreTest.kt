@@ -61,7 +61,7 @@ class ModuleStoreTest {
       assertThat(getOptionValue("foo")).isEqualTo("bar")
 
       setOption("foo", "not bar")
-      stateStore.save()
+      project.stateStore.save()
     }
 
     projectRule.loadModule(moduleFile).useAndDispose {
@@ -69,7 +69,7 @@ class ModuleStoreTest {
 
       setOption("foo", "not bar")
       // ensure that save the same data will not lead to any problems (like "Content equals, but it must be handled not on this level")
-      stateStore.save()
+      project.stateStore.save()
     }
   }
 
