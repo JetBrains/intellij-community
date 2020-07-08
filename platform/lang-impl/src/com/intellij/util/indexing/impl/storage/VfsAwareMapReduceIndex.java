@@ -18,7 +18,10 @@ import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.forward.*;
 import com.intellij.util.indexing.impl.perFileVersion.PersistentSubIndexerRetriever;
 import com.intellij.util.indexing.memory.InMemoryForwardIndex;
-import com.intellij.util.indexing.snapshot.*;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappingIndex;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
+import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
+import com.intellij.util.indexing.snapshot.UpdatableSnapshotInputMappingIndex;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -113,8 +116,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     } else {
       mySubIndexerRetriever = null;
     }
-    mySnapshotInputMappings = IndexImporterMappingIndex.wrap(snapshotInputMappings, extension);
-    myUpdateMappings = mySnapshotInputMappings instanceof UpdatableSnapshotInputMappingIndex;
+    mySnapshotInputMappings = snapshotInputMappings;
+    myUpdateMappings = mySnapshotInputMappings != null;
     mySingleEntryIndex = extension instanceof SingleEntryFileBasedIndexExtension;
     installMemoryModeListener();
   }
