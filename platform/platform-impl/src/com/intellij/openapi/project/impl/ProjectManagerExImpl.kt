@@ -80,7 +80,8 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
             projectToClose = openProjects[openProjects.size - 1]
           }
         }
-        if (checkExistingProjectOnOpen(projectToClose, options.callback, projectStoreBaseDir, this)) {
+        // This null assertion is required to overcome bug in new version of KT compiler: KT-40034
+        if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, this)) {
           return null
         }
       }
