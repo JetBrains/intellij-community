@@ -2,13 +2,18 @@
 package org.jetbrains.plugins.gradle.codeInsight.actions;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.TimeUnit;
 
 public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
 
@@ -46,13 +51,15 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
 
     configureGradleFile();
     performPaste();
-    checkResultByText(null, "dependencies {\n" +
-                            "    <dependency>\n" +
-                            "    <groupId>group</groupId>\n" +
-                            "    <version>1.0</version>\n" +
-                            "    <scope>runtime</scope>\n" +
-                            "    </dependency>\n" +
-                            "}", true);
+    PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(() -> {
+      checkResultByText(null, "dependencies {\n" +
+                              "    <dependency>\n" +
+                              "    <groupId>group</groupId>\n" +
+                              "    <version>1.0</version>\n" +
+                              "    <scope>runtime</scope>\n" +
+                              "    </dependency>\n" +
+                              "}", true);
+    });
   }
 
   public void test_AddCompile() {
@@ -95,13 +102,24 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
   private void performCut() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_CUT);
-    actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContextFromFocus().getResultSync());
+    actionHandler.execute(getEditor(), null, getContext());
   }
 
   private void performPaste() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-    actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContextFromFocus().getResultSync());
+    actionHandler.execute(getEditor(), null, getContext());
+  }
+
+  @Nullable
+  private static DataContext getContext() {
+    try {
+      return DataManager.getInstance().getDataContextFromFocusAsync().blockingGet(100, TimeUnit.MILLISECONDS);
+    }
+    catch (Exception e) {
+      ExceptionUtil.rethrow(e);
+    }
+    return null;
   }
 
   @NotNull
