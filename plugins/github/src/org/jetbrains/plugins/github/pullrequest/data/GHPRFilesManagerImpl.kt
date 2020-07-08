@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffVirtualFile
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineVirtualFile
 import java.util.*
 
@@ -30,6 +31,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     }.let {
       filesEventDispatcher.multicaster.onBeforeFileOpened(it)
       FileEditorManager.getInstance(project).openFile(it, requestFocus)
+      GHPRStatisticsCollector.logTimelineOpened(project)
     }
   }
 
@@ -38,6 +40,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
       GHPRDiffVirtualFile(id, project, repository, pullRequest)
     }.let {
       FileEditorManager.getInstance(project).openFile(it, requestFocus)
+      GHPRStatisticsCollector.logDiffOpened(project)
     }
   }
 

@@ -22,6 +22,7 @@ import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListen
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 
@@ -70,10 +71,11 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     }
     LOG.debug("Found remotes: $remotes")
 
+    val authenticatedServers = service<GithubAccountManager>().accounts.map { it.server }
     val servers = mutableListOf<GithubServerPath>().apply {
       add(GithubServerPath.DEFAULT_SERVER)
       GithubAccountsMigrationHelper.getInstance().getOldServer()?.let { add(it) }
-      addAll(service<GithubAccountManager>().accounts.map { it.server })
+      addAll(authenticatedServers)
       addAll(serversFromDiscovery)
     }
 
@@ -87,6 +89,13 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     }
     LOG.debug("New list of known repos: $repositories")
     knownRepositories = repositories
+
+    for (server in authenticatedServers) {
+      if (server.isGithubDotCom) continue
+      service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).successOnEdt {
+        GHPRStatisticsCollector.logEnterpriseServerMeta(server, it)
+      }
+    }
   }
 
   @CalledInAwt
