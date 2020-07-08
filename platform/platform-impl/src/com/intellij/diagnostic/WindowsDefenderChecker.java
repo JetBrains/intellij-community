@@ -310,14 +310,6 @@ public class WindowsDefenderChecker {
         PropertiesComponent.getInstance().setValue(IGNORE_VIRUS_CHECK, "true");
       }
     });
-    notification.addAction(new NotificationAction(DiagnosticBundle.message("virus.scanning.dont.show.again.this.project")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        notification.expire();
-        PropertiesComponent.getInstance(project).setValue(IGNORE_VIRUS_CHECK, "true");
-      }
-    });
-
   }
 
   public String getConfigurationInstructionsUrl() {

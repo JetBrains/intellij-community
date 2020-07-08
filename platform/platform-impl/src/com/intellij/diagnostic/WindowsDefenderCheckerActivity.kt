@@ -29,8 +29,8 @@ class WindowsDefenderCheckerActivity : StartupActivity.Background {
 
       val nonExcludedPaths = checkResult.pathStatus.filter { !it.value }.keys
       val notification = WindowsDefenderNotification(
-        DiagnosticBundle.message("virus.scanning.warn.message", ApplicationNamesInfo.getInstance().fullProductName,
-                                 nonExcludedPaths.joinToString("<br/>")),
+        DiagnosticBundle.message("virus.scanning.warn.title"),
+        DiagnosticBundle.message("virus.scanning.warn.message", nonExcludedPaths.joinToString("<br/>")),
         nonExcludedPaths
       )
       notification.isImportant = true
@@ -44,10 +44,10 @@ class WindowsDefenderCheckerActivity : StartupActivity.Background {
   }
 }
 
-class WindowsDefenderNotification(text: String, val paths: Collection<Path>) :
-  Notification(NotificationGroup.createIdWithTitle("System Health", IdeBundle.message("notification.group.system.health")), "", text, NotificationType.WARNING), NotificationFullContent
+class WindowsDefenderNotification(title: String, text: String, val paths: Collection<Path>) :
+  Notification(NotificationGroup.createIdWithTitle("System Health", IdeBundle.message("notification.group.system.health")), title, text, NotificationType.WARNING), NotificationFullContent
 
-class WindowsDefenderFixAction(val paths: Collection<Path>) : NotificationAction("Fix...") {
+class WindowsDefenderFixAction(val paths: Collection<Path>) : NotificationAction(DiagnosticBundle.message("virus.scanning.fix.action")) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
     val rc = Messages.showDialog(
       e.project,
