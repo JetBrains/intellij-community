@@ -364,7 +364,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         label = new JLabel("");
       }
 
-      comment = createCommentComponent(() -> new JBLabel("") {
+      comment = createCommentComponent(() -> new CommentLabel("") {
         @Override
         @NotNull
         protected HyperlinkListener createHyperlinkListener() {
