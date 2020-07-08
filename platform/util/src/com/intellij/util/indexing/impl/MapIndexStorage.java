@@ -16,12 +16,14 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -275,6 +277,13 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     } finally {
       l.unlock();
     }
+  }
+
+  @ApiStatus.Internal
+  public void clearCachedMappings() {
+    ConcurrencyUtil.withLock(l, () -> {
+      myCache.clear();
+    });
   }
 
   protected static <T> T unwrapCauseAndRethrow(RuntimeException e) throws StorageException {
