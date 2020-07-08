@@ -548,7 +548,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
-  public void testPostponedImportPackagePrefix() throws IOException {
+  public void testPostponedImportPackagePrefix() throws Exception {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
       new GradleBuildScriptBuilderEx()
@@ -569,6 +569,12 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     assertSourceNotExists("project.main", "src/main/kotlin");
     assertSourceNotExists("project.test", "src/test/java");
     createProjectSubFile("src/main/kotlin/Main.kt", "");
+    edt(() -> {
+      ((SourceFolderManagerImpl)SourceFolderManager.getInstance(myProject)).consumeBulkOperationsState(future -> {
+        PlatformTestUtil.waitForFuture(future, 1000);
+        return null;
+      });
+    });
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     assertSourcePackagePrefix("project.main", "src/main/kotlin", "prefix.package.other");
     assertSourceNotExists("project.test", "src/test/java");
