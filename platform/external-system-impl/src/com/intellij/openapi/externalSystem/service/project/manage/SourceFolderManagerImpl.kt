@@ -40,9 +40,8 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private val mutex = Any()
   private var sourceFolders = PathPrefixTreeMap<SourceFolderModel>()
   private var sourceFoldersByModule = HashMap<String, ModuleModel>()
-  @TestOnly
-  @Volatile
-  var bulkOperationState: Future<*>? = null
+
+  private val operationsStates = mutableListOf<Future<*>>()
 
   override fun addSourceFolder(module: Module, url: String, type: JpsModuleSourceRootType<*>) {
     synchronized(mutex) {
@@ -134,7 +133,13 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
           }
         }
 
-        bulkOperationState = ApplicationManager.getApplication().executeOnPooledThread { updateSourceFolders(sourceFoldersToChange) }
+        val application = ApplicationManager.getApplication()
+        val future = application.executeOnPooledThread { updateSourceFolders(sourceFoldersToChange) }
+        if (application.isUnitTestMode) {
+          ApplicationManager.getApplication().assertIsDispatchThread()
+          operationsStates.removeIf { it.isDone }
+          operationsStates.add(future)
+        }
       }
     })
 
@@ -245,6 +250,16 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       }
     }
     moduleModel.sourceFolders.add(url)
+  }
+
+  @TestOnly
+  @Throws(Exception::class)
+  fun consumeBulkOperationsState(stateConsumer: (Future<*>) -> Unit) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    assert(ApplicationManager.getApplication().isUnitTestMode)
+    for (operationsState in operationsStates) {
+      stateConsumer.invoke(operationsState)
+    }
   }
 
   companion object {

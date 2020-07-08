@@ -14,7 +14,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import org.assertj.core.api.BDDAssertions.then
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
-import java.util.concurrent.Future
 
 class SourceFolderManagerTest: HeavyPlatformTestCase() {
 
@@ -38,13 +37,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     FileUtil.writeToFile(file, "SomeContent")
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
-    val bulkOperationState: Future<*>? = manager.bulkOperationState
-    if (bulkOperationState == null) {
-      fail("Source Folder manager operation expected")
-    } else {
-      PlatformTestUtil.waitForFuture(bulkOperationState, 1000)
-    }
-
+    manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
     then(rootManager.contentEntries[0].sourceFolders)
       .hasSize(1)
       .extracting("url")
@@ -66,12 +59,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     FileUtil.writeToFile(file, "SomeContent")
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
-    val bulkOperationState: Future<*>? = manager.bulkOperationState
-    if (bulkOperationState == null) {
-      fail("Source Folder manager operation expected")
-    } else {
-      PlatformTestUtil.waitForFuture(bulkOperationState, 1000)
-    }
+    manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
 
     then(rootManager
            .contentEntries
