@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.reference.RefManager;
 import org.jetbrains.annotations.NotNull;
 
