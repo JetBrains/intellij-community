@@ -51,6 +51,7 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
           }
 
           override fun getInsets(): Insets = JBUI.insets(2)
+          override fun getMargin(): Insets = if(myPresentation.icon == AllIcons.General.ReaderMode) JBUI.emptyInsets() else JBUI.insetsRight(5)
         }
 
         actionButtonWithText.foreground = JBColor(NotNullProducer { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor })
