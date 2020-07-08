@@ -2260,7 +2260,7 @@ public final class HighlightUtil {
     TextRange fieldRange = referencedField.getTextRange();
     if (fieldRange == null || expression.getTextRange().getStartOffset() >= fieldRange.getEndOffset()) return null;
     // only simple reference can be illegal
-    if (!acceptQualified && expression.getQualifierExpression() != null) return null;
+    if (!acceptQualified && !containingClass.isEnum() && expression.getQualifierExpression() != null) return null;
     PsiField initField = findEnclosingFieldInitializer(expression);
     PsiClassInitializer classInitializer = findParentClassInitializer(expression);
     if (initField == null && classInitializer == null) return null;
