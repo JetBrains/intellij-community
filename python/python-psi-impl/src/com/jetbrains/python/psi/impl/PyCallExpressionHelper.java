@@ -99,45 +99,39 @@ public final class PyCallExpressionHelper {
 
   @NotNull
   public static List<@NotNull PyCallableType> multiResolveCallee(@NotNull PyCallExpression call, @NotNull PyResolveContext resolveContext) {
-    final PyExpression callee = call.getCallee();
-    final TypeEvalContext context = resolveContext.getTypeEvalContext();
-
-    final List<PyCallableType> calleesFromProviders = getCalleesFromProviders(callee, context);
+    final List<PyCallableType> calleesFromProviders = getCalleesFromProviders(call.getCallee(), resolveContext.getTypeEvalContext());
     if (calleesFromProviders != null) {
       return calleesFromProviders;
     }
 
-    if (callee == null) return Collections.emptyList();
-
-    return Stream.concat(getExplicitResolveResults(callee, call, context, resolveContext),
-                         getImplicitResolveResults(callee, resolveContext)).collect(Collectors.toList());
+    return ContainerUtil.concat(getExplicitResolveResults(call, resolveContext), getImplicitResolveResults(call, resolveContext));
   }
 
   @NotNull
-  private static Stream<@NotNull PyCallableType> getExplicitResolveResults(@NotNull PyExpression callee,
-                                                                           @NotNull PyCallExpression call,
-                                                                           @NotNull TypeEvalContext context,
-                                                                           @NotNull PyResolveContext resolveContext) {
-    final PyType callableTypes = context.getType(callee);
-    final List<PsiElement> dunderCallFunctions = resolveDunderCallMembers(callableTypes, call, resolveContext);
+  private static List<@NotNull PyCallableType> getExplicitResolveResults(@NotNull PyCallExpression call,
+                                                                         @NotNull PyResolveContext resolveContext) {
+    final List<PsiElement> dunderCallFunctions = resolveDunderCallMembers(call, resolveContext);
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
 
-    return !dunderCallFunctions.isEmpty() ? selectCallableTypes(StreamEx.of(dunderCallFunctions), context)
-                                          : PyTypeUtil.toStream(callableTypes).select(PyCallableType.class);
+    return !dunderCallFunctions.isEmpty()
+           ? selectCallableTypes(dunderCallFunctions, context)
+           : selectCallableTypes(Collections.singletonList(call.getCallee()), context);
   }
 
   @NotNull
-  private static Stream<@NotNull PyCallableType> getImplicitResolveResults(@NotNull PyExpression callee,
-                                                                           @NotNull PyResolveContext resolveContext) {
-    if (!resolveContext.allowImplicits()) return Stream.empty();
+  private static List<@NotNull PyCallableType> getImplicitResolveResults(@NotNull PyCallExpression call,
+                                                                         @NotNull PyResolveContext resolveContext) {
+    if (!resolveContext.allowImplicits()) return Collections.emptyList();
 
+    final PyExpression callee = call.getCallee();
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     if (callee instanceof PyQualifiedExpression) {
       final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
       final String referencedName = qualifiedCallee.getReferencedName();
-      if (referencedName == null) return Stream.empty();
+      if (referencedName == null) return Collections.emptyList();
 
       final PyExpression qualifier = qualifiedCallee.getQualifier();
-      if (qualifier == null || !canQualifyAnImplicitName(qualifier)) return Stream.empty();
+      if (qualifier == null || !canQualifyAnImplicitName(qualifier)) return Collections.emptyList();
 
       final PyType qualifierType = context.getType(qualifier);
       if (PyTypeChecker.isUnknown(qualifierType, context) ||
@@ -145,32 +139,39 @@ public final class PyCallExpressionHelper {
         final ResolveResultList resolveResults = new ResolveResultList();
         PyResolveUtil.addImplicitResolveResults(referencedName, resolveResults, qualifiedCallee);
 
-        final StreamEx<PsiElement> results = StreamEx.of(resolveResults).map(ResolveResult::getElement);
-        return selectCallableTypes(results, context);
+        return selectCallableTypes(ResolveResultList.getElements(resolveResults), context);
       }
     }
 
-    return Stream.empty();
+    return Collections.emptyList();
   }
 
   @NotNull
-  private static StreamEx<@NotNull PyCallableType> selectCallableTypes(@NotNull StreamEx<PsiElement> resolveResults,
-                                                                       @NotNull TypeEvalContext context) {
-    return resolveResults
+  private static List<@NotNull PyCallableType> selectCallableTypes(@NotNull List<PsiElement> resolveResults,
+                                                                   @NotNull TypeEvalContext context) {
+    return StreamEx
+      .of(resolveResults)
       .select(PyTypedElement.class)
-      .map(element -> context.getType(element))
-      .select(PyCallableType.class);
+      .map(context::getType)
+      .flatMap(PyTypeUtil::toStream)
+      .select(PyCallableType.class)
+      .toList();
   }
 
   @NotNull
-  private static List<PsiElement> resolveDunderCallMembers(@Nullable PyType callableTypes, @NotNull PyCallExpression call,
+  private static List<PsiElement> resolveDunderCallMembers(@NotNull PyCallExpression call,
                                                            @NotNull PyResolveContext resolveContext) {
-    return PyTypeUtil.toStream(callableTypes)
+    final PyExpression callee = call.getCallee();
+    if (callee == null) return Collections.emptyList();
+
+    final PyType calleeType = resolveContext.getTypeEvalContext().getType(callee);
+    return PyTypeUtil
+      .toStream(calleeType)
       .select(PyClassLikeType.class)
       .filter(type -> !type.isDefinition())
       .map(type -> type.resolveMember(PyNames.CALL, call, AccessDirection.READ, resolveContext, true))
       .nonNull()
-      .flatMap(list -> StreamEx.of(list).map(RatedResolveResult::getElement).nonNull())
+      .flatMap(list -> StreamEx.of(list).map(RatedResolveResult::getElement))
       .nonNull()
       .toList();
   }
