@@ -152,6 +152,11 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
       }
     }
     fixes.add(new RemoveTagFix(tagName, paramName));
+    if (isOnTheFly && element != null && REPORT_INACCESSIBLE) {
+      fixes.add(new SetInspectionOptionFix(this, "REPORT_INACCESSIBLE", 
+                                           JavaBundle.message("disable.report.inaccessible.symbols.fix"), 
+                                           false));
+    }
 
     holder.registerProblem(holder.getManager().createProblemDescriptor(valueElement, reference.getRangeInElement(), message,
                                                                        ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, isOnTheFly, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)));
