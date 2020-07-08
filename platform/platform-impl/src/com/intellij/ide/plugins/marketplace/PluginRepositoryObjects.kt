@@ -36,6 +36,7 @@ data class IntellijUpdateMetadata(
   val version: String = "",
   val notes: String = "",
   val dependencies: Set<String> = emptySet(),
+  val optionalDependencies: Set<String> = emptySet(),
   val since: String? = null,
   val until: String? = null,
   val productCode: String? = null,
@@ -57,12 +58,10 @@ data class IntellijUpdateMetadata(
     pluginNode.url = url
     pluginNode.size = size.toString()
     for (dep in dependencies) {
-      if (dep.startsWith("(optional)")) {
-        pluginNode.addDepends(dep.removePrefix("(optional)").trim(), true)
-      }
-      else {
-        pluginNode.addDepends(dep, false)
-      }
+      pluginNode.addDepends(dep, false)
+    }
+    for (dep in optionalDependencies) {
+      pluginNode.addDepends(dep, true)
     }
     return pluginNode
   }
