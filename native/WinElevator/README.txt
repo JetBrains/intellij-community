@@ -17,6 +17,10 @@ Launcher then creates threads to read/write them to console.
 
 -------
 How to build.
+
+ToolChain: VisualStudio 2017
+SDK: 8.1
+
 You may open .sln from Visual Studio or use msbuild from VS command prompt:
  msbuild Elevator.sln /p:Configuration=release /property:Platform=x86
 
