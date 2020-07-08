@@ -28,10 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.*;
 import com.intellij.util.lang.UrlClassLoader;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.lang.invoke.MethodHandle;
@@ -1092,7 +1089,8 @@ public final class PluginManagerCore {
     return getIncompatibleMessage(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) != null;
   }
 
-  static @Nullable String getIncompatibleMessage(@NotNull BuildNumber buildNumber, @Nullable String sinceBuild, @Nullable String untilBuild) {
+  static @Nullable @Nls String getIncompatibleMessage(@NotNull BuildNumber buildNumber, @Nullable @NonNls String sinceBuild, 
+                                                      @Nullable @NonNls String untilBuild) {
     try {
       String message = null;
       BuildNumber sinceBuildNumber = sinceBuild == null ? null : BuildNumber.fromString(sinceBuild, null, null);
