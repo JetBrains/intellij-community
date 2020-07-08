@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.OffsetKey;
 import com.intellij.codeInsight.completion.OffsetsInFile;
 import com.intellij.codeInsight.template.*;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,7 +20,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilBase;
@@ -95,9 +95,13 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return new TemplateImpl(key, text, group);
   }
 
+  private static Editor getTopLevelEditor(@NotNull Editor editor) {
+    return editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+  }
+
   @Nullable
   public static TemplateState getTemplateState(@NotNull Editor editor) {
-    UserDataHolder stateHolder = InjectedLanguageUtil.getTopLevelEditor(editor);
+    UserDataHolder stateHolder = getTopLevelEditor(editor);
     TemplateState templateState = stateHolder.getUserData(TEMPLATE_STATE_KEY);
     if (templateState != null && templateState.isDisposed()) {
       stateHolder.putUserData(TEMPLATE_STATE_KEY, null);
@@ -120,7 +124,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   @NotNull
   private TemplateState initTemplateState(@NotNull Editor editor) {
-    Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
+    Editor topLevelEditor = getTopLevelEditor(editor);
     TemplateState prevState = clearTemplateState(topLevelEditor);
     if (prevState != null) Disposer.dispose(prevState);
     TemplateState state = new TemplateState(myProject, topLevelEditor);
