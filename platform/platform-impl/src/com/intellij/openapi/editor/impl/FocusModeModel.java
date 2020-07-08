@@ -103,6 +103,8 @@ public class FocusModeModel implements Disposable {
     // Focus mode should not be applied when idea is used as rd server (for example, centaur mode).
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) return;
 
+    if (!caret.isUpToDate()) return;
+
     RangeMarkerEx[] startRange = new RangeMarkerEx[1];
     RangeMarkerEx[] endRange = new RangeMarkerEx[1];
     myFocusMarkerTree.processContaining(caret.getSelectionStart(), startMarker -> {
