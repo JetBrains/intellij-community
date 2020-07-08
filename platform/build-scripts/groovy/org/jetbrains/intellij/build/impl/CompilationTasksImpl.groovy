@@ -23,15 +23,17 @@ import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 @CompileStatic
 class CompilationTasksImpl extends CompilationTasks {
   private final CompilationContext context
+  private final PortableCompilationCache jpsCache
 
   CompilationTasksImpl(CompilationContext context) {
     this.context = context
+    this.jpsCache = new PortableCompilationCache(context)
   }
 
   @Override
   void compileModules(List<String> moduleNames, List<String> includingTestsInModules) {
-    def jpsCache = new PortableCompilationCache(context)
     if (jpsCache.canBeUsed) {
+      context.messages.info("JPS remote cache will be used")
       jpsCache.warmUp()
     }
     else if (context.options.useCompiledClassesFromProjectOutput) {

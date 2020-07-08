@@ -20,6 +20,10 @@ class Git {
     return execute("git log -$commitsCount --pretty=tformat:%H")
   }
 
+  List<String> status() {
+    return execute('git status --short --untracked-files=no --ignored=no')
+  }
+
   private List<String> execute(String command) {
     def process = command.execute((List)null, dir)
     def output = new BufferedReader(new InputStreamReader(process.inputStream, StandardCharsets.UTF_8)).withCloseable {
