@@ -7,7 +7,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.Interner;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
@@ -198,23 +198,19 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
                                                                   XmlReader.PROJECT_SERVICE,
                                                                   XmlReader.MODULE_SERVICE);
 
-  private final Interner<String> strings = Interner.createStringInterner();
+  private final ObjectOpenHashSet<String> strings = new ObjectOpenHashSet<>(CLASS_NAMES.size() + EXTRA_STRINGS.size());
 
   final DateFormat releaseDateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
   final List<String> visitedFiles = new ArrayList<>(3);
 
   PluginXmlFactory() {
-    for (String name : CLASS_NAMES) {
-      strings.intern(name);
-    }
-    for (String name : EXTRA_STRINGS) {
-      strings.intern(name);
-    }
+    strings.addAll(CLASS_NAMES);
+    strings.addAll(EXTRA_STRINGS);
   }
 
   @NotNull String intern(@NotNull String string) {
     // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
-    return string.length() < 64 ? strings.intern(string) : string;
+    return string.length() < 64 ? strings.addOrGet(string) : string;
   }
 
   @Override
