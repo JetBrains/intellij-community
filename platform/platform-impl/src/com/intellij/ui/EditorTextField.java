@@ -84,6 +84,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor;
   private boolean myOneLineMode; // use getter to access this field! It is allowed to override getter and change initial behaviour
+  private boolean myShowPlaceholderWhenFocused;
   private boolean myEnsureWillComputePreferredSize;
   private Dimension myPassivePreferredSize;
   private CharSequence myHintText;
@@ -154,6 +155,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public void setFontInheritedFromLAF(boolean b) {
     myInheritSwingFont = b;
     setDocument(myDocument); // reinit editor.
+  }
+
+  public void setShowPlaceholderWhenFocused(boolean b) {
+    myShowPlaceholderWhenFocused = b;
+    if (myEditor != null) {
+      myEditor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
+    }
   }
 
   @NotNull
@@ -552,6 +560,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     editor.getContentComponent().addMouseListener(this);
 
     editor.setPlaceholder(myHintText);
+    editor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
 
     initOneLineMode(editor);
 

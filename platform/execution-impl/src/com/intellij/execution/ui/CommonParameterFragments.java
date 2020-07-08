@@ -42,6 +42,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     String message = ExecutionBundle.message("run.configuration.program.hint");
     programArguments.getEditorField().getEmptyText().setText(message);
     programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
+    FragmentedSettingsUtil.setupPlaceholderVisibility(programArguments.getEditorField());
     MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
     myFragments.add(new SettingsEditorFragment<>("commandLineParameters", null, null, programArguments,
                                                  100,

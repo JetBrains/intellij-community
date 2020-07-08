@@ -60,12 +60,14 @@ public final class JavaApplicationSettingsEditor extends RunConfigurationFragmen
     vmOptions.getEditorField().getAccessibleContext().setAccessibleName(message);
     vmOptions.getEditorField().getEmptyText().setText(message);
     MacrosDialog.addMacroSupport(vmOptions.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
+    FragmentedSettingsUtil.setupPlaceholderVisibility(vmOptions.getEditorField());
     fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions, 15,
                                                (configuration, c) -> c.setText(configuration.getVMParameters()),
                                                (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
                                                configuration -> isNotEmpty(configuration.getVMParameters())));
 
     EditorTextField mainClass = ClassEditorField.createClassField(myProject, () -> classpathCombo.getSelectedModule());
+    mainClass.setShowPlaceholderWhenFocused(true);
     UIUtil.setMonospaced(mainClass);
     String placeholder = ExecutionBundle.message("application.configuration.main.class.placeholder");
     mainClass.setPlaceholder(placeholder);
