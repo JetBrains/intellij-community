@@ -86,8 +86,9 @@ class MutableLookupStorage(
     performanceTracker.reorderedByML()
   }
 
-  override fun shouldComputeFeatures(): Boolean = model != null || (_loggingEnabled && !experimentWithoutComputingFeatures()) ||
-                                                  (ApplicationManager.getApplication().isUnitTestMode && alwaysComputeFeaturesInTests)
+  override fun shouldComputeFeatures(): Boolean = model != null ||
+                                                  (ApplicationManager.getApplication().isUnitTestMode && alwaysComputeFeaturesInTests) ||
+                                                  (_loggingEnabled && !experimentWithoutComputingFeatures())
 
   fun isContextFactorsInitialized(): Boolean = contextFeaturesStorage != null
 

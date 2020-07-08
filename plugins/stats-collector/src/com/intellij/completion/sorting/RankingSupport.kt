@@ -62,8 +62,8 @@ object RankingSupport {
 
   private fun shouldSortByML(language: Language, provider: RankingModelProvider): Boolean {
     val application = ApplicationManager.getApplication()
-    val experimentStatus = ExperimentStatus.getInstance()
     if (application.isUnitTestMode) return enabledInTests
+    val experimentStatus = ExperimentStatus.getInstance()
     if (application.isEAP && experimentStatus.isExperimentOnCurrentIDE(language) && isCompletionLogsSendAllowed()) {
       configureSettingsInExperiment(experimentStatus, language, provider.displayNameInSettings)
     }
