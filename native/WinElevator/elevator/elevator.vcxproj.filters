@@ -17,7 +17,4 @@
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="jb.ico" />
-  </ItemGroup>
 </Project>
