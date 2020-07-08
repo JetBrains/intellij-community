@@ -491,6 +491,16 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     doTestResolveInNamespacePackage(getTestName(true));
   }
 
+  // PY-39748
+  public void testPkgResourcesNamespaceWithDocstring() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  // PY-39748
+  public void testTryExceptNamespace() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
   private void doTestResolveInNamespacePackage(String namespace) {
     myFixture.copyDirectoryToProject(namespace, "");
     runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
