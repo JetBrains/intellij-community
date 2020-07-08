@@ -49,6 +49,7 @@ public class MavenImportingSettings implements Cloneable {
   @NotNull private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
 
+  private boolean importAutomatically = false;
   private boolean createModulesForAggregators = true;
   private boolean createModuleGroups = false;
   private boolean excludeTargetFolder = true;
@@ -109,20 +110,22 @@ public class MavenImportingSettings implements Cloneable {
   /**
    * @deprecated see {@link MavenImportingSettings#setImportAutomatically(boolean)} for details
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public boolean isImportAutomatically() {
-    return true;
+    return importAutomatically;
   }
 
   /**
    * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker for details
    * @deprecated Auto-import cannot be disabled
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void setImportAutomatically(@SuppressWarnings("unused") boolean importAutomatically) {
-    LOG.warn(new Throwable("Auto-import cannot be disabled"));
+    this.importAutomatically = importAutomatically;
   }
 
   @NotNull
