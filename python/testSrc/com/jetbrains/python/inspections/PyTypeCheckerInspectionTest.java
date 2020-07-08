@@ -1176,4 +1176,15 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       configureInspection();
     });
   }
+
+  // PY-42205
+  public void testNonReferenceCallee() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("class CallableTest:\n" +
+                         "    def __call__(self, arg=None):\n" +
+                         "        pass\n" +
+                         "CallableTest()(\"bad 1\")")
+    );
+  }
 }

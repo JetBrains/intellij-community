@@ -741,9 +741,10 @@ public final class PyCallExpressionHelper {
       return Collections.emptyList();
     }
 
+    final List<PyExpression> arguments = Arrays.asList(argumentList.getArguments());
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     return ContainerUtil.map(callExpression.multiResolveCallee(resolveContext, implicitOffset),
-                             callableType -> mapArguments(callExpression, argumentList, callableType, context));
+                             callableType -> mapArguments(callExpression, arguments, callableType, context));
   }
 
   @NotNull
@@ -755,24 +756,23 @@ public final class PyCallExpressionHelper {
       return PyCallExpression.PyArgumentsMapping.empty(callExpression);
     }
 
-    return mapArguments(callExpression, argumentList, callableType, context);
+    return mapArguments(callExpression, Arrays.asList(argumentList.getArguments()), callableType, context);
   }
 
   @NotNull
-  private static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallExpression callExpression,
-                                                                  @NotNull PyArgumentList argumentList,
+  private static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallSiteExpression callSite,
+                                                                  @NotNull List<PyExpression> arguments,
                                                                   @NotNull PyCallableType callableType,
                                                                   @NotNull TypeEvalContext context) {
     final List<PyCallableParameter> parameters = callableType.getParameters(context);
-    if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callExpression);
+    if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
     final int safeImplicitOffset = Math.min(callableType.getImplicitOffset(), parameters.size());
     final List<PyCallableParameter> explicitParameters = parameters.subList(safeImplicitOffset, parameters.size());
     final List<PyCallableParameter> implicitParameters = parameters.subList(0, safeImplicitOffset);
-    final List<PyExpression> arguments = Arrays.asList(argumentList.getArguments());
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
 
-    return new PyCallExpression.PyArgumentsMapping(callExpression,
+    return new PyCallExpression.PyArgumentsMapping(callSite,
                                                    callableType,
                                                    implicitParameters,
                                                    mappingResults.getMappedParameters(),
@@ -787,8 +787,9 @@ public final class PyCallExpressionHelper {
   public static List<PyCallExpression.PyArgumentsMapping> mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                        @NotNull PyResolveContext resolveContext) {
     final List<PyCallExpression.PyArgumentsMapping> results = new ArrayList<>();
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
     for (Pair<PyCallable, PyCallableType> callableAndType : multiResolveCalleeFunction(callSite, resolveContext)) {
-      results.add(mapArguments(callSite, callableAndType.second, callableAndType.first, resolveContext));
+      results.add(mapArguments(callSite, callSite.getArguments(callableAndType.first), callableAndType.second, context));
     }
     return results;
   }
