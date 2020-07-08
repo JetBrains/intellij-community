@@ -3,6 +3,9 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.VisibleAreaEvent;
+import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
@@ -92,9 +95,12 @@ public interface CaretModel {
   }
 
   /**
-   * Tells whether caret model is in consistent state currently. This might not be the case during document update, but client code can
-   * observe such a state only in specific circumstances. So unless you're implementing very low-level editor logic (involving
-   * {@code PrioritizedDocumentListener}), you don't need this method - you'll only see it return {@code true}.
+   * Tells whether caret is in consistent state currently. This might not be the case during document update.
+   * One cannot observe an inconsistent state from a usual {@link DocumentListener} though, this can happen in more complex
+   * cases only (e.g. in {@link VisibleAreaListener#visibleAreaChanged(VisibleAreaEvent)} called as a result of soft wraps
+   * recalculation caused by document update).
+   * <p>
+   * Requesting caret position, or trying to change it, while caret isn't 'up-to-date', will cause an exception.
    */
   default boolean isUpToDate() {
     return getCurrentCaret().isUpToDate();
