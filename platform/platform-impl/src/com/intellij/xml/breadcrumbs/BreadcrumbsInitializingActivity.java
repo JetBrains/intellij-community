@@ -40,6 +40,7 @@ public final class BreadcrumbsInitializingActivity implements StartupActivity.Du
         reinitBreadcrumbsInAllEditors(project);
       }
     });
+    FileBreadcrumbsCollector.EP_NAME.getPoint(project).addChangeListener(() -> reinitBreadcrumbsInAllEditors(project), project);
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(project), project);
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> reinitBreadcrumbsInAllEditors(project));
