@@ -952,6 +952,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
 
+  protected int getSeparatorHeight() {
+    return JBUIScale.scale(24);
+  }
+
   private final class MySeparator extends JComponent {
     private final String myText;
 
@@ -965,7 +969,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       int gap = JBUIScale.scale(2);
       int center = JBUIScale.scale(3);
       int width = gap * 2 + center;
-      int height = JBUIScale.scale(24);
+      int height = getSeparatorHeight();
 
       if (myOrientation == SwingConstants.HORIZONTAL) {
         if (myText != null) {

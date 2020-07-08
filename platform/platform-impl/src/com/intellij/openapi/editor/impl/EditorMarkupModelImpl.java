@@ -153,6 +153,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private InspectionPopupManager myPopupManager;
   private final Disposable resourcesDisposable = Disposer.newDisposable();
   private final Alarm statusTimer = new Alarm(resourcesDisposable);
+  private final Map<InspectionWidgetActionProvider, AnAction> extensionActions = new HashMap<>();
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -174,8 +175,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     };
 
     StatusAction statusAction = new StatusAction();
-    DefaultActionGroup actions = new DefaultActionGroup(statusAction, navigateGroup);
-    fillEPActions(actions);
+    DefaultActionGroup actions = new DefaultActionGroup(createEPActions(), statusAction, navigateGroup);
 
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
@@ -188,6 +188,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       protected @NotNull Color getSeparatorColor() {
         Color separatorColor = myEditor.getColorsScheme().getColor(EditorColors.SEPARATOR_BELOW_COLOR);
         return separatorColor != null ? separatorColor : super.getSeparatorColor();
+      }
+
+      @Override
+      protected int getSeparatorHeight() {
+        return getStatusIconSize();
       }
 
       @Override
@@ -379,38 +384,34 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private void fillEPActions(DefaultActionGroup actions) {
-    InspectionWidgetActionProvider.EP_NAME.getExtensionList().
-      forEach(p -> {
-        Separator separator = p.getSeparator();
-        if (separator != null) {
-          actions.add(separator, Constraints.FIRST);
-        }
+  private DefaultActionGroup createEPActions() {
+    DefaultActionGroup epActions = new DefaultActionGroup();
 
-        actions.add(p.getAction(myEditor), Constraints.FIRST);
+    InspectionWidgetActionProvider.EP_NAME.getExtensionList().
+      forEach(extension -> {
+        AnAction action = extension.createAction(myEditor);
+        extensionActions.put(extension, action);
+        epActions.add(action);
       });
 
     InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<InspectionWidgetActionProvider>() {
       @Override
       public void extensionAdded(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        Separator separator = extension.getSeparator();
-        if (separator != null) {
-          actions.add(separator, Constraints.FIRST);
-        }
-
-        actions.add(extension.getAction(myEditor), Constraints.FIRST);
+        AnAction action = extension.createAction(myEditor);
+        extensionActions.put(extension, action);
+        epActions.add(action);
       }
 
       @Override
       public void extensionRemoved(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        actions.remove(extension.getAction(myEditor));
-
-        Separator separator = extension.getSeparator();
-        if (separator != null) {
-          actions.remove(separator);
+        AnAction action = extensionActions.remove(extension);
+        if (action != null) {
+          epActions.remove(action);
         }
       }
     }, resourcesDisposable);
+
+    return epActions;
   }
 
   private AnAction createAction(@NotNull String id, @NotNull Icon icon) {
@@ -795,6 +796,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     myPopupManager.hidePopup();
     myPopupManager = null;
+    extensionActions.clear();
 
     Disposer.dispose(resourcesDisposable);
 

@@ -15,21 +15,23 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.NotNullProducer
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import java.awt.Insets
 import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 
-class ReaderModeActionProvider(override val separator: Separator? = Separator.create()) : InspectionWidgetActionProvider {
-  override fun getAction(editor: Editor): AnAction {
-    return object : DumbAwareAction(LangBundle.messagePointer("action.ReaderModeProvider.text"),
-                                    LangBundle.messagePointer("action.ReaderModeProvider.description"), null), CustomComponentAction {
+class ReaderModeActionProvider : InspectionWidgetActionProvider {
+  override fun createAction(editor: Editor): AnAction {
+    val action = object : DumbAwareAction(LangBundle.messagePointer("action.ReaderModeProvider.text"),
+                                                   LangBundle.messagePointer("action.ReaderModeProvider.description"), null), CustomComponentAction {
       override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-        val actionButtonWithText = object : ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+        val actionButtonWithText = object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
           override fun iconTextSpace() = JBUI.scale(2)
 
           override fun updateToolTipText() {
@@ -47,6 +49,8 @@ class ReaderModeActionProvider(override val separator: Separator? = Separator.cr
               toolTipText = myPresentation.description
             }
           }
+
+          override fun getInsets(): Insets = JBUI.insets(2)
         }
 
         actionButtonWithText.foreground = JBColor(NotNullProducer { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor })
@@ -68,16 +72,9 @@ class ReaderModeActionProvider(override val separator: Separator? = Separator.cr
       }
 
       override fun update(e: AnActionEvent) {
-        if (!Experiments.getInstance().isFeatureEnabled("editor.reader.mode")) {
-          e.presentation.isEnabledAndVisible = false
-          return
-        }
-
-        val project = e.project?: return
-        val file = PlatformDataKeys.VIRTUAL_FILE.getData(e.dataContext)
-        e.presentation.isEnabledAndVisible = ReaderModeFileEditorListener.matchMode(project, file)
-
+        val project = editor.project?: return
         val presentation = e.presentation
+
         if (!ReaderModeSettings.instance(project).enabled) {
           presentation.text = null
           presentation.icon = AllIcons.General.ReaderMode
@@ -89,6 +86,19 @@ class ReaderModeActionProvider(override val separator: Separator? = Separator.cr
           presentation.icon = EmptyIcon.ICON_16
           presentation.hoveredIcon = AllIcons.Actions.CloseDarkGrey
           presentation.description = LangBundle.message("action.ReaderModeProvider.text.exit")
+        }
+      }
+    }
+
+     return object : DefaultActionGroup(action, Separator.create()) {
+      override fun update(e: AnActionEvent) {
+        if (!Experiments.getInstance().isFeatureEnabled("editor.reader.mode")) {
+          e.presentation.isEnabledAndVisible = false
+        }
+        else {
+          val project = editor.project?: return
+          val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.virtualFile
+          e.presentation.isEnabledAndVisible = ReaderModeFileEditorListener.matchMode(project, file)
         }
       }
     }
