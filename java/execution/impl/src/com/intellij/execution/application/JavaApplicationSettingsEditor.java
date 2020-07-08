@@ -56,7 +56,9 @@ public final class JavaApplicationSettingsEditor extends RunConfigurationFragmen
     String group = ExecutionBundle.message("group.java.options");
     RawCommandLineEditor vmOptions = new RawCommandLineEditor();
     setMinimumWidth(vmOptions, 400);
-    vmOptions.getEditorField().getEmptyText().setText(ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text"));
+    String message = ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text");
+    vmOptions.getEditorField().getAccessibleContext().setAccessibleName(message);
+    vmOptions.getEditorField().getEmptyText().setText(message);
     MacrosDialog.addMacroSupport(vmOptions.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
     fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions, 15,
                                                (configuration, c) -> c.setText(configuration.getVMParameters()),
@@ -65,7 +67,9 @@ public final class JavaApplicationSettingsEditor extends RunConfigurationFragmen
 
     EditorTextField mainClass = ClassEditorField.createClassField(myProject, () -> classpathCombo.getSelectedModule());
     UIUtil.setMonospaced(mainClass);
-    mainClass.setPlaceholder(ExecutionBundle.message("application.configuration.main.class.placeholder"));
+    String placeholder = ExecutionBundle.message("application.configuration.main.class.placeholder");
+    mainClass.setPlaceholder(placeholder);
+    mainClass.getAccessibleContext().setAccessibleName(placeholder);
     setMinimumWidth(mainClass, 300);
     fragments.add(new SettingsEditorFragment<>("mainClass", null, null, mainClass, 20,
                                                (configuration, component) -> component.setText(configuration.getMainClassName()),
