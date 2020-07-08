@@ -86,8 +86,8 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
   }
 
   @Nullable
-  private static XmlAttribute getInspectionShortNameAttribute(Module module, PsiClass inspectionClass) {
-    Extension extension = InspectionDescriptionInfo.findExtension(module, inspectionClass);
+  private static XmlAttribute getInspectionShortNameAttribute(PsiClass inspectionClass) {
+    Extension extension = InspectionDescriptionInfo.findExtension(inspectionClass);
     return extension == null ? null : extension.getXmlTag().getAttribute("shortName");
   }
 
@@ -130,7 +130,7 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
         return;
       }
 
-      XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(module, inspectionClass);
+      XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(inspectionClass);
       if (shortNameAttribute == null) {
         return;
       }
@@ -199,7 +199,7 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
           continue;
         }
 
-        XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(module, inspectionClass);
+        XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(inspectionClass);
         if (shortNameAttribute == null) {
           continue;
         }

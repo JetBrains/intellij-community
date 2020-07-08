@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -28,7 +29,9 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser;
 import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UastUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -64,7 +67,7 @@ public final class InspectionDescriptionInfo {
       shortNameInXml = true;
       String className = psiClass.getQualifiedName();
       if (className != null) {
-        Extension extension = findExtension(module, psiClass);
+        Extension extension = findExtension(psiClass);
         if (extension != null) {
           filename = extension.getXmlTag().getAttributeValue("shortName");
         }
@@ -86,9 +89,10 @@ public final class InspectionDescriptionInfo {
   }
 
   @Nullable
-  public static Extension findExtension(Module module, PsiClass psiClass) {
+  public static Extension findExtension(PsiClass psiClass) {
     return CachedValuesManager.getCachedValue(psiClass, () -> {
-      Extension extension = doFindExtension(module, psiClass);
+      Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
+      Extension extension = module == null ? null : doFindExtension(module, psiClass);
       return CachedValueProvider.Result
         .create(extension, extension == null ? PsiModificationTracker.MODIFICATION_COUNT : extension.getXmlTag());
     });
