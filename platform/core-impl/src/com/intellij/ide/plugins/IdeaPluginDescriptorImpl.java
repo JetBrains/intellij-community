@@ -111,7 +111,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public @NotNull List<IdeaPluginDependency> getDependencies() {
-    return pluginDependencies == null ? Collections.emptyList() : (List) pluginDependencies;
+    return pluginDependencies == null ? Collections.emptyList() : Collections.unmodifiableList(pluginDependencies);
   }
 
   @ApiStatus.Internal
@@ -332,7 +332,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         myModules.add(PluginId.getId(moduleName));
       }
     }
-    return;
   }
 
   private void readProduct(@NotNull DescriptorListLoadingContext context, @NotNull Element child) {
