@@ -747,16 +747,19 @@ public final class PyCallExpressionHelper {
                              callableType -> mapArguments(callExpression, arguments, callableType, context));
   }
 
+  /**
+   * Gets implicit offset from the {@code callableType},
+   * should be used with the methods below since they specify correct offset value.
+   *
+   * @see PyCallExpression#multiResolveCalleeFunction(PyResolveContext)
+   * @see PyCallExpression#multiResolveCallee(PyResolveContext)
+   * @see PyCallExpression#multiResolveCallee(PyResolveContext, int)
+   */
   @NotNull
-  public static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallExpression callExpression,
+  public static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                  @NotNull PyCallableType callableType,
                                                                  @NotNull TypeEvalContext context) {
-    final PyArgumentList argumentList = callExpression.getArgumentList();
-    if (argumentList == null) {
-      return PyCallExpression.PyArgumentsMapping.empty(callExpression);
-    }
-
-    return mapArguments(callExpression, Arrays.asList(argumentList.getArguments()), callableType, context);
+    return mapArguments(callSite, callSite.getArguments(callableType.getCallable()), callableType, context);
   }
 
   @NotNull
@@ -786,34 +789,24 @@ public final class PyCallExpressionHelper {
   @NotNull
   public static List<PyCallExpression.PyArgumentsMapping> mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                        @NotNull PyResolveContext resolveContext) {
-    final List<PyCallExpression.PyArgumentsMapping> results = new ArrayList<>();
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
-    for (Pair<PyCallable, PyCallableType> callableAndType : multiResolveCalleeFunction(callSite, resolveContext)) {
-      results.add(mapArguments(callSite, callSite.getArguments(callableAndType.first), callableAndType.second, context));
-    }
-    return results;
+    return ContainerUtil.map(multiResolveCalleeFunction(callSite, resolveContext), type -> mapArguments(callSite, type, context));
   }
 
   @NotNull
-  private static List<Pair<PyCallable, PyCallableType>> multiResolveCalleeFunction(@NotNull PyCallSiteExpression callSite,
-                                                                                   @NotNull PyResolveContext resolveContext) {
+  private static List<PyCallableType> multiResolveCalleeFunction(@NotNull PyCallSiteExpression callSite,
+                                                                 @NotNull PyResolveContext resolveContext) {
     if (callSite instanceof PyCallExpression) {
-      final List<PyCallableType> callableTypes = ((PyCallExpression)callSite).multiResolveCallee(resolveContext);
-
-      return StreamEx
-        .of(callableTypes)
-        .map(callableType -> Pair.create(callableType.getCallable(), callableType))
-        .toList();
+      return ((PyCallExpression)callSite).multiResolveCallee(resolveContext);
     }
     else {
-      final List<Pair<PyCallable, PyCallableType>> results = new ArrayList<>();
+      final List<PyCallableType> results = new ArrayList<>();
 
       for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
         if (result instanceof PyTypedElement) {
           final PyType resultType = resolveContext.getTypeEvalContext().getType((PyTypedElement)result);
           if (resultType instanceof PyCallableType) {
-            final PyCallable callable = PyUtil.as(result, PyCallable.class);
-            results.add(Pair.create(callable, (PyCallableType)resultType));
+            results.add((PyCallableType)resultType);
             continue;
           }
         }
@@ -824,6 +817,11 @@ public final class PyCallExpressionHelper {
     }
   }
 
+  /**
+   * Tries to infer implicit offset from the {@code callSite} and {@code callable}.
+   *
+   * @see PyCallExpressionHelper#mapArguments(PyCallSiteExpression, PyCallableType, TypeEvalContext)
+   */
   @NotNull
   public static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                  @NotNull PyCallable callable,
@@ -831,18 +829,10 @@ public final class PyCallExpressionHelper {
     final PyCallableType callableType = PyUtil.as(context.getType(callable), PyCallableType.class);
     if (callableType == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
-    return mapArguments(callSite, callableType, callable, PyResolveContext.defaultContext().withTypeEvalContext(context));
-  }
-
-  @NotNull
-  private static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallSiteExpression callSite,
-                                                                  @NotNull PyCallableType callableType,
-                                                                  @Nullable PyCallable callable,
-                                                                  @NotNull PyResolveContext resolveContext) {
-    final TypeEvalContext context = resolveContext.getTypeEvalContext();
     final List<PyCallableParameter> parameters = callableType.getParameters(context);
     if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
     final List<PyExpression> arguments = callSite.getArguments(callable);
     final List<PyCallableParameter> explicitParameters = filterExplicitParameters(parameters, callable, callSite, resolveContext);
     final List<PyCallableParameter> implicitParameters = parameters.subList(0, parameters.size() - explicitParameters.size());
