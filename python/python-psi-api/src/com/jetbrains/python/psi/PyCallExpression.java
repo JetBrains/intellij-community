@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Predicate;
 import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
@@ -23,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Represents an entire call expression, like <tt>foo()</tt> or <tt>foo.bar[1]('x')</tt>.
@@ -46,8 +46,8 @@ public interface PyCallExpression extends PyCallSiteExpression {
 
       if (resolvedCallee instanceof PyFunction &&
           qualifiedCallee.isQualified() &&
-          isConstructorName.apply(resolvedCallee.getName()) &&
-          !isConstructorName.apply(qualifiedCallee.getName())) {
+          isConstructorName.test(resolvedCallee.getName()) &&
+          !isConstructorName.test(qualifiedCallee.getName())) {
         return null;
       }
 
@@ -162,10 +162,9 @@ public interface PyCallExpression extends PyCallSiteExpression {
    *
    * @param resolveContext resolve context
    * @return the resolved callees or an empty list.
-   * <i>Note: the returned list does not contain null values.</i>
    */
   @NotNull
-  default List<PyCallable> multiResolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
+  default List<@NotNull PyCallable> multiResolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
     return ContainerUtil.mapNotNull(multiResolveCallee(resolveContext), PyCallableType::getCallable);
   }
 
@@ -174,10 +173,9 @@ public interface PyCallExpression extends PyCallSiteExpression {
    *
    * @param resolveContext resolve context
    * @return objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
-   * <i>Note: the returned list does not contain null values.</i>
    */
   @NotNull
-  default List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
+  default List<@NotNull PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
     return multiResolveCallee(resolveContext, 0);
   }
 
@@ -187,10 +185,9 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @param implicitOffset implicit offset which is known from the context
    * @return objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
-   * <i>Note: the returned list does not contain null values.</i>
    */
   @NotNull
-  List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset);
+  List<@NotNull PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset);
 
   /**
    * Resolves the callee to possible functions and maps arguments to parameters for all of them.
@@ -198,10 +195,9 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @return objects which contains callable and mappings.
    * Returned list is empty if the callee couldn't be resolved.
-   * <i>Note: the returned list does not contain null values.</i>
    */
   @NotNull
-  default List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
+  default List<@NotNull PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
     return multiMapArguments(resolveContext, 0);
   }
 
@@ -212,10 +208,9 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param implicitOffset implicit offset which is known from the context
    * @return objects which contains callable and mappings.
    * Returned list is empty if the callee couldn't be resolved.
-   * <i>Note: the returned list does not contain null values.</i>
    */
   @NotNull
-  List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset);
+  List<@NotNull PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset);
 
   /**
    * Checks if the unqualified name of the callee matches any of the specified names
