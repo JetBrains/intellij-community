@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.TestIconMapper;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.text.StringUtil;
@@ -89,7 +90,7 @@ public class TestStatusLine extends NonOpaquePanel {
     //finished tests
     boolean stopped = finishedTestsCount != testsTotal;
     if (stopped) {
-      myState.append("Stopped. ");
+      myState.append(TestRunnerBundle.message("test.stopped") + " ");
     }
 
     formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
@@ -100,11 +101,12 @@ public class TestStatusLine extends NonOpaquePanel {
   private void formatCounts(int failuresCount, int ignoredTestsCount, int passedCount, int testsTotal) {
     boolean something = false;
     if (failuresCount > 0) {
-      myState.append("Tests failed: " + failuresCount, ERROR_ATTRIBUTES);
+      myState.append(TestRunnerBundle.message("tests.result.prefix") + " ", ERROR_ATTRIBUTES);
+      myState.append(TestRunnerBundle.message("tests.result.failed.count", failuresCount), ERROR_ATTRIBUTES);
       something = true;
     }
     else {
-      myState.append("Tests ");
+      myState.append(TestRunnerBundle.message("tests.result.prefix")+" ");
     }
 
     if (passedCount > 0 || ignoredTestsCount + failuresCount == 0) {
@@ -112,18 +114,18 @@ public class TestStatusLine extends NonOpaquePanel {
         myState.append(", ");
       }
       something = true;
-      myState.append("passed: " + passedCount);
+      myState.append(TestRunnerBundle.message("tests.result.passed.count", passedCount));
     }
 
     if (ignoredTestsCount > 0) {
       if (something) {
         myState.append(", ");
       }
-      myState.append("ignored: " + ignoredTestsCount, IGNORE_ATTRIBUTES);
+      myState.append(TestRunnerBundle.message("tests.result.ignored.count", ignoredTestsCount), IGNORE_ATTRIBUTES);
     }
 
     if (testsTotal > 0) {
-      myState.append(" of " + getTestsTotalMessage(testsTotal), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      myState.append(TestRunnerBundle.message("tests.result.total.count", getTestsTotalMessage(testsTotal)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
 
