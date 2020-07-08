@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.codeInsight.actions;
 
 import com.intellij.ide.DataManager;
@@ -49,22 +35,22 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
                       "    runtime 'group:artifact:1.0:jdk14'\n" +
                       "}");
   }
-  
+
   public void test_DoNotConvertIfCoordinatesNotClear() {
     String noArtifact = getDependency("group", null, "1.0", "runtime", null);
     configureFromFileText("pom.xml", noArtifact);
 
     selectWholeFile();
-    
+
     performCut();
 
     configureGradleFile();
     performPaste();
     checkResultByText(null, "dependencies {\n" +
                             "    <dependency>\n" +
-                            "      <groupId>group</groupId>\n" +
-                            "      <version>1.0</version>\n" +
-                            "      <scope>runtime</scope>\n" +
+                            "    <groupId>group</groupId>\n" +
+                            "    <version>1.0</version>\n" +
+                            "    <scope>runtime</scope>\n" +
                             "    </dependency>\n" +
                             "}", true);
   }
@@ -94,34 +80,6 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
                       "}");
   }
 
-
-  @NotNull
-  private static String getDependency(@Nullable String groupId,
-                                      @Nullable String artifactId,
-                                      @Nullable String version,
-                                      @Nullable String scope,
-                                      @Nullable String classifier) {
-    
-    String dependency = "<dependency>\n";
-    if (groupId != null) {
-      dependency +=     "  <groupId>" + groupId + "</groupId>\n";
-    }
-    if (artifactId != null) {
-      dependency +=     "  <artifactId>" + artifactId + "</artifactId>\n";
-    }
-    if (version != null) {
-      dependency +=     "  <version>" + version + "</version>\n";     
-    }
-    if (scope != null) {
-      dependency +=     "  <scope>" + scope + "</scope>\n";
-    }
-    if (classifier != null) {
-      dependency +=     "  <classifier>" + classifier + "</classifier>\n";
-    }
-    dependency += "</dependency>";
-    return dependency;
-  }
-
   private void configureGradleFile() {
     configureFromFileText("build.gradle",
                           "dependencies {\n" +
@@ -144,5 +102,32 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
     actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContextFromFocus().getResultSync());
+  }
+
+  @NotNull
+  private static String getDependency(@Nullable String groupId,
+                                      @Nullable String artifactId,
+                                      @Nullable String version,
+                                      @Nullable String scope,
+                                      @Nullable String classifier) {
+
+    String dependency = "<dependency>\n";
+    if (groupId != null) {
+      dependency += "<groupId>" + groupId + "</groupId>\n";
+    }
+    if (artifactId != null) {
+      dependency += "<artifactId>" + artifactId + "</artifactId>\n";
+    }
+    if (version != null) {
+      dependency += "<version>" + version + "</version>\n";
+    }
+    if (scope != null) {
+      dependency += "<scope>" + scope + "</scope>\n";
+    }
+    if (classifier != null) {
+      dependency += "<classifier>" + classifier + "</classifier>\n";
+    }
+    dependency += "</dependency>";
+    return dependency;
   }
 }
