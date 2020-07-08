@@ -256,6 +256,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
       caretStates.add(new CaretState(editor.offsetToLogicalPosition(caretOffset),
                                      editor.offsetToLogicalPosition(selectionStartOffset),
                                      editor.offsetToLogicalPosition(selectionEndOffset)));
+      if (caretStates.size() >= editor.getCaretModel().getMaxCaretCount()) break;
     }
     if (caretStates.isEmpty()) {
       return;

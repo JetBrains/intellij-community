@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,11 @@ public class AddCaretPerSelectedLineAction extends EditorAction {
       int startLine = document.getLineNumber(selectionStart);
       int selectionEnd = caret.getSelectionEnd();
       int endLine = document.getLineNumber(selectionEnd);
+
+      if (caretModel.getCaretCount() + endLine - startLine > caretModel.getMaxCaretCount()) {
+        EditorUtil.notifyMaxCarets(editor);
+        return;
+      }
 
       caret.removeSelection();
 

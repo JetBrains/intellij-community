@@ -13,8 +13,11 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyClipboardOwner;
@@ -31,6 +34,8 @@ import java.util.List;
 import java.util.*;
 
 public final class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable, InlayModel.Listener {
+  private static final RegistryValue MAX_CARET_COUNT = Registry.get("editor.max.caret.count");
+
   private final EditorImpl myEditor;
 
   private final EventDispatcher<CaretListener> myCaretListeners = EventDispatcher.create(CaretListener.class);
@@ -159,6 +164,11 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
+  public int getMaxCaretCount() {
+    return Math.max(1, MAX_CARET_COUNT.asInteger());
+  }
+
+  @Override
   @NotNull
   public CaretImpl getCurrentCaret() {
     CaretImpl currentCaret = myCurrentCaret.get();
@@ -229,6 +239,9 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   boolean addCaret(@NotNull CaretImpl caretToAdd, boolean makePrimary) {
+    if (myCarets.size() >= getMaxCaretCount()) {
+      return false;
+    }
     for (CaretImpl caret : myCarets) {
       if (caretsOverlap(caret, caretToAdd)) {
         return false;
@@ -425,6 +438,14 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     if (caretStates.isEmpty()) {
       throw new IllegalArgumentException("At least one caret should exist");
     }
+    int maxCaretCount = getMaxCaretCount();
+    List<? extends CaretState> states;
+    if (caretStates.size() <= maxCaretCount) {
+      states = caretStates;
+    } else {
+      states = caretStates.subList(0, maxCaretCount);
+      EditorUtil.notifyMaxCarets(myEditor);
+    }
     doWithCaretMerging(() -> {
       int index = 0;
       int oldCaretCount = myCarets.size();
@@ -433,7 +454,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
       IntCollection selectionStartsAfter = null;
       IntCollection selectionEndsBefore = null;
       IntCollection selectionEndsAfter = null;
-      for (CaretState caretState : caretStates) {
+      for (CaretState caretState : states) {
         CaretImpl caret;
         if (index++ < oldCaretCount) {
           caret = caretIterator.next();
@@ -458,7 +479,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
         }
         if (caretState != null && caretState.getSelectionStart() != null && caretState.getSelectionEnd() != null) {
           if (selectionStartsBefore == null) {
-            int capacity = caretStates.size();
+            int capacity = states.size();
             selectionStartsBefore = new IntArrayList(capacity);
             selectionStartsAfter = new IntArrayList(capacity);
             selectionEndsBefore = new IntArrayList(capacity);
@@ -475,7 +496,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
           selectionEndsAfter.add(caret.getSelectionEnd());
         }
       }
-      int caretsToRemove = myCarets.size() - caretStates.size();
+      int caretsToRemove = myCarets.size() - states.size();
       for (int i = 0; i < caretsToRemove; i++) {
         CaretImpl caret;
         synchronized (myCarets) {

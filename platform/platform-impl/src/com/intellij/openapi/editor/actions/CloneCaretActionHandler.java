@@ -4,11 +4,10 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorLastActionTracker;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.util.Key;
@@ -58,7 +57,9 @@ public class CloneCaretActionHandler extends EditorActionHandler {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.add.carets.using.double.ctrl");
     }
     if (targetCaret != null) {
-      targetCaret.clone(myCloneAbove);
+      if (!EditorUtil.checkMaxCarets(editor)) {
+        targetCaret.clone(myCloneAbove);
+      }
       return;
     }
     int currentLevel = 0;
@@ -88,7 +89,10 @@ public class CloneCaretActionHandler extends EditorActionHandler {
             editor.getCaretModel().removeCaret(original);
           }
         } while (clone != null && caret.hasSelection() && !clone.hasSelection());
-        if (clone != null) {
+        if (clone == null) {
+          if (EditorUtil.checkMaxCarets(editor)) break;
+        }
+        else {
           clone.putUserData(LEVEL, newLevel);
         }
       }

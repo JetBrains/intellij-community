@@ -74,6 +74,11 @@ class CaretModelWindow implements CaretModel {
     return myDelegate.supportsMultipleCarets();
   }
 
+  @Override
+  public int getMaxCaretCount() {
+    return myDelegate.getMaxCaretCount();
+  }
+
   @NotNull
   @Override
   public Caret getCurrentCaret() {
