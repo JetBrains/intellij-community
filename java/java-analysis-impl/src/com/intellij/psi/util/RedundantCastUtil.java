@@ -853,7 +853,8 @@ public final class RedundantCastUtil {
       if (operand == null) return;
       PsiType castTo = typeCast.getType();
       if (castTo == null) return;
-      if (operand instanceof PsiFunctionalExpression && !castTo.equals(PsiTypesUtil.getExpectedTypeByParent(parent))) {
+      PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(parent);
+      if (operand instanceof PsiFunctionalExpression && !castTo.equals(expectedTypeByParent)) {
         return;
       }
 
@@ -863,7 +864,7 @@ public final class RedundantCastUtil {
       if (castTo instanceof PsiClassType && TypeConversionUtil.isPrimitiveAndNotNull(opType)) {
         if (oppositeOperand != null &&
             !(oppositeOperand.getType() instanceof PsiPrimitiveType) &&
-            !(PsiTypesUtil.getExpectedTypeByParent(parent) instanceof PsiPrimitiveType)) {
+            !(expectedTypeByParent instanceof PsiPrimitiveType)) {
           return;
         }
       }
@@ -877,7 +878,7 @@ public final class RedundantCastUtil {
           if (oppositeOperand == null || !Comparing.equal(conditionalType, oppositeOperand.getType())) return;
         }
       }
-      addIfNarrowing(typeCast, opType, null);
+      addIfNarrowing(typeCast, opType, expectedTypeByParent);
     }
 
     private static PsiType getOpTypeWithExpected(PsiExpression operand, PsiType expectedTypeByParent) {
