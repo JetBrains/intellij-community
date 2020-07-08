@@ -131,15 +131,9 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   }
 
   final static class MyWatchedRootsProvider implements WatchedRootsProvider {
-    private final Project myProject;
-
-    MyWatchedRootsProvider(Project project) {
-      myProject = project;
-    }
-
     @Override
-    public @NotNull Set<String> getRootsToWatch() {
-      return CompilerProjectExtensionImpl.getRootsToWatch(myProject);
+    public @NotNull Set<String> getRootsToWatch(@NotNull Project project) {
+      return CompilerProjectExtensionImpl.getRootsToWatch(project);
     }
   }
 }

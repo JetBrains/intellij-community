@@ -163,7 +163,7 @@
     <extensionPoint name="runAnything.helpGroup" interface="com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup" dynamic="true"/>
     <extensionPoint name="runAnything.commandCustomizer" interface="com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer" dynamic="true"/>
 
-    <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" dynamic="true"/>
     <extensionPoint name="librarySettingsProvider" interface="com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider" dynamic="true"/>
 
     <extensionPoint name="elementSignatureProvider" interface="com.intellij.codeInsight.folding.impl.ElementSignatureProvider" dynamic="true"/>

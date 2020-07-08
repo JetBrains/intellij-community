@@ -177,7 +177,7 @@
     <projectService serviceInterface="com.intellij.javaee.ExternalResourceManagerExImpl"
                     serviceImplementation="com.intellij.javaee.ProjectResources"/>
 
-    <roots.watchedRootsProvider implementation="com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction"/>
+    <roots.watchedRootsProvider implementation="com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction$MyWatchedRootsProvider"/>
 
     <fileBasedIndex implementation="com.intellij.xml.index.XmlTagNamesIndex"/>
     <fileBasedIndex implementation="com.intellij.xml.index.XmlNamespaceIndex"/>

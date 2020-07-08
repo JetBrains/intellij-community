@@ -229,14 +229,18 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Collection<VirtualFile> toWatch = extension.getRootsToWatch(myProject);
       if (!toWatch.isEmpty()) {
-        recursivePathsToWatch.addAll(ContainerUtil.map(toWatch, VirtualFile::getPath));
+        for (VirtualFile file : toWatch) {
+          recursivePathsToWatch.add(file.getPath());
+        }
       }
     }
 
-    for (WatchedRootsProvider extension : WATCHED_ROOTS_PROVIDER_EP_NAME.getExtensionList(myProject)) {
-      Set<String> toWatch = extension.getRootsToWatch();
+    for (WatchedRootsProvider extension : WATCHED_ROOTS_PROVIDER_EP_NAME.getExtensionList()) {
+      Set<String> toWatch = extension.getRootsToWatch(myProject);
       if (!toWatch.isEmpty()) {
-        recursivePathsToWatch.addAll(ContainerUtil.map(toWatch, FileUtil::toSystemIndependentName));
+        for (String path : toWatch) {
+          recursivePathsToWatch.add(FileUtil.toSystemIndependentName(path));
+        }
       }
     }
 

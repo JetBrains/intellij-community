@@ -51,7 +51,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class FetchExtResourceAction extends BaseExtResourceAction implements WatchedRootsProvider {
+public final class FetchExtResourceAction extends BaseExtResourceAction {
   private static final Logger LOG = Logger.getInstance(FetchExtResourceAction.class);
   @NonNls private static final String HTML_MIME = "text/html";
   @NonNls private static final String HTTP_PROTOCOL = "http://";
@@ -59,6 +59,15 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   @NonNls private static final String FTP_PROTOCOL = "ftp://";
   @NonNls private static final String EXT_RESOURCES_FOLDER = "extResources";
   private final boolean myForceResultIsValid;
+
+  static final class MyWatchedRootsProvider implements WatchedRootsProvider {
+    @Override
+    public @NotNull Set<String> getRootsToWatch(@NotNull Project project) {
+      String path = getExternalResourcesPath();
+      Path file = checkExists(path);
+      return Collections.singleton(file.toAbsolutePath().toString());
+    }
+  }
 
   public FetchExtResourceAction() {
     myForceResultIsValid = false;
@@ -108,14 +117,6 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       }
     }
     return uri;
-  }
-
-  @Override
-  @NotNull
-  public Set<String> getRootsToWatch() {
-    String path = getExternalResourcesPath();
-    Path file = checkExists(path);
-    return Collections.singleton(file.toAbsolutePath().toString());
   }
 
   @NotNull

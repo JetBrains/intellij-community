@@ -93,7 +93,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
 
   private void addListeners() {
     MessageBusConnection connection = myProject.getMessageBus().connect(this);
-    for (String rootPath : MvcWatchedRootProvider.getRootsToWatch(myProject)) {
+    for (String rootPath : MvcWatchedRootProvider.doGetRootsToWatch(myProject)) {
       VirtualFilePointerManager.getInstance().createDirectoryPointer(VfsUtilCore.pathToUrl(rootPath), true, this, new VirtualFilePointerListener() {
         @Override
         public void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
@@ -423,7 +423,7 @@ public final class MvcModuleStructureSynchronizer implements Disposable {
 
           Set<VirtualFile> roots = new HashSet<>();
 
-          for (String rootPath : MvcWatchedRootProvider.getRootsToWatch(project)) {
+          for (String rootPath : MvcWatchedRootProvider.doGetRootsToWatch(project)) {
             ContainerUtil.addIfNotNull(roots, LocalFileSystem.getInstance().findFileByPath(rootPath));
           }
 
