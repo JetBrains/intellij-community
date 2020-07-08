@@ -235,6 +235,18 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
         if (type == null) return;
       }
 
+      if (type == JavaTokenType.SEALED_KEYWORD || type == JavaTokenType.FINAL_KEYWORD || type == JavaTokenType.NON_SEALED_KEYWORD) {
+        if (type != JavaTokenType.SEALED_KEYWORD) {
+          setModifierProperty(SEALED, false);
+        }
+        if (type != JavaTokenType.NON_SEALED_KEYWORD) {
+          setModifierProperty(NON_SEALED, false);
+        }
+        if (type != JavaTokenType.FINAL_KEYWORD) {
+          setModifierProperty(FINAL, false);
+        }
+      }
+
       if (parent instanceof PsiField && grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {
         if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.STATIC_KEYWORD || type == JavaTokenType.FINAL_KEYWORD) return;
       }

@@ -1,4 +1,4 @@
-// "Make sealed" "false"
+// "Seal class" "false"
 
 public sealed class Ma<caret>in { }
 

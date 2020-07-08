@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
@@ -15,18 +16,22 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
-public class MakeSealedAction extends BaseElementAtCaretIntentionAction {
+import static com.intellij.util.ObjectUtils.tryCast;
+
+public class SealClassAction extends BaseElementAtCaretIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -35,7 +40,7 @@ public class MakeSealedAction extends BaseElementAtCaretIntentionAction {
 
   @Override
   public @IntentionName @NotNull String getText() {
-    return JavaBundle.message("intention.name.make.sealed");
+    return getFamilyName();
   }
 
   @Override
@@ -52,10 +57,12 @@ public class MakeSealedAction extends BaseElementAtCaretIntentionAction {
     if (lBrace == null) return false;
     if (offset >= lBrace.getTextRange().getStartOffset()) return false;
     if (aClass.hasModifierProperty(PsiModifier.SEALED)) return false;
-    if (aClass.getImplementsList() == null) return false;
     if (aClass.getPermitsList() != null) return false;
     if (aClass.getModifierList() == null) return false;
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) return false;
+    if (aClass.isEnum()) return false;
+    if (PsiUtil.isLocalOrAnonymousClass(aClass)) return false;
+    if (!(aClass.getContainingFile() instanceof PsiJavaFile)) return false;
     return !aClass.hasAnnotation(CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
   }
 
@@ -64,36 +71,73 @@ public class MakeSealedAction extends BaseElementAtCaretIntentionAction {
     PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (aClass == null) return;
     if (!isAvailable(aClass, editor)) return;
-    FileModificationService.getInstance().prepareFileForWrite(aClass.getContainingFile());
+    PsiJavaFile parentFile = (PsiJavaFile)aClass.getContainingFile();
+    FileModificationService.getInstance().prepareFileForWrite(parentFile);
     if (aClass.isInterface()) {
       if (FunctionalExpressionSearch.search(aClass).findFirst() != null) {
-        String message = JavaBundle.message("intention.error.make.sealed.class.is.used.in.functional.expression");
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getErrorTitle(), null);
+        showError(project, editor, "intention.error.make.sealed.class.is.used.in.functional.expression");
         return;
       }
     }
 
-    PsiClass[] inheritors = ClassInheritorsSearch.search(aClass, false).toArray(PsiClass.EMPTY_ARRAY);
-    String[] names = Stream.of(inheritors)
-      .map(aClass1 -> aClass1.getQualifiedName())
-      .toArray(String[]::new);
-    String[] nonNullNames = StreamEx.of(names).nonNull().toArray(String[]::new);
-    if (nonNullNames.length != names.length) {
-      String message = JavaBundle.message("intention.error.make.sealed.class.has.anonymous.inheritors");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getErrorTitle(), null);
-      return;
+    PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(aClass);
+
+    List<PsiClass> inheritors = new ArrayList<>();
+    for (PsiClass inheritor : ClassInheritorsSearch.search(aClass, false)) {
+      if (PsiUtil.isLocalOrAnonymousClass(inheritor)) {
+        showError(project, editor, "intention.error.make.sealed.class.has.anonymous.or.local.inheritors");
+        return;
+      }
+
+      if (module == null) {
+        PsiJavaFile file = tryCast(inheritor.getContainingFile(), PsiJavaFile.class);
+        if (file == null) {
+          showError(project, editor, "intention.error.make.sealed.class.inheritors.not.in.java.file");
+          return;
+        }
+        if (!parentFile.getPackageName().equals(file.getPackageName())) {
+          showError(project, editor, "intention.error.make.sealed.class.different.packages");
+          return;
+        }
+      }
+      else {
+        if (JavaModuleGraphUtil.findDescriptorByElement(inheritor) != module) {
+          showError(project, editor, "intention.error.make.sealed.class.different.modules");
+          return;
+        }
+      }
+
+      inheritors.add(inheritor);
     }
-    setParentModifier(aClass);
-    if (nonNullNames.length != 0) {
-      if (shouldCreatePermitsList(inheritors, aClass.getContainingFile())) {
-        addPermitsClause(project, aClass, nonNullNames);
+    List<String> names = ContainerUtil.map(inheritors, PsiClass::getQualifiedName);
+    @PsiModifier.ModifierConstant String modifier;
+    if (!names.isEmpty()) {
+      modifier = PsiModifier.SEALED;
+      if (shouldCreatePermitsList(inheritors, parentFile)) {
+        addPermitsClause(project, aClass, names);
       }
       setInheritorsModifiers(project, inheritors);
     }
+    else {
+      if (aClass.isInterface()) {
+        modifier = PsiModifier.SEALED;
+      }
+      else {
+        modifier = PsiModifier.FINAL;
+      }
+    }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiModifierList modifierList = Objects.requireNonNull(aClass.getModifierList());
+      modifierList.setModifierProperty(modifier, true);
+    });
   }
 
-  public boolean shouldCreatePermitsList(PsiClass[] inheritors, PsiFile parentFile) {
-    return !Arrays.stream(inheritors).allMatch(psiClass -> psiClass.getContainingFile() == parentFile);
+  public void showError(@NotNull Project project, Editor editor, String message) {
+    CommonRefactoringUtil.showErrorHint(project, editor, JavaBundle.message(message), getErrorTitle(), null);
+  }
+
+  public boolean shouldCreatePermitsList(List<PsiClass> inheritors, PsiFile parentFile) {
+    return !inheritors.stream().allMatch(psiClass -> psiClass.getContainingFile() == parentFile);
   }
 
   public void setParentModifier(PsiClass aClass) {
@@ -106,12 +150,13 @@ public class MakeSealedAction extends BaseElementAtCaretIntentionAction {
     });
   }
 
-  public void setInheritorsModifiers(@NotNull Project project, PsiClass[] inheritors) {
+  public void setInheritorsModifiers(@NotNull Project project, List<PsiClass> inheritors) {
     String title = JavaBundle.message("intention.error.make.sealed.class.task.title.set.inheritors.modifiers");
     SequentialModalProgressTask task = new SequentialModalProgressTask(project, title, true);
     task.setTask(new SequentialTask() {
+      private final FileModificationService myFileModificationService = FileModificationService.getInstance();
       private int current = 0;
-      private final int size = inheritors.length;
+      private final int size = inheritors.size();
 
       @Override
       public boolean isDone() {
@@ -121,7 +166,7 @@ public class MakeSealedAction extends BaseElementAtCaretIntentionAction {
       @Override
       public boolean iteration() {
         task.getIndicator().setFraction(((double)current) / size);
-        PsiClass inheritor = inheritors[current];
+        PsiClass inheritor = inheritors.get(current);
         current++;
         PsiModifierList modifierList = inheritor.getModifierList();
         assert modifierList != null; // ensured by absence of anonymous classes
@@ -130,6 +175,7 @@ public class MakeSealedAction extends BaseElementAtCaretIntentionAction {
             modifierList.hasModifierProperty(PsiModifier.FINAL)) {
           return isDone();
         }
+        myFileModificationService.prepareFileForWrite(inheritor.getContainingFile());
         ApplicationManager.getApplication().runWriteAction(() -> {
           modifierList.setModifierProperty(PsiModifier.NON_SEALED, true);
         });
@@ -139,7 +185,7 @@ public class MakeSealedAction extends BaseElementAtCaretIntentionAction {
     ProgressManager.getInstance().run(task);
   }
 
-  public static void addPermitsClause(@NotNull Project project, PsiClass aClass, String[] nonNullNames) {
+  public static void addPermitsClause(@NotNull Project project, PsiClass aClass, List<String> nonNullNames) {
     String permitsClause = StreamEx.of(nonNullNames).sorted().joining(",", "permits ", "");
     PsiReferenceList permitsList = createPermitsClause(project, permitsClause);
     PsiReferenceList implementsList = Objects.requireNonNull(aClass.getImplementsList());

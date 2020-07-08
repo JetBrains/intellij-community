@@ -1876,7 +1876,7 @@
       <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.MakeSealedAction</className>
+      <className>com.intellij.codeInsight.intention.impl.SealClassAction</className>
       <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>

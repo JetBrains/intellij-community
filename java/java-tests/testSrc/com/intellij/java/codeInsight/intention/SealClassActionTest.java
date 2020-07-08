@@ -6,7 +6,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class MakeSealedActionTest extends LightIntentionActionTestCase {
+public class SealClassActionTest extends LightIntentionActionTestCase {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return LightJavaCodeInsightFixtureTestCase.JAVA_15;
@@ -14,6 +14,6 @@ public class MakeSealedActionTest extends LightIntentionActionTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/makeClassSealed";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/sealClass";
   }
 }
