@@ -16,13 +16,13 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-class CountFilter extends FilterAction {
+public class CountFilter extends FilterAction {
 
   boolean myMinZero;
   boolean myMaxUnlimited;
 
-  CountFilter(FilterTable filterTable) {
-    super(SSRBundle.messagePointer("count.filter.name"), filterTable);
+  public CountFilter() {
+    super(SSRBundle.messagePointer("count.filter.name"));
   }
 
   @Override

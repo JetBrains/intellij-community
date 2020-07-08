@@ -21,10 +21,10 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-class ReferenceFilter extends FilterAction {
+public class ReferenceFilter extends FilterAction {
 
-  ReferenceFilter(FilterTable filterTable) {
-    super(SSRBundle.messagePointer("reference.filter.name"), filterTable);
+  public ReferenceFilter() {
+    super(SSRBundle.messagePointer("reference.filter.name"));
   }
 
   @Override

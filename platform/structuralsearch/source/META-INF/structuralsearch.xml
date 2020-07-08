@@ -5,6 +5,9 @@
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
                     interface="com.intellij.structuralsearch.StructuralSearchProfile"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.structuralsearch.filter"
+                    interface="com.intellij.structuralsearch.plugin.ui.filters.FilterAction"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -26,6 +29,12 @@
     <codeInsight.linkHandler prefix="#ssr_edit_filters/" handlerClass="com.intellij.structuralsearch.plugin.ui.filters.FilterTooltipLinkHandler"/>
     <daemon.highlightInfoFilter implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchHighlightInfoFilter"/>
     <inspectionProfileActionProvider implementation="com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider"/>
+
+    <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.ContextFilter"/>
+    <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.CountFilter"/>
+    <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.ReferenceFilter"/>
+    <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.TextFilter"/>
+    <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.TypeFilter"/>
   </extensions>
 
   <actions>

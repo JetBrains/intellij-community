@@ -18,12 +18,12 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-class TextFilter extends FilterAction {
+public class TextFilter extends FilterAction {
 
   boolean myShowHierarchy;
 
-  TextFilter(FilterTable filterTable) {
-    super(SSRBundle.messagePointer("text.filter.name"), filterTable);
+  public TextFilter() {
+    super(SSRBundle.messagePointer("text.filter.name"));
   }
 
   @Override

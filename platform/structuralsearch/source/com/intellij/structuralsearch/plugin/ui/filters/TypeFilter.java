@@ -20,12 +20,12 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-class TypeFilter extends FilterAction {
+public class TypeFilter extends FilterAction {
 
-  boolean showRegex;
+  boolean myShowRegex;
 
-  TypeFilter(FilterTable filterTable) {
-    super(SSRBundle.messagePointer("type.filter.name"), filterTable);
+  public TypeFilter() {
+    super(SSRBundle.messagePointer("type.filter.name"));
   }
 
   @Override
@@ -51,7 +51,7 @@ class TypeFilter extends FilterAction {
       return false;
     }
     final StructuralSearchProfile profile = myTable.getProfile();
-    showRegex = profile.isApplicableConstraint(UIUtil.TYPE_REGEX, nodes, completePattern, target);
+    myShowRegex = profile.isApplicableConstraint(UIUtil.TYPE_REGEX, nodes, completePattern, target);
     return profile.isApplicableConstraint(UIUtil.TYPE, nodes, completePattern, target);
   }
 
@@ -125,12 +125,12 @@ class TypeFilter extends FilterAction {
       @Override
       protected void loadValues() {
         final boolean regex = myConstraint.isRegexExprType();
-        myTextField.setFileType(showRegex && regex ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE);
+        myTextField.setFileType(myShowRegex && regex ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE);
         myTextField.setText((myConstraint.isInvertExprType() ? "!" : "") +
                             (regex ? myConstraint.getNameOfExprType() : myConstraint.getExpressionTypes()))  ;
         myHierarchyCheckBox.setSelected(myConstraint.isExprTypeWithinHierarchy());
-        myRegexCheckBox.setSelected(showRegex && regex);
-        myRegexCheckBox.setVisible(showRegex);
+        myRegexCheckBox.setSelected(myShowRegex && regex);
+        myRegexCheckBox.setVisible(myShowRegex);
       }
 
       @Override
@@ -140,7 +140,7 @@ class TypeFilter extends FilterAction {
         if (inverted) {
           text = text.substring(1);
         }
-        if (showRegex && myRegexCheckBox.isSelected()) {
+        if (myShowRegex && myRegexCheckBox.isSelected()) {
           myConstraint.setNameOfExprType(text);
         }
         else {
