@@ -4,7 +4,6 @@ package com.intellij.util.xml;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,14 +12,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
  */
 public final class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
-  private static final ConcurrentMap<Class, EnumConverter> ourCache =
-    ConcurrentFactoryMap.createMap(key -> new EnumConverter(key));
   private final Class<T> myType;
 
   private EnumConverter(final Class<T> aClass) {
@@ -28,7 +24,7 @@ public final class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
   }
 
   public static <T extends Enum> EnumConverter<T>  createEnumConverter(Class<T> aClass) {
-    return ourCache.get(aClass);
+    return new EnumConverter(aClass);
   }
 
   private String getStringValue(final T anEnum) {
