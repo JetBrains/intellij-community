@@ -288,14 +288,14 @@ internal fun getProjectStateStorage(filePath: String,
 private fun getStorageSpec(filePath: String, project: Project): Storage? {
   val collapsedPath: String
   val splitterClass: Class<out StateSplitterEx>
-  if (FileUtil.extensionEquals(filePath, "ipr")) {
+  val fileName = PathUtil.getFileName(filePath)
+  val parentPath = PathUtil.getParentPath(filePath)
+  val parentFileName = PathUtil.getFileName(parentPath)
+  if (FileUtil.extensionEquals(filePath, "ipr") || fileName == "misc.xml" && parentFileName == ".idea") {
     collapsedPath = "\$PROJECT_FILE$"
     splitterClass = StateSplitterEx::class.java
   }
   else {
-    val fileName = PathUtil.getFileName(filePath)
-    val parentPath = PathUtil.getParentPath(filePath)
-    val parentFileName = PathUtil.getFileName(parentPath)
     if (parentFileName == Project.DIRECTORY_STORE_FOLDER) {
       collapsedPath = fileName
       splitterClass = StateSplitterEx::class.java
