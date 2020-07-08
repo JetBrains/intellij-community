@@ -75,6 +75,13 @@ class CompilationOutputsDownloader implements AutoCloseable {
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
   }
 
+  def anyLocalChanges() {
+    def localChanges = git.status()
+    context.messages.info('Local changes:')
+    localChanges.each { context.messages.info("\t$it") }
+    !localChanges.isEmpty()
+  }
+
   @Override
   void close() {
     executor.close()
@@ -91,7 +98,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
       context.messages.info("Using $executor.corePoolSize threads to download caches.")
       // In case if outputs are available for the current commit
       // cache is not needed as we are not going to compile anything.
-      if (!availableForHeadCommit) {
+      if (!availableForHeadCommit || anyLocalChanges()) {
         executor.submit {
           saveCache(lastCachedCommit)
         }

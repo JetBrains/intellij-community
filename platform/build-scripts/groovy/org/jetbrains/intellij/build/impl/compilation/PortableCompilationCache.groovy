@@ -112,7 +112,7 @@ class PortableCompilationCache {
       downloadCachesAndOutput()
     }
     CompilationTasks.create(context).resolveProjectDependencies()
-    if (forceRebuild || !downloader.availableForHeadCommit || !forceDownload) {
+    if (forceRebuild || !downloader.availableForHeadCommit || downloader.anyLocalChanges() || !forceDownload) {
       // When force rebuilding incrementalCompilation has to be set to false otherwise backward-refs won't be created.
       // During rebuild JPS checks {@code CompilerReferenceIndex.exists(buildDir) || isRebuild} and if
       // incremental compilation enabled JPS won't create {@link JavaBackwardReferenceIndexWriter}.
