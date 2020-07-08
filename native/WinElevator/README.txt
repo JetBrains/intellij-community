@@ -1,3 +1,8 @@
+This project consists of two tools: "launcher and elevator" and "appxreparse".
+
+
+Launcher and elevator:
+
 With UAC enabled even administrator has limited access token and can't modify some folders like "Program Files".
 The only official way to elevate token for process is to launch app as elevated using shell api so user will have chance to accept it. 
 Since it may lead to security risks it is not recomended to run whole app as elevated, but run only certain tools instead.
@@ -15,11 +20,14 @@ But if std(out|err|in) are redirected to files or pipes, attaching to console is
 In this case launcher creates named pipes, elevator connects to them and provides their handlers as handlers for newly created process.
 Launcher then creates threads to read/write them to console.
 
+For "AppxReparse" see README inside of project
+
 -------
 How to build.
 
 ToolChain: VisualStudio 2017
-SDK: 8.1
+SDK: 8.1 (for "launcher and elevator")
+Win10 10.0.18362 (for "appx reparse")
 
 You may open .sln from Visual Studio or use msbuild from VS command prompt:
  msbuild Elevator.sln /p:Configuration=release /property:Platform=x86
