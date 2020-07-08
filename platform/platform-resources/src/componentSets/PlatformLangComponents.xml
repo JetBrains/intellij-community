@@ -42,7 +42,7 @@
     <listener class="com.intellij.notification.impl.NotificationsConfigurationImpl$MyNotificationListener" topic="com.intellij.notification.Notifications"/>
 
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyAnActionListener" topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
-    <listener class="com.intellij.internal.statistic.EventLogApplicationLifecycleListener" topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.internal.statistic.EventLogApplicationLifecycleListener" topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="true" activeInTestMode="false"/>
     <listener class="com.intellij.internal.statistic.local.ActionsLocalSummaryListener" topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
 
     <listener class="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl$MyProjectManagerListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
