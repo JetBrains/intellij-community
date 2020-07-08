@@ -910,6 +910,20 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     indicator.addStateDelegate(new RelayUiToDelegateIndicator(ui));
     indicator.popState(); // should not cause NPE
   }
+
+  public void testRelayUiToDelegateIndicatorMustBeReusable() {
+    ProgressIndicatorEx ui = new ProgressIndicatorBase();
+    RelayUiToDelegateIndicator relay = new RelayUiToDelegateIndicator(ui);
+    ProgressIndicatorBase indicator = new ProgressIndicatorBase(true);
+    indicator.addStateDelegate(relay);
+    indicator.start();
+    indicator.cancel();
+    indicator.stop();
+    indicator.start();
+    indicator.cancel();
+    indicator.removeStateDelegate(relay);
+  }
+
   public void testRelayUiToDelegate() {
     ProgressIndicatorEx ui = new ProgressIndicatorBase();
     ProgressIndicatorEx indicator = new ProgressIndicatorBase();
