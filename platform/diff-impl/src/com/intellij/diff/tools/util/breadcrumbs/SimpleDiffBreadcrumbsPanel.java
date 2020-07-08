@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class SimpleDiffBreadcrumbsPanel extends DiffBreadcrumbsPanel {
   private final VirtualFile myFile;
-  private volatile FileBreadcrumbsCollector myBreadcrumbsCollector;
 
   public SimpleDiffBreadcrumbsPanel(@NotNull Editor editor, @NotNull Disposable disposable) {
     super(editor, disposable);
@@ -23,14 +22,13 @@ public class SimpleDiffBreadcrumbsPanel extends DiffBreadcrumbsPanel {
 
   @Override
   protected boolean updateCollectors(boolean enabled) {
-    myBreadcrumbsCollector = enabled ? findCollector(myFile) : null;
-    return myBreadcrumbsCollector != null;
+    return enabled && findCollector(myFile) != null;
   }
 
   @Nullable
   @Override
   protected Iterable<? extends Crumb> computeCrumbs(int offset) {
-    FileBreadcrumbsCollector collector = myBreadcrumbsCollector;
+    FileBreadcrumbsCollector collector = findCollector(myFile);
     if (collector == null) return null;
 
     Document document = myEditor.getDocument();
