@@ -90,12 +90,11 @@ public class CommonJavaFragments {
   public static <S extends ModuleBasedConfiguration<?,?>> SettingsEditorFragment<S, ModuleClasspathCombo> moduleClasspath(
     ModuleClasspathCombo.Item option, Predicate<S> getter, BiConsumer<S, Boolean> setter) {
     ModuleClasspathCombo comboBox = new ModuleClasspathCombo(option);
+    String name = ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module");
+    comboBox.getAccessibleContext().setAccessibleName(name);
     setMinimumWidth(comboBox, 400);
     UIUtil.setMonospaced(comboBox);
-    return new SettingsEditorFragment<>("module.classpath",
-                                        ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module"),
-                                        ExecutionBundle.message("group.java.options"),
-                                        comboBox, 10,
+    return new SettingsEditorFragment<>("module.classpath", name, ExecutionBundle.message("group.java.options"), comboBox, 10,
                                         (s, c) -> { comboBox.reset(s); option.myOptionValue = getter.test(s); },
                                         (s, c) -> {
                                           if (comboBox.isVisible()) {
@@ -134,6 +133,7 @@ public class CommonJavaFragments {
 
     setMinimumWidth(jrePathEditor, 100);
     jrePathEditor.getLabel().setVisible(false);
+    jrePathEditor.getComponent().getAccessibleContext().setAccessibleName(jrePathEditor.getLabel().getText());
     jrePathEditor.setDefaultJreSelector(DefaultJreSelector.projectSdk(project));
     return new SettingsEditorFragment<>("jrePath", null, null, jrePathEditor, 5,
                                         (configuration, editor) -> editor

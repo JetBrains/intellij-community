@@ -39,7 +39,9 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   public CommonParameterFragments(@NotNull Project project, Computable<Boolean> hasModule) {
     RawCommandLineEditor programArguments = new RawCommandLineEditor();
     CommandLinePanel.setMinimumWidth(programArguments, 200);
-    programArguments.getEditorField().getEmptyText().setText(ExecutionBundle.message("run.configuration.program.hint"));
+    String message = ExecutionBundle.message("run.configuration.program.hint");
+    programArguments.getEditorField().getEmptyText().setText(message);
+    programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
     MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
     myFragments.add(new SettingsEditorFragment<>("commandLineParameters", null, null, programArguments,
                                                  100,
