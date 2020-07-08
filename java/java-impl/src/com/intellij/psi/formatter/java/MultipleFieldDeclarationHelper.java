@@ -67,26 +67,17 @@ public class MultipleFieldDeclarationHelper {
     if (lastChildNode.getElementType() == JavaTokenType.SEMICOLON) return child;
 
     ASTNode currentResult = child;
-    ASTNode currentNode = child.getTreeNext();
 
-    while (currentNode != null) {
+    for (ASTNode currentNode = child.getTreeNext(); currentNode != null; currentNode = currentNode.getTreeNext()) {
       if (currentNode.getElementType() == TokenType.WHITE_SPACE
           || currentNode.getElementType() == JavaTokenType.COMMA
           || StdTokenSets.COMMENT_BIT_SET.contains(currentNode.getElementType())) {
+        continue;
       }
-      else if (currentNode.getElementType() == JavaElementType.FIELD) {
-        if (compoundFieldPart(currentNode)) {
-          currentResult = currentNode;
-        }
-        else {
-          return currentResult;
-        }
+      if (currentNode.getElementType() != JavaElementType.FIELD || !compoundFieldPart(currentNode)) {
+        break;
       }
-      else {
-        return currentResult;
-      }
-
-      currentNode = currentNode.getTreeNext();
+      currentResult = currentNode;
     }
     return currentResult;
   }
