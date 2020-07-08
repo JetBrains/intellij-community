@@ -13,7 +13,10 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -84,8 +87,23 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   public @NotNull LightEditorInfo createEmptyEditor(@Nullable String preferredName) {
     String name = preferredName != null ? preferredName : getUniqueName();
     LightVirtualFile file = new LightVirtualFile(name);
-    file.setFileType(PlainTextFileType.INSTANCE);
+    file.setFileType(getFileType(preferredName));
     return Objects.requireNonNull(doCreateEditor(file));
+  }
+
+  @NotNull
+  private static FileType getFileType(@Nullable String preferredName) {
+    if (preferredName != null) {
+      int extOffset = preferredName.lastIndexOf(".");
+      if (extOffset >= 0 && preferredName.length() > extOffset + 1) {
+        String extension = preferredName.substring(extOffset + 1);
+        FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension);
+        if (!(fileType instanceof UnknownFileType || fileType.isBinary())) {
+          return fileType;
+        }
+      }
+    }
+    return PlainTextFileType.INSTANCE;
   }
 
   @Override

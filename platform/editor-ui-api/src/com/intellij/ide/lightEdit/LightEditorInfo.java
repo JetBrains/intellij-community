@@ -5,6 +5,9 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Path;
 
 @ApiStatus.Experimental
 public interface LightEditorInfo {
@@ -16,4 +19,8 @@ public interface LightEditorInfo {
   boolean isUnsaved();
 
   boolean isNew();
+
+  @Nullable Path getPreferredSavePath();
+
+  void setPreferredSavePath(@Nullable Path preferredSavePath);
 }

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.Collection;
 
 @ApiStatus.Experimental
@@ -18,7 +19,15 @@ public interface LightEditService {
     return ServiceManager.getService(LightEditService.class);
   }
 
-  LightEditorInfo createNewFile(@Nullable String preferredName);
+  /**
+   * Creates an empty document with the specified {@code preferredSavePath} and opens an editor tab.
+   *
+   * @param preferredSavePath The preferred path to save the document by default. The path must contain at least a file name. If the path
+   *                          is valid, it will be used to save the document without a file save dialog. If {@code preferredSavePath} is
+   *                          {@code null}, the new document will have a default name "untitled_...".
+   * @return An editor info for the newly created document.
+   */
+  LightEditorInfo createNewDocument(@Nullable Path preferredSavePath);
 
   void saveToAnotherFile(@NotNull VirtualFile file);
 

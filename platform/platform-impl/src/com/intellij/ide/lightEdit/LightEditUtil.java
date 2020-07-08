@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
@@ -47,6 +48,8 @@ public final class LightEditUtil {
 
   static final Key<String> CREATION_MESSAGE = Key.create("light.edit.file.creation.message");
 
+  private final static Logger LOG = Logger.getInstance(LightEditUtil.class);
+
   private static boolean ourForceOpenInExistingProjectFlag;
 
   private LightEditUtil() {
@@ -67,23 +70,20 @@ public final class LightEditUtil {
   }
 
   private static boolean handleNonExisting(@NotNull Path path) {
+    if (path.getFileName() == null) {
+      LOG.error("No file name is given");
+    }
     if (path.getNameCount() > 0) {
       String fileName = path.getFileName().toString();
       final Ref<String> creationMessage = Ref.create();
       if (path.getNameCount() > 1) {
         File newFile = path.toFile();
-        if (FileUtil.createIfDoesntExist(newFile)) {
-          VirtualFile newVFile = VfsUtil.findFileByIoFile(newFile, true);
-          if (newVFile != null) {
-            return LightEditService.getInstance().openFile(newVFile);
-          }
-        }
-        else {
+        if (!FileUtil.ensureCanCreateFile(newFile)) {
           creationMessage.set(ApplicationBundle.message("light.edit.file.creation.failed.message", path.toString(), fileName));
         }
       }
       ApplicationManager.getApplication().invokeLater(() -> {
-        LightEditorInfo editorInfo = LightEditService.getInstance().createNewFile(fileName);
+        LightEditorInfo editorInfo = LightEditService.getInstance().createNewDocument(path);
         if (creationMessage.get() != null) {
           editorInfo.getFile().putUserData(CREATION_MESSAGE, creationMessage.get());
           EditorNotifications.getInstance(getProject()).updateNotifications(editorInfo.getFile());
@@ -206,5 +206,19 @@ public final class LightEditUtil {
 
   public static void setForceOpenInExistingProject(boolean openInExistingProject) {
     ourForceOpenInExistingProjectFlag = openInExistingProject;
+  }
+
+  @Nullable
+  public static VirtualFile getPreferredSaveTarget(@NotNull LightEditorInfo editorInfo) {
+    if (editorInfo.isNew()) {
+      Path preferredPath = editorInfo.getPreferredSavePath();
+      if (preferredPath != null) {
+        File targetFile = preferredPath.toFile();
+        if (FileUtil.createIfDoesntExist(targetFile)) {
+          return VfsUtil.findFile(preferredPath, true);
+        }
+      }
+    }
+    return null;
   }
 }

@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.management.ManagementFactory;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -205,9 +206,12 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  public LightEditorInfo createNewFile(@Nullable String preferredName) {
+  public LightEditorInfo createNewDocument(@Nullable Path preferredSavePath) {
     showEditorWindow();
+    String preferredName = ObjectUtils.doIfNotNull(preferredSavePath,
+                                                   path -> path.getFileName().toString());
     LightEditorInfo newEditorInfo = myEditorManager.createEmptyEditor(preferredName);
+    newEditorInfo.setPreferredSavePath(preferredSavePath);
     addEditorTab(newEditorInfo);
     return newEditorInfo;
   }
@@ -331,18 +335,37 @@ public final class LightEditServiceImpl implements LightEditService,
   @Override
   public void afterSelect(@Nullable LightEditorInfo editorInfo) {
     if (myFrameWrapper != null) {
-      myFrameWrapper.setFrameTitle(editorInfo == null ? getAppName() : getFileTitle(editorInfo.getFile()));
+      myFrameWrapper.setFrameTitle(editorInfo == null ? getAppName() : getFileTitle(editorInfo));
     }
   }
 
-  private static String getFileTitle(@NotNull VirtualFile file) {
+  private static String getFileTitle(@NotNull LightEditorInfo editorInfo) {
+    VirtualFile file = editorInfo.getFile();
     StringBuilder titleBuilder = new StringBuilder();
     titleBuilder.append(file.getPresentableName());
-    VirtualFile parent = file.getParent();
-    if (parent != null) {
-      titleBuilder.append(" - ").append(truncateUrl(parent.getPresentableUrl()));
+    String parentPath = getPresentablePath(editorInfo);
+    if (parentPath != null) {
+      titleBuilder.append(" - ").append(truncateUrl(parentPath));
     }
     return titleBuilder.toString();
+  }
+
+  @Nullable
+  private static String getPresentablePath(@NotNull LightEditorInfo editorInfo) {
+    VirtualFile file = editorInfo.getFile();
+    if (file instanceof LightVirtualFile) {
+      Path preferredPath = editorInfo.getPreferredSavePath();
+      if (preferredPath != null && preferredPath.getParent() != null) {
+        return preferredPath.getParent().toString();
+      }
+    }
+    else {
+      VirtualFile parent = file.getParent();
+      if (parent != null) {
+        return parent.getPresentableUrl();
+      }
+    }
+    return null;
   }
 
   private static String truncateUrl(@NotNull String url) {
@@ -373,14 +396,18 @@ public final class LightEditServiceImpl implements LightEditService,
     return myEditorManager;
   }
 
+  private void saveEditorAs(@NotNull LightEditorInfo editorInfo, @NotNull VirtualFile targetFile) {
+    LightEditorInfo newInfo = myEditorManager.saveAs(editorInfo, targetFile);
+    getEditPanel().getTabs().replaceTab(editorInfo, newInfo);
+  }
+
   @Override
   public void saveToAnotherFile(@NotNull VirtualFile file) {
     LightEditorInfo editorInfo = myEditorManager.getEditorInfo(file);
     if (editorInfo != null) {
       VirtualFile targetFile = LightEditUtil.chooseTargetFile(myFrameWrapper.getLightEditPanel(), editorInfo);
       if (targetFile != null) {
-        LightEditorInfo newInfo = myEditorManager.saveAs(editorInfo, targetFile);
-        getEditPanel().getTabs().replaceTab(editorInfo, newInfo);
+        saveEditorAs(editorInfo, targetFile);
       }
     }
   }
@@ -440,9 +467,17 @@ public final class LightEditServiceImpl implements LightEditService,
   @Override
   public void saveNewDocuments() {
     for(VirtualFile virtualFile : myEditorManager.getOpenFiles()) {
-      if (virtualFile instanceof LightVirtualFile) {
-        saveToAnotherFile(virtualFile);
+      LightEditorInfo editorInfo = Objects.requireNonNull(myEditorManager.getEditorInfo(virtualFile));
+      if (editorInfo.isNew()) {
+        VirtualFile preferredTarget = LightEditUtil.getPreferredSaveTarget(editorInfo);
+        if (preferredTarget != null) {
+          saveEditorAs(editorInfo, preferredTarget);
+        }
+        else {
+          saveToAnotherFile(virtualFile);
+        }
       }
     }
   }
+
 }

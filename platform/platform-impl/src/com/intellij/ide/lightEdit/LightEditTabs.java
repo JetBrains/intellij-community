@@ -203,7 +203,10 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
 
   void saveDocument(@NotNull LightEditorInfo editorInfo) {
     if (editorInfo.isNew()) {
-      VirtualFile targetFile = LightEditUtil.chooseTargetFile(this.getParent(), editorInfo);
+      VirtualFile targetFile = LightEditUtil.getPreferredSaveTarget(editorInfo);
+      if (targetFile == null) {
+        targetFile = LightEditUtil.chooseTargetFile(this.getParent(), editorInfo);
+      }
       if (targetFile != null) {
         myEditorManager.saveAs(editorInfo, targetFile);
       }
