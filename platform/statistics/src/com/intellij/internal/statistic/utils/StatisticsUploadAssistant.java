@@ -4,12 +4,14 @@ package com.intellij.internal.statistic.utils;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public final class StatisticsUploadAssistant {
+  private static final String IDEA_HEADLESS_ENABLE_STATISTICS = "idea.headless.enable.statistics";
   private static final String IDEA_SUPPRESS_REPORT_STATISTICS = "idea.suppress.statistics.report";
   private static final String ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT = "idea.local.statistics.without.report";
 
@@ -22,13 +24,23 @@ public final class StatisticsUploadAssistant {
       return false;
     }
 
+    if (isHeadlessStatisticsEnabled()) {
+      return true;
+    }
     UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
     return settings != null && settings.isAllowed();
   }
 
   public static boolean isCollectAllowed() {
+    if (isHeadlessStatisticsEnabled()) {
+      return true;
+    }
     final UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
     return (settings != null && settings.isAllowed()) || Boolean.getBoolean(ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT);
+  }
+
+  private static boolean isHeadlessStatisticsEnabled() {
+    return Boolean.getBoolean(IDEA_HEADLESS_ENABLE_STATISTICS) && ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
   public static boolean isTestStatisticsEnabled() {
