@@ -122,7 +122,7 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
   }
 
   companion object {
-    private val INIT_DONE_KEY = Key<Any>("GHPR_CONTENT_INIT_DONE")
+    internal val INIT_DONE_KEY = Key<Any>("GHPR_CONTENT_INIT_DONE")
     private val REPOSITORY = Key<GHRepositoryCoordinates>("GHPR_REPOSITORY")
     private val REMOTE = Key<GitRemoteUrlCoordinates>("GHPR_REMOTE")
   }
