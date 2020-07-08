@@ -17,7 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.labels.DropDownLink;
+import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.util.PopupState;
@@ -335,7 +335,7 @@ class InspectionPopupManager {
                                   addData("level", inspectionsLevel.toString());
 
                                 FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
-                              }, true);
+                              });
   }
 
 

@@ -22,8 +22,8 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.labels.DropDownLink
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -46,7 +46,6 @@ import java.awt.BorderLayout
 import java.awt.Insets
 import java.awt.event.ItemEvent
 import java.awt.event.KeyEvent
-import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
@@ -217,10 +216,7 @@ class GitPullDialog(private val project: Project,
     }
   }
 
-  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("pull.options.modify"),
-                                                     Function<DropDownLink<*>?, ListPopupImpl> { createOptionsPopup() }).apply {
-    isFocusable = true
-  }
+  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("pull.options.modify")) { createOptionsPopup() }
 
   private fun createOptionsPopup() = object : ListPopupImpl(project, createOptionPopupStep()) {
     override fun getListElementRenderer() = OptionListCellRenderer(

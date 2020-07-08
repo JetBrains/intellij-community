@@ -13,13 +13,12 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.ui.components.labels.SwingActionLink;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.util.function.Consumer;
 
 final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
@@ -113,16 +112,14 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
 
   @Override
   protected JComponent createTopComponent() {
-    SwingActionLink link = new SwingActionLink(new AbstractAction(
-      KeyMapBundle.message("link.get.more.keymaps.in.0.plugins", ShowSettingsUtil.getSettingsMenuName())) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext((SwingActionLink)e.getSource()));
+    ActionLink link = new ActionLink(
+      KeyMapBundle.message("link.get.more.keymaps.in.0.plugins", ShowSettingsUtil.getSettingsMenuName()),
+      e -> {
+        Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext((ActionLink)e.getSource()));
         if (settings != null) {
           settings.select(settings.find("preferences.pluginManager"), "/tag:Keymap");
         }
-      }
-    });
+      });
     Box row = new Box(BoxLayout.X_AXIS);
     row.add(Box.createRigidArea(new JBDimension(2, 0)));
     row.add(link);

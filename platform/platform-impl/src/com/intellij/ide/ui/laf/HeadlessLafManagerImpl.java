@@ -6,6 +6,7 @@ import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.BasicOptionButtonUI;
+import com.intellij.ui.components.DefaultLinkButtonUI;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +16,7 @@ public class HeadlessLafManagerImpl extends LafManager {
   public HeadlessLafManagerImpl() {
     UIDefaults defaults = UIManager.getLookAndFeelDefaults();
     defaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
+    defaults.put("LinkButtonUI", DefaultLinkButtonUI.class.getName());
     defaults.put("TreeUI", DefaultTreeUI.class.getName());
   }
 
