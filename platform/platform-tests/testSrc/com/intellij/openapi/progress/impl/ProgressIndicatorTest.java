@@ -936,6 +936,8 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testRunProcessWithIndicatorAlreadyUsedInTheThisThreadMustBeWarned() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
     ProgressIndicatorEx p = new ProgressIndicatorBase();
     ProgressManager.getInstance().executeProcessUnderProgress(() -> {
       boolean allowed = true;
@@ -949,6 +951,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }, p);
   }
   public void testRunProcessWithIndicatorAlreadyUsedInTheOtherThreadMustBeWarned() throws Exception {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
     ProgressIndicatorEx p = new ProgressIndicatorBase();
     CountDownLatch run = new CountDownLatch(1);
     CountDownLatch exit = new CountDownLatch(1);
