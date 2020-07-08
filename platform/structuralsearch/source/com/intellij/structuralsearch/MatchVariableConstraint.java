@@ -1,17 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.*;
+import java.util.regex.Pattern;
+
 /**
  * @author Maxim.Mossienko
  */
 public class MatchVariableConstraint extends NamedScriptableDefinition {
+  private static final Pattern VALID_CONSTRAINT_NAME = Pattern.compile("[a-z][A-Za-z\\d]*");
+
+  private Map<String, String> additionalConstraints;
+
   @NotNull
   private String regExp = "";
   private boolean invertRegExp;
@@ -72,6 +81,13 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   @NonNls private static final String WHOLE_WORDS_ONLY = "wholeWordsOnly";
   @NonNls private static final String TRUE = Boolean.TRUE.toString();
+
+  private static final Set<String> ALL_ATTRIBUTES = ContainerUtil.set(
+    REFERENCE_CONDITION, NAME_OF_EXPRTYPE, NAME_OF_FORMALTYPE, REGEXP, EXPRTYPE_WITHIN_HIERARCHY, FORMALTYPE_WITHIN_HIERARCHY,
+    WITHIN_HIERARCHY, MAX_OCCURS, MIN_OCCURS, NEGATE_NAME_CONDITION, NEGATE_EXPRTYPE_CONDITION, NEGATE_FORMALTYPE_CONDITION,
+    NEGATE_CONTAINS_CONDITION, NEGATE_WITHIN_CONDITION, NEGATE_REFERENCE_CONDITION, WITHIN_CONDITION, CONTAINS_CONDITION,
+    TARGET, CONTEXT, WHOLE_WORDS_ONLY
+  );
 
   public MatchVariableConstraint() {}
 
@@ -344,38 +360,74 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     this.contextConstraint = contextConstraint;
   }
 
+  private static boolean isValidConstraintName(String name) {
+    return !ALL_ATTRIBUTES.contains(name) && VALID_CONSTRAINT_NAME.matcher(name).matches();
+  }
+
+  public void putAdditionalConstraint(String name, String value) {
+    if (!isValidConstraintName(name)) {
+      throw new IllegalArgumentException("Invalid constraint name");
+    }
+    if (additionalConstraints == null) {
+      if (value == null) {
+        return;
+      }
+      additionalConstraints = new HashMap<>();
+    }
+    if (value == null) {
+      additionalConstraints.remove(name);
+      if (additionalConstraints.isEmpty()) {
+        additionalConstraints = null;
+      }
+    }
+    else {
+      additionalConstraints.put(name, value);
+    }
+  }
+
+  public String getAdditionalConstraint(String name) {
+    if (additionalConstraints == null) {
+      return null;
+    }
+    return additionalConstraints.get(name);
+  }
+
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MatchVariableConstraint)) return false;
     if (!(super.equals(o))) return false;
 
-    final MatchVariableConstraint matchVariableConstraint = (MatchVariableConstraint)o;
+    final MatchVariableConstraint other = (MatchVariableConstraint)o;
 
-    if (exprTypeWithinHierarchy != matchVariableConstraint.exprTypeWithinHierarchy) return false;
-    if (formalArgTypeWithinHierarchy != matchVariableConstraint.formalArgTypeWithinHierarchy) return false;
-    if (greedy != matchVariableConstraint.greedy) return false;
-    if (invertExprType != matchVariableConstraint.invertExprType) return false;
-    if (invertFormalType != matchVariableConstraint.invertFormalType) return false;
-    if (invertReference != matchVariableConstraint.invertReference) return false;
-    if (invertRegExp != matchVariableConstraint.invertRegExp) return false;
-    if (maxCount != matchVariableConstraint.maxCount) return false;
-    if (minCount != matchVariableConstraint.minCount) return false;
-    if (partOfSearchResults != matchVariableConstraint.partOfSearchResults) return false;
-    if (strictlyWithinHierarchy != matchVariableConstraint.strictlyWithinHierarchy) return false;
-    if (wholeWordsOnly != matchVariableConstraint.wholeWordsOnly) return false;
-    if (withinHierarchy != matchVariableConstraint.withinHierarchy) return false;
-    if (!nameOfExprType.equals(matchVariableConstraint.nameOfExprType)) return false;
-    if (!expressionTypes.equals(matchVariableConstraint.expressionTypes)) return false;
-    if (!nameOfFormalArgType.equals(matchVariableConstraint.nameOfFormalArgType)) return false;
-    if (!expectedTypes.equals(matchVariableConstraint.expectedTypes)) return false;
-    if (!referenceConstraint.equals(matchVariableConstraint.referenceConstraint)) return false;
-    if (!regExp.equals(matchVariableConstraint.regExp)) return false;
-    if (!withinConstraint.equals(matchVariableConstraint.withinConstraint)) return false;
-    if (!containsConstraint.equals(matchVariableConstraint.containsConstraint)) return false;
-    if (invertWithinConstraint != matchVariableConstraint.invertWithinConstraint) return false;
-    if (invertContainsConstraint != matchVariableConstraint.invertContainsConstraint) return false;
-    if (!contextConstraint.equals(matchVariableConstraint.contextConstraint)) return false;
-
+    if (exprTypeWithinHierarchy != other.exprTypeWithinHierarchy) return false;
+    if (formalArgTypeWithinHierarchy != other.formalArgTypeWithinHierarchy) return false;
+    if (greedy != other.greedy) return false;
+    if (invertExprType != other.invertExprType) return false;
+    if (invertFormalType != other.invertFormalType) return false;
+    if (invertReference != other.invertReference) return false;
+    if (invertRegExp != other.invertRegExp) return false;
+    if (maxCount != other.maxCount) return false;
+    if (minCount != other.minCount) return false;
+    if (partOfSearchResults != other.partOfSearchResults) return false;
+    if (strictlyWithinHierarchy != other.strictlyWithinHierarchy) return false;
+    if (wholeWordsOnly != other.wholeWordsOnly) return false;
+    if (withinHierarchy != other.withinHierarchy) return false;
+    if (!nameOfExprType.equals(other.nameOfExprType)) return false;
+    if (!expressionTypes.equals(other.expressionTypes)) return false;
+    if (!nameOfFormalArgType.equals(other.nameOfFormalArgType)) return false;
+    if (!expectedTypes.equals(other.expectedTypes)) return false;
+    if (!referenceConstraint.equals(other.referenceConstraint)) return false;
+    if (!regExp.equals(other.regExp)) return false;
+    if (!withinConstraint.equals(other.withinConstraint)) return false;
+    if (!containsConstraint.equals(other.containsConstraint)) return false;
+    if (invertWithinConstraint != other.invertWithinConstraint) return false;
+    if (invertContainsConstraint != other.invertContainsConstraint) return false;
+    if (!contextConstraint.equals(other.contextConstraint)) return false;
+    if (additionalConstraints != null) {
+       if (!additionalConstraints.equals(other.additionalConstraints)) return false;
+    } else if (other.additionalConstraints != null) {
+      return false;
+    }
     return true;
   }
 
@@ -406,6 +458,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
     if (invertContainsConstraint) result = 29 * result + 1;
     if (invertWithinConstraint) result = 29 * result + 1;
+    if (additionalConstraints != null) result = 29 * result + additionalConstraints.hashCode();
     return result;
   }
 
@@ -445,6 +498,16 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     partOfSearchResults = getBooleanValue(element, TARGET, false);
 
     contextConstraint = StringUtil.notNullize(element.getAttributeValue(CONTEXT));
+
+    for (Attribute attribute : element.getAttributes()) {
+      final String name = attribute.getName();
+      if (isValidConstraintName(name)) {
+        if (additionalConstraints == null) {
+          additionalConstraints = new HashMap<>();
+        }
+        additionalConstraints.put(name, attribute.getValue());
+      }
+    }
   }
 
   public static boolean getBooleanValue(Element element, String attributeName, boolean defaultValue) {
@@ -499,6 +562,17 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     element.setAttribute(CONTAINS_CONDITION, containsConstraint);
 
     if (!contextConstraint.isEmpty()) element.setAttribute(CONTEXT, contextConstraint);
+
+    if (additionalConstraints != null && !additionalConstraints.isEmpty()) {
+      final SmartList<String> list = new SmartList<>(additionalConstraints.keySet());
+      Collections.sort(list);
+      for (String key : list) {
+        final String value = additionalConstraints.get(key);
+        if (value != null) {
+          element.setAttribute(key, value);
+        }
+      }
+    }
   }
 
   @NotNull
