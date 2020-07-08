@@ -110,6 +110,9 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
   @NotNull
   private String myLastRenderedHtml = "";
 
+  @Nullable
+  private static Boolean ourIsDefaultMarkdownPreviewSettings = null;
+
   public MarkdownPreviewFileEditor(@NotNull Project project, @NotNull VirtualFile file) {
     myProject = project;
     myFile = file;
@@ -282,18 +285,24 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     MarkdownHtmlPanelProvider provider = MarkdownHtmlPanelProvider.createFromInfo(providerInfo);
 
     if (provider.isAvailable() != MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE) {
+      if (ourIsDefaultMarkdownPreviewSettings == null) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourIsDefaultMarkdownPreviewSettings = settings.getMarkdownPreviewSettings() == MarkdownPreviewSettings.DEFAULT;
+      }
       settings.setMarkdownPreviewSettings(new MarkdownPreviewSettings(settings.getMarkdownPreviewSettings().getSplitEditorLayout(),
                                                                       MarkdownPreviewSettings.DEFAULT.getHtmlPanelProviderInfo(),
                                                                       settings.getMarkdownPreviewSettings().isUseGrayscaleRendering(),
                                                                       settings.getMarkdownPreviewSettings().isAutoScrollPreview(),
                                                                       settings.getMarkdownPreviewSettings().isVerticalSplit()));
 
-      Messages.showMessageDialog(
-        myHtmlPanelWrapper,
-        MarkdownBundle.message("dialog.message.tried.to.use.preview.panel.provider", providerInfo.getName()),
-        CommonBundle.getErrorTitle(),
-        Messages.getErrorIcon()
-      );
+      if (!ourIsDefaultMarkdownPreviewSettings) {
+        Messages.showMessageDialog(
+          myHtmlPanelWrapper,
+          MarkdownBundle.message("dialog.message.tried.to.use.preview.panel.provider", providerInfo.getName()),
+          CommonBundle.getErrorTitle(),
+          Messages.getErrorIcon()
+        );
+      }
 
       provider = Objects.requireNonNull(
         Arrays.stream(MarkdownHtmlPanelProvider.getProviders()).filter(
