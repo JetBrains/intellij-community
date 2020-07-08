@@ -210,12 +210,10 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     return ExtensionProcessingHelper.getByKey(getPointImpl(null), key, cacheId, keyMapper, valueMapper);
   }
 
-  /**
-   * {@code valueMapper} used as cache id and therefore must be extracted to a static final field.
-   */
   @ApiStatus.Experimental
   public final <@NotNull K, @NotNull V> @NotNull V computeIfAbsent(@NotNull K key,
+                                                                   @NotNull Class<?> cacheId,
                                                                    @NotNull Function<@NotNull K, @NotNull V> valueMapper) {
-    return ExtensionProcessingHelper.computeIfAbsent(getPointImpl(null), key, valueMapper);
+    return ExtensionProcessingHelper.computeIfAbsent(getPointImpl(null), key, cacheId, valueMapper);
   }
 }
