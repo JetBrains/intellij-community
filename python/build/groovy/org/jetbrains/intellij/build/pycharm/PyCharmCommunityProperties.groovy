@@ -46,7 +46,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   }
 
   @Override
-  String getSystemSelector(ApplicationInfoProperties applicationInfo) {
+  String getSystemSelector(ApplicationInfoProperties applicationInfo, String buildNumber) {
     "PyCharmCE${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
   }
 
