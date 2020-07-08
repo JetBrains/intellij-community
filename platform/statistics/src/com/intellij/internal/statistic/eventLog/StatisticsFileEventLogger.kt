@@ -20,6 +20,8 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
+  private val statisticsPersistenceComponent = UsageStatisticsPersistenceComponent.getInstance()
+
 
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
@@ -65,7 +67,6 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         it.event.addData("last", lastEventTime)
       }
       it.event.addData("created", lastEventCreatedTime)
-      val statisticsPersistenceComponent = UsageStatisticsPersistenceComponent.getInstance()
       var systemEventId = statisticsPersistenceComponent.getEventId(recorderId)
       it.event.addData("system_event_id", systemEventId)
       statisticsPersistenceComponent.setEventId(recorderId, ++systemEventId)
