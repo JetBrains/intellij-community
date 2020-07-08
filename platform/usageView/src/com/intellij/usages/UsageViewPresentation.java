@@ -29,6 +29,7 @@ public class UsageViewPresentation {
   private boolean myShowReadOnlyStatusAsRed = false;
   private boolean myShowCancelButton = false;
   private boolean myOpenInNewTab = true;
+  private int myRerunHash = 0;//this value shouldn't be copied and doesn't affect equals/hashcode methods
   private boolean myCodeUsages = true;
   private boolean myUsageTypeFilteringAvailable;
   private IntFunction<String> myUsagesWordSupplier = count -> UsageViewBundle.message("usage.name", count);
@@ -143,6 +144,14 @@ public class UsageViewPresentation {
 
   public void setOpenInNewTab(boolean openInNewTab) {
     myOpenInNewTab = openInNewTab;
+  }
+
+  public int getRerunHash() {
+    return myRerunHash;
+  }
+
+  public void setRerunHash(int rerunHash) {
+    myRerunHash = rerunHash;
   }
 
   public boolean isCodeUsages() {

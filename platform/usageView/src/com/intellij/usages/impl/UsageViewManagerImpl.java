@@ -104,15 +104,22 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   void showUsageView(@NotNull UsageViewEx usageView, @NotNull UsageViewPresentation presentation) {
+    boolean wasPinned = false;
+    Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent();
+    if (selectedContent != null && System.identityHashCode(selectedContent) == presentation.getRerunHash()) {
+      wasPinned = selectedContent.isPinned();
+      selectedContent.setPinned(false);//Unpin explicitly to make old content removed as we rerun search
+    }
     Content content = UsageViewContentManager.getInstance(myProject).addContent(
       presentation.getTabText(),
       presentation.getTabName(),
       presentation.getToolwindowTitle(),
       true,
       usageView.getComponent(),
-      presentation.isOpenInNewTab(),
+      presentation.isOpenInNewTab() && presentation.getRerunHash() == 0,
       true
     );
+    content.setPinned(wasPinned);
     ((UsageViewImpl)usageView).setContent(content);
     content.putUserData(USAGE_VIEW_KEY, usageView);
   }

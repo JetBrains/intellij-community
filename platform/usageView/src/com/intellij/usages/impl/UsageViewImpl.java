@@ -1159,7 +1159,7 @@ public class UsageViewImpl implements UsageViewEx {
     myChangesDetected = false;
     if (myRerunAction == null) {
       UsageViewPresentation rerunPresentation = myPresentation.copy();
-      rerunPresentation.setOpenInNewTab(false);
+      rerunPresentation.setRerunHash(System.identityHashCode(myContent));
       return UsageViewManager.getInstance(getProject()).
         searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, rerunPresentation, null);
     }
