@@ -7,11 +7,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.CompositeSettingsBuilder;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.SeparatorFactory;
-import com.intellij.ui.components.labels.DropDownLink;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -33,7 +33,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(TOP_INSET), 0, 0);
   private final Collection<SettingsEditorFragment<Settings, ?>> myFragments;
   private final SettingsEditorFragment<Settings, ?> myMain;
-  private LinkLabel<?> myLinkLabel;
+  private DropDownLink<String> myLinkLabel;
 
   FragmentedSettingsBuilder(Collection<SettingsEditorFragment<Settings, ?>> fragments, SettingsEditorFragment<Settings, ?> main) {
     myFragments = fragments;
@@ -121,21 +121,21 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     if (myMain != null) {
       panel.add(SeparatorFactory.createSeparator(myMain.getGroup(), null), BorderLayout.CENTER);
     }
-    myLinkLabel = new DropDownLink<>(OptionsBundle.message(myMain == null? "settings.editor.modify.options" : "settings.editor.modify"), () -> showOptions());
+    myLinkLabel = new DropDownLink<>(OptionsBundle.message(myMain == null ? "settings.editor.modify.options" : "settings.editor.modify"), link -> showOptions());
     myLinkLabel.setBorder(JBUI.Borders.emptyLeft(5));
     panel.add(myLinkLabel, BorderLayout.EAST);
     return panel;
   }
 
-  private void showOptions() {
+  private JBPopup showOptions() {
     List<SettingsEditorFragment<Settings, ?>> fragments =
       ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null);
     DefaultActionGroup actionGroup = buildGroup(fragments);
     DataContext dataContext = DataManager.getInstance().getDataContext(myLinkLabel);
-    JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),
+    return JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),
                                                         actionGroup,
                                                         dataContext,
-                                                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).showUnderneathOf(myLinkLabel);
+                                                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
   }
 
   @NotNull

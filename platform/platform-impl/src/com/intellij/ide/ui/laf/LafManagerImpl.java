@@ -37,6 +37,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
+import com.intellij.ui.components.DefaultLinkButtonUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
@@ -577,6 +578,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public void updateUI() {
     final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
+    uiDefaults.put("LinkButtonUI", DefaultLinkButtonUI.class.getName());
 
     fixPopupWeight();
 
