@@ -1,4 +1,5 @@
 import java.util.*;
+import java.io.*;
 <warning descr="Commented out code (1 line)">//</warning> import java.awt.List;
 
 class CommentedOutCode /* extends Object */ {
@@ -37,6 +38,13 @@ class CommentedOutCode /* extends Object */ {
   // TODO: change to (uri -> url)
   // uri -> path
   public String fromUri(String uri) {
+    try {
+      new FileInputStream(uri);
+    }
+    catch (FileNotFoundException e) {
+      //ignore;
+    }
+
     // was: true
     return null;
     // test

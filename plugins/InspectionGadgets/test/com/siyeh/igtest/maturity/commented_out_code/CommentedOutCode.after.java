@@ -30,6 +30,13 @@ class CommentedOutCode /* extends Object */ {
   // TODO: change to (uri -> url)
   // uri -> path
   public String fromUri(String uri) {
+    try {
+      new FileInputStream(uri);
+    }
+    catch (FileNotFoundException e) {
+      //ignore;
+    }
+
     // was: true
     return null;
     // test

@@ -209,6 +209,15 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
     }
 
     @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      if (expression.getParent() instanceof PsiExpressionStatement) {
+        invalidCode = true;
+        stopWalking();
+      }
+    }
+
+    @Override
     public void visitLabeledStatement(PsiLabeledStatement statement) {
       super.visitLabeledStatement(statement);
       final String name = statement.getName();
