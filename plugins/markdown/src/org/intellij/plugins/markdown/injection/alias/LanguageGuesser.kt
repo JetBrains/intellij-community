@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.injection.alias
 
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageUtil
 import com.intellij.lexer.EmbeddedTokenTypesProvider
 import com.intellij.openapi.util.text.StringUtil
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
@@ -20,9 +21,26 @@ internal object LanguageGuesser {
    * Guess IntelliJ Language from Markdown info-string.
    * It may either be lower-cased id or some of the aliases.
    *
+   * Language is guaranteed to be safely injectable
+   *
    * @return IntelliJ Language if it was found
    */
-  fun guessLanguage(value: String): Language? {
+  @JvmStatic
+  fun guessLanguageForInjection(value: String): Language? {
+    return guessLanguage(value)?.takeIf { LanguageUtil.isInjectableLanguage(it) }
+  }
+
+  /**
+   * Guess IntelliJ Language from Markdown info-string.
+   * It may either be lower-cased id or some of the aliases.
+   *
+   * Note, that returned language can be non-injectable.
+   * Consider using [guessLanguageForInjection]
+   *
+   * @return IntelliJ Language if it was found
+   */
+  @JvmStatic
+  private fun guessLanguage(value: String): Language? {
     val name = LanguageInfoString.findId(value)
 
     for (provider in customProviders) {

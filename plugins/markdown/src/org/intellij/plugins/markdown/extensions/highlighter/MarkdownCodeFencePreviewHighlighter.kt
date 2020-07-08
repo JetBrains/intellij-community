@@ -34,11 +34,11 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
   private val values = ConcurrentHashMap<String, CachedHTMLResult>()
 
   override fun isApplicable(language: String): Boolean {
-    return LanguageGuesser.guessLanguage(language) != null
+    return LanguageGuesser.guessLanguageForInjection(language) != null
   }
 
   override fun generateHtml(language: String, raw: String): String {
-    val lang = LanguageGuesser.guessLanguage(language) ?: return escape(raw)
+    val lang = LanguageGuesser.guessLanguageForInjection(language) ?: return escape(raw)
 
     val md5 = MarkdownUtil.md5(raw, language)
 

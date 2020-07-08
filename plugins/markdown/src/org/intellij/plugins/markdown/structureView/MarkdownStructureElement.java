@@ -110,7 +110,7 @@ public class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> imp
   @Override
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final ArrayList<StructureViewTreeElement> elements = new ArrayList<>();
-    MarkdownPsiUtil.processContainer(getElement(), element -> elements.add(new MarkdownStructureElement(element)), element -> {});
+    MarkdownPsiUtil.INSTANCE.processContainer(getElement(), element -> elements.add(new MarkdownStructureElement(element)), element -> {});
     return elements;
   }
 

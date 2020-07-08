@@ -37,7 +37,8 @@ internal object MarkdownBlocks {
         //Blockquotes should not be wrapped
         if (node.parents().any { it.elementType == MarkdownTokenTypeSets.BLOCK_QUOTE }) {
           MarkdownFormattingBlock(node, settings, spacing, align(node))
-        } else {
+        }
+        else {
           MarkdownWrappingFormattingBlock(settings, spacing, node, align(node))
         }
       }

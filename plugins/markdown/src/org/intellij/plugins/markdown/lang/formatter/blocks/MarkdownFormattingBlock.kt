@@ -7,15 +7,16 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
 import com.intellij.psi.formatter.common.SettingsAwareBlock
 import com.intellij.psi.tree.TokenSet
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
+import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 import org.intellij.plugins.markdown.util.children
 import org.intellij.plugins.markdown.util.parents
 
 /**
  * Formatting block used by markdown plugin
  *
- * It defines **2** spaces indent for inner lists (2 more spaces added via MarkdownFormattingPostProcessor)
  * It defines alignment equal for all block on the same line, and new for inner lists
  */
 internal open class MarkdownFormattingBlock(
@@ -25,14 +26,12 @@ internal open class MarkdownFormattingBlock(
 ) : AbstractBlock(node, wrap, alignment), SettingsAwareBlock {
 
   companion object {
-    private val DEFAULT_ATTRIBUTES = ChildAttributes(Indent.getNoneIndent(), null)
-
     private val NON_ALIGNABLE_LIST_ELEMENTS = TokenSet.orSet(MarkdownTokenTypeSets.LIST_MARKERS, MarkdownTokenTypeSets.LISTS)
   }
 
   override fun getSettings(): CodeStyleSettings = settings
 
-  override fun isLeaf(): Boolean = subBlocks.size == 0
+  override fun isLeaf(): Boolean = subBlocks.isEmpty()
 
   override fun getSpacing(child1: Block?, child2: Block): Spacing? = spacing.getSpacing(this, child1, child2)
 
@@ -49,9 +48,14 @@ internal open class MarkdownFormattingBlock(
    *  Other changes (for example, adding of `>` for blockquote) are handled by MarkdownEnterHandler
    */
   override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
-    if (newChildIndex <= 0) return DEFAULT_ATTRIBUTES
+    return MarkdownEditingAligner.calculateChildAttributes(subBlocks.getOrNull(newChildIndex - 1))
+  }
 
-    return ChildAttributes.DELEGATE_TO_PREV_CHILD
+  override fun getSubBlocks(): List<Block?> {
+    //Non top-level codefences cannot be formatted correctly even with correct inject, so -- just ignore it
+    if (MarkdownCodeFenceUtils.isCodeFence(node) && !MarkdownPsiUtil.isTopLevel(node)) return EMPTY
+
+    return super.getSubBlocks()
   }
 
   override fun buildChildren(): List<Block> {

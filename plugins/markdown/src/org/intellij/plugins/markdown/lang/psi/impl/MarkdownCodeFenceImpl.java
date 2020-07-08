@@ -2,14 +2,13 @@
 package org.intellij.plugins.markdown.lang.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -53,28 +53,26 @@ public class MarkdownCodeFenceImpl extends CompositePsiElement implements PsiLan
       @Nullable
       @Override
       public String getPresentableText() {
-        if (!isValid()) {
-          return null;
-        }
-        return "Code fence";
+        if (!isValid()) return null;
+
+        return "Code Fence";
       }
 
       @Nullable
       @Override
       public String getLocationString() {
-        if (!isValid()) {
-          return null;
-        }
+        if (!isValid()) return null;
 
         final StringBuilder sb = new StringBuilder();
-        for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
-          if (!(child instanceof MarkdownCodeFenceContentImpl)) {
-            continue;
-          }
+
+        List<PsiElement> elements = MarkdownCodeFenceUtils.getContent(MarkdownCodeFenceImpl.this, false);
+        if (elements == null) return "";
+
+        for (PsiElement element : elements) {
           if (sb.length() > 0) {
             sb.append("\\n");
           }
-          sb.append(child.getText());
+          sb.append(element.getText());
 
           if (sb.length() >= MarkdownCompositePsiElementBase.PRESENTABLE_TEXT_LENGTH) {
             break;
@@ -102,35 +100,52 @@ public class MarkdownCodeFenceImpl extends CompositePsiElement implements PsiLan
     return new LiteralTextEscaper<PsiLanguageInjectionHost>(this) {
       @Override
       public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-        outChars.append(rangeInsideHost.substring(myHost.getText()));
+        List<PsiElement> elements = MarkdownCodeFenceUtils.getContent((MarkdownCodeFenceImpl)this.myHost, false);
+        if (elements == null) return true;
+        for (PsiElement element: elements) {
+          outChars.append(element.getText());
+        }
+
         return true;
       }
 
       @Override
       public int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
-        return rangeInsideHost.getStartOffset() + offsetInDecoded;
+        List<PsiElement> elements = MarkdownCodeFenceUtils.getContent((MarkdownCodeFenceImpl)this.myHost, false);
+        if (elements == null) return -1;
+        int cur = 0;
+        for (PsiElement element: elements) {
+          if (cur + element.getTextLength() == offsetInDecoded) {
+            return element.getStartOffsetInParent() + element.getTextLength();
+          } else if (cur == offsetInDecoded) {
+            return element.getStartOffsetInParent();
+          } else if (cur < offsetInDecoded &&  (cur + element.getTextLength()) > offsetInDecoded) {
+            return element.getStartOffsetInParent() + (offsetInDecoded - cur);
+          }
+          cur += element.getTextLength();
+        }
+
+        PsiElement last = elements.get(elements.size() - 1);
+
+        int result = last.getStartOffsetInParent() + (offsetInDecoded - (cur - last.getTextLength()));
+        if (rangeInsideHost.getStartOffset() <= result && result <=rangeInsideHost.getEndOffset()) {
+          return result;
+        }
+
+        return -1;
       }
 
       @NotNull
       @Override
       public TextRange getRelevantTextRange() {
-        return getContentTextRange();
-      }
+        List<PsiElement> elements = MarkdownCodeFenceUtils.getContent((MarkdownCodeFenceImpl)this.myHost, true);
 
-      public TextRange getContentTextRange() {
-        final MarkdownCodeFenceContentImpl first = PsiTreeUtil.findChildOfType(myHost, MarkdownCodeFenceContentImpl.class);
-        if (first == null) {
+        if (elements == null) {
           return TextRange.EMPTY_RANGE;
         }
 
-        MarkdownCodeFenceContentImpl last = null;
-        for (PsiElement child = myHost.getLastChild(); child != null; child = child.getPrevSibling()) {
-          if (child instanceof MarkdownCodeFenceContentImpl) {
-            last = ((MarkdownCodeFenceContentImpl)child);
-            break;
-          }
-        }
-        assert last != null;
+        final PsiElement first = elements.get(0);
+        final PsiElement last = elements.get(elements.size() - 1);
 
         return TextRange.create(first.getStartOffsetInParent(), last.getStartOffsetInParent() + last.getTextLength());
       }
@@ -143,46 +158,34 @@ public class MarkdownCodeFenceImpl extends CompositePsiElement implements PsiLan
   }
 
   public static class Manipulator extends AbstractElementManipulator<MarkdownCodeFenceImpl> {
-
     @Override
-    public MarkdownCodeFenceImpl handleContentChange(@NotNull MarkdownCodeFenceImpl element, @NotNull TextRange range, String newContent)
+    public MarkdownCodeFenceImpl handleContentChange(@NotNull MarkdownCodeFenceImpl element, @NotNull TextRange range, String content)
       throws IncorrectOperationException {
-      if (newContent == null) {
+      if (content == null) {
         return null;
       }
 
-      if (newContent.contains("```") || newContent.contains("~~~")) {
-        MarkdownPsiElement textElement = MarkdownPsiElementFactory.createTextElement(element.getProject(), newContent);
+      if (content.contains("```") || content.contains("~~~")) {
+        MarkdownPsiElement textElement = MarkdownPsiElementFactory.createTextElement(element.getProject(), content);
         return textElement instanceof MarkdownCodeFenceImpl ? (MarkdownCodeFenceImpl)element.replace(textElement) : null;
       }
 
-      String indent = calculateIndent(element);
+      String indent = MarkdownCodeFenceUtils.getIndent(element);
 
       if (indent != null && indent.length() > 0) {
-        newContent = Arrays.stream(StringUtil.splitByLinesKeepSeparators(newContent))
-                           .map(line -> line.replaceAll(indent, ""))
-                           .map(line -> indent + line)
-                           .collect(Collectors.joining(""));
+        content = Arrays.stream(StringUtil.splitByLinesKeepSeparators(content))
+          .map(line -> indent + line)
+          .collect(Collectors.joining(""));
 
-        if (StringUtil.endsWithLineBreak(newContent)) {
-          newContent += indent;
+        if (StringUtil.endsWithLineBreak(content)) {
+          content += indent;
         }
       }
 
-      return (MarkdownCodeFenceImpl)element.replace(MarkdownPsiElementFactory
-                   .createCodeFence(element.getProject(), element.getFenceLanguage(), Objects.requireNonNull(newContent), indent));
+      return (MarkdownCodeFenceImpl)element.replace(
+        MarkdownPsiElementFactory.createCodeFence(
+          element.getProject(), element.getFenceLanguage(), Objects.requireNonNull(content), indent)
+      );
     }
-  }
-
-  @Nullable("Null if no document")
-  public static String calculateIndent(@NotNull MarkdownPsiElement element) {
-    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
-    if (document == null) {
-      return null;
-    }
-
-    int offset = element.getTextOffset();
-    int lineStartOffset = document.getLineStartOffset(document.getLineNumber(offset));
-    return document.getText(TextRange.create(lineStartOffset, offset)).replaceAll("[^> ]", " ");
   }
 }

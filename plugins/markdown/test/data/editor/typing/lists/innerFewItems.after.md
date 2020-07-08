@@ -1,0 +1,4 @@
+* item
+    * item
+    * item
+    <caret>

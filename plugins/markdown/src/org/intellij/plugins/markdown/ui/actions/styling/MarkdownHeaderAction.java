@@ -97,11 +97,11 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
 
     PsiElement first = elements.getFirst();
     PsiElement second = elements.getSecond();
-    if (MarkdownPsiUtil.isNewLine(first)) {
+    if (MarkdownPsiUtil.WhiteSpaces.isNewLine(first)) {
       first = PsiTreeUtil.nextVisibleLeaf(first);
     }
 
-    if (MarkdownPsiUtil.isNewLine(second)) {
+    if (MarkdownPsiUtil.WhiteSpaces.isNewLine(second)) {
       second = PsiTreeUtil.prevVisibleLeaf(second);
     }
 

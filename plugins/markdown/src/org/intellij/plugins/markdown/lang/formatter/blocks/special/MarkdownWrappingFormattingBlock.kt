@@ -28,6 +28,10 @@ internal class MarkdownWrappingFormattingBlock(
     private val NORMAL_WRAP = Wrap.createWrap(WrapType.NORMAL, false)
   }
 
+  /** Number of newlines in this block's text */
+  val newlines: Int
+    get() = node.text.count { it == '\n' }
+
   override fun buildChildren(): List<Block> {
     val filtered = MarkdownBlocks.filterFromWhitespaces(node.children())
 
