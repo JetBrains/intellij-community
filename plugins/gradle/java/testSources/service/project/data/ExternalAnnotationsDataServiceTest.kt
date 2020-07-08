@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.data
 
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.LibraryData
+import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
 import com.intellij.openapi.project.Project
@@ -18,6 +19,8 @@ import com.intellij.util.ThrowableRunnable
 import org.assertj.core.api.BDDAssertions.then
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 
@@ -26,6 +29,7 @@ class ExternalAnnotationsDataServiceTest: LightIdeaTestCase() {
   private lateinit var modelsProvider: IdeModifiableModelsProvider
   private lateinit var resolver: TestExternalAnnotationsResolver
   private lateinit var locationProvider: TestExternalAnnotationLocationProvider
+  private lateinit var projectData: ProjectData
 
   override fun setUp() {
     super.setUp()
@@ -34,7 +38,13 @@ class ExternalAnnotationsDataServiceTest: LightIdeaTestCase() {
     resolver = TestExternalAnnotationsResolver()
     locationProvider = TestExternalAnnotationLocationProvider()
 
-    Extensions.getRootArea().getExtensionPoint(ExternalAnnotationsArtifactsResolver.EP_NAME).registerExtension(resolver, testRootDisposable);
+    projectData = ProjectData(GradleConstants.SYSTEM_ID, "", "", "projectPath")
+    GradleSettings.getInstance(project).linkedProjectsSettings = listOf(GradleProjectSettings().apply {
+      isResolveExternalAnnotations = true
+      externalProjectPath = projectData.linkedExternalProjectPath
+    })
+
+    Extensions.getRootArea().getExtensionPoint(ExternalAnnotationsArtifactsResolver.EP_NAME).registerExtension(resolver, testRootDisposable)
     Extensions.getRootArea().getExtensionPoint(AnnotationsLocationProvider.EP_NAME).registerExtension(locationProvider, testRootDisposable)
   }
 
@@ -58,7 +68,7 @@ class ExternalAnnotationsDataServiceTest: LightIdeaTestCase() {
     val location = AnnotationsLocation("grp", "annotation-artifact", "1.0")
     libraryNames.forEach { locationProvider.addLocation("grp", it, "1.0", location) }
 
-    service.onSuccessImport(libraryDataNodes, null, project, modelsProvider)
+    service.onSuccessImport(libraryDataNodes, projectData, project, modelsProvider)
 
     then(resolver.attemptsCount).describedAs("Broken annotations location should only be attempted once").isEqualTo(1)
   }
@@ -72,7 +82,7 @@ class ExternalAnnotationsDataServiceTest: LightIdeaTestCase() {
 }
 
 class TestExternalAnnotationsResolver : ExternalAnnotationsArtifactsResolver {
-  public var attemptsCount = 0
+  var attemptsCount = 0
   override fun resolve(project: Project, library: Library, mavenId: String?): Boolean = false
 
   override fun resolve(project: Project, library: Library, annotationsLocation: AnnotationsLocation): Boolean {
