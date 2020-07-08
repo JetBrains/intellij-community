@@ -16,5 +16,9 @@ class TerminalDebugSmartCommandAction(override val executor: Executor? = Executo
 abstract class TerminalExecutorAction : AnAction() {
   abstract val executor: Executor?
 
+  init {
+    templatePresentation.isEnabled = false;
+  }
+
   override fun actionPerformed(e: AnActionEvent) {}
 }
