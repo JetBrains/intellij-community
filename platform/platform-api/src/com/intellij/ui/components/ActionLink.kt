@@ -32,7 +32,7 @@ open class ActionLink() : JButton() {
       isVisible = !newValue || isEnabled
     }
 
-  var visited = true
+  var visited = false
     set(newValue) {
       val oldValue = field
       if (oldValue == newValue) return
