@@ -17,7 +17,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.IconUtil
 import com.intellij.util.NotNullProducer
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
@@ -88,7 +87,7 @@ class ReaderModeActionProvider(override val separator: Separator? = Separator.cr
         else {
           presentation.text = LangBundle.message("action.ReaderModeProvider.text")
           presentation.icon = EmptyIcon.ICON_16
-          presentation.hoveredIcon = IconUtil.colorize(AllIcons.Actions.Close, ACTIONS_GREY_COLOR_KEY.defaultColor)
+          presentation.hoveredIcon = AllIcons.Actions.CloseDarkGrey
           presentation.description = LangBundle.message("action.ReaderModeProvider.text.exit")
         }
       }
@@ -97,6 +96,5 @@ class ReaderModeActionProvider(override val separator: Separator? = Separator.cr
 
   companion object {
     val FOREGROUND = ColorKey.createColorKey("ActionButton.iconTextForeground", UIUtil.getContextHelpForeground())
-    val ACTIONS_GREY_COLOR_KEY = ColorKey.createColorKey("Actions.Grey", UIUtil.getContextHelpForeground())
   }
 }
