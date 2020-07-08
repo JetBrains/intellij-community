@@ -95,16 +95,15 @@ public class PyArgumentListInspection extends PyInspection {
     }
   }
 
-  public static void inspectPyArgumentList(@NotNull PyArgumentList node,
-                                           @NotNull ProblemsHolder holder,
-                                           @NotNull PyResolveContext resolveContext,
-                                           int implicitOffset) {
+  private static void inspectPyArgumentList(@NotNull PyArgumentList node,
+                                            @NotNull ProblemsHolder holder,
+                                            @NotNull PyResolveContext resolveContext) {
     if (node.getParent() instanceof PyClass) return; // `(object)` in `class Foo(object)` is also an arg list
     final PyCallExpression call = node.getCallExpression();
     if (call == null) return;
 
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
-    final List<PyCallExpression.PyArgumentsMapping> mappings = call.multiMapArguments(resolveContext, implicitOffset);
+    final List<PyCallExpression.PyArgumentsMapping> mappings = call.multiMapArguments(resolveContext);
 
     for (PyCallExpression.PyArgumentsMapping mapping : mappings) {
       final PyCallableType callableType = mapping.getCallableType();
@@ -127,10 +126,6 @@ public class PyArgumentListInspection extends PyInspection {
     highlightUnexpectedArguments(node, holder, mappings, context);
     highlightUnfilledParameters(node, holder, mappings, context);
     highlightStarArgumentTypeMismatch(node, holder, context);
-  }
-
-  public static void inspectPyArgumentList(@NotNull PyArgumentList node, @NotNull ProblemsHolder holder, @NotNull PyResolveContext resolveContext) {
-    inspectPyArgumentList(node, holder, resolveContext, 0);
   }
 
   private static boolean decoratedClassInitCall(@Nullable PyExpression callee,

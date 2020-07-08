@@ -121,13 +121,13 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
       return callableType;
     };
 
-    return ContainerUtil.map(PyCallExpressionHelper.multiResolveCallee(this, resolveContext, implicitOffset), mapping);
+    return ContainerUtil.map(PyCallExpressionHelper.multiResolveCallee(this, resolveContext), mapping);
   }
 
   @NotNull
   @Override
   public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    return PyCallExpressionHelper.multiMapArguments(this, resolveContext, implicitOffset);
+    return PyCallExpressionHelper.mapArguments(this, resolveContext);
   }
 
   @Override
