@@ -134,7 +134,10 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
         List<PsiField> fields = parent instanceof PsiExtensibleClass ? ((PsiExtensibleClass)parent).getOwnFields()
                                                                      : Arrays.asList(((PsiClass)parent).getFields());
         boolean hasSubClass = ContainerUtil.find(fields, field -> field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) != null;
-        if (!hasSubClass) {
+        if (hasSubClass) {
+          implicitModifiers.add(SEALED);
+        }
+        else {
           implicitModifiers.add(FINAL);
         }
 
