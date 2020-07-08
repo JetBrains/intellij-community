@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -292,7 +293,16 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     DebugProcessImpl debugProcess = context.getDebugProcess();
     getRenderer(debugProcess)
-      .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer));
+      .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer))
+      .exceptionally(throwable -> {
+        if (throwable instanceof CompletionException) {
+          throwable = throwable.getCause();
+        }
+        LOG.error(throwable);
+        setValueLabelFailed(new EvaluateException(JavaDebuggerBundle.message("internal.debugger.error")));
+        labelListener.labelChanged();
+        return null;
+      });
 
     return "";
   }
