@@ -1,0 +1,812 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<!-- Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file. -->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="kab"/>
+	</identity>
+	<annotations>
+		<annotation cp="👶🏻">ṣebyan | taglimt taceɛlalt</annotation>
+		<annotation cp="👶🏻" type="tts">ṣebyan: taglimt taceɛlalt</annotation>
+		<annotation cp="👶🏼">ṣebyan | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👶🏼" type="tts">ṣebyan: tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👶🏽">ṣebyan | taglimt talemmast</annotation>
+		<annotation cp="👶🏽" type="tts">ṣebyan: taglimt talemmast</annotation>
+		<annotation cp="👶🏾">ṣebyan | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👶🏾" type="tts">ṣebyan: tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👶🏿">ṣebyan | tagwlimt tubrikt</annotation>
+		<annotation cp="👶🏿" type="tts">ṣebyan: tagwlimt tubrikt</annotation>
+		<annotation cp="🧒🏻">agrud | taglimt taceɛlalt</annotation>
+		<annotation cp="🧒🏻" type="tts">agrud: taglimt taceɛlalt</annotation>
+		<annotation cp="🧒🏼">agrud | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🧒🏼" type="tts">agrud: tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🧒🏽">agrud | taglimt talemmast</annotation>
+		<annotation cp="🧒🏽" type="tts">agrud: taglimt talemmast</annotation>
+		<annotation cp="🧒🏾">agrud | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🧒🏾" type="tts">agrud: tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🧒🏿">agrud | tagwlimt tubrikt</annotation>
+		<annotation cp="🧒🏿" type="tts">agrud: tagwlimt tubrikt</annotation>
+		<annotation cp="👦🏻">aqruṛ | taglimt taceɛlalt</annotation>
+		<annotation cp="👦🏻" type="tts">aqruṛ: taglimt taceɛlalt</annotation>
+		<annotation cp="👦🏼">aqruṛ | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👦🏼" type="tts">aqruṛ: tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👦🏽">aqruṛ | taglimt talemmast</annotation>
+		<annotation cp="👦🏽" type="tts">aqruṛ: taglimt talemmast</annotation>
+		<annotation cp="👦🏾">aqruṛ | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👦🏾" type="tts">aqruṛ: tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👦🏿">aqruṛ | tagwlimt tubrikt</annotation>
+		<annotation cp="👦🏿" type="tts">aqruṛ: tagwlimt tubrikt</annotation>
+		<annotation cp="👧🏻">taglimt taceɛlalt | Taqruṛt</annotation>
+		<annotation cp="👧🏻" type="tts">Taqruṛt: taglimt taceɛlalt</annotation>
+		<annotation cp="👧🏼">tagwlimt taceɛlalt talemmast | Taqruṛt</annotation>
+		<annotation cp="👧🏼" type="tts">Taqruṛt: tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👧🏽">taglimt talemmast | Taqruṛt</annotation>
+		<annotation cp="👧🏽" type="tts">Taqruṛt: taglimt talemmast</annotation>
+		<annotation cp="👧🏾">tagwlimt tubrikt talemmast | Taqruṛt</annotation>
+		<annotation cp="👧🏾" type="tts">Taqruṛt: tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👧🏿">tagwlimt tubrikt | Taqruṛt</annotation>
+		<annotation cp="👧🏿" type="tts">Taqruṛt: tagwlimt tubrikt</annotation>
+		<annotation cp="🧑🏻">amengaḍ | taglimt taceɛlalt</annotation>
+		<annotation cp="🧑🏻" type="tts">amengaḍ: taglimt taceɛlalt</annotation>
+		<annotation cp="🧑🏼">amengaḍ | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🧑🏼" type="tts">amengaḍ: tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🧑🏽">amengaḍ | taglimt talemmast</annotation>
+		<annotation cp="🧑🏽" type="tts">amengaḍ: taglimt talemmast</annotation>
+		<annotation cp="🧑🏾">amengaḍ | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🧑🏾" type="tts">amengaḍ: tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🧑🏿">amengaḍ | tagwlimt tubrikt</annotation>
+		<annotation cp="🧑🏿" type="tts">amengaḍ: tagwlimt tubrikt</annotation>
+		<annotation cp="🧑‍🦰">acekkuḥ azeggaɣ | amengaḍ</annotation>
+		<annotation cp="🧑‍🦰" type="tts">amengaḍ: acekkuḥ azeggaɣ</annotation>
+		<annotation cp="🧑🏻‍🦰">acekkuḥ azeggaɣ | amengaḍ | taglimt taceɛlalt</annotation>
+		<annotation cp="🧑🏻‍🦰" type="tts">amengaḍ: taglimt taceɛlalt, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="🧑🏼‍🦰">acekkuḥ azeggaɣ | amengaḍ | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🧑🏼‍🦰" type="tts">amengaḍ: tagwlimt taceɛlalt talemmast, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="🧑🏽‍🦰">acekkuḥ azeggaɣ | amengaḍ | taglimt talemmast</annotation>
+		<annotation cp="🧑🏽‍🦰" type="tts">amengaḍ: taglimt talemmast, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="🧑🏾‍🦰">acekkuḥ azeggaɣ | amengaḍ | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🧑🏾‍🦰" type="tts">amengaḍ: tagwlimt tubrikt talemmast, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="🧑🏿‍🦰">acekkuḥ azeggaɣ | amengaḍ | tagwlimt tubrikt</annotation>
+		<annotation cp="🧑🏿‍🦰" type="tts">amengaḍ: tagwlimt tubrikt, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="🧑‍🦱">acekkuḥ imdewweṛ | amengaḍ</annotation>
+		<annotation cp="🧑‍🦱" type="tts">amengaḍ: acekkuḥ imdewweṛ</annotation>
+		<annotation cp="🧑🏻‍🦱">acekkuḥ imdewweṛ | amengaḍ | taglimt taceɛlalt</annotation>
+		<annotation cp="🧑🏻‍🦱" type="tts">amengaḍ: taglimt taceɛlalt, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="🧑🏼‍🦱">acekkuḥ imdewweṛ | amengaḍ | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🧑🏼‍🦱" type="tts">amengaḍ: tagwlimt taceɛlalt talemmast, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="🧑🏽‍🦱">acekkuḥ imdewweṛ | amengaḍ | taglimt talemmast</annotation>
+		<annotation cp="🧑🏽‍🦱" type="tts">amengaḍ: taglimt talemmast, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="🧑🏾‍🦱">acekkuḥ imdewweṛ | amengaḍ | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🧑🏾‍🦱" type="tts">amengaḍ: tagwlimt tubrikt talemmast, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="🧑🏿‍🦱">acekkuḥ imdewweṛ | amengaḍ | tagwlimt tubrikt</annotation>
+		<annotation cp="🧑🏿‍🦱" type="tts">amengaḍ: tagwlimt tubrikt, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="🧑‍🦳">acekkuḥ amellal | amengaḍ</annotation>
+		<annotation cp="🧑‍🦳" type="tts">amengaḍ: acekkuḥ amellal</annotation>
+		<annotation cp="🧑🏻‍🦳">acekkuḥ amellal | amengaḍ | taglimt taceɛlalt</annotation>
+		<annotation cp="🧑🏻‍🦳" type="tts">amengaḍ: taglimt taceɛlalt, acekkuḥ amellal</annotation>
+		<annotation cp="🧑🏼‍🦳">acekkuḥ amellal | amengaḍ | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🧑🏼‍🦳" type="tts">amengaḍ: tagwlimt taceɛlalt talemmast, acekkuḥ amellal</annotation>
+		<annotation cp="🧑🏽‍🦳">acekkuḥ amellal | amengaḍ | taglimt talemmast</annotation>
+		<annotation cp="🧑🏽‍🦳" type="tts">amengaḍ: taglimt talemmast, acekkuḥ amellal</annotation>
+		<annotation cp="🧑🏾‍🦳">acekkuḥ amellal | amengaḍ | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🧑🏾‍🦳" type="tts">amengaḍ: tagwlimt tubrikt talemmast, acekkuḥ amellal</annotation>
+		<annotation cp="🧑🏿‍🦳">acekkuḥ amellal | amengaḍ | tagwlimt tubrikt</annotation>
+		<annotation cp="🧑🏿‍🦳" type="tts">amengaḍ: tagwlimt tubrikt, acekkuḥ amellal</annotation>
+		<annotation cp="🧑‍🦲">aferḍas | amengaḍ</annotation>
+		<annotation cp="🧑‍🦲" type="tts">amengaḍ: aferḍas</annotation>
+		<annotation cp="🧑🏻‍🦲">aferḍas | amengaḍ | taglimt taceɛlalt</annotation>
+		<annotation cp="🧑🏻‍🦲" type="tts">amengaḍ: taglimt taceɛlalt, aferḍas</annotation>
+		<annotation cp="🧑🏼‍🦲">aferḍas | amengaḍ | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🧑🏼‍🦲" type="tts">amengaḍ: tagwlimt taceɛlalt talemmast, aferḍas</annotation>
+		<annotation cp="🧑🏽‍🦲">aferḍas | amengaḍ | taglimt talemmast</annotation>
+		<annotation cp="🧑🏽‍🦲" type="tts">amengaḍ: taglimt talemmast, aferḍas</annotation>
+		<annotation cp="🧑🏾‍🦲">aferḍas | amengaḍ | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🧑🏾‍🦲" type="tts">amengaḍ: tagwlimt tubrikt talemmast, aferḍas</annotation>
+		<annotation cp="🧑🏿‍🦲">aferḍas | amengaḍ | tagwlimt tubrikt</annotation>
+		<annotation cp="🧑🏿‍🦲" type="tts">amengaḍ: tagwlimt tubrikt, aferḍas</annotation>
+		<annotation cp="👨🏻">argaz | taglimt taceɛlalt</annotation>
+		<annotation cp="👨🏻" type="tts">argaz: taglimt taceɛlalt</annotation>
+		<annotation cp="👨🏼">argaz | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👨🏼" type="tts">argaz: tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👨🏽">argaz | taglimt talemmast</annotation>
+		<annotation cp="👨🏽" type="tts">argaz: taglimt talemmast</annotation>
+		<annotation cp="👨🏾">argaz | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👨🏾" type="tts">argaz: tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👨🏿">argaz | tagwlimt tubrikt</annotation>
+		<annotation cp="👨🏿" type="tts">argaz: tagwlimt tubrikt</annotation>
+		<annotation cp="👨‍🦰">acekkuḥ azeggaɣ | argaz</annotation>
+		<annotation cp="👨‍🦰" type="tts">argaz: acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👨🏻‍🦰">acekkuḥ azeggaɣ | argaz | taglimt taceɛlalt</annotation>
+		<annotation cp="👨🏻‍🦰" type="tts">argaz: taglimt taceɛlalt, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👨🏼‍🦰">acekkuḥ azeggaɣ | argaz | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👨🏼‍🦰" type="tts">argaz: tagwlimt taceɛlalt talemmast, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👨🏽‍🦰">acekkuḥ azeggaɣ | argaz | taglimt talemmast</annotation>
+		<annotation cp="👨🏽‍🦰" type="tts">argaz: taglimt talemmast, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👨🏾‍🦰">acekkuḥ azeggaɣ | argaz | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👨🏾‍🦰" type="tts">argaz: tagwlimt tubrikt talemmast, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👨🏿‍🦰">acekkuḥ azeggaɣ | argaz | tagwlimt tubrikt</annotation>
+		<annotation cp="👨🏿‍🦰" type="tts">argaz: tagwlimt tubrikt, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👨‍🦱">acekkuḥ imdewweṛ | argaz</annotation>
+		<annotation cp="👨‍🦱" type="tts">argaz: acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👨🏻‍🦱">acekkuḥ imdewweṛ | argaz | taglimt taceɛlalt</annotation>
+		<annotation cp="👨🏻‍🦱" type="tts">argaz: taglimt taceɛlalt, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👨🏼‍🦱">acekkuḥ imdewweṛ | argaz | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👨🏼‍🦱" type="tts">argaz: tagwlimt taceɛlalt talemmast, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👨🏽‍🦱">acekkuḥ imdewweṛ | argaz | taglimt talemmast</annotation>
+		<annotation cp="👨🏽‍🦱" type="tts">argaz: taglimt talemmast, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👨🏾‍🦱">acekkuḥ imdewweṛ | argaz | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👨🏾‍🦱" type="tts">argaz: tagwlimt tubrikt talemmast, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👨🏿‍🦱">acekkuḥ imdewweṛ | argaz | tagwlimt tubrikt</annotation>
+		<annotation cp="👨🏿‍🦱" type="tts">argaz: tagwlimt tubrikt, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👨‍🦳">acekkuḥ amellal | argaz</annotation>
+		<annotation cp="👨‍🦳" type="tts">argaz: acekkuḥ amellal</annotation>
+		<annotation cp="👨🏻‍🦳">acekkuḥ amellal | argaz | taglimt taceɛlalt</annotation>
+		<annotation cp="👨🏻‍🦳" type="tts">argaz: taglimt taceɛlalt, acekkuḥ amellal</annotation>
+		<annotation cp="👨🏼‍🦳">acekkuḥ amellal | argaz | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👨🏼‍🦳" type="tts">argaz: tagwlimt taceɛlalt talemmast, acekkuḥ amellal</annotation>
+		<annotation cp="👨🏽‍🦳">acekkuḥ amellal | argaz | taglimt talemmast</annotation>
+		<annotation cp="👨🏽‍🦳" type="tts">argaz: taglimt talemmast, acekkuḥ amellal</annotation>
+		<annotation cp="👨🏾‍🦳">acekkuḥ amellal | argaz | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👨🏾‍🦳" type="tts">argaz: tagwlimt tubrikt talemmast, acekkuḥ amellal</annotation>
+		<annotation cp="👨🏿‍🦳">acekkuḥ amellal | argaz | tagwlimt tubrikt</annotation>
+		<annotation cp="👨🏿‍🦳" type="tts">argaz: tagwlimt tubrikt, acekkuḥ amellal</annotation>
+		<annotation cp="👨‍🦲">aferḍas | argaz</annotation>
+		<annotation cp="👨‍🦲" type="tts">argaz: aferḍas</annotation>
+		<annotation cp="👨🏻‍🦲">aferḍas | argaz | taglimt taceɛlalt</annotation>
+		<annotation cp="👨🏻‍🦲" type="tts">argaz: taglimt taceɛlalt, aferḍas</annotation>
+		<annotation cp="👨🏼‍🦲">aferḍas | argaz | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👨🏼‍🦲" type="tts">argaz: tagwlimt taceɛlalt talemmast, aferḍas</annotation>
+		<annotation cp="👨🏽‍🦲">aferḍas | argaz | taglimt talemmast</annotation>
+		<annotation cp="👨🏽‍🦲" type="tts">argaz: taglimt talemmast, aferḍas</annotation>
+		<annotation cp="👨🏾‍🦲">aferḍas | argaz | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👨🏾‍🦲" type="tts">argaz: tagwlimt tubrikt talemmast, aferḍas</annotation>
+		<annotation cp="👨🏿‍🦲">aferḍas | argaz | tagwlimt tubrikt</annotation>
+		<annotation cp="👨🏿‍🦲" type="tts">argaz: tagwlimt tubrikt, aferḍas</annotation>
+		<annotation cp="👩🏻">taglimt taceɛlalt | tameṭṭut</annotation>
+		<annotation cp="👩🏻" type="tts">tameṭṭut: taglimt taceɛlalt</annotation>
+		<annotation cp="👩🏼">tagwlimt taceɛlalt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏼" type="tts">tameṭṭut: tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👩🏽">taglimt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏽" type="tts">tameṭṭut: taglimt talemmast</annotation>
+		<annotation cp="👩🏾">tagwlimt tubrikt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏾" type="tts">tameṭṭut: tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👩🏿">tagwlimt tubrikt | tameṭṭut</annotation>
+		<annotation cp="👩🏿" type="tts">tameṭṭut: tagwlimt tubrikt</annotation>
+		<annotation cp="👩‍🦰">acekkuḥ azeggaɣ | tameṭṭut</annotation>
+		<annotation cp="👩‍🦰" type="tts">tameṭṭut: acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👩🏻‍🦰">acekkuḥ azeggaɣ | taglimt taceɛlalt | tameṭṭut</annotation>
+		<annotation cp="👩🏻‍🦰" type="tts">tameṭṭut: taglimt taceɛlalt, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👩🏼‍🦰">acekkuḥ azeggaɣ | tagwlimt taceɛlalt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏼‍🦰" type="tts">tameṭṭut: tagwlimt taceɛlalt talemmast, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👩🏽‍🦰">acekkuḥ azeggaɣ | taglimt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏽‍🦰" type="tts">tameṭṭut: taglimt talemmast, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👩🏾‍🦰">acekkuḥ azeggaɣ | tagwlimt tubrikt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏾‍🦰" type="tts">tameṭṭut: tagwlimt tubrikt talemmast, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👩🏿‍🦰">acekkuḥ azeggaɣ | tagwlimt tubrikt | tameṭṭut</annotation>
+		<annotation cp="👩🏿‍🦰" type="tts">tameṭṭut: tagwlimt tubrikt, acekkuḥ azeggaɣ</annotation>
+		<annotation cp="👩‍🦱">acekkuḥ imdewweṛ | tameṭṭut</annotation>
+		<annotation cp="👩‍🦱" type="tts">tameṭṭut: acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👩🏻‍🦱">acekkuḥ imdewweṛ | taglimt taceɛlalt | tameṭṭut</annotation>
+		<annotation cp="👩🏻‍🦱" type="tts">tameṭṭut: taglimt taceɛlalt, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👩🏼‍🦱">acekkuḥ imdewweṛ | tagwlimt taceɛlalt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏼‍🦱" type="tts">tameṭṭut: tagwlimt taceɛlalt talemmast, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👩🏽‍🦱">acekkuḥ imdewweṛ | taglimt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏽‍🦱" type="tts">tameṭṭut: taglimt talemmast, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👩🏾‍🦱">acekkuḥ imdewweṛ | tagwlimt tubrikt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏾‍🦱" type="tts">tameṭṭut: tagwlimt tubrikt talemmast, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👩🏿‍🦱">acekkuḥ imdewweṛ | tagwlimt tubrikt | tameṭṭut</annotation>
+		<annotation cp="👩🏿‍🦱" type="tts">tameṭṭut: tagwlimt tubrikt, acekkuḥ imdewweṛ</annotation>
+		<annotation cp="👩‍🦳">acekkuḥ amellal | tameṭṭut</annotation>
+		<annotation cp="👩‍🦳" type="tts">tameṭṭut: acekkuḥ amellal</annotation>
+		<annotation cp="👩🏻‍🦳">acekkuḥ amellal | taglimt taceɛlalt | tameṭṭut</annotation>
+		<annotation cp="👩🏻‍🦳" type="tts">tameṭṭut: taglimt taceɛlalt, acekkuḥ amellal</annotation>
+		<annotation cp="👩🏼‍🦳">acekkuḥ amellal | tagwlimt taceɛlalt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏼‍🦳" type="tts">tameṭṭut: tagwlimt taceɛlalt talemmast, acekkuḥ amellal</annotation>
+		<annotation cp="👩🏽‍🦳">acekkuḥ amellal | taglimt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏽‍🦳" type="tts">tameṭṭut: taglimt talemmast, acekkuḥ amellal</annotation>
+		<annotation cp="👩🏾‍🦳">acekkuḥ amellal | tagwlimt tubrikt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏾‍🦳" type="tts">tameṭṭut: tagwlimt tubrikt talemmast, acekkuḥ amellal</annotation>
+		<annotation cp="👩🏿‍🦳">acekkuḥ amellal | tagwlimt tubrikt | tameṭṭut</annotation>
+		<annotation cp="👩🏿‍🦳" type="tts">tameṭṭut: tagwlimt tubrikt, acekkuḥ amellal</annotation>
+		<annotation cp="👩‍🦲">aferḍas | tameṭṭut</annotation>
+		<annotation cp="👩‍🦲" type="tts">tameṭṭut: aferḍas</annotation>
+		<annotation cp="👩🏻‍🦲">aferḍas | taglimt taceɛlalt | tameṭṭut</annotation>
+		<annotation cp="👩🏻‍🦲" type="tts">tameṭṭut: taglimt taceɛlalt, aferḍas</annotation>
+		<annotation cp="👩🏼‍🦲">aferḍas | tagwlimt taceɛlalt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏼‍🦲" type="tts">tameṭṭut: tagwlimt taceɛlalt talemmast, aferḍas</annotation>
+		<annotation cp="👩🏽‍🦲">aferḍas | taglimt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏽‍🦲" type="tts">tameṭṭut: taglimt talemmast, aferḍas</annotation>
+		<annotation cp="👩🏾‍🦲">aferḍas | tagwlimt tubrikt talemmast | tameṭṭut</annotation>
+		<annotation cp="👩🏾‍🦲" type="tts">tameṭṭut: tagwlimt tubrikt talemmast, aferḍas</annotation>
+		<annotation cp="👩🏿‍🦲">aferḍas | tagwlimt tubrikt | tameṭṭut</annotation>
+		<annotation cp="👩🏿‍🦲" type="tts">tameṭṭut: tagwlimt tubrikt, aferḍas</annotation>
+		<annotation cp="🧓🏻">amengaḍ meqqren | taglimt taceɛlalt</annotation>
+		<annotation cp="🧓🏻" type="tts">amengaḍ meqqren: taglimt taceɛlalt</annotation>
+		<annotation cp="🧓🏼">amengaḍ meqqren | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🧓🏼" type="tts">amengaḍ meqqren: tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🧓🏽">amengaḍ meqqren | taglimt talemmast</annotation>
+		<annotation cp="🧓🏽" type="tts">amengaḍ meqqren: taglimt talemmast</annotation>
+		<annotation cp="🧓🏾">amengaḍ meqqren | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🧓🏾" type="tts">amengaḍ meqqren: tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🧓🏿">amengaḍ meqqren | tagwlimt tubrikt</annotation>
+		<annotation cp="🧓🏿" type="tts">amengaḍ meqqren: tagwlimt tubrikt</annotation>
+		<annotation cp="👴🏻">amɣaṛ | taglimt taceɛlalt</annotation>
+		<annotation cp="👴🏻" type="tts">amɣaṛ: taglimt taceɛlalt</annotation>
+		<annotation cp="👴🏼">amɣaṛ | tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👴🏼" type="tts">amɣaṛ: tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="👴🏽">amɣaṛ | taglimt talemmast</annotation>
+		<annotation cp="👴🏽" type="tts">amɣaṛ: taglimt talemmast</annotation>
+		<annotation cp="👴🏾">amɣaṛ | tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👴🏾" type="tts">amɣaṛ: tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="👴🏿">amɣaṛ | tagwlimt tubrikt</annotation>
+		<annotation cp="👴🏿" type="tts">amɣaṛ: tagwlimt tubrikt</annotation>
+		<annotation cp="#⃣">keycap</annotation>
+		<annotation cp="#⃣" type="tts">keycap: #</annotation>
+		<annotation cp="*⃣">keycap</annotation>
+		<annotation cp="*⃣" type="tts">keycap: *</annotation>
+		<annotation cp="🔟">keycap</annotation>
+		<annotation cp="🔟" type="tts">keycap: 10</annotation>
+		<annotation cp="🇦🇨">anay</annotation>
+		<annotation cp="🇦🇨" type="tts">anay: Tigzirt n Aṣunsyun</annotation>
+		<annotation cp="🇦🇩">anay</annotation>
+		<annotation cp="🇦🇩" type="tts">anay: Undura</annotation>
+		<annotation cp="🇦🇪">anay</annotation>
+		<annotation cp="🇦🇪" type="tts">anay: Tigeldunin Yedduklen Taɛrabin</annotation>
+		<annotation cp="🇦🇫">anay</annotation>
+		<annotation cp="🇦🇫" type="tts">anay: Afɣanistan</annotation>
+		<annotation cp="🇦🇬">anay</annotation>
+		<annotation cp="🇦🇬" type="tts">anay: Untiga d Barbuda</annotation>
+		<annotation cp="🇦🇮">anay</annotation>
+		<annotation cp="🇦🇮" type="tts">anay: Ungiya</annotation>
+		<annotation cp="🇦🇱">anay</annotation>
+		<annotation cp="🇦🇱" type="tts">anay: Lalbani</annotation>
+		<annotation cp="🇦🇲">anay</annotation>
+		<annotation cp="🇦🇲" type="tts">anay: Arminya</annotation>
+		<annotation cp="🇦🇴">anay</annotation>
+		<annotation cp="🇦🇴" type="tts">anay: Ungula</annotation>
+		<annotation cp="🇦🇶">anay</annotation>
+		<annotation cp="🇦🇶" type="tts">anay: Anṭarktik</annotation>
+		<annotation cp="🇦🇷">anay</annotation>
+		<annotation cp="🇦🇷" type="tts">anay: Arjuntin</annotation>
+		<annotation cp="🇦🇸">anay</annotation>
+		<annotation cp="🇦🇸" type="tts">anay: Samwa Tamarikanit</annotation>
+		<annotation cp="🇦🇹">anay</annotation>
+		<annotation cp="🇦🇹" type="tts">anay: Ustriya</annotation>
+		<annotation cp="🇦🇺">anay</annotation>
+		<annotation cp="🇦🇺" type="tts">anay: Ustrali</annotation>
+		<annotation cp="🇦🇼">anay</annotation>
+		<annotation cp="🇦🇼" type="tts">anay: Aruba</annotation>
+		<annotation cp="🇦🇽">anay</annotation>
+		<annotation cp="🇦🇽" type="tts">anay: Tigzirin n Aland</annotation>
+		<annotation cp="🇦🇿">anay</annotation>
+		<annotation cp="🇦🇿" type="tts">anay: Azrabijan</annotation>
+		<annotation cp="🇧🇦">anay</annotation>
+		<annotation cp="🇧🇦" type="tts">anay: Busna d Hersek</annotation>
+		<annotation cp="🇧🇧">anay</annotation>
+		<annotation cp="🇧🇧" type="tts">anay: Barbadus</annotation>
+		<annotation cp="🇧🇩">anay</annotation>
+		<annotation cp="🇧🇩" type="tts">anay: Bangladac</annotation>
+		<annotation cp="🇧🇪">anay</annotation>
+		<annotation cp="🇧🇪" type="tts">anay: Belǧik</annotation>
+		<annotation cp="🇧🇫">anay</annotation>
+		<annotation cp="🇧🇫" type="tts">anay: Burkina Fasu</annotation>
+		<annotation cp="🇧🇬">anay</annotation>
+		<annotation cp="🇧🇬" type="tts">anay: Bulgari</annotation>
+		<annotation cp="🇧🇭">anay</annotation>
+		<annotation cp="🇧🇭" type="tts">anay: Baḥrin</annotation>
+		<annotation cp="🇧🇮">anay</annotation>
+		<annotation cp="🇧🇮" type="tts">anay: Burandi</annotation>
+		<annotation cp="🇧🇯">anay</annotation>
+		<annotation cp="🇧🇯" type="tts">anay: Binin</annotation>
+		<annotation cp="🇧🇱">anay</annotation>
+		<annotation cp="🇧🇱" type="tts">anay: Sant Baṛtilimi</annotation>
+		<annotation cp="🇧🇲">anay</annotation>
+		<annotation cp="🇧🇲" type="tts">anay: Bermuda</annotation>
+		<annotation cp="🇧🇳">anay</annotation>
+		<annotation cp="🇧🇳" type="tts">anay: Bruney</annotation>
+		<annotation cp="🇧🇴">anay</annotation>
+		<annotation cp="🇧🇴" type="tts">anay: Bulivi</annotation>
+		<annotation cp="🇧🇶">anay</annotation>
+		<annotation cp="🇧🇶" type="tts">anay: Huland n Kaṛayib</annotation>
+		<annotation cp="🇧🇷">anay</annotation>
+		<annotation cp="🇧🇷" type="tts">anay: Brizil</annotation>
+		<annotation cp="🇧🇸">anay</annotation>
+		<annotation cp="🇧🇸" type="tts">anay: Bahamas</annotation>
+		<annotation cp="🇧🇹">anay</annotation>
+		<annotation cp="🇧🇹" type="tts">anay: Bhutan</annotation>
+		<annotation cp="🇧🇻">anay</annotation>
+		<annotation cp="🇧🇻" type="tts">anay: Tigzirin n Buvet</annotation>
+		<annotation cp="🇧🇼">anay</annotation>
+		<annotation cp="🇧🇼" type="tts">anay: Bustwana</annotation>
+		<annotation cp="🇧🇾">anay</annotation>
+		<annotation cp="🇧🇾" type="tts">anay: Bilarus</annotation>
+		<annotation cp="🇧🇿">anay</annotation>
+		<annotation cp="🇧🇿" type="tts">anay: Biliz</annotation>
+		<annotation cp="🇨🇦">anay</annotation>
+		<annotation cp="🇨🇦" type="tts">anay: Kanada</annotation>
+		<annotation cp="🇨🇨">anay</annotation>
+		<annotation cp="🇨🇨" type="tts">anay: Tigzirin n Kukus</annotation>
+		<annotation cp="🇨🇩">anay</annotation>
+		<annotation cp="🇨🇩" type="tts">anay: Tigduda Tagdudant n Kungu</annotation>
+		<annotation cp="🇨🇫">anay</annotation>
+		<annotation cp="🇨🇫" type="tts">anay: Tigduda n Tefriqt Talemmast</annotation>
+		<annotation cp="🇨🇬">anay</annotation>
+		<annotation cp="🇨🇬" type="tts">anay: Kungu</annotation>
+		<annotation cp="🇨🇭">anay</annotation>
+		<annotation cp="🇨🇭" type="tts">anay: Swis</annotation>
+		<annotation cp="🇨🇮">anay</annotation>
+		<annotation cp="🇨🇮" type="tts">anay: Kuṭ Divwar</annotation>
+		<annotation cp="🇨🇰">anay</annotation>
+		<annotation cp="🇨🇰" type="tts">anay: Tigzirin n Kuk</annotation>
+		<annotation cp="🇨🇱">anay</annotation>
+		<annotation cp="🇨🇱" type="tts">anay: Cili</annotation>
+		<annotation cp="🇨🇲">anay</annotation>
+		<annotation cp="🇨🇲" type="tts">anay: Kamirun</annotation>
+		<annotation cp="🇨🇳">anay</annotation>
+		<annotation cp="🇨🇳" type="tts">anay: Lacin</annotation>
+		<annotation cp="🇨🇴">anay</annotation>
+		<annotation cp="🇨🇴" type="tts">anay: Kulumbi</annotation>
+		<annotation cp="🇨🇵">anay</annotation>
+		<annotation cp="🇨🇵" type="tts">anay: Tigzirt n Klipirṭun</annotation>
+		<annotation cp="🇨🇷">anay</annotation>
+		<annotation cp="🇨🇷" type="tts">anay: Kusta Rika</annotation>
+		<annotation cp="🇨🇺">anay</annotation>
+		<annotation cp="🇨🇺" type="tts">anay: Kuba</annotation>
+		<annotation cp="🇨🇻">anay</annotation>
+		<annotation cp="🇨🇻" type="tts">anay: Tigzirin n yixef azegzaw</annotation>
+		<annotation cp="🇨🇼">anay</annotation>
+		<annotation cp="🇨🇼" type="tts">anay: Kurasaw</annotation>
+		<annotation cp="🇨🇽">anay</annotation>
+		<annotation cp="🇨🇽" type="tts">anay: Tigzrin n Kristmaṣ</annotation>
+		<annotation cp="🇨🇾">anay</annotation>
+		<annotation cp="🇨🇾" type="tts">anay: Cipr</annotation>
+		<annotation cp="🇨🇿">anay</annotation>
+		<annotation cp="🇨🇿" type="tts">anay: Čček</annotation>
+		<annotation cp="🇩🇪">anay</annotation>
+		<annotation cp="🇩🇪" type="tts">anay: Lalman</annotation>
+		<annotation cp="🇩🇬">anay</annotation>
+		<annotation cp="🇩🇬" type="tts">anay: Dyigu Garsiya</annotation>
+		<annotation cp="🇩🇯">anay</annotation>
+		<annotation cp="🇩🇯" type="tts">anay: Ǧibuti</annotation>
+		<annotation cp="🇩🇰">anay</annotation>
+		<annotation cp="🇩🇰" type="tts">anay: Denmark</annotation>
+		<annotation cp="🇩🇲">anay</annotation>
+		<annotation cp="🇩🇲" type="tts">anay: Duminik</annotation>
+		<annotation cp="🇩🇴">anay</annotation>
+		<annotation cp="🇩🇴" type="tts">anay: Tigduda Taduminikit</annotation>
+		<annotation cp="🇩🇿">anay</annotation>
+		<annotation cp="🇩🇿" type="tts">anay: Lezzayer</annotation>
+		<annotation cp="🇪🇦">anay</annotation>
+		<annotation cp="🇪🇦" type="tts">anay: Sebta d Melilla</annotation>
+		<annotation cp="🇪🇨">anay</annotation>
+		<annotation cp="🇪🇨" type="tts">anay: Ikwaṭur</annotation>
+		<annotation cp="🇪🇪">anay</annotation>
+		<annotation cp="🇪🇪" type="tts">anay: Istunya</annotation>
+		<annotation cp="🇪🇬">anay</annotation>
+		<annotation cp="🇪🇬" type="tts">anay: Maṣr</annotation>
+		<annotation cp="🇪🇭">anay</annotation>
+		<annotation cp="🇪🇭" type="tts">anay: Seḥra n umalu</annotation>
+		<annotation cp="🇪🇷">anay</annotation>
+		<annotation cp="🇪🇷" type="tts">anay: Iritiria</annotation>
+		<annotation cp="🇪🇸">anay</annotation>
+		<annotation cp="🇪🇸" type="tts">anay: Spanya</annotation>
+		<annotation cp="🇪🇹">anay</annotation>
+		<annotation cp="🇪🇹" type="tts">anay: Utyupi</annotation>
+		<annotation cp="🇪🇺">anay</annotation>
+		<annotation cp="🇪🇺" type="tts">anay: Tiddukla n Turuft</annotation>
+		<annotation cp="🇫🇮">anay</annotation>
+		<annotation cp="🇫🇮" type="tts">anay: Finlund</annotation>
+		<annotation cp="🇫🇯">anay</annotation>
+		<annotation cp="🇫🇯" type="tts">anay: Fiji</annotation>
+		<annotation cp="🇫🇰">anay</annotation>
+		<annotation cp="🇫🇰" type="tts">anay: Tigzirin n Falkland</annotation>
+		<annotation cp="🇫🇲">anay</annotation>
+		<annotation cp="🇫🇲" type="tts">anay: Mikrunizya</annotation>
+		<annotation cp="🇫🇴">anay</annotation>
+		<annotation cp="🇫🇴" type="tts">anay: Tigzirin n Faṛwi</annotation>
+		<annotation cp="🇫🇷">anay</annotation>
+		<annotation cp="🇫🇷" type="tts">anay: Fransa</annotation>
+		<annotation cp="🇬🇦">anay</annotation>
+		<annotation cp="🇬🇦" type="tts">anay: Gabun</annotation>
+		<annotation cp="🇬🇧">anay</annotation>
+		<annotation cp="🇬🇧" type="tts">anay: Tagelda Yedduklen</annotation>
+		<annotation cp="🇬🇩">anay</annotation>
+		<annotation cp="🇬🇩" type="tts">anay: Grunad</annotation>
+		<annotation cp="🇬🇪">anay</annotation>
+		<annotation cp="🇬🇪" type="tts">anay: Jiyurji</annotation>
+		<annotation cp="🇬🇫">anay</annotation>
+		<annotation cp="🇬🇫" type="tts">anay: Ɣana tafransist</annotation>
+		<annotation cp="🇬🇬">anay</annotation>
+		<annotation cp="🇬🇬" type="tts">anay: Girnizi</annotation>
+		<annotation cp="🇬🇭">anay</annotation>
+		<annotation cp="🇬🇭" type="tts">anay: Ɣana</annotation>
+		<annotation cp="🇬🇮">anay</annotation>
+		<annotation cp="🇬🇮" type="tts">anay: Jibraltar</annotation>
+		<annotation cp="🇬🇱">anay</annotation>
+		<annotation cp="🇬🇱" type="tts">anay: Grunland</annotation>
+		<annotation cp="🇬🇲">anay</annotation>
+		<annotation cp="🇬🇲" type="tts">anay: Gambya</annotation>
+		<annotation cp="🇬🇳">anay</annotation>
+		<annotation cp="🇬🇳" type="tts">anay: Ɣinya</annotation>
+		<annotation cp="🇬🇵">anay</annotation>
+		<annotation cp="🇬🇵" type="tts">anay: Gwadalupi</annotation>
+		<annotation cp="🇬🇶">anay</annotation>
+		<annotation cp="🇬🇶" type="tts">anay: Ɣinya Tasebgast</annotation>
+		<annotation cp="🇬🇷">anay</annotation>
+		<annotation cp="🇬🇷" type="tts">anay: Lagris</annotation>
+		<annotation cp="🇬🇸">anay</annotation>
+		<annotation cp="🇬🇸" type="tts">anay: Tigzirin n Jyuṛjya n Unẓul akked Sandwič n Unẓul</annotation>
+		<annotation cp="🇬🇹">anay</annotation>
+		<annotation cp="🇬🇹" type="tts">anay: Gwatimala</annotation>
+		<annotation cp="🇬🇺">anay</annotation>
+		<annotation cp="🇬🇺" type="tts">anay: Gwam</annotation>
+		<annotation cp="🇬🇼">anay</annotation>
+		<annotation cp="🇬🇼" type="tts">anay: Ɣinya-Bisaw</annotation>
+		<annotation cp="🇬🇾">anay</annotation>
+		<annotation cp="🇬🇾" type="tts">anay: Guwana</annotation>
+		<annotation cp="🇭🇰">anay</annotation>
+		<annotation cp="🇭🇰" type="tts">anay: Tamnaṭ Taqbuṛt Tacinwat n Hung Kung</annotation>
+		<annotation cp="🇭🇲">anay</annotation>
+		<annotation cp="🇭🇲" type="tts">anay: Tigzirin n Hird d Makdunalt</annotation>
+		<annotation cp="🇭🇳">anay</annotation>
+		<annotation cp="🇭🇳" type="tts">anay: Hunduras</annotation>
+		<annotation cp="🇭🇷">anay</annotation>
+		<annotation cp="🇭🇷" type="tts">anay: Kerwasya</annotation>
+		<annotation cp="🇭🇹">anay</annotation>
+		<annotation cp="🇭🇹" type="tts">anay: Hayti</annotation>
+		<annotation cp="🇭🇺">anay</annotation>
+		<annotation cp="🇭🇺" type="tts">anay: Hungri</annotation>
+		<annotation cp="🇮🇨">anay</annotation>
+		<annotation cp="🇮🇨" type="tts">anay: Tigzirin Tikanaṛiyin</annotation>
+		<annotation cp="🇮🇩">anay</annotation>
+		<annotation cp="🇮🇩" type="tts">anay: Indunizi</annotation>
+		<annotation cp="🇮🇪">anay</annotation>
+		<annotation cp="🇮🇪" type="tts">anay: Lirlund</annotation>
+		<annotation cp="🇮🇱">anay</annotation>
+		<annotation cp="🇮🇱" type="tts">anay: Izrayil</annotation>
+		<annotation cp="🇮🇲">anay</annotation>
+		<annotation cp="🇮🇲" type="tts">anay: Tigzirt n Man</annotation>
+		<annotation cp="🇮🇳">anay</annotation>
+		<annotation cp="🇮🇳" type="tts">anay: Lhend</annotation>
+		<annotation cp="🇮🇴">anay</annotation>
+		<annotation cp="🇮🇴" type="tts">anay: Akal Aglizi deg Ugaraw Ahendi</annotation>
+		<annotation cp="🇮🇶">anay</annotation>
+		<annotation cp="🇮🇶" type="tts">anay: Lɛiraq</annotation>
+		<annotation cp="🇮🇷">anay</annotation>
+		<annotation cp="🇮🇷" type="tts">anay: Iran</annotation>
+		<annotation cp="🇮🇸">anay</annotation>
+		<annotation cp="🇮🇸" type="tts">anay: Island</annotation>
+		<annotation cp="🇮🇹">anay</annotation>
+		<annotation cp="🇮🇹" type="tts">anay: Ṭelyan</annotation>
+		<annotation cp="🇯🇪">anay</annotation>
+		<annotation cp="🇯🇪" type="tts">anay: Jirzi</annotation>
+		<annotation cp="🇯🇲">anay</annotation>
+		<annotation cp="🇯🇲" type="tts">anay: Jamyika</annotation>
+		<annotation cp="🇯🇴">anay</annotation>
+		<annotation cp="🇯🇴" type="tts">anay: Lajurdani</annotation>
+		<annotation cp="🇯🇵">anay</annotation>
+		<annotation cp="🇯🇵" type="tts">anay: Jappu</annotation>
+		<annotation cp="🇰🇪">anay</annotation>
+		<annotation cp="🇰🇪" type="tts">anay: Kinya</annotation>
+		<annotation cp="🇰🇬">anay</annotation>
+		<annotation cp="🇰🇬" type="tts">anay: Kirigistan</annotation>
+		<annotation cp="🇰🇭">anay</annotation>
+		<annotation cp="🇰🇭" type="tts">anay: Cambudya</annotation>
+		<annotation cp="🇰🇮">anay</annotation>
+		<annotation cp="🇰🇮" type="tts">anay: Kiribati</annotation>
+		<annotation cp="🇰🇲">anay</annotation>
+		<annotation cp="🇰🇲" type="tts">anay: Kumur</annotation>
+		<annotation cp="🇰🇳">anay</annotation>
+		<annotation cp="🇰🇳" type="tts">anay: San Kits d Nivis</annotation>
+		<annotation cp="🇰🇵">anay</annotation>
+		<annotation cp="🇰🇵" type="tts">anay: Kurya, Ufella</annotation>
+		<annotation cp="🇰🇷">anay</annotation>
+		<annotation cp="🇰🇷" type="tts">anay: Kurya, Wadda</annotation>
+		<annotation cp="🇰🇼">anay</annotation>
+		<annotation cp="🇰🇼" type="tts">anay: Kuwayt</annotation>
+		<annotation cp="🇰🇾">anay</annotation>
+		<annotation cp="🇰🇾" type="tts">anay: Tigzirin n Kamyan</annotation>
+		<annotation cp="🇰🇿">anay</annotation>
+		<annotation cp="🇰🇿" type="tts">anay: Kazaxistan</annotation>
+		<annotation cp="🇱🇦">anay</annotation>
+		<annotation cp="🇱🇦" type="tts">anay: Laws</annotation>
+		<annotation cp="🇱🇧">anay</annotation>
+		<annotation cp="🇱🇧" type="tts">anay: Lubnan</annotation>
+		<annotation cp="🇱🇨">anay</annotation>
+		<annotation cp="🇱🇨" type="tts">anay: San Lučya</annotation>
+		<annotation cp="🇱🇮">anay</annotation>
+		<annotation cp="🇱🇮" type="tts">anay: Layctenstan</annotation>
+		<annotation cp="🇱🇰">anay</annotation>
+		<annotation cp="🇱🇰" type="tts">anay: Sri Lanka</annotation>
+		<annotation cp="🇱🇷">anay</annotation>
+		<annotation cp="🇱🇷" type="tts">anay: Libirya</annotation>
+		<annotation cp="🇱🇸">anay</annotation>
+		<annotation cp="🇱🇸" type="tts">anay: Lizuṭu</annotation>
+		<annotation cp="🇱🇹">anay</annotation>
+		<annotation cp="🇱🇹" type="tts">anay: Liṭwanya</annotation>
+		<annotation cp="🇱🇺">anay</annotation>
+		<annotation cp="🇱🇺" type="tts">anay: Luksamburg</annotation>
+		<annotation cp="🇱🇻">anay</annotation>
+		<annotation cp="🇱🇻" type="tts">anay: Latvia</annotation>
+		<annotation cp="🇱🇾">anay</annotation>
+		<annotation cp="🇱🇾" type="tts">anay: Libya</annotation>
+		<annotation cp="🇲🇦">anay</annotation>
+		<annotation cp="🇲🇦" type="tts">anay: Lmerruk</annotation>
+		<annotation cp="🇲🇨">anay</annotation>
+		<annotation cp="🇲🇨" type="tts">anay: Munaku</annotation>
+		<annotation cp="🇲🇩">anay</annotation>
+		<annotation cp="🇲🇩" type="tts">anay: Muldabi</annotation>
+		<annotation cp="🇲🇪">anay</annotation>
+		<annotation cp="🇲🇪" type="tts">anay: Muntinigru</annotation>
+		<annotation cp="🇲🇫">anay</annotation>
+		<annotation cp="🇲🇫" type="tts">anay: San Maṛtan</annotation>
+		<annotation cp="🇲🇬">anay</annotation>
+		<annotation cp="🇲🇬" type="tts">anay: Madaɣecqer</annotation>
+		<annotation cp="🇲🇭">anay</annotation>
+		<annotation cp="🇲🇭" type="tts">anay: Tigzirin n Marcal</annotation>
+		<annotation cp="🇲🇰">anay</annotation>
+		<annotation cp="🇲🇰" type="tts">anay: Masidunya n ugafa</annotation>
+		<annotation cp="🇲🇱">anay</annotation>
+		<annotation cp="🇲🇱" type="tts">anay: Mali</annotation>
+		<annotation cp="🇲🇲">anay</annotation>
+		<annotation cp="🇲🇲" type="tts">anay: Myanmar</annotation>
+		<annotation cp="🇲🇳">anay</annotation>
+		<annotation cp="🇲🇳" type="tts">anay: Mungulya</annotation>
+		<annotation cp="🇲🇴">anay</annotation>
+		<annotation cp="🇲🇴" type="tts">anay: Tamnaḍt tudbilt tuzzigt tacinwat n Makaw</annotation>
+		<annotation cp="🇲🇵">anay</annotation>
+		<annotation cp="🇲🇵" type="tts">anay: Tigzirin n Maryan Ufella</annotation>
+		<annotation cp="🇲🇶">anay</annotation>
+		<annotation cp="🇲🇶" type="tts">anay: Martinik</annotation>
+		<annotation cp="🇲🇷">anay</annotation>
+		<annotation cp="🇲🇷" type="tts">anay: Muriṭanya</annotation>
+		<annotation cp="🇲🇸">anay</annotation>
+		<annotation cp="🇲🇸" type="tts">anay: Munsirat</annotation>
+		<annotation cp="🇲🇹">anay</annotation>
+		<annotation cp="🇲🇹" type="tts">anay: Malṭ</annotation>
+		<annotation cp="🇲🇺">anay</annotation>
+		<annotation cp="🇲🇺" type="tts">anay: Muris</annotation>
+		<annotation cp="🇲🇻">anay</annotation>
+		<annotation cp="🇲🇻" type="tts">anay: Maldib</annotation>
+		<annotation cp="🇲🇼">anay</annotation>
+		<annotation cp="🇲🇼" type="tts">anay: Malawi</annotation>
+		<annotation cp="🇲🇽">anay</annotation>
+		<annotation cp="🇲🇽" type="tts">anay: Meksik</annotation>
+		<annotation cp="🇲🇾">anay</annotation>
+		<annotation cp="🇲🇾" type="tts">anay: Malizya</annotation>
+		<annotation cp="🇲🇿">anay</annotation>
+		<annotation cp="🇲🇿" type="tts">anay: Muzembiq</annotation>
+		<annotation cp="🇳🇦">anay</annotation>
+		<annotation cp="🇳🇦" type="tts">anay: Namibya</annotation>
+		<annotation cp="🇳🇨">anay</annotation>
+		<annotation cp="🇳🇨" type="tts">anay: Kalidunya Tamaynut</annotation>
+		<annotation cp="🇳🇪">anay</annotation>
+		<annotation cp="🇳🇪" type="tts">anay: Nijer</annotation>
+		<annotation cp="🇳🇫">anay</annotation>
+		<annotation cp="🇳🇫" type="tts">anay: Tigzirin Tinawfukin</annotation>
+		<annotation cp="🇳🇬">anay</annotation>
+		<annotation cp="🇳🇬" type="tts">anay: Nijirya</annotation>
+		<annotation cp="🇳🇮">anay</annotation>
+		<annotation cp="🇳🇮" type="tts">anay: Nikaragwa</annotation>
+		<annotation cp="🇳🇱">anay</annotation>
+		<annotation cp="🇳🇱" type="tts">anay: Timura-Yessakesren</annotation>
+		<annotation cp="🇳🇴">anay</annotation>
+		<annotation cp="🇳🇴" type="tts">anay: Nurvij</annotation>
+		<annotation cp="🇳🇵">anay</annotation>
+		<annotation cp="🇳🇵" type="tts">anay: Nipal</annotation>
+		<annotation cp="🇳🇷">anay</annotation>
+		<annotation cp="🇳🇷" type="tts">anay: Nuru</annotation>
+		<annotation cp="🇳🇺">anay</annotation>
+		<annotation cp="🇳🇺" type="tts">anay: Niwi</annotation>
+		<annotation cp="🇳🇿">anay</annotation>
+		<annotation cp="🇳🇿" type="tts">anay: Ziland Tamaynut</annotation>
+		<annotation cp="🇴🇲">anay</annotation>
+		<annotation cp="🇴🇲" type="tts">anay: Ɛuman</annotation>
+		<annotation cp="🇵🇦">anay</annotation>
+		<annotation cp="🇵🇦" type="tts">anay: Panam</annotation>
+		<annotation cp="🇵🇪">anay</annotation>
+		<annotation cp="🇵🇪" type="tts">anay: Piru</annotation>
+		<annotation cp="🇵🇫">anay</annotation>
+		<annotation cp="🇵🇫" type="tts">anay: Pulunizi tafransist</annotation>
+		<annotation cp="🇵🇬">anay</annotation>
+		<annotation cp="🇵🇬" type="tts">anay: Ɣinya Tamaynut Tapaput</annotation>
+		<annotation cp="🇵🇭">anay</annotation>
+		<annotation cp="🇵🇭" type="tts">anay: Filipin</annotation>
+		<annotation cp="🇵🇰">anay</annotation>
+		<annotation cp="🇵🇰" type="tts">anay: Pakistan</annotation>
+		<annotation cp="🇵🇱">anay</annotation>
+		<annotation cp="🇵🇱" type="tts">anay: Pulund</annotation>
+		<annotation cp="🇵🇲">anay</annotation>
+		<annotation cp="🇵🇲" type="tts">anay: San Pyar d Miklun</annotation>
+		<annotation cp="🇵🇳">anay</annotation>
+		<annotation cp="🇵🇳" type="tts">anay: Pitkarin</annotation>
+		<annotation cp="🇵🇷">anay</annotation>
+		<annotation cp="🇵🇷" type="tts">anay: Purtu Riku</annotation>
+		<annotation cp="🇵🇸">anay</annotation>
+		<annotation cp="🇵🇸" type="tts">anay: Falisṭin d Ɣezza</annotation>
+		<annotation cp="🇵🇹">anay</annotation>
+		<annotation cp="🇵🇹" type="tts">anay: Purtugal</annotation>
+		<annotation cp="🇵🇼">anay</annotation>
+		<annotation cp="🇵🇼" type="tts">anay: Palu</annotation>
+		<annotation cp="🇵🇾">anay</annotation>
+		<annotation cp="🇵🇾" type="tts">anay: Paragway</annotation>
+		<annotation cp="🇶🇦">anay</annotation>
+		<annotation cp="🇶🇦" type="tts">anay: Qaṭar</annotation>
+		<annotation cp="🇷🇪">anay</annotation>
+		<annotation cp="🇷🇪" type="tts">anay: Timlilit</annotation>
+		<annotation cp="🇷🇴">anay</annotation>
+		<annotation cp="🇷🇴" type="tts">anay: Rumani</annotation>
+		<annotation cp="🇷🇸">anay</annotation>
+		<annotation cp="🇷🇸" type="tts">anay: Ṣirbya</annotation>
+		<annotation cp="🇷🇺">anay</annotation>
+		<annotation cp="🇷🇺" type="tts">anay: Rrus</annotation>
+		<annotation cp="🇷🇼">anay</annotation>
+		<annotation cp="🇷🇼" type="tts">anay: Ruwanda</annotation>
+		<annotation cp="🇸🇦">anay</annotation>
+		<annotation cp="🇸🇦" type="tts">anay: Suɛudiya Taɛrabt</annotation>
+		<annotation cp="🇸🇧">anay</annotation>
+		<annotation cp="🇸🇧" type="tts">anay: Tigzirin n Sulumun</annotation>
+		<annotation cp="🇸🇨">anay</annotation>
+		<annotation cp="🇸🇨" type="tts">anay: Seycel</annotation>
+		<annotation cp="🇸🇩">anay</annotation>
+		<annotation cp="🇸🇩" type="tts">anay: Sudan</annotation>
+		<annotation cp="🇸🇪">anay</annotation>
+		<annotation cp="🇸🇪" type="tts">anay: Swid</annotation>
+		<annotation cp="🇸🇬">anay</annotation>
+		<annotation cp="🇸🇬" type="tts">anay: Singafur</annotation>
+		<annotation cp="🇸🇭">anay</annotation>
+		<annotation cp="🇸🇭" type="tts">anay: Sant Ilina</annotation>
+		<annotation cp="🇸🇮">anay</annotation>
+		<annotation cp="🇸🇮" type="tts">anay: Sluvinya</annotation>
+		<annotation cp="🇸🇯">anay</annotation>
+		<annotation cp="🇸🇯" type="tts">anay: Svalvard d Jan Mayen</annotation>
+		<annotation cp="🇸🇰">anay</annotation>
+		<annotation cp="🇸🇰" type="tts">anay: Sluvakya</annotation>
+		<annotation cp="🇸🇱">anay</annotation>
+		<annotation cp="🇸🇱" type="tts">anay: Sira Lyun</annotation>
+		<annotation cp="🇸🇲">anay</annotation>
+		<annotation cp="🇸🇲" type="tts">anay: San Marinu</annotation>
+		<annotation cp="🇸🇳">anay</annotation>
+		<annotation cp="🇸🇳" type="tts">anay: Sinigal</annotation>
+		<annotation cp="🇸🇴">anay</annotation>
+		<annotation cp="🇸🇴" type="tts">anay: Ṣumal</annotation>
+		<annotation cp="🇸🇷">anay</annotation>
+		<annotation cp="🇸🇷" type="tts">anay: Surinam</annotation>
+		<annotation cp="🇸🇸">anay</annotation>
+		<annotation cp="🇸🇸" type="tts">anay: Sudan n unẓul</annotation>
+		<annotation cp="🇸🇹">anay</annotation>
+		<annotation cp="🇸🇹" type="tts">anay: Saw Tumi d Pransip</annotation>
+		<annotation cp="🇸🇻">anay</annotation>
+		<annotation cp="🇸🇻" type="tts">anay: Salvadur</annotation>
+		<annotation cp="🇸🇽">anay</annotation>
+		<annotation cp="🇸🇽" type="tts">anay: San Maṛtan(Tamnaḍt tahulandit)</annotation>
+		<annotation cp="🇸🇾">anay</annotation>
+		<annotation cp="🇸🇾" type="tts">anay: Surya</annotation>
+		<annotation cp="🇸🇿">anay</annotation>
+		<annotation cp="🇸🇿" type="tts">anay: Swazilund</annotation>
+		<annotation cp="🇹🇦">anay</annotation>
+		<annotation cp="🇹🇦" type="tts">anay: Tristan da Kunha</annotation>
+		<annotation cp="🇹🇨">anay</annotation>
+		<annotation cp="🇹🇨" type="tts">anay: Ṭurk d Tegzirin n Kaykus</annotation>
+		<annotation cp="🇹🇩">anay</annotation>
+		<annotation cp="🇹🇩" type="tts">anay: Čad</annotation>
+		<annotation cp="🇹🇫">anay</annotation>
+		<annotation cp="🇹🇫" type="tts">anay: Timura tifransisin n unẓul</annotation>
+		<annotation cp="🇹🇬">anay</annotation>
+		<annotation cp="🇹🇬" type="tts">anay: Ṭugu</annotation>
+		<annotation cp="🇹🇭">anay</annotation>
+		<annotation cp="🇹🇭" type="tts">anay: Ṭayland</annotation>
+		<annotation cp="🇹🇯">anay</annotation>
+		<annotation cp="🇹🇯" type="tts">anay: Tajikistan</annotation>
+		<annotation cp="🇹🇰">anay</annotation>
+		<annotation cp="🇹🇰" type="tts">anay: Ṭuklu</annotation>
+		<annotation cp="🇹🇱">anay</annotation>
+		<annotation cp="🇹🇱" type="tts">anay: Tumur Asamar</annotation>
+		<annotation cp="🇹🇲">anay</annotation>
+		<annotation cp="🇹🇲" type="tts">anay: Ṭurkmanistan</annotation>
+		<annotation cp="🇹🇳">anay</annotation>
+		<annotation cp="🇹🇳" type="tts">anay: Tunes</annotation>
+		<annotation cp="🇹🇴">anay</annotation>
+		<annotation cp="🇹🇴" type="tts">anay: Ṭunga</annotation>
+		<annotation cp="🇹🇷">anay</annotation>
+		<annotation cp="🇹🇷" type="tts">anay: Ṭurk</annotation>
+		<annotation cp="🇹🇹">anay</annotation>
+		<annotation cp="🇹🇹" type="tts">anay: Ṭrindad d Ṭubagu</annotation>
+		<annotation cp="🇹🇻">anay</annotation>
+		<annotation cp="🇹🇻" type="tts">anay: Ṭuvalu</annotation>
+		<annotation cp="🇹🇼">anay</annotation>
+		<annotation cp="🇹🇼" type="tts">anay: Ṭaywan</annotation>
+		<annotation cp="🇹🇿">anay</annotation>
+		<annotation cp="🇹🇿" type="tts">anay: Ṭanzanya</annotation>
+		<annotation cp="🇺🇦">anay</annotation>
+		<annotation cp="🇺🇦" type="tts">anay: Ukran</annotation>
+		<annotation cp="🇺🇬">anay</annotation>
+		<annotation cp="🇺🇬" type="tts">anay: Uɣanda</annotation>
+		<annotation cp="🇺🇲">anay</annotation>
+		<annotation cp="🇺🇲" type="tts">anay: Tigzirin ibeɛden n Marikan</annotation>
+		<annotation cp="🇺🇳">anay</annotation>
+		<annotation cp="🇺🇳" type="tts">anay: Timura Idduklen</annotation>
+		<annotation cp="🇺🇸">anay</annotation>
+		<annotation cp="🇺🇸" type="tts">anay: WDM</annotation>
+		<annotation cp="🇺🇾">anay</annotation>
+		<annotation cp="🇺🇾" type="tts">anay: Urugway</annotation>
+		<annotation cp="🇺🇿">anay</annotation>
+		<annotation cp="🇺🇿" type="tts">anay: Uzbaxistan</annotation>
+		<annotation cp="🇻🇦">anay</annotation>
+		<annotation cp="🇻🇦" type="tts">anay: Awanek n Vatikan</annotation>
+		<annotation cp="🇻🇨">anay</annotation>
+		<annotation cp="🇻🇨" type="tts">anay: San Vansu d Grunadin</annotation>
+		<annotation cp="🇻🇪">anay</annotation>
+		<annotation cp="🇻🇪" type="tts">anay: Venzwila</annotation>
+		<annotation cp="🇻🇬">anay</annotation>
+		<annotation cp="🇻🇬" type="tts">anay: Tigzirin Tiverjiniyin Tigliziyin</annotation>
+		<annotation cp="🇻🇮">anay</annotation>
+		<annotation cp="🇻🇮" type="tts">anay: W.D. Tigzirin n Virginya</annotation>
+		<annotation cp="🇻🇳">anay</annotation>
+		<annotation cp="🇻🇳" type="tts">anay: Vyeṭnam</annotation>
+		<annotation cp="🇻🇺">anay</annotation>
+		<annotation cp="🇻🇺" type="tts">anay: Vanwatu</annotation>
+		<annotation cp="🇼🇫">anay</annotation>
+		<annotation cp="🇼🇫" type="tts">anay: Wallis d Futuna</annotation>
+		<annotation cp="🇼🇸">anay</annotation>
+		<annotation cp="🇼🇸" type="tts">anay: Samwa</annotation>
+		<annotation cp="🇽🇰">anay</annotation>
+		<annotation cp="🇽🇰" type="tts">anay: Kuṣuvu</annotation>
+		<annotation cp="🇾🇪">anay</annotation>
+		<annotation cp="🇾🇪" type="tts">anay: Lyamen</annotation>
+		<annotation cp="🇾🇹">anay</annotation>
+		<annotation cp="🇾🇹" type="tts">anay: Mayuṭ</annotation>
+		<annotation cp="🇿🇦">anay</annotation>
+		<annotation cp="🇿🇦" type="tts">anay: Tafriqt Wadda</annotation>
+		<annotation cp="🇿🇲">anay</annotation>
+		<annotation cp="🇿🇲" type="tts">anay: Zambya</annotation>
+		<annotation cp="🇿🇼">anay</annotation>
+		<annotation cp="🇿🇼" type="tts">anay: Zimbabwi</annotation>
+		<annotation cp="¤" type="tts">Tadrimt tarussint neɣ tarameɣtut</annotation>
+		<annotation cp="֏" type="tts">Adram Armini</annotation>
+		<annotation cp="؋" type="tts">Afɣani Afɣan</annotation>
+		<annotation cp="৳" type="tts">Ataka n Bangladec</annotation>
+		<annotation cp="฿" type="tts">Abaht n Tayland</annotation>
+		<annotation cp="៛" type="tts">Ariyil n Kambuj</annotation>
+		<annotation cp="₡" type="tts">Akulun n Kusta Rika</annotation>
+		<annotation cp="₦" type="tts">Anayra Anijiri</annotation>
+		<annotation cp="₧" type="tts">Apisetas n Spanya</annotation>
+		<annotation cp="₪" type="tts">Acikil amaynut n Izrayil</annotation>
+		<annotation cp="₫" type="tts">Adung n Vyitnam</annotation>
+		<annotation cp="₭" type="tts">Akip n Laws</annotation>
+		<annotation cp="₮" type="tts">Atugrik n Mungulya</annotation>
+		<annotation cp="₲" type="tts">Agarani n Paragway</annotation>
+		<annotation cp="₴" type="tts">Ahrivnya n Ukran</annotation>
+		<annotation cp="₵" type="tts">Asidi n Ɣana</annotation>
+		<annotation cp="₸" type="tts">Atunj n Kazaxistan</annotation>
+		<annotation cp="₺" type="tts">Apund n Ṭurk</annotation>
+		<annotation cp="₼" type="tts">Amanat Aziri</annotation>
+		<annotation cp="₾" type="tts">Alari n Jyurjya</annotation>
+		<annotation cp="0⃣">keycap</annotation>
+		<annotation cp="0⃣" type="tts">keycap: 0</annotation>
+		<annotation cp="1⃣">keycap</annotation>
+		<annotation cp="1⃣" type="tts">keycap: 1</annotation>
+		<annotation cp="2⃣">keycap</annotation>
+		<annotation cp="2⃣" type="tts">keycap: 2</annotation>
+		<annotation cp="3⃣">keycap</annotation>
+		<annotation cp="3⃣" type="tts">keycap: 3</annotation>
+		<annotation cp="4⃣">keycap</annotation>
+		<annotation cp="4⃣" type="tts">keycap: 4</annotation>
+		<annotation cp="5⃣">keycap</annotation>
+		<annotation cp="5⃣" type="tts">keycap: 5</annotation>
+		<annotation cp="6⃣">keycap</annotation>
+		<annotation cp="6⃣" type="tts">keycap: 6</annotation>
+		<annotation cp="7⃣">keycap</annotation>
+		<annotation cp="7⃣" type="tts">keycap: 7</annotation>
+		<annotation cp="8⃣">keycap</annotation>
+		<annotation cp="8⃣" type="tts">keycap: 8</annotation>
+		<annotation cp="9⃣">keycap</annotation>
+		<annotation cp="9⃣" type="tts">keycap: 9</annotation>
+	</annotations>
+</ldml>

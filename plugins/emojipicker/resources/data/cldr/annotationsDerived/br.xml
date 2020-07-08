@@ -1,0 +1,632 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<!-- Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file. -->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="br"/>
+	</identity>
+	<annotations>
+		<annotation cp="🧑‍🦰">blev ruz | den deuet</annotation>
+		<annotation cp="🧑‍🦰" type="tts">den deuet : blev ruz</annotation>
+		<annotation cp="🧑‍🦱">blev rodellek | den deuet</annotation>
+		<annotation cp="🧑‍🦱" type="tts">den deuet : blev rodellek</annotation>
+		<annotation cp="🧑‍🦳">blev gwenn | den deuet</annotation>
+		<annotation cp="🧑‍🦳" type="tts">den deuet : blev gwenn</annotation>
+		<annotation cp="🧑‍🦲">den deuet | moal</annotation>
+		<annotation cp="🧑‍🦲" type="tts">den deuet : moal</annotation>
+		<annotation cp="👨‍🦰">blev ruz | deuet | gwaz</annotation>
+		<annotation cp="👨‍🦰" type="tts">gwaz : blev ruz</annotation>
+		<annotation cp="👨‍🦱">blev rodellek | deuet | gwaz</annotation>
+		<annotation cp="👨‍🦱" type="tts">gwaz : blev rodellek</annotation>
+		<annotation cp="👨‍🦳">blev gwenn | deuet | gwaz</annotation>
+		<annotation cp="👨‍🦳" type="tts">gwaz : blev gwenn</annotation>
+		<annotation cp="👨‍🦲">deuet | gwaz | moal</annotation>
+		<annotation cp="👨‍🦲" type="tts">gwaz : moal</annotation>
+		<annotation cp="👩‍🦰">blev ruz | deuet | maouez</annotation>
+		<annotation cp="👩‍🦰" type="tts">maouez : blev ruz</annotation>
+		<annotation cp="👩‍🦱">blev rodellek | deuet | maouez</annotation>
+		<annotation cp="👩‍🦱" type="tts">maouez : blev rodellek</annotation>
+		<annotation cp="👩‍🦳">blev gwenn | deuet | maouez</annotation>
+		<annotation cp="👩‍🦳" type="tts">maouez : blev gwenn</annotation>
+		<annotation cp="👩‍🦲">deuet | maouez | moal</annotation>
+		<annotation cp="👩‍🦲" type="tts">maouez : moal</annotation>
+		<annotation cp="👨‍👩‍👦">bugel | familh | gwaz | mamm | maouez | paotr | tad</annotation>
+		<annotation cp="👨‍👩‍👦" type="tts">familh : gwaz, maouez, paotr</annotation>
+		<annotation cp="👨‍👩‍👧">bugel | familh | gwaz | mamm | maouez | placʼh | tad</annotation>
+		<annotation cp="👨‍👩‍👧" type="tts">familh : gwaz, maouez, placʼh</annotation>
+		<annotation cp="👨‍👩‍👧‍👦">bugel | familh | gwaz | mamm | maouez | paotr | placʼh | tad</annotation>
+		<annotation cp="👨‍👩‍👧‍👦" type="tts">familh : gwaz, maouez, placʼh, paotr</annotation>
+		<annotation cp="👨‍👩‍👦‍👦">bugel | familh | gwaz | mamm | maouez | paotr | tad</annotation>
+		<annotation cp="👨‍👩‍👦‍👦" type="tts">familh : gwaz, maouez, paotr, paotr</annotation>
+		<annotation cp="👨‍👩‍👧‍👧">bugel | familh | gwaz | mamm | maouez | placʼh | tad</annotation>
+		<annotation cp="👨‍👩‍👧‍👧" type="tts">familh : gwaz, maouez, placʼh, placʼh</annotation>
+		<annotation cp="👨‍👨‍👦">bugel | familh | gwaz | mamm | paotr | tad</annotation>
+		<annotation cp="👨‍👨‍👦" type="tts">familh : gwaz, gwaz, paotr</annotation>
+		<annotation cp="👨‍👨‍👧">bugel | familh | gwaz | mamm | placʼh | tad</annotation>
+		<annotation cp="👨‍👨‍👧" type="tts">familh : gwaz, gwaz, placʼh</annotation>
+		<annotation cp="👨‍👨‍👧‍👦">bugel | familh | gwaz | mamm | paotr | placʼh | tad</annotation>
+		<annotation cp="👨‍👨‍👧‍👦" type="tts">familh : gwaz, gwaz, placʼh, paotr</annotation>
+		<annotation cp="👨‍👨‍👦‍👦">bugel | familh | gwaz | mamm | paotr | tad</annotation>
+		<annotation cp="👨‍👨‍👦‍👦" type="tts">familh : gwaz, gwaz, paotr, paotr</annotation>
+		<annotation cp="👨‍👨‍👧‍👧">bugel | familh | gwaz | mamm | placʼh | tad</annotation>
+		<annotation cp="👨‍👨‍👧‍👧" type="tts">familh : gwaz, gwaz, placʼh, placʼh</annotation>
+		<annotation cp="👩‍👩‍👦">bugel | familh | mamm | maouez | paotr | tad</annotation>
+		<annotation cp="👩‍👩‍👦" type="tts">familh : maouez, maouez, paotr</annotation>
+		<annotation cp="👩‍👩‍👧">bugel | familh | mamm | maouez | placʼh | tad</annotation>
+		<annotation cp="👩‍👩‍👧" type="tts">familh : maouez, maouez, placʼh</annotation>
+		<annotation cp="👩‍👩‍👧‍👦">bugel | familh | mamm | maouez | paotr | placʼh | tad</annotation>
+		<annotation cp="👩‍👩‍👧‍👦" type="tts">familh : maouez, maouez, placʼh, paotr</annotation>
+		<annotation cp="👩‍👩‍👦‍👦">bugel | familh | mamm | maouez | paotr | tad</annotation>
+		<annotation cp="👩‍👩‍👦‍👦" type="tts">familh : maouez, maouez, paotr, paotr</annotation>
+		<annotation cp="👩‍👩‍👧‍👧">bugel | familh | mamm | maouez | placʼh | tad</annotation>
+		<annotation cp="👩‍👩‍👧‍👧" type="tts">familh : maouez, maouez, placʼh, placʼh</annotation>
+		<annotation cp="👨‍👦">bugel | familh | gwaz | mamm | paotr | tad</annotation>
+		<annotation cp="👨‍👦" type="tts">familh : gwaz, paotr</annotation>
+		<annotation cp="👨‍👦‍👦">bugel | familh | gwaz | mamm | paotr | tad</annotation>
+		<annotation cp="👨‍👦‍👦" type="tts">familh : gwaz, paotr, paotr</annotation>
+		<annotation cp="👨‍👧">bugel | familh | gwaz | mamm | placʼh | tad</annotation>
+		<annotation cp="👨‍👧" type="tts">familh : gwaz, placʼh</annotation>
+		<annotation cp="👨‍👧‍👦">bugel | familh | gwaz | mamm | paotr | placʼh | tad</annotation>
+		<annotation cp="👨‍👧‍👦" type="tts">familh : gwaz, placʼh, paotr</annotation>
+		<annotation cp="👨‍👧‍👧">bugel | familh | gwaz | mamm | placʼh | tad</annotation>
+		<annotation cp="👨‍👧‍👧" type="tts">familh : gwaz, placʼh, placʼh</annotation>
+		<annotation cp="👩‍👦">bugel | familh | mamm | maouez | paotr | tad</annotation>
+		<annotation cp="👩‍👦" type="tts">familh : maouez, paotr</annotation>
+		<annotation cp="👩‍👦‍👦">bugel | familh | mamm | maouez | paotr | tad</annotation>
+		<annotation cp="👩‍👦‍👦" type="tts">familh : maouez, paotr, paotr</annotation>
+		<annotation cp="👩‍👧">bugel | familh | mamm | maouez | placʼh | tad</annotation>
+		<annotation cp="👩‍👧" type="tts">familh : maouez, placʼh</annotation>
+		<annotation cp="👩‍👧‍👦">bugel | familh | mamm | maouez | paotr | placʼh | tad</annotation>
+		<annotation cp="👩‍👧‍👦" type="tts">familh : maouez, placʼh, paotr</annotation>
+		<annotation cp="👩‍👧‍👧">bugel | familh | mamm | maouez | placʼh | tad</annotation>
+		<annotation cp="👩‍👧‍👧" type="tts">familh : maouez, placʼh, placʼh</annotation>
+		<annotation cp="🇦🇨">banniel</annotation>
+		<annotation cp="🇦🇨" type="tts">banniel : Enez Ascension</annotation>
+		<annotation cp="🇦🇩">banniel</annotation>
+		<annotation cp="🇦🇩" type="tts">banniel : Andorra</annotation>
+		<annotation cp="🇦🇪">banniel</annotation>
+		<annotation cp="🇦🇪" type="tts">banniel : Emirelezhioù Arab Unanet</annotation>
+		<annotation cp="🇦🇫">banniel</annotation>
+		<annotation cp="🇦🇫" type="tts">banniel : Afghanistan</annotation>
+		<annotation cp="🇦🇬">banniel</annotation>
+		<annotation cp="🇦🇬" type="tts">banniel : Antigua ha Barbuda</annotation>
+		<annotation cp="🇦🇮">banniel</annotation>
+		<annotation cp="🇦🇮" type="tts">banniel : Anguilla</annotation>
+		<annotation cp="🇦🇱">banniel</annotation>
+		<annotation cp="🇦🇱" type="tts">banniel : Albania</annotation>
+		<annotation cp="🇦🇲">banniel</annotation>
+		<annotation cp="🇦🇲" type="tts">banniel : Armenia</annotation>
+		<annotation cp="🇦🇴">banniel</annotation>
+		<annotation cp="🇦🇴" type="tts">banniel : Angola</annotation>
+		<annotation cp="🇦🇶">banniel</annotation>
+		<annotation cp="🇦🇶" type="tts">banniel : Antarktika</annotation>
+		<annotation cp="🇦🇷">banniel</annotation>
+		<annotation cp="🇦🇷" type="tts">banniel : Arcʼhantina</annotation>
+		<annotation cp="🇦🇸">banniel</annotation>
+		<annotation cp="🇦🇸" type="tts">banniel : Samoa Amerikan</annotation>
+		<annotation cp="🇦🇹">banniel</annotation>
+		<annotation cp="🇦🇹" type="tts">banniel : Aostria</annotation>
+		<annotation cp="🇦🇺">banniel</annotation>
+		<annotation cp="🇦🇺" type="tts">banniel : Aostralia</annotation>
+		<annotation cp="🇦🇼">banniel</annotation>
+		<annotation cp="🇦🇼" type="tts">banniel : Aruba</annotation>
+		<annotation cp="🇦🇽">banniel</annotation>
+		<annotation cp="🇦🇽" type="tts">banniel : Inizi Åland</annotation>
+		<annotation cp="🇦🇿">banniel</annotation>
+		<annotation cp="🇦🇿" type="tts">banniel : Azerbaidjan</annotation>
+		<annotation cp="🇧🇦">banniel</annotation>
+		<annotation cp="🇧🇦" type="tts">banniel : Bosnia ha Herzegovina</annotation>
+		<annotation cp="🇧🇧">banniel</annotation>
+		<annotation cp="🇧🇧" type="tts">banniel : Barbados</annotation>
+		<annotation cp="🇧🇩">banniel</annotation>
+		<annotation cp="🇧🇩" type="tts">banniel : Bangladesh</annotation>
+		<annotation cp="🇧🇪">banniel</annotation>
+		<annotation cp="🇧🇪" type="tts">banniel : Belgia</annotation>
+		<annotation cp="🇧🇫">banniel</annotation>
+		<annotation cp="🇧🇫" type="tts">banniel : Burkina Faso</annotation>
+		<annotation cp="🇧🇬">banniel</annotation>
+		<annotation cp="🇧🇬" type="tts">banniel : Bulgaria</annotation>
+		<annotation cp="🇧🇭">banniel</annotation>
+		<annotation cp="🇧🇭" type="tts">banniel : Bahrein</annotation>
+		<annotation cp="🇧🇮">banniel</annotation>
+		<annotation cp="🇧🇮" type="tts">banniel : Burundi</annotation>
+		<annotation cp="🇧🇯">banniel</annotation>
+		<annotation cp="🇧🇯" type="tts">banniel : Benin</annotation>
+		<annotation cp="🇧🇱">banniel</annotation>
+		<annotation cp="🇧🇱" type="tts">banniel : Saint Barthélemy</annotation>
+		<annotation cp="🇧🇲">banniel</annotation>
+		<annotation cp="🇧🇲" type="tts">banniel : Bermuda</annotation>
+		<annotation cp="🇧🇳">banniel</annotation>
+		<annotation cp="🇧🇳" type="tts">banniel : Brunei</annotation>
+		<annotation cp="🇧🇴">banniel</annotation>
+		<annotation cp="🇧🇴" type="tts">banniel : Bolivia</annotation>
+		<annotation cp="🇧🇶">banniel</annotation>
+		<annotation cp="🇧🇶" type="tts">banniel : Karib Nederlandat</annotation>
+		<annotation cp="🇧🇷">banniel</annotation>
+		<annotation cp="🇧🇷" type="tts">banniel : Brazil</annotation>
+		<annotation cp="🇧🇸">banniel</annotation>
+		<annotation cp="🇧🇸" type="tts">banniel : Bahamas</annotation>
+		<annotation cp="🇧🇹">banniel</annotation>
+		<annotation cp="🇧🇹" type="tts">banniel : Bhoutan</annotation>
+		<annotation cp="🇧🇻">banniel</annotation>
+		<annotation cp="🇧🇻" type="tts">banniel : Enez Bouvet</annotation>
+		<annotation cp="🇧🇼">banniel</annotation>
+		<annotation cp="🇧🇼" type="tts">banniel : Botswana</annotation>
+		<annotation cp="🇧🇾">banniel</annotation>
+		<annotation cp="🇧🇾" type="tts">banniel : Belarus</annotation>
+		<annotation cp="🇧🇿">banniel</annotation>
+		<annotation cp="🇧🇿" type="tts">banniel : Belize</annotation>
+		<annotation cp="🇨🇦">banniel</annotation>
+		<annotation cp="🇨🇦" type="tts">banniel : Kanada</annotation>
+		<annotation cp="🇨🇨">banniel</annotation>
+		<annotation cp="🇨🇨" type="tts">banniel : Inizi Kokoz</annotation>
+		<annotation cp="🇨🇩">banniel</annotation>
+		<annotation cp="🇨🇩" type="tts">banniel : Kongo - Kinshasa</annotation>
+		<annotation cp="🇨🇫">banniel</annotation>
+		<annotation cp="🇨🇫" type="tts">banniel : Republik Kreizafrikan</annotation>
+		<annotation cp="🇨🇬">banniel</annotation>
+		<annotation cp="🇨🇬" type="tts">banniel : Kongo - Brazzaville</annotation>
+		<annotation cp="🇨🇭">banniel</annotation>
+		<annotation cp="🇨🇭" type="tts">banniel : Suis</annotation>
+		<annotation cp="🇨🇮">banniel</annotation>
+		<annotation cp="🇨🇮" type="tts">banniel : Aod an Olifant</annotation>
+		<annotation cp="🇨🇰">banniel</annotation>
+		<annotation cp="🇨🇰" type="tts">banniel : Inizi Cook</annotation>
+		<annotation cp="🇨🇱">banniel</annotation>
+		<annotation cp="🇨🇱" type="tts">banniel : Chile</annotation>
+		<annotation cp="🇨🇲">banniel</annotation>
+		<annotation cp="🇨🇲" type="tts">banniel : Kameroun</annotation>
+		<annotation cp="🇨🇳">banniel</annotation>
+		<annotation cp="🇨🇳" type="tts">banniel : Sina</annotation>
+		<annotation cp="🇨🇴">banniel</annotation>
+		<annotation cp="🇨🇴" type="tts">banniel : Kolombia</annotation>
+		<annotation cp="🇨🇵">banniel</annotation>
+		<annotation cp="🇨🇵" type="tts">banniel : Enez Clipperton</annotation>
+		<annotation cp="🇨🇷">banniel</annotation>
+		<annotation cp="🇨🇷" type="tts">banniel : Costa Rica</annotation>
+		<annotation cp="🇨🇺">banniel</annotation>
+		<annotation cp="🇨🇺" type="tts">banniel : Kuba</annotation>
+		<annotation cp="🇨🇻">banniel</annotation>
+		<annotation cp="🇨🇻" type="tts">banniel : Kab-Glas</annotation>
+		<annotation cp="🇨🇼">banniel</annotation>
+		<annotation cp="🇨🇼" type="tts">banniel : Curaçao</annotation>
+		<annotation cp="🇨🇽">banniel</annotation>
+		<annotation cp="🇨🇽" type="tts">banniel : Enez Christmas</annotation>
+		<annotation cp="🇨🇾">banniel</annotation>
+		<annotation cp="🇨🇾" type="tts">banniel : Kiprenez</annotation>
+		<annotation cp="🇨🇿">banniel</annotation>
+		<annotation cp="🇨🇿" type="tts">banniel : Tchekia</annotation>
+		<annotation cp="🇩🇪">banniel</annotation>
+		<annotation cp="🇩🇪" type="tts">banniel : Alamagn</annotation>
+		<annotation cp="🇩🇬">banniel</annotation>
+		<annotation cp="🇩🇬" type="tts">banniel : Diego Garcia</annotation>
+		<annotation cp="🇩🇯">banniel</annotation>
+		<annotation cp="🇩🇯" type="tts">banniel : Djibouti</annotation>
+		<annotation cp="🇩🇰">banniel</annotation>
+		<annotation cp="🇩🇰" type="tts">banniel : Danmark</annotation>
+		<annotation cp="🇩🇲">banniel</annotation>
+		<annotation cp="🇩🇲" type="tts">banniel : Dominica</annotation>
+		<annotation cp="🇩🇴">banniel</annotation>
+		<annotation cp="🇩🇴" type="tts">banniel : Republik Dominikan</annotation>
+		<annotation cp="🇩🇿">banniel</annotation>
+		<annotation cp="🇩🇿" type="tts">banniel : Aljeria</annotation>
+		<annotation cp="🇪🇦">banniel</annotation>
+		<annotation cp="🇪🇦" type="tts">banniel : Ceuta ha Melilla</annotation>
+		<annotation cp="🇪🇨">banniel</annotation>
+		<annotation cp="🇪🇨" type="tts">banniel : Ecuador</annotation>
+		<annotation cp="🇪🇪">banniel</annotation>
+		<annotation cp="🇪🇪" type="tts">banniel : Estonia</annotation>
+		<annotation cp="🇪🇬">banniel</annotation>
+		<annotation cp="🇪🇬" type="tts">banniel : Egipt</annotation>
+		<annotation cp="🇪🇭">banniel</annotation>
+		<annotation cp="🇪🇭" type="tts">banniel : Sahara ar Cʼhornôg</annotation>
+		<annotation cp="🇪🇷">banniel</annotation>
+		<annotation cp="🇪🇷" type="tts">banniel : Eritrea</annotation>
+		<annotation cp="🇪🇸">banniel</annotation>
+		<annotation cp="🇪🇸" type="tts">banniel : Spagn</annotation>
+		<annotation cp="🇪🇹">banniel</annotation>
+		<annotation cp="🇪🇹" type="tts">banniel : Etiopia</annotation>
+		<annotation cp="🇪🇺">banniel</annotation>
+		<annotation cp="🇪🇺" type="tts">banniel : Unaniezh Europa</annotation>
+		<annotation cp="🇫🇮">banniel</annotation>
+		<annotation cp="🇫🇮" type="tts">banniel : Finland</annotation>
+		<annotation cp="🇫🇯">banniel</annotation>
+		<annotation cp="🇫🇯" type="tts">banniel : Fidji</annotation>
+		<annotation cp="🇫🇰">banniel</annotation>
+		<annotation cp="🇫🇰" type="tts">banniel : Inizi Falkland</annotation>
+		<annotation cp="🇫🇲">banniel</annotation>
+		<annotation cp="🇫🇲" type="tts">banniel : Mikronezia</annotation>
+		<annotation cp="🇫🇴">banniel</annotation>
+		<annotation cp="🇫🇴" type="tts">banniel : Inizi Faero</annotation>
+		<annotation cp="🇫🇷">banniel</annotation>
+		<annotation cp="🇫🇷" type="tts">banniel : Frañs</annotation>
+		<annotation cp="🇬🇦">banniel</annotation>
+		<annotation cp="🇬🇦" type="tts">banniel : Gabon</annotation>
+		<annotation cp="🇬🇧">banniel</annotation>
+		<annotation cp="🇬🇧" type="tts">banniel : Rouantelezh-Unanet</annotation>
+		<annotation cp="🇬🇩">banniel</annotation>
+		<annotation cp="🇬🇩" type="tts">banniel : Grenada</annotation>
+		<annotation cp="🇬🇪">banniel</annotation>
+		<annotation cp="🇬🇪" type="tts">banniel : Jorjia</annotation>
+		<annotation cp="🇬🇫">banniel</annotation>
+		<annotation cp="🇬🇫" type="tts">banniel : Gwiana cʼhall</annotation>
+		<annotation cp="🇬🇬">banniel</annotation>
+		<annotation cp="🇬🇬" type="tts">banniel : Gwernenez</annotation>
+		<annotation cp="🇬🇭">banniel</annotation>
+		<annotation cp="🇬🇭" type="tts">banniel : Ghana</annotation>
+		<annotation cp="🇬🇮">banniel</annotation>
+		<annotation cp="🇬🇮" type="tts">banniel : Jibraltar</annotation>
+		<annotation cp="🇬🇱">banniel</annotation>
+		<annotation cp="🇬🇱" type="tts">banniel : Greunland</annotation>
+		<annotation cp="🇬🇲">banniel</annotation>
+		<annotation cp="🇬🇲" type="tts">banniel : Gambia</annotation>
+		<annotation cp="🇬🇳">banniel</annotation>
+		<annotation cp="🇬🇳" type="tts">banniel : Ginea</annotation>
+		<annotation cp="🇬🇵">banniel</annotation>
+		<annotation cp="🇬🇵" type="tts">banniel : Gwadeloup</annotation>
+		<annotation cp="🇬🇶">banniel</annotation>
+		<annotation cp="🇬🇶" type="tts">banniel : Ginea ar Cʼheheder</annotation>
+		<annotation cp="🇬🇷">banniel</annotation>
+		<annotation cp="🇬🇷" type="tts">banniel : Gres</annotation>
+		<annotation cp="🇬🇸">banniel</annotation>
+		<annotation cp="🇬🇸" type="tts">banniel : Inizi Georgia ar Su hag Inizi Sandwich ar Su</annotation>
+		<annotation cp="🇬🇹">banniel</annotation>
+		<annotation cp="🇬🇹" type="tts">banniel : Guatemala</annotation>
+		<annotation cp="🇬🇺">banniel</annotation>
+		<annotation cp="🇬🇺" type="tts">banniel : Guam</annotation>
+		<annotation cp="🇬🇼">banniel</annotation>
+		<annotation cp="🇬🇼" type="tts">banniel : Ginea-Bissau</annotation>
+		<annotation cp="🇬🇾">banniel</annotation>
+		<annotation cp="🇬🇾" type="tts">banniel : Guyana</annotation>
+		<annotation cp="🇭🇰">banniel</annotation>
+		<annotation cp="🇭🇰" type="tts">banniel : Hong Kong RMD Sina</annotation>
+		<annotation cp="🇭🇲">banniel</annotation>
+		<annotation cp="🇭🇲" type="tts">banniel : Inizi Heard ha McDonald</annotation>
+		<annotation cp="🇭🇳">banniel</annotation>
+		<annotation cp="🇭🇳" type="tts">banniel : Honduras</annotation>
+		<annotation cp="🇭🇷">banniel</annotation>
+		<annotation cp="🇭🇷" type="tts">banniel : Kroatia</annotation>
+		<annotation cp="🇭🇹">banniel</annotation>
+		<annotation cp="🇭🇹" type="tts">banniel : Haiti</annotation>
+		<annotation cp="🇭🇺">banniel</annotation>
+		<annotation cp="🇭🇺" type="tts">banniel : Hungaria</annotation>
+		<annotation cp="🇮🇨">banniel</annotation>
+		<annotation cp="🇮🇨" type="tts">banniel : Inizi Kanariez</annotation>
+		<annotation cp="🇮🇩">banniel</annotation>
+		<annotation cp="🇮🇩" type="tts">banniel : Indonezia</annotation>
+		<annotation cp="🇮🇪">banniel</annotation>
+		<annotation cp="🇮🇪" type="tts">banniel : Iwerzhon</annotation>
+		<annotation cp="🇮🇱">banniel</annotation>
+		<annotation cp="🇮🇱" type="tts">banniel : Israel</annotation>
+		<annotation cp="🇮🇲">banniel</annotation>
+		<annotation cp="🇮🇲" type="tts">banniel : Enez Vanav</annotation>
+		<annotation cp="🇮🇳">banniel</annotation>
+		<annotation cp="🇮🇳" type="tts">banniel : India</annotation>
+		<annotation cp="🇮🇴">banniel</annotation>
+		<annotation cp="🇮🇴" type="tts">banniel : Tiriad breizhveurat Meurvor Indez</annotation>
+		<annotation cp="🇮🇶">banniel</annotation>
+		<annotation cp="🇮🇶" type="tts">banniel : Iraq</annotation>
+		<annotation cp="🇮🇷">banniel</annotation>
+		<annotation cp="🇮🇷" type="tts">banniel : Iran</annotation>
+		<annotation cp="🇮🇸">banniel</annotation>
+		<annotation cp="🇮🇸" type="tts">banniel : Island</annotation>
+		<annotation cp="🇮🇹">banniel</annotation>
+		<annotation cp="🇮🇹" type="tts">banniel : Italia</annotation>
+		<annotation cp="🇯🇪">banniel</annotation>
+		<annotation cp="🇯🇪" type="tts">banniel : Jerzenez</annotation>
+		<annotation cp="🇯🇲">banniel</annotation>
+		<annotation cp="🇯🇲" type="tts">banniel : Jamaika</annotation>
+		<annotation cp="🇯🇴">banniel</annotation>
+		<annotation cp="🇯🇴" type="tts">banniel : Jordania</annotation>
+		<annotation cp="🇯🇵">banniel</annotation>
+		<annotation cp="🇯🇵" type="tts">banniel : Japan</annotation>
+		<annotation cp="🇰🇪">banniel</annotation>
+		<annotation cp="🇰🇪" type="tts">banniel : Kenya</annotation>
+		<annotation cp="🇰🇬">banniel</annotation>
+		<annotation cp="🇰🇬" type="tts">banniel : Kyrgyzstan</annotation>
+		<annotation cp="🇰🇭">banniel</annotation>
+		<annotation cp="🇰🇭" type="tts">banniel : Kambodja</annotation>
+		<annotation cp="🇰🇮">banniel</annotation>
+		<annotation cp="🇰🇮" type="tts">banniel : Kiribati</annotation>
+		<annotation cp="🇰🇲">banniel</annotation>
+		<annotation cp="🇰🇲" type="tts">banniel : Komorez</annotation>
+		<annotation cp="🇰🇳">banniel</annotation>
+		<annotation cp="🇰🇳" type="tts">banniel : Saint Kitts ha Nevis</annotation>
+		<annotation cp="🇰🇵">banniel</annotation>
+		<annotation cp="🇰🇵" type="tts">banniel : Korea an Norzh</annotation>
+		<annotation cp="🇰🇷">banniel</annotation>
+		<annotation cp="🇰🇷" type="tts">banniel : Korea ar Su</annotation>
+		<annotation cp="🇰🇼">banniel</annotation>
+		<annotation cp="🇰🇼" type="tts">banniel : Koweit</annotation>
+		<annotation cp="🇰🇾">banniel</annotation>
+		<annotation cp="🇰🇾" type="tts">banniel : Inizi Cayman</annotation>
+		<annotation cp="🇰🇿">banniel</annotation>
+		<annotation cp="🇰🇿" type="tts">banniel : Kazakstan</annotation>
+		<annotation cp="🇱🇦">banniel</annotation>
+		<annotation cp="🇱🇦" type="tts">banniel : Laos</annotation>
+		<annotation cp="🇱🇧">banniel</annotation>
+		<annotation cp="🇱🇧" type="tts">banniel : Liban</annotation>
+		<annotation cp="🇱🇨">banniel</annotation>
+		<annotation cp="🇱🇨" type="tts">banniel : Saint Lucia</annotation>
+		<annotation cp="🇱🇮">banniel</annotation>
+		<annotation cp="🇱🇮" type="tts">banniel : Liechtenstein</annotation>
+		<annotation cp="🇱🇰">banniel</annotation>
+		<annotation cp="🇱🇰" type="tts">banniel : Sri Lanka</annotation>
+		<annotation cp="🇱🇷">banniel</annotation>
+		<annotation cp="🇱🇷" type="tts">banniel : Liberia</annotation>
+		<annotation cp="🇱🇸">banniel</annotation>
+		<annotation cp="🇱🇸" type="tts">banniel : Lesotho</annotation>
+		<annotation cp="🇱🇹">banniel</annotation>
+		<annotation cp="🇱🇹" type="tts">banniel : Lituania</annotation>
+		<annotation cp="🇱🇺">banniel</annotation>
+		<annotation cp="🇱🇺" type="tts">banniel : Luksembourg</annotation>
+		<annotation cp="🇱🇻">banniel</annotation>
+		<annotation cp="🇱🇻" type="tts">banniel : Latvia</annotation>
+		<annotation cp="🇱🇾">banniel</annotation>
+		<annotation cp="🇱🇾" type="tts">banniel : Libia</annotation>
+		<annotation cp="🇲🇦">banniel</annotation>
+		<annotation cp="🇲🇦" type="tts">banniel : Maroko</annotation>
+		<annotation cp="🇲🇨">banniel</annotation>
+		<annotation cp="🇲🇨" type="tts">banniel : Monaco</annotation>
+		<annotation cp="🇲🇩">banniel</annotation>
+		<annotation cp="🇲🇩" type="tts">banniel : Moldova</annotation>
+		<annotation cp="🇲🇪">banniel</annotation>
+		<annotation cp="🇲🇪" type="tts">banniel : Montenegro</annotation>
+		<annotation cp="🇲🇫">banniel</annotation>
+		<annotation cp="🇲🇫" type="tts">banniel : Saint Martin</annotation>
+		<annotation cp="🇲🇬">banniel</annotation>
+		<annotation cp="🇲🇬" type="tts">banniel : Madagaskar</annotation>
+		<annotation cp="🇲🇭">banniel</annotation>
+		<annotation cp="🇲🇭" type="tts">banniel : Inizi Marshall</annotation>
+		<annotation cp="🇲🇰">banniel</annotation>
+		<annotation cp="🇲🇰" type="tts">banniel : Makedonia an Norzh</annotation>
+		<annotation cp="🇲🇱">banniel</annotation>
+		<annotation cp="🇲🇱" type="tts">banniel : Mali</annotation>
+		<annotation cp="🇲🇲">banniel</annotation>
+		<annotation cp="🇲🇲" type="tts">banniel : Myanmar (Birmania)</annotation>
+		<annotation cp="🇲🇳">banniel</annotation>
+		<annotation cp="🇲🇳" type="tts">banniel : Mongolia</annotation>
+		<annotation cp="🇲🇴">banniel</annotation>
+		<annotation cp="🇲🇴" type="tts">banniel : Macau RMD Sina</annotation>
+		<annotation cp="🇲🇵">banniel</annotation>
+		<annotation cp="🇲🇵" type="tts">banniel : Inizi Mariana an Norzh</annotation>
+		<annotation cp="🇲🇶">banniel</annotation>
+		<annotation cp="🇲🇶" type="tts">banniel : Martinik</annotation>
+		<annotation cp="🇲🇷">banniel</annotation>
+		<annotation cp="🇲🇷" type="tts">banniel : Maouritania</annotation>
+		<annotation cp="🇲🇸">banniel</annotation>
+		<annotation cp="🇲🇸" type="tts">banniel : Montserrat</annotation>
+		<annotation cp="🇲🇹">banniel</annotation>
+		<annotation cp="🇲🇹" type="tts">banniel : Malta</annotation>
+		<annotation cp="🇲🇺">banniel</annotation>
+		<annotation cp="🇲🇺" type="tts">banniel : Moris</annotation>
+		<annotation cp="🇲🇻">banniel</annotation>
+		<annotation cp="🇲🇻" type="tts">banniel : Maldivez</annotation>
+		<annotation cp="🇲🇼">banniel</annotation>
+		<annotation cp="🇲🇼" type="tts">banniel : Malawi</annotation>
+		<annotation cp="🇲🇽">banniel</annotation>
+		<annotation cp="🇲🇽" type="tts">banniel : Mecʼhiko</annotation>
+		<annotation cp="🇲🇾">banniel</annotation>
+		<annotation cp="🇲🇾" type="tts">banniel : Malaysia</annotation>
+		<annotation cp="🇲🇿">banniel</annotation>
+		<annotation cp="🇲🇿" type="tts">banniel : Mozambik</annotation>
+		<annotation cp="🇳🇦">banniel</annotation>
+		<annotation cp="🇳🇦" type="tts">banniel : Namibia</annotation>
+		<annotation cp="🇳🇨">banniel</annotation>
+		<annotation cp="🇳🇨" type="tts">banniel : Kaledonia Nevez</annotation>
+		<annotation cp="🇳🇪">banniel</annotation>
+		<annotation cp="🇳🇪" type="tts">banniel : Niger</annotation>
+		<annotation cp="🇳🇫">banniel</annotation>
+		<annotation cp="🇳🇫" type="tts">banniel : Enez Norfolk</annotation>
+		<annotation cp="🇳🇬">banniel</annotation>
+		<annotation cp="🇳🇬" type="tts">banniel : Nigeria</annotation>
+		<annotation cp="🇳🇮">banniel</annotation>
+		<annotation cp="🇳🇮" type="tts">banniel : Nicaragua</annotation>
+		<annotation cp="🇳🇱">banniel</annotation>
+		<annotation cp="🇳🇱" type="tts">banniel : Izelvroioù</annotation>
+		<annotation cp="🇳🇴">banniel</annotation>
+		<annotation cp="🇳🇴" type="tts">banniel : Norvegia</annotation>
+		<annotation cp="🇳🇵">banniel</annotation>
+		<annotation cp="🇳🇵" type="tts">banniel : Nepal</annotation>
+		<annotation cp="🇳🇷">banniel</annotation>
+		<annotation cp="🇳🇷" type="tts">banniel : Nauru</annotation>
+		<annotation cp="🇳🇺">banniel</annotation>
+		<annotation cp="🇳🇺" type="tts">banniel : Niue</annotation>
+		<annotation cp="🇳🇿">banniel</annotation>
+		<annotation cp="🇳🇿" type="tts">banniel : Zeland-Nevez</annotation>
+		<annotation cp="🇴🇲">banniel</annotation>
+		<annotation cp="🇴🇲" type="tts">banniel : Oman</annotation>
+		<annotation cp="🇵🇦">banniel</annotation>
+		<annotation cp="🇵🇦" type="tts">banniel : Panamá</annotation>
+		<annotation cp="🇵🇪">banniel</annotation>
+		<annotation cp="🇵🇪" type="tts">banniel : Perou</annotation>
+		<annotation cp="🇵🇫">banniel</annotation>
+		<annotation cp="🇵🇫" type="tts">banniel : Polinezia Cʼhall</annotation>
+		<annotation cp="🇵🇬">banniel</annotation>
+		<annotation cp="🇵🇬" type="tts">banniel : Papoua Ginea-Nevez</annotation>
+		<annotation cp="🇵🇭">banniel</annotation>
+		<annotation cp="🇵🇭" type="tts">banniel : Filipinez</annotation>
+		<annotation cp="🇵🇰">banniel</annotation>
+		<annotation cp="🇵🇰" type="tts">banniel : Pakistan</annotation>
+		<annotation cp="🇵🇱">banniel</annotation>
+		<annotation cp="🇵🇱" type="tts">banniel : Polonia</annotation>
+		<annotation cp="🇵🇲">banniel</annotation>
+		<annotation cp="🇵🇲" type="tts">banniel : Sant-Pêr-ha-Mikelon</annotation>
+		<annotation cp="🇵🇳">banniel</annotation>
+		<annotation cp="🇵🇳" type="tts">banniel : Enez Pitcairn</annotation>
+		<annotation cp="🇵🇷">banniel</annotation>
+		<annotation cp="🇵🇷" type="tts">banniel : Puerto Rico</annotation>
+		<annotation cp="🇵🇸">banniel</annotation>
+		<annotation cp="🇵🇸" type="tts">banniel : Tiriadoù Palestina</annotation>
+		<annotation cp="🇵🇹">banniel</annotation>
+		<annotation cp="🇵🇹" type="tts">banniel : Portugal</annotation>
+		<annotation cp="🇵🇼">banniel</annotation>
+		<annotation cp="🇵🇼" type="tts">banniel : Palau</annotation>
+		<annotation cp="🇵🇾">banniel</annotation>
+		<annotation cp="🇵🇾" type="tts">banniel : Paraguay</annotation>
+		<annotation cp="🇶🇦">banniel</annotation>
+		<annotation cp="🇶🇦" type="tts">banniel : Qatar</annotation>
+		<annotation cp="🇷🇪">banniel</annotation>
+		<annotation cp="🇷🇪" type="tts">banniel : Ar Reünion</annotation>
+		<annotation cp="🇷🇴">banniel</annotation>
+		<annotation cp="🇷🇴" type="tts">banniel : Roumania</annotation>
+		<annotation cp="🇷🇸">banniel</annotation>
+		<annotation cp="🇷🇸" type="tts">banniel : Serbia</annotation>
+		<annotation cp="🇷🇺">banniel</annotation>
+		<annotation cp="🇷🇺" type="tts">banniel : Rusia</annotation>
+		<annotation cp="🇷🇼">banniel</annotation>
+		<annotation cp="🇷🇼" type="tts">banniel : Rwanda</annotation>
+		<annotation cp="🇸🇦">banniel</annotation>
+		<annotation cp="🇸🇦" type="tts">banniel : Arabia Saoudat</annotation>
+		<annotation cp="🇸🇧">banniel</annotation>
+		<annotation cp="🇸🇧" type="tts">banniel : Inizi Salomon</annotation>
+		<annotation cp="🇸🇨">banniel</annotation>
+		<annotation cp="🇸🇨" type="tts">banniel : Sechelez</annotation>
+		<annotation cp="🇸🇩">banniel</annotation>
+		<annotation cp="🇸🇩" type="tts">banniel : Soudan</annotation>
+		<annotation cp="🇸🇪">banniel</annotation>
+		<annotation cp="🇸🇪" type="tts">banniel : Sveden</annotation>
+		<annotation cp="🇸🇬">banniel</annotation>
+		<annotation cp="🇸🇬" type="tts">banniel : Singapour</annotation>
+		<annotation cp="🇸🇭">banniel</annotation>
+		<annotation cp="🇸🇭" type="tts">banniel : Saint-Helena</annotation>
+		<annotation cp="🇸🇮">banniel</annotation>
+		<annotation cp="🇸🇮" type="tts">banniel : Slovenia</annotation>
+		<annotation cp="🇸🇯">banniel</annotation>
+		<annotation cp="🇸🇯" type="tts">banniel : Svalbard</annotation>
+		<annotation cp="🇸🇰">banniel</annotation>
+		<annotation cp="🇸🇰" type="tts">banniel : Slovakia</annotation>
+		<annotation cp="🇸🇱">banniel</annotation>
+		<annotation cp="🇸🇱" type="tts">banniel : Sierra Leone</annotation>
+		<annotation cp="🇸🇲">banniel</annotation>
+		<annotation cp="🇸🇲" type="tts">banniel : San Marino</annotation>
+		<annotation cp="🇸🇳">banniel</annotation>
+		<annotation cp="🇸🇳" type="tts">banniel : Senegal</annotation>
+		<annotation cp="🇸🇴">banniel</annotation>
+		<annotation cp="🇸🇴" type="tts">banniel : Somalia</annotation>
+		<annotation cp="🇸🇷">banniel</annotation>
+		<annotation cp="🇸🇷" type="tts">banniel : Surinam</annotation>
+		<annotation cp="🇸🇸">banniel</annotation>
+		<annotation cp="🇸🇸" type="tts">banniel : Susoudan</annotation>
+		<annotation cp="🇸🇹">banniel</annotation>
+		<annotation cp="🇸🇹" type="tts">banniel : São Tomé ha Príncipe</annotation>
+		<annotation cp="🇸🇻">banniel</annotation>
+		<annotation cp="🇸🇻" type="tts">banniel : Salvador</annotation>
+		<annotation cp="🇸🇽">banniel</annotation>
+		<annotation cp="🇸🇽" type="tts">banniel : Sint Maarten</annotation>
+		<annotation cp="🇸🇾">banniel</annotation>
+		<annotation cp="🇸🇾" type="tts">banniel : Siria</annotation>
+		<annotation cp="🇸🇿">banniel</annotation>
+		<annotation cp="🇸🇿" type="tts">banniel : Eswatini</annotation>
+		<annotation cp="🇹🇦">banniel</annotation>
+		<annotation cp="🇹🇦" type="tts">banniel : Tristan da Cunha</annotation>
+		<annotation cp="🇹🇨">banniel</annotation>
+		<annotation cp="🇹🇨" type="tts">banniel : Inizi Turks ha Caicos</annotation>
+		<annotation cp="🇹🇩">banniel</annotation>
+		<annotation cp="🇹🇩" type="tts">banniel : Tchad</annotation>
+		<annotation cp="🇹🇫">banniel</annotation>
+		<annotation cp="🇹🇫" type="tts">banniel : Douaroù aostral Frañs</annotation>
+		<annotation cp="🇹🇬">banniel</annotation>
+		<annotation cp="🇹🇬" type="tts">banniel : Togo</annotation>
+		<annotation cp="🇹🇭">banniel</annotation>
+		<annotation cp="🇹🇭" type="tts">banniel : Thailand</annotation>
+		<annotation cp="🇹🇯">banniel</annotation>
+		<annotation cp="🇹🇯" type="tts">banniel : Tadjikistan</annotation>
+		<annotation cp="🇹🇰">banniel</annotation>
+		<annotation cp="🇹🇰" type="tts">banniel : Tokelau</annotation>
+		<annotation cp="🇹🇱">banniel</annotation>
+		<annotation cp="🇹🇱" type="tts">banniel : Timor-Leste</annotation>
+		<annotation cp="🇹🇲">banniel</annotation>
+		<annotation cp="🇹🇲" type="tts">banniel : Turkmenistan</annotation>
+		<annotation cp="🇹🇳">banniel</annotation>
+		<annotation cp="🇹🇳" type="tts">banniel : Tunizia</annotation>
+		<annotation cp="🇹🇴">banniel</annotation>
+		<annotation cp="🇹🇴" type="tts">banniel : Tonga</annotation>
+		<annotation cp="🇹🇷">banniel</annotation>
+		<annotation cp="🇹🇷" type="tts">banniel : Turkia</annotation>
+		<annotation cp="🇹🇹">banniel</annotation>
+		<annotation cp="🇹🇹" type="tts">banniel : Trinidad ha Tobago</annotation>
+		<annotation cp="🇹🇻">banniel</annotation>
+		<annotation cp="🇹🇻" type="tts">banniel : Tuvalu</annotation>
+		<annotation cp="🇹🇼">banniel</annotation>
+		<annotation cp="🇹🇼" type="tts">banniel : Taiwan</annotation>
+		<annotation cp="🇹🇿">banniel</annotation>
+		<annotation cp="🇹🇿" type="tts">banniel : Tanzania</annotation>
+		<annotation cp="🇺🇦">banniel</annotation>
+		<annotation cp="🇺🇦" type="tts">banniel : Ukraina</annotation>
+		<annotation cp="🇺🇬">banniel</annotation>
+		<annotation cp="🇺🇬" type="tts">banniel : Ouganda</annotation>
+		<annotation cp="🇺🇲">banniel</annotation>
+		<annotation cp="🇺🇲" type="tts">banniel : Inizi diabell ar Stadoù-Unanet</annotation>
+		<annotation cp="🇺🇳">banniel</annotation>
+		<annotation cp="🇺🇳" type="tts">banniel : Broadoù unanet</annotation>
+		<annotation cp="🇺🇸">banniel</annotation>
+		<annotation cp="🇺🇸" type="tts">banniel : Stadoù-Unanet</annotation>
+		<annotation cp="🇺🇾">banniel</annotation>
+		<annotation cp="🇺🇾" type="tts">banniel : Uruguay</annotation>
+		<annotation cp="🇺🇿">banniel</annotation>
+		<annotation cp="🇺🇿" type="tts">banniel : Ouzbekistan</annotation>
+		<annotation cp="🇻🇦">banniel</annotation>
+		<annotation cp="🇻🇦" type="tts">banniel : Vatikan</annotation>
+		<annotation cp="🇻🇨">banniel</annotation>
+		<annotation cp="🇻🇨" type="tts">banniel : Sant Visant hag ar Grenadinez</annotation>
+		<annotation cp="🇻🇪">banniel</annotation>
+		<annotation cp="🇻🇪" type="tts">banniel : Venezuela</annotation>
+		<annotation cp="🇻🇬">banniel</annotation>
+		<annotation cp="🇻🇬" type="tts">banniel : Inizi Gwercʼh Breizh-Veur</annotation>
+		<annotation cp="🇻🇮">banniel</annotation>
+		<annotation cp="🇻🇮" type="tts">banniel : Inizi Gwercʼh ar Stadoù-Unanet</annotation>
+		<annotation cp="🇻🇳">banniel</annotation>
+		<annotation cp="🇻🇳" type="tts">banniel : Viêt Nam</annotation>
+		<annotation cp="🇻🇺">banniel</annotation>
+		<annotation cp="🇻🇺" type="tts">banniel : Vanuatu</annotation>
+		<annotation cp="🇼🇫">banniel</annotation>
+		<annotation cp="🇼🇫" type="tts">banniel : Wallis ha Futuna</annotation>
+		<annotation cp="🇼🇸">banniel</annotation>
+		<annotation cp="🇼🇸" type="tts">banniel : Samoa</annotation>
+		<annotation cp="🇽🇰">banniel</annotation>
+		<annotation cp="🇽🇰" type="tts">banniel : Kosovo</annotation>
+		<annotation cp="🇾🇪">banniel</annotation>
+		<annotation cp="🇾🇪" type="tts">banniel : Yemen</annotation>
+		<annotation cp="🇾🇹">banniel</annotation>
+		<annotation cp="🇾🇹" type="tts">banniel : Mayotte</annotation>
+		<annotation cp="🇿🇦">banniel</annotation>
+		<annotation cp="🇿🇦" type="tts">banniel : Suafrika</annotation>
+		<annotation cp="🇿🇲">banniel</annotation>
+		<annotation cp="🇿🇲" type="tts">banniel : Zambia</annotation>
+		<annotation cp="🇿🇼">banniel</annotation>
+		<annotation cp="🇿🇼" type="tts">banniel : Zimbabwe</annotation>
+		<annotation cp="🏴󠁧󠁢󠁥󠁮󠁧󠁿">banniel</annotation>
+		<annotation cp="🏴󠁧󠁢󠁥󠁮󠁧󠁿" type="tts">banniel : Bro-Saoz</annotation>
+		<annotation cp="🏴󠁧󠁢󠁳󠁣󠁴󠁿">banniel</annotation>
+		<annotation cp="🏴󠁧󠁢󠁳󠁣󠁴󠁿" type="tts">banniel : Skos</annotation>
+		<annotation cp="🏴󠁧󠁢󠁷󠁬󠁳󠁿">banniel</annotation>
+		<annotation cp="🏴󠁧󠁢󠁷󠁬󠁳󠁿" type="tts">banniel : Kembre</annotation>
+		<annotation cp="¤" type="tts">moneiz dianav</annotation>
+		<annotation cp="֏" type="tts">dram Armenia</annotation>
+		<annotation cp="؋" type="tts">afghani Afghanistan</annotation>
+		<annotation cp="৳" type="tts">taka Bangladesh</annotation>
+		<annotation cp="฿" type="tts">baht Thailand</annotation>
+		<annotation cp="៛" type="tts">riel Kambodja</annotation>
+		<annotation cp="₡" type="tts">colón Costa Rica</annotation>
+		<annotation cp="₦" type="tts">naira Nigeria</annotation>
+		<annotation cp="₧" type="tts">peseta Spagn</annotation>
+		<annotation cp="₪" type="tts">shekel nevez Israel</annotation>
+		<annotation cp="₫" type="tts">dong Viêt Nam</annotation>
+		<annotation cp="₭" type="tts">kip Laos</annotation>
+		<annotation cp="₮" type="tts">tugrik Mongolia</annotation>
+		<annotation cp="₲" type="tts">guarani Paraguay</annotation>
+		<annotation cp="₴" type="tts">hryvnia Ukraina</annotation>
+		<annotation cp="₵" type="tts">cedi Ghana</annotation>
+		<annotation cp="₸" type="tts">tenge Kazakstan</annotation>
+		<annotation cp="₺" type="tts">lur Turkia</annotation>
+		<annotation cp="₼" type="tts">manat Azerbaidjan</annotation>
+		<annotation cp="₾" type="tts">lari Jorjia</annotation>
+	</annotations>
+</ldml>

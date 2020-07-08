@@ -235,6 +235,9 @@ class CommunityRepositoryModules {
       withResource("resources/jediterm-bash.in", "")
       withResource("resources/fish/config.fish", "fish")
     },
+    plugin("intellij.emojipicker") {
+      bundlingRestrictions.supportedOs = [OsFamily.LINUX]
+    },
     plugin("intellij.textmate") {
       withModule("intellij.textmate.core")
       withResource("lib/bundles", "lib/bundles")

@@ -1,0 +1,9 @@
+RecentlyUsed: Recently Used
+SmileysAndPeople: Smileys & People
+AnimalsAndNature: Animals & Nature
+FoodAndDrink: Food & Drink
+TravelAndPlaces: Travel & Places
+Activities: Activities
+Objects: Objects
+Symbols: Symbols
+Flags: Flags

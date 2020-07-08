@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<!-- Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file. -->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="ug"/>
+	</identity>
+	<annotations>
+		<annotation cp="¤" type="tts">يوچۇن پۇل</annotation>
+		<annotation cp="֏" type="tts">ئەرمېنىيە دىرامى</annotation>
+		<annotation cp="؋" type="tts">ئافغان ئافغانى</annotation>
+		<annotation cp="৳" type="tts">باڭلادىش تاكاسى</annotation>
+		<annotation cp="฿" type="tts">تايلاند باختى</annotation>
+		<annotation cp="៛" type="tts">كامبودژا رىئېلى</annotation>
+		<annotation cp="₡" type="tts">كوستارىكا كولونى</annotation>
+		<annotation cp="₦" type="tts">نىگېرىيە نايراسى</annotation>
+		<annotation cp="₧" type="tts">ئىسپانىيە پېسېتاسى</annotation>
+		<annotation cp="₪" type="tts">ئىسرائىل يېڭى شېكېلى</annotation>
+		<annotation cp="₫" type="tts">ۋىيېتنام دوڭى</annotation>
+		<annotation cp="₭" type="tts">لائوس كىپى</annotation>
+		<annotation cp="₮" type="tts">موڭغۇلىيە تۈگرىكى</annotation>
+		<annotation cp="₲" type="tts">پاراگۋاي گۇئارانىسى</annotation>
+		<annotation cp="₴" type="tts">ئۇكرائىنا خرىۋناسى</annotation>
+		<annotation cp="₵" type="tts">گانا سېدىسى</annotation>
+		<annotation cp="₸" type="tts">قازاقىستان تەڭگىسى</annotation>
+		<annotation cp="₺" type="tts">تۈركىيە لىراسى</annotation>
+		<annotation cp="₼" type="tts">ئەزەربەيجان ماناتى</annotation>
+		<annotation cp="₾" type="tts">گىرۇزىيە لارىسى</annotation>
+	</annotations>
+</ldml>
