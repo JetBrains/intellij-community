@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.codeInsight.actions;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,22 +44,24 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
   public void test_DoNotConvertIfCoordinatesNotClear() {
     String noArtifact = getDependency("group", null, "1.0", "runtime", null);
     configureFromFileText("pom.xml", noArtifact);
-
     selectWholeFile();
-
     performCut();
-
     configureGradleFile();
-    performPaste();
-    PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(() -> {
+    int old = CodeInsightSettings.getInstance().REFORMAT_ON_PASTE;
+    try {
+      CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
+      performPaste();
       checkResultByText(null, "dependencies {\n" +
                               "    <dependency>\n" +
-                              "    <groupId>group</groupId>\n" +
-                              "    <version>1.0</version>\n" +
-                              "    <scope>runtime</scope>\n" +
-                              "    </dependency>\n" +
+                              "<groupId>group</groupId>\n" +
+                              "<version>1.0</version>\n" +
+                              "<scope>runtime</scope>\n" +
+                              "</dependency>\n" +
                               "}", true);
-    });
+    }
+    finally {
+      CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = old;
+    }
   }
 
   public void test_AddCompile() {
