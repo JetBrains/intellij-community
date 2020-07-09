@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -82,6 +83,10 @@ final class WatchRootsUtil {
 
   static <T> @NotNull NavigableMap<String, T> createFileNavigableMap() {
     return new TreeMap<>(OSAgnosticPathUtil.COMPARATOR);
+  }
+
+  static @NotNull NavigableSet<Pair<String, String>> createMappingsNavigableSet() {
+    return new TreeSet<>((a,b) -> OSAgnosticPathUtil.COMPARATOR.compare(a.first, b.first));
   }
 
   static boolean removeRecursivePath(@NotNull NavigableSet<String> optimizedRecursiveRoots,

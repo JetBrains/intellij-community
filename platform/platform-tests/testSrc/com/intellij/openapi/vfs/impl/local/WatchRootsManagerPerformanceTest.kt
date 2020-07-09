@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl.local
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -15,7 +16,6 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.containers.MultiMap
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -79,7 +79,7 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
     val root = tempDir.newDirectory("root")
     val fileCount = 50_000
     try {
-      PlatformTestUtil.startPerformanceTest("Adding roots", 11000) {
+      PlatformTestUtil.startPerformanceTest("Adding roots", 9000) {
         val requests = ArrayList<LocalFileSystem.WatchRequest>(fileCount)
         for (i in 1..fileCount) {
           requests.add(fs.addRootToWatch(File(root, "f$i").path, true)!!)
@@ -120,7 +120,7 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
     }
     refresh(root)
     try {
-      PlatformTestUtil.startPerformanceTest("Adding roots", 3000) {
+      PlatformTestUtil.startPerformanceTest("Adding roots", 2000) {
         fs.removeWatchedRoot(fs.addRootToWatch(root.path, true)!!)
       }.assertTiming()
     }
@@ -134,24 +134,60 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
     val root = tempDir.newDirectory("root").path.replace('\\', '/')
     val flatWatchRoots = TreeSet<String>()
     val optimizedRecursiveWatchRoots = TreeSet<String>()
-    val pathMappings = MultiMap.create<String, String>()
+    val pathMappings = WatchRootsUtil.createMappingsNavigableSet()
 
     val filesCount = 10_000
     (1..filesCount).forEach {i ->
       optimizedRecursiveWatchRoots.add("$root/rec$i")
       (1..5).forEach { flatWatchRoots.add("$root/rec$i/flat$it") }
       flatWatchRoots.add("$root/flat$i")
-      (1..5).forEach { pathMappings.putValue("$root/rec$i/ln$it", "$root/targets/rec$i/ln$it") }
+      (1..5).forEach { pathMappings.add(Pair("$root/rec$i/ln$it", "$root/targets/rec$i/ln$it")) }
     }
 
     PlatformTestUtil.startPerformanceTest("Create canonical path map", 7000) {
-      repeat(10) {
+      repeat(18) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
       }
     }.assertTiming()
 
     PlatformTestUtil.startPerformanceTest("Create canonical path map - convert paths", 10000) {
-      repeat(10) {
+      repeat(18) {
+        WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
+      }
+    }.assertTiming()
+  }
+
+  @Test
+  fun testCanonicalPathMapWithManySymlinks() {
+    val root = "/users/foo/workspace"
+    val flatWatchRoots = TreeSet<String>()
+    val optimizedRecursiveWatchRoots = TreeSet<String>()
+    val pathMappings = WatchRootsUtil.createMappingsNavigableSet()
+
+    val filesCount = 100_000
+    optimizedRecursiveWatchRoots.add("$root/targets")
+    optimizedRecursiveWatchRoots.add("$root/src")
+    (1..filesCount).forEach {i ->
+      pathMappings.add(Pair("$root/src/ln$i", "$root/targets/ln$i-1"))
+      pathMappings.add(Pair("$root/src/ln$i", "$root/targets/ln$i-2"))
+    }
+
+    val map = WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
+    map.addMapping((1..filesCount).map { Pair("$root/src/ln$it-3", "$root/src/ln$it-3") })
+    PlatformTestUtil.startPerformanceTest("Test apply mapping from canonical path map", 3000) {
+      repeat(1_000_000) {
+        map.mapToOriginalWatchRoots("$root/src/ln${(Math.random() * 200_000).toInt()}", true)
+      }
+    }.assertTiming()
+
+    PlatformTestUtil.startPerformanceTest("Create canonical path map", 3000) {
+      repeat(100) {
+        WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
+      }
+    }.assertTiming()
+
+    PlatformTestUtil.startPerformanceTest("Create canonical path map - convert paths", 3000) {
+      repeat(40) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
       }
     }.assertTiming()

@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -13,7 +14,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ final class WatchRootsManager {
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots = WatchRootsUtil.createFileNavigableSet();
   private final NavigableMap<String, SymlinkData> mySymlinksByPath = WatchRootsUtil.createFileNavigableMap();
   private final Int2ObjectMap<SymlinkData> mySymlinksById = new Int2ObjectOpenHashMap<>();
-  private final MultiMap<String, String> myPathMappings = MultiMap.createConcurrentSet();
+  private final NavigableSet<Pair<String, String>> myPathMappings = WatchRootsUtil.createMappingsNavigableSet();
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private boolean myWatcherRequiresUpdate;  // synchronized on `myLock`
   private final Object myLock = new Object();
@@ -141,25 +141,23 @@ final class WatchRootsManager {
 
   static CanonicalPathMap createCanonicalPathMap(NavigableSet<String> flatWatchRoots,
                                                  NavigableSet<String> optimizedRecursiveWatchRoots,
-                                                 MultiMap<String, String> pathMappings,
+                                                 Collection<Pair<String, String>> pathMappings,
                                                  boolean convertToForwardSlashes) {
     NavigableSet<@SystemDependent String> optimizedRecursiveWatchRootsCopy = WatchRootsUtil.createFileNavigableSet();
-    MultiMap<@SystemDependent String, @SystemDependent String> initialMappings = MultiMap.createConcurrentSet();
+    List<Pair<@SystemDependent String, @SystemDependent String>> initialMappings = new ArrayList<>(pathMappings.size());
 
     // Ensure paths are system dependent
     if (!convertToForwardSlashes) {
       optimizedRecursiveWatchRootsCopy.addAll(optimizedRecursiveWatchRoots);
-      initialMappings.putAllValues(pathMappings);
+      initialMappings.addAll(pathMappings);
     }
     else {
       for (String recursiveWatchRoot: optimizedRecursiveWatchRoots) {
         optimizedRecursiveWatchRootsCopy.add(recursiveWatchRoot.replace('/', '\\'));
       }
-      for (Map.Entry<String, Collection<String>> entry : pathMappings.entrySet()) {
-        Collection<String> values = initialMappings.getModifiable(entry.getKey().replace('/', '\\'));
-        for (String mapping: entry.getValue()) {
-          values.add(mapping.replace('/', '\\'));
-        }
+      for (Pair<String, String> mapping: pathMappings) {
+        initialMappings.add(new Pair<>(mapping.first.replace('/', '\\'),
+                                       mapping.second.replace('/', '\\')));
       }
     }
     NavigableSet<@SystemDependent String> optimizedFlatWatchRoots =
@@ -272,7 +270,7 @@ final class WatchRootsManager {
     }
     if (request.setRegistered(true)) {
       myWatcherRequiresUpdate = true;
-      myPathMappings.putValue(watchRoot, request.getOriginalPath());
+      myPathMappings.add(new Pair<>(watchRoot, request.getOriginalPath()));
     }
   }
 
@@ -299,7 +297,7 @@ final class WatchRootsManager {
     }
     removeWatchRequest(request);
     if (request.setRegistered(false)) {
-      myPathMappings.remove(request.getRootPath(), request.getOriginalPath());
+      myPathMappings.remove(new Pair<>(request.getRootPath(), request.getOriginalPath()));
       myWatcherRequiresUpdate = true;
     }
   }
