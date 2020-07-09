@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
 import com.intellij.openapi.vfs.VirtualFile
@@ -60,9 +61,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
     this.project = project
     this.document = document
 
-    vcsDocument = DocumentImpl(this.document.immutableCharSequence, true)
-    vcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, true)
-    vcsDocument.setReadOnly(true)
+    vcsDocument = createVcsDocument(this.document)
 
     documentTracker = DocumentTracker(vcsDocument, this.document, LOCK)
     Disposer.register(disposable, documentTracker)
@@ -124,21 +123,8 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
   @CalledInAwt
   protected fun updateDocument(side: Side, commandName: String?, task: (Document) -> Unit): Boolean {
-    if (side.isLeft) {
-      vcsDocument.setReadOnly(false)
-      try {
-          CommandProcessor.getInstance().runUndoTransparentAction {
-            task(vcsDocument)
-          }
-        return true
-      }
-      finally {
-        vcsDocument.setReadOnly(true)
-      }
-    }
-    else {
-      return DiffUtil.executeWriteCommand(document, project, commandName, { task(document) })
-    }
+    val affectedDocument = if (side.isLeft) vcsDocument else document
+    return updateDocument(project, affectedDocument, commandName, task)
   }
 
   @CalledInAwt
@@ -292,7 +278,36 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
 
   companion object {
-    @JvmStatic protected val LOG: Logger = Logger.getInstance(LineStatusTrackerBase::class.java)
+    @JvmStatic
+    protected val LOG: Logger = Logger.getInstance(LineStatusTrackerBase::class.java)
+    private val VCS_DOCUMENT_KEY: Key<Boolean> = Key.create("LineStatusTrackerBase.VCS_DOCUMENT_KEY")
+
+    fun createVcsDocument(originalDocument: Document): Document {
+      val result = DocumentImpl(originalDocument.immutableCharSequence, true)
+      result.putUserData(UndoConstants.DONT_RECORD_UNDO, true)
+      result.putUserData(VCS_DOCUMENT_KEY, true)
+      result.setReadOnly(true)
+      return result
+    }
+
+    @CalledInAwt
+    fun updateDocument(project: Project?, document: Document, commandName: String?, task: (Document) -> Unit): Boolean {
+      if (DiffUtil.isUserDataFlagSet(VCS_DOCUMENT_KEY, document)) {
+        document.setReadOnly(false)
+        try {
+          CommandProcessor.getInstance().runUndoTransparentAction {
+            task(document)
+          }
+          return true
+        }
+        finally {
+          document.setReadOnly(true)
+        }
+      }
+      else {
+        return DiffUtil.executeWriteCommand(document, project, commandName) { task(document) }
+      }
+    }
   }
 
 
