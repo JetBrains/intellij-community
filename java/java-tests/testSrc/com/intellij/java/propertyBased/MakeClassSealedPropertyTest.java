@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
-import com.intellij.codeInsight.intention.impl.MakeSealedAction;
+import com.intellij.codeInsight.intention.impl.SealClassAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -54,7 +54,7 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
     Generator<PsiJavaFile> javaFiles = psiJavaFiles();
     PsiJavaFile psiFile = env.generateValue(javaFiles, "Open %s in editor");
 
-    MakeSealedAction makeSealedAction = new MakeSealedAction();
+    SealClassAction makeSealedAction = new SealClassAction();
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
     Editor editor = editorManager.openTextEditor(new OpenFileDescriptor(myProject, psiFile.getVirtualFile()), true);
 
@@ -93,7 +93,7 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
   }
 
   private static boolean convertToSealedClass(@NotNull Editor editor,
-                                              @NotNull MakeSealedAction makeSealedAction,
+                                              @NotNull SealClassAction makeSealedAction,
                                               @NotNull PsiIdentifier classIdentifier) {
     Project project = classIdentifier.getProject();
     return WriteCommandAction.runWriteCommandAction(project, (Computable<Boolean>)() -> {
@@ -108,7 +108,7 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
   }
 
   private static boolean canConvertToSealedClass(@NotNull Editor editor,
-                                                 @NotNull MakeSealedAction makeSealedAction,
+                                                 @NotNull SealClassAction makeSealedAction,
                                                  @NotNull PsiClass psiClass) {
     PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
     if (nameIdentifier == null) return false;
