@@ -506,9 +506,13 @@
     </action>
 
     <action id="Maven.ShowSettings"
-            class="org.jetbrains.idea.maven.project.actions.EditSettingsAction"
-            icon="AllIcons.General.Settings">
+            class="org.jetbrains.idea.maven.project.actions.EditSettingsAction">
     </action>
+
+    <group id="Maven.ShowSettingsGroup" popup="true" icon="AllIcons.General.Settings">
+      <reference id="ExternalSystem.ShowCommonSettings"/>
+      <reference id="Maven.ShowSettings"/>
+    </group>
 
     <action id="Maven.ToggleOffline"
             class="org.jetbrains.idea.maven.project.actions.ToggleOfflineAction"
@@ -594,7 +598,7 @@
       <reference id="Maven.ToggleSkipTests"/>
       <reference id="Maven.CollapseAll"/>
       <separator/>
-      <reference id="Maven.ShowSettings"/>
+      <reference id="Maven.ShowSettingsGroup"/>
     </group>
 
     <group id="Maven.DependencyMenu">
