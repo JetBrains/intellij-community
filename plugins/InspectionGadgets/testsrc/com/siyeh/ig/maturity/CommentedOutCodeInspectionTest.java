@@ -17,6 +17,8 @@ public class CommentedOutCodeInspectionTest extends LightJavaInspectionTestCase 
 
   @Override
   protected @Nullable InspectionProfileEntry getInspection() {
-    return new CommentedOutCodeInspection();
+    final CommentedOutCodeInspection inspection = new CommentedOutCodeInspection();
+    inspection.minLines = 1;
+    return inspection;
   }
 }

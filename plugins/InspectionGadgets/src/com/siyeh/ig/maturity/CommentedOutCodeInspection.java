@@ -3,6 +3,7 @@ package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.project.Project;
@@ -11,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -18,6 +20,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,9 +29,18 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class CommentedOutCodeInspection extends BaseInspection implements CleanupLocalInspectionTool {
+
+  public int minLines = 2;
+
   @Override
   protected @NotNull @InspectionMessage String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("inspection.commented.out.code.problem.descriptor", infos[0]);
+  }
+
+  @Override
+  public @Nullable JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("inspection.commented.out.code.min.lines.options"),
+                                              this, "minLines");
   }
 
   @Override
@@ -36,6 +49,8 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
   }
 
   private static class DeleteCommentedOutCodeFix extends InspectionGadgetsFix {
+
+    DeleteCommentedOutCodeFix() {}
 
     @Override
     @NotNull
@@ -71,7 +86,9 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
     return new CommentedOutCodeVisitor();
   }
 
-  private static class CommentedOutCodeVisitor extends BaseInspectionVisitor {
+  private class CommentedOutCodeVisitor extends BaseInspectionVisitor {
+
+    CommentedOutCodeVisitor() {}
 
     @Override
     public void visitComment(@NotNull PsiComment comment) {
@@ -86,8 +103,12 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
         }
         while (true) {
           final String text = getCommentText(comment);
+          final int lines = StringUtil.countNewLines(text) + 1;
+          if (lines < minLines) {
+            return;
+          }
           if (isCode(text, comment)) {
-            registerErrorAtOffset(comment, 0, 2, StringUtil.countNewLines(text) + 1);
+            registerErrorAtOffset(comment, 0, 2, lines);
             return;
           }
           final PsiElement after = PsiTreeUtil.skipWhitespacesForward(comment);
@@ -102,59 +123,59 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
       }
       else {
         final String text = getCommentText(comment);
-        if (!isCode(text, comment)) {
+        if (StringUtil.countNewLines(text) + 1 < minLines || !isCode(text, comment)) {
           return;
         }
         registerErrorAtOffset(comment, 0, 2, StringUtil.countNewLines(text) + 1);
       }
     }
-
-    private static boolean isCode(String text, PsiElement context) {
-      if (text.isEmpty()) {
-        return false;
-      }
-      final Project project = context.getProject();
-      final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
-      final PsiElement fragment;
-      final PsiElement parent = context.getParent();
-      if (parent instanceof PsiJavaFile) {
-        fragment = PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", JavaFileType.INSTANCE, text);
-      }
-      else if (parent instanceof PsiClass) {
-        fragment = factory.createMemberCodeFragment(text, context, false);
-      }
-      else {
-        fragment = factory.createCodeBlockCodeFragment(text, context, false);
-      }
-      return !isInvalidCode(fragment);
-    }
-
-    private static String getCommentText(PsiComment comment) {
-      String lineText = getEndOfLineCommentText(comment);
-      if (lineText != null) {
-        final StringBuilder result = new StringBuilder();
-        while (lineText != null) {
-          result.append(lineText).append('\n');
-          final PsiElement sibling = PsiTreeUtil.skipWhitespacesForward(comment);
-          if (!(sibling instanceof PsiComment)) {
-            break;
-          }
-          comment = (PsiComment)sibling;
-          lineText = getEndOfLineCommentText(comment);
-        }
-        return result.toString().trim();
-      }
-      final String text = comment.getText();
-      return StringUtil.trimEnd(StringUtil.trimStart(text, "/*"), "*/").trim();
-    }
-
-    @Nullable
-    private static String getEndOfLineCommentText(PsiComment comment) {
-      return (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) ? StringUtil.trimStart(comment.getText(), "//") : null;
-    }
   }
 
-  private static boolean isInvalidCode(PsiElement element) {
+  static boolean isCode(String text, PsiElement context) {
+    if (text.isEmpty()) {
+      return false;
+    }
+    final Project project = context.getProject();
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
+    final PsiElement fragment;
+    final PsiElement parent = context.getParent();
+    if (parent instanceof PsiJavaFile) {
+      fragment = PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", JavaFileType.INSTANCE, text);
+    }
+    else if (parent instanceof PsiClass) {
+      fragment = factory.createMemberCodeFragment(text, context, false);
+    }
+    else {
+      fragment = factory.createCodeBlockCodeFragment(text, context, false);
+    }
+    return !isInvalidCode(fragment);
+  }
+
+  static String getCommentText(PsiComment comment) {
+    String lineText = getEndOfLineCommentText(comment);
+    if (lineText != null) {
+      final StringBuilder result = new StringBuilder();
+      while (lineText != null) {
+        result.append(lineText).append('\n');
+        final PsiElement sibling = PsiTreeUtil.skipWhitespacesForward(comment);
+        if (!(sibling instanceof PsiComment)) {
+          break;
+        }
+        comment = (PsiComment)sibling;
+        lineText = getEndOfLineCommentText(comment);
+      }
+      return result.toString().trim();
+    }
+    final String text = comment.getText();
+    return StringUtil.trimEnd(StringUtil.trimStart(text, "/*"), "*/").trim();
+  }
+
+  @Nullable
+  static String getEndOfLineCommentText(PsiComment comment) {
+    return (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) ? StringUtil.trimStart(comment.getText(), "//") : null;
+  }
+
+  static boolean isInvalidCode(PsiElement element) {
     final PsiElement firstChild = element.getFirstChild();
     final PsiElement lastChild = element.getLastChild();
     final boolean strict = firstChild == lastChild && firstChild instanceof PsiExpressionStatement;
