@@ -75,6 +75,7 @@ internal class MarketplaceSearchPluginData(
   var isPaid: Boolean = false,
   val rating: Double = 0.0,
   val name: String = "",
+  val cdate: String? = null,
   val vendor: String = "",
   @get:JsonProperty("updateId")
   val externalUpdateId: String? = null,
@@ -85,6 +86,7 @@ internal class MarketplaceSearchPluginData(
   fun toPluginNode(): PluginNode {
     val pluginNode = PluginNode()
     pluginNode.setId(id)
+    pluginNode.setDate(cdate)
     pluginNode.name = name
     pluginNode.rating = String.format("%.2f", rating)
     pluginNode.downloads = downloads
