@@ -18,7 +18,7 @@ interface TerminalShellCommandHandler {
    * Launches matched command, see {@see #matches}.
    * Returns true if command has been successfully executed, false if failed.
    */
-  fun execute(project: Project, workingDirectory: String?, localSession: Boolean, @NonNls command: String, executor: Executor?): Boolean
+  fun execute(project: Project, workingDirectory: String?, localSession: Boolean, @NonNls command: String, executor: Executor): Boolean
 
   companion object {
     private val LOG = Logger.getInstance(TerminalShellCommandHandler::class.java)
@@ -28,7 +28,7 @@ interface TerminalShellCommandHandler {
       return EP.extensionList.any { it.matches(project, workingDirectory, localSession, command) }
     }
 
-    fun executeShellCommandHandler(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor?) {
+    fun executeShellCommandHandler(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor) {
       EP.extensionList
         .find { it.matches(project, workingDirectory, localSession, command) }
         ?.execute(project, workingDirectory, localSession, command, executor)
