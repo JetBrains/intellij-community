@@ -835,48 +835,51 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       LOG.warn("file: " + getFile(entry.getKey()), entry.getValue());
     }
 
-    final String text = StringUtil.join(failures.values(), Throwable::getMessage, "\n");
+    // later to get out of write action
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final String text = StringUtil.join(failures.values(), Throwable::getMessage, "\n");
 
-    final DialogWrapper dialog = new DialogWrapper(null) {
-      {
-        init();
-        setTitle(UIBundle.message("cannot.save.files.dialog.title"));
-      }
+      final DialogWrapper dialog = new DialogWrapper(null) {
+        {
+          init();
+          setTitle(UIBundle.message("cannot.save.files.dialog.title"));
+        }
 
-      @Override
-      protected void createDefaultActions() {
-        super.createDefaultActions();
-        myOKAction.putValue(Action.NAME, UIBundle
-          .message(myOnClose ? "cannot.save.files.dialog.ignore.changes" : "cannot.save.files.dialog.revert.changes"));
-        myOKAction.putValue(DEFAULT_ACTION, null);
+        @Override
+        protected void createDefaultActions() {
+          super.createDefaultActions();
+          myOKAction.putValue(Action.NAME, UIBundle
+            .message(myOnClose ? "cannot.save.files.dialog.ignore.changes" : "cannot.save.files.dialog.revert.changes"));
+          myOKAction.putValue(DEFAULT_ACTION, null);
 
-        if (!myOnClose) {
-          myCancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
+          if (!myOnClose) {
+            myCancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
+          }
+        }
+
+        @Override
+        protected JComponent createCenterPanel() {
+          final JPanel panel = new JPanel(new BorderLayout(0, 5));
+
+          panel.add(new JLabel(UIBundle.message("cannot.save.files.dialog.message")), BorderLayout.NORTH);
+
+          final JTextPane area = new JTextPane();
+          area.setText(text);
+          area.setEditable(false);
+          area.setMinimumSize(new Dimension(area.getMinimumSize().width, 50));
+          panel.add(new JBScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
+                    BorderLayout.CENTER);
+
+          return panel;
+        }
+      };
+
+      if (dialog.showAndGet()) {
+        for (Document document : failures.keySet()) {
+          reloadFromDisk(document);
         }
       }
-
-      @Override
-      protected JComponent createCenterPanel() {
-        final JPanel panel = new JPanel(new BorderLayout(0, 5));
-
-        panel.add(new JLabel(UIBundle.message("cannot.save.files.dialog.message")), BorderLayout.NORTH);
-
-        final JTextPane area = new JTextPane();
-        area.setText(text);
-        area.setEditable(false);
-        area.setMinimumSize(new Dimension(area.getMinimumSize().width, 50));
-        panel.add(new JBScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
-                  BorderLayout.CENTER);
-
-        return panel;
-      }
-    };
-
-    if (dialog.showAndGet()) {
-      for (Document document : failures.keySet()) {
-        reloadFromDisk(document);
-      }
-    }
+    });
   }
 
   private final Map<VirtualFile, Document> myDocumentCache = ContainerUtil.createConcurrentWeakValueMap();
