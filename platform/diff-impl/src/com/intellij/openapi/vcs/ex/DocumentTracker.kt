@@ -450,8 +450,7 @@ class DocumentTracker : Disposable {
 
     fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean = true
 
-    fun afterRangeChange() {}
-    fun afterBulkRangeChange() {}
+    fun afterBulkRangeChange(isDirty: Boolean) {}
 
     fun onFreeze(side: Side) {}
     fun onUnfreeze(side: Side) {}
@@ -484,7 +483,7 @@ private class LineTracker(private val handler: Handler,
     blocks = ranges.map { Block(it, dirty, false) }
     isDirty = dirty
 
-    handler.afterBulkRangeChange()
+    handler.afterBulkRangeChange(isDirty)
   }
 
   fun destroy() {
@@ -503,7 +502,7 @@ private class LineTracker(private val handler: Handler,
     blocks = result.newBlocks
     isDirty = false
 
-    handler.afterBulkRangeChange()
+    handler.afterBulkRangeChange(isDirty)
   }
 
   fun rangeChanged(side: Side, startLine: Int, beforeLength: Int, afterLength: Int) {
@@ -517,7 +516,7 @@ private class LineTracker(private val handler: Handler,
     blocks = data.newBlocks
     isDirty = data.newBlocks.isNotEmpty()
 
-    handler.afterRangeChange()
+    handler.afterBulkRangeChange(isDirty)
   }
 
   fun rangesChanged(side: Side, iterable: DiffIterable) {
@@ -526,7 +525,7 @@ private class LineTracker(private val handler: Handler,
     blocks = newBlocks
     isDirty = newBlocks.isNotEmpty()
 
-    handler.afterBulkRangeChange()
+    handler.afterBulkRangeChange(isDirty)
   }
 
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Block> {
@@ -550,7 +549,7 @@ private class LineTracker(private val handler: Handler,
 
     blocks = newBlocks
 
-    handler.afterBulkRangeChange()
+    handler.afterBulkRangeChange(isDirty)
 
     return appliedBlocks
   }

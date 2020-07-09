@@ -431,15 +431,8 @@ class ChangelistsLocalLineStatusTracker(project: Project,
       return false
     }
 
-    override fun afterRangeChange() {
-      super.afterRangeChange()
-
-      updateAffectedChangeLists()
-      fireExcludedFromCommitChanged()
-    }
-
-    override fun afterBulkRangeChange() {
-      super.afterBulkRangeChange()
+    override fun afterBulkRangeChange(isDirty: Boolean) {
+      super.afterBulkRangeChange(isDirty)
 
       blocks.forEach {
         // do not override markers, that are set via other methods of this listener

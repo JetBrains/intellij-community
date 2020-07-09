@@ -183,13 +183,9 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
       after.ourData.innerRanges = before.ourData.innerRanges
     }
 
-    override fun afterRangeChange() {
-      updateHighlighters()
-    }
-
-    override fun afterBulkRangeChange() {
+    override fun afterBulkRangeChange(isDirty: Boolean) {
       checkIfFileUnchanged()
-      calcInnerRanges()
+      if (!isDirty) calcInnerRanges()
       updateHighlighters()
     }
 
