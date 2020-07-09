@@ -73,6 +73,7 @@ public final class CustomPluginRepositoryService {
     }
   }
 
+  @NotNull
   public Collection<IdeaPluginDescriptor> getCustomRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
       if (myCustomRepositoryPluginsList != null) {
