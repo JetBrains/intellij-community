@@ -15,7 +15,7 @@ class OpenFileShellCommandHandler : TerminalShellCommandHandler {
   override fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String) =
     handleCommand(command, localSession, workingDirectory) { file -> checkRegisteredFileType(file) }
 
-  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor?) =
+  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor) =
     handleCommand(command, localSession, workingDirectory) { file -> openFileEditor(project, file) }
 
   private fun checkRegisteredFileType(file: VirtualFile?) =

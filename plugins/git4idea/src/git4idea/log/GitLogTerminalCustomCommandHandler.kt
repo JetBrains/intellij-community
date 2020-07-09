@@ -21,7 +21,7 @@ class GitLogTerminalCustomCommandHandler : TerminalShellCommandHandler {
   override fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean =
     parse(project, workingDirectory, command) != null
 
-  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor?): Boolean {
+  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor): Boolean {
     if (workingDirectory == null) {
       LOG.warn("Cannot open git log for unknown root.")
       return false

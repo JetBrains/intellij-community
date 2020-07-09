@@ -15,7 +15,7 @@ import java.nio.file.Paths
 
 class DiffCustomCommandHandler : TerminalShellCommandHandler {
   private val LOG = Logger.getInstance(DiffCustomCommandHandler::class.java)
-  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor?): Boolean {
+  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor): Boolean {
     val parameters = parse(workingDirectory, localSession, command)
 
     if (parameters == null) {
