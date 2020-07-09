@@ -559,7 +559,6 @@ public class MavenProjectImporter {
       }
     }
 
-    List<Module> modulesToMavenize = new ArrayList<>();
     List<MavenModuleImporter> importers = new ArrayList<>();
 
     for (Map.Entry<MavenProject, MavenProjectChanges> each : projectsWithChanges.entrySet()) {
@@ -570,7 +569,6 @@ public class MavenProjectImporter {
       myModelsProvider.registerModulePublication(
         module, new ProjectId(mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion()));
       MavenModuleImporter moduleImporter = createModuleImporter(module, project, each.getValue());
-      modulesToMavenize.add(module);
       importers.add(moduleImporter);
 
       MavenRootModelAdapter rootModelAdapter =
