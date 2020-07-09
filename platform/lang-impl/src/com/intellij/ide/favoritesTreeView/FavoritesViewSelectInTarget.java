@@ -51,7 +51,7 @@ final class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
     PsiElement toSelect = findElementToSelect(element, null);
     if (toSelect != null) {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(toSelect);
-      virtualFile = BackedVirtualFile.getOriginFileIfBacked(virtualFile);
+      virtualFile = virtualFile == null ? null : BackedVirtualFile.getOriginFileIfBacked(virtualFile);
       select(toSelect, virtualFile, requestFocus);
     }
   }
