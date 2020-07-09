@@ -463,11 +463,13 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     if (!isSoftWrappingEnabled()) {
       if (shouldSoftWrapsBeForced(event)) {
         forceSoftWraps();
-        recalculate();
+        if (isSoftWrappingEnabled()) {
+          myDirty = false;
+          myApplianceManager.recalculateAll();
+          return;
+        }
       }
-      else {
-        myDirty = true;
-      }
+      myDirty = true;
       return;
     }
     myApplianceManager.documentChanged(event, myAfterLineEndInlayUpdated);
