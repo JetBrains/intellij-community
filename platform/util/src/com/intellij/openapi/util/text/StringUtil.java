@@ -937,6 +937,28 @@ public class StringUtil extends StringUtilRt {
     return builder;
   }
 
+  @Contract(value = "null -> null; !null -> !null", pure = true)
+  public static @Nullable CharSequence trim(@Nullable CharSequence s) {
+    if (s == null) return null;
+    int startIndex = 0;
+    int length = s.length();
+    if (length == 0) return s;
+    while (startIndex < length && Character.isWhitespace(s.charAt(startIndex))) startIndex++;
+
+    if (startIndex == length) {
+      return Strings.EMPTY_CHAR_SEQUENCE;
+    }
+
+    int endIndex = length - 1;
+    while (endIndex >= startIndex && Character.isWhitespace(s.charAt(endIndex))) endIndex--;
+    endIndex++;
+
+    if (startIndex > 0 || endIndex < length) {
+      return s.subSequence(startIndex, endIndex);
+    }
+    return s;
+  }
+
   @Contract(pure = true)
   public static boolean startsWithChar(@Nullable CharSequence s, char prefix) {
     return s != null && s.length() != 0 && s.charAt(0) == prefix;
