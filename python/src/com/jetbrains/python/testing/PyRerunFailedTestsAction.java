@@ -173,11 +173,6 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     }
 
     @Override
-    protected void addTestRunnerParameters(GeneralCommandLine cmd) {
-      myState.addTestRunnerParameters(cmd);
-    }
-
-    @Override
     protected void addAfterParameters(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
                                       @NotNull PythonScriptExecution testScriptExecution) {
       myState.addAfterParameters(targetEnvironmentRequest, testScriptExecution);
