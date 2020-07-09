@@ -30,6 +30,7 @@ public final class OSAgnosticPathUtil {
 
     int length1 = path1.length();
     int length2 = path2.length();
+    boolean ignoreCase = !SystemInfo.isFileSystemCaseSensitive;
 
     for (int pos = 0; pos < length1 && pos < length2; pos++) {
       char ch1 = path1.charAt(pos);
@@ -46,7 +47,7 @@ public final class OSAgnosticPathUtil {
       else if (ch2 == '/' || ch2 == '\\') {
         return 1;
       }
-      int diff = StringUtil.compare(ch1, ch2, !SystemInfo.isFileSystemCaseSensitive);
+      int diff = StringUtil.compare(ch1, ch2, ignoreCase);
       if (diff != 0) {
         return diff;
       }
@@ -70,6 +71,7 @@ public final class OSAgnosticPathUtil {
     int pathLength = path.length(), prefixLength = prefix.length();
     if (prefixLength == 0) return true;
     if (prefixLength > pathLength) return false;
+    boolean ignoreCase = !SystemInfo.isFileSystemCaseSensitive;
     for (int pos = 0; pos < pathLength && pos < prefixLength; pos++) {
       char ch1 = path.charAt(pos);
       char ch2 = prefix.charAt(pos);
@@ -85,7 +87,7 @@ public final class OSAgnosticPathUtil {
       else if (ch2 == '/' || ch2 == '\\') {
         return false;
       }
-      if (StringUtil.compare(ch1, ch2, !SystemInfo.isFileSystemCaseSensitive) != 0) return false;
+      if (StringUtil.compare(ch1, ch2, ignoreCase) != 0) return false;
     }
     if (pathLength == prefixLength) {
       return true;

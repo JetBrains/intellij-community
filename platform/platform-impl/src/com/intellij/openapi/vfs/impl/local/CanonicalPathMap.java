@@ -22,24 +22,25 @@ import static com.intellij.util.PathUtil.getParentPath;
  */
 final class CanonicalPathMap {
   static CanonicalPathMap empty() {
-    return new CanonicalPathMap(Collections.emptyNavigableSet(), Collections.emptyNavigableSet(), MultiMap.createConcurrentSet());
+    return new CanonicalPathMap(Collections.emptyNavigableSet(), Collections.emptyNavigableSet(), Collections.emptyNavigableSet());
   }
 
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots;
   private final NavigableSet<String> myOptimizedFlatWatchRoots;
+  private Collection<Pair<String, String>> myInitialPathMappings;
   private final MultiMap<String, String> myPathMappings;
 
   CanonicalPathMap(@NotNull NavigableSet<String> optimizedRecursiveWatchRoots,
                    @NotNull NavigableSet<String> optimizedFlatWatchRoots,
-                   @NotNull MultiMap<String, String> initialPathMappings) {
+                   @NotNull Collection<Pair<String, String>> initialPathMappings) {
     myOptimizedRecursiveWatchRoots = optimizedRecursiveWatchRoots;
     myOptimizedFlatWatchRoots = optimizedFlatWatchRoots;
-    myPathMappings = initialPathMappings;
-    assert myPathMappings.getClass() == MultiMap.createConcurrentSet().getClass()
-      : "initialPathMappings must be created with MultiMap.createConcurrentSet()";
+    myInitialPathMappings = initialPathMappings;
+    myPathMappings = MultiMap.createConcurrentSet();
   }
 
   @NotNull Pair<List<String>, List<String>> getCanonicalWatchRoots() {
+    initializeMappings();
     Map<String, String> canonicalPathMappings = new ConcurrentHashMap<>();
     Stream.concat(myOptimizedRecursiveWatchRoots.stream(), myOptimizedFlatWatchRoots.stream())
       .parallel()
@@ -77,6 +78,23 @@ final class CanonicalPathMap {
     }
 
     return pair(new ArrayList<>(canonicalRecursiveRoots), new ArrayList<>(canonicalFlatRoots));
+  }
+
+  private void initializeMappings() {
+    String lastMapping = "";
+    Collection<String> lastCollection = null;
+    for (Pair<String, String> mapping: myInitialPathMappings) {
+      String currentMapping = mapping.first;
+      // If mappings are sorted, below check should improve performance by avoiding
+      // unnecessary gets from the concurrent multi map.
+      if (!currentMapping.equals(lastMapping) || lastCollection == null) {
+        lastMapping = mapping.first;
+        lastCollection = myPathMappings.getModifiable(lastMapping);
+      }
+      lastCollection.add(mapping.second);
+    }
+    // Free the memory
+    myInitialPathMappings = null;
   }
 
   void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
