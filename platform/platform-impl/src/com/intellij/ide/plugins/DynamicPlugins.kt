@@ -278,16 +278,31 @@ object DynamicPlugins {
                                                   processor: (mainDescriptor: IdeaPluginDescriptorImpl, subDescriptor: IdeaPluginDescriptorImpl?) -> Boolean) {
     for (descriptor in PluginManagerCore.getLoadedPlugins(null)) {
       for (dependency in (descriptor.pluginDependencies ?: continue)) {
-        if (!dependency.isOptional || dependency.id != dependencyPluginId) {
-          continue
-        }
-
-        val subDescriptor = dependency.configFile?.let { loadOptionalDependencyDescriptor(descriptor, it) }
-        if (!processor(descriptor, subDescriptor)) {
-          break
-        }
+        if (!processOptionalDependencyDescriptor(dependencyPluginId, descriptor, dependency, processor)) break
       }
     }
+  }
+
+  private fun processOptionalDependencyDescriptor(
+    dependencyPluginId: PluginId,
+    descriptor: IdeaPluginDescriptorImpl,
+    dependency: PluginDependency,
+    processor: (mainDescriptor: IdeaPluginDescriptorImpl, subDescriptor: IdeaPluginDescriptorImpl?) -> Boolean
+  ): Boolean {
+    if (!dependency.isOptional) {
+      return true
+    }
+
+    val subDescriptor = dependency.configFile?.let { loadOptionalDependencyDescriptor(descriptor, it) } ?: return true
+    if (dependency.id == dependencyPluginId) {
+      if (!processor(descriptor, subDescriptor)) {
+        return false
+      }
+    }
+    subDescriptor.pluginDependencies?.forEach { subDependency ->
+      if (!processOptionalDependencyDescriptor(dependencyPluginId, descriptor, subDependency, processor)) return false
+    }
+    return true
   }
 
   private fun processImplementationDetailDependenciesOnPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
