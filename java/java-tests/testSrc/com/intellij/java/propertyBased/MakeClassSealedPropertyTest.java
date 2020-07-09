@@ -111,8 +111,6 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
     PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
     if (nameIdentifier == null) return false;
     editor.getCaretModel().moveToOffset(nameIdentifier.getTextOffset());
-    if (!makeSealedAction.isAvailable(psiClass.getProject(), editor, nameIdentifier)) return false;
-    // for interface without implementations red code is produced
-    return !psiClass.isInterface() || ClassInheritorsSearch.search(psiClass).findFirst() != null;
+    return makeSealedAction.isAvailable(psiClass.getProject(), editor, nameIdentifier);
   }
 }
