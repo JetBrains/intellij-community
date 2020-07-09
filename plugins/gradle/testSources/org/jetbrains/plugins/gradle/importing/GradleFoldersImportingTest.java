@@ -825,9 +825,11 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   protected void waitForModulesUpdate() throws Exception {
-    ((SourceFolderManagerImpl)SourceFolderManager.getInstance(myProject)).consumeBulkOperationsState(future -> {
-      PlatformTestUtil.waitForFuture(future, 1000);
-      return null;
+    edt(() -> {
+      ((SourceFolderManagerImpl)SourceFolderManager.getInstance(myProject)).consumeBulkOperationsState(future -> {
+        PlatformTestUtil.waitForFuture(future, 1000);
+        return null;
+      });
     });
   }
 }
