@@ -515,7 +515,7 @@ private class LineTracker(private val handler: Handler,
     }
 
     blocks = data.newBlocks
-    isDirty = true
+    isDirty = data.newBlocks.isNotEmpty()
 
     handler.afterRangeChange()
   }
@@ -524,7 +524,7 @@ private class LineTracker(private val handler: Handler,
     val newBlocks = BulkRangeChangeHandler(handler, blocks, side).run(iterable)
 
     blocks = newBlocks
-    isDirty = true
+    isDirty = newBlocks.isNotEmpty()
 
     handler.afterBulkRangeChange()
   }
