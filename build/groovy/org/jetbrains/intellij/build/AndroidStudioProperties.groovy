@@ -268,6 +268,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)
       }
+      doNotCreateSeparateJarForLocalizableResources()
     }
   }
 
