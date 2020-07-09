@@ -62,6 +62,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -2260,8 +2261,10 @@ public final class HighlightUtil {
     TextRange fieldRange = referencedField.getTextRange();
     if (fieldRange == null || expression.getTextRange().getStartOffset() >= fieldRange.getEndOffset()) return null;
     // only simple reference can be illegal
-    if (!acceptQualified && PsiTreeUtil.getParentOfType(expression, PsiEnumConstant.class) == null &&
-        expression.getQualifierExpression() != null) return null;
+    if (!acceptQualified) {
+      PsiClassType enumType = TypeUtils.getType(CommonClassNames.JAVA_LANG_ENUM, referencedField);
+      if (!enumType.isAssignableFrom(referencedField.getType()) && expression.getQualifierExpression() != null) return null;
+    }
     PsiField initField = findEnclosingFieldInitializer(expression);
     PsiClassInitializer classInitializer = findParentClassInitializer(expression);
     if (initField == null && classInitializer == null) return null;

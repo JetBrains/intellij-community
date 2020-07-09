@@ -11,3 +11,11 @@ enum Enum242390 {
     this.next = next;
   }
 }
+
+enum Enum242390_2 {
+  A(Enum242390_2.D);
+
+  Enum242390_2(String s) { }
+
+  static final String D = "";
+}
