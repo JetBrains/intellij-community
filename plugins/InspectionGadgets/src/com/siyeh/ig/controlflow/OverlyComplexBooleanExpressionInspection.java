@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -69,8 +68,6 @@ public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
     final CheckBox ignoreConjunctionsDisjunctionsCheckBox =
       new CheckBox(InspectionGadgetsBundle.message("overly.complex.boolean.expression.ignore.option"),
                    this, "m_ignorePureConjunctionsDisjunctions");
-    final NumberFormat formatter = NumberFormat.getIntegerInstance();
-    formatter.setParseIntegerOnly(true);
     final JFormattedTextField termLimitTextField = prepareNumberEditor("m_limit");
 
     final GridBagConstraints constraints = new GridBagConstraints();
