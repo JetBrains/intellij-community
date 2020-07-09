@@ -40,12 +40,12 @@ import java.util.*
 abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   protected val application: Application = ApplicationManager.getApplication()
 
-  open val project: Project?
+  override val project: Project?
 
   final override val document: Document
   final override val vcsDocument: Document
 
-  protected val disposable: Disposable = Disposer.newDisposable()
+  final override val disposable: Disposable = Disposer.newDisposable()
   protected val documentTracker: DocumentTracker
   protected abstract val renderer: LineStatusMarkerRenderer
 
@@ -154,6 +154,10 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   @CalledInAwt
   override fun doFrozen(task: Runnable) {
     documentTracker.doFrozen({ task.run() })
+  }
+
+  override fun <T> readLock(task: () -> T): T {
+    return documentTracker.readLock(task)
   }
 
 

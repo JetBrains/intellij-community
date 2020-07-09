@@ -23,15 +23,13 @@ import java.awt.Point
 import java.util.*
 
 interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
-  val project: Project
+  override val project: Project
   override val virtualFile: VirtualFile
 
   fun isAvailableAt(editor: Editor): Boolean
 
   fun scrollAndShowHint(range: Range, editor: Editor)
   fun showHint(range: Range, editor: Editor)
-
-  fun <T> readLock(task: () -> T): T
 }
 
 interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
@@ -56,9 +54,10 @@ interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
              val detectWhitespaceChangedLines: Boolean)
 }
 
-abstract class LocalLineStatusTrackerImpl<R : Range> constructor(override val project: Project,
-                                                                 document: Document,
-                                                                 override val virtualFile: VirtualFile
+abstract class LocalLineStatusTrackerImpl<R : Range>(
+  final override val project: Project,
+  document: Document,
+  final override val virtualFile: VirtualFile
 ) : LineStatusTrackerBase<R>(project, document), LocalLineStatusTracker<R> {
   abstract override val renderer: LocalLineStatusMarkerRenderer
 
@@ -149,9 +148,5 @@ abstract class LocalLineStatusTrackerImpl<R : Range> constructor(override val pr
   override fun unfreeze() {
     documentTracker.unfreeze(Side.LEFT)
     documentTracker.unfreeze(Side.RIGHT)
-  }
-
-  override fun <T> readLock(task: () -> T): T {
-    return documentTracker.readLock(task)
   }
 }
