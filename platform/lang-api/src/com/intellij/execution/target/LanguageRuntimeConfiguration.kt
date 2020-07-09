@@ -8,9 +8,7 @@ import com.intellij.execution.target.LanguageRuntimeType.VolumeType
 import com.intellij.execution.target.TargetEnvironment.TargetPath
 import com.intellij.execution.target.TargetEnvironment.UploadRoot
 import com.intellij.execution.target.TargetEnvironmentType.TargetSpecificVolumeData
-import com.intellij.openapi.components.BaseState
 import com.intellij.util.text.nullize
-import com.intellij.util.xmlb.annotations.Transient
 import java.nio.file.Path
 
 /**
@@ -57,24 +55,6 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
         this[key] = value
       }
     }
-  }
-
-  /**
-   * Default serialization format for the volume data, including both the target path and target specific data configured by the user
-   */
-  class VolumeState : BaseState() {
-    var remotePath by string()
-    var targetSpecificBits by map<String, String>()
-
-    var targetSpecificData: TargetSpecificVolumeData?
-      @Transient
-      get() = object : TargetSpecificVolumeData {
-        override fun toStorableMap(): Map<String, String> = targetSpecificBits.toMap()
-      }
-      set(data) {
-        val dataAsMap = data?.toStorableMap() ?: emptyMap()
-        targetSpecificBits = dataAsMap.toMutableMap()
-      }
   }
 }
 

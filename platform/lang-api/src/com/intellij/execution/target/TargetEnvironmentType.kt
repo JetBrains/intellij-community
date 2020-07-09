@@ -46,10 +46,10 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
   }
 
   /**
-   * Editor for the target specific volume data. The language runtime is expected to create separate editor instance for each of its
-   * [LanguageRuntimeType.volumeDescriptors] descriptors. The data configured by the user will be stored in the
+   * Custom UI component for editing of the target specific volume data. The language runtime is expected to create separate editor instance
+   * for each of its [LanguageRuntimeType.volumeDescriptors] descriptors. The data configured by the user will be stored in the
    * [LanguageRuntimeConfiguration.getTargetSpecificData], and will be made available for the target via the [TargetEnvironmentRequest].
-   * <p/>
+   *
    * Currently, only [TargetEnvironment.UploadRoot.volumeData] is actually supported.
    *
    * The [TargetSpecificVolumeData] configured by the user in this editor,
@@ -58,7 +58,10 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
   interface TargetSpecificVolumeContributionUI {
     fun createComponent(): JComponent
 
-    fun resetFrom(state: TargetSpecificVolumeData?)
+    /**
+     * [storedData] previously serialized data originally produced by [TargetSpecificVolumeData#toStorableMap] call
+     */
+    fun resetFrom(storedData: Map<String, String>)
 
     fun getConfiguredValue(): TargetSpecificVolumeData
   }
@@ -66,11 +69,11 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
   /**
    * Marker interface for all the target specific data that has to be configured by the user for each volume, defined in the language runtime.
    * E.g, the docker target may request user to define whether particular path has to be mounted as volume, or copied to target via `docker cp`.
-   * <p/>
    */
   interface TargetSpecificVolumeData {
     /**
-     * Defines serialization format for the
+     * Defines serialization format for target specific volume data. The result map is a separate copy of the real data,
+     * its modifications do not affect the actual data.
      */
     fun toStorableMap(): Map<String, String>
   }
