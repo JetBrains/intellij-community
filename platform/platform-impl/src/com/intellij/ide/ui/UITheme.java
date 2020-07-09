@@ -233,8 +233,8 @@ public final class UITheme {
 
               private void patchColorAttribute(@NotNull Element svg, String attrName) {
                 String color = svg.getAttribute(attrName);
-                if (color != null) {
-                  String newColor = newPalette.get(StringUtil.toLowerCase(color));
+                if (!StringUtil.isEmpty(color)) {
+                  String newColor = newPalette.get(toCanonicalColor(color));
                   if (newColor != null) {
                     svg.setAttribute(attrName, newColor);
                     if (alphas.get(newColor) != null) {
@@ -250,6 +250,15 @@ public final class UITheme {
     }
 
     return theme;
+  }
+
+  private static String toCanonicalColor(String color) {
+    String s = StringUtil.toLowerCase(color);
+    //todo[kb]: add support for red, white, black, and other named colors
+    if (s.startsWith("#") && s.length() < 7) {
+      s = "#" + ColorUtil.toHex(ColorUtil.fromHex(s));
+    }
+    return s;
   }
 
   private static String toColorString(String key, boolean darkTheme) {
