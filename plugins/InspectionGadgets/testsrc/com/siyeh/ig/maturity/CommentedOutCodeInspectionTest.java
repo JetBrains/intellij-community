@@ -2,6 +2,7 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,16 @@ public class CommentedOutCodeInspectionTest extends LightJavaInspectionTestCase 
   public void testCommentedOutCode() {
     doTest();
     checkQuickFixAll();
+  }
+
+  public void testUncommentBlock() {
+    doTest();
+    checkQuickFix(InspectionGadgetsBundle.message("commented.out.code.uncomment.quickfix"));
+  }
+
+  public void testUncommentEndOfLine() {
+    doTest();
+    checkQuickFix(InspectionGadgetsBundle.message("commented.out.code.uncomment.quickfix"));
   }
 
   @Override

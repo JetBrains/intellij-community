@@ -6,13 +6,14 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -21,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,8 +45,8 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
   }
 
   @Override
-  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
-    return new DeleteCommentedOutCodeFix();
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    return new InspectionGadgetsFix[] { new DeleteCommentedOutCodeFix(), new UncommentCodeFix() };
   }
 
   private static class DeleteCommentedOutCodeFix extends InspectionGadgetsFix {
@@ -77,6 +78,50 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
       }
       else {
         deleteElement(element);
+      }
+    }
+  }
+
+  private static class UncommentCodeFix extends InspectionGadgetsFix {
+
+    UncommentCodeFix() {}
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("commented.out.code.uncomment.quickfix");
+    }
+
+    @Override
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiComment)) {
+        return;
+      }
+      final PsiComment comment = (PsiComment)element;
+      if (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+        final List<TextRange> ranges = new ArrayList<>();
+        ranges.add(comment.getTextRange());
+        PsiElement sibling = PsiTreeUtil.skipWhitespacesForward(comment);
+        while (sibling instanceof PsiComment && ((PsiComment)sibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+          ranges.add(sibling.getTextRange());
+          sibling = PsiTreeUtil.skipWhitespacesForward(sibling);
+        }
+        final PsiFile file = element.getContainingFile();
+        final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
+        assert document != null;
+        Collections.reverse(ranges);
+        ranges.forEach(r -> document.deleteString(r.getStartOffset(), r.getStartOffset() + 2));
+      }
+      else {
+        final TextRange range = element.getTextRange();
+        final PsiFile file = element.getContainingFile();
+        final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
+        assert document != null;
+        final int start = range.getStartOffset();
+        final int end = range.getEndOffset();
+        document.deleteString(end - 2, end);
+        document.deleteString(start, start + 2);
       }
     }
   }
