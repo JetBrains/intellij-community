@@ -35,7 +35,7 @@ abstract class AbstractGithubUrlGroupingAction(dynamicText: Supplier<String?>, d
     val repositories = project.service<GHProjectRepositoriesManager>().knownRepositories
     return if (repositories.size > 1) {
       repositories.map {
-        object : DumbAwareAction(it.remote.remote.name + ": " + GithubUrlUtil.removeProtocolPrefix(it.remote.url)) {
+        object : DumbAwareAction(it.gitRemote.remote.name + ": " + GithubUrlUtil.removeProtocolPrefix(it.gitRemote.url)) {
           override fun actionPerformed(e: AnActionEvent) {
             actionPerformed(e, project, it)
           }

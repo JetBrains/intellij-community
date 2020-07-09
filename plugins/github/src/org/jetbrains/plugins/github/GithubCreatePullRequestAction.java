@@ -31,7 +31,7 @@ public class GithubCreatePullRequestAction extends AbstractAuthenticatingGithubU
                               @NotNull Project project,
                               @NotNull GHGitRepositoryMapping repository,
                               @NotNull GithubAccount account) {
-    GitRemoteUrlCoordinates remoteCoordinates = repository.getRemote();
+    GitRemoteUrlCoordinates remoteCoordinates = repository.getGitRemote();
     createPullRequest(project, remoteCoordinates.getRepository(), remoteCoordinates.getRemote(), remoteCoordinates.getUrl(), account);
   }
 

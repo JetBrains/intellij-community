@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.util
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubServerPath
 
-class GHGitRepositoryMapping(val repository: GHRepositoryCoordinates, val remote: GitRemoteUrlCoordinates) {
+class GHGitRepositoryMapping(val repository: GHRepositoryCoordinates, val gitRemote: GitRemoteUrlCoordinates) {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -20,7 +20,7 @@ class GHGitRepositoryMapping(val repository: GHRepositoryCoordinates, val remote
   }
 
   override fun toString(): String {
-    return "(repository=$repository, remote=$remote)"
+    return "(repository=$repository, remote=$gitRemote)"
   }
 
   companion object {

@@ -62,7 +62,7 @@ internal class GHPRToolWindowTabsManager(private val project: Project) : Disposa
   }
 
   private fun updateTabs(afterUpdate: (() -> Unit)? = null) {
-    val repositories = getRepositories().associateBy({ it.repository }, { it.remote })
+    val repositories = getRepositories().associateBy({ it.repository }, { it.gitRemote })
     ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID)?.setAvailable(repositories.isNotEmpty()) {
       val contentManager = contentManager
       if (contentManager != null) {
