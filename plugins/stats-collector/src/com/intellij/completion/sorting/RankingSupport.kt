@@ -15,14 +15,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.stats.sender.isCompletionLogsSendAllowed
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.stats.experiment.ExperimentStatus
 import com.jetbrains.completion.ranker.WeakModelProvider
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
   private const val LANGUAGES_RANKING_UPDATED_PROPERTY_KEY = "ml.completion.experiment.languages.ranking.updated"
+  private const val SHOW_ARROWS_NOTIFICATION_REGISTRY = "completion.stats.show.arrows.notification"
   private val LOG = logger<RankingSupport>()
-  private val properties = PropertiesComponent.getInstance()
   private var enabledInTests: Boolean = false
 
   fun getRankingModel(language: Language): RankingModelWrapper? {
@@ -79,6 +80,7 @@ object RankingSupport {
     if (experimentStatus.experimentChanged()) {
       updateSettingsOnce(settings, shouldRank, shouldShowArrows)
     }
+    val properties = PropertiesComponent.getInstance()
     val languages = properties.getValues(LANGUAGES_RANKING_UPDATED_PROPERTY_KEY) ?: emptyArray()
     if (languageName !in languages) {
       settings.setLanguageEnabled(languageName, shouldRank)
@@ -91,11 +93,14 @@ object RankingSupport {
     val languages = availableLanguages()
     languages.forEach { settings.setLanguageEnabled(it, shouldRank) }
     settings.isShowDiffEnabled = shouldShowArrows
-    if (shouldShowArrows) {
+    if (shouldShowArrows && shouldShowArrowsNotification()) {
       showNotificationAboutArrows()
     }
+    val properties = PropertiesComponent.getInstance()
     properties.setValues(LANGUAGES_RANKING_UPDATED_PROPERTY_KEY, languages.toTypedArray())
   }
+
+  private fun shouldShowArrowsNotification(): Boolean = Registry.`is`(SHOW_ARROWS_NOTIFICATION_REGISTRY, true)
 
   private fun showNotificationAboutArrows() {
     Notification(

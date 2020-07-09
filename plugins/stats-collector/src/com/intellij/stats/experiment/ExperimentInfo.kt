@@ -9,3 +9,10 @@ data class ExperimentInfo(val version: Int,
     fun disabledExperiment(): ExperimentInfo = DISABLED_EXPERIMENT
   }
 }
+
+data class ExperimentGroupInfo(val number: Int,
+                               val description: String,
+                               val experimentBucket: Int,
+                               val useMLRanking: Boolean,
+                               val showArrows: Boolean,
+                               val calculateFeatures: Boolean)

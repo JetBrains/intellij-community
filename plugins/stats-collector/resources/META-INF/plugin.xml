@@ -52,8 +52,9 @@
                         testServiceImplementation="com.intellij.mocks.TestStatisticSender"/>
 
     <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentStatus"
-                        serviceImplementation="com.intellij.stats.experiment.ClientExperimentStatus" preload="true"
-                        testServiceImplementation="com.intellij.mocks.TestExperimentStatus"/>
+                        serviceImplementation="com.intellij.stats.experiment.ClientExperimentStatus"
+                        testServiceImplementation="com.intellij.mocks.TestExperimentStatus"
+                        preload="true"/>
 
     <applicationService serviceInterface="com.intellij.stats.network.service.RequestService"
                         serviceImplementation="com.intellij.stats.network.service.SimpleRequestService"
@@ -91,6 +92,9 @@
 
     <registryKey key="completion.stats.send.logs" defaultValue="true"
                  description="Send anonymous logs about completion usage in EAP builds"/>
+
+    <registryKey key="completion.stats.show.arrows.notification" defaultValue="true"
+                 description="Show notification about arrows if user in corresponding group of A/B experiment"/>
 
     <registryKey key="completion.stats.enable.session.factors" defaultValue="true"
                  description="Use inside single session factors"/>
