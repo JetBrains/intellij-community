@@ -234,9 +234,17 @@ public final class UIUtil {
   @NotNull
   public static EditorTextField createEditorComponent(String text, String fileName, Project project) {
     final FileType fileType = getFileType(fileName);
-    final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, text, -1, true);
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    final Document document = createDocument(fileType, text, project);
     return new EditorTextField(document, project, fileType);
+  }
+
+  @NotNull
+  public static Document createDocument(FileType fileType, String text, Project project) {
+    final PsiFile file =
+      PsiFileFactory.getInstance(project).createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, text, -1, true);
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    assert document != null;
+    return document;
   }
 
   private static FileType getFileType(final String fileName) {

@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -78,9 +80,11 @@ public class TypeFilter extends FilterAction {
       private final JCheckBox myHierarchyCheckBox = new JCheckBox(SSRBundle.message("within.type.hierarchy.check.box"), false);
       private final JCheckBox myRegexCheckBox = new JCheckBox(SSRBundle.message("regex.check.box"), false);
       {
-        myRegexCheckBox.addActionListener(e -> myTextField.setFileType(myRegexCheckBox.isSelected()
-                                                                       ? RegExpFileType.INSTANCE
-                                                                       : PlainTextFileType.INSTANCE));
+        myRegexCheckBox.addActionListener(e -> {
+          final FileType fileType = myRegexCheckBox.isSelected() ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE;
+          final Document document = UIUtil.createDocument(fileType, myTextField.getText(), myTable.getProject());
+          myTextField.setDocument(document);
+        });
       }
       private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("type.filter.help.text"));
 
