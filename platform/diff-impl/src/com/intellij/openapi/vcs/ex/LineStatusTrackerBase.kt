@@ -66,8 +66,10 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
     vcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, true)
     vcsDocument.setReadOnly(true)
 
-    documentTracker = DocumentTracker(vcsDocument, this.document, LOCK, createDocumentTrackerHandler())
+    documentTracker = DocumentTracker(vcsDocument, this.document, LOCK)
     Disposer.register(disposable, documentTracker)
+
+    documentTracker.addHandler(MyDocumentTrackerHandler())
   }
 
 
@@ -82,8 +84,6 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   override val virtualFile: VirtualFile? get() = null
 
   protected abstract fun Block.toRange(): R
-
-  protected open fun createDocumentTrackerHandler(): DocumentTracker.Handler = MyDocumentTrackerHandler()
 
 
   override fun getRanges(): List<R>? {
@@ -178,7 +178,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   }
 
 
-  protected open inner class MyDocumentTrackerHandler : DocumentTracker.Handler {
+  private inner class MyDocumentTrackerHandler : DocumentTracker.Handler {
     override fun onRangeShifted(before: Block, after: Block) {
       after.ourData.innerRanges = before.ourData.innerRanges
     }
