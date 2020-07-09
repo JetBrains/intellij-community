@@ -50,6 +50,7 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.*
 import org.junit.Assert.assertFalse
+import org.junit.Assume.assumeTrue
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -272,7 +273,7 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `load unloaded modules`() {
-    if (!ProjectModelRule.isWorkspaceModelEnabled) return
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadProjectAndCheckResults("unloadedModules") { project ->
       val unloadedModuleName = "imported"
       val moduleManager = ModuleManager.getInstance(project)
