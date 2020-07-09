@@ -40,6 +40,7 @@ public abstract class AbstractBundle {
   }
 
   @NotNull
+  @Contract(pure = true)
   public String getMessage(@NotNull String key, Object @NotNull ... params) {
     return message(getResourceBundle(), key, params);
   }
