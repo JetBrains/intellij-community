@@ -42,12 +42,6 @@ interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
 interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
   fun release()
 
-  @CalledInAwt
-  fun dropBaseRevision()
-
-  @CalledInAwt
-  fun setBaseRevision(vcsContent: CharSequence)
-
   @CalledInAny
   fun freeze()
 
@@ -94,6 +88,9 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   override fun isClearLineModificationFlagOnRollback(): Boolean = true
 
   protected abstract var Block.innerRanges: List<Range.InnerRange>?
+
+  @CalledInAwt
+  abstract fun setBaseRevision(vcsContent: CharSequence)
 
 
   override fun scrollAndShowHint(range: Range, editor: Editor) {

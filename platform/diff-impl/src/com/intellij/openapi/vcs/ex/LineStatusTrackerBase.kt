@@ -36,11 +36,11 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
-abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
-  override val project: Project?
-
+abstract class LineStatusTrackerBase<R : Range>(
+  override val project: Project?,
   final override val document: Document
-  final override val vcsDocument: Document
+) : LineStatusTrackerI<R> {
+  final override val vcsDocument: Document = createVcsDocument(document)
 
   final override val disposable: Disposable = Disposer.newDisposable()
   internal val LOCK: DocumentTracker.Lock = DocumentTracker.Lock()
@@ -57,13 +57,8 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
   protected val blocks: List<Block> get() = documentTracker.blocks
 
-  constructor(project: Project?, document: Document) {
-    this.project = project
-    this.document = document
-
-    vcsDocument = createVcsDocument(this.document)
-
-    documentTracker = DocumentTracker(vcsDocument, this.document, LOCK)
+  init {
+    documentTracker = DocumentTracker(vcsDocument, document, LOCK)
     Disposer.register(disposable, documentTracker)
 
     documentTracker.addHandler(MyDocumentTrackerHandler())
@@ -78,10 +73,10 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
    */
   protected open fun isClearLineModificationFlagOnRollback(): Boolean = false
 
-  override val virtualFile: VirtualFile? get() = null
-
   protected abstract fun toRange(block: Block): R
 
+
+  override val virtualFile: VirtualFile? get() = null
 
   override fun getRanges(): List<R>? {
     ApplicationManager.getApplication().assertReadAccessAllowed()
@@ -116,6 +111,23 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
     updateHighlighters()
   }
 
+  fun release() {
+    val runnable = Runnable {
+      if (isReleased) return@Runnable
+      isReleased = true
+
+      Disposer.dispose(disposable)
+    }
+
+    if (!ApplicationManager.getApplication().isDispatchThread || LOCK.isHeldByCurrentThread) {
+      WriteThread.submit(runnable)
+    }
+    else {
+      runnable.run()
+    }
+  }
+
+
   @CalledInAwt
   protected fun updateDocument(side: Side, task: (Document) -> Unit): Boolean {
     return updateDocument(side, null, task)
@@ -134,23 +146,6 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
   override fun <T> readLock(task: () -> T): T {
     return documentTracker.readLock(task)
-  }
-
-
-  fun release() {
-    val runnable = Runnable {
-      if (isReleased) return@Runnable
-      isReleased = true
-
-      Disposer.dispose(disposable)
-    }
-
-    if (!ApplicationManager.getApplication().isDispatchThread || LOCK.isHeldByCurrentThread) {
-      WriteThread.submit(runnable)
-    }
-    else {
-      runnable.run()
-    }
   }
 
 
@@ -225,6 +220,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   protected fun updateHighlighters() {
     renderer.scheduleUpdate()
   }
+
 
   override fun isOperational(): Boolean = LOCK.read {
     return isInitialized && !isReleased

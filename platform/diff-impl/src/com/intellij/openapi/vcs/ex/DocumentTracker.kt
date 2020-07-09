@@ -34,27 +34,29 @@ import kotlin.math.max
  *
  * Blocks are modified on EDT and under [LOCK].
  */
-class DocumentTracker : Disposable {
+class DocumentTracker(
+  document1: Document,
+  document2: Document,
+  private val LOCK: Lock
+) : Disposable {
+
   private val handlers: MutableList<Handler> = mutableListOf()
 
-  private val LOCK: Lock
-
-  val document1: Document
-  val document2: Document
+  var document1: Document = document1
+    private set
+  var document2: Document = document2
+    private set
 
   private val tracker: LineTracker
   private val freezeHelper: FreezeHelper = FreezeHelper()
 
   private var isDisposed: Boolean = false
 
+  private val documentListener1 = MyDocumentListener(Side.LEFT, document1)
+  private val documentListener2 = MyDocumentListener(Side.RIGHT, document2)
 
-  constructor(document1: Document,
-              document2: Document,
-              LOCK: Lock) {
+  init {
     assert(document1 != document2)
-    this.document1 = document1
-    this.document2 = document2
-    this.LOCK = LOCK
 
     val changes = when {
       document1.immutableCharSequence === document2.immutableCharSequence -> emptyList()
@@ -67,9 +69,6 @@ class DocumentTracker : Disposable {
 
     val application = ApplicationManager.getApplication()
     application.addApplicationListener(MyApplicationListener(), this)
-
-    document1.addDocumentListener(MyDocumentListener(Side.LEFT), this)
-    document2.addDocumentListener(MyDocumentListener(Side.RIGHT), this)
   }
 
   @CalledInAwt
@@ -142,6 +141,22 @@ class DocumentTracker : Disposable {
       val frozenContent = freezeHelper.getFrozenContent(side)
       if (frozenContent != null) return frozenContent
       return side[document1, document2].immutableCharSequence
+    }
+  }
+
+  @CalledInAwt
+  fun replaceDocument(side: Side, newDocument: Document) {
+    assert(!LOCK.isHeldByCurrentThread)
+
+    doFrozen {
+      if (side.isLeft) {
+        documentListener1.switchDocument(newDocument)
+        document1 = newDocument
+      }
+      else {
+        documentListener2.switchDocument(newDocument)
+        document2 = newDocument
+      }
     }
   }
 
@@ -288,14 +303,22 @@ class DocumentTracker : Disposable {
     }
   }
 
-  private inner class MyDocumentListener(val side: Side) : DocumentListener {
-    private val document = side[document1, document2]
-
+  private inner class MyDocumentListener(val side: Side, private var document: Document) : DocumentListener {
     private var line1: Int = 0
     private var line2: Int = 0
 
     init {
+      document.addDocumentListener(this, this@DocumentTracker)
       if (document.isInBulkUpdate) freeze(side)
+    }
+
+    fun switchDocument(newDocument: Document) {
+      document.removeDocumentListener(this)
+      if (document.isInBulkUpdate == true) unfreeze(side)
+
+      document = newDocument
+      newDocument.addDocumentListener(this, this@DocumentTracker)
+      if (newDocument.isInBulkUpdate) freeze(side)
     }
 
     override fun beforeDocumentChange(e: DocumentEvent) {

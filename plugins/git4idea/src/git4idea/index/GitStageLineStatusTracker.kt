@@ -29,10 +29,10 @@ import kotlin.math.max
 class GitStageLineStatusTracker(
   override val project: Project,
   override val virtualFile: VirtualFile,
-  override val document: Document,
-  private val stagedDocument: Document
+  override val document: Document
 ) : LocalLineStatusTracker<StagedRange> {
   override val vcsDocument: Document = LineStatusTrackerBase.createVcsDocument(document)
+  private var stagedDocument: Document = LineStatusTrackerBase.createVcsDocument(document)
 
   override val disposable: Disposable = Disposer.newDisposable()
   private val LOCK: DocumentTracker.Lock = DocumentTracker.Lock()
@@ -65,9 +65,15 @@ class GitStageLineStatusTracker(
 
 
   @CalledInAwt
-  override fun setBaseRevision(vcsContent: CharSequence) {
+  fun setBaseRevision(vcsContent: CharSequence, newStagedDocument: Document) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isReleased) return
+
+    if (stagedDocument != newStagedDocument) {
+      stagedTracker.replaceDocument(Side.RIGHT, newStagedDocument)
+      unstagedTracker.replaceDocument(Side.LEFT, newStagedDocument)
+      stagedDocument = newStagedDocument
+    }
 
     stagedTracker.doFrozen(Side.LEFT) {
       updateDocument(ThreeSide.LEFT, null) {
@@ -82,7 +88,7 @@ class GitStageLineStatusTracker(
   }
 
   @CalledInAwt
-  override fun dropBaseRevision() {
+  fun dropBaseRevision() {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isReleased) return
 
