@@ -11,7 +11,6 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.InlineIconButton
@@ -93,12 +92,7 @@ class GHPRListCellRenderer(private val avatarIconsProvider: CachingGithubAvatarI
 
     stateIcon.apply {
       icon = GithubUIUtil.getPullRequestStateIcon(value.state, value.isDraft)
-      toolTipText = if (value.isDraft) GithubBundle.message("pull.request.state.draft")
-      else when (value.state) {
-        GHPullRequestState.CLOSED -> GithubBundle.message("pull.request.state.closed")
-        GHPullRequestState.MERGED -> GithubBundle.message("pull.request.state.merged")
-        GHPullRequestState.OPEN -> GithubBundle.message("pull.request.state.open")
-      }
+      toolTipText = GithubUIUtil.getPullRequestStateText(value.state, value.isDraft)
     }
     title.apply {
       text = value.title
