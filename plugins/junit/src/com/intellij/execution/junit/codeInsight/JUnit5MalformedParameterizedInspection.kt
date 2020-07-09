@@ -6,6 +6,7 @@ import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
@@ -33,6 +34,7 @@ import java.util.*
 
 class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTool() {
   private object Annotations {
+    const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
     val EXTENDS_WITH = listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)
   }
 
@@ -213,10 +215,13 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
 
         if (!sourceProvider.hasModifierProperty(PsiModifier.STATIC) &&
             containingClass != null && !TestUtils.testInstancePerClass(containingClass)) {
+          val annotation: PsiAnnotation = JavaPsiFacade.getElementFactory(containingClass.project).createAnnotationFromText(Annotations.TEST_INSTANCE_PER_CLASS, containingClass)
+          val attributes: Array<PsiNameValuePair> = annotation.parameterList.attributes
+          val annoName: String = annotation.qualifiedName!!
           holder.registerProblem(attributeValue, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.static", providerName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  QuickFixFactory.getInstance().createModifierListFix(sourceProvider, PsiModifier.STATIC, true, false),
-          AddTestInstanceAnnotationFix(containingClass))
+                                 AddAnnotationPsiFix(annoName, containingClass, attributes))
         }
         else if (sourceProvider.parameterList.parametersCount != 0) {
           holder.registerProblem(getElementToHighlight(attributeValue, method), JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.no.params", providerName))
@@ -355,29 +360,6 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
              .count() > 1
            && !MetaAnnotationUtil.isMetaAnnotated(method, Annotations.EXTENDS_WITH)
            && !MetaAnnotationUtil.isMetaAnnotatedInHierarchy(containingClass, Annotations.EXTENDS_WITH)
-  }
-}
-
-class AddTestInstanceAnnotationFix(aClass : PsiClass): LocalQuickFixAndIntentionActionOnPsiElement(aClass) {
- override fun getFamilyName(): String = JUnitBundle.message("junit5.malformed.parameterized.fix.add.lifecycle.per.class")
-
-  override fun getText(): String = JUnitBundle.message("junit5.malformed.parameterized.fix.add.lifecycle.per.class")
-
-  override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-    val TEST_INSTANCE_PER_CLASS_ANNOTATION = "@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)"
-    val annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText(TEST_INSTANCE_PER_CLASS_ANNOTATION, startElement)
-    val aClass : PsiClass? = startElement as? PsiClass
-    val modifierList: PsiModifierList? = aClass?.modifierList
-    val element = modifierList?.firstChild
-
-    if (element != null) {
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addBefore(annotation, element))
-    }
-    else {
-      if (modifierList != null) {
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.add(annotation))
-      }
-    }
   }
 }
 

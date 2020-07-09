@@ -29,7 +29,7 @@ public class Junit5MalformedParameterizedAddTestInstanceTest extends LightJavaCo
   private void doTest() {
     final String name = getTestName(false);
     myFixture.configureByFile(name + ".java");
-    myFixture.launchAction(myFixture.findSingleIntention("Add @TestInstance(TestInstance.Lifecycle.PER_CLASS) annotation to class"));
+    myFixture.launchAction(myFixture.findSingleIntention("Annotate class 'Test' as @TestInstance"));
     myFixture.checkResultByFile(name + ".after.java");
   }
 }
