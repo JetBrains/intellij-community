@@ -26,7 +26,8 @@ internal class CompletionLoggerInitializer(private val actionListener: LookupAct
       "ecmascript 6" to 0.2,
       "typescript" to 0.5,
       "c/c++" to 0.5,
-      "c#" to 0.1
+      "c#" to 0.1,
+      "go" to 0.4
     )
   }
 
