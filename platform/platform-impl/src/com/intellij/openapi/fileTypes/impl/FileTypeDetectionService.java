@@ -16,7 +16,6 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -36,6 +35,7 @@ import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentPackedBitsArray;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
+import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -234,11 +234,16 @@ final class FileTypeDetectionService implements Disposable {
     return fileType;
   }
 
-  void loadState(Element state) {
-    String fileTypeChangedCounterStr = JDOMExternalizer.readString(state, "fileTypeChangedCounter");
+  void loadState(@NotNull Element state) {
+    String fileTypeChangedCounterStr = null;
+    for (Element element : state.getChildren()) {
+      if (element.getName().equals("setting") && "fileTypeChangedCounter".equals(element.getAttributeValue(Constants.NAME))) {
+        fileTypeChangedCounterStr = element.getAttributeValue(Constants.VALUE);
+        break;
+      }
+    }
     if (fileTypeChangedCounterStr != null) {
-      int fileTypeChangedCounter = StringUtilRt.parseInt(fileTypeChangedCounterStr, 0);
-      fileTypeChangedCount.set(fileTypeChangedCounter);
+      fileTypeChangedCount.set(StringUtilRt.parseInt(fileTypeChangedCounterStr, 0));
       autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.get());
     }
   }
@@ -527,9 +532,10 @@ final class FileTypeDetectionService implements Disposable {
     return fileType;
   }
 
-  @NotNull
-  private FileType detect(@NotNull VirtualFile file, byte @NotNull [] bytes, int length, @NotNull List<? extends FileTypeRegistry.FileTypeDetector> detectors) {
-    if (length <= 0) return UnknownFileType.INSTANCE;
+  private @NotNull FileType detect(@NotNull VirtualFile file, byte @NotNull [] bytes, int length, @NotNull List<? extends FileTypeRegistry.FileTypeDetector> detectors) {
+    if (length <= 0) {
+      return UnknownFileType.INSTANCE;
+    }
 
     // use PlainTextFileType because it doesn't supply its own charset detector
     // help set charset in the process to avoid double charset detection from content

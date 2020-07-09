@@ -88,7 +88,7 @@ public abstract class ProjectLevelVcsManager {
    */
   public abstract @Nullable VirtualFile getVcsRootFor(FilePath file);
 
-  public abstract @Nullable VcsRoot getVcsRootObjectFor(final VirtualFile file);
+  public abstract @Nullable VcsRoot getVcsRootObjectFor(@Nullable VirtualFile file);
 
   public abstract @Nullable VcsRoot getVcsRootObjectFor(FilePath file);
 

@@ -22,7 +22,10 @@ import com.intellij.util.NotNullizer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -33,7 +36,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-class ServiceModel implements Disposable, InvokerSupplier {
+final class ServiceModel implements Disposable, InvokerSupplier {
   static final ExtensionPointName<ServiceViewContributor<?>> CONTRIBUTOR_EP_NAME =
     ExtensionPointName.create("com.intellij.serviceViewContributor");
   private static final Logger LOG = Logger.getInstance(ServiceModel.class);

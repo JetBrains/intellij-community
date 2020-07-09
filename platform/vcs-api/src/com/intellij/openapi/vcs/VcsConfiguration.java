@@ -2,7 +2,10 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
@@ -157,7 +160,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   }
 
   public static VcsConfiguration getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsConfiguration.class);
+    return project.getService(VcsConfiguration.class);
   }
 
   public void saveCommitMessage(final String comment) {

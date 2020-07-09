@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.plugincomponents;
 
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SettingsProviderComponent extends SimpleModificationTracker {
+public final class SettingsProviderComponent extends SimpleModificationTracker {
   private static final Key<CachedValue<List<OutPair>>> CACHED_PAIRS = Key.create("editorconfig.cached.pairs");
   public static final String ERROR = "___error___";
   private final EditorConfig editorConfig;
@@ -38,7 +38,7 @@ public class SettingsProviderComponent extends SimpleModificationTracker {
   }
 
   public static SettingsProviderComponent getInstance() {
-    return ServiceManager.getService(SettingsProviderComponent.class);
+    return ApplicationManager.getApplication().getService(SettingsProviderComponent.class);
   }
 
   public List<OutPair> getOutPairs(Project project, VirtualFile file) {
