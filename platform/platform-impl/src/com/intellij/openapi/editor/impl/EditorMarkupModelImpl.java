@@ -235,6 +235,15 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
 
       @Override
+      protected JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
+        JComponent component = super.createCustomComponent(action, presentation);
+        if (component instanceof ActionButton) {
+          ((ActionButton)component).setLook(editorButtonLook);
+        }
+        return component;
+      }
+
+      @Override
       public void doLayout() {
         LayoutManager layoutManager = getLayout();
         if (layoutManager != null) {
@@ -1676,7 +1685,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       GridBag gc = new GridBag().nextLine();
       if (status.size() == 1 && StringUtil.isEmpty(status.get(0).getText())) {
         add(createStyledLabel(null, status.get(0).getIcon(), SwingConstants.CENTER),
-            gc.next().weightx(1).fillCellHorizontally());
+            gc.next().weightx(1).weighty(1).fillCell());
       }
       else if (status.size() > 0) {
         int leftRightOffset = JBUIScale.scale(LEFT_RIGHT_INDENT);
@@ -1685,7 +1694,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         int counter = 0;
         for (StatusItem item : status) {
           add(createStyledLabel(item.getText(), item.getIcon(), SwingConstants.LEFT),
-              gc.next().insetLeft(counter++ > 0 ? INTER_GROUP_OFFSET : 0));
+              gc.next().insetLeft(counter++ > 0 ? INTER_GROUP_OFFSET : 0).fillCell().weighty(1));
         }
 
         add(Box.createHorizontalStrut(leftRightOffset), gc.next());

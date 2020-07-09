@@ -30,8 +30,8 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
   override fun createAction(editor: Editor): AnAction {
     val action = object : DumbAwareAction(LangBundle.messagePointer("action.ReaderModeProvider.text"),
                                                    LangBundle.messagePointer("action.ReaderModeProvider.description"), null), CustomComponentAction {
-      override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-        val actionButtonWithText = object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
+      override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
+        object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
           override fun iconTextSpace() = JBUI.scale(2)
 
           override fun updateToolTipText() {
@@ -51,19 +51,21 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
           }
 
           override fun getInsets(): Insets = JBUI.insets(2)
-          override fun getMargin(): Insets = if(myPresentation.icon == AllIcons.General.ReaderMode) JBUI.emptyInsets() else JBUI.insetsRight(5)
+          override fun getMargins(): Insets = if (myPresentation.icon == AllIcons.General.ReaderMode) JBUI.emptyInsets() else JBUI.insetsRight(5)
+
+          override fun updateUI() {
+            super.updateUI()
+            if (!SystemInfo.isWindows) {
+              font = FontUIResource(font.deriveFont(font.style, font.size - JBUIScale.scale(2).toFloat()))
+            }
+          }
+        }.
+        apply {
+          foreground = JBColor(NotNullProducer { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor })
+          if (!SystemInfo.isWindows) {
+            font = FontUIResource(font.deriveFont(font.style, font.size - JBUIScale.scale(2).toFloat()))
+          }
         }
-
-        actionButtonWithText.foreground = JBColor(NotNullProducer { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor })
-
-        if (!SystemInfo.isWindows) {
-          var font = actionButtonWithText.font
-          font = FontUIResource(font.deriveFont(font.style, font.size - JBUIScale.scale(2).toFloat()))
-          actionButtonWithText.font = (font)
-        }
-
-        return actionButtonWithText
-      }
 
       override fun actionPerformed(e: AnActionEvent) {
         val project = e.project?: return
