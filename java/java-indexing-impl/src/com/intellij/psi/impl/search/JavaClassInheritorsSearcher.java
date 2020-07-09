@@ -111,7 +111,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
           ProgressManager.checkCanceled();
           PsiAnchor pointer = ReadAction.compute(() -> PsiAnchor.create(subClass));
           // append found result to subClasses as early as possible to allow other waiting threads to continue
-          processor.consume(pointer);
+          processor.accept(pointer);
           return true;
         });
 

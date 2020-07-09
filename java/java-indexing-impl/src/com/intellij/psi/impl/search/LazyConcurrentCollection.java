@@ -18,7 +18,6 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSetQueue;
 import gnu.trove.THashSet;
@@ -28,6 +27,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
