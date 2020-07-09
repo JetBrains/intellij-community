@@ -19,7 +19,6 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.LineNumberConstants
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteThread
 import com.intellij.openapi.command.CommandProcessor
@@ -37,8 +36,6 @@ import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
-  protected val application: Application = ApplicationManager.getApplication()
-
   override val project: Project?
 
   final override val document: Document
@@ -86,7 +83,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
 
   override fun getRanges(): List<R>? {
-    application.assertReadAccessAllowed()
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     LOCK.read {
       if (!isValid()) return null
       return blocks.filter { !it.range.isEmpty }.map { it.toRange() }
@@ -95,7 +92,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
   @CalledInAwt
   protected fun setBaseRevision(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
-    application.assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsDispatchThread()
     if (isReleased) return
 
     documentTracker.doFrozen(Side.LEFT) {
@@ -114,7 +111,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
   @CalledInAwt
   fun dropBaseRevision() {
-    application.assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsDispatchThread()
     if (isReleased) return
 
     isInitialized = false
@@ -163,7 +160,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
       Disposer.dispose(disposable)
     }
 
-    if (!application.isDispatchThread || LOCK.isHeldByCurrentThread) {
+    if (!ApplicationManager.getApplication().isDispatchThread || LOCK.isHeldByCurrentThread) {
       WriteThread.submit(runnable)
     }
     else {
