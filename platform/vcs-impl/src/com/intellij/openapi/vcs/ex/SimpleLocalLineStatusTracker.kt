@@ -27,7 +27,7 @@ class SimpleLocalLineStatusTracker(project: Project,
 ) : LocalLineStatusTrackerImpl<Range>(project, document, virtualFile) {
 
   override val renderer: LocalLineStatusMarkerRenderer = LocalLineStatusMarkerRenderer(this)
-  override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
+  override fun toRange(block: Block): Range = Range(block.start, block.end, block.vcsStart, block.vcsEnd, block.innerRanges)
 
   @CalledInAwt
   override fun setBaseRevision(vcsContent: CharSequence) {

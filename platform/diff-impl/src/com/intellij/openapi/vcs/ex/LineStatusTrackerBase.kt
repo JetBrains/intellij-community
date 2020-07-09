@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.ex
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.LineNumberConstants
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteThread
 import com.intellij.openapi.command.CommandProcessor
@@ -30,6 +29,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
+import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
@@ -42,6 +42,9 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   final override val vcsDocument: Document
 
   final override val disposable: Disposable = Disposer.newDisposable()
+  internal val LOCK: DocumentTracker.Lock = DocumentTracker.Lock()
+
+  protected val blockOperations: LineStatusTrackerBlockOperations<R, Block> = MyBlockOperations(LOCK)
   protected val documentTracker: DocumentTracker
   protected abstract val renderer: LineStatusMarkerRenderer
 
@@ -52,7 +55,6 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
     private set
 
   protected val blocks: List<Block> get() = documentTracker.blocks
-  internal val LOCK: DocumentTracker.Lock = DocumentTracker.Lock()
 
   constructor(project: Project?, document: Document) {
     this.project = project
@@ -79,15 +81,12 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
   override val virtualFile: VirtualFile? get() = null
 
-  protected abstract fun Block.toRange(): R
+  protected abstract fun toRange(block: Block): R
 
 
   override fun getRanges(): List<R>? {
     ApplicationManager.getApplication().assertReadAccessAllowed()
-    LOCK.read {
-      if (!isValid()) return null
-      return blocks.filter { !it.range.isEmpty }.map { it.toRange() }
-    }
+    return blockOperations.getRanges()
   }
 
   @CalledInAwt
@@ -169,6 +168,11 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   }
 
 
+  private inner class MyBlockOperations(lock: DocumentTracker.Lock) : LineStatusTrackerBlockOperations<R, Block>(lock) {
+    override fun getBlocks(): List<Block>? = if (isValid()) blocks else null
+    override fun Block.toRange(): R = toRange(this)
+  }
+
   private inner class MyDocumentTrackerHandler : DocumentTracker.Handler {
     override fun afterBulkRangeChange(isDirty: Boolean) {
       updateHighlighters()
@@ -244,77 +248,20 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
     return isOperational() && !documentTracker.isFrozen()
   }
 
-
-  override fun findRange(range: Range): R? = findBlock(range)?.toRange()
-
-  protected fun findBlock(range: Range): Block? {
-    LOCK.read {
-      if (!isValid()) return null
-      for (block in blocks) {
-        if (block.start == range.line1 &&
-            block.end == range.line2 &&
-            block.vcsStart == range.vcsLine1 &&
-            block.vcsEnd == range.vcsLine2) {
-          return block
-        }
-      }
-      return null
-    }
-  }
-
-  override fun getNextRange(line: Int): R? {
-    LOCK.read {
-      if (!isValid()) return null
-      for (block in blocks) {
-        if (line < block.end && !block.isSelectedByLine(line)) {
-          return block.toRange()
-        }
-      }
-      return null
-    }
-  }
-
-  override fun getPrevRange(line: Int): R? {
-    LOCK.read {
-      if (!isValid()) return null
-      for (block in blocks.reversed()) {
-        if (line > block.start && !block.isSelectedByLine(line)) {
-          return block.toRange()
-        }
-      }
-      return null
-    }
-  }
-
-  override fun getRangesForLines(lines: BitSet): List<R>? {
-    LOCK.read {
-      if (!isValid()) return null
-      val result = ArrayList<R>()
-      for (block in blocks) {
-        if (block.isSelectedByLine(lines)) {
-          result.add(block.toRange())
-        }
-      }
-      return result
-    }
-  }
-
-  override fun getRangeForLine(line: Int): R? {
-    LOCK.read {
-      if (!isValid()) return null
-      for (block in blocks) {
-        if (block.isSelectedByLine(line)) {
-          return block.toRange()
-        }
-      }
-      return null
-    }
-  }
+  override fun findRange(range: Range): R? = blockOperations.findRange(range)
+  override fun getNextRange(line: Int): R? = blockOperations.getNextRange(line)
+  override fun getPrevRange(line: Int): R? = blockOperations.getPrevRange(line)
+  override fun getRangesForLines(lines: BitSet): List<R>? = blockOperations.getRangesForLines(lines)
+  override fun getRangeForLine(line: Int): R? = blockOperations.getRangeForLine(line)
+  override fun isLineModified(line: Int): Boolean = blockOperations.isLineModified(line)
+  override fun isRangeModified(startLine: Int, endLine: Int): Boolean = blockOperations.isRangeModified(startLine, endLine)
+  override fun transferLineFromVcs(line: Int, approximate: Boolean): Int = blockOperations.transferLineFromVcs(line, approximate)
+  override fun transferLineToVcs(line: Int, approximate: Boolean): Int = blockOperations.transferLineToVcs(line, approximate)
 
 
   @CalledInAwt
   override fun rollbackChanges(range: Range) {
-    val newRange = findBlock(range)
+    val newRange = blockOperations.findBlock(range)
     if (newRange != null) {
       runBulkRollback { it == newRange }
     }
@@ -344,69 +291,8 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   }
 
 
-  override fun isLineModified(line: Int): Boolean {
-    return isRangeModified(line, line + 1)
-  }
-
-  override fun isRangeModified(startLine: Int, endLine: Int): Boolean {
-    if (startLine == endLine) return false
-    assert(startLine < endLine)
-
-    LOCK.read {
-      if (!isValid()) return false
-      for (block in blocks) {
-        if (block.start >= endLine) return false
-        if (block.end > startLine) return true
-      }
-      return false
-    }
-  }
-
-  override fun transferLineFromVcs(line: Int, approximate: Boolean): Int {
-    return transferLine(line, approximate, true)
-  }
-
-  override fun transferLineToVcs(line: Int, approximate: Boolean): Int {
-    return transferLine(line, approximate, false)
-  }
-
-  private fun transferLine(line: Int, approximate: Boolean, fromVcs: Boolean): Int {
-    LOCK.read {
-      if (!isValid()) return if (approximate) line else LineNumberConstants.ABSENT_LINE_NUMBER
-
-      var result = line
-
-      for (block in blocks) {
-        val startLine1 = if (fromVcs) block.vcsStart else block.start
-        val endLine1 = if (fromVcs) block.vcsEnd else block.end
-        val startLine2 = if (fromVcs) block.start else block.vcsStart
-        val endLine2 = if (fromVcs) block.end else block.vcsEnd
-
-        if (line in startLine1 until endLine1) {
-          return if (approximate) startLine2 else LineNumberConstants.ABSENT_LINE_NUMBER
-        }
-
-        if (endLine1 > line) return result
-
-        val length1 = endLine1 - startLine1
-        val length2 = endLine2 - startLine2
-        result += length2 - length1
-      }
-      return result
-    }
-  }
-
-
   companion object {
     @JvmStatic protected val LOG: Logger = Logger.getInstance(LineStatusTrackerBase::class.java)
-
-    @JvmStatic protected val Block.start: Int get() = range.start2
-    @JvmStatic protected val Block.end: Int get() = range.end2
-    @JvmStatic protected val Block.vcsStart: Int get() = range.start1
-    @JvmStatic protected val Block.vcsEnd: Int get() = range.end1
-
-    @JvmStatic protected fun Block.isSelectedByLine(line: Int): Boolean = DiffUtil.isSelectedByLine(line, this.range.start2, this.range.end2)
-    @JvmStatic protected fun Block.isSelectedByLine(lines: BitSet): Boolean = DiffUtil.isSelectedByLine(lines, this.range.start2, this.range.end2)
   }
 
 

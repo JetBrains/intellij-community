@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListWorker
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
+import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.DropDownLink
@@ -133,8 +134,8 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     assert(blocks.isEmpty())
   }
 
-  override fun Block.toRange(): LocalRange = LocalRange(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges,
-                                                        this.marker.changelistId, this.excludedFromCommit)
+  override fun toRange(block: Block): LocalRange = LocalRange(block.start, block.end, block.vcsStart, block.vcsEnd, block.innerRanges,
+                                                              block.marker.changelistId, block.excludedFromCommit)
 
   override fun getAffectedChangeListsIds(): List<String> {
     return documentTracker.readLock {
@@ -616,7 +617,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   @CalledInAwt
   override fun moveToChangelist(range: Range, changelist: LocalChangeList) {
-    val newRange = findBlock(range)
+    val newRange = blockOperations.findBlock(range)
     if (newRange != null) {
       moveToChangelist({ it == newRange }, changelist)
     }
@@ -677,7 +678,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   }
 
   override fun setExcludedFromCommit(range: Range, isExcluded: Boolean) {
-    val newRange = findBlock(range)
+    val newRange = blockOperations.findBlock(range)
     setExcludedFromCommit({ it == newRange }, isExcluded)
   }
 

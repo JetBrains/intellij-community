@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
@@ -86,7 +87,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
   override fun isClearLineModificationFlagOnRollback(): Boolean = true
 
-  protected abstract var DocumentTracker.Block.innerRanges: List<Range.InnerRange>?
+  protected abstract var Block.innerRanges: List<Range.InnerRange>?
 
 
   override fun scrollAndShowHint(range: Range, editor: Editor) {
@@ -157,7 +158,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   private inner class MyInnerRangesDocumentTrackerHandler : InnerRangesDocumentTrackerHandler() {
     override fun isDetectWhitespaceChangedLines(): Boolean = mode.let { it.isVisible && it.detectWhitespaceChangedLines }
 
-    override var DocumentTracker.Block.innerRanges: List<Range.InnerRange>?
+    override var Block.innerRanges: List<Range.InnerRange>?
       get() {
         val block = this
         with(this@LocalLineStatusTrackerImpl) {

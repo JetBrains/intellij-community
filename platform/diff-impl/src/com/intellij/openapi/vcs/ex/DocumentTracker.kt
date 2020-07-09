@@ -491,8 +491,13 @@ class DocumentTracker : Disposable {
   }
 
 
-  class Block(val range: Range, internal val isDirty: Boolean, internal val isTooBig: Boolean) {
+  class Block(val range: Range, internal val isDirty: Boolean, internal val isTooBig: Boolean) : BlockI {
     var data: Any? = null
+
+    override val start: Int get() = range.start2
+    override val end: Int get() = range.end2
+    override val vcsStart: Int get() = range.start1
+    override val vcsEnd: Int get() = range.end1
   }
 
   companion object {
