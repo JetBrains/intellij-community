@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -31,9 +30,12 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.layout.*
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Dimension
+import java.awt.Insets
 import java.awt.Rectangle
 import javax.swing.JLabel
 
@@ -49,6 +51,7 @@ object TemplateInlayUtil {
     VirtualTemplateElement.installOnTemplate(templateState, object : VirtualTemplateElement {
       override fun onSelect(templateState: TemplateState) {
         presentation.isSelected = true
+        templateState.focusCurrentHighlighter(false)
       }
     })
     presentation.addListener(object : PresentationListener {
@@ -74,13 +77,14 @@ object TemplateInlayUtil {
     fun showPopup() {
       try {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, inlay.visualPosition)
-        panel.border = DialogWrapper.createDefaultBorder()
+        panel.border = JBEmptyBorder(JBInsets.create(Insets(8, 12, 4, 12)))
         val popup = JBPopupFactory.getInstance()
           .createComponentPopupBuilder(panel, panel.preferredFocusedComponent)
           .setRequestFocus(true)
           .addListener(object : JBPopupListener {
             override fun onClosed(event: LightweightWindowEvent) {
               presentation.isSelected = false
+              templateState.focusCurrentHighlighter(true)
             }
           })
           .createPopup()
@@ -134,7 +138,7 @@ object TemplateInlayUtil {
       presentation = iconPresentation,
       padding = InlayPresentationFactory.Padding(if (second) 0 else 4, 4, 4, 4),
       background = colorsScheme.getColor(bgKey)
-    ), padding = InlayPresentationFactory.Padding(if (second) 0 else 3, if (second) 6 else 0, 0, 0))
+    ), padding = InlayPresentationFactory.Padding(if (second) 0 else 4, if (second) 6 else 0, 0, 0))
 
     var tooltip = "Choose where to rename occurrences in addition to usages: \n" +
                           "– In comments and string literals"

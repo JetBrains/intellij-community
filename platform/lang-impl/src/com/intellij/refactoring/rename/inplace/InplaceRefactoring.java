@@ -623,7 +623,7 @@ public abstract class InplaceRefactoring {
   protected void showDialogAdvertisement(final String actionId) {
     final Shortcut shortcut = KeymapUtil.getPrimaryShortcut(actionId);
     if (shortcut != null) {
-      setAdvertisementText("Press " + KeymapUtil.getShortcutText(shortcut) + " to show dialog with more options");
+      setAdvertisementText(RefactoringBundle.message("inplace.refactoring.advertisement.text", KeymapUtil.getShortcutText(shortcut)));
     }
   }
 

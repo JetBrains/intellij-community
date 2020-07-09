@@ -123,6 +123,16 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
+  protected void showDialogAdvertisement(String actionId) {
+    if (Registry.is("enable.rename.options.inplace", false)) {
+      setAdvertisementText(RefactoringBundle.message("inplace.refactoring.advertisement.text", "Tab"));
+    }
+    else {
+      super.showDialogAdvertisement(actionId);
+    }
+  }
+
+  @Override
   protected boolean isIdentifier(String newName, Language language) {
     PsiNamedElement namedElement = getVariable();
     return namedElement != null ? RenameUtil.isValidName(myProject, namedElement, newName) : super.isIdentifier(newName, language);

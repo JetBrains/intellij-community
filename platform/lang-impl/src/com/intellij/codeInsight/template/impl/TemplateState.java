@@ -1179,7 +1179,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     return var.getDefaultValueExpression().calculateQuickResult(getExpressionContextForSegment(segmentNumber)) == null;
   }
 
-  private void focusCurrentHighlighter(boolean toSelect) {
+  public void focusCurrentHighlighter(boolean toSelect) {
     if (isFinished()) {
       return;
     }
