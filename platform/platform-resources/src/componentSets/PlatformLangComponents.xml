@@ -53,6 +53,7 @@
     <listener class="com.intellij.internal.performance.LatenciometerListener" topic="com.intellij.openapi.editor.actionSystem.LatencyListener"/>
 
     <listener class="com.intellij.openapi.vfs.newvfs.impl.CachedFileType$PsiListener" topic="com.intellij.psi.util.PsiModificationTracker$Listener"/>
+    <listener class="com.intellij.openapi.vfs.newvfs.impl.CachedFileType$ReparseListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.execution.lineMarker.RunnableStatusListener" topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
