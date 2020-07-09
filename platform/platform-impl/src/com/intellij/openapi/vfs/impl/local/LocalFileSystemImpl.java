@@ -34,12 +34,11 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
   public LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
-    myWatcher = new FileWatcher(myManagingFS);
-    if (myWatcher.isOperational()) {
+    myWatcher = new FileWatcher(myManagingFS, () -> {
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
         () -> { if (!ApplicationManager.getApplication().isDisposed()) storeRefreshStatusToFiles(); },
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
-    }
+    });
     myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
     new SymbolicLinkRefresher(this);
