@@ -2,6 +2,7 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.tree.DoubleClickExpandable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,7 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 
-public abstract class NodeDescriptor<E> {
+public abstract class NodeDescriptor<E> implements DoubleClickExpandable {
   public static final NodeDescriptor<?>[] EMPTY_ARRAY = new NodeDescriptor[0];
   public static final int DEFAULT_WEIGHT = 30;
 
@@ -98,6 +99,7 @@ public abstract class NodeDescriptor<E> {
     return myProject;
   }
 
+  @Override
   public boolean expandOnDoubleClick() {
     return true;
   }

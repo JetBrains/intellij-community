@@ -17,6 +17,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
+import static com.intellij.ui.tree.DoubleClickExpandable.isExpandOnDoubleClickAllowed;
+
 public final class EditSourceOnDoubleClickHandler {
   private EditSourceOnDoubleClickHandler() { }
 
@@ -76,10 +78,11 @@ public final class EditSourceOnDoubleClickHandler {
   }
 
   public static boolean isToggleEvent(@NotNull JTree tree, @NotNull MouseEvent e) {
-    TreePath selectionPath = tree.getSelectionPath();
-    if (selectionPath == null) return false;
-
-    return !tree.getModel().isLeaf(selectionPath.getLastPathComponent()) && tree.getToggleClickCount() == e.getClickCount();
+    if (!SwingUtilities.isLeftMouseButton(e)) return false;
+    int count = tree.getToggleClickCount();
+    if (count <= 0 || e.getClickCount() % count != 0) return false;
+    TreePath path = tree.getSelectionPath();
+    return isExpandOnDoubleClickAllowed(path) && !tree.getModel().isLeaf(path.getLastPathComponent());
   }
 
   public static class TreeMouseListener extends DoubleClickListener {
