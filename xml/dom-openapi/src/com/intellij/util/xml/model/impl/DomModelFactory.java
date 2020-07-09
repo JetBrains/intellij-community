@@ -4,6 +4,7 @@ package com.intellij.util.xml.model.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
@@ -21,8 +22,8 @@ import java.util.Set;
 
 public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T>, C extends PsiElement> extends BaseDomModelFactory<Module, T, M, C> {
 
-  protected DomModelFactory(@NotNull Class<T> aClass, @NonNls String name) {
-    super(aClass, name);
+  protected DomModelFactory(@NotNull Class<T> aClass, final Project project, @NonNls String name) {
+    super(aClass, project, name);
   }
 
   @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.model.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,8 +36,11 @@ import java.util.*;
 public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends DomElement, M extends DomModel<T>, C extends PsiElement>
     extends DomModelFactoryHelper<T> implements SimpleModelFactory<T, M>, MultipleDomModelFactory<S, T, M> {
 
-  protected BaseDomModelFactory(@NotNull Class<T> aClass, @NonNls String name) {
+  private final Project myProject;
+  protected BaseDomModelFactory(@NotNull Class<T> aClass, final Project project, @NonNls String name) {
     super(aClass, DomService.getInstance().createModelMerger());
+
+    myProject = project;
   }
 
   @Nullable
@@ -127,5 +131,9 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     final DomFileElement<T> mergedModel = getModelMerger().mergeModels(DomFileElement.class, list);
     final M firstModel = models.get(0);
     return createCombinedModel(configFiles, mergedModel, firstModel, s);
+  }
+
+  protected Project getProject() {
+    return myProject;
   }
 }
