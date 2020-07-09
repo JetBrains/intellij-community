@@ -307,7 +307,7 @@ public final class StringToConstraintsTransformer {
       else if (c == '(') {
         if (text.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.expected.condition.name"));
         final String option = text.toString();
-        if (!knownOptions.contains(option)) {
+        if (!option.startsWith("_") && !knownOptions.contains(option)) {
           throw new MalformedPatternException(SSRBundle.message("option.is.not.recognized.error.message", option));
         }
         text.setLength(0);
@@ -372,11 +372,11 @@ public final class StringToConstraintsTransformer {
   private static void handleOption(@NotNull MatchVariableConstraint constraint, @NotNull String option, @NotNull String argument,
                                    boolean invert) {
     argument = argument.trim();
-    if (option.equalsIgnoreCase(REF)) {
+    if (option.equals(REF)) {
       constraint.setReferenceConstraint(argument);
       constraint.setInvertReference(invert);
     }
-    else if (option.equalsIgnoreCase(REGEX) || option.equalsIgnoreCase(REGEXW)) {
+    else if (option.equals(REGEX) || option.equals(REGEXW)) {
       if (argument.charAt(0) == '*') {
         argument = argument.substring(1);
         constraint.setWithinHierarchy(true);
@@ -384,11 +384,11 @@ public final class StringToConstraintsTransformer {
       checkRegex(argument);
       constraint.setRegExp(argument);
       constraint.setInvertRegExp(invert);
-      if (option.equalsIgnoreCase(REGEXW)) {
+      if (option.equals(REGEXW)) {
         constraint.setWholeWordsOnly(true);
       }
     }
-    else if (option.equalsIgnoreCase(EXPRTYPE)) {
+    else if (option.equals(EXPRTYPE)) {
       if (argument.charAt(0) == '*') {
         argument = argument.substring(1);
         constraint.setExprTypeWithinHierarchy(true);
@@ -397,7 +397,7 @@ public final class StringToConstraintsTransformer {
       constraint.setExpressionTypes(argument);
       constraint.setInvertExprType(invert);
     }
-    else if (option.equalsIgnoreCase(FORMAL)) {
+    else if (option.equals(FORMAL)) {
       if (argument.charAt(0) == '*') {
         argument = argument.substring(1);
         constraint.setFormalArgTypeWithinHierarchy(true);
@@ -406,24 +406,29 @@ public final class StringToConstraintsTransformer {
       constraint.setExpectedTypes(argument);
       constraint.setInvertFormalType(invert);
     }
-    else if (option.equalsIgnoreCase(SCRIPT)) {
+    else if (option.equals(SCRIPT)) {
       if (invert) throw new MalformedPatternException(SSRBundle.message("error.cannot.invert", option));
       constraint.setScriptCodeConstraint(argument);
     }
-    else if (option.equalsIgnoreCase(CONTAINS)) {
+    else if (option.equals(CONTAINS)) {
       constraint.setContainsConstraint(argument);
       constraint.setInvertContainsConstraint(invert);
     }
-    else if (option.equalsIgnoreCase(WITHIN)) {
+    else if (option.equals(WITHIN)) {
       if (!Configuration.CONTEXT_VAR_NAME.equals(constraint.getName()))
         throw new MalformedPatternException(SSRBundle.message("error.only.applicable.to.complete.match", option));
       constraint.setWithinConstraint(argument);
       constraint.setInvertWithinConstraint(invert);
     }
-    else if (option.equalsIgnoreCase(CONTEXT)) {
+    else if (option.equals(CONTEXT)) {
+      if (invert) throw new MalformedPatternException(SSRBundle.message("error.cannot.invert", option));
       if (!Configuration.CONTEXT_VAR_NAME.equals(constraint.getName()))
         throw new MalformedPatternException(SSRBundle.message("error.only.applicable.to.complete.match", option));
       constraint.setContextConstraint(argument);
+    }
+    else if (option.startsWith("_")) {
+      if (invert) throw new MalformedPatternException(SSRBundle.message("error.cannot.invert", option));
+      constraint.putAdditionalConstraint(option.substring(1), argument);
     }
     else {
       assert false;
