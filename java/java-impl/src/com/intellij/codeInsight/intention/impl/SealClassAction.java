@@ -60,7 +60,6 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
     if (aClass.getPermitsList() != null) return false;
     if (aClass.getModifierList() == null) return false;
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) return false;
-    if (aClass.isEnum()) return false;
     if (PsiUtil.isLocalOrAnonymousClass(aClass)) return false;
     if (!(aClass.getContainingFile() instanceof PsiJavaFile)) return false;
     return !aClass.hasAnnotation(CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
