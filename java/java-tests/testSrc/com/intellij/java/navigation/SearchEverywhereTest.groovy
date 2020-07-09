@@ -21,7 +21,7 @@ import javax.swing.*
 import static com.intellij.testFramework.PlatformTestUtil.waitForFuture
 
 class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
-  static final int SEARCH_TIMEOUT = 5000
+  static final int SEARCH_TIMEOUT = 10_000
 
   SearchEverywhereUIBase mySearchUI
 
