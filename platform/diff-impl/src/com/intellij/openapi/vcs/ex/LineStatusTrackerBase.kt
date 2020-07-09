@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.nullize
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -174,57 +173,70 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
 
   private inner class MyDocumentTrackerHandler : DocumentTracker.Handler {
-    override fun onRangeShifted(before: Block, after: Block) {
-      after.ourData.innerRanges = before.ourData.innerRanges
-    }
-
     override fun afterBulkRangeChange(isDirty: Boolean) {
-      if (!isDirty) calcInnerRanges()
       updateHighlighters()
     }
 
     override fun onUnfreeze(side: Side) {
-      calcInnerRanges()
       updateHighlighters()
     }
+  }
 
-    private fun calcInnerRanges() {
-      if (isDetectWhitespaceChangedLines() &&
-          !documentTracker.isFrozen()) {
-        for (block in blocks) {
-          if (block.ourData.innerRanges == null) {
-            block.ourData.innerRanges = calcInnerRanges(block)
+  protected abstract inner class InnerRangesDocumentTrackerHandler : DocumentTracker.Handler {
+    abstract var Block.innerRanges: List<Range.InnerRange>?
+
+    abstract fun isDetectWhitespaceChangedLines(): Boolean
+
+
+    override fun onRangeShifted(before: Block, after: Block) {
+      after.innerRanges = before.innerRanges
+    }
+
+    override fun afterBulkRangeChange(isDirty: Boolean) {
+      if (!isDirty) updateMissingInnerRanges()
+    }
+
+    override fun onUnfreeze(side: Side) {
+      updateMissingInnerRanges()
+    }
+
+    private fun updateMissingInnerRanges() {
+      if (!isDetectWhitespaceChangedLines()) return
+      if (documentTracker.isFrozen()) return
+
+      for (block in blocks) {
+        if (block.innerRanges == null) {
+          block.innerRanges = calcInnerRanges(block)
+        }
+      }
+    }
+
+    @CalledInAwt
+    fun resetInnerRanges() {
+      LOCK.write {
+        if (isDetectWhitespaceChangedLines()) {
+          for (block in blocks) {
+            block.innerRanges = calcInnerRanges(block)
+          }
+        }
+        else {
+          for (block in blocks) {
+            block.innerRanges = null
           }
         }
       }
     }
-  }
 
-  private fun calcInnerRanges(block: Block): List<Range.InnerRange> {
-    if (block.start == block.end || block.vcsStart == block.vcsEnd) return emptyList()
-    return createInnerRanges(block.range,
-                             vcsDocument.immutableCharSequence, document.immutableCharSequence,
-                             vcsDocument.lineOffsets, document.lineOffsets)
+    private fun calcInnerRanges(block: Block): List<Range.InnerRange> {
+      if (block.start == block.end || block.vcsStart == block.vcsEnd) return emptyList()
+      return createInnerRanges(block.range,
+                               vcsDocument.immutableCharSequence, document.immutableCharSequence,
+                               vcsDocument.lineOffsets, document.lineOffsets)
+    }
   }
 
   protected fun updateHighlighters() {
     renderer.scheduleUpdate()
-  }
-
-  @CalledInAwt
-  protected fun resetInnerRanges() {
-    LOCK.write {
-      if (isDetectWhitespaceChangedLines()) {
-        for (block in blocks) {
-          block.ourData.innerRanges = calcInnerRanges(block)
-        }
-      }
-      else {
-        for (block in blocks) {
-          block.ourData.innerRanges = null
-        }
-      }
-    }
   }
 
   override fun isOperational(): Boolean = LOCK.read {
@@ -386,18 +398,6 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
       return result
     }
   }
-
-
-  protected open class BlockData(internal var innerRanges: List<Range.InnerRange>? = null)
-
-  protected open fun createBlockData(): BlockData = BlockData()
-  protected open val Block.ourData: BlockData get() = getBlockData(this)
-  protected fun getBlockData(block: Block): BlockData {
-    if (block.data == null) block.data = createBlockData()
-    return block.data as BlockData
-  }
-
-  protected val Block.innerRanges: List<Range.InnerRange>? get() = this.ourData.innerRanges.nullize()
 
 
   companion object {

@@ -845,12 +845,21 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   }
 
 
-  protected data class MyBlockData(var marker: ChangeListMarker? = null,
-                                   var excludedFromCommit: Boolean = true
-  ) : LineStatusTrackerBase.BlockData()
+  private data class BlockData(var innerRanges: List<Range.InnerRange>? = null,
+                               var marker: ChangeListMarker? = null,
+                               var excludedFromCommit: Boolean = true)
 
-  override fun createBlockData(): BlockData = MyBlockData()
-  override val Block.ourData: MyBlockData get() = getBlockData(this) as MyBlockData
+  private val Block.ourData: BlockData
+    get() {
+      if (data == null) data = BlockData()
+      return data as BlockData
+    }
+
+  override var Block.innerRanges: List<Range.InnerRange>?
+    get() = this.ourData.innerRanges
+    set(value) {
+      this.ourData.innerRanges = value
+    }
 
   private var Block.marker: ChangeListMarker
     get() = this.ourData.marker!! // can be null in MyLineTrackerListener, until `onBlockAdded` is called
@@ -863,7 +872,6 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     set(value) {
       this.ourData.excludedFromCommit = value
     }
-
 
   companion object {
     @JvmStatic

@@ -60,16 +60,19 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 ) : LineStatusTrackerBase<R>(project, document), LocalLineStatusTracker<R> {
   abstract override val renderer: LocalLineStatusMarkerRenderer
 
+  private val innerRangesHandler = MyInnerRangesDocumentTrackerHandler()
+
   override var mode: LocalLineStatusTracker.Mode = LocalLineStatusTracker.Mode(true, true, false)
     set(value) {
       if (value == mode) return
       field = value
-      resetInnerRanges()
+      innerRangesHandler.resetInnerRanges()
       updateHighlighters()
     }
 
   init {
     documentTracker.addHandler(LocalDocumentTrackerHandler())
+    documentTracker.addHandler(innerRangesHandler)
   }
 
   @CalledInAwt
@@ -81,6 +84,8 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   override fun isDetectWhitespaceChangedLines(): Boolean = mode.isVisible && mode.detectWhitespaceChangedLines
 
   override fun isClearLineModificationFlagOnRollback(): Boolean = true
+
+  protected abstract var DocumentTracker.Block.innerRanges: List<Range.InnerRange>?
 
 
   override fun scrollAndShowHint(range: Range, editor: Editor) {
@@ -143,6 +148,25 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
       }
     }
   }
+
+  private inner class MyInnerRangesDocumentTrackerHandler : InnerRangesDocumentTrackerHandler() {
+    override fun isDetectWhitespaceChangedLines(): Boolean = mode.let { it.isVisible && it.detectWhitespaceChangedLines }
+
+    override var DocumentTracker.Block.innerRanges: List<Range.InnerRange>?
+      get() {
+        val block = this
+        with(this@LocalLineStatusTrackerImpl) {
+          return block.innerRanges
+        }
+      }
+      set(value) {
+        val block = this
+        with(this@LocalLineStatusTrackerImpl) {
+          block.innerRanges = value
+        }
+      }
+  }
+
 
   @CalledInAny
   override fun freeze() {

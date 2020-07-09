@@ -34,6 +34,13 @@ class SimpleLocalLineStatusTracker(project: Project,
     setBaseRevision(vcsContent, null)
   }
 
+  @Suppress("UNCHECKED_CAST")
+  override var Block.innerRanges: List<Range.InnerRange>?
+    get() = data as List<Range.InnerRange>?
+    set(value) {
+      data = value
+    }
+
   companion object {
     @JvmStatic
     fun createTracker(project: Project,

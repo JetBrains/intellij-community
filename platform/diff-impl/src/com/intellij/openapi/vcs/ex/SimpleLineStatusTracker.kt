@@ -28,7 +28,7 @@ class SimpleLineStatusTracker(project: Project?,
 ) : LineStatusTrackerBase<Range>(project, document) {
   override val renderer: LineStatusMarkerRenderer = rendererBuilder(this)
   override val virtualFile: VirtualFile? = FileDocumentManager.getInstance().getFile(document)
-  override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
+  override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, null)
 
   @CalledInAwt
   fun setBaseRevision(vcsContent: CharSequence) {
