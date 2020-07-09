@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
 import com.intellij.util.containers.PeekableIteratorWrapper
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAwt
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -30,7 +31,7 @@ class DocumentTracker : Disposable {
 
   // Any external calls (ex: Document modifications) must be avoided under lock,
   // do avoid deadlock with ChangeListManager
-  internal val LOCK: Lock = Lock()
+  private val LOCK: Lock
 
   val document1: Document
   val document2: Document
@@ -43,10 +44,12 @@ class DocumentTracker : Disposable {
 
   constructor(document1: Document,
               document2: Document,
+              LOCK: Lock,
               handler: Handler) {
     assert(document1 != document2)
     this.document1 = document1
     this.document2 = document2
+    this.LOCK = LOCK
     this.handler = handler
 
     val changes = when {
@@ -424,18 +427,19 @@ class DocumentTracker : Disposable {
   }
 
 
-  internal inner class Lock {
-    private val myLock = ReentrantLock()
+  @ApiStatus.Internal
+  class Lock {
+    val myLock = ReentrantLock()
 
-    internal inline fun <T> read(task: () -> T): T {
+    inline fun <T> read(task: () -> T): T {
       return myLock.withLock(task)
     }
 
-    internal inline fun <T> write(task: () -> T): T {
+    inline fun <T> write(task: () -> T): T {
       return myLock.withLock(task)
     }
 
-    internal val isHeldByCurrentThread: Boolean
+    val isHeldByCurrentThread: Boolean
       get() = myLock.isHeldByCurrentThread
   }
 

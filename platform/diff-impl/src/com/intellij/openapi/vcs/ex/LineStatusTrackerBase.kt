@@ -56,7 +56,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
     private set
 
   protected val blocks: List<Block> get() = documentTracker.blocks
-  internal val LOCK: DocumentTracker.Lock get() = documentTracker.LOCK
+  internal val LOCK: DocumentTracker.Lock = DocumentTracker.Lock()
 
   constructor(project: Project?, document: Document) {
     this.project = project
@@ -66,7 +66,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
     vcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, true)
     vcsDocument.setReadOnly(true)
 
-    documentTracker = DocumentTracker(vcsDocument, this.document, createDocumentTrackerHandler())
+    documentTracker = DocumentTracker(vcsDocument, this.document, LOCK, createDocumentTrackerHandler())
     Disposer.register(disposable, documentTracker)
   }
 
