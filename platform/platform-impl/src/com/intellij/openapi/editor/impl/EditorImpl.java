@@ -2213,7 +2213,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   @Override
   public Dimension getContentSize() {
-    return myView.getPreferredSize();
+    return isReleased ? new Dimension() : myView.getPreferredSize();
   }
 
   @NotNull
