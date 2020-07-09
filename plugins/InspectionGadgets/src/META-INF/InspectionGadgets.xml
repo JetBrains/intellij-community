@@ -1530,7 +1530,7 @@
                      implementationClass="com.siyeh.ig.maturity.UseOfObsoleteDateTimeApiInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CommentedOutCode" bundle="messages.InspectionGadgetsBundle"
                      key="inspection.commented.out.code.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.maturity.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.code.maturity.issues" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.siyeh.ig.maturity.CommentedOutCodeInspection" cleanupTool="true"/>
 
     <!--group.names.memory.issues-->
