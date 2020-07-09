@@ -263,6 +263,9 @@ public final class PluginNode implements IdeaPluginDescriptor {
   public void setDate(String date) {
     this.date = Long.valueOf(date);
   }
+  public void setDate(Long date) {
+    this.date = date;
+  }
 
   public long getDate() {
     return date;
