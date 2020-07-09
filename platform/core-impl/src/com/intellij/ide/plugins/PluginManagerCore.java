@@ -962,7 +962,7 @@ public final class PluginManagerCore {
     return UrlClassLoader.build().allowLock().useCache().urlsInterned();
   }
 
-  static @NotNull BuildNumber getBuildNumber() {
+  public static @NotNull BuildNumber getBuildNumber() {
     BuildNumber result = ourBuildNumber;
     if (result == null) {
       result = BuildNumber.fromString(getPluginsCompatibleBuild());
@@ -1085,8 +1085,8 @@ public final class PluginManagerCore {
     return getIncompatibleMessage(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) != null;
   }
 
-  static @Nullable @Nls String getIncompatibleMessage(@NotNull BuildNumber buildNumber, @Nullable @NonNls String sinceBuild, 
-                                                      @Nullable @NonNls String untilBuild) {
+  public static @Nullable @Nls String getIncompatibleMessage(@NotNull BuildNumber buildNumber, @Nullable @NonNls String sinceBuild,
+                                                             @Nullable @NonNls String untilBuild) {
     try {
       String message = null;
       BuildNumber sinceBuildNumber = sinceBuild == null ? null : BuildNumber.fromString(sinceBuild, null, null);
