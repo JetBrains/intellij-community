@@ -174,11 +174,18 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
 
     @NotNull
     private static Pair<String, String> getUndoOrRedoActionNameAndDescription(boolean undo) {
-      String command = undo ? "undo" : "redo";
-      return Pair.create(
-        ActionsBundle.message("action." + command + ".text", "").trim(),
-        ActionsBundle.message("action." + command + ".description",
-                              ActionsBundle.message("action." + command + ".description.empty")).trim());
+      if (undo) {
+        return Pair.create(
+          ActionsBundle.message("action.undo.text", "").trim(),
+          ActionsBundle.message("action.undo.description",
+                                ActionsBundle.message("action.undo.description.empty")).trim());
+      }
+      else {
+        return Pair.create(
+          ActionsBundle.message("action.redo.text", "").trim(),
+          ActionsBundle.message("action.redo.description",
+                                ActionsBundle.message("action.redo.description.empty")).trim());
+      }
     }
   }
 }
