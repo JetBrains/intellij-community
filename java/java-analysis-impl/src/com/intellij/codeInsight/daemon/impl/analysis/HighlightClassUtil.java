@@ -1091,7 +1091,7 @@ public class HighlightClassUtil {
     if (psiClass.hasModifierProperty(PsiModifier.SEALED) && psiClass.getPermitsListTypes().length == 0) {
       PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
       if (nameIdentifier == null) return null;
-      if (psiClass.isEnum() && StreamEx.of(psiClass.getAllFields())
+      if (psiClass.isEnum() && StreamEx.of(psiClass.getFields())
         .select(PsiEnumConstant.class)
         .anyMatch(field -> field.getInitializingClass() != null)
       ) {
