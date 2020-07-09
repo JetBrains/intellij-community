@@ -44,7 +44,7 @@ class GithubCreatePullRequestTest : GithubGitRepoTest() {
 
     val coordinatesSet = myProject.service<GHProjectRepositoriesManager>().knownRepositories
     assertSize(1, coordinatesSet)
-    val coordinates = coordinatesSet.first().remote
+    val coordinates = coordinatesSet.first().gitRemote
 
     GithubCreatePullRequestAction.createPullRequest(myProject, repository, coordinates.remote, coordinates.url, mainAccount.account)
 
@@ -66,7 +66,7 @@ class GithubCreatePullRequestTest : GithubGitRepoTest() {
 
     val coordinatesSet = myProject.service<GHProjectRepositoriesManager>().knownRepositories
     assertSize(1, coordinatesSet)
-    val coordinates = coordinatesSet.first().remote
+    val coordinates = coordinatesSet.first().gitRemote
 
     service<GithubSettings>().createPullRequestCreateRemote = ThreeState.YES
     GithubCreatePullRequestAction.createPullRequest(myProject, repository, coordinates.remote, coordinates.url, secondaryAccount.account)

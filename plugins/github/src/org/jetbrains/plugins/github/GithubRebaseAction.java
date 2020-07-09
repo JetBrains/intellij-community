@@ -60,7 +60,7 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
     if (executor == null) return;
 
     new RebaseTask(project, executor, Git.getInstance(), account.getServer(),
-                   repository.getRemote().getRepository(),
+                   repository.getGitRemote().getRepository(),
                    repository.getRepository().getRepositoryPath()).queue();
   }
 
