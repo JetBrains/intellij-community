@@ -86,7 +86,9 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
 
       ApplicationActivationListener.TOPIC.subscribe(this, object : ApplicationActivationListener {
         override fun applicationActivated(ideFrame: IdeFrame) {
-          scheduleCheckVersion()
+          if (versionCheckState == VersionCheckState.FAILED) {
+            scheduleCheckVersion()
+          }
         }
       })
     }
