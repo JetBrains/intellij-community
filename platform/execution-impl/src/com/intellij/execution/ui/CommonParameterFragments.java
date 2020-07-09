@@ -39,16 +39,19 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   public CommonParameterFragments(@NotNull Project project, Computable<Boolean> hasModule) {
     RawCommandLineEditor programArguments = new RawCommandLineEditor();
     CommandLinePanel.setMinimumWidth(programArguments, 200);
-    String message = ExecutionBundle.message("run.configuration.program.hint");
+    String message = ExecutionBundle.message("run.configuration.program.placeholder");
     programArguments.getEditorField().getEmptyText().setText(message);
     programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
     FragmentedSettingsUtil.setupPlaceholderVisibility(programArguments.getEditorField());
     MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
-    myFragments.add(new SettingsEditorFragment<>("commandLineParameters", null, null, programArguments,
-                                                 100,
-                                                 (settings, component) -> component.setText(settings.getProgramParameters()),
-                                                 (settings, component) -> settings.setProgramParameters(component.getText()),
-                                                 settings -> true));
+    SettingsEditorFragment<Settings, RawCommandLineEditor> parameters =
+      new SettingsEditorFragment<>("commandLineParameters", null, null, programArguments,
+                                   100,
+                                   (settings, component) -> component.setText(settings.getProgramParameters()),
+                                   (settings, component) -> settings.setProgramParameters(component.getText()),
+                                   settings -> true);
+    parameters.setHint(ExecutionBundle.message("run.configuration.program.hint"));
+    myFragments.add(parameters);
 
     TextFieldWithBrowseButton workingDirectoryField = new TextFieldWithBrowseButton();
     workingDirectoryField.addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null,
@@ -112,17 +115,20 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
     env.setLabelLocation(BorderLayout.WEST);
     UIUtil.setMonospaced(env.getComponent().getTextField());
-    return new SettingsEditorFragment<>("environmentVariables", ExecutionBundle.message("environment.variables.fragment.name"),
-                                        ExecutionBundle.message("group.operating.system"), (JComponent)env,
-                                        (settings, c) -> env.reset(settings),
-                                        (settings, c) -> {
-                                          if (!env.isVisible()) {
-                                            settings.setEnvs(Collections.emptyMap());
-                                            settings.setPassParentEnvs(true);
-                                          }
-                                          else
-                                            env.apply(settings);
-                                        },
-                                        s -> true);
+    SettingsEditorFragment<S, JComponent> fragment =
+      new SettingsEditorFragment<>("environmentVariables", ExecutionBundle.message("environment.variables.fragment.name"),
+                                   ExecutionBundle.message("group.operating.system"), env,
+                                   (settings, c) -> env.reset(settings),
+                                   (settings, c) -> {
+                                     if (!env.isVisible()) {
+                                       settings.setEnvs(Collections.emptyMap());
+                                       settings.setPassParentEnvs(true);
+                                     }
+                                     else
+                                       env.apply(settings);
+                                   },
+                                   s -> true);
+    fragment.setHint(ExecutionBundle.message("environment.variables.fragment.hint"));
+    return fragment;
   }
 }

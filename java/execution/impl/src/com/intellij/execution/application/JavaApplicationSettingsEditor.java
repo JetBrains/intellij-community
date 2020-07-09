@@ -61,10 +61,14 @@ public final class JavaApplicationSettingsEditor extends RunConfigurationFragmen
     vmOptions.getEditorField().getEmptyText().setText(message);
     MacrosDialog.addMacroSupport(vmOptions.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
     FragmentedSettingsUtil.setupPlaceholderVisibility(vmOptions.getEditorField());
-    fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions, 15,
-                                               (configuration, c) -> c.setText(configuration.getVMParameters()),
-                                               (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
-                                               configuration -> isNotEmpty(configuration.getVMParameters())));
+    SettingsEditorFragment<ApplicationConfiguration, RawCommandLineEditor> vmParameters =
+      new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions,
+                                   15,
+                                   (configuration, c) -> c.setText(configuration.getVMParameters()),
+                                   (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
+                                   configuration -> isNotEmpty(configuration.getVMParameters()));
+    vmParameters.setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"));
+    fragments.add(vmParameters);
 
     EditorTextField mainClass = ClassEditorField.createClassField(myProject, () -> classpathCombo.getSelectedModule());
     mainClass.setShowPlaceholderWhenFocused(true);
@@ -73,10 +77,13 @@ public final class JavaApplicationSettingsEditor extends RunConfigurationFragmen
     mainClass.setPlaceholder(placeholder);
     mainClass.getAccessibleContext().setAccessibleName(placeholder);
     setMinimumWidth(mainClass, 300);
-    fragments.add(new SettingsEditorFragment<>("mainClass", null, null, mainClass, 20,
-                                               (configuration, component) -> component.setText(configuration.getMainClassName()),
-                                               (configuration, component) -> configuration.setMainClassName(component.getText()),
-                                               configuration -> true));
+    SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment =
+      new SettingsEditorFragment<>("mainClass", null, null, mainClass, 20,
+                                   (configuration, component) -> component.setText(configuration.getMainClassName()),
+                                   (configuration, component) -> configuration.setMainClassName(component.getText()),
+                                   configuration -> true);
+    mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
+    fragments.add(mainClassFragment);
     fragments.add(moduleClasspath);
 
     ShortenCommandLineModeCombo combo = new ShortenCommandLineModeCombo(myProject, jrePath.component(), () -> classpathCombo.getSelectedModule(),
