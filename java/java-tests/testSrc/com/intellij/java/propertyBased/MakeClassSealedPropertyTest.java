@@ -19,9 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.propertyBased.InvokeIntention;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
-import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
@@ -114,7 +112,7 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
     if (nameIdentifier == null) return false;
     editor.getCaretModel().moveToOffset(nameIdentifier.getTextOffset());
     if (!makeSealedAction.isAvailable(psiClass.getProject(), editor, nameIdentifier)) return false;
-    Query<PsiClass> query = ClassInheritorsSearch.search(psiClass);
-    return query.findFirst() != null && query.allMatch(c -> ClassUtils.inSamePackage(c, psiClass));
+    // for interface without implementations red code is produced
+    return !psiClass.isInterface() || ClassInheritorsSearch.search(psiClass).findFirst() != null;
   }
 }
