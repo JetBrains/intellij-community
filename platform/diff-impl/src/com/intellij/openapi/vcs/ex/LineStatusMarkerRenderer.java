@@ -395,7 +395,7 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   @NotNull
-  private static IntPair getGutterArea(@NotNull Editor editor) {
+  protected static IntPair getGutterArea(@NotNull Editor editor) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
     int endX = gutter.getWhitespaceSeparatorOffset();
@@ -407,7 +407,8 @@ public abstract class LineStatusMarkerRenderer {
     return e.getX() > gutter.getLineMarkerFreePaintersAreaOffset();
   }
 
-  private static void paintRect(@NotNull Graphics2D g, @Nullable Color color, @Nullable Color borderColor, int x1, int y1, int x2, int y2) {
+  protected static void paintRect(@NotNull Graphics2D g, @Nullable Color color, @Nullable Color borderColor,
+                                  int x1, int y1, int x2, int y2) {
     if (color != null) {
       g.setColor(color);
       g.fillRect(x1, y1, x2 - x1, y2 - y1);
@@ -423,8 +424,8 @@ public abstract class LineStatusMarkerRenderer {
     }
   }
 
-  private static void paintTriangle(@NotNull Graphics2D g, @NotNull Editor editor, @Nullable Color color, @Nullable Color borderColor,
-                                    int x1, int x2, int y) {
+  protected static void paintTriangle(@NotNull Graphics2D g, @NotNull Editor editor, @Nullable Color color, @Nullable Color borderColor,
+                                      int x1, int x2, int y) {
     float editorScale = editor instanceof EditorImpl ? ((EditorImpl)editor).getScale() : 1.0f;
     int size = (int)JBUIScale.scale(4 * editorScale);
     if (y < size) y = size;
@@ -446,7 +447,7 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   @Nullable
-  private static Color getGutterColor(byte type, @Nullable Editor editor) {
+  protected static Color getGutterColor(byte type, @Nullable Editor editor) {
     final EditorColorsScheme scheme = getColorScheme(editor);
     switch (type) {
       case Range.INSERTED:

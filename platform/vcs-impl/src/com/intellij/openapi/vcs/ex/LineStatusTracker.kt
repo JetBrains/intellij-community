@@ -27,9 +27,15 @@ interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
   override val project: Project
   override val virtualFile: VirtualFile
 
-  fun isAvailableAt(editor: Editor): Boolean
+  @CalledInAwt
+  fun isAvailableAt(editor: Editor): Boolean {
+    return editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
+  }
 
+  @CalledInAwt
   fun scrollAndShowHint(range: Range, editor: Editor)
+
+  @CalledInAwt
   fun showHint(range: Range, editor: Editor)
 }
 
@@ -53,6 +59,11 @@ interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
   class Mode(val isVisible: Boolean,
              val showErrorStripeMarkers: Boolean,
              val detectWhitespaceChangedLines: Boolean)
+
+  @CalledInAwt
+  override fun isAvailableAt(editor: Editor): Boolean {
+    return mode.isVisible && super.isAvailableAt(editor)
+  }
 }
 
 abstract class LocalLineStatusTrackerImpl<R : Range>(
@@ -75,11 +86,6 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   init {
     documentTracker.addHandler(LocalDocumentTrackerHandler())
     documentTracker.addHandler(innerRangesHandler)
-  }
-
-  @CalledInAwt
-  override fun isAvailableAt(editor: Editor): Boolean {
-    return mode.isVisible && editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
   }
 
   @CalledInAwt
