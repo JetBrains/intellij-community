@@ -62,7 +62,7 @@ import static com.intellij.diff.util.DiffUtil.getDiffType;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRenderer {
-  public LineStatusMarkerPopupRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
+  public LineStatusMarkerPopupRenderer(@NotNull LineStatusTrackerI<?> tracker) {
     super(tracker);
   }
 

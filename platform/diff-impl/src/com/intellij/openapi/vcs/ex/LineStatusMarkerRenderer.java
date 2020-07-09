@@ -44,7 +44,7 @@ import static java.util.Collections.emptyList;
 public abstract class LineStatusMarkerRenderer {
   private static final Logger LOG = getInstance(LineStatusMarkerRenderer.class);
 
-  @NotNull protected final LineStatusTrackerBase<?> myTracker;
+  @NotNull protected final LineStatusTrackerI<?> myTracker;
   private final MarkupEditorFilter myEditorFilter;
 
   @NotNull private final MergingUpdateQueue myUpdateQueue;
@@ -52,7 +52,7 @@ public abstract class LineStatusMarkerRenderer {
   @NotNull private final RangeHighlighter myHighlighter;
   @NotNull private final List<RangeHighlighter> myTooltipHighlighters = new ArrayList<>();
 
-  LineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
+  LineStatusMarkerRenderer(@NotNull LineStatusTrackerI<?> tracker) {
     myTracker = tracker;
     myEditorFilter = getEditorFilter();
 

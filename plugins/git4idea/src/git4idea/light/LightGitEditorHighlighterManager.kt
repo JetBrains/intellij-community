@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
+import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,7 +23,7 @@ private val LOG = Logger.getInstance("#git4idea.light.LightGitEditorHighlighterM
 
 class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposable {
   private val singleTaskController = MySingleTaskController()
-  private var lst: LineStatusTrackerBase<Range>? = null
+  private var lst: LocalLineStatusTracker<Range>? = null
 
   private val lightEditService
     get() = LightEditService.getInstance()
