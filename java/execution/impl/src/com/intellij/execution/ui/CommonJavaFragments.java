@@ -94,19 +94,25 @@ public class CommonJavaFragments {
     comboBox.getAccessibleContext().setAccessibleName(name);
     setMinimumWidth(comboBox, 400);
     UIUtil.setMonospaced(comboBox);
-    return new SettingsEditorFragment<>("module.classpath", name, ExecutionBundle.message("group.java.options"), comboBox, 10,
-                                        (s, c) -> { comboBox.reset(s); option.myOptionValue = getter.test(s); },
-                                        (s, c) -> {
-                                          if (comboBox.isVisible()) {
-                                            comboBox.applyTo(s);
-                                            setter.accept(s, option.myOptionValue);
-                                          }
-                                          else {
-                                            s.setModule(s.getDefaultModule());
-                                            setter.accept(s, false);
-                                          }
-                                        },
-                                        s -> s.getDefaultModule() != s.getConfigurationModule().getModule());
+    SettingsEditorFragment<S, ModuleClasspathCombo> fragment =
+      new SettingsEditorFragment<>("module.classpath", name, ExecutionBundle.message("group.java.options"), comboBox, 10,
+                                   (s, c) -> {
+                                     comboBox.reset(s);
+                                     option.myOptionValue = getter.test(s);
+                                   },
+                                   (s, c) -> {
+                                     if (comboBox.isVisible()) {
+                                       comboBox.applyTo(s);
+                                       setter.accept(s, option.myOptionValue);
+                                     }
+                                     else {
+                                       s.setModule(s.getDefaultModule());
+                                       setter.accept(s, false);
+                                     }
+                                   },
+                                   s -> s.getDefaultModule() != s.getConfigurationModule().getModule());
+    fragment.setHint(ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.hint"));
+    return fragment;
   }
 
   @NotNull

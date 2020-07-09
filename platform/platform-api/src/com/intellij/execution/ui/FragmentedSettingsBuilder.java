@@ -64,11 +64,15 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
     JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, 0, 0));
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
+      JComponent component = fragment.getComponent();
       if (fragment.isTag()) {
-        tagsPanel.add(fragment.getComponent());
+        tagsPanel.add(component);
       }
       else {
-        addLine(fragment.getComponent());
+        addLine(component);
+        if (fragment.getHintComponent() != null) {
+          addLine(fragment.getHintComponent(), 0, getLeftInset(component), TOP_INSET);
+        }
       }
     }
     addLine(tagsPanel, GROUP_INSET - TOP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)), 0);
@@ -81,8 +85,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
       myPanel.add(new JPanel(), myConstraints);
     }
 
-    List<PanelWithAnchor> panels =
-      fragments.stream().map(SettingsEditorFragment::component).filter(component -> component instanceof PanelWithAnchor)
+    List<PanelWithAnchor> panels = Arrays.stream(myPanel.getComponents()).filter(component -> component instanceof PanelWithAnchor)
         .map(component -> (PanelWithAnchor)component).collect(Collectors.toList());
     UIUtil.mergeComponentsWithAnchor(panels);
     return myPanel;
@@ -161,11 +164,11 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.getCommandLinePosition() > 0);
     if (list.isEmpty()) return;
     fragments.removeAll(list);
-    CommandLinePanel panel = new CommandLinePanel(ContainerUtil.map(list, fragment -> fragment.createEditor()));
+    CommandLinePanel panel = new CommandLinePanel(list);
     for (SettingsEditorFragment<Settings, ?> fragment : list) {
       fragment.addSettingsEditorListener(editor -> panel.rebuildRows());
     }
-    addLine(panel, TOP_INSET, -panel.getLeftInset(), GROUP_INSET - TOP_INSET);
+    addLine(panel, TOP_INSET, -panel.getLeftInset(), TOP_INSET * 2);
   }
 
   static int getLeftInset(JComponent component) {
