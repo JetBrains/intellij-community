@@ -45,6 +45,7 @@ import java.awt.Insets
 import java.awt.event.ItemEvent
 import java.util.Collections.synchronizedMap
 import java.util.function.Function
+import java.util.regex.Pattern
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -198,6 +199,7 @@ class GitMergeDialog(private val project: Project,
     try {
       result = Git.getInstance().runCommand(handler).getOutputOrThrow()
         .lines()
+        .filter { branch -> !LINK_REF_REGEX.matcher(branch).matches() }
         .map { it.trim() }
     }
     catch (e: Exception) {
@@ -467,5 +469,6 @@ class GitMergeDialog(private val project: Project,
 
   companion object {
     private val LOG = logger<GitMergeDialog>()
+    private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+")
   }
 }
