@@ -42,16 +42,14 @@ import com.intellij.packaging.impl.elements.ArchivePackagingElement
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
+import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.*
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.*
 import org.junit.Assert.assertFalse
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -270,6 +268,20 @@ class ExternalSystemStorageTest {
     model.createLibrary("regular", null)
     model.createLibrary("imported", null, externalSource)
     model.commit()
+  }
+
+  @Test
+  fun `load unloaded modules`() {
+    if (!ProjectModelRule.isWorkspaceModelEnabled) return
+    loadProjectAndCheckResults("unloadedModules") { project ->
+      val unloadedModuleName = "imported"
+      val moduleManager = ModuleManager.getInstance(project)
+      val moduleDescription = moduleManager.getUnloadedModuleDescription(unloadedModuleName)
+      assertThat(moduleDescription).isNotNull
+      val contentRoots = moduleDescription!!.contentRoots
+      assertThat(contentRoots.size).isEqualTo(1)
+      assertThat(contentRoots[0].fileName).isEqualTo(unloadedModuleName)
+    }
   }
 
   @Test
