@@ -466,6 +466,6 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
 
     companion object {
         fun getInstance(project: Project): GradleBuildRootsManager =
-            EPN.findExtensionOrFail(GradleBuildRootsManager::class.java, project)
+            ScriptingSupport.EPN.findExtensionOrFail(GradleBuildRootsManager::class.java, project)
     }
 }

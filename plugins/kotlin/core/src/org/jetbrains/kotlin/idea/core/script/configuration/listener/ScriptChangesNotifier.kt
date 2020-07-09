@@ -84,10 +84,11 @@ internal class ScriptChangesNotifier(
     }
 
     private val defaultListener = DefaultScriptChangeListener(project)
-    private val listeners: Collection<ScriptChangeListener> = mutableListOf<ScriptChangeListener>().apply {
-        addAll(LISTENER.getExtensions(project))
-        add(defaultListener)
-    }
+    private val listeners: Collection<ScriptChangeListener>
+        get() = mutableListOf<ScriptChangeListener>().apply {
+            addAll(LISTENER.getExtensions(project))
+            add(defaultListener)
+        }
 
     private fun getListener(project: Project, file: VirtualFile): ScriptChangeListener? {
         if (project.isDisposed || areListenersDisabled()) return null
