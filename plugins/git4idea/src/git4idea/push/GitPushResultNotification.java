@@ -25,12 +25,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
-import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateInfoAsLog;
 import git4idea.update.GitUpdateResult;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,8 +55,8 @@ final class GitPushResultNotification extends Notification {
   private static final Logger LOG = Logger.getInstance(GitPushResultNotification.class);
 
   private GitPushResultNotification(@NotNull String groupDisplayId,
-                                    @NotNull String title,
-                                    @NotNull String content,
+                                    @NotNull @Nls String title,
+                                    @NotNull @Nls String content,
                                     @NotNull NotificationType type) {
     super(groupDisplayId, "", emulateTitle(title, content), type);
   }
@@ -181,7 +181,7 @@ final class GitPushResultNotification extends Notification {
   }
 
   @NotNull
-  static String emulateTitle(@NotNull String title, @NotNull String content) {
+  static String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
     return "<b>" + title + "</b><br/>" + content;
   }
 
@@ -216,8 +216,8 @@ final class GitPushResultNotification extends Notification {
     }, "<br/>");
   }
 
-  private static String formRepoDescription(@NotNull GitPushRepoResult result) {
-    String description;
+  private static @Nls String formRepoDescription(@NotNull GitPushRepoResult result) {
+    @Nls String description;
     String sourceBranch = GitBranchUtil.stripRefsPrefix(result.getSourceBranch());
     String targetBranch = GitBranchUtil.stripRefsPrefix(result.getTargetBranch());
     String tagDescription = formTagDescription(result.getPushedTags(), result.getTargetRemote());
@@ -268,7 +268,7 @@ final class GitPushResultNotification extends Notification {
   }
 
   @Nullable
-  private static String formTagDescription(@NotNull List<String> pushedTags, @NotNull String remoteName) {
+  private static @Nls String formTagDescription(@NotNull List<String> pushedTags, @NotNull String remoteName) {
     if (pushedTags.isEmpty()) {
       return null;
     }
@@ -278,7 +278,7 @@ final class GitPushResultNotification extends Notification {
     return pushedTags.size() + " tags to " + remoteName;
   }
 
-  private static String formDescriptionBasedOnUpdateResult(GitUpdateResult updateResult, String targetBranch) {
+  private static @Nls String formDescriptionBasedOnUpdateResult(GitUpdateResult updateResult, String targetBranch) {
     if (updateResult == null || updateResult == GitUpdateResult.SUCCESS || updateResult == GitUpdateResult.NOTHING_TO_UPDATE) {
       return String.format("push to %s was rejected", targetBranch);
     }
