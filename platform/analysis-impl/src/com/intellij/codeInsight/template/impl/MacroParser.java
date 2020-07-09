@@ -5,6 +5,7 @@ package com.intellij.codeInsight.template.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.macro.MacroFactory;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -131,7 +132,7 @@ public final class MacroParser {
     advance(lexer);
 
     if (lexer.getTokenType() == null) {
-      if (TemplateImpl.END.equals(variableName)) {
+      if (Template.END.equals(variableName)) {
         return new EmptyNode();
       }
 

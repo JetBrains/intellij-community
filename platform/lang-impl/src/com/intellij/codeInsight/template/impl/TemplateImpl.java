@@ -6,7 +6,6 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -16,17 +15,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class TemplateImpl extends Template implements SchemeElement {
+public class TemplateImpl extends TemplateBase implements SchemeElement {
   private String myKey;
-  @NotNull private String myString;
   private String myDescription;
   private String myGroupName;
   private char myShortcutChar = TemplateSettings.DEFAULT_CHAR;
   private final List<Variable> myVariables = new SmartList<>();
-  private List<Segment> mySegments;
-  private String myTemplateText;
   private String myId;
-  @Nullable private Throwable myBuildingTemplateTrace;
 
   @Override
   public boolean equals(Object o) {
@@ -42,8 +37,8 @@ public class TemplateImpl extends Template implements SchemeElement {
     if (myDescription != null ? !myDescription.equals(template.myDescription) : template.myDescription != null) return false;
     if (myGroupName != null ? !myGroupName.equals(template.myGroupName) : template.myGroupName != null) return false;
     if (myKey != null ? !myKey.equals(template.myKey) : template.myKey != null) return false;
-    if (!myString.equals(template.myString)) return false;
-    if (myTemplateText != null ? !myTemplateText.equals(template.myTemplateText) : template.myTemplateText != null) return false;
+    if (!getString().equals(template.getString())) return false;
+    if (getTemplateText() != null ? !getTemplateText().equals(template.getTemplateText()) : template.getTemplateText() != null) return false;
 
     if (!new THashSet<>(myVariables).equals(new THashSet<>(template.myVariables))) return false;
     if (isDeactivated != template.isDeactivated) return false;
@@ -58,18 +53,15 @@ public class TemplateImpl extends Template implements SchemeElement {
     }
     int result;
     result = myKey.hashCode();
-    result = 29 * result + myString.hashCode();
+    result = 29 * result + getString().hashCode();
     result = 29 * result + myGroupName.hashCode();
     return result;
   }
 
   private boolean isToReformat;
   private boolean isToShortenLongNames = true;
-  private boolean toParseSegments = true;
   private TemplateContext myTemplateContext = new TemplateContext();
 
-  @NonNls public static final String END = "END";
-  @NonNls public static final String SELECTION = "SELECTION";
   @NonNls private static final String SELECTION_START = "SELECTION_START";
   @NonNls private static final String SELECTION_END = "SELECTION_END";
   @NonNls public static final String ARG = "ARG";
@@ -95,9 +87,9 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   public TemplateImpl(@NotNull String key, @NotNull String group) {
     this(key, null, group);
-    toParseSegments = false;
-    myTemplateText = "";
-    mySegments = new SmartList<>();
+    setToParseSegments(false);
+    setTemplateText("");
+    setSegments(new SmartList<>());
   }
 
   public TemplateImpl(@NotNull String key, String string, @NotNull String group) {
@@ -106,20 +98,9 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   TemplateImpl(@NotNull String key, String string, @NotNull String group, boolean storeBuildingStacktrace) {
     myKey = key;
-    myString = StringUtil.convertLineSeparators(StringUtil.notNullize(string));
+    setString(StringUtil.convertLineSeparators(StringUtil.notNullize(string)));
     myGroupName = group;
-    myBuildingTemplateTrace = storeBuildingStacktrace ? new Throwable() : null;
-  }
-
-  @Override
-  public void addTextSegment(@NotNull String text) {
-    text = StringUtil.convertLineSeparators(text);
-    myTemplateText += text;
-  }
-
-  @Override
-  public void addVariableSegment(@NotNull String name) {
-    mySegments.add(new Segment(name, myTemplateText.length()));
+    setBuildingTemplateTrace(storeBuildingStacktrace ? new Throwable() : null);
   }
 
   @NotNull
@@ -135,7 +116,7 @@ public class TemplateImpl extends Template implements SchemeElement {
                               Expression defaultValueExpression,
                               boolean isAlwaysStopAt,
                               boolean skipOnStart) {
-    if (mySegments != null) {
+    if (getSegments() != null) {
       addVariableSegment(name);
     }
     Variable variable = new Variable(name, expression, defaultValueExpression, isAlwaysStopAt, skipOnStart);
@@ -174,18 +155,18 @@ public class TemplateImpl extends Template implements SchemeElement {
   @NotNull
   @Override
   public TemplateImpl copy() {
-    TemplateImpl template = new TemplateImpl(myKey, myString, myGroupName);
+    TemplateImpl template = new TemplateImpl(myKey, getString(), myGroupName);
     template.resetFrom(this);
     return template;
   }
 
   public void resetFrom(TemplateImpl another) {
     removeAllParsed();
-    toParseSegments = another.toParseSegments;
+    setToParseSegments(another.isToParseSegments());
 
     myKey = another.getKey();
-    myString = another.myString;
-    myTemplateText = another.myTemplateText;
+    setString(another.getString());
+    setTemplateText(another.getTemplateText());
     myGroupName = another.myGroupName;
     myId = another.myId;
     myDescription = another.myDescription;
@@ -260,83 +241,11 @@ public class TemplateImpl extends Template implements SchemeElement {
     return getVariableSegmentNumber(SELECTION_END);
   }
 
-  int getVariableSegmentNumber(String variableName) {
-    parseSegments();
-    for (int i = 0; i < mySegments.size(); i++) {
-      Segment segment = mySegments.get(i);
-      if (segment.name.equals(variableName)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  @NotNull
-  @Override
-  public String getTemplateText() {
-    parseSegments();
-    return myTemplateText;
-  }
-
-  @NotNull
-  @Override
-  public String getSegmentName(int i) {
-    parseSegments();
-    return mySegments.get(i).name;
-  }
-
-  @Override
-  public int getSegmentOffset(int i) {
-    parseSegments();
-    return mySegments.get(i).offset;
-  }
-
-  @Override
-  public int getSegmentsCount() {
-    parseSegments();
-    return mySegments.size();
-  }
-
-  public void parseSegments() {
-    if(!toParseSegments) {
-      return;
-    }
-    if(mySegments != null) {
-      return;
-    }
-
-    mySegments = new SmartList<>();
-    StringBuilder buffer = new StringBuilder(myString.length());
-    TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(myString);
-
-    while(true){
-      IElementType tokenType = lexer.getTokenType();
-      if (tokenType == null) break;
-      int start = lexer.getTokenStart();
-      int end = lexer.getTokenEnd();
-      String token = myString.substring(start, end);
-      if (tokenType == TemplateTokenType.VARIABLE){
-        String name = token.substring(1, token.length() - 1);
-        Segment segment = new Segment(name, buffer.length());
-        mySegments.add(segment);
-      }
-      else if (tokenType == TemplateTokenType.ESCAPE_DOLLAR){
-        buffer.append("$");
-      }
-      else{
-        buffer.append(token);
-      }
-      lexer.advance();
-    }
-    myTemplateText = buffer.toString();
-  }
-
   public void removeAllParsed() {
     myVariables.clear();
-    mySegments = null;
-    toParseSegments = true;
-    myBuildingTemplateTrace = new Throwable();
+    setSegments(null);
+    setToParseSegments(true);
+    setBuildingTemplateTrace(new Throwable());
   }
 
   public void removeVariable(int i) {
@@ -385,25 +294,6 @@ public class TemplateImpl extends Template implements SchemeElement {
     myKey = key;
   }
 
-  @NotNull
-  @Override
-  public String getString() {
-    parseSegments();
-    return myString;
-  }
-
-  /**
-   * Set template text as it appears in Live Template settings, including variables surrounded with '$'.
-   * The text will be reparsed when needed.
-   * @param string template string text
-   */
-  public void setString(@NotNull String string) {
-    myString = StringUtil.convertLineSeparators(string);
-    mySegments = null;
-    toParseSegments = true;
-    myBuildingTemplateTrace = new Throwable();
-  }
-
   @Override
   public String getDescription() {
     return myDescription;
@@ -435,7 +325,7 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   public boolean isSelectionTemplate() {
     parseSegments();
-    for (Segment v : mySegments) {
+    for (Segment v : getSegments()) {
       if (SELECTION.equals(v.name)) return true;
     }
     return ContainerUtil.exists(getVariables(),
@@ -506,27 +396,11 @@ public class TemplateImpl extends Template implements SchemeElement {
   @SuppressWarnings("unused")
   //used is cases when building templates without PSI and TemplateBuilder
   public void setPrimarySegment(int segmentNumber) {
-    Collections.swap(mySegments, 0, segmentNumber);
-  }
-
-  private static final class Segment {
-    @NotNull
-    public final String name;
-    public final int offset;
-
-    private Segment(@NotNull String name, int offset) {
-      this.name = name;
-      this.offset = offset;
-    }
+    Collections.swap(getSegments(), 0, segmentNumber);
   }
 
   @Override
   public String toString() {
     return myGroupName +"/" + myKey;
-  }
-
-  @Nullable
-  Throwable getBuildingTemplateTrace() {
-    return myBuildingTemplateTrace;
   }
 }

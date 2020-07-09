@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.OffsetKey;
 import com.intellij.codeInsight.completion.OffsetsInFile;
 import com.intellij.codeInsight.template.*;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +43,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   private final Project myProject;
   private static final Key<Boolean> ourTemplateTesting = Key.create("TemplateTesting");
 
-  private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
   private final TemplateManagerListener myEventPublisher;
 
   public TemplateManagerImpl(@NotNull Project project) {
@@ -95,41 +93,24 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return new TemplateImpl(key, text, group);
   }
 
-  private static Editor getTopLevelEditor(@NotNull Editor editor) {
-    return editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
-  }
-
   @Nullable
   public static TemplateState getTemplateState(@NotNull Editor editor) {
-    UserDataHolder stateHolder = getTopLevelEditor(editor);
-    TemplateState templateState = stateHolder.getUserData(TEMPLATE_STATE_KEY);
-    if (templateState != null && templateState.isDisposed()) {
-      stateHolder.putUserData(TEMPLATE_STATE_KEY, null);
-      return null;
-    }
-    return templateState;
+    return (TemplateState) TemplateManagerUtilBase.getTemplateState(editor);
   }
 
   @Nullable
   static TemplateState clearTemplateState(@NotNull Editor editor) {
-    TemplateState prevState = getTemplateState(editor);
-    if (prevState != null) {
-      Editor stateEditor = prevState.getEditor();
-      if (stateEditor != null) {
-        stateEditor.putUserData(TEMPLATE_STATE_KEY, null);
-      }
-    }
-    return prevState;
+    return (TemplateState) TemplateManagerUtilBase.clearTemplateState(editor);
   }
 
   @NotNull
   private TemplateState initTemplateState(@NotNull Editor editor) {
-    Editor topLevelEditor = getTopLevelEditor(editor);
+    Editor topLevelEditor = TemplateManagerUtilBase.getTopLevelEditor(editor);
     TemplateState prevState = clearTemplateState(topLevelEditor);
     if (prevState != null) Disposer.dispose(prevState);
     TemplateState state = new TemplateState(myProject, topLevelEditor);
     Disposer.register(this, state);
-    topLevelEditor.putUserData(TEMPLATE_STATE_KEY, state);
+    TemplateManagerUtilBase.setTemplateState(topLevelEditor, state);
     return state;
   }
 

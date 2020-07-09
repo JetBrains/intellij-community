@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,7 @@ public class Variable implements Cloneable {
   @NotNull
   public Expression getExpression() {
     if (myExpression == null) {
-      if (myName.equals(TemplateImpl.SELECTION)) {
+      if (myName.equals(Template.SELECTION)) {
         myExpression = new SelectionNode();
       }
       else {
@@ -105,7 +106,7 @@ public class Variable implements Cloneable {
   }
 
   public boolean isAlwaysStopAt() {
-    if (myName.equals(TemplateImpl.SELECTION)) return false;
+    if (myName.equals(Template.SELECTION)) return false;
     return myAlwaysStopAt;
   }
 

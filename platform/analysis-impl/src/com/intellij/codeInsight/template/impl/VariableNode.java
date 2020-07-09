@@ -36,7 +36,7 @@ public class VariableNode extends Expression {
     if (myInitialValue != null){
       return myInitialValue.calculateResult(context);
     }
-    return TemplateManagerImpl.getTemplateState(context.getEditor()).getVariableValue(getName());
+    return TemplateManagerUtilBase.getTemplateState(context.getEditor()).getVariableValue(getName());
   }
 
   @Override
@@ -44,7 +44,7 @@ public class VariableNode extends Expression {
     if (myInitialValue != null){
       return myInitialValue.calculateQuickResult(context);
     }
-    return TemplateManagerImpl.getTemplateState(context.getEditor()).getVariableValue(getName());
+    return TemplateManagerUtilBase.getTemplateState(context.getEditor()).getVariableValue(getName());
   }
 
   @Override
