@@ -121,8 +121,6 @@ class GitMergeDialog(private val project: Project,
 
   override fun getHelpId() = "reference.VersionControl.Git.MergeBranches"
 
-  override fun getDimensionServiceKey(): String = GitMergeDialog::class.java.name
-
   override fun doOKAction() {
     try {
       saveSettings()

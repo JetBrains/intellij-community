@@ -101,8 +101,6 @@ class GitPullDialog(private val project: Project,
 
   override fun getHelpId() = "reference.VersionControl.Git.Pull"
 
-  override fun getDimensionServiceKey(): String = GitPullDialog::class.java.name
-
   override fun doValidateAll(): MutableList<ValidationInfo> {
     val branchFieldValidation = validateBranchField()
     if (branchFieldValidation != null) {

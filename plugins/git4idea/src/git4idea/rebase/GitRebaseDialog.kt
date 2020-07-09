@@ -116,8 +116,6 @@ class GitRebaseDialog(private val project: Project,
 
   override fun getHelpId() = "reference.VersionControl.Git.Rebase"
 
-  override fun getDimensionServiceKey(): String = GitRebaseDialog::class.java.name
-
   override fun getPreferredFocusedComponent() = upstreamField
 
   override fun doOKAction() {
