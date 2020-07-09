@@ -840,8 +840,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     ApplicationManager.getApplication().assertIsWriteThread()
 
-    if (!containerState.compareAndSet(ContainerState.COMPONENT_CREATED, ContainerState.DISPOSE_IN_PROGRESS) ||
-        !containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.DISPOSE_IN_PROGRESS)) {
+    if (!(containerState.compareAndSet(ContainerState.COMPONENT_CREATED, ContainerState.DISPOSE_IN_PROGRESS) ||
+          containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.DISPOSE_IN_PROGRESS))) {
       // disposed in a recommended way using ProjectManager
       return
     }
