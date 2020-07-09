@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -22,11 +23,18 @@ import static com.jetbrains.jsonSchema.JsonPointerUtil.isSelfReference;
  */
 public class JsonSchemaVariantsTreeBuilder {
 
+  private static final Set<String> SCHEMAS_WITH_TOO_MANY_VARIANTS = ImmutableSet.of(
+    "https://github.com/Microsoft/azure-pipelines-vscode/blob/master/local-schema.json"
+  );
+
   public static JsonSchemaTreeNode buildTree(@NotNull Project project,
                                              @NotNull final JsonSchemaObject schema,
                                              @NotNull final JsonPointerPosition position,
                                              final boolean skipLastExpand) {
     final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, schema);
+    if (SCHEMAS_WITH_TOO_MANY_VARIANTS.contains(schema.getId())) {
+      return root;
+    }
     JsonSchemaService service = JsonSchemaService.Impl.get(project);
     expandChildSchema(root, schema, service);
     // set root's position since this children are just variants of root
