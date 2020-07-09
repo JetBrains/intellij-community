@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.CalledInAwt
 
 class SimpleLocalLineStatusTracker(project: Project,
                                    document: Document,
@@ -27,6 +28,11 @@ class SimpleLocalLineStatusTracker(project: Project,
 
   override val renderer: LocalLineStatusMarkerRenderer = LocalLineStatusMarkerRenderer(this)
   override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
+
+  @CalledInAwt
+  override fun setBaseRevision(vcsContent: CharSequence) {
+    setBaseRevision(vcsContent, null)
+  }
 
   companion object {
     @JvmStatic

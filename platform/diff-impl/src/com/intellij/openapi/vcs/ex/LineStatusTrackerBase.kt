@@ -95,11 +95,6 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   }
 
   @CalledInAwt
-  open fun setBaseRevision(vcsContent: CharSequence) {
-    setBaseRevision(vcsContent, null)
-  }
-
-  @CalledInAwt
   protected fun setBaseRevision(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
     application.assertIsDispatchThread()
     if (isReleased) return
