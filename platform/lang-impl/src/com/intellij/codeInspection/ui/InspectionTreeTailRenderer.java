@@ -35,6 +35,9 @@ public abstract class InspectionTreeTailRenderer<E extends Exception> {
   }
 
   public void appendTailText(InspectionTreeNode node) throws E {
+    if (myContext.isViewClosed()) {
+      return;
+    }
     final String customizedTailText = node.getTailText();
     if (customizedTailText != null) {
       if (!customizedTailText.isEmpty()) {
