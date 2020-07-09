@@ -76,10 +76,10 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   @CalledInAwt
   protected open fun isDetectWhitespaceChangedLines(): Boolean = false
 
-  @CalledInAwt
-  protected open fun fireFileUnchanged() {}
-
-  protected open fun fireLinesUnchanged(startLine: Int, endLine: Int) {}
+  /**
+   * Prevent "trim trailing spaces for modified lines on save" from re-applying just reverted changes.
+   */
+  protected open fun isClearLineModificationFlagOnRollback(): Boolean = false
 
   override val virtualFile: VirtualFile? get() = null
 
@@ -184,7 +184,6 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
     }
 
     override fun afterBulkRangeChange(isDirty: Boolean) {
-      checkIfFileUnchanged()
       if (!isDirty) calcInnerRanges()
       updateHighlighters()
     }
@@ -192,12 +191,6 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
     override fun onUnfreeze(side: Side) {
       calcInnerRanges()
       updateHighlighters()
-    }
-
-    private fun checkIfFileUnchanged() {
-      if (blocks.isEmpty()) {
-        fireFileUnchanged()
-      }
     }
 
     private fun calcInnerRanges() {
@@ -337,6 +330,13 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
         fireLinesUnchanged(block.start + shift, block.start + shift + (block.vcsEnd - block.vcsStart))
       }
     }
+  }
+
+  private fun fireLinesUnchanged(startLine: Int, endLine: Int) {
+    if (!isClearLineModificationFlagOnRollback()) return
+    if (document.textLength == 0) return  // empty document has no lines
+    if (startLine == endLine) return
+    (document as DocumentImpl).clearLineModificationFlags(startLine, endLine)
   }
 
 

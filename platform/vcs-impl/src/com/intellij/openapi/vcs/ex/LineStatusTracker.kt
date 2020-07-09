@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -69,6 +68,9 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
       updateHighlighters()
     }
 
+  init {
+    documentTracker.addHandler(LocalDocumentTrackerHandler())
+  }
 
   @CalledInAwt
   override fun isAvailableAt(editor: Editor): Boolean {
@@ -78,21 +80,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   @CalledInAwt
   override fun isDetectWhitespaceChangedLines(): Boolean = mode.isVisible && mode.detectWhitespaceChangedLines
 
-  @CalledInAwt
-  override fun fireFileUnchanged() {
-    if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-      // later to avoid saving inside document change event processing and deadlock with CLM.
-      ApplicationManager.getApplication().invokeLater(Runnable {
-        FileDocumentManager.getInstance().saveDocument(document)
-      }, project.disposed)
-    }
-  }
-
-  override fun fireLinesUnchanged(startLine: Int, endLine: Int) {
-    if (document.textLength == 0) return  // empty document has no lines
-    if (startLine == endLine) return
-    (document as DocumentImpl).clearLineModificationFlags(startLine, endLine)
-  }
+  override fun isClearLineModificationFlagOnRollback(): Boolean = true
 
 
   override fun scrollAndShowHint(range: Range, editor: Editor) {
@@ -134,6 +122,24 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
       override fun actionPerformed(editor: Editor, range: Range) {
         RollbackLineStatusAction.rollback(tracker, range, editor)
+      }
+    }
+  }
+
+  private inner class LocalDocumentTrackerHandler : DocumentTracker.Handler {
+    override fun afterBulkRangeChange(isDirty: Boolean) {
+      if (blocks.isEmpty()) {
+        fireFileUnchanged()
+      }
+    }
+
+    @CalledInAwt
+    private fun fireFileUnchanged() {
+      if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
+        // later to avoid saving inside document change event processing and deadlock with CLM.
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          FileDocumentManager.getInstance().saveDocument(document)
+        }, project.disposed)
       }
     }
   }
