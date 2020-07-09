@@ -4,7 +4,10 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
 import org.intellij.lang.annotations.Language
@@ -20,6 +23,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemComp
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
 
 class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHAvatarIconsProvider)
   : GHPRTimelineEventComponentFactory<GHPRTimelineEvent> {
@@ -276,10 +281,23 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
       return this
     }
 
-    private fun createComponent(reference: GHPRReferencedSubject) =
-      //language=HTML
-      HtmlEditorPane("""${reference.title}&nbsp<a href='${reference.url}'>#${reference.number}</a>""").apply {
-        border = JBUI.Borders.emptyLeft(28)
+    private fun createComponent(reference: GHPRReferencedSubject): JComponent {
+      val stateIcon = when (reference) {
+        is GHPRReferencedSubject.Issue -> GithubUIUtil.getIssueStateIcon(reference.state)
+        is GHPRReferencedSubject.PullRequest -> GithubUIUtil.getPullRequestStateIcon(reference.state, reference.isDraft)
       }
+      val stateToolTip = when (reference) {
+        is GHPRReferencedSubject.Issue -> GithubUIUtil.getIssueStateText(reference.state)
+        is GHPRReferencedSubject.PullRequest -> GithubUIUtil.getPullRequestStateText(reference.state, reference.isDraft)
+      }
+      return NonOpaquePanel(HorizontalLayout(UI.scale(5))).apply {
+        border = JBUI.Borders.emptyLeft(28)
+        add(JLabel(stateIcon).apply {
+          toolTipText = stateToolTip
+        })
+        //language=HTML
+        add(HtmlEditorPane("""${reference.title}&nbsp<a href='${reference.url}'>#${reference.number}</a>"""))
+      }
+    }
   }
 }

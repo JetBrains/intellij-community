@@ -192,14 +192,18 @@ fragment baseRefChangedEvent on BaseRefChangedEvent {
 }
 
 fragment referenceSubject on ReferencedSubject {
+    __typename
     ... on PullRequest {
         title
         number
+        state
+        isDraft
         url
     }
     ... on Issue {
         title
         number
+        state
         url
     }
 }
