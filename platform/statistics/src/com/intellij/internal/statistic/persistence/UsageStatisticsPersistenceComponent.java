@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.persistence;
 
 import com.intellij.ide.ConsentOptionsProvider;
+import com.intellij.internal.statistic.eventLog.StatisticsSystemEventIdProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,7 +19,7 @@ import java.util.Map;
   reportStatistic = false
 )
 @Service
-public final class UsageStatisticsPersistenceComponent implements PersistentStateComponent<Element> {
+public final class UsageStatisticsPersistenceComponent implements PersistentStateComponent<Element>, StatisticsSystemEventIdProvider {
   public static final String USAGE_STATISTICS_XML = "usage.statistics.xml";
 
   private boolean isAllowedForEAP = true;
@@ -144,12 +145,14 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
     return ServiceManager.getService(ConsentOptionsProvider.class);
   }
 
-  public long getEventId(@NotNull String recorderId) {
+  @Override
+  public long getSystemEventId(@NotNull String recorderId) {
     Long eventId = myRecorderToSystemEventIds.get(recorderId);
     return eventId != null ? eventId : 0;
   }
 
-  public void setEventId(@NotNull String recorderId, long eventId) {
+  @Override
+  public void setSystemEventId(@NotNull String recorderId, long eventId) {
     myRecorderToSystemEventIds.put(recorderId, eventId);
   }
 }

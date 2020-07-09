@@ -268,11 +268,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   @Test
   fun testLogSystemEventId() {
-    val statisticsPersistenceComponent = UsageStatisticsPersistenceComponent.getInstance()
-    val oldSystemEventId = statisticsPersistenceComponent.getEventId(TEST_RECORDER)
-    statisticsPersistenceComponent.setEventId(TEST_RECORDER, 42L)
     val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1",
-                                                 TestFeatureUsageEventWriter())
+                                                 TestFeatureUsageEventWriter(), TestSystemEventIdProvider(42L))
     logger.logAsync(EventLogGroup("group.id.1", 1), "test.action.1", false)
     logger.logAsync(EventLogGroup("group.id.2", 1), "test.action.2", false)
     logger.dispose()
@@ -280,7 +277,6 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     UsefulTestCase.assertSize(2, logged)
     assertEquals(logged[0].event.data["system_event_id"], 42.toLong())
     assertEquals(logged[1].event.data["system_event_id"], 43.toLong())
-    statisticsPersistenceComponent.setEventId(TEST_RECORDER, oldSystemEventId)
   }
 
   @Test
@@ -503,8 +499,9 @@ class TestFeatureUsageFileEventLogger(session: String,
                                       build: String,
                                       bucket: String,
                                       recorderVersion: String,
-                                      writer: TestFeatureUsageEventWriter) :
-  StatisticsFileEventLogger(TEST_RECORDER, session, build, bucket, recorderVersion, writer) {
+                                      writer: TestFeatureUsageEventWriter,
+                                      systemEventIdProvider: StatisticsSystemEventIdProvider = TestSystemEventIdProvider(0)) :
+  StatisticsFileEventLogger(TEST_RECORDER, session, build, bucket, recorderVersion, writer, systemEventIdProvider) {
   val testWriter = writer
 
   override fun dispose() {
@@ -524,4 +521,14 @@ class TestFeatureUsageEventWriter : StatisticsEventLogWriter {
   override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider
   override fun cleanup() = Unit
   override fun rollOver() = Unit
+}
+
+class TestSystemEventIdProvider(var value: Long) : StatisticsSystemEventIdProvider {
+  override fun getSystemEventId(recorderId: String): Long {
+    return value
+  }
+
+  override fun setSystemEventId(recorderId: String, eventId: Long) {
+    value = eventId
+  }
 }

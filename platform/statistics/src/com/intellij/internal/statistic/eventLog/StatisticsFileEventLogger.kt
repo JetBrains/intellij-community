@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import java.util.concurrent.CompletableFuture
@@ -14,14 +13,13 @@ open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val build: String,
                                      private val bucket: String,
                                      private val recorderVersion: String,
-                                     private val writer: StatisticsEventLogWriter) : StatisticsEventLogger, Disposable {
+                                     private val writer: StatisticsEventLogWriter,
+                                     private val systemEventIdProvider: StatisticsSystemEventIdProvider) : StatisticsEventLogger, Disposable {
   protected val logExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("StatisticsFileEventLogger: $sessionId")
 
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
-  private val statisticsPersistenceComponent = UsageStatisticsPersistenceComponent.getInstance()
-
 
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
@@ -67,9 +65,9 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         it.event.addData("last", lastEventTime)
       }
       it.event.addData("created", lastEventCreatedTime)
-      var systemEventId = statisticsPersistenceComponent.getEventId(recorderId)
+      var systemEventId = systemEventIdProvider.getSystemEventId(recorderId)
       it.event.addData("system_event_id", systemEventId)
-      statisticsPersistenceComponent.setEventId(recorderId, ++systemEventId)
+      systemEventIdProvider.setSystemEventId(recorderId, ++systemEventId)
       writer.log(it)
     }
     lastEvent = null
