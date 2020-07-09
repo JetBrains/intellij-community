@@ -39,6 +39,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -295,11 +296,16 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     getRenderer(debugProcess)
       .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer))
       .exceptionally(throwable -> {
-        if (throwable instanceof CompletionException) {
-          throwable = throwable.getCause();
+        throwable = DebuggerUtilsAsync.unwrap(throwable);
+        String message;
+        if (throwable instanceof CancellationException) {
+          message = JavaDebuggerBundle.message("error.context.has.changed");
         }
-        LOG.error(throwable);
-        setValueLabelFailed(new EvaluateException(JavaDebuggerBundle.message("internal.debugger.error")));
+        else {
+          message = JavaDebuggerBundle.message("internal.debugger.error");
+          LOG.error(new Throwable(throwable));
+        }
+        setValueLabelFailed(new EvaluateException(message));
         labelListener.labelChanged();
         return null;
       });
@@ -363,7 +369,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         myIsExpandable = res;
       }
       else {
-        LOG.error(ex);
+        ex = DebuggerUtilsAsync.unwrap(ex);
+        if (!(ex instanceof CancellationException)) {
+          LOG.error(new Throwable(ex));
+        }
       }
       labelListener.labelChanged();
     });

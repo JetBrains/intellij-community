@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -290,8 +291,7 @@ public class DebuggerUtilsAsync {
 
           @Override
           protected void commandCancelled() {
-            // TODO: better exception
-            res.completeExceptionally(new Exception("Cancelled"));
+            res.cancel(false);
           }
         });
       }
@@ -304,13 +304,16 @@ public class DebuggerUtilsAsync {
 
           @Override
           protected void commandCancelled() {
-            // TODO: better exception
-            res.completeExceptionally(new Exception("Cancelled"));
+            res.cancel(false);
           }
         });
       }
     });
     return res;
+  }
+
+  public static Throwable unwrap(Throwable throwable) {
+    return throwable instanceof CompletionException ? throwable.getCause() : throwable;
   }
 
   private static <T> void completeFuture(T res, Throwable ex, CompletableFuture<T> future) {
