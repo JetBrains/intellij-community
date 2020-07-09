@@ -71,7 +71,6 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
     if (aClass == null) return;
     if (!isAvailable(aClass, editor)) return;
     PsiJavaFile parentFile = (PsiJavaFile)aClass.getContainingFile();
-    FileModificationService.getInstance().prepareFileForWrite(parentFile);
     if (aClass.isInterface()) {
       if (FunctionalExpressionSearch.search(aClass).findFirst() != null) {
         showError(project, editor, "intention.error.make.sealed.class.is.used.in.functional.expression");
@@ -119,12 +118,14 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
     }
     else {
       if (aClass.isInterface()) {
-        modifier = PsiModifier.SEALED;
+        showError(project, editor, "intention.error.make.sealed.class.interface.has.no.inheritors");
+        return;
       }
       else {
         modifier = PsiModifier.FINAL;
       }
     }
+    FileModificationService.getInstance().prepareFileForWrite(parentFile);
     ApplicationManager.getApplication().runWriteAction(() -> {
       PsiModifierList modifierList = Objects.requireNonNull(aClass.getModifierList());
       modifierList.setModifierProperty(modifier, true);
@@ -150,7 +151,7 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
   }
 
   public void setInheritorsModifiers(@NotNull Project project, List<PsiClass> inheritors) {
-    String title = JavaBundle.message("intention.error.make.sealed.class.task.title.set.inheritors.modifiers");
+    String title = JavaBundle.message("intention.make.sealed.class.task.title.set.inheritors.modifiers");
     SequentialModalProgressTask task = new SequentialModalProgressTask(project, title, true);
     task.setTask(new SequentialTask() {
       private final FileModificationService myFileModificationService = FileModificationService.getInstance();
@@ -207,6 +208,6 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
   }
 
   private static String getErrorTitle() {
-    return JavaBundle.message("intention.error.make.sealed.class.hint.title");
+    return JavaBundle.message("intention.make.sealed.class.hint.title");
   }
 }

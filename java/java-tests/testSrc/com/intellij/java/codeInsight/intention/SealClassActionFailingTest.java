@@ -28,6 +28,10 @@ public class SealClassActionFailingTest extends LightJavaCodeInsightFixtureTestC
     checkErrorMessage(JavaBundle.message("intention.error.make.sealed.class.has.anonymous.or.local.inheritors"));
   }
 
+  public void testInterfaceWithoutInheritors() {
+    checkErrorMessage(JavaBundle.message("intention.error.make.sealed.class.interface.has.no.inheritors"));
+  }
+
   public void testDifferentPackages() {
     myFixture.addFileToProject("foo.java", "package other;\n class Other extends Parent {}");
     checkErrorMessage(JavaBundle.message("intention.error.make.sealed.class.different.packages"));
