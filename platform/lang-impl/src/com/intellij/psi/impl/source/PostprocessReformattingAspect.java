@@ -67,7 +67,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   static final class LangPomModel extends PomModelImpl {
-    public LangPomModel(@NotNull Project project) {
+    LangPomModel(@NotNull Project project) {
       super(project, new PostprocessReformattingAspect(project));
     }
   }
@@ -150,115 +150,99 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     }
   }
 
-  private static void atomic(@NotNull Runnable r) {
-    ProgressManager.getInstance().executeNonCancelableSection(r);
-  }
-
   @Override
   public void update(@NotNull final PomModelEvent event) {
-    atomic(new Runnable() {
-      @Override
-      public void run() {
-        if (isDisabled() || getContext().myPostponedCounter == 0) return;
-        final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect.getValue());
-        if (changeSet == null) return;
-        final PsiElement psiElement = changeSet.getRootElement().getPsi();
-        if (psiElement == null) return;
-        PsiFile containingFile = InjectedLanguageManager.getInstance(psiElement.getProject()).getTopLevelFile(psiElement);
-        final FileViewProvider viewProvider = containingFile.getViewProvider();
+    if (isDisabled() || getContext().myPostponedCounter == 0) return;
+    final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect.getValue());
+    if (changeSet == null) return;
+    final PsiElement psiElement = changeSet.getRootElement().getPsi();
+    if (psiElement == null) return;
+    PsiFile containingFile = InjectedLanguageManager.getInstance(psiElement.getProject()).getTopLevelFile(psiElement);
+    final FileViewProvider viewProvider = containingFile.getViewProvider();
 
-        if (!viewProvider.isEventSystemEnabled() && ModelBranch.getPsiBranch(containingFile) == null) return;
-        getContext().myUpdatedProviders.putValue(viewProvider, (FileElement)containingFile.getNode());
-        for (final ASTNode node : changeSet.getChangedElements()) {
-          final TreeChange treeChange = changeSet.getChangesByElement(node);
-          for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
-            if (changeMightBreakPsiTextConsistency(affectedChild)) {
-              containingFile.putUserData(REPARSE_PENDING, true);
-            }
-            else if (leavesEmptyRangeAtEdge((TreeChangeImpl)treeChange, affectedChild) && hasRaiseableEdgeChild(node)) {
-              getContext().myRaisingCandidates.putValue(viewProvider, node);
-            }
+    if (!viewProvider.isEventSystemEnabled() && ModelBranch.getPsiBranch(containingFile) == null) return;
+    getContext().myUpdatedProviders.putValue(viewProvider, (FileElement)containingFile.getNode());
+    for (final ASTNode node : changeSet.getChangedElements()) {
+      final TreeChange treeChange = changeSet.getChangesByElement(node);
+      for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
+        if (changeMightBreakPsiTextConsistency(affectedChild)) {
+          containingFile.putUserData(REPARSE_PENDING, true);
+        }
+        else if (leavesEmptyRangeAtEdge((TreeChangeImpl)treeChange, affectedChild) && hasRaiseableEdgeChild(node)) {
+          getContext().myRaisingCandidates.putValue(viewProvider, node);
+        }
 
-            final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
-            switch (childChange.getChangeType()) {
-              case ChangeInfo.ADD:
-              case ChangeInfo.REPLACE:
-                postponeFormatting(viewProvider, affectedChild);
-                break;
-              case ChangeInfo.CONTENTS_CHANGED:
-                if (!CodeEditUtil.isNodeGenerated(affectedChild)) {
-                  ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor() {
-                    @Override
-                    protected void visitNode(TreeElement element) {
-                      if (CodeEditUtil.isNodeGenerated(element) && CodeEditUtil.isSuspendedNodesReformattingAllowed()) {
-                        postponeFormatting(viewProvider, element);
-                        return;
-                      }
-                      super.visitNode(element);
-                    }
-                  });
+        final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
+        switch (childChange.getChangeType()) {
+          case ChangeInfo.ADD:
+          case ChangeInfo.REPLACE:
+            postponeFormatting(viewProvider, affectedChild);
+            break;
+          case ChangeInfo.CONTENTS_CHANGED:
+            if (!CodeEditUtil.isNodeGenerated(affectedChild)) {
+              ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+                @Override
+                protected void visitNode(TreeElement element) {
+                  if (CodeEditUtil.isNodeGenerated(element) && CodeEditUtil.isSuspendedNodesReformattingAllowed()) {
+                    postponeFormatting(viewProvider, element);
+                    return;
+                  }
+                  super.visitNode(element);
                 }
-                break;
+              });
             }
-          }
+            break;
         }
       }
+    }
+  }
 
-      private boolean changeMightBreakPsiTextConsistency(ASTNode child) {
-        return TreeUtil.containsOuterLanguageElements(child) || isRightAfterErrorElement(child);
-      }
+  private static boolean changeMightBreakPsiTextConsistency(ASTNode child) {
+    return TreeUtil.containsOuterLanguageElements(child) || isRightAfterErrorElement(child);
+  }
 
-      private boolean leavesEmptyRangeAtEdge(TreeChangeImpl treeChange, ASTNode child) {
-        ChangeInfoImpl info = treeChange.getChangeByChild(child);
-        TreeElement newChild = info.getNewChild();
-        return (newChild == null || newChild.getTextLength() == 0) && wasEdgeChild(treeChange, info.getOldChild());
-      }
+  private static boolean leavesEmptyRangeAtEdge(TreeChangeImpl treeChange, ASTNode child) {
+    ChangeInfoImpl info = treeChange.getChangeByChild(child);
+    TreeElement newChild = info.getNewChild();
+    return (newChild == null || newChild.getTextLength() == 0) && wasEdgeChild(treeChange, info.getOldChild());
+  }
 
-      private boolean wasEdgeChild(TreeChangeImpl treeChange, TreeElement oldChild) {
-        List<TreeElement> initial = treeChange.getInitialChildren();
-        return initial.size() > 0 && (oldChild == initial.get(0) || oldChild == initial.get(initial.size() - 1));
-      }
+  private static boolean wasEdgeChild(TreeChangeImpl treeChange, TreeElement oldChild) {
+    List<TreeElement> initial = treeChange.getInitialChildren();
+    return initial.size() > 0 && (oldChild == initial.get(0) || oldChild == initial.get(initial.size() - 1));
+  }
 
-      private boolean isRightAfterErrorElement(ASTNode _node) {
-        Function<ASTNode, ASTNode> prevNode = node -> {
-          ASTNode prev = node.getTreePrev();
-          return prev != null ? TreeUtil.getLastChild(prev) : node.getTreeParent();
-        };
-        return JBIterable.generate(_node, prevNode)
-                         .skip(1)
-                         .takeWhile(e -> e instanceof PsiWhiteSpace || e.getTextLength() == 0)
-                         .filter(PsiErrorElement.class)
-                         .isNotEmpty();
-      }
-    });
+  private static boolean isRightAfterErrorElement(ASTNode _node) {
+    Function<ASTNode, ASTNode> prevNode = node -> {
+      ASTNode prev = node.getTreePrev();
+      return prev != null ? TreeUtil.getLastChild(prev) : node.getTreeParent();
+    };
+    return JBIterable.generate(_node, prevNode)
+      .skip(1)
+      .takeWhile(e -> e instanceof PsiWhiteSpace || e.getTextLength() == 0)
+      .filter(PsiErrorElement.class)
+      .isNotEmpty();
   }
 
   public void doPostponedFormatting() {
-    atomic(() -> {
-      if (isDisabled()) return;
-      try {
-        FileViewProvider[] viewProviders = getContext().myUpdatedProviders.keySet().toArray(new FileViewProvider[0]);
-        for (final FileViewProvider viewProvider : viewProviders) {
-          doPostponedFormatting(viewProvider);
-        }
+    if (isDisabled()) return;
+    try {
+      FileViewProvider[] viewProviders = getContext().myUpdatedProviders.keySet().toArray(new FileViewProvider[0]);
+      for (final FileViewProvider viewProvider : viewProviders) {
+        doPostponedFormatting(viewProvider);
       }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      finally {
-        LOG.assertTrue(getContext().myReformatElements.isEmpty(), getContext().myReformatElements);
-      }
-    });
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    finally {
+      LOG.assertTrue(getContext().myReformatElements.isEmpty(), getContext().myReformatElements);
+    }
   }
 
   public void doPostponedFormatting(@NotNull FileViewProvider viewProvider) {
-    postponedFormattingImpl(viewProvider);
-  }
-
-  private void postponedFormattingImpl(@NotNull final FileViewProvider viewProvider) {
-    atomic(() -> {
-      if (isDisabled()) return;
-
+    if (isDisabled()) return;
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
       try {
         disablePostprocessFormattingInside(() -> doPostponedFormattingInner(viewProvider));
       }
