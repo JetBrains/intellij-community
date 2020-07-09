@@ -1091,12 +1091,7 @@ public class HighlightClassUtil {
     if (psiClass.hasModifierProperty(PsiModifier.SEALED) && psiClass.getPermitsListTypes().length == 0) {
       PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
       if (nameIdentifier == null) return null;
-      if (psiClass.isEnum() && StreamEx.of(psiClass.getFields())
-        .select(PsiEnumConstant.class)
-        .anyMatch(field -> field.getInitializingClass() != null)
-      ) {
-        return null;
-      }
+      if (psiClass.isEnum()) return null;
       if (!DirectClassInheritorsSearch.search(psiClass, new LocalSearchScope(psiClass.getContainingFile())).anyMatch(c -> !PsiUtil.isLocalOrAnonymousClass(c))) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(nameIdentifier)
@@ -1110,12 +1105,13 @@ public class HighlightClassUtil {
   public static HighlightInfo checkSealedSuper(PsiClass aClass) {
     PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
     if (nameIdentifier != null &&
+        !(aClass instanceof PsiTypeParameter) &&
         !aClass.hasModifierProperty(PsiModifier.SEALED) &&
         !aClass.hasModifierProperty(PsiModifier.NON_SEALED) &&
         !aClass.hasModifierProperty(PsiModifier.FINAL) &&
         Arrays.stream(aClass.getSuperTypes())
           .map(type -> type.resolve())
-          .anyMatch(superClass -> superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED) && !superClass.isEnum())) {
+          .anyMatch(superClass -> superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED))) {
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier)
         .descriptionAndTooltip(JavaErrorBundle.message("sealed.type.inheritor.expected.modifiers", PsiModifier.SEALED, PsiModifier.NON_SEALED, PsiModifier.FINAL)).create();
       if (!aClass.isInterface()) {
