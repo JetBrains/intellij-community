@@ -11,7 +11,7 @@ import kotlin.reflect.KProperty1
  */
 
 /**
- * A base interface for entities. A entity must be an interface which extend [WorkspaceEntity] and have 'val' properties of the following types:
+ * A base interface for entities. A entity may have properties of the following types:
  * * primitive types;
  * * String;
  * * enum;
@@ -20,6 +20,9 @@ import kotlin.reflect.KProperty1
  * * [List] of another allowed type;
  * * another data class with properties of the allowed types (references to entities must be wrapped into [EntityReference]);
  * * sealed abstract class where all implementations satisfy these requirements.
+ *
+ * Currently the entities are representing by classes inheriting from WorkspaceEntityBase, and need to have a separate class with `Data`
+ * suffix extending WorkspaceEntityData to store the actual data.
  */
 interface WorkspaceEntity {
   val entitySource: EntitySource
@@ -32,12 +35,10 @@ interface WorkspaceEntity {
 }
 
 /**
- * Base interface for modifiable variant of [Unmodifiable] entity. Its implementation must be an interface which overrides each 'val' property in [Unmodifiable] interface
- * with 'var' modifier. Properties of type [List] may be overridden with [MutableList]. The implementation can be used to [create a new entity][WorkspaceEntityStorageBuilder.addEntity]
+ * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][WorkspaceEntityStorageBuilder.addEntity]
  * or [modify an existing value][WorkspaceEntityStorageBuilder.modifyEntity].
  *
- * It's possible create a single interface with 'var' properties and use it for both read and write operations but you should be cautious to
- * avoid calling setters on entity instances directly (such calls will fail at runtime).
+ * Currently the class must inherit from ModifiableWorkspaceEntityBase. 
  */
 interface ModifiableWorkspaceEntity<Unmodifiable : WorkspaceEntity> : WorkspaceEntity
 
@@ -106,6 +107,9 @@ interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
   fun persistentId(): PersistentEntityId<*>
 }
 
+/**
+ * Read-only interface to a storage. Use [WorkspaceEntityStorageBuilder] or [WorkspaceEntityStorageDiffBuilder] to modify it.
+ */
 interface WorkspaceEntityStorage {
   fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
@@ -115,6 +119,10 @@ interface WorkspaceEntityStorage {
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
 }
 
+/**
+ * Writeable interface to a storage. Use it if you need to build a storage from scratch or modify an existing storage in a way which requires
+ * reading its state after modifications. For simple modifications use [WorkspaceEntityStorageDiffBuilder] instead.
+ */
 interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntityStorageDiffBuilder {
   override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>,
                                                                                  source: EntitySource,
@@ -152,6 +160,9 @@ sealed class EntityChange<T : WorkspaceEntity> {
   data class Replaced<T : WorkspaceEntity>(val oldEntity: T, val newEntity: T) : EntityChange<T>()
 }
 
+/**
+ * Write-only interface to a storage. 
+ */
 interface WorkspaceEntityStorageDiffBuilder {
   fun isEmpty(): Boolean
 
