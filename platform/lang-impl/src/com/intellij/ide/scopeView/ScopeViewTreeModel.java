@@ -388,9 +388,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
           }
         });
         Comparator<? super NodeDescriptor<?>> comparator = this.comparator;
-        if (comparator != null) {
-          result.sort(comparator);
-        }
+        if (comparator != null) result.sort(comparator);
         return result;
       }
     }

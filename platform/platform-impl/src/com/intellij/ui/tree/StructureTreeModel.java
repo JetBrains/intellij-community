@@ -374,9 +374,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   @Nullable
   private List<Node> getValidChildren(@NotNull Node node) {
     NodeDescriptor<?> descriptor = node.getDescriptor();
-    if (descriptor == null) {
-      return null;
-    }
+    if (descriptor == null) return null;
 
     Object parent = descriptor.getElement();
     if (!isValid(structure, parent)) return null;
