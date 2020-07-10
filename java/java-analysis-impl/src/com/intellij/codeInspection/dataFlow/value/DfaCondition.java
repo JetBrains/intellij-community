@@ -2,10 +2,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
-import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
-import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.types.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,12 +103,12 @@ public abstract class DfaCondition {
                                !DfaUtil.isNaN(((DfConstantType<?>)leftType).getValue()) ^
                                relationType == RelationType.EQ);
           }
-          if (!rightType.isSuperType(leftType)) {
+          if (!couldBeEqualToConstant(rightType, leftType)) {
             return fromBoolean(relationType == RelationType.NE);
           }
         }
         else if (rightType instanceof DfConstantType) {
-          if (!leftType.isSuperType(rightType)) {
+          if (!couldBeEqualToConstant(leftType, rightType)) {
             return fromBoolean(relationType == RelationType.NE);
           }
         }
@@ -140,6 +137,10 @@ public abstract class DfaCondition {
       }
   
       return null;
+    }
+
+    private static boolean couldBeEqualToConstant(DfType type, DfType constantType) {
+      return (type instanceof DfReferenceType ? ((DfReferenceType)type).dropTypeConstraint() : type).isSuperType(constantType);
     }
   }
 }
