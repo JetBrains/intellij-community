@@ -20,12 +20,13 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author peter
  */
 public class DomExtensionImpl implements DomExtension {
-  public static final Key<DomAnchor<?>> KEY_DOM_DECLARATION = Key.create("DOM_DECLARATION");
+  public static final Key<Supplier<? extends DomElement>> KEY_DOM_DECLARATION = Key.create("DOM_DECLARATION");
   public static final Key<List<DomExtender<?>>> DOM_EXTENDER_KEY = Key.create("Dom.Extender");
   public static final Key<SmartPsiElementPointer<?>> DECLARING_ELEMENT_KEY = Key.create("Dom.Extension.PsiDeclaration");
   private final XmlName myXmlName;
@@ -72,7 +73,13 @@ public class DomExtensionImpl implements DomExtension {
 
   @Override
   public DomExtension setDeclaringElement(@NotNull DomElement declaringElement) {
-    putUserData(KEY_DOM_DECLARATION, DomAnchorImpl.createAnchor(declaringElement, true));
+    DomAnchor<DomElement> anchor = DomAnchorImpl.createAnchor(declaringElement, true);
+    return setDeclaringDomElement(() -> anchor.retrieveDomElement());
+  }
+
+  @Override
+  public DomExtension setDeclaringDomElement(@NotNull Supplier<? extends DomElement> declarationFinder) {
+    putUserData(KEY_DOM_DECLARATION, declarationFinder);
     return this;
   }
 

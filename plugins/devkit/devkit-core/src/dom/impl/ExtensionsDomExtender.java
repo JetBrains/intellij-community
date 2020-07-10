@@ -28,6 +28,7 @@ import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public class ExtensionsDomExtender extends DomExtender<Extensions> {
 
@@ -47,11 +48,11 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
     Set<VirtualFile> files = getVisibleFiles(project, currentFile);
 
     String epPrefix = extensions.getEpPrefix();
-    Map<String, ExtensionPoint> points = ExtensionPointIndex.getExtensionPoints(project, files, epPrefix);
+    Map<String, Supplier<ExtensionPoint>> points = ExtensionPointIndex.getExtensionPoints(project, files, epPrefix);
 
-    for (Map.Entry<String, ExtensionPoint> entry : points.entrySet()) {
+    for (Map.Entry<String, Supplier<ExtensionPoint>> entry : points.entrySet()) {
       registrar.registerCollectionChildrenExtension(new XmlName(entry.getKey().substring(epPrefix.length())), Extension.class)
-        .setDeclaringElement(entry.getValue())
+        .setDeclaringDomElement(entry.getValue())
         .addExtender(EXTENSION_EXTENDER);
     }
   }

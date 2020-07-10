@@ -36,6 +36,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -179,16 +180,9 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
       }
       return domDeclaration.getXmlElement();
     }
-    final DomAnchor anchor = getUserData(DomExtensionImpl.KEY_DOM_DECLARATION);
-    if (anchor != null) {
-      return anchor.getContainingFile();
-    }
     final SmartPsiElementPointer<?> pointer = getUserData(DomExtensionImpl.DECLARING_ELEMENT_KEY);
     if (pointer != null) {
-      final PsiElement element = pointer.getElement();
-      if (element != null) {
-        return element;
-      }
+      return pointer.getElement();
     }
 
     return PomService.convertToPsi(project, this);
@@ -196,11 +190,8 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
 
   @Override
   public DomElement getDomDeclaration() {
-    final DomAnchor anchor = getUserData(DomExtensionImpl.KEY_DOM_DECLARATION);
-    if (anchor != null) {
-      return anchor.retrieveDomElement();
-    }
-    return null;
+    Supplier<? extends DomElement> domDecl = getUserData(DomExtensionImpl.KEY_DOM_DECLARATION);
+    return domDecl != null ? domDecl.get() : null;
   }
 
   @Override
