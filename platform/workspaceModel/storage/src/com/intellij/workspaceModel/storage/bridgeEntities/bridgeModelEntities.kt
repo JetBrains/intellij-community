@@ -226,9 +226,11 @@ open class SourceRootEntity(
   val rootType: String
 ) : WorkspaceEntityBase() {
   val module: ModuleEntity by moduleDelegate
+  val contentRoot: ContentRootEntity by contentRootDelegate
 
   companion object {
     val moduleDelegate = ManyToOne.NotNull<ModuleEntity, SourceRootEntity>(ModuleEntity::class.java)
+    val contentRootDelegate = ManyToOne.NotNull<ContentRootEntity, SourceRootEntity>(ContentRootEntity::class.java)
   }
 }
 
@@ -316,9 +318,11 @@ open class ContentRootEntity(
   val excludedPatterns: List<String>
 ) : WorkspaceEntityBase() {
   open val module: ModuleEntity by moduleDelegate
+  val sourceRoots: Sequence<SourceRootEntity> by sourceRootDelegate
 
   companion object {
     val moduleDelegate = ManyToOne.NotNull<ModuleEntity, ContentRootEntity>(ModuleEntity::class.java)
+    val sourceRootDelegate = OneToMany<ContentRootEntity, SourceRootEntity>(SourceRootEntity::class.java, false)
   }
 }
 

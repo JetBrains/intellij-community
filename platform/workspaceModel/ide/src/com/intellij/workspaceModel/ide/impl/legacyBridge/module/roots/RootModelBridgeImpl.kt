@@ -56,22 +56,9 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
     val moduleEntity = moduleEntity ?: return@lazy emptyList<ContentEntryBridge>()
     val contentEntries = moduleEntity.contentRoots.toMutableList()
 
-    val contentUrlToSourceRoots = moduleEntity.sourceRoots.groupByTo(HashMap()) { sourceRoot ->
-
-      // Order contentEntries so most nested will be selected
-      // TODO It's very slow. Probably it's better to sort by number of components in VirtualFileUrl or something
-      val existingContentEntry = contentEntries
-        .sortedByDescending { it.url.url.length }
-        .find { it.url.isEqualOrParentOf(sourceRoot.url) }
-
-      val contentEntry = existingContentEntry ?: FakeContentRootEntity(sourceRoot.url, moduleEntity).also { contentEntries.add(it) }
-
-      contentEntry.url
-    }
-
     contentEntries.sortBy { it.url.url }
     contentEntries.map { contentRoot ->
-      ContentEntryBridge(rootModel, contentUrlToSourceRoots[contentRoot.url] ?: emptyList(), contentRoot, updater)
+      ContentEntryBridge(rootModel, contentRoot.sourceRoots.toList(), contentRoot, updater)
     }
   }
 

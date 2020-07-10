@@ -30,9 +30,10 @@ class WorkspaceModuleImporter(private val project: Project,
   fun importModule() {
     val dependencies = collectDependencies();
     moduleEntity = diff.addModuleEntity(mavenProject.displayName, dependencies, MavenExternalSource.INSTANCE)
-    diff.addContentRootEntity(virtualFileManager.fromPath(mavenProject.directory), emptyList(), emptyList(), moduleEntity,
-                              MavenExternalSource.INSTANCE)
-    importFolders()
+    val contentRootEntity = diff.addContentRootEntity(virtualFileManager.fromPath(mavenProject.directory), emptyList(), emptyList(),
+                                                      moduleEntity,
+                                                      MavenExternalSource.INSTANCE)
+    importFolders(contentRootEntity)
     importLanguageLevel();
   }
 
@@ -150,7 +151,7 @@ class WorkspaceModuleImporter(private val project: Project,
                                  emptyList(), MavenExternalSource.INSTANCE)
   }
 
-  private fun importFolders() {
+  private fun importFolders(contentRootEntity: ContentRootEntity) {
     MavenFoldersImporter.getSourceFolders(mavenProject).forEach { entry ->
 
       val serializer = (JpsModelSerializerExtension.getExtensions()
@@ -158,7 +159,8 @@ class WorkspaceModuleImporter(private val project: Project,
         .firstOrNull { it.type == entry.value }) as? JpsModuleSourceRootPropertiesSerializer
                        ?: error("Module source root type ${entry}.value is not registered as JpsModelSerializerExtension")
 
-      val sourceRootEntity = diff.addSourceRootEntity(moduleEntity, virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(entry.key)),
+      val sourceRootEntity = diff.addSourceRootEntity(moduleEntity, contentRootEntity,
+                                                      virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(entry.key)),
                                                       entry.value.isForTests,
                                                       serializer.typeId,
                                                       MavenExternalSource.INSTANCE)

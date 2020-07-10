@@ -147,6 +147,14 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val entitySource = moduleEntity.entitySource
     for (contentElement in rootManagerElement.getChildrenAndDetach(CONTENT_TAG)) {
       val orderOfItems = mutableListOf<VirtualFileUrl>()
+      val excludeRootsUrls = contentElement.getChildren(EXCLUDE_FOLDER_TAG)
+        .map { virtualFileManager.fromUrl(it.getAttributeValueStrict(URL_ATTRIBUTE)) }
+      val excludePatterns = contentElement.getChildren(EXCLUDE_PATTERN_TAG)
+        .map { it.getAttributeValue(EXCLUDE_PATTERN_ATTRIBUTE) }
+      val contentRootUrl = contentElement.getAttributeValueStrict(URL_ATTRIBUTE)
+        .let { virtualFileManager.fromUrl(it) }
+      val contentRootEntity = builder.addContentRootEntity(contentRootUrl, excludeRootsUrls, excludePatterns, moduleEntity, entitySource)
+
       for (sourceRootElement in contentElement.getChildren(SOURCE_FOLDER_TAG)) {
         val url = sourceRootElement.getAttributeValueStrict(URL_ATTRIBUTE)
         val isTestSource = sourceRootElement.getAttributeValue(IS_TEST_SOURCE_ATTRIBUTE)?.toBoolean() == true
@@ -154,7 +162,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                    ?: (if (isTestSource) JAVA_TEST_ROOT_TYPE_ID else JAVA_SOURCE_ROOT_TYPE_ID)
         val virtualFileUrl = virtualFileManager.fromUrl(url)
         orderOfItems += virtualFileUrl
-        val sourceRoot = builder.addSourceRootEntity(moduleEntity, virtualFileUrl,
+        val sourceRoot = builder.addSourceRootEntity(moduleEntity, contentRootEntity, virtualFileUrl,
                                                      type == JAVA_TEST_ROOT_TYPE_ID || type == JAVA_TEST_RESOURCE_ROOT_ID,
                                                      type, entitySource)
         if (type == JAVA_SOURCE_ROOT_TYPE_ID || type == JAVA_TEST_ROOT_TYPE_ID) {
@@ -172,13 +180,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           builder.addCustomSourceRootPropertiesEntity(sourceRoot, JDOMUtil.write(elem), entitySource)
         }
       }
-      val excludeRootsUrls = contentElement.getChildren(EXCLUDE_FOLDER_TAG)
-        .map { virtualFileManager.fromUrl(it.getAttributeValueStrict(URL_ATTRIBUTE)) }
-      val excludePatterns = contentElement.getChildren(EXCLUDE_PATTERN_TAG)
-        .map { it.getAttributeValue(EXCLUDE_PATTERN_ATTRIBUTE) }
-      val contentRootUrl = contentElement.getAttributeValueStrict(URL_ATTRIBUTE)
-        .let { virtualFileManager.fromUrl(it) }
-      val contentRootEntity = builder.addContentRootEntity(contentRootUrl, excludeRootsUrls, excludePatterns, moduleEntity, entitySource)
 
       if (orderOfItems.size > 1) {
         // Save the order in which sourceRoots appear in the module
@@ -340,26 +341,20 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
     val contentEntities = module.contentRoots.filter { it.entitySource == module.entitySource }.sortedBy { it.url.url }
 
-    // Content.url -> (SourceRoot.url -> SourceRoot)
-    val contentUrlToSourceRoots = module.sourceRoots.groupByTo(HashMap()) { sourceRoot ->
-      contentEntities.find { VfsUtil.isEqualOrAncestor(it.url.url, sourceRoot.url.url) }?.url?.url ?: sourceRoot.url.url
-    }.mapValues { (_, value) -> value.groupByTo(HashMap()) { it.url } }
-
     contentEntities.forEach { contentEntry ->
       val contentRootTag = Element(CONTENT_TAG)
       contentRootTag.setAttribute(URL_ATTRIBUTE, contentEntry.url.url)
 
-      val sourceRoots = contentUrlToSourceRoots[contentEntry.url.url]
-      if (sourceRoots != null) {
-        // Save the source roots where the order is known
-        contentEntry.getSourceRootOrder()?.orderOfSourceRoots?.forEach {
-          sourceRoots.remove(it)?.forEach { sourceRoot ->
-            contentRootTag.addContent(saveSourceRoot(sourceRoot))
-          }
+      // SourceRoot.url -> SourceRoot
+      val sourceRoots = contentEntry.sourceRoots.associateByTo(HashMap()) { it.url }
+      // Save the source roots where the order is known
+      contentEntry.getSourceRootOrder()?.orderOfSourceRoots?.forEach {
+        sourceRoots.remove(it)?.let { sourceRoot ->
+          contentRootTag.addContent(saveSourceRoot(sourceRoot))
         }
-        // Save the roots with unknown ordering
-        sourceRoots.values.flatten().sortedBy { it.url.url }.forEach { contentRootTag.addContent(saveSourceRoot(it)) }
       }
+      // Save the roots with unknown ordering
+      sourceRoots.values.sortedBy { it.url.url }.forEach { contentRootTag.addContent(saveSourceRoot(it)) }
 
       contentEntry.excludedUrls.forEach {
         contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTRIBUTE, it.url))

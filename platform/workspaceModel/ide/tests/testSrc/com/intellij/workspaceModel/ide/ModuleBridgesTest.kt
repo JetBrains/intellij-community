@@ -312,7 +312,7 @@ class ModuleBridgesTest {
     }
 
   @Test
-  fun `test content roots provided implicitly`() =
+  fun `test content roots provided`() =
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
@@ -321,23 +321,26 @@ class ModuleBridgesTest {
       val projectModel = WorkspaceModel.getInstance(project)
 
       val projectLocation = project.configLocation!!
-
+      val virtualFileUrl = dir.toVirtualFileUrl(virtualFileManager)
       projectModel.updateProjectModel {
         val moduleEntity = it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
-        it.addSourceRootEntity(moduleEntity, dir.toVirtualFileUrl(virtualFileManager), false, "", JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+        val contentRootEntity = it.addContentRootEntity(virtualFileUrl, emptyList(), emptyList(), moduleEntity,
+                                                        moduleEntity.entitySource)
+        it.addSourceRootEntity(moduleEntity, contentRootEntity, virtualFileUrl, false, "",
+                               JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
       }
 
       val module = moduleManager.findModuleByName("name")
       assertNotNull(module)
 
       assertArrayEquals(
-        arrayOf(dir.toVirtualFileUrl(virtualFileManager).url),
+        arrayOf(virtualFileUrl.url),
         ModuleRootManager.getInstance(module!!).contentRootUrls
       )
 
       val sourceRootUrl = ModuleRootManager.getInstance(module).contentEntries.single()
         .sourceFolders.single().url
-      assertEquals(dir.toVirtualFileUrl(virtualFileManager).url, sourceRootUrl)
+      assertEquals(virtualFileUrl.url, sourceRootUrl)
     }
 
   @Test

@@ -53,9 +53,11 @@ internal class ModifiableContentEntryBridge(
     val serializer: JpsModuleSourceRootPropertiesSerializer<P> = SourceRootPropertiesHelper.findSerializer(type)
                                                                  ?: error("Module source root type $type is not registered as JpsModelSerializerExtension")
 
-    val entitySource = currentContentEntry.value.entity.entitySource
+    val contentRootEntity = currentContentEntry.value.entity
+    val entitySource = contentRootEntity.entitySource
     val sourceRootEntity = diff.addSourceRootEntity(
-      module = currentContentEntry.value.entity.module,
+      module = contentRootEntity.module,
+      contentRoot = contentRootEntity,
       url = sourceFolderUrl,
       tests = type.isForTests,
       rootType = serializer.typeId,

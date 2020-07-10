@@ -81,17 +81,20 @@ fun WorkspaceEntityStorageDiffBuilder.addModuleGroupPathEntity(path: List<String
 
 class ModifiableSourceRootEntity : ModifiableWorkspaceEntityBase<SourceRootEntity>() {
   var module: ModuleEntity by MutableManyToOne.NotNull(SourceRootEntity::class.java, ModuleEntity::class.java)
+  var contentRoot: ContentRootEntity by MutableManyToOne.NotNull(SourceRootEntity::class.java, ContentRootEntity::class.java)
   var url: VirtualFileUrl by VirtualFileUrlProperty()
   var tests: Boolean by EntityDataDelegation()
   var rootType: String by EntityDataDelegation()
 }
 
 fun WorkspaceEntityStorageDiffBuilder.addSourceRootEntity(module: ModuleEntity,
+                                                          contentRoot: ContentRootEntity,
                                                           url: VirtualFileUrl,
                                                           tests: Boolean,
                                                           rootType: String, source: EntitySource) = addEntity(
   ModifiableSourceRootEntity::class.java, source) {
   this.module = module
+  this.contentRoot = contentRoot
   this.url = url
   this.tests = tests
   this.rootType = rootType
