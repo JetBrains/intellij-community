@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class SettingsEditorFragment<Settings, C extends JComponent> extends SettingsEditor<Settings> {
@@ -30,6 +32,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private final Predicate<Settings> myInitialSelection;
   private @Nullable String myHint;
   private @Nullable JComponent myHintComponent;
+  private @Nullable Function<C, JComponent> myEditorGetter;
 
   public SettingsEditorFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
@@ -130,6 +133,19 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public void toggle(boolean selected) {
     setSelected(selected);
+    if (selected) {
+      IdeFocusManager.getGlobalInstance().requestFocus(getEditorComponent(), false);
+    }
+  }
+
+  public void setEditorGetter(@Nullable Function<C, JComponent> editorGetter) {
+    myEditorGetter = editorGetter;
+  }
+
+  protected JComponent getEditorComponent() {
+    JComponent component = component();
+    if (myEditorGetter != null) return myEditorGetter.apply(component());
+    return component instanceof LabeledComponent ? ((LabeledComponent<?>)component).getComponent() : component;
   }
 
   public int getCommandLinePosition() {

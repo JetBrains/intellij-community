@@ -68,6 +68,7 @@ public final class JavaApplicationSettingsEditor extends RunConfigurationFragmen
                                    (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
                                    configuration -> isNotEmpty(configuration.getVMParameters()));
     vmParameters.setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"));
+    vmParameters.setEditorGetter(editor -> editor.getEditorField());
     fragments.add(vmParameters);
 
     EditorTextField mainClass = ClassEditorField.createClassField(myProject, () -> classpathCombo.getSelectedModule());
