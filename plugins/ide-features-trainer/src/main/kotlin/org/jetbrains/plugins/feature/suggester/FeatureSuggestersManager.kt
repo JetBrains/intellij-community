@@ -15,24 +15,24 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.ui.LightweightHint
-import org.jetbrains.plugins.feature.suggester.cache.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsHistory
+import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
 import org.jetbrains.plugins.feature.suggester.changes.*
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
 import java.awt.Point
 
 class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener {
     private val MAX_ACTIONS_NUMBER: Int = 100
-    private val actionsCache = UserActionsHistory(MAX_ACTIONS_NUMBER)
-    private val anActionsCache = UserAnActionsHistory(MAX_ACTIONS_NUMBER)
+    private val actionsHistory = UserActionsHistory(MAX_ACTIONS_NUMBER)
+    private val anActionsHistory = UserAnActionsHistory(MAX_ACTIONS_NUMBER)
 
     private var psiListenersIsSet: Boolean = false
 
     fun actionPerformed(action: UserAction) {
-        actionsCache.add(action)
+        actionsHistory.add(action)
         for (suggester in FeatureSuggester.suggesters) {
             if (!isEnabled(suggester)) continue
-            val suggestion = suggester.getSuggestion(actionsCache, anActionsCache)
+            val suggestion = suggester.getSuggestion(actionsHistory, anActionsHistory)
             if (suggestion is PopupSuggestion) {
                 action.parent?.containingFile?.virtualFile ?: return
                 val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
@@ -71,6 +71,30 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
             return
 
         PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
+            override fun beforePropertyChange(event: PsiTreeChangeEvent) {
+                actionPerformed(BeforePropertyChangedAction(event.parent))
+            }
+
+            override fun beforeChildAddition(event: PsiTreeChangeEvent) {
+                actionPerformed(BeforeChildAddedAction(event.parent, event.newChild))
+            }
+
+            override fun beforeChildReplacement(event: PsiTreeChangeEvent) {
+                actionPerformed(BeforeChildReplacedAction(event.parent, event.newChild, event.oldChild))
+            }
+
+            override fun beforeChildrenChange(event: PsiTreeChangeEvent) {
+                actionPerformed(BeforeChildrenChangedAction(event.parent))
+            }
+
+            override fun beforeChildMovement(event: PsiTreeChangeEvent) {
+                actionPerformed(BeforeChildMovedAction(event.parent, event.child, event.oldParent))
+            }
+
+            override fun beforeChildRemoval(event: PsiTreeChangeEvent) {
+                actionPerformed(BeforeChildRemovedAction(event.parent, event.child))
+            }
+
             override fun propertyChanged(event: PsiTreeChangeEvent) {
                 actionPerformed(PropertyChangedAction(event.parent))
             }

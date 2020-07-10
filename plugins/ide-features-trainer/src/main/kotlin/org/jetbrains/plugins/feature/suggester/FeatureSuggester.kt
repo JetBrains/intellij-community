@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.feature.suggester
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import org.jetbrains.plugins.feature.suggester.cache.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsHistory
+import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
 
 interface FeatureSuggester {
 

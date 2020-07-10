@@ -1,0 +1,33 @@
+abc = 3
+bcd = 5
+
+if abc * bcd > 3:
+    print(abc)
+else:
+    print(bcd)
+
+
+def function(aaa, bbb):
+    if aaa - bbb > aaa:
+        print(aaa)
+    else:
+        print(bbb)
+
+function(322, function(abc, bcd))
+
+class Clazz:
+    field = 3
+
+    def function(self, aaa, bbb):
+        if aaa - bbb > aaa:
+            print(aaa)
+        else:
+            print(bbb - self.field)
+
+    def __init__(self) -> None:
+        self.function(2, self.function(2, 3 + self.field))
+        print(self.field)
+
+
+classVar = Clazz()
+classVar.function(1, 2)

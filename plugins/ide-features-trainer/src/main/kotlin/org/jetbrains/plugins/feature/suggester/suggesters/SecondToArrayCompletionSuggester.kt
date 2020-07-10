@@ -6,8 +6,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.cache.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsHistory
+import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
 import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
 

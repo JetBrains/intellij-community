@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.testFramework.runInEdtAndWait
 
+@Deprecated("Tests must run only in EDT")
 class LineCommentingSuggesterTest : FeatureSuggesterTest() {
 
     fun `testComment one line and get suggestion`() {

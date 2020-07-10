@@ -11,6 +11,7 @@
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.java</depends>
+    <depends>com.intellij.modules.python</depends>
 
     <extensionPoints>
         <extensionPoint name="featureSuggester" interface="org.jetbrains.plugins.feature.suggester.FeatureSuggester"/>
@@ -24,6 +25,7 @@
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SuppressWarningSuggester"/>
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.AutoIndentLinesSuggester"/>
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.ExclamationCompletionSuggester"/>
+        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.RenamingSuggester"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">

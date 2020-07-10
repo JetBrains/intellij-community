@@ -14,6 +14,15 @@ data class PropertyChangedAction(override val parent: PsiElement?) : UserAction(
 data class ChildMovedAction(override val parent: PsiElement?, val child: PsiElement?, val oldParent: PsiElement?) :
     UserAction(parent)
 
+data class BeforeChildrenChangedAction(override val parent: PsiElement?) : UserAction(parent)
+data class BeforeChildAddedAction(override val parent: PsiElement?, val newChild: PsiElement?) : UserAction(parent)
+data class BeforeChildReplacedAction(override val parent: PsiElement?, val newChild: PsiElement?, val oldChild: PsiElement?) :
+    UserAction(parent)
+
+data class BeforeChildRemovedAction(override val parent: PsiElement?, val child: PsiElement?) : UserAction(parent)
+data class BeforePropertyChangedAction(override val parent: PsiElement?) : UserAction(parent)
+data class BeforeChildMovedAction(override val parent: PsiElement?, val child: PsiElement?, val oldParent: PsiElement?) :
+    UserAction(parent)
 
 sealed class UserAnAction(open val timestamp: Long)
 
