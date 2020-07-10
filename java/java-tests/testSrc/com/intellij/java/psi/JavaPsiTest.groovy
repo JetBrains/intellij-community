@@ -10,7 +10,6 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -198,13 +197,13 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void "test record has members in dumb mode"() {
-    final DumbServiceImpl dumbService = DumbServiceImpl.getInstance(getProject());
-    EdtTestUtil.runInEdtAndWait({ -> dumbService.setDumb(true) })
-    def clazz = configureFile("record A(@Foo A... i)").classes[0]
-    def methods = clazz.findMethodsByName("i")
-    assert 1 == methods.size()
-    def method = methods.first()
-    assert method instanceof LightRecordMethod
+    DumbServiceImpl.getInstance(getProject()).runInDumbMode {
+      def clazz = configureFile("record A(@Foo A... i)").classes[0]
+      def methods = clazz.findMethodsByName("i")
+      assert 1 == methods.size()
+      def method = methods.first()
+      assert method instanceof LightRecordMethod
+    }
   }
 
   void "test add record component"() {
