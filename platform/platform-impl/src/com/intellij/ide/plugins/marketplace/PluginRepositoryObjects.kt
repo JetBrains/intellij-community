@@ -96,6 +96,7 @@ internal class MarketplaceSearchPluginData(
     pluginNode.vendor = vendor
     pluginNode.externalPluginId = externalPluginId
     pluginNode.externalUpdateId = externalUpdateId
+    if (cdate != null) pluginNode.date = cdate
     if (isPaid) pluginNode.tags = listOf(Tags.Paid.name)
     return pluginNode
   }
