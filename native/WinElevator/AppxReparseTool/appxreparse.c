@@ -44,7 +44,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
 	REPARSE_DATA_BUFFER buffer;
 	ZeroMemory(&buffer, sizeof(buffer));
-	DWORD bytesRead = 0;
+	DWORD numOfBytes = 0;
 
 	if (!DeviceIoControl(
 		file,
@@ -53,7 +53,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		0,
 		&buffer,
 		sizeof(buffer),
-		&bytesRead,
+		&numOfBytes,
 		NULL
 	))
 	{
@@ -61,27 +61,32 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		return _ProcessError(L"DeviceIoCtl");
 	}
 
-	if (bytesRead == 0 || buffer.ReparseTag != IO_REPARSE_TAG_APPEXECLINK)
+	if (numOfBytes == 0 || buffer.ReparseTag != IO_REPARSE_TAG_APPEXECLINK)
 	{
 		fwprintf(stderr, L"Not a reparse point");
 		CloseHandle(file);
 		return -1;
 	}
 
-	
-	const wchar_t* textStart = buffer.DATA;
+
+	const WCHAR* textStart = buffer.DATA;
 	// Data consists of several unprintable (<32) chars following human-readable name of AppX
 	// Search for first printable (>32) char.
-	for (USHORT i = 0; (!iswprint(*textStart)) && i < buffer.ReparseDataLength; i++, textStart++)
+	USHORT firstPrintableChar;
+	const USHORT maxChars = buffer.ReparseDataLength / sizeof(WCHAR);
+	for (firstPrintableChar = 0; (!iswprint(*textStart)) && firstPrintableChar < maxChars; firstPrintableChar++,
+	     textStart++)
 	{
 	}
-	if (textStart == buffer.DATA + buffer.ReparseDataLength)
+	if (firstPrintableChar == maxChars)
 	{
 		fwprintf(stderr, L"No printable chars in data");
 		CloseHandle(file);
 		return -1;
 	}
-	wprintf(L"%ls", textStart);
+	//stdlib wprintf will convert chars to 1-byte charset, which may break non-ascii chars (if any)
+	WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), textStart, wcsnlen_s(textStart, maxChars - firstPrintableChar),
+	              &numOfBytes, NULL);
 	CloseHandle(file);
 	return 0;
 }
