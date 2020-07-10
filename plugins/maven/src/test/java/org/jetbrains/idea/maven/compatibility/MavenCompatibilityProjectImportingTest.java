@@ -19,6 +19,37 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCase {
 
+
+  @Parameterized.Parameters(name = "with Maven-{0}")
+  public static List<String[]> getMavenVersions() {
+    return Arrays.asList(
+      new String[]{"3.7.0-SNAPSHOT"},
+      new String[]{"3.6.3"}
+      /*new String[]{"3.6.2"},
+      new String[]{"3.6.1"},
+      new String[]{"3.6.0"},
+      new String[]{"3.5.4"},
+      new String[]{"3.5.3"},
+      new String[]{"3.5.2"},
+      new String[]{"3.5.0"},
+      new String[]{"3.3.9"},
+      new String[]{"3.3.3"},
+      new String[]{"3.3.1"},
+      new String[]{"3.2.5"},
+      new String[]{"3.2.3"},
+      new String[]{"3.2.2"},
+      new String[]{"3.2.1"},
+      new String[]{"3.1.1"},
+      new String[]{"3.1.0"},
+      new String[]{"3.0.5"},
+      new String[]{"3.0.4"},
+      new String[]{"3.0.3"},
+      new String[]{"3.0.2"},
+      new String[]{"3.0.1"},
+      new String[]{"3.0"}*/
+    );
+  }
+
   @NotNull
   protected MavenWrapperTestFixture myWrapperTestFixture;
 
@@ -46,36 +77,6 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
   @After
   public void after() throws Exception {
     myWrapperTestFixture.tearDown();
-  }
-
-  @Parameterized.Parameters(name = "with Maven-{0}")
-  public static List<String[]> getMavenVersions() {
-    return Arrays.asList(
-      //new String[]{"3.7.0-SNAPSHOT"},
-      new String[]{"3.6.3"},
-      new String[]{"3.6.2"},
-      new String[]{"3.6.1"},
-      new String[]{"3.6.0"},
-      new String[]{"3.5.4"},
-      new String[]{"3.5.3"},
-      new String[]{"3.5.2"},
-      new String[]{"3.5.0"},
-      new String[]{"3.3.9"},
-      new String[]{"3.3.3"},
-      new String[]{"3.3.1"},
-      new String[]{"3.2.5"},
-      new String[]{"3.2.3"},
-      new String[]{"3.2.2"},
-      new String[]{"3.2.1"},
-      new String[]{"3.1.1"},
-      new String[]{"3.1.0"},
-      new String[]{"3.0.5"},
-      new String[]{"3.0.4"},
-      new String[]{"3.0.3"},
-      new String[]{"3.0.2"},
-      new String[]{"3.0.1"},
-      new String[]{"3.0"}
-    );
   }
 
 
