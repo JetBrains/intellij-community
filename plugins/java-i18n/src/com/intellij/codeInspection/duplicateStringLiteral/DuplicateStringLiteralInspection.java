@@ -288,6 +288,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
 
   private static final class ReplaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     private final String myText;
+    @SafeFieldForPreview
     private final SmartPsiElementPointer<PsiField> myConst;
 
     private ReplaceFix(PsiField constant, PsiExpression originalExpression) {
