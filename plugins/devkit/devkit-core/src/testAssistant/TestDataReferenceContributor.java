@@ -53,6 +53,10 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
   }
 
   private static class TestDataReferenceProvider extends UastInjectionHostReferenceProvider {
+    @Override
+    public boolean acceptsTarget(@NotNull PsiElement target) {
+      return target instanceof PsiFileSystemItem;
+    }
 
     @Override
     public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,

@@ -48,6 +48,10 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
         }
       }), "value"), new UastInjectionHostReferenceProvider() {
 
+      @Override
+      public boolean acceptsTarget(@NotNull PsiElement target) {
+        return false;
+      }
 
       @Override
       public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
