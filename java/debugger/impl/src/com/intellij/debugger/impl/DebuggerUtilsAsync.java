@@ -266,7 +266,7 @@ public class DebuggerUtilsAsync {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     DebuggerManagerThreadImpl thread = (DebuggerManagerThreadImpl)InvokeThread.currentThread();
     LOG.assertTrue(thread != null);
-    DebuggerCommandImpl event = thread.myEvents.getCurrentEvent();
+    DebuggerCommandImpl event = DebuggerManagerThreadImpl.getCurrentCommand();
     LOG.assertTrue(event != null);
     PrioritizedTask.Priority priority = event.getPriority();
     SuspendContextImpl suspendContext =
