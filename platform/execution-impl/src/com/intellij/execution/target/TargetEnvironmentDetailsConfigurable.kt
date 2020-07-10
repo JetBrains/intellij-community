@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -7,16 +7,17 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.ui.TitledSeparator
+import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.labels.DropDownLink
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import java.util.function.Consumer
 import javax.swing.Icon
+import javax.swing.JButton
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal class TargetEnvironmentDetailsConfigurable(private val project: Project, private val config: TargetEnvironmentConfiguration)
@@ -79,15 +80,15 @@ internal class TargetEnvironmentDetailsConfigurable(private val project: Project
     }
   }
 
-  private fun createAddRuntimeHyperlink(): JLabel {
+  private fun createAddRuntimeHyperlink(): JButton {
     class Item(val type: LanguageRuntimeType<*>?) {
       override fun toString(): String {
         return type?.displayName ?: "Add language runtime"
       }
     }
 
-    return DropDownLink<Item>(Item(null), LanguageRuntimeType.EXTENSION_NAME.extensionList.map { Item(it) }, {
-      val newRuntime = it.type?.createDefaultConfig() ?: return@DropDownLink
+    return DropDownLink(Item(null), LanguageRuntimeType.EXTENSION_NAME.extensionList.map { Item(it) }, Consumer {
+      val newRuntime = it.type?.createDefaultConfig() ?: return@Consumer
       config.runtimes.addConfig(newRuntime)
       forceRefreshUI()
     }, false)
