@@ -37,14 +37,14 @@ class SaveProjectTest {
   val projectModel = ProjectModelRule()
 
   @Test
-  fun `save module`() = runBlocking {
+  fun `save single module`() = runBlocking {
     projectModel.createModule("foo")
     saveProjectState()
     projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("single-module")))
   }
 
   @Test
-  fun `save library`() = runBlocking {
+  fun `save single library`() = runBlocking {
     projectModel.addProjectLevelLibrary("foo") {
       it.addRoot(VfsUtil.pathToUrl(projectModel.baseProjectDir.rootPath.resolve("lib/classes").systemIndependentPath), OrderRootType.CLASSES)
     }
@@ -67,5 +67,5 @@ class SaveProjectTest {
   }
 
   private val testDataRoot: Path
-    get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/configurationStore/saveProjectTest")
+    get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/configurationStore")
 }
