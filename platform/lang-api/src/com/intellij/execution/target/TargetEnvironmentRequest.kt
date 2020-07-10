@@ -21,10 +21,20 @@ interface TargetEnvironmentRequest {
    */
   val targetPlatform: TargetPlatform
 
+  /**
+   * Set of required upload roots.
+   * Note that both local and remote paths must be unique across all requests.
+   * I.e., neither `setOf(UploadRoot("/local", Persistent("/remote1")), UploadRoot("/local", Persistent("/remote2")))`,
+   * nor `setOf(UploadRoot("/local1", Persistent("/remote")), UploadRoot("/local2", Persistent("/remote")))` can be resolved.
+   */
   @JvmDefault
   val uploadVolumes: MutableSet<TargetEnvironment.UploadRoot>
     get() = throw UnsupportedOperationException()
 
+  /**
+   * Set of required download roots.
+   * Like for [uploadVolumes], both local and remote paths must be unique across all requests.
+   */
   @JvmDefault
   val downloadVolumes: MutableSet<TargetEnvironment.DownloadRoot>
     get() = throw UnsupportedOperationException()
