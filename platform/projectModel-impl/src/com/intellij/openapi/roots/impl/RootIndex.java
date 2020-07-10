@@ -609,9 +609,16 @@ class RootIndex {
       file = file.getParent();
     }
 
-    for (VirtualFile each = file; each != null; each = each.getParent()) {
-      DirectoryInfo info = getOwnInfo(each);
-      if (info != null) return info;
+    if (file instanceof VirtualFileWithId) {
+      for (VirtualFile each = file; each != null; each = each.getParent()) {
+        DirectoryInfo info = getOwnInfo(((VirtualFileWithId)each).getId(), each);
+        if (info != null) return info;
+      }
+    } else {
+      for (VirtualFile each = file; each != null; each = each.getParent()) {
+        DirectoryInfo info = getOwnInfo(each);
+        if (info != null) return info;
+      }
     }
 
     return NonProjectDirectoryInfo.NOT_UNDER_PROJECT_ROOTS;
@@ -619,22 +626,21 @@ class RootIndex {
 
   @Nullable
   private DirectoryInfo getOwnFileInfo(@NotNull VirtualFile file) {
-    return myHasNonDirectoryRoots ? getOwnInfo(file) :
-           ourFileTypes.isFileIgnored(file) ? NonProjectDirectoryInfo.IGNORED :
-           null;
+    if (myHasNonDirectoryRoots) {
+      return file instanceof VirtualFileWithId
+             ? getOwnInfo(((VirtualFileWithId)file).getId(), file)
+             : getOwnInfo(file);
+    }
+    return ourFileTypes.isFileIgnored(file) ? NonProjectDirectoryInfo.IGNORED : null;
   }
 
   @Nullable
-  private DirectoryInfo getOwnInfo(VirtualFile file) {
-    if (!(file instanceof VirtualFileWithId)) {
-      return doGetFileInfo(file);
-    }
-    int id = ((VirtualFileWithId)file).getId();
+  private DirectoryInfo getOwnInfo(int id, VirtualFile file) {
     return myNonInterestingIds.get(id) ? null : handleInterestingId(id, file);
   }
 
   @Nullable
-  private DirectoryInfo doGetFileInfo(@NotNull VirtualFile file) {
+  private DirectoryInfo getOwnInfo(@NotNull VirtualFile file) {
     DirectoryInfo info = myRootInfos.get(file);
     if (info != null) {
       return info;
@@ -649,7 +655,11 @@ class RootIndex {
 
   @Nullable
   private DirectoryInfo handleInterestingId(int id, @NotNull VirtualFile file) {
-    DirectoryInfo info = doGetFileInfo(file);
+    DirectoryInfo info = myRootInfos.get(file);
+    if (info == null && ourFileTypes.isFileIgnored(file)) {
+      info = NonProjectDirectoryInfo.IGNORED;
+    }
+
     if (info == null) {
       if ((id > 500_000_000 || id < 0) && LOG.isDebugEnabled()) {
         LOG.error("Invalid id: " + id + " for " + file + " of " + file.getClass());
