@@ -154,7 +154,12 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     private val UPDATE_IDENTITY = Any()
 
     private fun updateRepositories(project: Project) {
-      if (!project.isDisposed) project.service<GHProjectRepositoriesManager>().updateRepositories()
+      try {
+        if (!project.isDisposed) project.service<GHProjectRepositoriesManager>().updateRepositories()
+      }
+      catch (e: Exception) {
+        LOG.info("Error occurred while updating repositories", e)
+      }
     }
   }
 
