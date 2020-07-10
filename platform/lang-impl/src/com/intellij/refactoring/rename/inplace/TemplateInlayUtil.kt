@@ -134,37 +134,39 @@ object TemplateInlayUtil {
 
     val factory = PresentationFactory(editor)
     val colorsScheme = editor.colorsScheme
-    fun button(bgKey: ColorKey, iconPresentation: IconPresentation, second : Boolean = false) = factory.container(factory.container(
+    fun button(iconPresentation: IconPresentation, second : Boolean = false) = factory.container(factory.container(
       presentation = iconPresentation,
-      padding = InlayPresentationFactory.Padding(if (second) 0 else 4, 4, 4, 4),
-      background = colorsScheme.getColor(bgKey)
-    ), padding = InlayPresentationFactory.Padding(if (second) 0 else 4, if (second) 6 else 0, 0, 0))
+      padding = InlayPresentationFactory.Padding(if (second) 0 else 4, 4, 4, 4)
+    ))
 
     var tooltip = "Choose where to rename occurrences in addition to usages: \n" +
                           "– In comments and string literals"
     val commentsStatusIcon = if (processor.isToSearchInComments(elementToRename)) AllIcons.Actions.InlayRenameInCommentsActive else AllIcons.Actions.InlayRenameInComments
 
-    val inCommentsIconPresentation = factory.icon(commentsStatusIcon)
-    
-    fun commentsButton(bgKey : ColorKey) = button(bgKey, inCommentsIconPresentation)
-    var defaultPresentation = commentsButton(INLINE_REFACTORING_SETTINGS_DEFAULT)
-    var active = commentsButton(INLINE_REFACTORING_SETTINGS_FOCUSED)
-    var hovered = commentsButton(INLINE_REFACTORING_SETTINGS_HOVERED)
-
+    var buttonsPresentation = button(factory.icon(commentsStatusIcon))
     var inTextOccurrencesIconPresentation: IconPresentation? = null
     if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(elementToRename)) {
-      val textOccurrencesStatusIcon = if (processor.isToSearchForTextOccurrences(elementToRename)) AllIcons.Actions.InlayRenameInNoCodeFilesActive else AllIcons.Actions.InlayRenameInNoCodeFiles
+      val textOccurrencesStatusIcon = if (processor.isToSearchForTextOccurrences(elementToRename))
+                                                AllIcons.Actions.InlayRenameInNoCodeFilesActive 
+                                            else 
+                                                AllIcons.Actions.InlayRenameInNoCodeFiles
 
       inTextOccurrencesIconPresentation = factory.icon(textOccurrencesStatusIcon)
-      fun testOccurrencesButton(bgKey : ColorKey, p : InlayPresentation) = factory.seq(p, button(bgKey, inTextOccurrencesIconPresentation, true))
-      
-      defaultPresentation = testOccurrencesButton(INLINE_REFACTORING_SETTINGS_DEFAULT, defaultPresentation)
-      active = testOccurrencesButton(INLINE_REFACTORING_SETTINGS_FOCUSED, active)
-      hovered = testOccurrencesButton(INLINE_REFACTORING_SETTINGS_HOVERED, hovered)
+      buttonsPresentation = factory.seq(buttonsPresentation, button(inTextOccurrencesIconPresentation, true))
       tooltip += "\n– In files that don’t contain source code"
     }
 
-    val presentation = SelectableInlayButton(editor, defaultPresentation, active, factory.withTooltip(tooltip, hovered))
+    fun withBackground(bgKey: ColorKey) =
+      factory.container(factory.container(buttonsPresentation,
+                                          roundedCorners = InlayPresentationFactory.RoundedCorners(3, 3),
+                                          background = colorsScheme.getColor(bgKey)),
+        padding = InlayPresentationFactory.Padding(4, 0,0, 0)
+      )
+    
+    val presentation = SelectableInlayButton(editor,
+                                             withBackground(INLINE_REFACTORING_SETTINGS_DEFAULT),
+                                             withBackground(INLINE_REFACTORING_SETTINGS_FOCUSED),
+                                             factory.withTooltip(tooltip, withBackground(INLINE_REFACTORING_SETTINGS_HOVERED)))
     val panel = renamePanel(elementToRename, editor, inTextOccurrencesIconPresentation, restart)
     return createNavigatableButtonWithPopup(templateState, offset, presentation, panel) ?: return null
   }
