@@ -133,6 +133,11 @@ public class SingleConfigurableEditor extends DialogWrapper {
   }
 
   @Override
+  public @Nullable Dimension getInitialSize() {
+    return new Dimension(650, 500);
+  }
+
+  @Override
   protected Action @NotNull [] createActions() {
     List<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
