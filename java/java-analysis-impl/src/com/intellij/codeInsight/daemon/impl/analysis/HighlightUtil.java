@@ -62,6 +62,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -2242,7 +2243,7 @@ public final class HighlightUtil {
   }
 
   /**
-   * See JLS 8.3.2.3.
+   * See JLS 8.3.3.
    */
   static HighlightInfo checkIllegalForwardReferenceToField(@NotNull PsiReferenceExpression expression, @NotNull PsiField referencedField) {
     Boolean isIllegalForwardReference = isIllegalForwardReferenceToField(expression, referencedField, false);
@@ -2259,8 +2260,13 @@ public final class HighlightUtil {
     if (expression.getContainingFile() != referencedField.getContainingFile()) return null;
     TextRange fieldRange = referencedField.getTextRange();
     if (fieldRange == null || expression.getTextRange().getStartOffset() >= fieldRange.getEndOffset()) return null;
-    // only simple reference can be illegal
-    if (!acceptQualified && expression.getQualifierExpression() != null) return null;
+    if (!acceptQualified) {
+      if (containingClass.isEnum()) {
+        if (isLegalForwardReferenceInEnum(expression, referencedField, containingClass)) return null;
+      }
+      // simple reference can be illegal (JLS 8.3.3)
+      else if (expression.getQualifierExpression() != null) return null;
+    }
     PsiField initField = findEnclosingFieldInitializer(expression);
     PsiClassInitializer classInitializer = findParentClassInitializer(expression);
     if (initField == null && classInitializer == null) return null;
@@ -2274,6 +2280,25 @@ public final class HighlightUtil {
       return null;
     }
     return initField != referencedField;
+  }
+
+  private static boolean isLegalForwardReferenceInEnum(@NotNull PsiReferenceExpression expression,
+                                                       @NotNull PsiField referencedField,
+                                                       @NotNull PsiClass containingClass) {
+    PsiExpression qualifierExpr = expression.getQualifierExpression();
+    // simple reference can be illegal (JLS 8.3.3)
+    if (qualifierExpr == null) return false;
+    if (Objects.equals(qualifierExpr.getText(), containingClass.getName())) {
+      PsiClassType enumType = TypeUtils.getType(CommonClassNames.JAVA_LANG_ENUM, referencedField);
+      // static fields that are constant variables (4.12.4) are initialized before other static fields (12.4.2),
+      // so a qualified reference to the constant variable is possible.
+      // And we have to ignore a reference to the enum constant which is not a constant variable (4.12.4, 15.29).
+      if (!enumType.isAssignableFrom(referencedField.getType()) && referencedField.computeConstantValue() != null) {
+        return true;
+      }
+      return false;
+    }
+    return true;
   }
 
   /**
