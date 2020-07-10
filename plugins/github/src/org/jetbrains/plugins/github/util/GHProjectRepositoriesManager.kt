@@ -95,13 +95,14 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     LOG.debug("Extracted URI $uri from remote ${remote.url}")
     if (uri == null) return
 
+    val host = uri.host ?: return
     val path = uri.path ?: return
     val pathParts = path.removePrefix("/").split('/').takeIf { it.size >= 2 } ?: return
     val serverSuffix = if (pathParts.size == 2) null else pathParts.subList(0, pathParts.size - 2).joinToString("/", "/")
 
-    val server = GithubServerPath(false, uri.host, null, serverSuffix)
-    val serverHttp = GithubServerPath(true, uri.host, null, serverSuffix)
-    val server8080 = GithubServerPath(true, uri.host, 8080, serverSuffix)
+    val server = GithubServerPath(false, host, null, serverSuffix)
+    val serverHttp = GithubServerPath(true, host, null, serverSuffix)
+    val server8080 = GithubServerPath(true, host, 8080, serverSuffix)
     LOG.debug("Scheduling GHE server discovery for $server, $serverHttp and $server8080")
 
     val serverManager = service<GHEnterpriseServerMetadataLoader>()
