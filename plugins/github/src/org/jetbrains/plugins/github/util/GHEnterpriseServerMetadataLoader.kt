@@ -2,11 +2,9 @@
 package org.jetbrains.plugins.github.util
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.GithubApiRequest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -20,24 +18,20 @@ class GHEnterpriseServerMetadataLoader : Disposable {
 
   private val apiRequestExecutor = GithubApiRequestExecutor.Factory.getInstance().create()
   private val serverMetadataRequests = ConcurrentHashMap<GithubServerPath, CompletableFuture<GHEnterpriseServerMeta>>()
-  private val indicators = ConcurrentHashMap.newKeySet<ProgressIndicator>()
+  private val indicatorProvider = ProgressIndicatorsProvider().also {
+    Disposer.register(this, it)
+  }
 
   @CalledInAny
   fun loadMetadata(server: GithubServerPath): CompletableFuture<GHEnterpriseServerMeta> {
     require(!server.isGithubDotCom) { "Cannot retrieve server metadata from github.com" }
     return serverMetadataRequests.getOrPut(server) {
-      val indicator = EmptyProgressIndicator(ModalityState.any())
-      indicators.add(indicator)
-      ProgressManager.getInstance().submitIOTask(indicator) {
+      ProgressManager.getInstance().submitIOTask(indicatorProvider) {
         val metaUrl = server.toApiUrl() + "/meta"
-        apiRequestExecutor.execute(GithubApiRequest.Get.json<GHEnterpriseServerMeta>(metaUrl))
-      }.completionOnEdt {
-        indicators.remove(indicator)
+        apiRequestExecutor.execute(it, GithubApiRequest.Get.json<GHEnterpriseServerMeta>(metaUrl))
       }
     }
   }
 
-  override fun dispose() {
-    indicators.forEach { it.cancel() }
-  }
+  override fun dispose() {}
 }
