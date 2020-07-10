@@ -561,7 +561,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final PsiElement ourContainer = findContainer(getElement());
     final PsiElement theirContainer = findContainer(element);
     if (ourContainer != null) {
-      if (ourContainer == theirContainer) {
+      if (ourContainer == theirContainer && ourScopeOwner == theirScopeOwner) {
         return true;
       }
       if (PsiTreeUtil.isAncestor(theirContainer, ourContainer, true)) {
