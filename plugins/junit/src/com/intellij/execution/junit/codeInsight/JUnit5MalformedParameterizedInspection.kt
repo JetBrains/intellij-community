@@ -217,11 +217,10 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
             containingClass != null && !TestUtils.testInstancePerClass(containingClass)) {
           val annotation: PsiAnnotation = JavaPsiFacade.getElementFactory(containingClass.project).createAnnotationFromText(Annotations.TEST_INSTANCE_PER_CLASS, containingClass)
           val attributes: Array<PsiNameValuePair> = annotation.parameterList.attributes
-          val annoName: String = annotation.qualifiedName!!
           holder.registerProblem(attributeValue, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.static", providerName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  QuickFixFactory.getInstance().createModifierListFix(sourceProvider, PsiModifier.STATIC, true, false),
-                                 AddAnnotationPsiFix(annoName, containingClass, attributes))
+                                 AddAnnotationPsiFix(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE, containingClass, attributes))
         }
         else if (sourceProvider.parameterList.parametersCount != 0) {
           holder.registerProblem(getElementToHighlight(attributeValue, method), JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.no.params", providerName))
