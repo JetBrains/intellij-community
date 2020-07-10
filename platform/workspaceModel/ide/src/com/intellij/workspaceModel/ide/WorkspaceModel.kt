@@ -6,9 +6,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 
+/**
+ * Provides access to the storage which holds workspace model entities.
+ */
 interface WorkspaceModel {
   val entityStorage: VersionedEntityStorage
 
+  /**
+   * Modifies the current model by calling [updater] and applying it to the storage. Requires write action.
+   */
   fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R
 
   /** Update project model without the notification to message bus */

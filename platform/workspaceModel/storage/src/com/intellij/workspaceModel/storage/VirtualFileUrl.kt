@@ -4,7 +4,9 @@ package com.intellij.workspaceModel.storage
 import java.io.File
 import java.nio.file.Path
 
-// TODO Do we want to make it inline?
+/**
+ * Represent an URL (in VFS format) of a file or directory.
+ */
 class VirtualFileUrl(private val id: Int, internal val manager: VirtualFileUrlManager) {
   val url: String
     get() = manager.getUrlById(id)
@@ -36,8 +38,6 @@ class VirtualFileUrl(private val id: Int, internal val manager: VirtualFileUrlMa
 
   fun isEqualOrParentOf(other: VirtualFileUrl): Boolean = manager.isEqualOrParentOf(this.id, other.id)
 
-  //override fun equals(other: Any?): Boolean = id == (other as? VirtualFileUrl)?.id
-  //override fun hashCode(): Int = id
   override fun toString(): String = url
 
   override fun equals(other: Any?): Boolean {
