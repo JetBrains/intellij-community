@@ -8,11 +8,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EventObject;
 
 public final class FileEditorManagerEvent extends EventObject {
-
-  private final VirtualFile        myOldFile;
-  private final FileEditor         myOldEditor;
-  private final VirtualFile        myNewFile;
-  private final FileEditor         myNewEditor;
+  private final VirtualFile myOldFile;
+  private final FileEditor myOldEditor;
+  private final VirtualFile myNewFile;
+  private final FileEditor myNewEditor;
   private final FileEditorProvider myOldProvider;
   private final FileEditorProvider myNewProvider;
 
@@ -20,19 +19,17 @@ public final class FileEditorManagerEvent extends EventObject {
                                 @Nullable VirtualFile oldFile,
                                 @Nullable FileEditor oldEditor,
                                 @Nullable VirtualFile newFile,
-                                @Nullable FileEditor newEditor)
-  {
+                                @Nullable FileEditor newEditor) {
     this(source, oldFile, oldEditor, null, newFile, newEditor, null);
   }
-  
+
   public FileEditorManagerEvent(@NotNull FileEditorManager source,
                                 @Nullable VirtualFile oldFile,
                                 @Nullable FileEditor oldEditor,
                                 @Nullable FileEditorProvider oldProvider,
                                 @Nullable VirtualFile newFile,
                                 @Nullable FileEditor newEditor,
-                                @Nullable FileEditorProvider newProvider)
-  {
+                                @Nullable FileEditorProvider newProvider) {
     super(source);
     myOldFile = oldFile;
     myOldEditor = oldEditor;
@@ -43,36 +40,30 @@ public final class FileEditorManagerEvent extends EventObject {
   }
 
   @NotNull
-  public FileEditorManager getManager(){
+  public FileEditorManager getManager() {
     return (FileEditorManager)getSource();
   }
 
-  @Nullable
   public VirtualFile getOldFile() {
     return myOldFile;
   }
 
-  @Nullable
   public VirtualFile getNewFile() {
     return myNewFile;
   }
 
-  @Nullable
   public FileEditor getOldEditor() {
     return myOldEditor;
   }
 
-  @Nullable
   public FileEditor getNewEditor() {
     return myNewEditor;
   }
 
-  @Nullable
   public FileEditorProvider getOldProvider() {
     return myOldProvider;
   }
 
-  @Nullable
   public FileEditorProvider getNewProvider() {
     return myNewProvider;
   }

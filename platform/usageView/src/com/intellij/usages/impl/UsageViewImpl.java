@@ -165,7 +165,7 @@ public class UsageViewImpl implements UsageViewEx {
   private boolean myDisposeSmartPointersOnClose = true;
   private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("Usage View Update Requests", AppExecutorUtil.getAppExecutorService(), JobSchedulerImpl.getJobPoolParallelism(), this);
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
-  private Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses = new HashSet<>();
+  private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses = ContainerUtil.newConcurrentSet();
 
   public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -283,17 +283,14 @@ public class UsageViewImpl implements UsageViewEx {
             addButtonToLowerPane(this::close, UsageViewBundle.message("usage.view.cancel.button"));
           }
 
-          myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-            @Override
-            public void valueChanged(final TreeSelectionEvent e) {
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(() -> {
-                if (!isDisposed()) {
-                  updateOnSelectionChanged();
-                  myNeedUpdateButtons = true;
-                }
-              });
-            }
+          myTree.getSelectionModel().addTreeSelectionListener(__ -> {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(() -> {
+              if (!isDisposed()) {
+                updateOnSelectionChanged();
+                myNeedUpdateButtons = true;
+              }
+            });
           });
           myModel.addTreeModelListener(new TreeModelAdapter() {
             @Override
@@ -1840,11 +1837,6 @@ public class UsageViewImpl implements UsageViewEx {
     }
     final List<Navigatable> result = new ArrayList<>();
     for (final Node node : nodes) {
-      /*
-      if (!node.isDataValid()) {
-        continue;
-      }
-      */
       Object userObject = node.getUserObject();
       if (userObject instanceof Navigatable) {
         result.add((Navigatable)userObject);
@@ -2147,8 +2139,6 @@ public class UsageViewImpl implements UsageViewEx {
         }
         else {
           Messages.showMessageDialog(myProject, myCannotMakeString, title, Messages.getErrorIcon());
-          //todo[myakovlev] request focus to tree
-          //myUsageView.getTree().requestFocus();
           return;
         }
       }

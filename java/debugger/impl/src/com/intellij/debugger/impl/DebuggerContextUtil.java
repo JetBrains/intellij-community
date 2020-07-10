@@ -94,7 +94,8 @@ public class DebuggerContextUtil {
                 if (line > bestLine && line < breakPointLine) {
                   bestLine = line;
                   bestOffset = range.getStartOffset();
-                } else if (line == breakPointLine) {
+                }
+                else if (line == breakPointLine) {
                   bestOffset = range.getStartOffset();
                   break;
                 }

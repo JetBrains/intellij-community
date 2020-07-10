@@ -9,9 +9,9 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
 
 class UsageNodeTreeBuilder {
@@ -42,7 +42,7 @@ class UsageNodeTreeBuilder {
   }
 
   public boolean isVisible(@NotNull Usage usage) {
-    return Arrays.stream(myFilteringRules).allMatch(rule -> rule.isVisible(usage, myTargets));
+    return ContainerUtil.and(myFilteringRules, rule -> rule.isVisible(usage, myTargets));
   }
 
   UsageNode appendOrGet(@NotNull Usage usage,

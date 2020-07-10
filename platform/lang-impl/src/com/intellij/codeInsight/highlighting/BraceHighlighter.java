@@ -68,7 +68,7 @@ final class BraceHighlighter implements StartupActivity.DumbAware {
           // Don't perform braces update in case of active/absent selection.
           return;
         }
-        updateBraces(editor);
+        updateBraces(project, editor);
       }
     };
     eventMulticaster.addSelectionListener(selectionListener, activityDisposable);
@@ -77,7 +77,7 @@ final class BraceHighlighter implements StartupActivity.DumbAware {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         myAlarm.cancelAllRequests();
-        EditorFactory.getInstance().editors(e.getDocument(), project).forEach(editor -> updateBraces(editor));
+        EditorFactory.getInstance().editors(e.getDocument(), project).forEach(editor -> updateBraces(project, editor));
       }
     };
     eventMulticaster.addDocumentListener(documentListener, activityDisposable);
@@ -89,11 +89,11 @@ final class BraceHighlighter implements StartupActivity.DumbAware {
           myAlarm.cancelAllRequests();
           FileEditor oldEditor = e.getOldEditor();
           if (oldEditor instanceof TextEditor) {
-            clearBraces(((TextEditor)oldEditor).getEditor());
+            clearBraces(project, ((TextEditor)oldEditor).getEditor());
           }
           FileEditor newEditor = e.getNewEditor();
           if (newEditor instanceof TextEditor) {
-            updateBraces(((TextEditor)newEditor).getEditor());
+            updateBraces(project, ((TextEditor)newEditor).getEditor());
           }
         }
       });
@@ -106,22 +106,22 @@ final class BraceHighlighter implements StartupActivity.DumbAware {
     if (editor.getProject() != project || selectionModel.hasSelection()) {
       return;
     }
-    updateBraces(editor);
+    updateBraces(project, editor);
   }
 
-  private void updateBraces(@NotNull Editor editor) {
+  private void updateBraces(@NotNull Project project, @NotNull Editor editor) {
     if (editor.getDocument().isInBulkUpdate()) {
       return;
     }
 
-    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, myAlarm, handler -> {
+    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(project, editor, myAlarm, handler -> {
       handler.updateBraces();
       return false;
     });
   }
 
-  private void clearBraces(@NotNull Editor editor) {
-    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, myAlarm, handler -> {
+  private void clearBraces(@NotNull Project project, @NotNull Editor editor) {
+    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(project, editor, myAlarm, handler -> {
       handler.clearBraceHighlighters();
       return false;
     });

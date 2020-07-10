@@ -31,6 +31,8 @@ internal fun highlightUsages(project: Project, editor: Editor, file: PsiFile): B
 private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFile, symbol: Symbol, clearHighlights: Boolean) {
   val fileToUse = InjectedLanguageManager.getInstance(project).getTopLevelFile((file as? PsiCompiledFile)?.decompiledPsiFile ?: file)
   val editorToUse = (editor as? EditorWindow)?.delegate ?: editor
-  val usages: Couple<List<TextRange>> = IdentifierHighlighterPass.getUsages(fileToUse, symbol)
-  HighlightUsagesHandler.highlightUsages(project, editorToUse, usages, clearHighlights)
+  val readUsages = ArrayList<TextRange>()
+  val writeUsages = ArrayList<TextRange>()
+  IdentifierHighlighterPass.getUsages(fileToUse, symbol, readUsages, writeUsages)
+  HighlightUsagesHandler.highlightUsages(project, editorToUse, readUsages, writeUsages, clearHighlights)
 }

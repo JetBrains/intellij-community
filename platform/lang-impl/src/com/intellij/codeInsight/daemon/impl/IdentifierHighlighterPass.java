@@ -67,17 +67,17 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   @Override
-  public void doCollectInformation(@NotNull final ProgressIndicator progress) {
-    final HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile, myVisibleRange);
+  public void doCollectInformation(@NotNull ProgressIndicator progress) {
+    HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile, myVisibleRange);
     if (highlightUsagesHandler != null) {
       List<PsiElement> targets = highlightUsagesHandler.getTargets();
       highlightUsagesHandler.computeUsages(targets);
-      final List<TextRange> readUsages = highlightUsagesHandler.getReadUsages();
+      List<TextRange> readUsages = highlightUsagesHandler.getReadUsages();
       for (TextRange readUsage : readUsages) {
         LOG.assertTrue(readUsage != null, "null text range from " + highlightUsagesHandler);
       }
       myReadAccessRanges.addAll(readUsages);
-      final List<TextRange> writeUsages = highlightUsagesHandler.getWriteUsages();
+      List<TextRange> writeUsages = highlightUsagesHandler.getWriteUsages();
       for (TextRange writeUsage : writeUsages) {
         LOG.assertTrue(writeUsage != null, "null text range from " + highlightUsagesHandler);
       }
@@ -114,7 +114,8 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
 
     if (myTarget != null) {
       highlightTargetUsages(myTarget);
-    } else {
+    }
+    else {
       PsiReference ref = TargetElementUtil.findReference(myEditor);
       if (ref instanceof PsiPolyVariantReference) {
         if (!ref.getElement().isValid()) {
@@ -151,41 +152,46 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
    *
    * @param target target psi element
    * @param psiElement psi element to search in
-   * @return a pair where first element is read usages and second is write usages
    */
-  @NotNull
-  public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, @NotNull PsiElement psiElement, boolean withDeclarations) {
-    return getUsages(target, psiElement, withDeclarations, true);
+  public static void getHighlightUsages(@NotNull PsiElement target,
+                                        @NotNull PsiElement psiElement,
+                                        boolean withDeclarations,
+                                        @NotNull Collection<? super TextRange> readRanges,
+                                        @NotNull Collection<? super TextRange> writeRanges) {
+    getUsages(target, psiElement, withDeclarations, true, readRanges, writeRanges);
   }
 
   /**
    * Returns usages of psi element inside a single element
-   *
    * @param target target psi element
    * @param psiElement psi element to search in
    */
   @NotNull
   public static Collection<TextRange> getUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations) {
-    return getUsages(target, psiElement, withDeclarations, false).first;
+    List<TextRange> ranges = new ArrayList<>();
+    getUsages(target, psiElement, withDeclarations, false, ranges, ranges);
+    return ranges;
   }
 
-  @NotNull
-  private static Couple<Collection<TextRange>> getUsages(@NotNull PsiElement target, @NotNull PsiElement psiElement, boolean withDeclarations, boolean detectAccess) {
-    List<TextRange> readRanges = new ArrayList<>();
-    List<TextRange> writeRanges = new ArrayList<>();
-    final ReadWriteAccessDetector detector = detectAccess ? ReadWriteAccessDetector.findDetector(target) : null;
-    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
-    final FindUsagesHandler findUsagesHandler = findUsagesManager.getFindUsagesHandler(target, true);
-    final LocalSearchScope scope = new LocalSearchScope(psiElement);
-    Collection<PsiReference> refs = findUsagesHandler != null
-                              ? findUsagesHandler.findReferencesToHighlight(target, scope)
-                              : ReferencesSearch.search(target, scope).findAll();
+  private static void getUsages(@NotNull PsiElement target,
+                                @NotNull PsiElement scopeElement,
+                                boolean withDeclarations,
+                                boolean detectAccess,
+                                @NotNull Collection<? super TextRange> readRanges,
+                                @NotNull Collection<? super TextRange> writeRanges) {
+    ReadWriteAccessDetector detector = detectAccess ? ReadWriteAccessDetector.findDetector(target) : null;
+    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
+    FindUsagesHandler findUsagesHandler = findUsagesManager.getFindUsagesHandler(target, true);
+    LocalSearchScope scope = new LocalSearchScope(scopeElement);
+    Collection<PsiReference> refs = findUsagesHandler == null
+                                    ? ReferencesSearch.search(target, scope).findAll()
+                                    : findUsagesHandler.findReferencesToHighlight(target, scope);
     for (PsiReference psiReference : refs) {
       if (psiReference == null) {
         LOG.error("Null reference returned, findUsagesHandler=" + findUsagesHandler + "; target=" + target + " of " + target.getClass());
         continue;
       }
-      List<TextRange> destination;
+      Collection<? super TextRange> destination;
       if (detector == null || detector.getReferenceAccess(target, psiReference) == ReadWriteAccessDetector.Access.Read) {
         destination = readRanges;
       }
@@ -196,7 +202,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     }
 
     if (withDeclarations) {
-      final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(psiElement.getContainingFile(), target);
+      TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(scopeElement.getContainingFile(), target);
       if (declRange != null) {
         if (detector != null && detector.isDeclarationWriteAccess(target)) {
           writeRanges.add(declRange);
@@ -206,19 +212,18 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
         }
       }
     }
-
-    return Couple.of(readRanges, writeRanges);
   }
 
   private void highlightTargetUsages(@NotNull PsiElement target) {
-    final Couple<Collection<TextRange>> usages = AstLoadingFilter.disallowTreeLoading(
-      () -> getHighlightUsages(target, myFile, true),
+    AstLoadingFilter.disallowTreeLoading(
+      () -> {
+        getHighlightUsages(target, myFile, true, myReadAccessRanges, myWriteAccessRanges);
+        return null;
+      },
       () -> "Currently highlighted file: \n" +
             "psi file: " + myFile + ";\n" +
             "virtual file: " + myFile.getVirtualFile()
     );
-    myReadAccessRanges.addAll(usages.first);
-    myWriteAccessRanges.addAll(usages.second);
   }
 
   private void highlightReferencesAndDeclarations() {
@@ -238,38 +243,39 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     catch (IndexNotReadyException ignored) {
     }
     //noinspection deprecation
-    final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
-    final PsiFile injectedFile = PsiDocumentManager.getInstance(myProject).getPsiFile(injectedEditor.getDocument());
+    Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
+    PsiFile injectedFile = PsiDocumentManager.getInstance(myProject).getPsiFile(injectedEditor.getDocument());
     if (injectedFile == null) {
       return Collections.emptyList();
     }
-    final int injectedOffset = injectedEditor.getCaretModel().getOffset();
+    int injectedOffset = injectedEditor.getCaretModel().getOffset();
     return targetSymbols(injectedFile, injectedOffset);
   }
 
   private void highlightTargetUsages(@NotNull Symbol target) {
-    final Couple<? extends Collection<TextRange>> usages = AstLoadingFilter.disallowTreeLoading(
-      () -> getUsages(myFile, target),
+    AstLoadingFilter.disallowTreeLoading(
+      () -> {
+        getUsages(myFile, target, myReadAccessRanges, myWriteAccessRanges);
+        return null;
+      },
       () -> "Currently highlighted file: \n" +
             "psi file: " + myFile + ";\n" +
             "virtual file: " + myFile.getVirtualFile()
     );
-    myReadAccessRanges.addAll(usages.first);
-    myWriteAccessRanges.addAll(usages.second);
   }
 
   @ApiStatus.Internal
-  public static @NotNull Couple<List<TextRange>> getUsages(@NotNull PsiFile file, @NotNull Symbol symbol) {
-    final List<TextRange> readRanges = new ArrayList<>();
-    final List<TextRange> writeRanges = new ArrayList<>();
+  public static void getUsages(@NotNull PsiFile file,
+                               @NotNull Symbol symbol,
+                               @NotNull Collection<? super TextRange> readRanges,
+                               @NotNull Collection<? super TextRange> writeRanges) {
+    SearchScope searchScope = new LocalSearchScope(file);
 
-    final SearchScope searchScope = new LocalSearchScope(file);
+    Project project = file.getProject();
+    PsiElement psiTarget = PsiSymbolService.getInstance().extractElementFromSymbol(symbol);
+    ReadWriteAccessDetector detector = psiTarget != null ? ReadWriteAccessDetector.findDetector(psiTarget) : null;
 
-    final Project project = file.getProject();
-    final PsiElement psiTarget = PsiSymbolService.getInstance().extractElementFromSymbol(symbol);
-    final ReadWriteAccessDetector detector = psiTarget != null ? ReadWriteAccessDetector.findDetector(psiTarget) : null;
-
-    final Collection<? extends PsiSymbolReference> refs = getReferences(project, searchScope, symbol, psiTarget);
+    Collection<? extends PsiSymbolReference> refs = getReferences(project, searchScope, symbol, psiTarget);
     for (PsiSymbolReference ref : refs) {
       boolean write = detector != null &&
                       ref instanceof PsiReference &&
@@ -277,16 +283,15 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       HighlightUsagesHandler.collectHighlightRanges(ref, write ? writeRanges : readRanges);
     }
 
-    final Collection<? extends PsiSymbolDeclaration> declarations = SearchService.getInstance()
+    Collection<? extends PsiSymbolDeclaration> declarations = SearchService.getInstance()
       .searchPsiSymbolDeclarations(project, symbol, searchScope)
       .findAll();
-    final boolean declarationWrite = psiTarget != null && detector != null && detector.isDeclarationWriteAccess(psiTarget);
+    boolean declarationWrite = psiTarget != null && detector != null && detector.isDeclarationWriteAccess(psiTarget);
     for (PsiSymbolDeclaration declaration : declarations) {
       HighlightUsagesHandler.collectHighlightRanges(
         declaration.getDeclaringElement(), declaration.getDeclarationRange(), declarationWrite ? writeRanges : readRanges
       );
     }
-    return Couple.of(readRanges, writeRanges);
   }
 
   @NotNull
@@ -309,8 +314,8 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    final boolean virtSpace = EditorUtil.isCaretInVirtualSpace(myEditor);
-    final List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
+    boolean virtSpace = EditorUtil.isCaretInVirtualSpace(myEditor);
+    List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
     UpdateHighlightersUtil.setHighlightersToSingleEditor(myProject, myEditor, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
     doAdditionalCodeBlockHighlighting();
   }
@@ -335,8 +340,8 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     markers.sort(Segment.BY_START_OFFSET_THEN_END_OFFSET);
     TextRange leftBraceRange = markers.get(0);
     TextRange rightBraceRange = markers.get(markers.size() - 1);
-    final int startLine = myEditor.offsetToLogicalPosition(leftBraceRange.getStartOffset()).line;
-    final int endLine = myEditor.offsetToLogicalPosition(rightBraceRange.getEndOffset()).line;
+    int startLine = myEditor.offsetToLogicalPosition(leftBraceRange.getStartOffset()).line;
+    int endLine = myEditor.offsetToLogicalPosition(rightBraceRange.getEndOffset()).line;
     if (endLine - startLine > 0) {
       BraceHighlightingHandler.lineMarkFragment((EditorEx)myEditor, myDocument, startLine, endLine, true);
     }

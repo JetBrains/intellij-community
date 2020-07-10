@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -281,13 +280,14 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   @ApiStatus.Experimental
   public static void highlightUsages(@NotNull Project project,
                                      @NotNull Editor editor,
-                                     @NotNull Couple<@NotNull List<@NotNull TextRange>> usages,
+                                     @NotNull List<? extends TextRange> readUsages,
+                                     @NotNull List<? extends TextRange> writeUsages,
                                      boolean clearHighlights) {
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     setupFindModel(project);
-    highlightRanges(highlightManager, editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, clearHighlights, usages.first);
-    highlightRanges(highlightManager, editor, EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, clearHighlights, usages.second);
-    setStatusText(project, null, usages.first.size() + usages.second.size(), clearHighlights);
+    highlightRanges(highlightManager, editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, clearHighlights, readUsages);
+    highlightRanges(highlightManager, editor, EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, clearHighlights, writeUsages);
+    setStatusText(project, null, readUsages.size() + writeUsages.size(), clearHighlights);
   }
 
   @Nullable
@@ -460,7 +460,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return result;
   }
 
-  public static void collectHighlightRanges(@NotNull PsiSymbolReference ref, @NotNull List<? super TextRange> result) {
+  public static void collectHighlightRanges(@NotNull PsiSymbolReference ref, @NotNull Collection<? super TextRange> result) {
     for (TextRange relativeRange : ReferenceRange.getRanges(ref)) {
       collectHighlightRanges(ref.getElement(), relativeRange, result);
     }
@@ -468,10 +468,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   public static void collectHighlightRanges(@NotNull PsiElement element,
                                             @NotNull TextRange rangeInElement,
-                                            @NotNull List<? super TextRange> result) {
+                                            @NotNull Collection<? super TextRange> result) {
     TextRange range = safeCut(element.getTextRange(), rangeInElement);
     if (range.isEmpty()) return;
-    // injection occurs
     result.add(InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range));
   }
 

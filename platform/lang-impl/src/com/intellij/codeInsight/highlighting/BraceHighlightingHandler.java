@@ -50,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 
 public class BraceHighlightingHandler {
@@ -81,19 +80,19 @@ public class BraceHighlightingHandler {
     myCodeInsightSettings = CodeInsightSettings.getInstance();
   }
 
-  static void lookForInjectedAndMatchBracesInOtherThread(@NotNull Editor editor,
+  static void lookForInjectedAndMatchBracesInOtherThread(@NotNull Project project,
+                                                         @NotNull Editor editor,
                                                          @NotNull Alarm alarm,
                                                          @NotNull Processor<? super BraceHighlightingHandler> processor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isValidEditor(editor)) return;
 
-    Project project = Objects.requireNonNull(editor.getProject());
-    int offset = editor.getCaretModel().getOffset();
+    int offsetBefore = editor.getCaretModel().getOffset();
 
     ReadAction
       .nonBlocking(() -> {
         PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-        return psiFile == null || psiFile instanceof PsiBinaryFile ? null : getInjectedFileIfAny(offset, psiFile);
+        return psiFile == null || psiFile instanceof PsiBinaryFile ? null : getInjectedFileIfAny(offsetBefore, psiFile);
       })
       .withDocumentsCommitted(project)
       .expireWhen(() -> !isValidEditor(editor))
@@ -101,13 +100,13 @@ public class BraceHighlightingHandler {
       .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), foundFile -> {
         if (foundFile == null) return;
 
-        if (foundFile.isValid() && offset == editor.getCaretModel().getOffset()) {
+        if (foundFile.isValid() && offsetBefore == editor.getCaretModel().getOffset()) {
           EditorEx newEditor = (EditorEx)InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, foundFile);
           BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, foundFile);
           processor.process(handler);
         }
         else {
-          lookForInjectedAndMatchBracesInOtherThread(editor, alarm, processor);
+          lookForInjectedAndMatchBracesInOtherThread(project, editor, alarm, processor);
         }
       })
       .submit(AppExecutorUtil.getAppExecutorService());
