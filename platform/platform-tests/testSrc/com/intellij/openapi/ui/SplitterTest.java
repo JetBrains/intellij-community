@@ -41,8 +41,10 @@ public class SplitterTest extends TestCase{
   private static void resizeTest(Splitter splitter) {
     JPanel jPanel1 = new JPanel();
     jPanel1.setMinimumSize(new Dimension(100, 100));
+    jPanel1.setPreferredSize(new Dimension(100, 100));
     JPanel jPanel2 = new JPanel();
     jPanel2.setMinimumSize(new Dimension(100, 100));
+    jPanel2.setPreferredSize(new Dimension(100, 100));
     splitter.setFirstComponent(jPanel1);
     splitter.setSecondComponent(jPanel2);
     splitter.setHonorComponentsMinimumSize(true);
