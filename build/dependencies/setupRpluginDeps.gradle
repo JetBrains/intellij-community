@@ -29,8 +29,8 @@ task copyFsNotifierForRPlugin {
   copy {
     from "$projectDir/../../bin/linux/"
     into "$buildDir/rplugin/"
-    include "fsnotifier"
-    rename "fsnotifier", "fsnotifier-linux"
+    include "fsnotifier64"
+    rename "fsnotifier64", "fsnotifier-linux"
   }
   outputs.file("$buildDir/rplugin/fsnotifier-osx")
   copy {
