@@ -11,9 +11,11 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -74,7 +76,9 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(isSupported() && getFile(e) != null);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    e.getPresentation().setEnabledAndVisible(isSupported() && getFile(e) != null &&
+                                             (!ActionPlaces.isPopupPlace(e.getPlace()) || editor == null || !editor.getSelectionModel().hasSelection()));
     e.getPresentation().setText(getActionName());
   }
 

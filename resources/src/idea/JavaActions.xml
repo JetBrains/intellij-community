@@ -188,8 +188,12 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
       <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
       <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-      <add-to-group group-id="EditorPopupMenu1" anchor="after" relative-to-action="FindUsages"/>
     </reference>
+
+    <group id="EditorPopupMenuAnalyze" class="com.intellij.ide.actions.EditorPopupNoSelectionGroup">
+      <reference ref="AnalyzeMenu"/>
+      <add-to-group group-id="EditorPopupMenu1" anchor="after" relative-to-action="FindUsages"/>
+    </group>
 
     <group id="ProjectViewAnalysisGroup">
       <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="first"/>

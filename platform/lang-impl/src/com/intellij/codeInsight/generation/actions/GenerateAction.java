@@ -37,7 +37,8 @@ public class GenerateAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
-      presentation.setEnabledAndVisible(isEnabled(event));
+      Editor editor = event.getData(CommonDataKeys.EDITOR);
+      presentation.setEnabledAndVisible(isEnabled(event) && editor != null && !editor.getSelectionModel().hasSelection());
     }
     else {
       presentation.setEnabled(isEnabled(event));
