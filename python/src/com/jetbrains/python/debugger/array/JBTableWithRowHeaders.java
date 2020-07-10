@@ -19,9 +19,8 @@ import java.util.Set;
 /**
  * @author amarch
  */
-public class JBTableWithRowHeaders extends JBTable {
-  private static final int AUTO_RESIZE_MAX_COLUMN_WIDTH = 200;
-
+public class JBTableWithRowHeaders extends AbstractDataViewTable {
+  private static final int MAX_INIT_COLUMN_WIDTH = 250;
   private final JBScrollPane myScrollPane;
   private boolean myAutoResize;
   private final RowHeaderTable myRowHeaderTable;
@@ -55,20 +54,28 @@ public class JBTableWithRowHeaders extends JBTable {
     return component;
   }
 
+  @Override
   public void setAutoResize(boolean autoResize) {
     myNotAdjustableColumns.clear();
     myAutoResize = autoResize;
     setAutoResizeMode(myAutoResize ? AUTO_RESIZE_OFF : AUTO_RESIZE_SUBSEQUENT_COLUMNS);
   }
 
+  @Override
+  public void setEmpty() {
+    setModel(new DefaultTableModel());
+    myRowHeaderTable.setModel(new DefaultTableModel());
+  }
+
   private static int updateColumnWidth(int column, int width, @NotNull JTable table) {
     TableColumn tableColumn = table.getColumnModel().getColumn(column);
     int headerWidth = new ColumnHeaderRenderer().getTableCellRendererComponent(table, tableColumn.getHeaderValue(), false, false, -1, column).getPreferredSize().width + 4;
     int newWidth = Math.max(width, headerWidth) + 2 * table.getIntercellSpacing().width;
-    tableColumn.setPreferredWidth(Math.min(Math.max(newWidth, tableColumn.getPreferredWidth()), AUTO_RESIZE_MAX_COLUMN_WIDTH));
+    tableColumn.setPreferredWidth(Math.min(Math.max(newWidth, tableColumn.getPreferredWidth()), MAX_INIT_COLUMN_WIDTH));
     return newWidth;
   }
 
+  @Override
   public JBScrollPane getScrollPane() {
     return myScrollPane;
   }
@@ -245,10 +252,5 @@ public class JBTableWithRowHeaders extends JBTable {
       setBorder(UIManager.getBorder("TableHeader.cellBorder"));
       return this;
     }
-  }
-
-  public void setEmpty() {
-    setModel(new DefaultTableModel());
-    myRowHeaderTable.setModel(new DefaultTableModel());
   }
 }

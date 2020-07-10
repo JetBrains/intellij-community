@@ -453,6 +453,9 @@
     <extensionPoint qualifiedName="Pythonid.runConfigurationTargetEnvironmentAdjuster"
                     interface="com.jetbrains.python.run.PythonRunConfigurationTargetEnvironmentAdjuster"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.dataViewPanelFactory"
+                    interface="com.jetbrains.python.debugger.containerview.PyDataViewPanelFactory"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

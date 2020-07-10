@@ -101,7 +101,7 @@ import sys
 import inspect
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string, \
-    get_non_pydevd_threads
+    get_non_pydevd_threads, is_pandas_container, is_numpy_container
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
@@ -141,7 +141,7 @@ from _pydevd_bundle.pydevd_comm_constants import (
     CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_PYDEVD_JSON_CONFIG,
     CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, CMD_THREAD_RESUME_SINGLE_NOTIFICATION,
     CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, CMD_SET_PROJECT_ROOTS, CMD_VERSION,
-    CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR, CMD_GET_SMART_STEP_INTO_VARIANTS,)
+    CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR, CMD_GET_SMART_STEP_INTO_VARIANTS, CMD_DATAVIEWER_ACTION,)
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
 #this number can be changed if there's need to do so
 
@@ -846,6 +846,12 @@ class NetCommandFactory:
         except Exception:
             return self.make_error_message(seq, get_exception_traceback_str())
 
+    def make_successful_dataviewer_action_message(self, seq, payload):
+        try:
+            return NetCommand(CMD_DATAVIEWER_ACTION, seq, payload)
+        except Exception:
+            return self.make_error_message(seq, get_exception_traceback_str())
+
     def make_get_description_message(self, seq, payload):
         try:
             return NetCommand(CMD_GET_DESCRIPTION, seq, payload)
@@ -1281,6 +1287,82 @@ class InternalGetArray(InternalThreadCommand):
         except:
             cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error resolving array: " + get_exception_traceback_str())
             dbg.writer.add_command(cmd)
+
+
+#=======================================================================================================================
+# InternalDataViewerAction
+#=======================================================================================================================
+class InternalDataViewerAction(InternalThreadCommand):
+    def __init__(self, sequence, thread_id, frame_id, var, action, args):
+        self.sequence = sequence
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.var = var
+        self.action = action
+        self.args = args
+
+    def do_it(self, dbg):
+        try:
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
+            tmp_var = pydevd_vars.eval_in_context(self.var, frame.f_globals, frame.f_locals)
+
+            self.act(tmp_var, self.action, self.args)
+
+            cmd = dbg.cmd_factory.make_successful_dataviewer_action_message(
+                self.sequence,
+                "Successful execution")
+            dbg.writer.add_command(cmd)
+
+        except Exception as e:
+            cmd = dbg.cmd_factory.make_error_message(
+                self.sequence,
+                type(e).__name__ + "\nError exporting frame: " + get_exception_traceback_str())
+            dbg.writer.add_command(cmd)
+
+    @staticmethod
+    def act(tmp_var, action, args):
+        if action == 'EXPORT':
+            return InternalDataViewerAction.export_action(tmp_var, args)
+
+    @staticmethod
+    def get_type_info(var):
+        tp = type(var)
+        tp_name = tp.__name__
+        tp_qualifier = getattr(tp, "__module__", "")
+
+        return (tp_qualifier, tp_name)
+
+    @staticmethod
+    def export_action(var, args):
+        # args: (filepath)
+        filepath = args[0]
+        extension = filepath.rsplit('.', 1)[1].lower()
+
+        type_info = InternalDataViewerAction.get_type_info(var)
+
+        if is_pandas_container(*type_info, var):
+            if extension in ('csv', 'tsv'):
+                delim = ',' if extension == 'csv' else '\t'
+                var.to_csv(filepath, sep=delim)
+            else:
+                raise AttributeError("Format '{}' is not supported".format(extension))
+
+        elif is_numpy_container(*type_info, var):
+            try:
+                import numpy as np
+
+            except ImportError:
+                # Strange. We have an instance of numpy array but we failed to import numpy
+                raise
+
+            if extension in ('csv', 'tsv'):
+                delim = ',' if extension == 'csv' else '\t'
+                np.savetxt(filepath, var, fmt="%s", delimiter=delim)
+            else:
+                raise AttributeError("Format '{}' is not supported".format(extension))
+
+        else:
+            raise AttributeError("Type {} is not supported".format(type(var)))
 
 #=======================================================================================================================
 # InternalChangeVariable

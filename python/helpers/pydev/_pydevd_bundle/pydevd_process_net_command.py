@@ -22,7 +22,8 @@ from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, 
     InternalLoadFullValue, CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS,
     InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, CMD_GET_SMART_STEP_INTO_VARIANTS,
     CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, NetCommand,
-    CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG, InternalGetThreadStack, InternalSmartStepInto, InternalGetSmartStepIntoVariants,)
+    CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG, InternalGetThreadStack, InternalSmartStepInto, InternalGetSmartStepIntoVariants,
+    CMD_DATAVIEWER_ACTION, InternalDataViewerAction)
 from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN,
     NEXT_VALUE_SEPARATOR, IS_WINDOWS, get_current_thread_id)
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
@@ -868,6 +869,19 @@ def process_net_command(py_db, cmd_id, seq, text):
                 thread_id, frame_id, start_line, end_line = text.split('\t', 3)
                 int_cmd = InternalGetSmartStepIntoVariants(seq, thread_id, frame_id, start_line, end_line)
                 py_db.post_internal_command(int_cmd, thread_id)
+
+            # Powerful DataViewer commands
+            elif cmd_id == CMD_DATAVIEWER_ACTION:
+                # format: thread_id frame_id name temp
+                try:
+                    thread_id, frame_id, var, action, args = text.split('\t', 4)
+                    args = args.split('\t')
+
+                    int_cmd = InternalDataViewerAction(seq, thread_id, frame_id, var, action, args)
+                    py_db.post_internal_command(int_cmd, thread_id)
+
+                except:
+                    traceback.print_exc()
 
             else:
                 #I have no idea what this is all about

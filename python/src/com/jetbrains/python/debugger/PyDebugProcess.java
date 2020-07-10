@@ -62,6 +62,8 @@ import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.*;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoContext;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoHandler;
@@ -917,6 +919,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     return myDebugger.loadArrayItems(frame.getThreadId(), frame.getFrameId(), var, rowOffset, colOffset, rows, cols, format);
+  }
+
+  @Override
+  public DataViewerCommandResult executeDataViewerCommand(DataViewerCommandBuilder builder) throws PyDebuggerException {
+    final PyStackFrame frame = currentFrame();
+    builder.setThreadId(frame.getThreadId());
+    builder.setFrameId(frame.getFrameId());
+    return myDebugger.executeDataViewerCommand(builder);
   }
 
   @Nullable

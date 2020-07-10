@@ -72,7 +72,7 @@ public final class PyDataView implements DumbAware {
     window.getContentManager().getReady(this).doWhenDone(() -> {
       TabInfo selectedInfo = addTab(value.getFrameAccessor());
       PyDataViewerPanel dataViewerPanel = (PyDataViewerPanel)selectedInfo.getComponent();
-      dataViewerPanel.apply(value);
+      dataViewerPanel.apply(value, false);
     });
     window.show(null);
     final Content dataView = window.getContentManager().getContent(0);
@@ -91,6 +91,7 @@ public final class PyDataView implements DumbAware {
     ApplicationManager.getApplication().invokeLater(() -> {
       for (TabInfo info : tabsToRemove) {
         myTabs.removeTab(info);
+        getPanel(info).closeEditorTabs();
       }
     });
   }
@@ -189,7 +190,14 @@ public final class PyDataView implements DumbAware {
     if (hasOnlyEmptyTab()) {
       myTabs.removeTab(myTabs.getSelectedInfo());
     }
-    PyDataViewerPanel panel = new PyDataViewerPanel(myProject, frameAccessor);
+    PyDataViewerPanel panel = null;
+    for (PyDataViewPanelFactory factory : PyDataViewPanelFactory.EP_NAME.getExtensionList()) {
+      panel = factory.createDataViewPanel(myProject, frameAccessor);
+      if (panel != null) break;
+    }
+    if (panel == null) {
+      panel = new PyDataViewerPanel(myProject, frameAccessor);
+    }
     TabInfo info = new TabInfo(panel);
     if (frameAccessor instanceof PydevConsoleCommunication) {
       info.setIcon(PythonIcons.Python.PythonConsole);

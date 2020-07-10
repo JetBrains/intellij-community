@@ -30,6 +30,8 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import org.apache.thrift.TException;
@@ -46,6 +48,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.*;
+import static com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult.ResultType.UNHANDLED_ERROR;
 
 /**
  * Communication with Python console backend using Thrift services.
@@ -635,6 +638,32 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     else {
       return null;
     }
+  }
+
+  @Override
+  public DataViewerCommandResult executeDataViewerCommand(DataViewerCommandBuilder builder) throws PyDebuggerException {
+    if (!isCommunicationClosed()) {
+      return executeBackgroundTask(
+        () -> {
+          try {
+            getPythonConsoleBackendClient().execDataViewerAction(
+              builder.getVar().getName(),
+              builder.getAction().name(),
+              builder.getArgs() == null? "" :String.join("\t", builder.getArgs())
+            );
+
+            return DataViewerCommandResult.makeSuccessResult("Export successful");
+          }
+          catch (PythonUnhandledException e) {
+            return DataViewerCommandResult.errorFromExportTraceback(e.getTraceback());
+          }
+        },
+        true,
+        PyBundle.message("console.executing.dataviewer.command"),
+        "Error in DataViewer command:"
+      );
+    }
+    return DataViewerCommandResult.makeErrorResult(UNHANDLED_ERROR, "Console communication is closed");
   }
 
   @Nullable

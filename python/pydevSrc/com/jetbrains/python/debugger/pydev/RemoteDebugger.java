@@ -20,6 +20,9 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommand;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport;
 import com.jetbrains.python.debugger.pydev.transport.DebuggerTransport;
 import com.jetbrains.python.debugger.pydev.transport.ServerModeDebuggerTransport;
@@ -200,6 +203,14 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getArray();
   }
 
+  @Override
+  @NotNull
+  public DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
+    builder.setDebugger(this);
+    DataViewerCommand command = builder.build();
+    command.execute();
+    return command.getResult();
+  }
 
   @Override
   public void loadReferrers(final String threadId,
