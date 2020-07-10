@@ -1,55 +1,70 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 import java.io.FilenameFilter
+import java.util.concurrent.TimeUnit
 
 /**
- * AppX packages installed to AppX volume (see `Get-AppxDefaultVolume`).
- * At the same time, **reparse point** is created somewhere in `%LOCALAPPDATA%`.
- * This point has tag `IO_REPARSE_TAG_APPEXECLINK` and it also added to `PATH`
+ * AppX packages installed to AppX volume (see ``Get-AppxDefaultVolume``, ``Get-AppxPackage``).
+ * They can't be executed nor read.
  *
- * Such points can't be read. Their attributes are also inaccessible. [File#exists] returns false.
+ * At the same time, **reparse point** is created somewhere in `%LOCALAPPDATA%`.
+ * This point has tag ``IO_REPARSE_TAG_APPEXECLINK`` and it also added to `PATH`
+ *
+ * Their attributes are also inaccessible. [File#exists] returns false.
  * But when executed, they are processed by NTFS filter and redirected to their real location in AppX volume.
- * They are also returned with parent's [File#listFiles]
- * There is no Java API to fetch reparse data, and its structure is undocumented (although pretty simple), so we workaround it
+ *
+ * There may be ``python.exe`` there, but it may point to Windows Store (so it can be installed when accessed) or to the real python.
+ * There is no Java API to see reparse point destination, so we use native app (See ``appxreparse.c`` and README in the same folder).
+ * This tool returns AppX name (either ``PythonSoftwareFoundation...`` or ``DesktopAppInstaller..``).
+ * We use it to check if ``python.exe`` is real python or WindowsStore mock.
  */
 
 /**
- * If file is appx reparse point, then file.exists doesn't work.
+ * When product of AppX reparse point contains this word, that means it is a link to the store
  */
-fun mayBeAppXReparsePoint(file: File): Boolean =
-  pythonsStoreLocation?.let { storeLocation ->
-    FileUtil.isAncestor(storeLocation, file, false)
-  } == true
+private const val storeMarker = "DesktopAppInstaller"
 
 /**
- * Since you can't use file.exists for reparse point, this function checks if file exists
+ * Files in [userAppxFolder] that matches [filePattern] and contains [expectedProduct]] in their product name
  */
-fun appXReparsePointFileExists(file: File): Boolean {
-  return file.exists() || (mayBeAppXReparsePoint(file) && file.parentFile.list()?.contains(file.name) == true)
-}
+fun getAppxFiles(expectedProduct: String, filePattern: Regex): Collection<File> =
+  userAppxFolder?.listFiles(FilenameFilter { _, name -> filePattern.matches(name) })
+    ?.sortedBy { it.nameWithoutExtension }
+    ?.mapNotNull { file -> file.appxProduct?.let { product -> Pair(product, file) } }
+    ?.toMap()
+    ?.filterKeys { expectedProduct in it }
+    ?.values ?: emptyList()
 
 /**
- * Appx apps are installed in [pythonsStoreLocation], each one in separate folder.
- * But folders are inaccessible, but there are reparse points on the toplevel.
- * This function provides list of them
+ * If file is AppX reparse point link -- return it's product name
  */
-fun getAppXAppsInstalled(filenameFilter: FilenameFilter): List<File> =
-  pythonsStoreLocation?.list(filenameFilter)?.mapNotNull { File(pythonsStoreLocation, it) }
-  ?: emptyList()
-
-private val pythonsStoreLocation
-  get(): File? {
-    if (!SystemInfo.isWin10OrNewer) {
-      return null
-    }
-    val localappdata = System.getenv("LOCALAPPDATA") ?: return null
-    val appsPath = File(localappdata, "Microsoft//WindowsApps")
-    return if (appsPath.exists()) appsPath else null
+val File.appxProduct: String?
+  get() {
+    if (parentFile?.equals(userAppxFolder) != true) return null
+    val reparseTool = PathManager.findBinFile("AppxReparse.exe")!!
+    // Intellij API prohibits running external processes under Read action or on EDT, so we use java api as it is done for registry
+    val process = Runtime.getRuntime().exec(arrayOf(reparseTool.toFile().absolutePath, absolutePath))
+    // It is much faster in most cases, but since this code may run under EDT we limit it
+    if (!process.waitFor(1, TimeUnit.SECONDS)) return null
+    if (process.exitValue() != 0) return null
+    // appxreparse outputs wide chars (2 bytes), they are LE on Intel
+    val output = process.inputStream.readBytes().toString(Charsets.UTF_16LE)
+    return if (storeMarker !in output) output else null
   }
 
-
-
+/**
+ * Path to ``%LOCALAPPDATA%\Microsoft\WindowsApps``
+ */
+private val userAppxFolder =
+  if (!SystemInfo.isWin10OrNewer) {
+    null
+  }
+  else {
+    val localappdata = System.getenv("LOCALAPPDATA") ?: null
+    val appsPath = File(localappdata, "Microsoft//WindowsApps")
+    if (appsPath.exists()) appsPath else null
+  }
