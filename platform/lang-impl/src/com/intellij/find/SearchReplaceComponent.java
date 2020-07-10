@@ -196,6 +196,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     splitter.setSecondComponent(myRightPanel);
     splitter.setHonorComponentsMinimumSize(true);
     splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+    splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
     splitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
     splitter.setOpaque(false);
     splitter.getDivider().setOpaque(false);
