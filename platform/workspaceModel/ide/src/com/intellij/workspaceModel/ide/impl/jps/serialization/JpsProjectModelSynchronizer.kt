@@ -100,15 +100,20 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
         //todo support move/rename
         //todo optimize: filter events before creating lists
         val toProcess = events.asSequence().filter { isFireStorageFileChangedEvent(it) }
-        val addedUrls = toProcess.filterIsInstance<VFileCreateEvent>().mapTo(ArrayList()) { JpsPathUtil.pathToUrl(it.path) }
-        val removedUrls = toProcess.filterIsInstance<VFileDeleteEvent>().mapTo(ArrayList()) { JpsPathUtil.pathToUrl(it.path) }
-        val changedUrls = toProcess.filterIsInstance<VFileContentChangeEvent>().mapTo(ArrayList()) { JpsPathUtil.pathToUrl(it.path) }
+        val addedUrls = toProcess.filterIsInstance<VFileCreateEvent>().flatMapTo(ArrayList()) { extractUrls(JpsPathUtil.pathToUrl(it.path)) }
+        val removedUrls = toProcess.filterIsInstance<VFileDeleteEvent>().flatMapTo(ArrayList()) { extractUrls(JpsPathUtil.pathToUrl(it.path)) }
+        val changedUrls = toProcess.filterIsInstance<VFileContentChangeEvent>().flatMapTo(ArrayList()) { extractUrls(JpsPathUtil.pathToUrl(it.path)) }
         if (addedUrls.isNotEmpty() || removedUrls.isNotEmpty() || changedUrls.isNotEmpty()) {
           val change = JpsConfigurationFilesChange(addedUrls, removedUrls, changedUrls)
           incomingChanges.add(change)
 
           StoreReloadManager.getInstance().scheduleProcessingChangedFiles()
         }
+      }
+
+      private fun extractUrls(url: String): Sequence<String> {
+        val file = JpsPathUtil.urlToFile(url)
+        return if (file.isDirectory) file.walkTopDown().map { JpsPathUtil.pathToUrl(it.canonicalPath) } else sequenceOf(url)
       }
     })
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
