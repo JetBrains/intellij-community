@@ -77,11 +77,9 @@
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
+              topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"/>
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
+              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"/>
 
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$BeforeProjectCloseListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"
@@ -97,11 +95,9 @@
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
-              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
-              topic="git4idea.repo.GitRepositoryChangeListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
+              topic="git4idea.repo.GitRepositoryChangeListener"/>
 
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$BeforePluginUnloadListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"
