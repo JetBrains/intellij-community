@@ -1,33 +1,33 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
@@ -186,13 +186,49 @@ public final class CompletionInitializationUtil {
   }
 
   private static void setOriginalFile(PsiFileImpl copy, PsiFile origin) {
+    checkInjectionConsistency(copy);
     PsiFile currentOrigin = copy.getOriginalFile();
     if (currentOrigin == copy) {
       copy.setOriginalFile(origin);
-    } else {
+    } else if (currentOrigin != origin) {
+
       PsiUtilCore.ensureValid(currentOrigin);
-      if (currentOrigin != origin) {
-        LOG.error(currentOrigin + " != " + origin + "\n" + currentOrigin.getViewProvider() + " != " + origin.getViewProvider());
+      checkInjectionConsistency(origin);
+      checkInjectionConsistency(currentOrigin);
+
+      PsiElement host = Objects.requireNonNull(currentOrigin.getContext());
+      recoverFromBrokenInjection(host.getContainingFile());
+      throw new AssertionError(
+        currentOrigin + " != " + origin + "\n" +
+        currentOrigin.getViewProvider() + " != " + origin.getViewProvider() + "\n" +
+        "host of " + host.getClass());
+    }
+  }
+
+  private static void recoverFromBrokenInjection(PsiFile hostFile) {
+    ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(hostFile.getViewProvider().getVirtualFile()));
+  }
+
+  private static void checkInjectionConsistency(PsiFile injectedFile) {
+    PsiElement host = injectedFile.getContext();
+    if (host instanceof PsiLanguageInjectionHost) {
+      DocumentWindow document = (DocumentWindow)injectedFile.getViewProvider().getDocument();
+      assert document != null;
+      TextRange hostRange = host.getTextRange();
+      LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = ((PsiLanguageInjectionHost)host).createLiteralTextEscaper();
+      TextRange relevantRange = escaper.getRelevantTextRange().shiftRight(hostRange.getStartOffset());
+      for (Segment range : document.getHostRanges()) {
+        if (hostRange.contains(range) && !relevantRange.contains(range)) {
+          String message = "Injection host of " + host.getClass() +
+                           " with range " + hostRange +
+                           " contains injection at " + range +
+                           ", which contradicts literalTextEscaper that only allows injection at " + relevantRange;
+          PsiFile hostFile = Objects.requireNonNull(host).getContainingFile();
+          recoverFromBrokenInjection(hostFile);
+
+          Attachment fileText = new Attachment(hostFile.getViewProvider().getVirtualFile().getPath(), hostFile.getText());
+          throw PluginException.createByClass(new RuntimeExceptionWithAttachments(message, fileText), host.getClass());
+        }
       }
     }
   }
