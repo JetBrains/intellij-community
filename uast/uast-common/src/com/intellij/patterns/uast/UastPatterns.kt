@@ -8,13 +8,11 @@ package com.intellij.patterns.uast
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.ObjectPattern
-import com.intellij.patterns.PatternCondition
-import com.intellij.patterns.PsiJavaPatterns
+import com.intellij.patterns.*
 import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.uast.*
 
@@ -133,11 +131,21 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
   fun withAnyResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = withResolvedMethod(method, true)
 
   fun withResolvedMethod(method: ElementPattern<out PsiMethod>,
-                         multiResolve: Boolean): UCallExpressionPattern = filterWithContext { uCallExpression, context ->
-    if (multiResolve && uCallExpression is UMultiResolvable)
-      uCallExpression.multiResolve().any { method.accepts(it.element, context) }
-    else
-      uCallExpression.resolve().let { method.accepts(it, context) }
+                         multiResolve: Boolean): UCallExpressionPattern {
+    val nameCondition = ContainerUtil.findInstance(
+      method.condition.conditions,
+      PsiNamePatternCondition::class.java)
+    return filterWithContext { uCallExpression, context ->
+      if (nameCondition != null) {
+        val methodName = uCallExpression.methodName
+        if (methodName != null && !nameCondition.namePattern.accepts(methodName)) return@filterWithContext false
+      }
+
+      if (multiResolve && uCallExpression is UMultiResolvable) {
+        uCallExpression.multiResolve().any { method.accepts(it.element, context) }}
+      else
+        uCallExpression.resolve().let { method.accepts(it, context) }
+    }
   }
 
   fun withMethodName(namePattern: ElementPattern<String>): UCallExpressionPattern = filterWithContext { it, context ->
