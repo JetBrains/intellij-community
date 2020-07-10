@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -159,10 +159,16 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
    * state events recorded by a scheduler {@link ApplicationUsagesCollector} or {@link ProjectUsagesCollector}
    * </p>
    */
-  public static void logStateEvents(@NotNull EventLogGroup group, @NotNull Collection<MetricEvent> events) {
+  public static @NotNull CompletableFuture<Void> logStateEventsAsync(@NotNull EventLogGroup group, @NotNull Collection<MetricEvent> events) {
+    List<CompletableFuture<Void>> futures = new ArrayList<>();
     for (MetricEvent event : events) {
-      FeatureUsageLogger.INSTANCE.logState(group, event.getEventId(), event.getData().build());
+      futures.add(FeatureUsageLogger.INSTANCE.logState(group, event.getEventId(), event.getData().build()));
     }
-    FeatureUsageLogger.INSTANCE.logState(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED);
+    futures.add(FeatureUsageLogger.INSTANCE.logState(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED));
+    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+  }
+
+  public static void logStateEvents(@NotNull EventLogGroup group, @NotNull Collection<MetricEvent> events) {
+    logStateEventsAsync(group, events);
   }
 }

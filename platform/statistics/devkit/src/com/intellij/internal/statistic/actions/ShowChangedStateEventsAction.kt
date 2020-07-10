@@ -74,6 +74,7 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
 
       val difference = Maps.difference(newEvent.event.data, oldEvent.event.data)
       for (key in difference.entriesDiffering().keys) {
+        if (newEvent.group.id == "settings" && key == "id") continue
         if (key !in SYSTEM_FIELDS) {
           return false
         }
