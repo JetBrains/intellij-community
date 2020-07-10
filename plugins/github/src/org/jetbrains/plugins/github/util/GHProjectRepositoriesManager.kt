@@ -3,8 +3,7 @@ package org.jetbrains.plugins.github.util
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -30,6 +29,7 @@ import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
   private val updateQueue = MergingUpdateQueue("GitHub repositories update", 50, true, null, this, null, true)
+    .usePassThroughInUnitTestMode()
   private val eventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   var knownRepositories by observableField(emptySet<GHGitRepositoryMapping>(), eventDispatcher)
@@ -129,18 +129,20 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
   class RemoteUrlsListener(private val project: Project) : VcsRepositoryMappingListener, GitRepositoryChangeListener {
 
-    override fun mappingChanged() = runInEdt(project) { updateRepositories(project) }
+    override fun mappingChanged() =
+      invokeAndWaitIfNeeded { if (!project.isDisposed) updateRepositories(project) }
 
-    override fun repositoryChanged(repository: GitRepository) = runInEdt(project) { updateRepositories(project) }
+    override fun repositoryChanged(repository: GitRepository) =
+      invokeAndWaitIfNeeded { if (!project.isDisposed) updateRepositories(project) }
   }
 
   class AccountsListener : AccountRemovedListener, AccountTokenChangedListener {
     override fun accountRemoved(removedAccount: GithubAccount) = updateRemotes()
     override fun tokenChanged(account: GithubAccount) = updateRemotes()
 
-    private fun updateRemotes() = runInEdt {
+    private fun updateRemotes() = invokeAndWaitIfNeeded {
       for (project in ProjectManager.getInstance().openProjects) {
-        updateRepositories(project)
+        if (!project.isDisposed) updateRepositories(project)
       }
     }
   }
@@ -149,12 +151,6 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     private val LOG = logger<GHProjectRepositoriesManager>()
 
     private val UPDATE_IDENTITY = Any()
-
-    private inline fun runInEdt(project: Project, crossinline runnable: () -> Unit) {
-      val application = ApplicationManager.getApplication()
-      if (application.isDispatchThread) runnable()
-      else application.invokeLater({ runnable() }) { project.isDisposed }
-    }
 
     private fun updateRepositories(project: Project) {
       if (!project.isDisposed) project.service<GHProjectRepositoriesManager>().updateRepositories()
