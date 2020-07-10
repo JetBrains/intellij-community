@@ -51,7 +51,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public void registerExtensionPoints(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<Element> extensionPointElements) {
+  public void registerExtensionPoints(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<? extends Element> extensionPointElements) {
     for (Element element : extensionPointElements) {
       registerExtensionPoint(pluginDescriptor, element);
     }
@@ -102,9 +102,9 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   public boolean unregisterExtensions(@NotNull String extensionPointName,
                                       @NotNull PluginDescriptor loadedPluginDescriptor,
-                                      @NotNull List<Element> elements,
-                                      @NotNull List<Runnable> priorityListenerCallbacks,
-                                      @NotNull List<Runnable> listenerCallbacks) {
+                                      @NotNull List<? extends Element> elements,
+                                      @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                      @NotNull List<? super Runnable> listenerCallbacks) {
     ExtensionPointImpl<?> point = extensionPoints.get(extensionPointName);
     if (point == null) {
       return false;
@@ -115,7 +115,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   // extensionPoints here are raw and not initialized (not the same instance, only name can be used)
-  public void resetExtensionPoints(@NotNull List<ExtensionPointImpl<?>> rawExtensionPoints) {
+  public void resetExtensionPoints(@NotNull List<? extends ExtensionPointImpl<?>> rawExtensionPoints) {
     for (ExtensionPointImpl<?> point : rawExtensionPoints) {
       ExtensionPointImpl<?> extensionPoint = extensionPoints.get(point.getName());
       if (extensionPoint != null) {
@@ -132,7 +132,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   /**
    * You must call {@link #resetExtensionPoints} before otherwise event ExtensionEvent.REMOVED will be not fired.
    */
-  public void unregisterExtensionPoints(@NotNull List<ExtensionPointImpl<?>> rawExtensionPoints) {
+  public void unregisterExtensionPoints(@NotNull List<? extends ExtensionPointImpl<?>> rawExtensionPoints) {
     for (ExtensionPointImpl<?> point : rawExtensionPoints) {
       extensionPoints.remove(point.getName());
     }
@@ -188,7 +188,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
                                                                       @NotNull PluginDescriptor pluginDescriptor, boolean isInterface, boolean dynamic) {
     ExtensionPointImpl<T> point;
     if (isInterface) {
-      point = new InterfaceExtensionPoint<>(name, extensionClass, pluginDescriptor, dynamic);
+      point = new InterfaceExtensionPoint<>(name, extensionClass, pluginDescriptor, null, dynamic);
     }
     else {
       point = new BeanExtensionPoint<>(name, extensionClass, pluginDescriptor, dynamic);
@@ -264,7 +264,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   public void registerExtensions(@NotNull Map<String, List<Element>> extensions,
                                  @NotNull PluginDescriptor pluginDescriptor,
-                                 @Nullable List<Runnable> listenerCallbacks) {
+                                 @Nullable List<? super Runnable> listenerCallbacks) {
     extensions.forEach((name, list) -> {
       ExtensionPointImpl<?> point = extensionPoints.get(name);
       if (point != null) {
@@ -274,9 +274,9 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public boolean registerExtensions(@NotNull String pointName,
-                                    @NotNull List<Element> extensions,
+                                    @NotNull List<? extends Element> extensions,
                                     @NotNull PluginDescriptor pluginDescriptor,
-                                    @Nullable List<Runnable> listenerCallbacks)  {
+                                    @Nullable List<? super Runnable> listenerCallbacks)  {
     ExtensionPointImpl<?> point = extensionPoints.get(pointName);
     if (point == null) {
       return false;
@@ -298,7 +298,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public void processExtensionPoints(@NotNull Consumer<ExtensionPointImpl<?>> consumer) {
+  public void processExtensionPoints(@NotNull Consumer<? super ExtensionPointImpl<?>> consumer) {
     extensionPoints.values().forEach(consumer);
   }
 

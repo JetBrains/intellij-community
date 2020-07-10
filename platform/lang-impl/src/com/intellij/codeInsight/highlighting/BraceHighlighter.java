@@ -22,17 +22,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public final class BraceHighlighter implements StartupActivity.DumbAware {
+final class BraceHighlighter implements StartupActivity.DumbAware {
   private final Alarm myAlarm = new Alarm();
 
   @Override
-  public void runActivity(@NotNull final Project project) {
+  public void runActivity(@NotNull Project project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return; // sorry, upsource
 
     Disposable activityDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.POST_STARTUP_ACTIVITY);
     Disposer.register(project, activityDisposable);
 
-    final EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
+    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
@@ -53,7 +53,7 @@ public final class BraceHighlighter implements StartupActivity.DumbAware {
       }
     }, activityDisposable);
 
-    final SelectionListener selectionListener = new SelectionListener() {
+    SelectionListener selectionListener = new SelectionListener() {
       @Override
       public void selectionChanged(@NotNull SelectionEvent e) {
         myAlarm.cancelAllRequests();
@@ -62,13 +62,13 @@ public final class BraceHighlighter implements StartupActivity.DumbAware {
           return;
         }
 
-        final TextRange oldRange = e.getOldRange();
-        final TextRange newRange = e.getNewRange();
+        TextRange oldRange = e.getOldRange();
+        TextRange newRange = e.getNewRange();
         if (oldRange != null && newRange != null && oldRange.isEmpty() == newRange.isEmpty()) {
           // Don't perform braces update in case of active/absent selection.
           return;
         }
-        updateBraces(editor, myAlarm);
+        updateBraces(editor);
       }
     };
     eventMulticaster.addSelectionListener(selectionListener, activityDisposable);
@@ -77,7 +77,7 @@ public final class BraceHighlighter implements StartupActivity.DumbAware {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         myAlarm.cancelAllRequests();
-        EditorFactory.getInstance().editors(e.getDocument(), project).forEach(editor -> updateBraces(editor, myAlarm));
+        EditorFactory.getInstance().editors(e.getDocument(), project).forEach(editor -> updateBraces(editor));
       }
     };
     eventMulticaster.addDocumentListener(documentListener, activityDisposable);
@@ -93,7 +93,7 @@ public final class BraceHighlighter implements StartupActivity.DumbAware {
           }
           FileEditor newEditor = e.getNewEditor();
           if (newEditor instanceof TextEditor) {
-            updateBraces(((TextEditor)newEditor).getEditor(), myAlarm);
+            updateBraces(((TextEditor)newEditor).getEditor());
           }
         }
       });
@@ -106,15 +106,15 @@ public final class BraceHighlighter implements StartupActivity.DumbAware {
     if (editor.getProject() != project || selectionModel.hasSelection()) {
       return;
     }
-    updateBraces(editor, myAlarm);
+    updateBraces(editor);
   }
 
-  private static void updateBraces(@NotNull Editor editor, @NotNull Alarm alarm) {
+  private void updateBraces(@NotNull Editor editor) {
     if (editor.getDocument().isInBulkUpdate()) {
       return;
     }
 
-    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, alarm, handler -> {
+    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, myAlarm, handler -> {
       handler.updateBraces();
       return false;
     });
@@ -128,7 +128,7 @@ public final class BraceHighlighter implements StartupActivity.DumbAware {
   }
 
   @NotNull
-  public static Alarm getAlarm() {
+  static Alarm getAlarm() {
     return Objects.requireNonNull(POST_STARTUP_ACTIVITY.findExtension(BraceHighlighter.class)).myAlarm;
   }
 }

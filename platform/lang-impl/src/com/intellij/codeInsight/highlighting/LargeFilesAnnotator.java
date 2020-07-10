@@ -27,7 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class LargeFilesAnnotator implements Annotator {
+class LargeFilesAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof PsiFile) {

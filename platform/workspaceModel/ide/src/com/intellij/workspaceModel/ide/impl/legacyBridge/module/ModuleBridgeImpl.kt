@@ -62,7 +62,7 @@ internal class ModuleBridgeImpl(
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
-  override fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: List<Runnable>?) {
+  override fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: MutableList<in Runnable>?) {
     super.registerComponents(plugins, null)
 
     val corePlugin = plugins.asSequence().map { it.descriptor }.find { it.pluginId == PluginManagerCore.CORE_ID }

@@ -7,12 +7,13 @@ import com.intellij.find.FindModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author msk
  */
 public abstract class HighlightHandlerBase {
-  public static void setupFindModel(final Project project) {
+  public static void setupFindModel(@NotNull Project project) {
     final FindManager findManager = FindManager.getInstance(project);
     FindModel model = findManager.getFindNextModel();
     if (model == null) {
@@ -23,7 +24,8 @@ public abstract class HighlightHandlerBase {
     findManager.setFindNextModel(model);
   }
 
-  public static String getLineTextErrorStripeTooltip(Document document, int offset, boolean escape) {
+  @NotNull
+  public static String getLineTextErrorStripeTooltip(@NotNull Document document, int offset, boolean escape) {
     final int lineNumber = document.getLineNumber(offset);
     int lineStartOffset = document.getLineStartOffset(lineNumber);
     int lineEndOffset = document.getLineEndOffset(lineNumber);

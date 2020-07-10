@@ -6,12 +6,12 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
 
 @Service
-final class FileTypeBraceMather extends FileTypeExtension<BraceMatcher> {
-  static FileTypeBraceMather getInstance() {
-    return ApplicationManager.getApplication().getService(FileTypeBraceMather.class);
+final class FileTypeBraceMatcher extends FileTypeExtension<BraceMatcher> {
+  static FileTypeBraceMatcher getInstance() {
+    return ApplicationManager.getApplication().getService(FileTypeBraceMatcher.class);
   }
 
-  FileTypeBraceMather() {
+  FileTypeBraceMatcher() {
     super(BraceMatcher.EP_NAME.getName());
   }
 }

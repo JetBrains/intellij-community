@@ -160,7 +160,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   )
 
   @Internal
-  open fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: List<Runnable>?) {
+  open fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: MutableList<in Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
     val app = getApplication()

@@ -28,11 +28,11 @@ import org.jetbrains.annotations.Nullable;
 public interface BraceMatcher {
   ExtensionPointName<FileTypeExtensionPoint<BraceMatcher>> EP_NAME = new ExtensionPointName<>("com.intellij.braceMatcher");
 
-  int getBraceTokenGroupId(IElementType tokenType);
-  boolean isLBraceToken(HighlighterIterator iterator,CharSequence fileText, FileType fileType);
-  boolean isRBraceToken(HighlighterIterator iterator,CharSequence fileText, FileType fileType);
-  boolean isPairBraces(IElementType tokenType,IElementType tokenType2);
-  boolean isStructuralBrace(HighlighterIterator iterator,CharSequence text, FileType fileType);
+  int getBraceTokenGroupId(@NotNull IElementType tokenType);
+  boolean isLBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType);
+  boolean isRBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType);
+  boolean isPairBraces(@NotNull IElementType tokenType, @NotNull IElementType tokenType2);
+  boolean isStructuralBrace(@NotNull HighlighterIterator iterator, @NotNull CharSequence text, @NotNull FileType fileType);
   @Nullable IElementType getOppositeBraceTokenType(@NotNull IElementType type);
   boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType);
 
@@ -44,5 +44,5 @@ public interface BraceMatcher {
    * @param openingBraceOffset the offset of an opening structural brace.
    * @return the offset of corresponding code construct, or the same offset if not defined.
    */
-  int getCodeConstructStart(final PsiFile file, int openingBraceOffset);
+  int getCodeConstructStart(@NotNull PsiFile file, int openingBraceOffset);
 }

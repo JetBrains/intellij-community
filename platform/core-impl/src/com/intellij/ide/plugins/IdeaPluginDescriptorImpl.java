@@ -64,8 +64,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private @Nullable List<Element> myActionElements;
   // extension point name -> list of extension elements
-  // LinkedHashMap for predictable register order
-  private @Nullable LinkedHashMap<String, List<Element>> epNameToExtensionElements;
+  private @Nullable Map<String, List<Element>> epNameToExtensionElements;
 
   final ContainerDescriptor appContainerDescriptor = new ContainerDescriptor();
   final ContainerDescriptor projectContainerDescriptor = new ContainerDescriptor();
@@ -569,7 +568,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void registerExtensions(@NotNull ExtensionsAreaImpl area,
                                  @NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                  @NotNull ContainerDescriptor containerDescriptor,
-                                 @Nullable List<Runnable> listenerCallbacks) {
+                                 @Nullable List<? super Runnable> listenerCallbacks) {
     Map<String, List<Element>> extensions = containerDescriptor.extensions;
     if (extensions != null) {
       area.registerExtensions(extensions, rootDescriptor, listenerCallbacks);
@@ -909,9 +908,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       epNameToExtensionElements = descriptor.epNameToExtensionElements;
     }
     else if (descriptor.epNameToExtensionElements != null) {
-      descriptor.epNameToExtensionElements.forEach((name, list) -> {
-        addExtensionList(epNameToExtensionElements, name, list);
-      });
+      descriptor.epNameToExtensionElements.forEach((name, list) -> addExtensionList(epNameToExtensionElements, name, list));
     }
 
     if (myActionElements == null) {

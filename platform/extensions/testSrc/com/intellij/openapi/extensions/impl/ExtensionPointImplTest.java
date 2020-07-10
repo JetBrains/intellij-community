@@ -322,7 +322,8 @@ public class ExtensionPointImplTest {
   }
 
   private static @NotNull <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
-    InterfaceExtensionPoint<T> point = new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new DefaultPluginDescriptor("test"));
+    InterfaceExtensionPoint<T> point = new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass.getName(),
+                                                                     new DefaultPluginDescriptor("test"), aClass, false);
     point.setComponentManager(new MyComponentManager());
     return point;
   }

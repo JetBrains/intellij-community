@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 final class XmlReader {
   @SuppressWarnings("SSBasedInspection")
@@ -261,10 +262,10 @@ final class XmlReader {
     return value == null || Boolean.parseBoolean(value);
   }
 
-  static @Nullable LinkedHashMap<String, List<Element>> readExtensions(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                       @Nullable LinkedHashMap<String, List<Element>> epNameToExtensions,
-                                                                       @NotNull DescriptorListLoadingContext loadingContext,
-                                                                       @NotNull Element child) {
+  static @Nullable Map<String, List<Element>> readExtensions(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                                             @Nullable Map<String, List<Element>> epNameToExtensions,
+                                                             @NotNull DescriptorListLoadingContext loadingContext,
+                                                             @NotNull Element child) {
     String ns = child.getAttributeValue("defaultExtensionNs");
     for (Element extensionElement : child.getChildren()) {
       String os = extensionElement.getAttributeValue("os");
@@ -351,7 +352,7 @@ final class XmlReader {
         point = new BeanExtensionPoint<>(pointName, beanClassName, rootDescriptor, dynamic);
       }
       else {
-        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, rootDescriptor, dynamic);
+        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, rootDescriptor, null, dynamic);
       }
 
       List<ExtensionPointImpl<?>> result = containerDescriptor.extensionPoints;

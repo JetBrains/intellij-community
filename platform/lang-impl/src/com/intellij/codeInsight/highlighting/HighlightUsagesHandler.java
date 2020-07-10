@@ -155,7 +155,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
    * @see HighlightUsagesHandlerFactory#createHighlightUsagesHandler(Editor, PsiFile, ProperTextRange)
    */
   @Nullable
-  public static <T extends PsiElement> HighlightUsagesHandlerBase<T> createCustomHandler(@NotNull Editor editor, @NotNull PsiFile file,
+  public static <T extends PsiElement> HighlightUsagesHandlerBase<T> createCustomHandler(@NotNull Editor editor,
+                                                                                         @NotNull PsiFile file,
                                                                                          @NotNull ProperTextRange visibleRange) {
     for (HighlightUsagesHandlerFactory factory : HighlightUsagesHandlerFactory.EP_NAME.getExtensionList()) {
       HighlightUsagesHandlerBase<T> handler = factory.createHighlightUsagesHandler(editor, file, visibleRange);
@@ -217,8 +218,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     private final PsiFile myFile;
     private final boolean myClearHighlights;
 
-    public DoHighlightRunnable(@NotNull List<? extends PsiReference> refs, @NotNull Project project, @NotNull PsiElement target, @NotNull Editor editor,
-                               @NotNull PsiFile file, boolean clearHighlights) {
+    public DoHighlightRunnable(@NotNull List<? extends PsiReference> refs,
+                               @NotNull Project project,
+                               @NotNull PsiElement target,
+                               @NotNull Editor editor,
+                               @NotNull PsiFile file,
+                               boolean clearHighlights) {
       myRefs = refs;
       myProject = project;
       myTarget = target;
@@ -240,7 +245,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                          @NotNull Editor editor,
                                          @NotNull PsiFile file,
                                          boolean clearHighlights) {
-
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     setupFindModel(project);
 
@@ -324,7 +328,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
    * @deprecated internal API
    */
   @Deprecated
-  public static void doHighlightElements(@NotNull Editor editor, PsiElement @NotNull [] elements, @NotNull TextAttributes attributes, boolean clearHighlights) {
+  public static void doHighlightElements(@NotNull Editor editor,
+                                         PsiElement @NotNull [] elements,
+                                         @NotNull TextAttributes attributes,
+                                         boolean clearHighlights) {
     HighlightManager highlightManager = HighlightManager.getInstance(editor.getProject());
     List<TextRange> textRanges = new ArrayList<>(elements.length);
     for (PsiElement element : elements) {
@@ -340,7 +347,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
    * @deprecated Use the overload with TextAttributesKey
    */
   @Deprecated
-  public static void highlightRanges(@NotNull HighlightManager highlightManager, @NotNull Editor editor, @NotNull TextAttributes attributes,
+  public static void highlightRanges(@NotNull HighlightManager highlightManager,
+                                     @NotNull Editor editor,
+                                     @NotNull TextAttributes attributes,
                                      boolean clearHighlights,
                                      @NotNull List<? extends TextRange> textRanges) {
     highlightRanges(highlightManager, editor, attributes, null, clearHighlights, textRanges);
@@ -399,8 +408,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                       @NotNull HighlightManager highlightManager,
                                       @NotNull List<? extends TextRange> rangesToHighlight,
                                       @Nullable TextAttributes attributes,
-                                      @Nullable TextAttributesKey attributesKey
-  ) {
+                                      @Nullable TextAttributesKey attributesKey) {
     assert attributes != null || attributesKey != null : "Both attributes and attributesKey are null";
 
     if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
@@ -433,8 +441,11 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  private static void doHighlightRefs(@NotNull HighlightManager highlightManager, @NotNull Editor editor, @NotNull List<? extends PsiReference> refs,
-                                      @NotNull TextAttributesKey attributesKey, boolean clearHighlights) {
+  private static void doHighlightRefs(@NotNull HighlightManager highlightManager,
+                                      @NotNull Editor editor,
+                                      @NotNull List<? extends PsiReference> refs,
+                                      @NotNull TextAttributesKey attributesKey,
+                                      boolean clearHighlights) {
     List<TextRange> textRanges = new ArrayList<>(refs.size());
     for (PsiReference ref : refs) {
       collectHighlightRanges(ref, textRanges);
