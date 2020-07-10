@@ -7,6 +7,7 @@ iml_module(
     test_resources = ["testData"],
     # do not sort: must match IML order
     test_runtime_deps = [
+        "//tools/idea/platform/inspect:intellij.platform.inspect",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
@@ -19,13 +20,15 @@ iml_module(
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
-        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:javax.activation",
         "//tools/idea/.idea/libraries:jaxb-api",
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/.idea/libraries:javax.annotation-api",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     test_srcs = ["test"],
     test_tags = ["manual"],
@@ -36,5 +39,6 @@ iml_module(
         "//tools/idea/json:intellij.json[module, test]",
         "//tools/idea/spellchecker:intellij.spellchecker[module, test]",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

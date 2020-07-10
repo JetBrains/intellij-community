@@ -37,5 +37,7 @@ iml_module(
         "//tools/idea/.idea/libraries:hamcrest[test]",
         "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

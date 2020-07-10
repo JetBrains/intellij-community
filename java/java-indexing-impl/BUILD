@@ -26,5 +26,7 @@ iml_module(
         "//tools/idea/java/java-indexing-api:intellij.java.indexing[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

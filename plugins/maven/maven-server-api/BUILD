@@ -13,6 +13,7 @@ iml_module(
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/plugins/maven/maven-server-api/lib:lucene-core-2.4.1",
+        "//tools/idea:intellij.maven.model",
     ],
     # do not sort: must match IML order
     deps = [
@@ -22,5 +23,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/plugins/maven/maven-server-api/lib:lucene-core-2.4.1",
         "//tools/idea/.idea/libraries:NanoXML",
+        "//tools/idea:intellij.maven.model[module]",
     ],
 )

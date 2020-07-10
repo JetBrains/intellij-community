@@ -10,5 +10,6 @@ iml_module(
     deps = [
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:JUnit4",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

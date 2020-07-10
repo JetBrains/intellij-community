@@ -25,5 +25,7 @@ iml_module(
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/.idea/libraries:XStream",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

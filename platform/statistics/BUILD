@@ -6,6 +6,8 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.platform.statistics.iml"],
     resources = ["resources"],
+    test_srcs = ["test"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/statistics/uploader:intellij.platform.statistics.uploader"],
     # do not sort: must match IML order
@@ -22,8 +24,8 @@ iml_module(
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:jetbrains-annotations",
         "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/statistics/uploader:intellij.platform.statistics.uploader[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
     ],
 )

@@ -21,5 +21,7 @@ iml_module(
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/uast/uast-common:intellij.platform.uast[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

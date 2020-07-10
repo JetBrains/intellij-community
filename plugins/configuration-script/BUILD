@@ -21,6 +21,7 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/platform/inspect:intellij.platform.inspect",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
@@ -32,13 +33,15 @@ iml_module(
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
-        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:javax.activation",
         "//tools/idea/.idea/libraries:jaxb-api",
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/.idea/libraries:javax.annotation-api",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     # do not sort: must match IML order
     deps = [
@@ -57,6 +60,7 @@ iml_module(
         "//tools/idea/.idea/libraries:jackson[test]",
         "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
         "//tools/idea/.idea/libraries:snakeyaml-engine",
+        "//tools/idea/.idea/libraries:fastutil-min",
     ],
 )
 
@@ -74,10 +78,12 @@ iml_module(
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
-        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:jaxb-runtime",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
         "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",

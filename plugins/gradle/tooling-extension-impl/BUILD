@@ -45,7 +45,6 @@ iml_module(
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
-        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
@@ -55,13 +54,15 @@ iml_module(
         "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:javax.activation",
         "//tools/idea/.idea/libraries:jaxb-api",
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/.idea/libraries:javax.annotation-api",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     # do not sort: must match IML order
     deps = [
@@ -73,5 +74,7 @@ iml_module(
         "//prebuilts/tools/common/m2/repository/org/jeasy/easy-random-core/4.1.0:jar[test]",
         "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/3.1:jar[test]",
         "//tools/idea/.idea/libraries:ion[test]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

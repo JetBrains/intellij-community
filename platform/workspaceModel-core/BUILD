@@ -18,5 +18,7 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:Kryo",
         "//tools/idea/.idea/libraries:Objenesis",
+        "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
     ],
 )

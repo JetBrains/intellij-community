@@ -21,5 +21,8 @@ iml_module(
         "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
         "//tools/idea/.idea/libraries:automaton",
         "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
+        "//tools/idea/.idea/libraries:Trove4j",
+        "//tools/idea/.idea/libraries:fastutil-min",
     ],
 )

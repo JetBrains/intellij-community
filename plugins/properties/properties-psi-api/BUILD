@@ -33,5 +33,7 @@ iml_module(
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/platform/boot:intellij.platform.boot[module]",
         "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

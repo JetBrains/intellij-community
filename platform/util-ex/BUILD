@@ -14,5 +14,7 @@ iml_module(
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

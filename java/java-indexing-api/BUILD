@@ -13,5 +13,6 @@ iml_module(
         "//tools/idea/java/java-psi-api:intellij.java.psi[module]",
         "//tools/idea/platform/indexing-api:intellij.platform.indexing[module]",
         "//tools/idea/platform/util:intellij.platform.concurrency[module]",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

@@ -16,5 +16,7 @@ iml_module(
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
         "//tools/idea/platform/util:intellij.platform.concurrency[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

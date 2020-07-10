@@ -21,6 +21,7 @@ iml_module(
         "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
-        "//tools/idea/.idea/libraries:Groovy",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-ant",
     ],
 )

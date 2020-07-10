@@ -2,9 +2,9 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 # managed by go/iml_to_build
 iml_module(
-    name = "intellij.laf.macos",
+    name = "intellij.platform.inspect",
     srcs = ["src"],
-    iml_files = ["intellij.laf.macos.iml"],
+    iml_files = ["intellij.platform.inspect.iml"],
     resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
@@ -14,11 +14,15 @@ iml_module(
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
+    exports = [
+        "//tools/idea/platform/core-api:intellij.platform.core",
+        "//tools/idea/platform/extensions:intellij.platform.extensions",
+    ],
+    # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/platform/usageView:intellij.platform.usageView",
         "//tools/idea/platform/execution-impl:intellij.platform.execution.impl",
-        "//tools/idea/platform/inspect:intellij.platform.inspect",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
@@ -44,8 +48,20 @@ iml_module(
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/platform/core-api:intellij.platform.core[module]",
+        "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
+        "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",
+        "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/platform/analysis-impl:intellij.platform.analysis.impl[module]",
+        "//tools/idea/platform/vcs-api/vcs-api-core:intellij.platform.vcs.core[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
-        "//tools/idea/.idea/libraries:Java_Compatibility",
+        "//tools/idea/platform/diff-api:intellij.platform.diff[module]",
+        "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
+        "//tools/idea/.idea/libraries:StreamEx",
+        "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module]",
+        "//tools/idea/platform/boot:intellij.platform.boot[module]",
+        "//tools/idea/.idea/libraries:cli-parser",
     ],
 )

@@ -15,6 +15,7 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
+        "//tools/idea/platform/inspect:intellij.platform.inspect",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
@@ -24,17 +25,18 @@ iml_module(
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
-        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:javax.activation",
         "//tools/idea/.idea/libraries:jaxb-api",
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/.idea/libraries:javax.annotation-api",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     # do not sort: must match IML order
     deps = [
@@ -52,5 +54,7 @@ iml_module(
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl[module]",
         "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/platform/external-system-api:intellij.platform.externalSystem[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
     ],
 )

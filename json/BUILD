@@ -19,6 +19,7 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/platform/inspect:intellij.platform.inspect",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
@@ -30,13 +31,15 @@ iml_module(
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
-        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:javax.activation",
         "//tools/idea/.idea/libraries:jaxb-api",
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/.idea/libraries:javax.annotation-api",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     # do not sort: must match IML order
     deps = [
@@ -48,5 +51,7 @@ iml_module(
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/RegExpSupport:intellij.regexp[module]",
         "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

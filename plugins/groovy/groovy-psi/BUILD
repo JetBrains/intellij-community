@@ -37,7 +37,7 @@ iml_module(
         "//tools/idea/.idea/libraries:precompiled_jshell-frontend",
     ],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/.idea/libraries:Groovy"],
+    exports = ["//tools/idea/.idea/libraries:org.codehaus.groovy_groovy"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
@@ -48,19 +48,20 @@ iml_module(
         "//tools/idea/platform/statistics/devkit:intellij.platform.statistics.devkit",
         "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
-        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/.idea/libraries:javax.annotation-api",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
         "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/documentation/tips-intellij-idea-community/201.11:jar",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:Groovy",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
         "//tools/idea/java/openapi:intellij.java[module]",
@@ -77,5 +78,6 @@ iml_module(
         "//tools/idea/plugins/properties/properties-psi-impl:intellij.properties.psi.impl[module]",
         "//tools/idea/plugins/properties/properties-psi-api:intellij.properties.psi[module]",
         "//tools/idea/.idea/libraries:kotlin-reflect",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

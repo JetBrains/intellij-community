@@ -6,7 +6,11 @@ iml_module(
     srcs = ["javacvs-src"],
     iml_files = ["javacvs-src/intellij.vcs.cvs.javacvs.iml"],
     visibility = ["//visibility:public"],
-    deps = ["//tools/idea/platform/util:intellij.platform.util[module]"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/.idea/libraries:Trove4j",
+    ],
 )
 
 # managed by go/iml_to_build

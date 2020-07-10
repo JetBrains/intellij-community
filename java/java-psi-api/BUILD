@@ -13,5 +13,7 @@ iml_module(
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
         "//tools/idea/platform/core-ui:intellij.platform.core.ui[module]",
+        "//tools/idea/.idea/libraries:Trove4j",
+        "//tools/idea/.idea/libraries:fastutil-min",
     ],
 )

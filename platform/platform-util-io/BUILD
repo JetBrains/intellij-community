@@ -19,5 +19,7 @@ iml_module(
         "//tools/idea/.idea/libraries:pty4j",
         "//tools/idea/.idea/libraries:winp",
         "//tools/idea/.idea/libraries:jackson",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

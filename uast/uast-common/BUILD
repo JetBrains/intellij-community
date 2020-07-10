@@ -20,5 +20,6 @@ iml_module(
         "//tools/idea/java/java-psi-impl:intellij.java.psi.impl[module]",
         "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

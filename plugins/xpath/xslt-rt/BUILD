@@ -2,8 +2,8 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 # managed by go/iml_to_build
 iml_module(
-    name = "intellij.xslt.debugger.rt",
+    name = "intellij.xpath.rt",
     srcs = ["src"],
-    iml_files = ["intellij.xslt.debugger.rt.iml"],
+    iml_files = ["intellij.xpath.rt.iml"],
     visibility = ["//visibility:public"],
 )

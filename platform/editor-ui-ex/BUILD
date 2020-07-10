@@ -23,5 +23,7 @@ iml_module(
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

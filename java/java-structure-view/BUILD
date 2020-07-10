@@ -19,5 +19,7 @@ iml_module(
         "//tools/idea/platform/structure-view-impl:intellij.platform.structureView.impl[module]",
         "//tools/idea/java/java-psi-impl:intellij.java.psi.impl[module]",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

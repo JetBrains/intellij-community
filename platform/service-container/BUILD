@@ -17,5 +17,7 @@ iml_module(
         "//tools/idea/platform/bootstrap:intellij.platform.bootstrap[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

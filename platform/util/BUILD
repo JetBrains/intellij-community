@@ -14,7 +14,6 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/.idea/libraries:jetbrains-annotations",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt",
         "//tools/idea/platform/util-class-loader:intellij.platform.util.classLoader",
@@ -31,6 +30,7 @@ iml_module(
         "//tools/idea/.idea/libraries:OroMatcher",
         "//tools/idea/.idea/libraries:lz4-java",
         "//tools/idea/.idea/libraries:commons-compress",
+        "//tools/idea/.idea/libraries:fastutil-min",
         "//tools/idea/.idea/libraries:protobuf",
         "//tools/idea/.idea/libraries:HdrHistogram",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
@@ -45,6 +45,7 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
+        "//tools/idea/platform/inspect:intellij.platform.inspect",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
@@ -56,24 +57,25 @@ iml_module(
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
-        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:javax.activation",
         "//tools/idea/.idea/libraries:jaxb-api",
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/.idea/libraries:javax.annotation-api",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:Groovy[test]",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy[test]",
         "//tools/idea/platform/util:intellij.platform.util[module, test]",
         "//tools/idea/.idea/libraries:JDOM[test]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8[test]",
@@ -89,6 +91,7 @@ iml_module(
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
         "//tools/idea/.idea/libraries:bouncy-castle-provider[test]",
         "//tools/idea/.idea/libraries:memoryfilesystem[test]",
+        "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/.idea/libraries:jimfs[test]",
         "//tools/idea/.idea/libraries:HdrHistogram[test]",
         "//tools/idea/.idea/libraries:protobuf[test]",
@@ -107,6 +110,8 @@ iml_module(
         "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )
 
@@ -128,6 +133,8 @@ iml_module(
         "//tools/idea/.idea/libraries:Java_Compatibility",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:batik-codec",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/.idea/libraries:xml-apis",
     ],
 )

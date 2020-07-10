@@ -35,6 +35,8 @@ iml_module(
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
         "//tools/idea/.idea/libraries:lz4-java",
         "//tools/idea/.idea/libraries:assertJ[test]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )
 
@@ -46,6 +48,7 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
+        "//tools/idea/platform/inspect:intellij.platform.inspect",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
@@ -57,17 +60,18 @@ iml_module(
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
-        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:javax.activation",
         "//tools/idea/.idea/libraries:jaxb-api",
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/.idea/libraries:javax.annotation-api",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
@@ -82,5 +86,7 @@ iml_module(
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module, test]",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module, test]",
         "//tools/idea/.idea/libraries:ion",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

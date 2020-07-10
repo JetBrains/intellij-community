@@ -36,5 +36,7 @@ iml_module(
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/core-impl:intellij.platform.core.impl[module]",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

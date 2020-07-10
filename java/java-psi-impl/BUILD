@@ -24,5 +24,7 @@ iml_module(
         "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
         "//tools/idea/platform/core-ui:intellij.platform.core.ui[module]",
+        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )
