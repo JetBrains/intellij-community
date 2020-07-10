@@ -175,9 +175,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
 
   @Nullable
   public LightEditorInfo findOpen(@NotNull VirtualFile file) {
-    return myEditors.stream()
-      .filter(editorInfo -> file.getPath().equals(editorInfo.getFile().getPath()))
-      .findFirst().orElse(null);
+    return ContainerUtil.find(myEditors, editorInfo -> file.getPath().equals(editorInfo.getFile().getPath()));
   }
 
   @Override
@@ -249,6 +247,6 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
 
   @Nullable
   LightEditorInfo getEditorInfo(@NotNull VirtualFile file) {
-    return myEditors.stream().filter(editorInfo -> file.equals(editorInfo.getFile())).findFirst().orElse(null);
+    return ContainerUtil.find(myEditors, editorInfo -> file.equals(editorInfo.getFile()));
   }
 }
