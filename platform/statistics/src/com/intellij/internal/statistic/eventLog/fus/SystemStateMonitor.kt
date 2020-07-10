@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.fus
 
 import com.intellij.concurrency.JobScheduler
@@ -16,10 +16,6 @@ import java.util.concurrent.TimeUnit
 
 class SystemStateMonitor : FeatureUsageStateEventTracker {
   private val OS_GROUP = EventLogGroup("system.os", 3)
-
-  @Deprecated("This group will be removed in 2019.3 because the same information is recorded in SystemRuntimeCollector")
-  private val JAVA_GROUP = EventLogGroup("system.java", 1)
-
   private val INITIAL_DELAY = 0
   private val PERIOD_DELAY = 24 * 60
 
@@ -35,9 +31,6 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
   }
 
   override fun reportNow() {
-    val data = FeatureUsageData().addVersion(Version(1, JavaVersion.current().feature, 0))
-    FUStateUsagesLogger.logStateEvent(JAVA_GROUP, getJavaVendor(), data)
-
     val osEvents: MutableList<MetricEvent> = ArrayList()
 
     /** Record OS name in both old and new format to have a smooth transition on the server **/
@@ -72,18 +65,6 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
       SystemInfo.isWindows -> "Windows"
       SystemInfo.isFreeBSD -> "FreeBSD"
       SystemInfo.isSolaris -> "Solaris"
-      else -> "Other"
-    }
-  }
-
-  private fun getJavaVendor() : String {
-    return when {
-      SystemInfo.isJetBrainsJvm -> "JetBrains"
-      SystemInfo.isAppleJvm -> "Apple"
-      SystemInfo.isOracleJvm -> "Oracle"
-      SystemInfo.isSunJvm -> "Sun"
-      SystemInfo.isIbmJvm -> "IBM"
-      SystemInfo.isAzulJvm -> "Azul"
       else -> "Other"
     }
   }
