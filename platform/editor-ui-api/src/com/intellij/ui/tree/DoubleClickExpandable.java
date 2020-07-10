@@ -7,7 +7,16 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
+/**
+ * This interface is intended for a tree node so that double click on it
+ * navigates to the source code instead of node expanding/collapsing.
+ *
+ * @see com.intellij.util.EditSourceOnDoubleClickHandler#isToggleEvent
+ */
 public interface DoubleClickExpandable {
+  /**
+   * @return {@code true} to expand/collapse the node, {@code false} to navigate to source if possible
+   */
   boolean expandOnDoubleClick();
 
   static boolean isExpandOnDoubleClickAllowed(@Nullable TreePath path) {
