@@ -16,8 +16,8 @@ open class ChangesHistory<EventType>(val maxHistorySize: Int) {
         checkOverflow()
     }
 
-    fun last(): EventType {
-        return history.last()
+    fun lastOrNull(): EventType? {
+        return history.lastOrNull()
     }
 
     /**

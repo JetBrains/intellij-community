@@ -29,7 +29,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
     }
 
     override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
-        val lastAction = actions.last()
+        val lastAction = actions.lastOrNull() ?: return NoSuggestion
         val parent = lastAction.parent
         when (lastAction) {
             is ChildAddedAction -> {

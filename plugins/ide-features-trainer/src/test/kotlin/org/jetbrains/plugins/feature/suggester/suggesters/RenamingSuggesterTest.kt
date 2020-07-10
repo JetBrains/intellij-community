@@ -7,17 +7,6 @@ import org.jetbrains.plugins.feature.suggester.Suggestion
 
 abstract class RenamingSuggesterTest : FeatureSuggesterTest() {
 
-    protected abstract val testingCodeFileName: String
-
-    protected lateinit var expectedSuggestion: Suggestion
-
-    override fun setUp() {
-        super.setUp()
-        myFixture.configureByFile(testingCodeFileName)
-        expectedSuggestion = NoSuggestion
-        subscribeToSuggestions { suggestion -> expectedSuggestion = suggestion }
-    }
-
     abstract fun `testAdd one symbol to identifiers of local variable and catch suggestion`()
 
     abstract fun `testRemove one symbol from identifiers of local variable and catch suggestion`()

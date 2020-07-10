@@ -24,6 +24,10 @@ data class BeforePropertyChangedAction(override val parent: PsiElement?) : UserA
 data class BeforeChildMovedAction(override val parent: PsiElement?, val child: PsiElement?, val oldParent: PsiElement?) :
     UserAction(parent)
 
-sealed class UserAnAction(open val timestamp: Long)
+sealed class UserAnAction(open val timeMillis: Long)
 
-data class BackspaceAction(val selectedText: String, override val timestamp: Long) : UserAnAction(timestamp)
+data class BackspaceAction(val selectedText: String, override val timeMillis: Long) : UserAnAction(timeMillis)
+data class EditorCopyAction(val copiedText: String, override val timeMillis: Long): UserAnAction(timeMillis)
+data class EditorPasteAction(val pastedText: String, override val timeMillis: Long): UserAnAction(timeMillis)
+data class BeforeEditorCopyAction(val copiedText: String, override val timeMillis: Long): UserAnAction(timeMillis)
+data class BeforeEditorPasteAction(val pastedText: String, override val timeMillis: Long): UserAnAction(timeMillis)

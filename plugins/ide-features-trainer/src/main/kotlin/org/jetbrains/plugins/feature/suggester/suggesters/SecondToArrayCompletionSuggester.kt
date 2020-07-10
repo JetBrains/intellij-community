@@ -20,7 +20,7 @@ class SecondToArrayCompletionSuggester : FeatureSuggester {
     }
 
     override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
-        when (val lastAction = actions.last()) {
+        when (val lastAction = actions.lastOrNull()) {
             is ChildAddedAction -> {
                 if (isMethodCall(lastAction.newChild)) {
                     return createSuggestion(DESCRIPTOR_ID, POPUP_MESSAGE)

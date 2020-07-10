@@ -47,7 +47,7 @@ class RenamingSuggester : FeatureSuggester {
         if (name != null && name != "Paste") {
             return NoSuggestion
         }
-        when (val lastAction = actions.last()) {
+        when (val lastAction = actions.lastOrNull()) {
             is BeforeChildReplacedAction -> {
                 val (parent, newChild, oldChild) = lastAction
                 if (parent == null || newChild == null || oldChild == null) return NoSuggestion

@@ -3,6 +3,8 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 @Deprecated("Tests must run only in EDT")
 class SafeDeleteSuggesterTest : FeatureSuggesterTest() {
 
+    override val testingCodeFileName: String = "JavaCodeExample.java"
+
     fun `testRemove variable declaration and get suggestion`() {
         testSuggestionFound({
             myFixture.configureByFile("JavaCodeExample.java")

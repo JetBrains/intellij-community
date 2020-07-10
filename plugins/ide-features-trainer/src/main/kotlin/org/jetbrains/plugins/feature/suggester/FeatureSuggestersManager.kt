@@ -6,19 +6,29 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.IdeTooltipManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actions.CopyAction
+import com.intellij.openapi.editor.actions.PasteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.ui.LightweightHint
+import org.jetbrains.plugins.feature.suggester.changes.*
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
-import org.jetbrains.plugins.feature.suggester.changes.*
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
+import org.jetbrains.plugins.feature.suggester.suggesters.asString
 import java.awt.Point
 
 class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener {
@@ -30,24 +40,36 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
 
     fun actionPerformed(action: UserAction) {
         actionsHistory.add(action)
-        for (suggester in FeatureSuggester.suggesters) {
-            if (!isEnabled(suggester)) continue
-            val suggestion = suggester.getSuggestion(actionsHistory, anActionsHistory)
-            if (suggestion is PopupSuggestion) {
-                action.parent?.containingFile?.virtualFile ?: return
-                val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
-                if (suggester.needToClearLookup) {
-                    //todo: this is hack to avoid exception in spection completion case
-                    val lookupManager = LookupManager.getInstance(project)
-                    lookupManager as LookupManagerImpl
-                    lookupManager.clearLookup()
-                }
-                showSuggestionHint(suggestion.message, editor)
+        if (action.parent?.containingFile?.virtualFile == null) return
+        processSuggesters()
+    }
 
-                // send event for testing
-                project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion)
-                return
+    fun anActionPerformed(anAction: UserAnAction) {
+        anActionsHistory.add(anAction)
+        processSuggesters()
+    }
+
+    private fun processSuggesters() {
+        for (suggester in FeatureSuggester.suggesters) {
+            if (!suggester.isEnabled()) continue
+            processSuggester(suggester)
+        }
+    }
+
+    private fun processSuggester(suggester: FeatureSuggester) {
+        val suggestion = suggester.getSuggestion(actionsHistory, anActionsHistory)
+        if (suggestion is PopupSuggestion) {
+            val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
+            if (suggester.needToClearLookup) {
+                //todo: this is hack to avoid exception in spection completion case
+                val lookupManager = LookupManager.getInstance(project)
+                lookupManager as LookupManagerImpl
+                lookupManager.clearLookup()
             }
+            showSuggestionHint(suggestion.message, editor)
+
+            // send event for testing
+            project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion)
         }
     }
 
@@ -120,10 +142,45 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
             }
         })
 
+        ApplicationManager.getApplication().messageBus.connect()
+            .subscribe(AnActionListener.TOPIC, object : AnActionListener {
+                private val copyPasteManager = CopyPasteManager.getInstance()
+
+                override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+                    when (action) {
+                        is CopyAction -> {
+                            val copiedText = copyPasteManager.contents?.asString() ?: return
+                            anActionPerformed(EditorCopyAction(copiedText, System.currentTimeMillis()))
+                        }
+                        is PasteAction -> {
+                            val pastedText = copyPasteManager.contents?.asString() ?: return
+                            anActionPerformed(EditorPasteAction(pastedText, System.currentTimeMillis()))
+                        }
+                    }
+                }
+
+                override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+                    when (action) {
+                        is CopyAction -> {
+                            val selectedText = dataContext.getSelectedText() ?: return
+                            anActionPerformed(BeforeEditorCopyAction(selectedText, System.currentTimeMillis()))
+                        }
+                        is PasteAction -> {
+                            val pastedText = copyPasteManager.contents?.asString() ?: return
+                            anActionPerformed(BeforeEditorPasteAction(pastedText, System.currentTimeMillis()))
+                        }
+                    }
+                }
+
+                private fun DataContext.getSelectedText(): String? {
+                    return getData(CommonDataKeys.EDITOR)?.selectionModel?.selectedText
+                }
+            })
+
         psiListenersIsSet = true
     }
 
-    private fun isEnabled(suggester: FeatureSuggester): Boolean {
-        return FeatureSuggesterSettings.isEnabled(suggester.getId())
+    private fun FeatureSuggester.isEnabled(): Boolean {
+        return FeatureSuggesterSettings.isEnabled(getId())
     }
 }

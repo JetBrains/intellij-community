@@ -12,6 +12,8 @@ import org.jetbrains.plugins.feature.suggester.FeatureUsageSuggestion
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
 
 internal fun isCommentAddedToLineStart(file: PsiFile, offset: Int): Boolean {
     val fileBeforeCommentText = file.text.substring(0, offset)
@@ -39,6 +41,14 @@ internal fun PsiElement.isIdentifier(): Boolean {
 
 internal fun PsiElement.resolveRef(): PsiElement? {
     return reference?.resolve()
+}
+
+internal fun Transferable.asString(): String? {
+    return try {
+        getTransferData(DataFlavor.stringFlavor) as? String
+    } catch (ex: Exception) {
+        null
+    }
 }
 
 internal fun createSuggestion(descriptorId: String?, popupMessage: String, usageDelta: Long = 1000): Suggestion {

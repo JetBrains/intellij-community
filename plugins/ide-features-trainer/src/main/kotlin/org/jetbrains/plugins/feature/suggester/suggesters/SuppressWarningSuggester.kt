@@ -18,7 +18,7 @@ class SuppressWarningSuggester : FeatureSuggester {
     }
 
     override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
-        when (val lastAction = actions.last()) {
+        when (val lastAction = actions.lastOrNull()) {
             is ChildAddedAction -> {
                 val child = lastAction.newChild
                 if (child is PsiAnnotation && child.text.startsWith("@SuppressWarnings")) {

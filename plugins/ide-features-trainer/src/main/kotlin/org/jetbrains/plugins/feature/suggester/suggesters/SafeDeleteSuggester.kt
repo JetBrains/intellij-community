@@ -31,7 +31,7 @@ class SafeDeleteSuggester : FeatureSuggester {
             //it's not user typing action, so let's do nothing
             return NoSuggestion
         }
-        val lastAction = actions.last()
+        val lastAction = actions.lastOrNull()
         if (lastAction is ChildRemovedAction && isDeclarationRemoving(lastAction)) {
             val delta = System.currentTimeMillis() - lastTimeForPopupMillis
             if (delta < suggestionCountdownMillis) {

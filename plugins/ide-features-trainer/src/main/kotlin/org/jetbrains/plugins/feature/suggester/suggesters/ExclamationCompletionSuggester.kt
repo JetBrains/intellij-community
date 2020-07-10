@@ -24,7 +24,7 @@ class ExclamationCompletionSuggester : FeatureSuggester {
 
     override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
         updateCompletionStatus()
-        when (val lastAction = actions.last()) {
+        when (val lastAction = actions.lastOrNull()) {
             is ChildAddedAction -> {
                 val child = lastAction.newChild ?: return NoSuggestion
                 val expr = child.getFramingExpression()

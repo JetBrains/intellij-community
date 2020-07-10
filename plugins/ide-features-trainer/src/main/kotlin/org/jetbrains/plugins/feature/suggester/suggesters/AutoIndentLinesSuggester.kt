@@ -18,7 +18,7 @@ class AutoIndentLinesSuggester : FeatureSuggester {
     override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
         val command = CommandProcessor.getInstance().currentCommand
         if (command != null) return NoSuggestion
-        val lastAction = actions.last()
+        val lastAction = actions.lastOrNull()
         if (lastAction is ChildReplacedAction) {
             val newChild = lastAction.newChild
             val oldChild = lastAction.oldChild

@@ -5,6 +5,8 @@ import com.intellij.testFramework.runInEdtAndWait
 @Deprecated("Tests must run only in EDT")
 class LineCommentingSuggesterTest : FeatureSuggesterTest() {
 
+    override val testingCodeFileName: String = "SimpleCodeExample.java"
+
     fun `testComment one line and get suggestion`() {
         testSuggestionFound({
             myFixture.apply {
