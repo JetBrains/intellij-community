@@ -179,10 +179,7 @@ public class DfaValueFactory {
         return getNull();
       }
       if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
-        PsiType initializerType = initializer.getType();
-        if (initializerType != null) {
-          return getConstant(variable, initializerType);
-        }
+        return getConstant(variable, type);
       }
       return null;
     }

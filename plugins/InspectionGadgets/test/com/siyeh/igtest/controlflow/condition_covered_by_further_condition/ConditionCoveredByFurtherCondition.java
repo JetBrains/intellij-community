@@ -9,6 +9,17 @@ public class ConditionCoveredByFurtherCondition {
         public void m() {
             if (this == C1 || this == C2) { /* ...*/ }
         }
+        
+        public static final Object C3 = getC();
+        public static final Object C4 = getC();
+        
+        public void m2() {
+            if (this == C3 || this == C4) {}
+        }
+        
+        private static Object getC() {
+            return new C();
+        }
     }
     
     public void testInstanceOf(Object arg) {
