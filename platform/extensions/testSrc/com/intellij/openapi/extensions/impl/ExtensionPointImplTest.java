@@ -143,15 +143,10 @@ public class ExtensionPointImplTest {
   @Test
   public void testIncompatibleAdapter() {
     ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
-
     extensionPoint.addExtensionAdapter(newStringAdapter());
-
-    try {
-      assertThat(extensionPoint.getExtensionList()).isEmpty();
-      fail("must throw");
-    }
-    catch (AssertionError ignored) {
-    }
+    assertThatThrownBy(() -> {
+      extensionPoint.getExtensionList();
+    }).hasMessageContaining("Extension class java.lang.String does not implement class java.lang.Integer");
   }
 
   @Test
