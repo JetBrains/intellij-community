@@ -15,3 +15,5 @@ Reparse data is undocumented, but it is just a array of wide chars with some unp
 
 This tool reads reparse point info and tries to fetch AppX name, so we can see if it points to Store or not.
 See https://youtrack.jetbrains.com/issue/PY-43082#focus=Comments-27-4224605.0-0
+
+Output is unicode 16-LE

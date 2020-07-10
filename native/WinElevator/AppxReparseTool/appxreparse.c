@@ -85,8 +85,9 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		return -1;
 	}
 	//stdlib wprintf will convert chars to 1-byte charset, which may break non-ascii chars (if any)
-	WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), textStart, wcsnlen_s(textStart, maxChars - firstPrintableChar),
-	              &numOfBytes, NULL);
+	// we print wide chars (16 bit LE) directly to stdout
+	const DWORD textLenInBytes = wcsnlen_s(textStart, maxChars - firstPrintableChar) * sizeof(WCHAR);
+	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), textStart, textLenInBytes, &numOfBytes, NULL);
 	CloseHandle(file);
 	return 0;
 }
