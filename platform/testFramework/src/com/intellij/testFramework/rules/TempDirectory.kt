@@ -36,6 +36,9 @@ class TempDirectory : ExternalResource() {
       return myRoot!!
     }
 
+  val rootPath: Path
+    get() = root.toPath()
+
   private val virtualFileRoot: VirtualFile
     get() {
       if (myVirtualFileRoot == null) {
