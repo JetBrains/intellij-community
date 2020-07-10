@@ -11,6 +11,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.messages.MessageBusConnection;
+import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -181,7 +182,14 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
                              path("impl/build/generated/sources/annotationProcessor/java/main")));
     }
 
-    assertSameElements(dirtyOutputRoots, expected);
+    if (isGradleNewerOrSameThen("6.3")) {
+      expected.addAll(asList(path("build/generated/sources/headers/java/main"),
+                             path("api/build/generated/sources/headers/java/main"),
+                             path("impl/build/generated/sources/headers/java/main")));
+    }
+
+    Assertions.assertThat(dirtyOutputRoots)
+      .containsExactlyInAnyOrderElementsOf(expected);
 
     assertCopied(langPart + "/main/my/pack/App.class");
     assertNotCopied(langPart + "/test/my/pack/AppTest.class");
@@ -211,7 +219,14 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
       expected.addAll(asList(path("build/generated/sources/annotationProcessor/java/main"),
                              path("build/generated/sources/annotationProcessor/java/test")));
     }
-    assertUnorderedElementsAreEqual(dirtyOutputRoots, expected);
+
+    if (isGradleNewerOrSameThen("6.3")) {
+      expected.addAll(asList(path("build/generated/sources/headers/java/main"),
+                             path("build/generated/sources/headers/java/test")));
+    }
+
+    Assertions.assertThat(dirtyOutputRoots)
+      .containsExactlyInAnyOrderElementsOf(expected);
 
     assertCopied(langPart + "/main/my/pack/App.class");
     assertCopied(langPart + "/test/my/pack/AppTest.class");
