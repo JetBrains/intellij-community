@@ -21,3 +21,29 @@ task setupRkernel {
     }
   }
 }
+
+task copyFsNotifierForRPlugin {
+  setupRkernel.dependsOn(it)
+  group = setupRkernel.group
+  outputs.file("$buildDir/rplugin/fsnotifier-linux")
+  copy {
+    from "$projectDir/../../bin/linux/"
+    into "$buildDir/rplugin/"
+    include "fsnotifier"
+    rename "fsnotifier", "fsnotifier-linux"
+  }
+  outputs.file("$buildDir/rplugin/fsnotifier-osx")
+  copy {
+    from "$projectDir/../../bin/mac/"
+    into "$buildDir/rplugin/"
+    include "fsnotifier"
+    rename "fsnotifier", "fsnotifier-osx"
+  }
+  outputs.file("$buildDir/rplugin/fsnotifier-win.exe")
+  copy {
+    from "$projectDir/../../bin/win/"
+    into "$buildDir/rplugin/"
+    include "fsnotifier.exe"
+    rename "fsnotifier.exe", "fsnotifier-win.exe"
+  }
+}
