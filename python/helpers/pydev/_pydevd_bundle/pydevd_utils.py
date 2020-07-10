@@ -341,6 +341,12 @@ def is_test_item_or_set_up_caller(trace):
         # This can happen when the exception has been raised inside a test item or set up caller.
         return False
 
+    abs_path, _, _ = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(trace.tb_next.tb_frame)
+    if not in_project_roots(abs_path):
+        # The next stack frame must be the frame of a project scope function, otherwise we risk stopping
+        # at a line a few times since multiple test framework functions we are looking for may appear in the stack.
+        return False
+
     # Set up and tear down methods can be checked immediately, since they are shared by both `pytest` and `unittest`.
     unittest_set_up_and_tear_down_methods = ('_callSetUp', '_callTearDown')
     if frame.f_code.co_name in unittest_set_up_and_tear_down_methods:
