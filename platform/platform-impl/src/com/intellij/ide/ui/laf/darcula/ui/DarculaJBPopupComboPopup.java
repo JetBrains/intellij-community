@@ -144,9 +144,11 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     return myPopup != null && myPopup.isVisible();
   }
 
+  // in JDK 11 ComboPopup.getList returns JList<Object>, not raw JList
+  @SuppressWarnings("unchecked")
   @Override
-  public JList<T> getList() {
-    return myProxyList;
+  public JList<Object> getList() {
+    return (JList<Object>)myProxyList;
   }
 
   @Override
