@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
@@ -97,20 +96,12 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
   private fun registerListener() {
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-
-      private val removedUrls: MutableList<String> = ArrayList()
-
-      override fun before(events: MutableList<out VFileEvent>) {
-        removedUrls.clear()
-        val toProcess = events.asSequence().filter { isFireStorageFileChangedEvent(it) }
-        toProcess.filterIsInstance<VFileDeleteEvent>().flatMapTo(removedUrls) { extractUrls(it.file) }
-      }
-
       override fun after(events: List<VFileEvent>) {
         //todo support move/rename
         //todo optimize: filter events before creating lists
         val toProcess = events.asSequence().filter { isFireStorageFileChangedEvent(it) }
         val addedUrls = toProcess.filterIsInstance<VFileCreateEvent>().flatMapTo(ArrayList()) { extractUrls(JpsPathUtil.pathToUrl(it.path)) }
+        val removedUrls = toProcess.filterIsInstance<VFileDeleteEvent>().flatMapTo(ArrayList()) { extractUrls(JpsPathUtil.pathToUrl(it.path)) }
         val changedUrls = toProcess.filterIsInstance<VFileContentChangeEvent>().flatMapTo(ArrayList()) { extractUrls(JpsPathUtil.pathToUrl(it.path)) }
         if (addedUrls.isNotEmpty() || removedUrls.isNotEmpty() || changedUrls.isNotEmpty()) {
           val change = JpsConfigurationFilesChange(addedUrls, removedUrls, changedUrls)
@@ -123,10 +114,6 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
       private fun extractUrls(url: String): Sequence<String> {
         val file = JpsPathUtil.urlToFile(url)
         return if (file.isDirectory) file.walkTopDown().map { JpsPathUtil.pathToUrl(it.canonicalPath) } else sequenceOf(url)
-      }
-
-      private fun extractUrls(file: VirtualFile): Sequence<String> {
-        return if (file.isDirectory) file.children.map { JpsPathUtil.pathToUrl(it.path) }.asSequence() else sequenceOf(file.path)
       }
     })
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
