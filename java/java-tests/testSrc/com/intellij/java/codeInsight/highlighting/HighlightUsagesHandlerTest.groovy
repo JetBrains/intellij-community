@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.injected.MyTestInjector
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+
 class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = JavaTestUtil.relativeJavaTestDataPath
 
@@ -235,12 +236,13 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void "test identifier highlighter for static imports"() {
-    myFixture.addClass '''
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), getTestRootDisposable()) {
+      myFixture.addClass '''
       class Foo {
         static void foo(int a) {}
         static void foo(int a, int b) {}
       }'''.stripIndent()
-    myFixture.configureByText 'Bar.java', '''
+      myFixture.configureByText 'Bar.java', '''
       import static Foo.fo<caret>o;
 
       class Bar {
@@ -248,7 +250,7 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
           foo(1);
         }
       }'''.stripIndent()
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
+
       def infos = myFixture.doHighlighting()
       //import highlighted twice: for each overloaded usage target
       assert infos.findAll {
@@ -285,8 +287,14 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void testMethodParameterEndOfIdentifier() {
-    configureFile()
-    assertElementUnderCaretRangesAndTexts("28:33 param", "60:65 param", "68:73 param")
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), getTestRootDisposable()) {
+      configureFile()
+      def infos = myFixture.doHighlighting()
+      Segment[] segments = infos.findAll {
+        it.severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY
+      }
+      assertSegments(segments, ["28:33 param", "60:65 param", "68:73 param"] as java.lang.String[])
+    }
   }
 
   void testRecordComponents() {
@@ -325,16 +333,6 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   private void assertRangesAndTexts(String... expected) {
     def highlighters = myFixture.editor.markupModel.allHighlighters
     assertSegments(highlighters, expected)
-  }
-
-  private void assertElementUnderCaretRangesAndTexts(String... expected) {
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
-      def infos = myFixture.doHighlighting()
-      Segment[] segments = infos.findAll {
-        it.severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY
-      }
-      assertSegments(segments, expected)
-    }
   }
 
   private void assertSegments(Segment[] highlighters, String... expected) {

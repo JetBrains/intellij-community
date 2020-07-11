@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -37,7 +38,7 @@ public final class IdentifierHighlighterPassFactory implements TextEditorHighlig
   }
 
   @TestOnly
-  public static void doWithHighlightingEnabled(@NotNull Runnable r) {
+  public static void doWithHighlightingEnabled(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull Runnable r) {
     TestModeFlags.set(ourTestingIdentifierHighlighting, true);
     try {
       r.run();
