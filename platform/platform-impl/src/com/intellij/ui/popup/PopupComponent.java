@@ -11,7 +11,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.FieldAccessor;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import com.sun.awt.AWTUtilities;
 
 import javax.swing.*;
 import java.awt.*;
@@ -203,7 +202,7 @@ public interface PopupComponent {
     private static void fixFlickering(Window wnd, boolean opaque) {
       try {
         if (StartupUiUtil.isUnderDarcula() && SystemInfo.isMac && Registry.is("darcula.fix.native.flickering") && wnd != null) {
-          AWTUtilities.setWindowOpaque(wnd, opaque);
+          wnd.setOpacity(opaque ? 1.0f : 0.0f);
         }
       } catch (Exception ignore) {}
     }
