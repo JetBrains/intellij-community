@@ -5,7 +5,9 @@ import circlet.automation.bootstrap.embeddedMavenServer
 import circlet.automation.bootstrap.publicMavenServer
 import circlet.components.circletWorkspace
 import circlet.pipelines.config.api.ScriptConfig
+import circlet.pipelines.config.dsl.script.exec.common.ProjectConfigValidationResult
 import circlet.pipelines.config.dsl.script.exec.common.evaluateModel
+import circlet.pipelines.config.dsl.script.exec.common.validate
 import circlet.pipelines.config.utils.AutomationCompilerConfiguration
 import circlet.platform.client.backgroundDispatcher
 import circlet.plugins.pipelines.utils.ObservableQueue
@@ -31,6 +33,7 @@ import org.slf4j.event.SubstituteLoggingEvent
 import org.slf4j.helpers.SubstituteLogger
 import runtime.Ui
 import runtime.reactive.*
+import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.nio.file.Paths
@@ -165,8 +168,10 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
         )
 
         try {
-          val outputFolder = createTempDir().absolutePath + "/"
-          val targetJar = outputFolder + "compiledJar.jar"
+          val tempDir = createTempDir()
+
+          val outputFolder = tempDir.absolutePath + "/"
+          val jarFile = File(outputFolder, "compiledJar.jar")
 
           // Primary option is to download from currently connected server, fallback on the public maven
           val server = circletWorkspace.workspace.value?.client?.server?.let { embeddedMavenServer(it) } ?: publicMavenServer
@@ -175,14 +180,39 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
 
           val compile = AutomationCompilerBootstrap(eventLogger, configuration = configuration).compile(
             Paths.get(scriptFile.path),
-            Paths.get(targetJar)
+            jarFile.toPath()
           )
 
           if (compile == 0) {
-            // TODO: fix script runtime path
-            val config = evaluateModel(targetJar, "")
-            _error.value = null
-            //_config.value = config
+            if (!jarFile.exists() || !jarFile.isFile) {
+              _config.value = null
+              _error.value = "Compilation failed: can't find output file ${jarFile.absolutePath}"
+            }
+            else {
+              val scriptRuntimePath = "$tempDir/space-automation-runtime.jar"
+              // See AutomationCompiler.kt's where we copy the runtime jar into the output folder for all resolver types
+              if (!File(scriptRuntimePath).exists()) {
+                _config.value = null
+                _error.value = "script-automation-runtime.jar is missing after script compilation."
+              } else {
+                val config = evaluateModel(jarFile.absolutePath, scriptRuntimePath)
+                val scriptConfig = config.config()
+
+                when (val validationResult = scriptConfig.validate()) {
+                  is ProjectConfigValidationResult.Failed -> {
+                    val message = validationResult.printUserFriendlyMessage()
+                    logData.error(message)
+                    _config.value = null
+                    _error.value = message
+                  }
+                  else -> {
+                    _error.value = null
+                    //_config.value = scriptConfig
+                  }
+                }
+
+              }
+            }
           }
           else {
             _error.value = "Compilation failed, $compile"
