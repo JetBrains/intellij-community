@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
@@ -83,7 +83,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
         if (e.stateChange == ItemEvent.SELECTED) {
           val provider = e.item as CheckoutProvider
           centerPanel.setContent(vcsComponents.getOrPut(provider, {
-            val cloneComponent = provider.buildVcsCloneComponent(project, modalityState)
+            val cloneComponent = provider.buildVcsCloneComponent(project, modalityState, dialogStateListener)
             Disposer.register(this, cloneComponent)
             cloneComponent
           }).getView())

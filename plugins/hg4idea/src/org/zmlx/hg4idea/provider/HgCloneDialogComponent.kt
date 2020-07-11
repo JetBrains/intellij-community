@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.provider
 
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
@@ -8,13 +8,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import org.zmlx.hg4idea.HgRememberedInputs
 import org.zmlx.hg4idea.util.HgUtil
 import java.nio.file.Paths
 
-class HgCloneDialogComponent(project: Project) : DvcsCloneDialogComponent(project,
-                                                                          HgUtil.DOT_HG,
-                                                                          HgRememberedInputs.getInstance()) {
+class HgCloneDialogComponent(project: Project, dialogStateListener: VcsCloneDialogComponentStateListener) :
+  DvcsCloneDialogComponent(project,
+                           HgUtil.DOT_HG,
+                           HgRememberedInputs.getInstance(),
+                           dialogStateListener) {
   private val LOG = Logger.getInstance(HgCloneDialogComponent::class.java)
 
   override fun doClone(project: Project, listener: CheckoutProvider.Listener) {

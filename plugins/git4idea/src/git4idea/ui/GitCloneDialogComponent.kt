@@ -25,10 +25,13 @@ import git4idea.remote.GitRememberedInputs
 import org.jetbrains.annotations.CalledInAwt
 import java.nio.file.Paths
 
-class GitCloneDialogComponent(project: Project, private val modalityState: ModalityState) :
+class GitCloneDialogComponent(project: Project,
+                              private val modalityState: ModalityState,
+                              dialogStateListener: VcsCloneDialogComponentStateListener) :
   DvcsCloneDialogComponent(project,
                            GitUtil.DOT_GIT,
-                           GitRememberedInputs.getInstance()) {
+                           GitRememberedInputs.getInstance(),
+                           dialogStateListener) {
   private val LOG = Logger.getInstance(GitCloneDialogComponent::class.java)
 
   private val executableManager get() = GitExecutableManager.getInstance()
@@ -130,10 +133,7 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
   }
 
   @CalledInAwt
-  private fun updateOkActionState(dialogStateListener: VcsCloneDialogComponentStateListener) {
-    dialogStateListener.onOkActionEnabled(versionCheckState == VersionCheckState.SUCCESS)
-  }
-
+  override fun isOkActionEnabled(): Boolean = super.isOkActionEnabled() && versionCheckState == VersionCheckState.SUCCESS
 
   private enum class VersionCheckState {
     NOT_CHECKED,
