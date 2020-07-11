@@ -49,5 +49,6 @@ iml_module(
         "//prebuilts/tools/common/m2/repository/xalan/xalan/2.7.2:jar",
         "//tools/idea/.idea/libraries:JUnit3[test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
+        "//prebuilts/studio/jdk:linux/jre/lib/rt",
     ],
 )

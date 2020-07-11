@@ -51,5 +51,6 @@ iml_module(
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/.idea/libraries:NanoXML",
         "//tools/idea/.idea/libraries:fastutil-min",
+        "//prebuilts/studio/jdk:linux/jre/lib/rt",
     ],
 )

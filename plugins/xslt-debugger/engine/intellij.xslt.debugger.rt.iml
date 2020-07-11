@@ -18,5 +18,14 @@
       </library>
     </orderEntry>
     <orderEntry type="library" exported="" name="Trove4j" level="project" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../../../../prebuilts/studio/jdk/linux/jre/lib/rt.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

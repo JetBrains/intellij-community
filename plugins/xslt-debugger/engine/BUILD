@@ -12,5 +12,6 @@ iml_module(
         "//tools/idea/plugins/xpath/xslt-rt:intellij.xpath.rt[module]",
         "//tools/idea/plugins/xslt-debugger/engine/lib:rmi-stubs",
         "//tools/idea/.idea/libraries:Trove4j",
+        "//prebuilts/studio/jdk:linux/jre/lib/rt",
     ],
 )
