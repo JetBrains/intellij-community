@@ -6,8 +6,6 @@ import com.intellij.formatting.ChildAttributes
 import com.intellij.formatting.Indent
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.formatter.blocks.special.MarkdownWrappingFormattingBlock
-import org.intellij.plugins.markdown.util.MarkdownPsiUtil
-import org.intellij.plugins.markdown.util.nextSiblings
 
 object MarkdownEditingAligner {
   private val DEFAULT_ATTRIBUTES = ChildAttributes(Indent.getNoneIndent(), null)
