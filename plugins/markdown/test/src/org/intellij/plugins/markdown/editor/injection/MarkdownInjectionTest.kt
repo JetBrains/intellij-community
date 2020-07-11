@@ -1,14 +1,37 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.injection
 
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import junit.framework.TestCase
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser.guessLanguageForInjection
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 
 class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
-  fun testFenceWithoutLang() {
+  fun `test fence with injection empty`() {
+    doTest(
+      """
+        ```xml<caret>
+        ```
+      """.trimIndent(), false)
+  }
+
+  fun `test fence without end token has no injection`() {
+    //Incorrect behavior of parser, it will treat end fence as content
+    //still let's fix this behavior
+    doTest(
+      """
+        ```xml
+        <<caret>```
+      """.trimIndent(), false)
+  }
+
+  fun `test fence without lang`() {
     doTest(
       """
         ```
@@ -20,7 +43,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent(), false)
   }
 
-  fun testFenceWithLang() {
+  fun `test fence with lang`() {
     doTest(
       """
         ```text
@@ -32,7 +55,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent(), true)
   }
 
-  fun testFenceDoesNotIgnoreLineSeparators() {
+  fun `test fence does not ignore line separators`() {
     val content =
       """
       class C {
@@ -62,7 +85,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
     assertEquals(content, file.findElementAt(editor.caretModel.offset)!!.containingFile.text)
   }
 
-  fun testFenceInQuotes() {
+  fun `test fence in quotes`() {
     val content =
       """
       > class C {
@@ -89,7 +112,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
     assertEquals(content, file.findElementAt(editor.caretModel.offset)!!.containingFile.text)
   }
 
-  fun testFenceInList() {
+  fun `test fence in list`() {
     val content =
       """
       |  class C {
@@ -116,7 +139,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
     assertEquals(content, file.findElementAt(editor.caretModel.offset)!!.containingFile.text)
   }
 
-  fun testFenceWithLangWithDisabledAutoInjection() {
+  fun `test fence with lang with disabled auto injection`() {
     val markdownSettings = MarkdownApplicationSettings.getInstance()
     val oldValue = markdownSettings.isDisableInjections
     try {
@@ -136,14 +159,46 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
     }
   }
 
-  fun testFenceWithXml() {
-    TestCase.assertNotNull(guessLanguageForInjection("xml"))
+  fun `test fence with xml`() {
+    assertNotNull(guessLanguageForInjection("xml"))
+  }
+
+  /**
+   * Special test for IDEA-242751
+   * It checks that in case of now elements in code fence still InjectionHost
+   * will return TextRange that is located inside of injection valid range
+   */
+  fun `test no exceptions on reusing completion copy with emptied original injection with lang`() {
+    val ilm = InjectedLanguageManager.getInstance(project)
+
+    doTest("```xml\n<caret><\n```", true)
+
+    caretRight()
+
+    CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor, 1)
+    LookupManager.getActiveLookup(editor)!!.hideLookup(true)
+
+    bringRealEditorBack()
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      backspace()
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      ilm.findInjectedElementAt(file, editor.caretModel.offset)
+
+      type('<')
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      assertNotNull(ilm.findInjectedElementAt(file, editor.caretModel.offset))
+    }
+
+    setupEditorForInjectedLanguage()
+    CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor, 1)
+    assertNotNull(LookupManager.getActiveLookup(editor)) // and no exceptions!
   }
 
   private fun doTest(text: String, shouldHaveInjection: Boolean) {
     configureFromFileText("test.md", text)
 
-    TestCase.assertEquals(
+    assertEquals(
       shouldHaveInjection, !file.findElementAt(editor.caretModel.offset)!!.language.isKindOf(MarkdownLanguage.INSTANCE)
     )
   }

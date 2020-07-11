@@ -59,6 +59,38 @@ object MarkdownCodeFenceUtils {
   }
 
   /**
+   * Check that code fence is reasonably formatted to accept injections
+   *
+   * Basically, it means that it has start and end code fence and at least
+   * one line (even empty) of text.
+   */
+  @JvmStatic
+  fun isAbleToAcceptInjections(host: MarkdownCodeFenceImpl): Boolean {
+    if (host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_END) }
+        || host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_START) }) {
+      return false
+    }
+
+    val newlines = host.children.count { MarkdownPsiUtil.WhiteSpaces.isNewLine(it) }
+
+    return newlines >= 2
+  }
+
+  /**
+   * Get valid empty range (in terms of Injection) for this code fence.
+   *
+   * Note, that this function should be used only if [getContent]
+   * returns null
+   */
+  @JvmStatic
+  fun getEmptyRange(host: MarkdownCodeFenceImpl): TextRange {
+    val start = host.children.find { it.hasType(MarkdownTokenTypes.FENCE_LANG) }
+                ?: host.children.find { it.hasType(MarkdownTokenTypes.CODE_FENCE_START) }
+
+    return TextRange.from(start!!.startOffsetInParent + start.textLength + 1, 0)
+  }
+
+  /**
    * Get code fence if [element] is part of it.
    *
    * Would also work for injected elements.

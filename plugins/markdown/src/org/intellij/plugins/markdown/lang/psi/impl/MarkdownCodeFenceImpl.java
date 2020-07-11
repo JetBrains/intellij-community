@@ -86,7 +86,7 @@ public class MarkdownCodeFenceImpl extends CompositePsiElement implements PsiLan
 
   @Override
   public boolean isValidHost() {
-    return true;
+    return MarkdownCodeFenceUtils.isAbleToAcceptInjections(this);
   }
 
   @Override
@@ -141,7 +141,7 @@ public class MarkdownCodeFenceImpl extends CompositePsiElement implements PsiLan
         List<PsiElement> elements = MarkdownCodeFenceUtils.getContent((MarkdownCodeFenceImpl)this.myHost, true);
 
         if (elements == null) {
-          return TextRange.EMPTY_RANGE;
+          return MarkdownCodeFenceUtils.getEmptyRange((MarkdownCodeFenceImpl) this.myHost);
         }
 
         final PsiElement first = elements.get(0);
