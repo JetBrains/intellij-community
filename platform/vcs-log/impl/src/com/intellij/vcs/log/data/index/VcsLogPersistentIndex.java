@@ -420,7 +420,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
               throw reThrown;
             }
             catch (Throwable t) {
-              LOG.error("Error while indexing", t);
+              request.processException(t);
             }
           }
         }
@@ -532,13 +532,13 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       }
     }
 
-    private void processException(@NotNull VcsException e) {
+    private void processException(@NotNull Throwable e) {
       int errorHash = ThrowableInterner.computeTraceHashCode(e);
       int errors = myIndexingErrors.get(myRoot).cacheOrGet(errorHash, 0);
       myIndexingErrors.get(myRoot).put(errorHash, errors + 1);
 
       if (errors <= LOGGED_ERRORS_COUNT) {
-        LOG.error(e);
+        LOG.error("Error while indexing " + myRoot.getName(), e);
       }
       else if (errors >= STOPPING_ERROR_COUNT) {
         myBigRepositoriesList.addRepository(myRoot);
