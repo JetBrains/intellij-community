@@ -183,40 +183,41 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
             jarFile.toPath()
           )
 
-          if (compile == 0) {
-            if (!jarFile.exists() || !jarFile.isFile) {
-              _config.value = null
-              _error.value = "Compilation failed: can't find output file ${jarFile.absolutePath}"
-            }
-            else {
-              val scriptRuntimePath = "$tempDir/space-automation-runtime.jar"
-              // See AutomationCompiler.kt's where we copy the runtime jar into the output folder for all resolver types
-              if (!File(scriptRuntimePath).exists()) {
-                _config.value = null
-                _error.value = "script-automation-runtime.jar is missing after script compilation."
-              } else {
-                val config = evaluateModel(jarFile.absolutePath, scriptRuntimePath)
-                val scriptConfig = config.config()
-
-                when (val validationResult = scriptConfig.validate()) {
-                  is ProjectConfigValidationResult.Failed -> {
-                    val message = validationResult.printUserFriendlyMessage()
-                    logData.error(message)
-                    _config.value = null
-                    _error.value = message
-                  }
-                  else -> {
-                    _error.value = null
-                    //_config.value = scriptConfig
-                  }
-                }
-
-              }
-            }
-          }
-          else {
+          if (compile != 0) {
+            _config.value = null
             _error.value = "Compilation failed, $compile"
+            return@using
           }
+
+          if (!jarFile.exists() || !jarFile.isFile) {
+            _config.value = null
+            _error.value = "Compilation failed: can't find output file ${jarFile.absolutePath}"
+            return@using
+          }
+
+          val scriptRuntimePath = "$tempDir/space-automation-runtime.jar"
+          // See AutomationCompiler.kt's where we copy the runtime jar into the output folder for all resolver types
+          if (!File(scriptRuntimePath).exists()) {
+            _config.value = null
+            _error.value = "script-automation-runtime.jar is missing after script compilation."
+            return@using
+          }
+
+          val config = evaluateModel(jarFile.absolutePath, scriptRuntimePath)
+          val scriptConfig = config.config()
+
+          val validationResult = scriptConfig.validate()
+
+          if (validationResult is ProjectConfigValidationResult.Failed) {
+            val message = validationResult.printUserFriendlyMessage()
+            logData.error(message)
+            _config.value = null
+            _error.value = message
+            return@using
+          }
+
+          _error.value = null
+          //_config.value = scriptConfig
 
         }
         catch (th: Throwable) {
