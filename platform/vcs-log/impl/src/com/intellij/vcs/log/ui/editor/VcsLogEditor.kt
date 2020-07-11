@@ -59,6 +59,8 @@ class VcsLogFile(component: JComponent, uis: List<VcsLogUiEx>, name: String) :
     _logUis.forEach(Disposer::dispose)
     _logUis.clear()
   }
+
+  override fun isValid(): Boolean = _logUis.isNotEmpty()
 }
 
 class VcsLogIconProvider : FileIconProvider {
