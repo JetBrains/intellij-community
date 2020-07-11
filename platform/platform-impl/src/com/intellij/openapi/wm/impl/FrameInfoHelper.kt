@@ -11,6 +11,7 @@ import sun.awt.AWTAccessor
 import java.awt.Frame
 import java.awt.Point
 import java.awt.Rectangle
+import java.awt.peer.ComponentPeer
 import java.awt.peer.FramePeer
 
 class FrameInfoHelper {
@@ -72,7 +73,9 @@ private fun updateFrameInfo(frameHelper: ProjectFrameHelper, lastNormalFrameBoun
   val frame = frameHelper.frame
   var extendedState = frame.extendedState
   if (SystemInfo.isMacOSLion) {
-    val peer = AWTAccessor.getComponentAccessor().getPeer(frame)
+    // java 11
+    @Suppress("USELESS_CAST")
+    val peer = AWTAccessor.getComponentAccessor().getPeer(frame) as ComponentPeer?
     if (peer is FramePeer) {
       // frame.state is not updated by jdk so get it directly from peer
       extendedState = peer.state
