@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
@@ -124,7 +125,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
-    return new GitCloneDialogComponent(project, modalityState);
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+    return new GitCloneDialogComponent(project, modalityState, dialogStateListener);
   }
 }
