@@ -2,6 +2,9 @@
 
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -13,25 +16,34 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Objects;
 
-final class BraceHighlighter implements StartupActivity.DumbAware {
+/**
+ * Listens for editor events and starts brace/identifier highlighting in the background
+ */
+final class BackgroundHighlighter implements StartupActivity.DumbAware {
   private final Alarm myAlarm = new Alarm();
 
   @Override
   public void runActivity(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return; // sorry, upsource
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !IdentifierHighlighterPassFactory.isEnabledInHeadlessMode()) return; // sorry, upsource
 
     Disposable activityDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.POST_STARTUP_ACTIVITY);
     Disposer.register(project, activityDisposable);
 
+    registerListeners(project, activityDisposable);
+  }
+
+  private void registerListeners(@NotNull Project project, @NotNull Disposable parentDisposable) {
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
     eventMulticaster.addCaretListener(new CaretListener() {
@@ -51,7 +63,7 @@ final class BraceHighlighter implements StartupActivity.DumbAware {
       public void caretRemoved(@NotNull CaretEvent e) {
         onCaretUpdate(e.getEditor(), project);
       }
-    }, activityDisposable);
+    }, parentDisposable);
 
     SelectionListener selectionListener = new SelectionListener() {
       @Override
@@ -68,21 +80,21 @@ final class BraceHighlighter implements StartupActivity.DumbAware {
           // Don't perform braces update in case of active/absent selection.
           return;
         }
-        updateBraces(project, editor);
+        updateHighlighted(project, editor);
       }
     };
-    eventMulticaster.addSelectionListener(selectionListener, activityDisposable);
+    eventMulticaster.addSelectionListener(selectionListener, parentDisposable);
 
     DocumentListener documentListener = new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         myAlarm.cancelAllRequests();
-        EditorFactory.getInstance().editors(e.getDocument(), project).forEach(editor -> updateBraces(project, editor));
+        EditorFactory.getInstance().editors(e.getDocument(), project).forEach(editor -> updateHighlighted(project, editor));
       }
     };
-    eventMulticaster.addDocumentListener(documentListener, activityDisposable);
+    eventMulticaster.addDocumentListener(documentListener, parentDisposable);
 
-    project.getMessageBus().connect(activityDisposable)
+    project.getMessageBus().connect(parentDisposable)
       .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent e) {
@@ -93,7 +105,7 @@ final class BraceHighlighter implements StartupActivity.DumbAware {
           }
           FileEditor newEditor = e.getNewEditor();
           if (newEditor instanceof TextEditor) {
-            updateBraces(project, ((TextEditor)newEditor).getEditor());
+            updateHighlighted(project, ((TextEditor)newEditor).getEditor());
           }
         }
       });
@@ -106,29 +118,42 @@ final class BraceHighlighter implements StartupActivity.DumbAware {
     if (editor.getProject() != project || selectionModel.hasSelection()) {
       return;
     }
-    updateBraces(project, editor);
+    updateHighlighted(project, editor);
   }
 
-  private void updateBraces(@NotNull Project project, @NotNull Editor editor) {
+  private void updateHighlighted(@NotNull Project project, @NotNull Editor editor) {
     if (editor.getDocument().isInBulkUpdate()) {
       return;
     }
 
-    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(project, editor, myAlarm, handler -> {
+    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (foundFile, newEditor) -> {
+      BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, foundFile);
       handler.updateBraces();
-      return false;
+
+      TextEditorHighlightingPass pass = new IdentifierHighlighterPassFactory().createHighlightingPass(foundFile, newEditor);
+      if (pass != null) {
+        ProgressManager.getInstance().runProcess(() -> {
+          pass.collectInformation(ProgressManager.getGlobalProgressIndicator());
+          pass.applyInformationToEditor();
+        }, new DaemonProgressIndicator());
+      }
     });
   }
 
   private void clearBraces(@NotNull Project project, @NotNull Editor editor) {
-    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(project, editor, myAlarm, handler -> {
+    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (foundFile, newEditor) -> {
+      BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, foundFile);
       handler.clearBraceHighlighters();
-      return false;
     });
   }
 
   @NotNull
   static Alarm getAlarm() {
-    return Objects.requireNonNull(POST_STARTUP_ACTIVITY.findExtension(BraceHighlighter.class)).myAlarm;
+    return Objects.requireNonNull(POST_STARTUP_ACTIVITY.findExtension(BackgroundHighlighter.class)).myAlarm;
+  }
+
+  @TestOnly
+  static void enableInTest(@NotNull Project project, @NotNull Disposable disposable) {
+    POST_STARTUP_ACTIVITY.findExtension(BackgroundHighlighter.class).registerListeners(project, disposable);
   }
 }

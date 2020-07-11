@@ -13,6 +13,7 @@ import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -116,6 +117,8 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   private fun highlightUnderCaret(): List<HighlightInfo> {
+    // wait for async "highlight identifier" computation to apply in com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     return myFixture.doHighlighting().filter { it.severity === HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY }
   }
 

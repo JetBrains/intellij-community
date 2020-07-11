@@ -7,13 +7,11 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil.BraceHighlighting
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -34,14 +32,11 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
-import com.intellij.util.Processor;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,56 +73,6 @@ public class BraceHighlightingHandler {
 
     myPsiFile = psiFile;
     myCodeInsightSettings = CodeInsightSettings.getInstance();
-  }
-
-  static void lookForInjectedAndMatchBracesInOtherThread(@NotNull Project project,
-                                                         @NotNull Editor editor,
-                                                         @NotNull Alarm alarm,
-                                                         @NotNull Processor<? super BraceHighlightingHandler> processor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!isValidEditor(editor)) return;
-
-    int offsetBefore = editor.getCaretModel().getOffset();
-
-    ReadAction
-      .nonBlocking(() -> {
-        PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-        return psiFile == null || psiFile instanceof PsiBinaryFile ? null : getInjectedFileIfAny(offsetBefore, psiFile);
-      })
-      .withDocumentsCommitted(project)
-      .expireWhen(() -> !isValidEditor(editor))
-      .coalesceBy(BraceHighlightingHandler.class, editor)
-      .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), foundFile -> {
-        if (foundFile == null) return;
-
-        if (foundFile.isValid() && offsetBefore == editor.getCaretModel().getOffset()) {
-          EditorEx newEditor = (EditorEx)InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, foundFile);
-          BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, foundFile);
-          processor.process(handler);
-        }
-        else {
-          lookForInjectedAndMatchBracesInOtherThread(project, editor, alarm, processor);
-        }
-      })
-      .submit(AppExecutorUtil.getAppExecutorService());
-  }
-
-  private static boolean isValidEditor(@NotNull Editor editor) {
-    Project editorProject = editor.getProject();
-    return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() &&
-           EditorActivityManager.getInstance().isVisible(editor);
-  }
-
-  @NotNull
-  private static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
-    PsiElement injectedElement = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, offset);
-    if (injectedElement != null /*&& !(injectedElement instanceof PsiWhiteSpace)*/) {
-      PsiFile injected = injectedElement.getContainingFile();
-      if (injected != null) {
-        return injected;
-      }
-    }
-    return psiFile;
   }
 
   @NotNull
@@ -372,7 +317,7 @@ public class BraceHighlightingHandler {
                                    @NotNull PsiFile psiFile,
                                    int leftBraceStart,
                                    int leftBraceEnd) {
-    new BraceHighlightingHandler(psiFile.getProject(), (EditorEx)editor, BraceHighlighter.getAlarm(), psiFile).showScopeHint(leftBraceStart, leftBraceEnd, null);
+    new BraceHighlightingHandler(psiFile.getProject(), (EditorEx)editor, BackgroundHighlighter.getAlarm(), psiFile).showScopeHint(leftBraceStart, leftBraceEnd, null);
   }
 
   /**

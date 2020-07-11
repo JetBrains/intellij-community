@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
@@ -250,6 +251,9 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
           foo(1);
         }
       }'''.stripIndent()
+
+      // wait for async "highlight identifier" computation to apply in com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
       def infos = myFixture.doHighlighting()
       //import highlighted twice: for each overloaded usage target
