@@ -149,7 +149,7 @@ private fun canPickupColorFromDisplay(): Boolean {
   }
 
   return try {
-    System.getSecurityManager()?.checkPermission(SecurityConstants.AWT.READ_DISPLAY_PIXELS_PERMISSION)
+    System.getSecurityManager()?.checkPermission(AWTPermission("readDisplayPixels"))
     true
   }
   catch (e: SecurityException) {
