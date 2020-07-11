@@ -93,4 +93,28 @@
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("createXMLStreamWriter").withParameters("java.io.OutputStream", "java.lang.String").definedInClass("javax.xml.stream.XMLInputFactory"))]]></place>
   </injection>
 
+  <injection language="RegExp" injector-id="java">
+    <display-name>Validate (org.apache.commons.lang3)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("matchesPattern").definedInClass("org.apache.commons.lang3.Validate"))]]></place>
+  </injection>
+
+  <injection language="RegExp" injector-id="java">
+    <display-name>Matchers (org.hamcrest)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("matchesPattern").definedInClass("org.hamcrest.Matchers"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("matchesRegex").definedInClass("org.hamcrest.Matchers"))]]></place>
+  </injection>
+
+  <injection language="XPath" injector-id="java">
+    <display-name>Matchers (org.hamcrest)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasXPath").definedInClass("org.hamcrest.Matchers"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasXPath").definedInClass("org.hamcrest.Matchers"))]]></place>
+  </injection>
+
+  <injection language="RegExp" injector-id="java">
+    <display-name>StringSubject (com.google.common.truth)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("matches").definedInClass("com.google.common.truth.StringSubject"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("containsMatch").definedInClass("com.google.common.truth.StringSubject"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("doesNotMatch").definedInClass("com.google.common.truth.StringSubject"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("doesNotContainMatch").definedInClass("com.google.common.truth.StringSubject"))]]></place>
+  </injection>
 </component>
