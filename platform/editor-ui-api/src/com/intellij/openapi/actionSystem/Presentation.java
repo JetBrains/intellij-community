@@ -177,10 +177,9 @@ public final class Presentation implements Cloneable {
   public Supplier<TextWithMnemonic> getTextWithMnemonic(@Nls(capitalization = Nls.Capitalization.Title) @NotNull Supplier<String> text,
                                                         boolean mayContainMnemonic) {
     Supplier<TextWithMnemonic> textWithMnemonic = () -> null;
-    String txt = text.get();
-    if (txt != null) {
+    if (text.get() != null) {
       if (mayContainMnemonic) {
-        textWithMnemonic = () -> TextWithMnemonic.parse(txt);
+        textWithMnemonic = () -> TextWithMnemonic.parse(text.get());
 
         UISettings uiSettings = UISettings.getInstanceOrNull();
         if (uiSettings != null && uiSettings.getDisableMnemonicsInControls()) {
@@ -189,7 +188,7 @@ public final class Presentation implements Cloneable {
         }
       }
       else {
-        textWithMnemonic = () -> TextWithMnemonic.fromPlainText(txt);
+        textWithMnemonic = () -> TextWithMnemonic.fromPlainText(text.get());
       }
     }
     return textWithMnemonic;
