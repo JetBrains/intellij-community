@@ -1,9 +1,11 @@
+package test;
+
 import java.util.ArrayList;
 import java.util.List;
 
 enum Enum1 {
   A(<error descr="Illegal forward reference">B</error>.var),
-  B(A.var),
+  B(test.Enum1.A.var),
   C(<error descr="Illegal forward reference">constant</error>),
   D(Enum1.constant),
   E(<error descr="Illegal forward reference">staticVar</error>),

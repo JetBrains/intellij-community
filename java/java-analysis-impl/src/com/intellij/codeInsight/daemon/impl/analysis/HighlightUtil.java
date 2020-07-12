@@ -2288,15 +2288,13 @@ public final class HighlightUtil {
     PsiExpression qualifierExpr = expression.getQualifierExpression();
     // simple reference can be illegal (JLS 8.3.3)
     if (qualifierExpr == null) return false;
-    if (Objects.equals(qualifierExpr.getText(), containingClass.getName())) {
-      PsiClassType enumType = TypeUtils.getType(CommonClassNames.JAVA_LANG_ENUM, referencedField);
+    if (!(qualifierExpr instanceof PsiReferenceExpression)) return true;
+
+    String qualifiedExprName = ((PsiReferenceExpression)qualifierExpr).getQualifiedName();
+    if (qualifiedExprName.equals(containingClass.getQualifiedName())) {
       // static fields that are constant variables (4.12.4) are initialized before other static fields (12.4.2),
       // so a qualified reference to the constant variable is possible.
-      // And we have to ignore a reference to the enum constant which is not a constant variable (4.12.4, 15.29).
-      if (!enumType.isAssignableFrom(referencedField.getType()) && referencedField.computeConstantValue() != null) {
-        return true;
-      }
-      return false;
+      return PsiUtil.isCompileTimeConstant(referencedField);
     }
     return true;
   }
