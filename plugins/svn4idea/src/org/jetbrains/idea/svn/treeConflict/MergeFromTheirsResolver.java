@@ -55,13 +55,12 @@ import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.partitioningBy;
 import static java.util.stream.Collectors.toMap;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-public class MergeFromTheirsResolver extends BackgroundTaskGroup {
+public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
   @NotNull private final SvnVcs myVcs;
   @NotNull private final TreeConflictDescription myDescription;
   @NotNull private final Change myChange;
@@ -74,7 +73,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   @NotNull private final List<Change> myTheirsChanges;
   @NotNull private final List<Change> myTheirsBinaryChanges;
-  private List<TextFilePatch> myTextPatches;
+  private List<FilePatch> myTextPatches;
   private final VirtualFile myBaseForPatch;
   private boolean myThereAreCreations;
 
@@ -87,8 +86,8 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     myDescription = description;
     myChange = change;
     myCommittedRevision = revision;
-    myOldFilePath = requireNonNull(myChange.getBeforeRevision()).getFile();
-    myNewFilePath = requireNonNull(myChange.getAfterRevision()).getFile();
+    myOldFilePath = Objects.requireNonNull(myChange.getBeforeRevision()).getFile();
+    myNewFilePath = Objects.requireNonNull(myChange.getAfterRevision()).getFile();
     myBaseForPatch = findValidParentAccurately(myNewFilePath);
     myOldPresentation = TreeConflictRefreshablePanel.filePath(myOldFilePath);
     myNewPresentation = TreeConflictRefreshablePanel.filePath(myNewFilePath);
@@ -187,7 +186,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             List<FilePatch> patches = ApplyPatchSaveToFileExecutor.toOnePatchGroup(patchGroupsToApply, myBaseDir);
-            new PatchApplier(requireNonNull(myProject), myBaseDir, patches, localList, null).execute(false, true);
+            new PatchApplier(Objects.requireNonNull(myProject), myBaseDir, patches, localList, null).execute(false, true);
             myThereAreCreations =
               patches.stream().anyMatch(patch -> patch.isNewFile() || !Objects.equals(patch.getAfterName(), patch.getBeforeName()));
           }
@@ -212,7 +211,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void createPatches() throws VcsException {
-    List<FilePatch> patches = buildPatch(myVcs.getProject(), myTheirsChanges, requireNonNull(myBaseForPatch).getPath(), false);
+    List<FilePatch> patches = buildPatch(myVcs.getProject(), myTheirsChanges, Objects.requireNonNull(myBaseForPatch).getPath(), false);
     myTextPatches = map(patches, TextFilePatch.class::cast);
   }
 
@@ -270,7 +269,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   private static void applyBinaryChange(@NotNull Change change) throws IOException, VcsException {
     if (change.getAfterRevision() == null) {
-      FilePath path = requireNonNull(change.getBeforeRevision()).getFile();
+      FilePath path = Objects.requireNonNull(change.getBeforeRevision()).getFile();
       VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
       if (file == null) {
         throw new VcsException("Can not delete file: " + path.getPath(), true);
@@ -279,7 +278,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     }
     else {
       FilePath file = change.getAfterRevision().getFile();
-      String parentPath = requireNonNull(file.getParentPath()).getPath();
+      String parentPath = Objects.requireNonNull(file.getParentPath()).getPath();
       VirtualFile parentFile = VfsUtil.createDirectoryIfMissing(parentPath);
       if (parentFile == null) {
         throw new VcsException("Can not create directory: " + parentPath, true);
@@ -357,7 +356,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   @NotNull
   private static FilePath rebasePath(@NotNull FilePath oldBase, @NotNull FilePath newBase, @NotNull FilePath path) {
-    String relativePath = requireNonNull(getRelativePath(oldBase.getPath(), path.getPath(), '/'));
+    String relativePath = Objects.requireNonNull(getRelativePath(oldBase.getPath(), path.getPath(), '/'));
     return VcsUtil.getFilePath(newBase.getPath() + "/" + relativePath, path.isDirectory());
   }
 
@@ -399,8 +398,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     }
   }
 
-  @NotNull
-  private List<SvnChangeList> loadSvnChangeListsForPatch(@NotNull TreeConflictDescription description) throws VcsException {
+  private @NotNull List<SvnChangeList> loadSvnChangeListsForPatch(@NotNull TreeConflictDescription description) throws VcsException {
     long max = description.getSourceRightVersion().getPegRevision();
     long min = description.getSourceLeftVersion().getPegRevision();
     SvnRepositoryLocation location = new SvnRepositoryLocation(description.getSourceRightVersion().getRepositoryRoot());
@@ -409,9 +407,10 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     settings.CHANGE_BEFORE = String.valueOf(max);
     settings.CHANGE_AFTER = String.valueOf(min);
 
+    @SuppressWarnings("rawtypes")
+    CachingCommittedChangesProvider provider = Objects.requireNonNull(myVcs.getCachingCommittedChangesProvider());
     //noinspection unchecked
-    List<SvnChangeList> committedChanges = requireNonNull(myVcs.getCachingCommittedChangesProvider())
-      .getCommittedChanges(settings, location, 0);
+    List<SvnChangeList> committedChanges = provider.getCommittedChanges(settings, location, 0);
     return filter(committedChanges, changeList -> changeList.getNumber() != min);
   }
 

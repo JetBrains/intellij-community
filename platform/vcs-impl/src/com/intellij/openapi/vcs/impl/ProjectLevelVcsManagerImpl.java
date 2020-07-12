@@ -189,7 +189,9 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public @Nullable VirtualFile getVcsRootFor(@Nullable FilePath file) {
-    if (file == null || myProject.isDisposed()) return null;
+    if (file == null || myProject.isDisposed()) {
+      return null;
+    }
 
     NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
     return root != null ? root.root : null;

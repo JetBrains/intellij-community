@@ -15,7 +15,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchFileHeaderInfo;
+import com.intellij.openapi.diff.impl.patch.PatchReader;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -29,6 +32,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Couple;
@@ -85,8 +89,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final ZipperUpdater myLoadQueue;
   private final TextFieldWithBrowseButton myPatchFile;
 
-  private final List<AbstractFilePatchInProgress> myPatches;
-  private final List<? extends ShelvedBinaryFilePatch> myBinaryShelvedPatches;
+  private final List<AbstractFilePatchInProgress<?>> myPatches;
+  private final List<ShelvedBinaryFilePatch> myBinaryShelvedPatches;
   @NotNull private final EditorNotificationPanel myErrorNotificationPanel;
   @NotNull private final MyChangeTreeList myChangesTreeList;
   @NotNull private final JBLoadingPanel myChangesTreeLoadingPanel;
@@ -112,32 +116,33 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private String myHelpId = "reference.dialogs.vcs.patch.apply"; //NON-NLS
   private final boolean myShouldUpdateChangeListName;
 
-  public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<? extends ApplyPatchExecutor> executors,
-                                        @NotNull final ApplyPatchMode applyPatchMode, @NotNull final VirtualFile patchFile) {
+  public ApplyPatchDifferentiatedDialog(Project project, ApplyPatchExecutor<?> callback, List<? extends ApplyPatchExecutor<?>> executors,
+                                        @NotNull ApplyPatchMode applyPatchMode, @NotNull VirtualFile patchFile) {
     this(project, callback, executors, applyPatchMode, patchFile, null, null, null, null, null, false);
   }
 
-  public ApplyPatchDifferentiatedDialog(final Project project,
-                                        final ApplyPatchExecutor callback,
-                                        final List<? extends ApplyPatchExecutor> executors,
-                                        @NotNull final ApplyPatchMode applyPatchMode,
-                                        @NotNull final List<? extends TextFilePatch> patches,
-                                        @Nullable final LocalChangeList defaultList) {
+  public ApplyPatchDifferentiatedDialog(Project project,
+                                        ApplyPatchExecutor<?> callback,
+                                        List<? extends ApplyPatchExecutor<?>> executors,
+                                        @NotNull ApplyPatchMode applyPatchMode,
+                                        @NotNull List<FilePatch> patches,
+                                        @Nullable ChangeList defaultList) {
     this(project, callback, executors, applyPatchMode, null, patches, defaultList, null, null, null, false);
   }
 
-  public ApplyPatchDifferentiatedDialog(final Project project,
-                                        final ApplyPatchExecutor callback,
-                                        final List<? extends ApplyPatchExecutor> executors,
-                                        @NotNull final ApplyPatchMode applyPatchMode,
-                                        @Nullable final VirtualFile patchFile,
-                                        @Nullable final List<? extends TextFilePatch> patches,
-                                        @Nullable final LocalChangeList defaultList,
-                                        @Nullable List<? extends ShelvedBinaryFilePatch> binaryShelvedPatches,
-                                        @Nullable Collection<? extends Change> preselectedChanges,
+  public ApplyPatchDifferentiatedDialog(Project project,
+                                        ApplyPatchExecutor<?> callback,
+                                        List<? extends ApplyPatchExecutor<?>> executors,
+                                        @NotNull ApplyPatchMode applyPatchMode,
+                                        @Nullable VirtualFile patchFile,
+                                        @Nullable List<FilePatch> patches,
+                                        @Nullable ChangeList defaultList,
+                                        @Nullable List<ShelvedBinaryFilePatch> binaryShelvedPatches,
+                                        @Nullable Collection<Change> preselectedChanges,
                                         @Nullable String externalCommitMessage,
                                         boolean useProjectRootAsPredefinedBase) {
     super(project, true);
+
     myCallback = callback;
     myExecutors = executors;
     myUseProjectRootAsPredefinedBase = useProjectRootAsPredefinedBase;
@@ -278,9 +283,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myLoadQueue.queue(myUpdater);
   }
 
-  private void init(List<? extends FilePatch> patches) {
-    final List<AbstractFilePatchInProgress> matchedPatches =
-      new MatchPatchPaths(myProject).execute(patches, myUseProjectRootAsPredefinedBase);
+  private void init(@NotNull List<FilePatch> patches) {
+    List<AbstractFilePatchInProgress<?>> matchedPatches = new MatchPatchPaths(myProject).execute(patches, myUseProjectRootAsPredefinedBase);
     //todo add shelved binary patches
     ApplicationManager.getApplication().invokeLater(() -> {
       myPatches.clear();
@@ -322,14 +326,16 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   @CalledInAwt
-  private void runExecutor(ApplyPatchExecutor executor) {
-    final Collection<AbstractFilePatchInProgress> included = getIncluded();
-    if (included.isEmpty()) return;
-    final MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups = new MultiMap<>();
-    for (AbstractFilePatchInProgress patchInProgress : included) {
+  private void runExecutor(ApplyPatchExecutor<AbstractFilePatchInProgress<?>> executor) {
+    Collection<AbstractFilePatchInProgress<?>> included = getIncluded();
+    if (included.isEmpty()) {
+      return;
+    }
+    MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroups = new MultiMap<>();
+    for (AbstractFilePatchInProgress<?> patchInProgress : included) {
       patchGroups.putValue(patchInProgress.getBase(), patchInProgress);
     }
-    final LocalChangeList selected = getSelectedChangeList();
+    LocalChangeList selected = getSelectedChangeList();
     FilePresentationModel presentation = myRecentPathFileChange.get();
     VirtualFile vf = presentation != null ? presentation.getVf() : null;
     executor.apply(getOriginalRemaining(), patchGroups, selected, vf == null ? null : vf.getName(),
@@ -401,8 +407,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (!ContainerUtil.isEmpty(myBinaryShelvedPatches)) {
         filePatches.addAll(myBinaryShelvedPatches);
       }
-      final List<AbstractFilePatchInProgress> matchedPatches =
-        new MatchPatchPaths(myProject).execute(filePatches, myUseProjectRootAsPredefinedBase);
+      List<AbstractFilePatchInProgress<?>> matchedPatches = new MatchPatchPaths(myProject).execute(filePatches, myUseProjectRootAsPredefinedBase);
 
       ApplicationManager.getApplication().invokeLater(() -> {
         if (myShouldUpdateChangeListName) {
@@ -663,7 +668,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         }
         else {
           autoBases.add(null);
-          final MapPopup step = new MapPopup(autoBases, myNewBaseSelector);
+          ListPopupStep<VirtualFile> step = new MapPopup(autoBases, myNewBaseSelector);
           JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(myProject);
         }
       }
@@ -971,7 +976,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MyChangeNodeDecorator implements ChangeNodeDecorator {
+  private final class MyChangeNodeDecorator implements ChangeNodeDecorator {
     @Override
     public void decorate(@NotNull Change change, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
       if (change instanceof AbstractFilePatchInProgress.PatchChange) {
@@ -1020,7 +1025,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       .filesEqual(patchInProgress.myIoCurrentBase, new File(myProject.getBasePath(), patchInProgress.getOriginalBeforePath()));
   }
 
-  private Collection<AbstractFilePatchInProgress> getIncluded() {
+  private Collection<AbstractFilePatchInProgress<?>> getIncluded() {
     return map(myChangesTreeList.getIncludedChanges(), AbstractFilePatchInProgress.PatchChange::getPatchInProgress);
   }
 

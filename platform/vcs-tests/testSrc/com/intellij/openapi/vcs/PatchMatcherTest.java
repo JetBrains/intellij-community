@@ -19,7 +19,7 @@ public class PatchMatcherTest extends HeavyPlatformTestCase {
     TextFilePatch patch = PatchAutoInitTest.create("../file.txt");
 
     MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    List<AbstractFilePatchInProgress> filePatchInProgresses = iterator.execute(Collections.singletonList(patch));
+    List<AbstractFilePatchInProgress<?>> filePatchInProgresses = iterator.execute(Collections.singletonList(patch));
 
     assertEquals(1, filePatchInProgresses.size());
     assertEquals(ioFile.getParent(), filePatchInProgresses.get(0).getBase().toNioPath());

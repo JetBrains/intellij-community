@@ -43,14 +43,14 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   public void testSimple() {
-    final VirtualFile root = getOrCreateProjectBaseDir();
-    final VirtualFile dir = createChildDirectory(root, "dir");
+    VirtualFile root = getOrCreateProjectBaseDir();
+    VirtualFile dir = createChildDirectory(root, "dir");
     createChildData(dir, "somefile.txt");
 
     final TextFilePatch patch = create("dir/somefile.txt");
 
-    final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> filePatchInProgresses = iterator.execute(Collections.singletonList(patch));
+    MatchPatchPaths iterator = new MatchPatchPaths(myProject);
+    List<AbstractFilePatchInProgress<?>> filePatchInProgresses = iterator.execute(Collections.singletonList(patch));
 
     assertEquals(1, filePatchInProgresses.size());
     assertEquals(root, filePatchInProgresses.get(0).getBase());
@@ -61,7 +61,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
   }
 
   static TextFilePatch create(String s) {
-    final TextFilePatch patch = new TextFilePatch(null);
+    TextFilePatch patch = new TextFilePatch(null);
     patch.setBeforeName(s);
     patch.setAfterName(s);
     return patch;
@@ -110,7 +110,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     ShelvedBinaryFilePatch shelvedBinaryPatch = createShelvedBinarySimplePatch("c/" + BINARY_FILENAME);
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(Arrays.asList(patch1, patch2, patch3, patch4, shelvedBinaryPatch));
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(Arrays.asList(patch1, patch2, patch3, patch4, shelvedBinaryPatch));
     checkPath(result, "b/c/f1.txt", Arrays.asList(a, e), 0);
     checkPath(result, "a/b/c/f2.txt", Collections.singletonList(root), 0);
     checkPath(result, "e/b/c/f3.txt", Collections.singletonList(root), 0);
@@ -137,7 +137,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
 
     ShelvedBinaryFilePatch shelvedBinaryPatch = createShelvedBinarySimplePatch(cBinary);
     final MatchPatchPaths matchPatchPaths = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> resultProjectBase = matchPatchPaths.execute(Collections.singletonList(shelvedBinaryPatch));
+    final List<AbstractFilePatchInProgress<?>> resultProjectBase = matchPatchPaths.execute(Collections.singletonList(shelvedBinaryPatch));
     checkPath(resultProjectBase, cBinary, Arrays.asList(root, b, f), 0);
     assertEquals(resultProjectBase.get(0).getBase(), getOrCreateProjectBaseDir());
   }
@@ -180,8 +180,8 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     VfsTestUtil.createFile(root, "platform/util/src/com/intellij/openapi/util/io/I.java");
     VfsTestUtil.createFile(root, "platform/util/completely/different/folder/J.java");
 
-    final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
+    MatchPatchPaths iterator = new MatchPatchPaths(myProject);
+    List<AbstractFilePatchInProgress<?>> result = iterator.execute(Collections.singletonList(patch));
     checkPath(result, filePath, Collections.singletonList(root), 0);
   }
 
@@ -199,7 +199,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
     String path = "platform/platform-tests/testSrc/com/intellij/openapi/editor/colors/impl/A.java";
     TextFilePatch patch = create(path);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(Collections.singletonList(patch));
     checkPath(result, path, Collections.singletonList(root), 0);
   }
 
@@ -215,7 +215,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     String prefix = "community/platform/";
     String path = "platform-tests/testSrc/com/intellij/openapi/editor/colors/A.java";
     TextFilePatch patch = create(prefix + path);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(Collections.singletonList(patch));
     checkPath(result, path, Collections.singletonList(root), StringUtil.split(prefix, "/").size());
   }
 
@@ -230,7 +230,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     TextFilePatch patch = createFileAddition("module-new/src/com/intellij/openapi/tests/SomeNewFile.java");
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(Collections.singletonList(patch));
     checkPath(result, "module-new/src/com/intellij/openapi/tests/SomeNewFile.java", Collections.singletonList(root), 0);
   }
 
@@ -251,7 +251,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     patch.addHunk(hunk);
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(Collections.singletonList(patch));
     checkPath(result, ".idea/module.xml", Collections.singletonList(root), 0);
   }
 
@@ -269,11 +269,11 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     TextFilePatch patch2 = create("../../module-2/.idea/module.xml");
 
     final MatchPatchPaths iterator1 = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result1 = iterator1.execute(Collections.singletonList(patch1), true);
+    final List<AbstractFilePatchInProgress<?>> result1 = iterator1.execute(Collections.singletonList(patch1), true);
     checkPath(result1, "module-1/.idea/module.xml", Collections.singletonList(grandRoot), 2);
 
     final MatchPatchPaths iterator2 = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result2 = iterator2.execute(Collections.singletonList(patch2), true);
+    final List<AbstractFilePatchInProgress<?>> result2 = iterator2.execute(Collections.singletonList(patch2), true);
     checkPath(result2, "module-2/.idea/module.xml", Collections.singletonList(grandRoot), 2);
   }
 
@@ -288,12 +288,12 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     final ShelvedBinaryFilePatch patch = createShelvedBinarySimplePatch(".idea/module.bin");
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(Collections.singletonList(patch));
     checkPath(result, ".idea/module.bin", Collections.singletonList(root), 0);
   }
 
-  private static void checkPath(List<AbstractFilePatchInProgress> filePatchInProgresses, String path, List<VirtualFile> bases, int strip) {
-    for (AbstractFilePatchInProgress patch : filePatchInProgresses) {
+  private static void checkPath(List<AbstractFilePatchInProgress<?>> filePatchInProgresses, String path, List<VirtualFile> bases, int strip) {
+    for (AbstractFilePatchInProgress<?> patch : filePatchInProgresses) {
       if (bases.contains(patch.getBase()) && path.equals(patch.getCurrentPath()) && (patch.getCurrentStrip() == strip)) {
         return;
       }
@@ -302,9 +302,9 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
          "'; results: " + printPatches(filePatchInProgresses));
   }
 
-  private static String printPatches(final List<AbstractFilePatchInProgress> filePatchInProgresses) {
-    final StringBuilder sb = new StringBuilder();
-    for (AbstractFilePatchInProgress patch : filePatchInProgresses) {
+  private static String printPatches(@NotNull List<AbstractFilePatchInProgress<?>> filePatchInProgresses) {
+    StringBuilder sb = new StringBuilder();
+    for (AbstractFilePatchInProgress<?> patch : filePatchInProgresses) {
       sb.append("\n").append(patch.getBase().getPath()).append(" + ").append(patch.getCurrentPath()).
         append(' ').append(patch.getCurrentStrip());
     }
@@ -333,7 +333,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     ShelvedBinaryFilePatch shelvedBinaryPatch = createShelvedBinarySimplePatch("t/b/c/" + BINARY_FILENAME);
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(Arrays.asList(patch1, patch2, patch3, patch4, shelvedBinaryPatch));
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(Arrays.asList(patch1, patch2, patch3, patch4, shelvedBinaryPatch));
 
     checkPath(result, "b/c/f1.txt", Collections.singletonList(a), 1);
     checkPath(result, "b/c/f2.txt", Collections.singletonList(a), 1);
@@ -374,7 +374,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     final TextFilePatch patch2 = create("h1/c/f2.txt");
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(Arrays.asList(patch1, patch2));
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(Arrays.asList(patch1, patch2));
     checkPath(result, "a1/b1/c/f1.txt", Collections.singletonList(e), 0);
     checkPath(result, "h1/c/f2.txt", Collections.singletonList(e), 0);
   }
@@ -398,7 +398,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     final ShelvedBinaryFilePatch shelvedBinaryPatch = createShelvedBinarySimplePatch("a1/b1/c/" + BINARY_FILENAME);
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(Arrays.asList(patch1, patch2, shelvedBinaryPatch));
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(Arrays.asList(patch1, patch2, shelvedBinaryPatch));
     checkPath(result, "c/f1.txt", Collections.singletonList(b), 2);
     checkPath(result, "c/f2.txt", Collections.singletonList(b), 1);
     checkPath(result, "c/" + BINARY_FILENAME, Collections.singletonList(b), 2);
@@ -424,7 +424,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     TextFilePatch patch5 = create("h1/c/f10.txt");
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(Arrays.asList(patch1, patch2, patch3, patch4, patch5));
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(Arrays.asList(patch1, patch2, patch3, patch4, patch5));
     checkPath(result, "c/f1.txt", Collections.singletonList(b), 2);
     checkPath(result, "f2.txt", Collections.singletonList(c), 2);
     checkPath(result, "b/c/f3.txt", Collections.singletonList(a), 0);
@@ -461,7 +461,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     ShelvedBinaryFilePatch shelvedBinaryPatch2 = createShelvedBinarySimplePatch("mod2/b/c/" + BINARY_FILENAME);
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result =
+    final List<AbstractFilePatchInProgress<?>> result =
       iterator.execute(Arrays.asList(patch1, patch2, patch3, shelvedBinaryPatch1, shelvedBinaryPatch2));
     checkPath(result, "mod1/b/c/f1.txt", Collections.singletonList(a), 0);
     checkPath(result, "mod2/b/c/f1.txt", Collections.singletonList(a), 0);
@@ -540,7 +540,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
                                                         "\\ No newline at end of file\n").readTextPatches();
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(patches);
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(patches);
     checkPath(result, "coupleFiles/file1.txt", Collections.singletonList(b2), 0);
   }
 
@@ -612,7 +612,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
                                                         "\\ No newline at end of file\n").readTextPatches();
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> result = iterator.execute(patches);
+    final List<AbstractFilePatchInProgress<?>> result = iterator.execute(patches);
     checkPath(result, "coupleFiles/file1.txt", Collections.singletonList(b1), 0);
   }
 
@@ -644,7 +644,7 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
                                                   " eeee\n" +
                                                   "\\ No newline at end of file\n").readTextPatches();
 
-    List<AbstractFilePatchInProgress> result = new MatchPatchPaths(myProject).execute(patches, true);
+    List<AbstractFilePatchInProgress<?>> result = new MatchPatchPaths(myProject).execute(patches, true);
     checkPath(result, "fff1.txt", Collections.singletonList(root), 0);
     result = new MatchPatchPaths(myProject).execute(patches);
     checkPath(result, "fff1.txt", Collections.singletonList(subdir), 0);

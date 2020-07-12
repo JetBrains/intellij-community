@@ -26,7 +26,6 @@ import java.util.Collection;
  * @author Kirill Likhodedov
  */
 public abstract class GitChangesSaver {
-
   private static final Logger LOG = Logger.getInstance(GitChangesSaver.class);
 
   @NotNull protected final Project myProject;
@@ -136,7 +135,7 @@ public abstract class GitChangesSaver {
     return GitBundle.getString("save.load.conflict.dialog.diff.left.title");
   }
 
-  protected class ShowSavedChangesNotificationListener implements NotificationListener {
+  protected final class ShowSavedChangesNotificationListener implements NotificationListener {
     @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("saver")) {
         showSavedChanges();

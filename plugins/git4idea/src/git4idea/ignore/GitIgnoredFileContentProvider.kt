@@ -21,7 +21,6 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.repo.GitRepositoryManager
-import java.lang.System.lineSeparator
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -39,7 +38,7 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     val ignoreFileVcsRoot = VcsUtil.getVcsRootFor(project, ignoreFileRoot) ?: return ""
 
     val content = StringBuilder()
-    val lineSeparator = lineSeparator()
+    val lineSeparator = System.lineSeparator()
     val untrackedFiles = getUntrackedFiles(ignoreFileVcsRoot)
 
     if (untrackedFiles.isEmpty()) return "" //if there is no untracked files this mean nothing to ignore
@@ -125,8 +124,9 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
             && shouldNotConsiderInternalIgnoreFile(ignoredBean, ignoreFileRoot)
   }
 
-  private fun shouldIgnoreByMask(ignoredBean: IgnoredFileDescriptor, untrackedFiles: Set<FilePath>) =
-    untrackedFiles.any { ignoredBean.matchesFile(it) }
+  private fun shouldIgnoreByMask(ignoredBean: IgnoredFileDescriptor, untrackedFiles: Set<FilePath>): Boolean {
+    return untrackedFiles.any { ignoredBean.matchesFile(it) }
+  }
 
   private fun shouldNotConsiderInternalIgnoreFile(ignoredBean: IgnoredFileDescriptor, ignoreFileRoot: VirtualFile): Boolean {
     val insideDirectoryStore = ignoredBean.path?.contains(Project.DIRECTORY_STORE_FOLDER) ?: false
@@ -137,19 +137,24 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     return true
   }
 
-  override fun buildUnignoreContent(ignorePattern: String) = StringBuilder().apply {
-    append(lineSeparator())
-    append("!$ignorePattern")
-  }.toString()
+  override fun buildUnignoreContent(ignorePattern: String): String {
+    val builder = StringBuilder()
+    builder.append(System.lineSeparator())
+    builder.append('!').append(ignorePattern)
+    return builder.toString()
+  }
 
-  override fun buildIgnoreGroupDescription(ignoredFileProvider: IgnoredFileProvider) =
-    prependCommentHashCharacterIfNeeded(ignoredFileProvider.ignoredGroupDescription)
+  override fun buildIgnoreGroupDescription(ignoredFileProvider: IgnoredFileProvider): String {
+    return prependCommentHashCharacterIfNeeded(ignoredFileProvider.ignoredGroupDescription)
+  }
 
-  override fun buildIgnoreEntryContent(ignoreEntryRoot: VirtualFile, ignoredFileDescriptor: IgnoredFileDescriptor) =
-    "/${FileUtil.getRelativePath(ignoreEntryRoot.path, ignoredFileDescriptor.path!!, '/') ?: ""}"
+  override fun buildIgnoreEntryContent(ignoreEntryRoot: VirtualFile, ignoredFileDescriptor: IgnoredFileDescriptor): String {
+    return "/${FileUtil.getRelativePath(ignoreEntryRoot.path, ignoredFileDescriptor.path!!, '/') ?: ""}"
+  }
 
-  private fun prependCommentHashCharacterIfNeeded(description: String): String =
-    if (description.startsWith("#")) description else "# $description"
+  private fun prependCommentHashCharacterIfNeeded(description: String): String {
+    return if (description.startsWith("#")) description else "# $description"
+  }
 
   /**
    * Disable creating a new .idea/.gitignore for [com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl].
