@@ -34,6 +34,7 @@ import org.jetbrains.idea.svn.actions.CreateExternalAction;
 import org.jetbrains.idea.svn.api.Url;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
@@ -52,14 +53,13 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.RunAll.runAll;
-import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
-import static com.intellij.testFramework.UsefulTestCase.assertExists;
+import static com.intellij.testFramework.UsefulTestCase.*;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
@@ -102,6 +102,12 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @NotNull
   public static String getPluginHome() {
     return getPluginHomePath("svn4idea");
+  }
+
+  @BeforeClass
+  public static void assumeNotMacUnderTeamCity() {
+    String message = "Mac svn binaries are not added yet";
+    assumeFalse(message, IS_UNDER_TEAMCITY && SystemInfo.isMac);
   }
 
   @Before
