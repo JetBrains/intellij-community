@@ -127,11 +127,6 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final Project project = e.getData(CommonDataKeys.PROJECT);
       assert project != null;
       final Configuration configuration = dialog.getConfiguration();
-      configuration.setOrder(0); // reset
-      configuration.setName(SSRBundle.message("new.template.defaultname"));
-      configuration.setDescription("");
-      configuration.setProblemDescriptor("");
-      configuration.setSuppressId("");
       if (!createNewInspection(configuration, project, profile)) {
         return;
       }
@@ -148,6 +143,11 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
                                      @NotNull InspectionProfileImpl profile) {
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      configuration.setOrder(0); // reset
+      configuration.setName(SSRBundle.message("new.template.defaultname"));
+      configuration.setDescription("");
+      configuration.setProblemDescriptor("");
+      configuration.setSuppressId("");
       final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration, true);
       if (!dialog.showAndGet()) return false;
     }
