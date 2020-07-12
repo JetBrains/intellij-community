@@ -15,6 +15,7 @@ import org.cef.handler.CefLoadHandlerAdapter;
 import org.intellij.markdown.html.HtmlGenerator;
 import org.intellij.plugins.markdown.ui.preview.MarkdownAccessor;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel;
+import org.intellij.plugins.markdown.ui.preview.PreviewColorThemeStyles;
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,8 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
     String url = "about:blank";
     try {
       url = MarkdownJCEFHtmlPanel.class.getResource(MarkdownJCEFHtmlPanel.class.getSimpleName() + ".class").toExternalForm();
-    } catch (Exception ignored) {
+    }
+    catch (Exception ignored) {
     }
     ourClassUrl = url;
   }
@@ -65,18 +67,20 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
     super(ourClassUrl + "@" + new Random().nextInt(Integer.MAX_VALUE));
 
     myJSQuerySetScrollY.addHandler((scrollY) -> {
-        try {
-          myScrollPreservingListener.myScrollY = Integer.parseInt(scrollY);
-        } catch (NumberFormatException ignored) {}
-        return null;
-      });
+      try {
+        myScrollPreservingListener.myScrollY = Integer.parseInt(scrollY);
+      }
+      catch (NumberFormatException ignored) {
+      }
+      return null;
+    });
 
     if (Registry.is("markdown.open.link.in.external.browser")) {
       myJSQueryOpenInBrowser.addHandler((link) -> {
-          if (JBCefPsiNavigationUtils.INSTANCE.navigateTo(link)) return null;
-          MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
-          return null;
-        });
+        if (JBCefPsiNavigationUtils.INSTANCE.navigateTo(link)) return null;
+        MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
+        return null;
+      });
     }
 
     getJBCefClient().addLoadHandler(myCefLoadHandler = new CefLoadHandlerAdapter() {
@@ -97,18 +101,28 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   @NotNull
   @Override
   protected String prepareHtml(@NotNull String html) {
-    return MarkdownAccessor.getImageRefreshFixAccessor().setStamps(html
-      .replace("<head>", "<head>"
-               + "<meta http-equiv=\"Content-Security-Policy\" content=\"" + myCSP + "\"/>"
-               + MarkdownHtmlPanel.getCssLines(null, myCssUris) + "\n" + getScriptingLines()));
+    return MarkdownAccessor.getImageRefreshFixAccessor().setStamps(
+      html
+        .replace("<head>", "<head>"
+                           +
+                           "<meta http-equiv=\"Content-Security-Policy\" content=\"" +
+                           myCSP +
+                           "\"/>"
+                           +
+                           MarkdownHtmlPanel.getCssLines(null, myCssUris) +
+                           "\n" +
+                           getScriptingLines()));
   }
 
   @Override
   public void setCSS(@Nullable String inlineCss, String @NotNull ... fileUris) {
     PreviewStaticServer.getInstance().setInlineStyle(inlineCss);
-    myCssUris = inlineCss == null ? fileUris
+    PreviewStaticServer.getInstance().setColorThemeStyles(PreviewColorThemeStyles.createStylesheet());
+    String[] baseStyles =
+      ArrayUtil.mergeArrays(fileUris, PreviewStaticServer.getStyleUrl(PreviewStaticServer.COLOR_THEME_CSS_FILENAME));
+    myCssUris = inlineCss == null ? baseStyles
                                   : ArrayUtil
-                  .mergeArrays(fileUris, PreviewStaticServer.getStyleUrl(PreviewStaticServer.INLINE_CSS_FILENAME));
+                  .mergeArrays(baseStyles, PreviewStaticServer.getStyleUrl(PreviewStaticServer.INLINE_CSS_FILENAME));
     myCSP = PreviewStaticServer.createCSP(ContainerUtil.map(SCRIPTS, s -> PreviewStaticServer.getScriptUrl(s)),
                                           ContainerUtil.concat(
                                             ContainerUtil.map(STYLES, s -> PreviewStaticServer.getStyleUrl(s)),
@@ -147,15 +161,15 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
     return MY_SCRIPTING_LINES.getValue();
   }
 
-  private class BridgeSettingListener extends CefLoadHandlerAdapter  {
+  private class BridgeSettingListener extends CefLoadHandlerAdapter {
     @Override
     public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
       if (Registry.is("markdown.open.link.in.external.browser")) {
         getCefBrowser().executeJavaScript(
           "window.JavaPanelBridge = {" +
-            "openInExternalBrowser : function(link) {" +
-              myJSQueryOpenInBrowser.inject("link") +
-            "}" +
+          "openInExternalBrowser : function(link) {" +
+          myJSQueryOpenInBrowser.inject("link") +
+          "}" +
           "};",
           getCefBrowser().getURL(), 0);
       }

@@ -7,17 +7,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 class MarkdownLAFListener implements LafManagerListener {
   @Override
   public void lookAndFeelChanged(@NotNull LafManager source) {
-    final UIManager.LookAndFeelInfo newLookAndFeel = source.getCurrentLookAndFeel();
-    final boolean isNewLookAndFeelDarcula = isDarcula(newLookAndFeel);
-
-    reinit(isNewLookAndFeelDarcula);
+    reinit();
   }
 
   /**
@@ -25,15 +19,15 @@ class MarkdownLAFListener implements LafManagerListener {
    * <p>
    * For example, it would reinitialize preview and clear caches
    */
-  public static void reinit(boolean isDarcula) {
+  public static void reinit() {
     MarkdownCodeFencePluginGeneratingProvider.Companion.notifyLAFChanged();
-    updateCssSettingsForced(isDarcula);
+    updateCssSettingsForced();
   }
 
-  private static void updateCssSettingsForced(boolean isDarcula) {
+  private static void updateCssSettingsForced() {
     final MarkdownCssSettings currentCssSettings = MarkdownApplicationSettings.getInstance().getMarkdownCssSettings();
     final String stylesheetUri = StringUtil.isEmpty(currentCssSettings.getStylesheetUri())
-                                 ? MarkdownCssSettings.getDefaultCssSettings(isDarcula).getStylesheetUri()
+                                 ? MarkdownCssSettings.DEFAULT.getStylesheetUri()
                                  : currentCssSettings.getStylesheetUri();
 
     MarkdownApplicationSettings.getInstance().setMarkdownCssSettings(new MarkdownCssSettings(
@@ -46,12 +40,5 @@ class MarkdownLAFListener implements LafManagerListener {
     ApplicationManager.getApplication().getMessageBus()
       .syncPublisher(MarkdownApplicationSettings.SettingsChangedListener.TOPIC)
       .settingsChanged(MarkdownApplicationSettings.getInstance());
-  }
-
-  public static boolean isDarcula(@Nullable UIManager.LookAndFeelInfo laf) {
-    if (laf == null) {
-      return false;
-    }
-    return laf.getName().contains("Darcula");
   }
 }

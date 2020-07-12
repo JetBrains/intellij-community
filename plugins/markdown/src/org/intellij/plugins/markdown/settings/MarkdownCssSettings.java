@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.settings;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,8 +9,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 public final class MarkdownCssSettings {
-  public static final MarkdownCssSettings DEFAULT = new MarkdownCssSettings(false);
-  public static final MarkdownCssSettings DARCULA = new MarkdownCssSettings(true);
+  public static final MarkdownCssSettings DEFAULT = new MarkdownCssSettings();
 
   @SuppressWarnings("FieldMayBeFinal")
   @Attribute("UriEnabled")
@@ -32,11 +30,7 @@ public final class MarkdownCssSettings {
   private String myStylesheetText;
 
   private MarkdownCssSettings() {
-    this(StartupUiUtil.isUnderDarcula());
-  }
-
-  private MarkdownCssSettings(boolean isDarcula) {
-    this(false, getPredefinedCssURI(isDarcula), false, "");
+    this(false, getDefaultCssURI(), false, "");
   }
 
   public MarkdownCssSettings(boolean uriEnabled, @NotNull String stylesheetUri, boolean textEnabled, @NotNull String stylesheetText) {
@@ -80,15 +74,9 @@ public final class MarkdownCssSettings {
   }
 
   @NotNull
-  public static MarkdownCssSettings getDefaultCssSettings(boolean isDarcula) {
-    return isDarcula ? DARCULA : DEFAULT;
-  }
-
-  @NotNull
-  private static String getPredefinedCssURI(boolean isDarcula) {
-    final String fileName = isDarcula ? "darcula.css" : "default.css";
+  private static String getDefaultCssURI() {
     try {
-      final URL resource = MarkdownCssSettings.class.getResource(fileName);
+      final URL resource = MarkdownCssSettings.class.getResource("default.css");
       return resource != null ? resource.toURI().toString() : "";
     }
     catch (URISyntaxException e) {

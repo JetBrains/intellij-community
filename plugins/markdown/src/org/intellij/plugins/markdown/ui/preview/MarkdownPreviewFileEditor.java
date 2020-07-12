@@ -20,7 +20,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.StartupUiUtil;
 import org.intellij.markdown.html.HtmlGenerator;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
@@ -390,13 +389,13 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     String styles = getCustomStyles();
 
     if (styles != null) {
-      panel.setCSS(styles, MarkdownCssSettings.getDefaultCssSettings(StartupUiUtil.isUnderDarcula()).getStylesheetUri());
+      panel.setCSS(styles, MarkdownCssSettings.DEFAULT.getStylesheetUri());
     }
     else {
       String inlineCss = cssSettings.isTextEnabled() ? cssSettings.getStylesheetText() : null;
       String customCssURI = cssSettings.isUriEnabled()
                             ? cssSettings.getStylesheetUri()
-                            : MarkdownCssSettings.getDefaultCssSettings(StartupUiUtil.isUnderDarcula()).getStylesheetUri();
+                            : MarkdownCssSettings.DEFAULT.getStylesheetUri();
 
       panel.setCSS(inlineCss, customCssURI);
     }

@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.extensions.highlighter
 
 import com.intellij.lang.Language
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.testFramework.LightVirtualFile
 import org.intellij.markdown.html.entities.EntityConverter
@@ -80,11 +81,14 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
     lexer.start(text)
 
     val html = StringBuilder(text.length)
+    val colorScheme = EditorColorsManager.getInstance().globalScheme
 
     while (lexer.tokenType != null) {
       val type = lexer.tokenType
       val highlights = highlighter.getTokenHighlights(type).lastOrNull()
-      val color = highlights?.defaultAttributes?.foregroundColor
+      val color = highlights?.let {
+        colorScheme.getAttributes(it)?.foregroundColor
+      } ?: highlights?.defaultAttributes?.foregroundColor
 
       val current = if (color != null) {
         //deprecated font tag is used since JavaFX HTML Viewer does not support span tag with style

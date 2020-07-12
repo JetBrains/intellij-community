@@ -29,11 +29,14 @@ import java.util.Objects;
 
 public class PreviewStaticServer extends HttpRequestHandler {
   public static final String INLINE_CSS_FILENAME = "inline.css";
+  public static final String COLOR_THEME_CSS_FILENAME = "colors.css";
   private static final Logger LOG = Logger.getInstance(PreviewStaticServer.class);
   private static final String PREFIX = "/4f800f8a-bbed-4dd8-b03c-00449c9f6698/";
 
   private byte @Nullable [] myInlineStyleBytes = null;
   private long myInlineStyleTimestamp = 0;
+  private byte @Nullable [] myColorThemeStylesBytes = null;
+  private long myColorThemeStylesTimestamp = 0;
 
   public static PreviewStaticServer getInstance() {
     return HttpRequestHandler.Companion.getEP_NAME().findExtension(PreviewStaticServer.class);
@@ -68,6 +71,11 @@ public class PreviewStaticServer extends HttpRequestHandler {
     myInlineStyleTimestamp = System.currentTimeMillis();
   }
 
+  public void setColorThemeStyles(@Nullable String overrides) {
+    myColorThemeStylesBytes = overrides == null ? null : overrides.getBytes(StandardCharsets.UTF_8);
+    myColorThemeStylesTimestamp = System.currentTimeMillis();
+  }
+
   @Override
   public boolean isSupported(@NotNull FullHttpRequest request) {
     return super.isSupported(request) && request.uri().startsWith(PREFIX);
@@ -99,7 +107,10 @@ public class PreviewStaticServer extends HttpRequestHandler {
     }
     else if ("styles".equals(contentType) && MarkdownHtmlPanel.STYLES.contains(fileName)) {
       if (INLINE_CSS_FILENAME.equals(fileName)) {
-        sendInlineStyle(request, context.channel());
+        sendStyleFromMemory(myInlineStyleBytes, myInlineStyleTimestamp, request, context.channel());
+      }
+      else if (COLOR_THEME_CSS_FILENAME.equals(fileName)) {
+        sendStyleFromMemory(myColorThemeStylesBytes, myColorThemeStylesTimestamp, request, context.channel());
       }
       else {
         sendResource(request,
@@ -115,22 +126,24 @@ public class PreviewStaticServer extends HttpRequestHandler {
     return true;
   }
 
-
-  private void sendInlineStyle(@NotNull HttpRequest request, @NotNull Channel channel) {
-    if (FileResponses.INSTANCE.checkCache(request, channel, myInlineStyleTimestamp)) {
+  private static void sendStyleFromMemory(byte @Nullable []  content,
+                                          long timestamp,
+                                          @NotNull HttpRequest request,
+                                          @NotNull Channel channel) {
+    if (FileResponses.INSTANCE.checkCache(request, channel, timestamp)) {
       return;
     }
 
-    if (myInlineStyleBytes == null) {
+    if (content == null) {
       Responses.send(HttpResponseStatus.NOT_FOUND, channel, request);
       return;
     }
 
     FullHttpResponse response =
-      new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.wrappedBuffer(myInlineStyleBytes));
+      new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.wrappedBuffer(content));
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/css");
     response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate");
-    response.headers().set(HttpHeaderNames.LAST_MODIFIED, new Date(myInlineStyleTimestamp));
+    response.headers().set(HttpHeaderNames.LAST_MODIFIED, new Date(timestamp));
     Responses.send(response, channel, request);
   }
 
