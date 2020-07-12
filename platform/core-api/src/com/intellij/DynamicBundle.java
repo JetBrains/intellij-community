@@ -32,6 +32,10 @@ public abstract class DynamicBundle extends AbstractBundle {
                                       @NotNull ResourceBundle.Control control) {
     ResourceBundle base = super.findBundle(pathToBundle, baseLoader, control);
 
+    if (DefaultBundleService.isDefaultBundle()) {
+      return base;
+    }
+
     LanguageBundleEP langBundle = findLanguageBundle();
     if (langBundle == null) return base;
 
