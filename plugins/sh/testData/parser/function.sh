@@ -20,3 +20,7 @@ function wait_file {
 
 varr(     ) { ''
 } | echo 1 # what a wonderful language
+
+`test -z "${DGIF}" && echo DGIF`
+`test -z "${DGIF}"`
+test -z `"${DGIF}"`

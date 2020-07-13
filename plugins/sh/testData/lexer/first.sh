@@ -51,3 +51,6 @@ ${asdasd#assdf}
 ${asdasd#assdf}
 
 test -s /etc/init.d/.depend.boot  || CONCURRENCY="none"
+`test -z "${DGIF}" && echo DGIF`
+`test -z "${DGIF}"`
+test -z `"${DGIF}"`

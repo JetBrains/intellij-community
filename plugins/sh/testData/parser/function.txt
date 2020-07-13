@@ -284,3 +284,76 @@ SHELL_SCRIPT
         PsiElement(int)('1')
   PsiWhiteSpace(' ')
   PsiComment(Comment)('# what a wonderful language')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    COMMAND_SUBSTITUTION_COMMAND
+      PsiElement(OPEN_BACKQUOTE)('`')
+      COMPOUND_LIST
+        TEST_COMMAND
+          PsiElement(test)('test')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-z')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(word)('DGIF')
+              PsiElement(})('}')
+            PsiElement(CLOSE_QUOTE)('"')
+        PsiWhiteSpace(' ')
+        PsiElement(&&)('&&')
+        PsiWhiteSpace(' ')
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('DGIF')
+      PsiElement(CLOSE_BACKQUOTE)('`')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    COMMAND_SUBSTITUTION_COMMAND
+      PsiElement(OPEN_BACKQUOTE)('`')
+      COMPOUND_LIST
+        TEST_COMMAND
+          PsiElement(test)('test')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-z')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(word)('DGIF')
+              PsiElement(})('}')
+            PsiElement(CLOSE_QUOTE)('"')
+      PsiElement(CLOSE_BACKQUOTE)('`')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    TEST_COMMAND
+      PsiElement(test)('test')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('-z')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        COMMAND_SUBSTITUTION_COMMAND
+          PsiElement(OPEN_BACKQUOTE)('`')
+          COMPOUND_LIST
+            GENERIC_COMMAND_DIRECTIVE
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement($)('$')
+                SHELL_PARAMETER_EXPANSION
+                  PsiElement({)('{')
+                  PsiElement(word)('DGIF')
+                  PsiElement(})('}')
+                PsiElement(CLOSE_QUOTE)('"')
+          PsiElement(CLOSE_BACKQUOTE)('`')

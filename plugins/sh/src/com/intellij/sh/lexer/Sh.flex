@@ -203,6 +203,10 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
 <TEST_EXPRESSION> {
     "!="                          { return WORD; }
     ";"                           { popState(); return SEMI; }
+    "&&"                          { popState(); return AND_AND; }
+    "||"                          { popState(); return OR_OR; }
+    "`"                           { if (isBackquoteOpen) { popState(); yypushback(yylength()); }
+                                    else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; } }
     {LineTerminator}              { popState(); return LINEFEED; }
 }
 

@@ -2196,10 +2196,8 @@ SHELL_SCRIPT
                                 PsiWhiteSpace(' ')
                                 PsiElement(&&)('&&')
                                 PsiWhiteSpace(' ')
-                                SIMPLE_COMMAND
-                                  GENERIC_COMMAND_DIRECTIVE
-                                    LITERAL
-                                      PsiElement(word)('test')
+                                TEST_COMMAND
+                                  PsiElement(test)('test')
                                   PsiWhiteSpace(' ')
                                   LITERAL
                                     PsiElement(word)('-d')
@@ -2212,10 +2210,8 @@ SHELL_SCRIPT
                                 PsiWhiteSpace(' ')
                                 PsiElement(&&)('&&')
                                 PsiWhiteSpace(' ')
-                                SIMPLE_COMMAND
-                                  GENERIC_COMMAND_DIRECTIVE
-                                    LITERAL
-                                      PsiElement(word)('test')
+                                TEST_COMMAND
+                                  PsiElement(test)('test')
                                   PsiWhiteSpace(' ')
                                   LITERAL
                                     PsiElement(word)('-d')
