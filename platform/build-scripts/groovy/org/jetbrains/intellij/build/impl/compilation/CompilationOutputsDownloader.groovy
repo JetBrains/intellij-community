@@ -25,6 +25,8 @@ import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.impl.retry.Retry
 import org.jetbrains.intellij.build.impl.retry.StopTrying
 
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
@@ -223,7 +225,9 @@ class GetClient {
           DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
           throwDownloadException(response, downloadException)
         }
-        file << response.entity.content
+        response.entity.content.withCloseable {
+          Files.copy(it, file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
       }
     })
   }
