@@ -37,7 +37,6 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -254,23 +253,20 @@ public abstract class PluginManagerMain {
       if (pluginEnabler.isDisabled(pluginId)) {
         disabled.add(node);
       }
-      List<PluginId> depends = node.getDepends();
-      if (depends != null) {
-        Set<PluginId> optionalDeps = new HashSet<>(Arrays.asList(node.getOptionalDependentPluginIds()));
-        for (PluginId dependantId : depends) {
-          if (optionalDeps.contains(dependantId)) {
-            continue;
-          }
+      for (IdeaPluginDependency dependency : node.getDependencies()) {
+        if (dependency.isOptional()) {
+          continue;
+        }
 
-          if (PluginManagerCore.isModuleDependency(dependantId)) {
-            PluginId pluginIdByModule = PluginModulesHelper.getInstance().getInstalledPluginIdByModule(dependantId);
-            // If there is no installed plugin implementing module then it can only be platform module which can not be disabled
-            if (pluginIdByModule == null) continue;
-          }
-          IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(dependantId);
-          if (pluginDescriptor != null && pluginEnabler.isDisabled(dependantId)) {
-            disabledDependants.add(pluginDescriptor);
-          }
+        PluginId dependantId = dependency.getPluginId();
+        if (PluginManagerCore.isModuleDependency(dependantId)) {
+          PluginId pluginIdByModule = PluginModulesHelper.getInstance().getInstalledPluginIdByModule(dependantId);
+          // If there is no installed plugin implementing module then it can only be platform module which can not be disabled
+          if (pluginIdByModule == null) continue;
+        }
+        IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(dependantId);
+        if (pluginDescriptor != null && pluginEnabler.isDisabled(dependantId)) {
+          disabledDependants.add(pluginDescriptor);
         }
       }
     }

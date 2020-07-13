@@ -50,11 +50,10 @@ public class PluginGroups {
           List<PluginNode> featuredPlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(featuresPluginIds);
           List<@NotNull String> dependsIds =
             featuredPlugins.stream()
-              .map(p -> p.getDepends())
-              .filter(Objects::nonNull)
+              .map(p -> p.getDependencies())
               .flatMap(Collection::stream)
-              .map(id -> id.getIdString())
-              .filter(id -> !id.startsWith("(optional)"))
+              .filter(dep -> !dep.isOptional())
+              .map(dep -> dep.getPluginId().getIdString())
               .collect(Collectors.toList());
           List<PluginNode> dependsPlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(dependsIds);
           featuredPlugins.addAll(dependsPlugins);

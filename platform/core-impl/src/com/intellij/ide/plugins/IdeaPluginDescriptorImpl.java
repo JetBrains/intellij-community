@@ -109,6 +109,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return moduleContainerDescriptor;
   }
 
+  @Override
+  public @NotNull List<IdeaPluginDependency> getDependencies() {
+    return pluginDependencies == null ? Collections.emptyList() : (List) pluginDependencies;
+  }
+
   @ApiStatus.Internal
   public @NotNull List<PluginDependency> getPluginDependencies() {
     return pluginDependencies == null ? Collections.emptyList() : pluginDependencies;

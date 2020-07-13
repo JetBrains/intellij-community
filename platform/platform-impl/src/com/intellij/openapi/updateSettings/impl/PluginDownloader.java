@@ -42,7 +42,7 @@ public final class PluginDownloader {
   private final int myReleaseVersion;
   private final boolean myLicenseOptional;
   private final String myDescription;
-  private final List<PluginId> myDepends;
+  private final @NotNull List<IdeaPluginDependency> myDependencies;
 
   private final String myPluginUrl;
   private final BuildNumber myBuildNumber;
@@ -63,7 +63,7 @@ public final class PluginDownloader {
     myReleaseVersion = descriptor.getReleaseVersion();
     myLicenseOptional = descriptor.isLicenseOptional();
     myDescription = descriptor.getDescription();
-    myDepends = descriptor instanceof PluginNode ? ((PluginNode)descriptor).getDepends() : Arrays.asList(descriptor.getDependentPluginIds());
+    myDependencies = descriptor.getDependencies();
 
     myPluginUrl = url;
     myBuildNumber = buildNumber;
@@ -315,7 +315,7 @@ public final class PluginDownloader {
     node.setVersion(downloader.getPluginVersion());
     node.setRepositoryName(host);
     node.setDownloadUrl(downloader.myPluginUrl);
-    node.setDepends(downloader.myDepends, null);
+    node.setDependencies(downloader.myDependencies);
     node.setDescription(downloader.myDescription);
     return node;
   }
