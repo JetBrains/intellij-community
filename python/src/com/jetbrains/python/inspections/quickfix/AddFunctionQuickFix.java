@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
@@ -71,7 +72,12 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
     try {
       final PsiElement problemElement = descriptor.getPsiElement();
       if (!(problemElement instanceof PyQualifiedExpression)) return;
-      final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
+      PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
+      if (qualifier == null) {
+        final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(problemElement, PyFromImportStatement.class);
+        if (fromImport == null) return;
+        qualifier = fromImport.getImportSource();
+      }
       if (qualifier == null) return;
       final PyType type = TypeEvalContext.userInitiated(problemElement.getProject(), problemElement.getContainingFile()).getType(qualifier);
       if (!(type instanceof PyModuleType)) return;
