@@ -64,6 +64,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     throw new UnsupportedOperationException();
   };
 
+  // myModalityState and myUiThreadAction must be both null or both not-null
   private final ModalityState myModalityState;
   private final Consumer<? super T> myUiThreadAction;
   private final ContextConstraint @NotNull [] myConstraints;
@@ -97,6 +98,9 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     myDisposables = disposables;
     myCoalesceEquality = coalesceEquality;
     myProgressIndicator = progressIndicator;
+    if ((modalityState == null) != (uiThreadAction == null)) {
+      throw new IllegalArgumentException("myModalityState and myUiThreadAction must be both null or both not-null but got: "+modalityState+", "+uiThreadAction);
+    }
   }
 
   @NotNull
