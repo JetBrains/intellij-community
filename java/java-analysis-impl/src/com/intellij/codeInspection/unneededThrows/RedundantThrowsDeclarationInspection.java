@@ -66,7 +66,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
 
     final Set<PsiClass> unThrownSet = ContainerUtil.set(unThrown);
 
-    return RedundantThrowsDeclarationLocalInspection.getProblems(method, IGNORE_ENTRY_POINTS)
+    return RedundantThrowsDeclarationLocalInspection.getRedundantThrowsCandidates(method, IGNORE_ENTRY_POINTS)
       .filter(throwRefType -> unThrownSet.contains(throwRefType.getType().resolve()))
       .map(throwRefType -> {
         final PsiElement throwsRef = throwRefType.getReference();
@@ -207,7 +207,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
     private StreamEx<PsiElement> removeException(@Nullable final RefMethod refMethod,
                                                  @NotNull final PsiType exceptionType,
                                                  @NotNull final PsiMethod psiMethod) {
-      final StreamEx<PsiElement> elements = RedundantThrowsDeclarationLocalInspection.getProblems(psiMethod, myIgnoreEntryPoints)
+      final StreamEx<PsiElement> elements = RedundantThrowsDeclarationLocalInspection.getRedundantThrowsCandidates(psiMethod, myIgnoreEntryPoints)
         .filter(throwRefType -> exceptionType.isAssignableFrom(throwRefType.getType()))
         .map(ThrowRefType::getReference);
 

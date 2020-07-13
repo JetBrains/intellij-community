@@ -58,6 +58,8 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
   @Override
   public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDisplayName() {
+    // this method is required by unit tests to look for "For all 'Redundant 'throws' clause' problems in file"
+    // since this local inspection is not defined in JavaAnalysisPlugin.xml and hence has no shortName
     return JavaAnalysisBundle.message("inspection.redundant.throws.display.name");
   }
 
@@ -66,8 +68,16 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     return new RedundantThrowsVisitor(holder, myGlobalTool.IGNORE_ENTRY_POINTS);
   }
 
+  /**
+   * The method extracts throws declarations that are probably redundant from both the method's throws list and javadoc.
+   * It filters out throws declarations that are either of java.lang.RuntimeException or java.rmi.RemoteException type.
+   *
+   * @param method            method to extract throws declarations from
+   * @param ignoreEntryPoints whether or not to extract throws if the method is an entry point (e.g. public static void main)
+   * @return a stream of throws declarations that are candidates for redundant declarations
+   */
   @Contract(pure = true)
-  static StreamEx<ThrowRefType> getProblems(@Nullable final PsiMethod method, final boolean ignoreEntryPoints) {
+  static StreamEx<ThrowRefType> getRedundantThrowsCandidates(@Nullable final PsiMethod method, final boolean ignoreEntryPoints) {
     if (method == null) return StreamEx.empty();
     if (ignoreEntryPoints && UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(method)) return StreamEx.empty();
     if (method.hasModifier(JvmModifier.NATIVE)) return StreamEx.empty();
@@ -84,9 +94,9 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       redundantInJavadoc = Arrays.stream(comment.getTags())
         .filter(tag -> "throws".equals(tag.getName()))
         .flatMap(tag -> {
-          final PsiClass aClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());
-          if (aClass == null) return Stream.empty();
-          return Stream.of(new ThrowRefType(tag, TypeUtils.getType(aClass)));
+          final PsiClass throwsClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());
+          if (throwsClass == null) return Stream.empty();
+          return Stream.of(new ThrowRefType(tag, TypeUtils.getType(throwsClass)));
         });
     }
     else {
@@ -109,7 +119,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
     @Override
     public void visitMethod(@NotNull final PsiMethod method) {
-      getProblems(method, myIgnoreEntryPoints)
+      getRedundantThrowsCandidates(method, myIgnoreEntryPoints)
         .filter(throwRefType -> !throwRefType.isThrownIn(method))
         .filter(throwRefType -> !throwRefType.isInOverridenOf(method))
         .forEach(throwRefType -> {
@@ -153,19 +163,24 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     }
   }
 
+  /**
+   * Holder for a throw declaration (either in throws list or javadoc) in a method and its exception class type.
+   */
   static final class ThrowRefType {
     @NotNull private final PsiElement myReference;
     @NotNull private final PsiClassType myType;
 
-    ThrowRefType(@NotNull final PsiElement reference, @NotNull final PsiClassType type) {
+    private ThrowRefType(@NotNull final PsiElement reference, @NotNull final PsiClassType type) {
       myReference = reference;
       myType = type;
     }
 
+    @Contract(pure = true)
     private boolean isCheckedException() {
       return !ExceptionUtil.isUncheckedException(myType);
     }
 
+    @Contract(pure = true)
     private boolean isRemoteExceptionInRemoteMethod(@NotNull final PsiMethod psiMethod) {
       if (!myType.equalsToText("java.rmi.RemoteException")) return false;
 
