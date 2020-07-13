@@ -931,7 +931,7 @@ public class PyCallExpressionHelper {
     return StreamEx
       .of(results)
       .map(ResolveResult::getElement)
-      .remove(it -> typeDunderCall.contains(it) || isSelfArgsKwargsCallable(it, context))
+      .remove(it -> typeDunderCall.contains(it) || ParamHelper.isSelfArgsKwargsCallable(it, context))
       .toList();
   }
 
@@ -941,18 +941,6 @@ public class PyCallExpressionHelper {
                                                                       @NotNull PyResolveContext resolveContext) {
     if (type == null) return Collections.emptyList();
     return ObjectUtils.notNull(type.resolveMember(PyNames.CALL, location, AccessDirection.READ, resolveContext), Collections.emptyList());
-  }
-
-  private static boolean isSelfArgsKwargsCallable(@Nullable PsiElement element, @NotNull TypeEvalContext context) {
-    if (element instanceof PyCallable) {
-      final List<PyCallableParameter> parameters = ((PyCallable)element).getParameters(context);
-      return parameters.size() == 3 &&
-             parameters.get(0).isSelf() &&
-             parameters.get(1).isPositionalContainer() &&
-             parameters.get(2).isKeywordContainer();
-    }
-
-    return false;
   }
 
   @NotNull
