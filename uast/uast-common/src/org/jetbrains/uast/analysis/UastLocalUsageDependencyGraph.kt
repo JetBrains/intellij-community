@@ -342,6 +342,16 @@ private class VisitorWithVariablesTracking(
     return@checkedDepthCall true
   }
 
+  // Ignore class nodes
+  override fun visitClass(node: UClass): Boolean {
+    return true
+  }
+
+  // Ignore field nodes
+  override fun visitField(node: UField): Boolean {
+    return true
+  }
+
   private fun registerDependency(dependent: Dependent,
                                  dependency: Dependency) {
     for (el in dependency.elements) {
