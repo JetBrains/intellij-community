@@ -3,7 +3,8 @@ package org.jetbrains.plugins.github.util
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -138,21 +139,17 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     SimpleEventListener.addDisposableListener(eventDispatcher, disposable, listener)
 
   class RemoteUrlsListener(private val project: Project) : VcsRepositoryMappingListener, GitRepositoryChangeListener {
-
-    override fun mappingChanged() =
-      invokeAndWaitIfNeeded { if (!project.isDisposed) updateRepositories(project) }
-
-    override fun repositoryChanged(repository: GitRepository) =
-      invokeAndWaitIfNeeded { if (!project.isDisposed) updateRepositories(project) }
+    override fun mappingChanged() = runInEdt(project) { updateRepositories(project) }
+    override fun repositoryChanged(repository: GitRepository) = runInEdt(project) { updateRepositories(project) }
   }
 
   class AccountsListener : AccountRemovedListener, AccountTokenChangedListener {
     override fun accountRemoved(removedAccount: GithubAccount) = updateRemotes()
     override fun tokenChanged(account: GithubAccount) = updateRemotes()
 
-    private fun updateRemotes() = invokeAndWaitIfNeeded {
+    private fun updateRemotes() = runInEdt {
       for (project in ProjectManager.getInstance().openProjects) {
-        if (!project.isDisposed) updateRepositories(project)
+        updateRepositories(project)
       }
     }
   }
@@ -161,6 +158,12 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     private val LOG = logger<GHProjectRepositoriesManager>()
 
     private val UPDATE_IDENTITY = Any()
+
+    private inline fun runInEdt(project: Project, crossinline runnable: () -> Unit) {
+      val application = ApplicationManager.getApplication()
+      if (application.isDispatchThread) runnable()
+      else application.invokeLater({ runnable() }) { project.isDisposed }
+    }
 
     private fun updateRepositories(project: Project) {
       try {
