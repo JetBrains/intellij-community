@@ -2,7 +2,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.*;
@@ -15,6 +15,7 @@ import com.intellij.model.psi.PsiSymbolDeclaration;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.model.psi.PsiSymbolService;
 import com.intellij.model.search.SearchService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -23,10 +24,12 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -47,7 +50,7 @@ import static com.intellij.model.psi.impl.TargetsKt.targetSymbols;
 /**
  * @author yole
  */
-public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
+public class IdentifierHighlighterPass {
   private static final Logger LOG = Logger.getInstance(IdentifierHighlighterPass.class);
 
   private final PsiFile myFile;
@@ -59,15 +62,13 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   private final ProperTextRange myVisibleRange;
 
   IdentifierHighlighterPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor) {
-    super(project, editor.getDocument(), false);
     myFile = file;
     myEditor = editor;
     myCaretOffset = myEditor.getCaretModel().getOffset();
     myVisibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(myEditor);
   }
 
-  @Override
-  public void doCollectInformation(@NotNull ProgressIndicator progress) {
+  public void doCollectInformation() {
     HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile, myVisibleRange);
     if (highlightUsagesHandler != null) {
       List<PsiElement> targets = highlightUsagesHandler.getTargets();
@@ -105,7 +106,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     }
 
     if (myTarget == null) {
-      if (!PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
+      if (!PsiDocumentManager.getInstance(myFile.getProject()).isUncommited(myEditor.getDocument())) {
         // when document is committed, try to check injected stuff - it's fast
         Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
         myTarget = TargetElementUtil.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset());
@@ -244,7 +245,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     }
     //noinspection deprecation
     Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
-    PsiFile injectedFile = PsiDocumentManager.getInstance(myProject).getPsiFile(injectedEditor.getDocument());
+    PsiFile injectedFile = PsiDocumentManager.getInstance(myFile.getProject()).getPsiFile(injectedEditor.getDocument());
     if (injectedFile == null) {
       return Collections.emptyList();
     }
@@ -312,11 +313,21 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       .findAll();
   }
 
-  @Override
+  private static volatile int id;
+  private int getId() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    int id = IdentifierHighlighterPass.id;
+    if (id == 0) {
+      IdentifierHighlighterPass.id = id = ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(
+        myFile.getProject())).getNextAvailableId().incrementAndGet();
+    }
+    return id;
+  }
+
   public void doApplyInformationToEditor() {
     boolean virtSpace = EditorUtil.isCaretInVirtualSpace(myEditor);
     List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
-    UpdateHighlightersUtil.setHighlightersToSingleEditor(myProject, myEditor, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
+    UpdateHighlightersUtil.setHighlightersToSingleEditor(myFile.getProject(), myEditor, 0, myFile.getTextLength(), infos, myEditor.getColorsScheme(), getId());
     doAdditionalCodeBlockHighlighting();
   }
 
@@ -343,7 +354,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     int startLine = myEditor.offsetToLogicalPosition(leftBraceRange.getStartOffset()).line;
     int endLine = myEditor.offsetToLogicalPosition(rightBraceRange.getEndOffset()).line;
     if (endLine - startLine > 0) {
-      BraceHighlightingHandler.lineMarkFragment((EditorEx)myEditor, myDocument, startLine, endLine, true);
+      BraceHighlightingHandler.lineMarkFragment((EditorEx)myEditor, myEditor.getDocument(), startLine, endLine, true);
     }
 
     BraceHighlightingHandler.showScopeHint(myEditor, myFile, leftBraceRange.getStartOffset(), leftBraceRange.getEndOffset());
@@ -377,7 +388,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   @NotNull
   private HighlightInfo createHighlightInfo(@NotNull TextRange range, @NotNull HighlightInfoType type, @NotNull Set<Pair<Object, TextRange>> existingMarkupTooltips) {
     int start = range.getStartOffset();
-    String tooltip = start <= myDocument.getTextLength() ? HighlightHandlerBase.getLineTextErrorStripeTooltip(myDocument, start, false) : null;
+    String tooltip = start <= myEditor.getDocument().getTextLength() ? HighlightHandlerBase.getLineTextErrorStripeTooltip(myEditor.getDocument(), start, false) : null;
     String unescapedTooltip = existingMarkupTooltips.contains(new Pair<Object, TextRange>(tooltip, range)) ? null : tooltip;
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
     if (unescapedTooltip != null) {

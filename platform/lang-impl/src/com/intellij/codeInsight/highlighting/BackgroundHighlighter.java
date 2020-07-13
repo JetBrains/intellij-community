@@ -2,8 +2,7 @@
 
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,7 +15,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
@@ -130,12 +128,11 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
       BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, foundFile);
       handler.updateBraces();
 
-      TextEditorHighlightingPass pass = new IdentifierHighlighterPassFactory().createHighlightingPass(foundFile, newEditor);
+      IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().
+        createHighlightingPass(foundFile, newEditor);
       if (pass != null) {
-        ProgressManager.getInstance().runProcess(() -> {
-          pass.collectInformation(ProgressManager.getGlobalProgressIndicator());
-          pass.applyInformationToEditor();
-        }, new DaemonProgressIndicator());
+        pass.doCollectInformation();
+        pass.doApplyInformationToEditor();
       }
     });
   }
