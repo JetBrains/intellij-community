@@ -2,6 +2,7 @@
 package com.intellij.ide.lightEdit.actions.associate;
 
 import com.intellij.ide.lightEdit.actions.associate.linux.LinuxFileTypeAssociator;
+import com.intellij.ide.lightEdit.actions.associate.macos.MacOSFileTypeAssociator;
 import com.intellij.ide.lightEdit.actions.associate.win.WinFileTypeAssociator;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,9 @@ public final class SystemAssociatorFactory {
     }
     if (SystemInfo.isWindows) {
       return new WinFileTypeAssociator();
+    }
+    if (SystemInfo.isMac) {
+      return new MacOSFileTypeAssociator();
     }
     return null;
   }
