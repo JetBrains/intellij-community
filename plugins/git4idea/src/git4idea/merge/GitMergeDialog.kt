@@ -43,6 +43,7 @@ import org.jetbrains.annotations.CalledInBackground
 import java.awt.BorderLayout
 import java.awt.Insets
 import java.awt.event.ItemEvent
+import java.awt.event.KeyEvent
 import java.util.Collections.synchronizedMap
 import java.util.regex.Pattern
 import javax.swing.JComponent
@@ -369,7 +370,9 @@ class GitMergeDialog(private val project: Project,
           .minHeight("${JBUI.scale(75)}px"))
   }
 
-  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) { createOptionsPopup() }
+  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) { createOptionsPopup() }.apply {
+    mnemonic = KeyEvent.VK_M
+  }
 
   private fun createOptionsPopup() = object : ListPopupImpl(project, createOptionPopupStep()) {
     override fun getListElementRenderer() = OptionListCellRenderer(

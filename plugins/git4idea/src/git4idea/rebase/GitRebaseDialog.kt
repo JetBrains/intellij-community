@@ -42,6 +42,7 @@ import java.awt.Container
 import java.awt.Insets
 import java.awt.event.ActionListener
 import java.awt.event.ItemEvent
+import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
@@ -506,7 +507,9 @@ class GitRebaseDialog(private val project: Project,
     add(optionsPanel, CC().newline())
   }
 
-  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) { createOptionsPopup() }
+  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) { createOptionsPopup() }.apply {
+    mnemonic = KeyEvent.VK_M
+  }
 
   private fun createOptionsPopup() = object : ListPopupImpl(project, createOptionPopupStep()) {
     override fun getListElementRenderer() = OptionListCellRenderer(
