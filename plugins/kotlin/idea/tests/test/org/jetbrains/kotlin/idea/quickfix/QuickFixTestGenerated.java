@@ -4191,6 +4191,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/inBaseInterface.kt");
                     }
 
+                    @TestMetadata("inBaseInterfaceWithReceiver.kt")
+                    public void testInBaseInterfaceWithReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/inBaseInterfaceWithReceiver.kt");
+                    }
+
+                    @TestMetadata("inBaseInterfaceWithReceiver2.kt")
+                    public void testInBaseInterfaceWithReceiver2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/inBaseInterfaceWithReceiver2.kt");
+                    }
+
                     @TestMetadata("interfaceNoExplicitReceiver.kt")
                     public void testInterfaceNoExplicitReceiver() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/interfaceNoExplicitReceiver.kt");
