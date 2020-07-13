@@ -61,6 +61,7 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
     JavaCoverageEnabledConfiguration configuration = getConfiguration();
     CoverageClassFilterEditor filterEditor = new CoverageClassFilterEditor(myConfiguration.getProject());
     filterEditor.setBorder(IdeBorderFactory.createTitledBorder(message, false, JBUI.emptyInsets()));
+    filterEditor.setupEasyFocusTraversing();
     return new SettingsEditorFragment<>(id, optionName, null, filterEditor,
                                         (p, editor) -> editor.setFilters(CoverageConfigurable.getCoveragePatterns(configuration, included)),
                                         (p, editor) -> setCoveragePatterns(configuration, isSelected() && filterEditor.isVisible() ? editor.getFilters() : ClassFilter.EMPTY_ARRAY, included),
