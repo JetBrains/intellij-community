@@ -62,7 +62,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -1627,8 +1626,9 @@ public final class HighlightUtil {
     final PsiAnnotation annotation = owner.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
     if (annotation != null) return annotation;
 
-    if (!(owner instanceof PsiClass) || !owner.hasModifier(JvmModifier.STATIC)) {
-      final PsiAnnotation result = getPreviewFeatureAnnotation(PsiTreeUtil.getParentOfType(owner, PsiClass.class));
+    if (owner instanceof PsiMember && !owner.hasModifier(JvmModifier.STATIC)) {
+      final PsiMember member = (PsiMember)owner;
+      final PsiAnnotation result = getPreviewFeatureAnnotation(member.getContainingClass());
       if (result != null) return result;
     }
 
