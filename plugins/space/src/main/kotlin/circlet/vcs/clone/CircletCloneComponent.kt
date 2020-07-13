@@ -2,8 +2,6 @@ package circlet.vcs.clone
 
 import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
-import circlet.client.repoService
-import circlet.client.td
 import circlet.components.CircletUserAvatarProvider
 import circlet.components.circletWorkspace
 import circlet.platform.api.oauth.OAuthTokenResponse
@@ -316,7 +314,7 @@ private class CloneView(
     }
 
     private fun setGitHttpPassword() {
-        val dialog = CircletSetGitHttpPasswordDialog(st.workspace.me.value, client.td, client.repoService)
+        val dialog = CircletSetGitHttpPasswordDialog(st.workspace.me.value, client)
         if (dialog.showAndGet()) {
             cloneViewModel.circletHttpPasswordState.value = dialog.result
         }

@@ -181,5 +181,8 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
         }
 
         override fun enableDebug() { }
+        override fun onThrowable(th: Throwable) {
+
+        }
     }
 }

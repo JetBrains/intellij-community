@@ -1,8 +1,7 @@
 package circlet.plugins.pipelines.services.execution
 
 import circlet.pipelines.common.api.ExecutionStatus
-import circlet.pipelines.common.api.GraphExecId
-import circlet.pipelines.common.api.StepExecId
+import circlet.pipelines.common.api.StepExecutionBase
 import circlet.pipelines.common.api.TraceLevel
 import circlet.pipelines.engine.AutomationGraphEngineImpl
 import circlet.pipelines.engine.AutomationGraphManagerImpl
@@ -12,6 +11,8 @@ import circlet.pipelines.engine.api.storage.AutomationStorageTransaction
 import circlet.pipelines.provider.FailureChecker
 import circlet.pipelines.provider.io.CommonFile
 import circlet.pipelines.provider.local.*
+import circlet.pipelines.provider.local.docker.DockerFacadeConfig
+import circlet.pipelines.provider.local.docker.DockerFacadeImpl
 import circlet.plugins.pipelines.services.SpaceKtsModelBuilder
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessHandler
@@ -78,33 +79,23 @@ class CircletTaskRunner(val project: Project) {
 
 
         val tracer = CircletIdeaAutomationTracer(processHandler)
-        val dockerFacade = DockerFacadeImpl(orgUrlWrappedForDocker, ideaLocalRunnerLabel, vp, dockerEventsListener, tracer, processes)
+        val dockerFacade = DockerFacadeImpl(orgUrlWrappedForDocker, ideaLocalRunnerLabel, vp, dockerEventsListener, tracer, object : DockerFacadeConfig {
+            override val dockerBuilderImage: String
+                get() = ""
+
+        }, processes)
 
         val batchSize = 1
 
         val logMessageSink = object : LogMessagesSink {
-            override fun handleLogsEnded(graphExecutionId: GraphExecId, stepExecutionId: StepExecId, serviceExecutionId: Long?) {
+            override fun handleLogsEnded(stepExecutionBase: StepExecutionBase) {
                 TODO("Not yet implemented")
             }
 
-            override fun handleNewLogs(graphExecutionId: GraphExecId,
-                                       stepExecutionId: StepExecId,
-                                       serviceExecutionId: Long?,
-                                       startingIndex: Int,
-                                       lines: List<LogLine>) {
+            override fun handleNewLogs(stepExecutionBase: StepExecutionBase, startingIndex: Int, lines: List<LogLine>) {
                 TODO("Not yet implemented")
             }
-            //override fun invoke(
-            //  graphExecutionId: GraphExecId,
-            //  stepExecutionId: StepExecId,
-            //  serviceExecutionId: Long?,
-            //  batchIndex: Int,
-            //  data: List<LogLine>
-            //) {
-            //    data.forEach {
-            //        processHandler.message(it.line, TraceLevel.INFO)
-            //    }
-            //}
+
         }
 
         val reporting = LocalReportingImpl(lifetime, processes, LocalReporting.Settings(batchSize), logMessageSink)
