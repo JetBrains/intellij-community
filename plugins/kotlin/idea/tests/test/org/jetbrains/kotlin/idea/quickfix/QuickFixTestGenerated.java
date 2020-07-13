@@ -4886,6 +4886,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createTypeParameter/inReferencedDeclaration/addToFunction.kt");
                 }
 
+                @TestMetadata("externalLibrary.kt")
+                public void testExternalLibrary() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createTypeParameter/inReferencedDeclaration/externalLibrary.kt");
+                }
+
                 @TestMetadata("missingArguments.kt")
                 public void testMissingArguments() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createTypeParameter/inReferencedDeclaration/missingArguments.kt");
