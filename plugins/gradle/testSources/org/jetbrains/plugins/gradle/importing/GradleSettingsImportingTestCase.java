@@ -27,7 +27,7 @@ import java.util.*;
 import static com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
 
 public abstract class GradleSettingsImportingTestCase extends GradleImportingTestCase {
-  public static final String IDEA_EXT_PLUGIN_VERSION = "0.5";
+  public static final String IDEA_EXT_PLUGIN_VERSION = "0.8";
 
   @Override
   public void setUp() throws Exception {

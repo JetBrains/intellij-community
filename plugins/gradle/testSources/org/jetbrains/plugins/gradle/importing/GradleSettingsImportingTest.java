@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -107,7 +106,6 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
-  @Ignore
   public void testGradleRunConfigurationSettingsImport() throws Exception {
     TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("gradle");
     maskRunImporter(testExtension);
@@ -115,7 +113,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPluginIfCan("0.5.1")
+        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
         .addPostfix(
           "import org.jetbrains.gradle.ext.*",
           "idea.project.settings {",
@@ -251,6 +249,43 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
                  FileUtil.toSystemIndependentName(settings.getExternalProjectPath()));
   }
 
+  @Test
+  public void testJarApplicationRunConfigurationSettingsImport() throws Exception {
+    TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("jarApplication");
+    maskRunImporter(testExtension);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      new GradleBuildScriptBuilderEx()
+      .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+      .addPostfix(
+        "import org.jetbrains.gradle.ext.*",
+        "idea.project.settings {",
+        "  runConfigurations {",
+        "    jarApp1(JarApplication) {",
+        "      jarPath =    'my/app.jar'",
+        "      jvmArgs =    '-DvmKey=vmVal'",
+        "      moduleName = 'moduleName'",
+        "    }",
+        "    jarApp2(JarApplication) {",
+        "      jarPath =    'my/app2.jar'",
+        "      moduleName = 'moduleName'",
+        "    }",
+        "  }",
+        "}"
+      ).generate());
+
+    final Map<String, Map<String, Object>> configs = testExtension.getConfigs();
+
+    assertContain(new ArrayList<>(configs.keySet()), "jarApp1", "jarApp2");
+    Map<String, Object> jarApp1Settings = configs.get("jarApp1");
+    Map<String, Object> jarApp2Settings = configs.get("jarApp2");
+
+    assertEquals("my/app.jar", jarApp1Settings.get("jarPath"));
+    assertEquals("my/app2.jar", jarApp2Settings.get("jarPath"));
+    assertEquals("-DvmKey=vmVal", jarApp1Settings.get("jvmArgs"));
+    assertNull(jarApp2Settings.get("jvmArgs"));
+  }
 
   @Test
   public void testFacetSettingsImport() throws Exception {
