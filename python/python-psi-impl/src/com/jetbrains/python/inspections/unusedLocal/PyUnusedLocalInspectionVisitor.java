@@ -23,9 +23,9 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyRemoveExceptionTargetQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveParameterQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveStatementQuickFix;
-import com.jetbrains.python.inspections.quickfix.PyRemoveExceptionTargetQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -392,9 +392,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           registerWarning(element, PyPsiBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
         else {
-          if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {
-            continue;
-          }
+          if (myIgnoreVariablesStartingWithUnderscore && element.getText().startsWith(PyNames.UNDERSCORE)) continue;
+          if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) continue;
 
           final PyForStatement forStatement = PyForStatementNavigator.getPyForStatementByIterable(element);
           if (forStatement != null) {
@@ -405,15 +404,13 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             continue;
           }
 
-          if (!myIgnoreVariablesStartingWithUnderscore || !name.startsWith(PyNames.UNDERSCORE)) {
-            final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(element);
-            if (exceptPart != null) {
-              registerWarning(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveExceptionTargetQuickFix());
-              continue;
-            }
-
-            registerWarning(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveStatementQuickFix());
+          final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(element);
+          if (exceptPart != null) {
+            registerWarning(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveExceptionTargetQuickFix());
+            continue;
           }
+
+          registerWarning(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveStatementQuickFix());
         }
       }
     }
