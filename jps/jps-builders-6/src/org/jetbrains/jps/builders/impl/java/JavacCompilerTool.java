@@ -60,7 +60,7 @@ public class JavacCompilerTool extends JavaCompilingTool {
   @NotNull
   @Override
   public JavaCompiler createCompiler() throws CannotCreateJavaCompilerException {
-    Throwable err1 = null, err2 = null;
+    Throwable err1 = null;
     try {
       JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
       if (compiler != null) {
@@ -71,22 +71,16 @@ public class JavacCompilerTool extends JavaCompilingTool {
       err1 = ex;
     }
 
+    String message;
     // trying to obtain additional diagnostic for the case when compiler.jar is present, but there were problems with compiler class loading:
     try {
       //temporary workaround for IDEA-169747: try to create the instance by hand if it was found
       return (JavaCompiler)Class.forName("com.sun.tools.javac.api.JavacTool", true, JavacMain.class.getClassLoader()).newInstance();
     }
     catch (Throwable ex) {
-      err2 = ex;
+      message = (err1 != null ? formatErrorMessage("Error obtaining system java compiler", err1) + "\n" : "") + formatErrorMessage("System Java Compiler was not found in classpath", ex);
     }
     
-    String message = "";
-    if (err1 != null) {
-      message = formatErrorMessage("Error obtaining system java compiler", err1);
-    }
-    if (err2 != null) {
-      message = (message.isEmpty()? "" : message + "\n") + formatErrorMessage("System Java Compiler was not found in classpath", err2);
-    }
     throw new CannotCreateJavaCompilerException(message);
   }
 
