@@ -125,7 +125,12 @@ public final class ClassLoadingUtils {
                   "\nReference vm: " + reference.virtualMachine() +
                   " loaded by " + reference.virtualMachine().getClass().getClassLoader() +
                   "\nMirrors vms: " + StreamEx.of(mirrors).map(Mirror::virtualMachine).distinct()
-                    .map(m -> m + " loaded by " + arrayClass.virtualMachine().getClass().getClassLoader()).joining(", ")
+                    .map(m -> {
+                      return m +
+                             " loaded by " + arrayClass.virtualMachine().getClass().getClassLoader() +
+                             " same as ref vm = " + (m.virtualMachine() == reference.virtualMachine());
+                    })
+                    .joining(", ")
           , e);
       }
     }
