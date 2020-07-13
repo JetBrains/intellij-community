@@ -80,6 +80,10 @@ open class MarketplaceRequests {
     "${PLUGIN_MANAGER_URL}/api/search/aggregation/tags"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
+  private val JETBRAINS_PLUGINS_URL = Urls.newFromEncoded(
+    "${PLUGIN_MANAGER_URL}/api/search/plugins?organization=JetBrains&max=1000"
+  ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
+
   private val COMPATIBLE_UPDATE_URL = "${PLUGIN_MANAGER_URL}/api/search/compatibleUpdates"
 
   private val objectMapper = ObjectMapper()
@@ -308,6 +312,34 @@ open class MarketplaceRequests {
     logWarnOrPrintIfDebug("Can not get compatible update by module from Marketplace", e)
     emptyList()
   }
+
+  var jetBrainsPluginsIds: Set<String>? = null
+    private set
+
+  fun loadJetBrainsPluginsIds() =
+    if (jetBrainsPluginsIds == null) {
+      jetBrainsPluginsIds = try {
+        HttpRequests
+          .request(JETBRAINS_PLUGINS_URL)
+          .productNameAsUserAgent()
+          .throwStatusCodeException(false)
+          .connect {
+            objectMapper.readValue(
+              it.inputStream,
+              object : TypeReference<List<MarketplaceSearchPluginData>>() {}
+            ).map { searchPluginData -> searchPluginData.id }.toSet()
+          }
+      }
+      catch (e: Exception) {
+        logWarnOrPrintIfDebug("Can not get JetBrains plugins' IDs from Marketplace", e)
+        null
+      }
+    } else {}
+
+  private fun parseBrokenPlugins(reader: Reader) = objectMapper.readValue(
+    reader,
+    object : TypeReference<List<MarketplaceBrokenPlugin>>() {}
+  )
 
   private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<List<String>>() {})
 

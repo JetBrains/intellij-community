@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
@@ -45,8 +46,10 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     PluginAdvertiserExtensionsState pluginAdvertiserExtensionsState = PluginAdvertiserExtensionsState.getInstance(project);
     String fullExtension = file.getExtension() != null ? "*." + file.getExtension() : null;
     PluginAdvertiserExtensionsData extensionsData = pluginAdvertiserExtensionsState.requestExtensionData(file.getName(), file.getFileType(), fullExtension);
-    if (extensionsData == null) {
+    Set<String> jetBrainsPluginsIds = MarketplaceRequests.getInstance().getJetBrainsPluginsIds();
+    if (extensionsData == null || jetBrainsPluginsIds == null) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        MarketplaceRequests.getInstance().loadJetBrainsPluginsIds();
         boolean shouldUpdateNotifications = PluginAdvertiserExtensionsState.getInstance(project).updateCache(file.getName());
         if (fullExtension != null) {
           shouldUpdateNotifications = PluginAdvertiserExtensionsState.getInstance(project).updateCache(fullExtension) || shouldUpdateNotifications;
@@ -65,6 +68,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
 
     IdeaPluginDescriptor disabledPlugin = null;
     Set<PluginsAdvertiser.Plugin> pluginsToInstall = new HashSet<>();
+    Set<PluginsAdvertiser.Plugin> jbPluginsToInstall = new HashSet<>();
     for (PluginsAdvertiser.Plugin plugin : plugins) {
       IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId));
       if (installedPlugin != null) {
@@ -72,6 +76,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       }
       else if (!plugin.myBundled) {
         pluginsToInstall.add(plugin);
+        if (jetBrainsPluginsIds.contains(plugin.myPluginId)) jbPluginsToInstall.add(plugin);
       }
     }
 
@@ -85,6 +90,11 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
           .addData("plugins", Collections.singletonList(finalDisabledPlugin.getPluginId().getIdString()));
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
         PluginsAdvertiser.enablePlugins(project, Collections.singletonList(finalDisabledPlugin));
+      });
+    }
+    else if (!jbPluginsToInstall.isEmpty()) {
+      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugins"), () -> {
+        installPlugins(project, pluginAdvertiserExtensionsState, extensionOrFileName, jbPluginsToInstall);
       });
     }
     else if (PluginsAdvertiser.hasBundledPluginToInstall(plugins) != null) {
@@ -109,18 +119,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     }
     else if (!pluginsToInstall.isEmpty()) {
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugins"), () -> {
-        Set<PluginId> pluginIds = new HashSet<>();
-        for (PluginsAdvertiser.Plugin plugin : pluginsToInstall) {
-          pluginIds.add(PluginId.getId(plugin.myPluginId));
-        }
-        FeatureUsageData data = new FeatureUsageData()
-          .addData("source", "editor")
-          .addData("plugins", ContainerUtil.map(pluginIds, (pluginId) -> pluginId.getIdString()));
-        FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "install.plugins", data);
-        PluginsAdvertiser.installAndEnable(pluginIds, () -> {
-          pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
-          EditorNotifications.getInstance(project).updateAllNotifications();
-        });
+        installPlugins(project, pluginAdvertiserExtensionsState, extensionOrFileName, pluginsToInstall);
       });
     }
     else {
@@ -133,5 +132,23 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       EditorNotifications.getInstance(project).updateAllNotifications();
     });
     return panel;
+  }
+
+  private static void installPlugins(@NotNull Project project,
+                                     PluginAdvertiserExtensionsState pluginAdvertiserExtensionsState,
+                                     String extensionOrFileName,
+                                     Set<PluginsAdvertiser.Plugin> pluginsToInstall) {
+    Set<PluginId> pluginIds = new HashSet<>();
+    for (PluginsAdvertiser.Plugin plugin : pluginsToInstall) {
+      pluginIds.add(PluginId.getId(plugin.myPluginId));
+    }
+    FeatureUsageData data = new FeatureUsageData()
+      .addData("source", "editor")
+      .addData("plugins", ContainerUtil.map(pluginIds, (pluginId) -> pluginId.getIdString()));
+    FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "install.plugins", data);
+    PluginsAdvertiser.installAndEnable(pluginIds, () -> {
+      pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
+      EditorNotifications.getInstance(project).updateAllNotifications();
+    });
   }
 }
