@@ -2,17 +2,29 @@ package circlet.vcs.clone
 
 import circlet.client.*
 import circlet.client.api.*
-import circlet.platform.api.*
-import circlet.platform.client.*
-import circlet.settings.*
-import circlet.settings.CloneType.*
-import circlet.vcs.*
-import circlet.workspaces.*
-import com.intellij.util.ui.cloneDialog.*
-import libraries.coroutines.extra.*
-import runtime.*
-import runtime.reactive.*
-import runtime.utils.*
+import circlet.client.api.impl.vcsPasswords
+import circlet.platform.api.Ref
+import circlet.platform.client.resolve
+import circlet.platform.client.resolveRefsOrFetch
+import circlet.platform.client.xTransformedPagedListOnFlux
+import circlet.settings.CircletSettings
+import circlet.settings.CloneType
+import circlet.settings.CloneType.HTTP
+import circlet.vcs.CircletHttpPasswordState
+import circlet.vcs.CircletKeysState
+import circlet.workspaces.Workspace
+import com.intellij.util.ui.cloneDialog.SearchableListItem
+import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.Lifetimed
+import libraries.coroutines.extra.launch
+import runtime.Ui
+import runtime.UiDispatch
+import runtime.dispatchInterval
+import runtime.reactive.MutableProperty
+import runtime.reactive.Property
+import runtime.reactive.mapInit
+import runtime.reactive.mutableProperty
+import runtime.utils.mapToSet
 
 internal class CircletCloneComponentViewModel(
     override val lifetime: Lifetime,
@@ -82,9 +94,9 @@ internal class CircletCloneComponentViewModel(
     val selectedUrl: MutableProperty<String?> = Property.createMutable(null)
 
     val circletHttpPasswordState: MutableProperty<CircletHttpPasswordState> = lifetime.mapInit<CloneType, CircletHttpPasswordState>(cloneType, CircletHttpPasswordState.NotChecked) { cloneType ->
-        if (cloneType == SSH) return@mapInit CircletHttpPasswordState.NotChecked
+        if (cloneType == CloneType.SSH) return@mapInit CircletHttpPasswordState.NotChecked
 
-        td.getVcsPassword(me.value.id).let {
+        workspace.client.api.vcsPasswords().getVcsPassword(me.value.identifier).let {
             if (it == null) CircletHttpPasswordState.NotSet else CircletHttpPasswordState.Set(it)
         }
     } as MutableProperty<CircletHttpPasswordState>
