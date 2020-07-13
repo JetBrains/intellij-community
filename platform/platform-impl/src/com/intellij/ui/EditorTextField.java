@@ -63,6 +63,9 @@ import java.util.List;
 
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 
+/**
+ * Use {@code editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);} to disable search/replace component.
+ */
 public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, DataProvider, TextAccessor,
                                                                FocusListener, MouseListener {
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
