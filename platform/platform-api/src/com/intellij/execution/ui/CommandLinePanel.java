@@ -3,6 +3,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -68,7 +69,7 @@ public class CommandLinePanel extends JPanel {
     add(row);
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(myHintLabel, BorderLayout.WEST);
-    Dimension size = new Dimension(100, 20);
+    JBDimension size = new JBDimension(100, 20);
     panel.setMinimumSize(size);
     panel.setPreferredSize(size);
     panel.setBorder(JBUI.Borders.emptyLeft(getLeftInset()));
