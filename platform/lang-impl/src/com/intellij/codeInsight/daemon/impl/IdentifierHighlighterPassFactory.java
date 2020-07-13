@@ -38,7 +38,7 @@ public final class IdentifierHighlighterPassFactory {
   @TestOnly
   public static void doWithHighlightingEnabled(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull Runnable r) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    BackgroundHighlightingUtil.enableInTest(project, parentDisposable);
+    BackgroundHighlightingUtil.enableListenersInTest(project, parentDisposable);
     TestModeFlags.set(ourTestingIdentifierHighlighting, true);
     try {
       r.run();

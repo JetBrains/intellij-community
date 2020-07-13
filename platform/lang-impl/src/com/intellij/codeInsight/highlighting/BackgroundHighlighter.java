@@ -153,7 +153,7 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
   }
 
   @TestOnly
-  static void enableInTest(@NotNull Project project, @NotNull Disposable disposable) {
+  static void enableListenersInTest(@NotNull Project project, @NotNull Disposable disposable) {
     POST_STARTUP_ACTIVITY.findExtension(BackgroundHighlighter.class).registerListeners(project, disposable);
   }
 }

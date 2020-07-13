@@ -80,7 +80,7 @@ public class BackgroundHighlightingUtil {
   }
 
   @TestOnly
-  public static void enableInTest(@NotNull Project project, @NotNull Disposable disposable) {
-    BackgroundHighlighter.enableInTest(project, disposable);
+  public static void enableListenersInTest(@NotNull Project project, @NotNull Disposable disposable) {
+    BackgroundHighlighter.enableListenersInTest(project, disposable);
   }
 }
