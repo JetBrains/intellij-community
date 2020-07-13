@@ -124,6 +124,10 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
       addToArtifacts.consume(path);
     }
 
+    for (Element dependency : config.getChildren("dependency")) {
+      addToArtifacts.consume(dependency);
+    }
+
     for (Element annotationProcessorPath : config.getChildren("annotationProcessorPath")) {
       addToArtifacts.consume(annotationProcessorPath);
     }
