@@ -3,8 +3,9 @@ package com.jetbrains.python.intentions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestInputDialog;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -32,6 +33,7 @@ public class PyIntentionTest extends PyTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      Messages.setTestInputDialog(TestInputDialog.DEFAULT);
       if (myDocumentationSettings != null) {
         myDocumentationSettings.setFormat(DocStringFormat.PLAIN);
       }
@@ -58,6 +60,16 @@ public class PyIntentionTest extends PyTestCase {
     assertSdkRootsNotParsed(file);
     myFixture.launchAction(action);
     myFixture.checkResultByFile("intentions/" + getTestName(true) + "_after.py", ignoreWhiteSpaces);
+  }
+
+  private void doMultiFileTest(@NotNull String hint) {
+    final String directoryPath = "intentions/" + getTestName(false);
+    final String filesPathPrefix = directoryPath + "/" + getTestName(true);
+    myFixture.copyDirectoryToProject(directoryPath, "");
+    myFixture.configureByFile(filesPathPrefix + ".py");
+    final IntentionAction action = myFixture.findSingleIntention(hint);
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile(filesPathPrefix + ".py", filesPathPrefix + "_after.py", false);
   }
 
   /**
@@ -793,6 +805,17 @@ public class PyIntentionTest extends PyTestCase {
 
   public void testConvertStaticMethodToFunctionUsage() {
     doTest(PyPsiBundle.message("INTN.convert.static.method.to.function"));
+  }
+
+  // PY-24482
+  public void testImportToggleAlias() {
+    Messages.setTestInputDialog(new TestInputDialog() {
+      @Override
+      public String show(String message) {
+        return "mc";
+      }
+    });
+    doMultiFileTest(PyPsiBundle.message("INTN.add.alias.for.import.$0", "MyClass"));
   }
 
   private void doDocStubTest(@NotNull DocStringFormat format) {
