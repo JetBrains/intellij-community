@@ -49,6 +49,10 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     myApplyAction = applyAction;
   }
 
+  public @NotNull Consumer<? super InputEvent> getApplyAction() {
+    return myApplyAction;
+  }
+
   public void setError(String error) {
     myTextField.putClientProperty("JComponent.outline", error != null ? "error" : null);
 
