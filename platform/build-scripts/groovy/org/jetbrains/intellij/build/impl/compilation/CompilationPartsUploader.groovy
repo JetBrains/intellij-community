@@ -197,7 +197,12 @@ class CompilationPartsUploader implements Closeable {
 
   CloseableHttpResponse executeWithRetry(HttpUriRequest request) {
     return new Retry(myMessages).call {
-      myHttpClient.execute(request)
+      def response = myHttpClient.execute(request)
+      if (response.statusLine.statusCode >= HttpStatus.SC_INTERNAL_SERVER_ERROR) {
+        // server error, will retry
+        throw new RuntimeException("$request: response is $response.statusLine.statusCode, $response.entity.content.text")
+      }
+      response
     }
   }
 
