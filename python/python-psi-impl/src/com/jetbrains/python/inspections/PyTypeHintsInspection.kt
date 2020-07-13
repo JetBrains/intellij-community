@@ -19,9 +19,9 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority
+import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.documentation.doctest.PyDocstringFile
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
@@ -101,7 +101,7 @@ class PyTypeHintsInspection : PyInspection() {
         }
       }
 
-      if ((node.parent is PyAnnotation || node.parent is PyExpressionStatement && node.parent.parent is PyDocstringFile)) {
+      if ((node.parent is PyAnnotation || node.parent is PyExpressionStatement && node.parent.parent is PyTypeHintFile)) {
         val qNames = node.multiFollowAssignmentsChain(resolveContext, this::followNotTypingOpaque)
           .asSequence()
           .mapNotNull { it.element }
@@ -120,7 +120,7 @@ class PyTypeHintsInspection : PyInspection() {
     override fun visitPyFile(node: PyFile?) {
       super.visitPyFile(node)
 
-      if (node is PyDocstringFile && PyTypingTypeProvider.isInAnnotationOrTypeComment(node)) {
+      if (node is PyTypeHintFile) {
         node.children.singleOrNull().also { if (it is PyExpressionStatement) checkTupleMatching(it.expression) }
       }
     }
