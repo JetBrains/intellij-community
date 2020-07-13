@@ -114,7 +114,7 @@ public class ShColorPage implements ColorSettingsPage {
         "<var>multiline</var>='first line\n" +
         "           second line\n" +
         "           third line'\n" +
-        "cat << EOF\n" +
+        "<generic>cat</generic> << EOF\n" +
         " Sample text\n" +
         "EOF";
   }
