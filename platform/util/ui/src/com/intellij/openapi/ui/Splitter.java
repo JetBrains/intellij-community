@@ -42,6 +42,7 @@ public class Splitter extends JPanel implements Splittable {
    */
   private boolean myVerticalSplit;
   private boolean myHonorMinimumSize;
+  private boolean myHonorPreferredSize;
   private final float myMinProp;
   private final float myMaxProp;
 
@@ -110,6 +111,7 @@ public class Splitter extends JPanel implements Splittable {
     myShowDividerControls = false;
     myShowDividerIcon = true;
     myHonorMinimumSize = true;
+    myHonorPreferredSize = false;
     myDivider = createDivider();
     setProportion(proportion);
     myDividerWidth = 7;
@@ -151,6 +153,14 @@ public class Splitter extends JPanel implements Splittable {
 
   public void setHonorComponentsMinimumSize(boolean honorMinimumSize) {
     myHonorMinimumSize = honorMinimumSize;
+  }
+
+  public boolean isHonorPreferredSize() {
+    return myHonorPreferredSize;
+  }
+
+  public void setHonorComponentsPreferredSize(boolean honorPreferredSize) {
+    myHonorPreferredSize = honorPreferredSize;
   }
 
   public void setLackOfSpaceStrategy(@NotNull LackOfSpaceStrategy strategy) {
@@ -331,7 +341,7 @@ public class Splitter extends JPanel implements Splittable {
           double mSize2 = isVertical() ? mySecondComponent.getMinimumSize().getHeight() : mySecondComponent.getMinimumSize().getWidth();
           double pSize1 = isVertical() ? myFirstComponent.getPreferredSize().getHeight() : myFirstComponent.getPreferredSize().getWidth();
           double pSize2 = isVertical() ? mySecondComponent.getPreferredSize().getHeight() : mySecondComponent.getPreferredSize().getWidth();
-          if (size1 + size2 > pSize1 + pSize2) {
+          if (size1 + size2 > pSize1 + pSize2 && myHonorPreferredSize) {
             mSize1 = pSize1;
             mSize2 = pSize2;
           }
