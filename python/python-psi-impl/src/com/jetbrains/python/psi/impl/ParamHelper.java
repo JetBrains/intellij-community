@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyCallableParameter;
@@ -207,6 +208,18 @@ public final class ParamHelper {
 
   public static boolean couldHaveDefaultValue(@NotNull String parameterName) {
     return !parameterName.startsWith("*") && !parameterName.equals(PySlashParameter.TEXT);
+  }
+
+  public static boolean isSelfArgsKwargsCallable(@Nullable PsiElement element, @NotNull TypeEvalContext context) {
+    if (element instanceof PyCallable) {
+      final List<PyCallableParameter> parameters = ((PyCallable)element).getParameters(context);
+      return parameters.size() == 3 &&
+             parameters.get(0).isSelf() &&
+             parameters.get(1).isPositionalContainer() &&
+             parameters.get(2).isKeywordContainer();
+    }
+
+    return false;
   }
 
   public interface ParamWalker {
