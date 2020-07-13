@@ -97,9 +97,11 @@ public class AsyncEditorLoader {
             throw e;
           } catch (IndexOutOfBoundsException e) {
             // EA-232290 investigation
+            Attachment filePathAttachment = new Attachment("filePath.txt", myTextEditor.getFile().toString());
+            Attachment threadDumpAttachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
+            threadDumpAttachment.setIncluded(true);
             Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e,
-                                                              new Attachment("file.txt", myTextEditor.getFile().toString()),
-                                                              new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+                                                              filePathAttachment, threadDumpAttachment);
             return null;
           } catch (Exception e) {
             Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e);
