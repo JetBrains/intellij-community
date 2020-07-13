@@ -45,6 +45,7 @@ public class ShFileLexerTest extends LexerTestCase {
   public void testStrings()              { doFileTest("sh"); }
   public void testParamExpansionEscape() { doFileTest("sh"); } // IDEA-219928
   public void testProcessSubstitution()  { doFileTest("sh"); } // IDEA-220072
+  public void testTest()                 { doFileTest("sh"); } // IDEA-244312
   public void testShouldBeFixed()        { doFileTest("sh"); }
 
   @Override
