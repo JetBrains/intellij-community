@@ -858,7 +858,7 @@
       <description>Defines whether to show "What's new" notification after IDE update or not.</description>
     </experimentalFeature>
 
-    <experimentalFeature id="search.everywhere.mixed.results" percentOfUsers="100">
+    <experimentalFeature id="search.everywhere.mixed.results" percentOfUsers="0">
       <description>Use mixed list of results on All tab in Search Everywhere (instead of Files/Classes/Actions groups)</description>
     </experimentalFeature>
 
