@@ -14,9 +14,11 @@ interface ExternalSystemProjectReloadContext {
   val isExplicitReload: Boolean
 
   /**
-   * Project has undefined modification
+   * Project has undefined modifications
+   * Undefined modifications are modifications, provided by [ExternalSystemProjectTracker.markDirty]
+   *  e.g. changes in settings from UI, cache invalidation and etc.
    *
-   * Expected, project will fully reloaded uf this parameter is `true`
+   * Project is expected to be fully reloaded when this flag is set to true
    */
   val hasUndefinedModifications: Boolean
 
