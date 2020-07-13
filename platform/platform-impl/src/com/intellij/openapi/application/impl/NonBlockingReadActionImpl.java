@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.constraints.BaseConstrainedExecution;
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -182,13 +183,15 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
 
   @Override
   public CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
-    Submission submission = new Submission(backgroundThreadExecutor, myProgressIndicator);
+    return ReadAction.compute(() -> {
+      Submission submission = new Submission(backgroundThreadExecutor, myProgressIndicator);
     if (myCoalesceEquality == null) {
       submission.transferToBgThread();
-    } else {
+      } else {
       submission.submitOrScheduleCoalesced(myCoalesceEquality);
     }
     return submission;
+    });
   }
 
   private class Submission extends AsyncPromise<T> {
