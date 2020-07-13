@@ -656,9 +656,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       Registry.get("ide.settings.move.mouse.on.default.button").setValue(true)
       state.moveMouseOnDefaultButton = false
     }
-    if (state.allowMergeButtons) {
-      Registry.get("ide.allow.merge.buttons").setValue(true)
-      state.allowMergeButtons = false
+    if (!state.allowMergeButtons) {
+      Registry.get("ide.allow.merge.buttons").setValue(false)
+      state.allowMergeButtons = true
     }
   }
 
