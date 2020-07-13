@@ -30,7 +30,7 @@ class WindowsDefenderCheckerActivity : StartupActivity.Background {
       val nonExcludedPaths = checkResult.pathStatus.filter { !it.value }.keys
       val notification = WindowsDefenderNotification(
         DiagnosticBundle.message("virus.scanning.warn.title"),
-        DiagnosticBundle.message("virus.scanning.warn.message", nonExcludedPaths.joinToString("<br/>")),
+        windowsDefenderChecker.getNotificationText(nonExcludedPaths),
         nonExcludedPaths
       )
       notification.isImportant = true
