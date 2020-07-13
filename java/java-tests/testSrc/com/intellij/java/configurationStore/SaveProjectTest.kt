@@ -6,10 +6,10 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.util.io.systemIndependentPath
@@ -41,6 +41,16 @@ class SaveProjectTest {
     projectModel.createModule("foo")
     saveProjectState()
     projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("single-module")))
+  }
+
+  @Test
+  fun `save detached module`() = runBlocking {
+    projectModel.createModule("foo")
+    val module = projectModel.createModule("bar")
+    saveProjectState()
+    runInEdtAndWait { projectModel.moduleManager.disposeModule(module) }
+    saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("detached-module")))
   }
 
   @Test

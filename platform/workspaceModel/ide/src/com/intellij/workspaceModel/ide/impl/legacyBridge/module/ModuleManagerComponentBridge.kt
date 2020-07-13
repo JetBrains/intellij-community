@@ -431,19 +431,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   override fun getModuleGrouper(model: ModifiableModuleModel?): ModuleGrouper = createGrouper(project, model)
 
   override fun loadModule(filePath: String): Module {
-    val moduleName = getModuleNameByFilePath(filePath)
-    if (findModuleByName(moduleName) != null) {
-      error("Module name '$moduleName' already exists. Trying to load module: $filePath")
-    }
-
-    val moduleFile = File(filePath)
-
-    WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-      JpsProjectEntitiesLoader.loadModule(moduleFile, project.configLocation!!, builder, virtualFileManager)
-    }
-
-    return findModuleByName(moduleName)
-           ?: error("Module '$moduleName' was not found after loading: $filePath")
+    val model = modifiableModel
+    val module = model.loadModule(filePath)
+    model.commit()
+    return module
   }
 
   override fun getUnloadedModuleDescription(moduleName: String): UnloadedModuleDescription? = unloadedModules[moduleName]

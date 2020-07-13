@@ -16,6 +16,7 @@ import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.configLocation
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -25,6 +26,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import java.io.File
+import java.io.IOException
 
 internal class ModifiableModuleModelBridge(
   private val project: Project,
@@ -92,10 +95,13 @@ internal class ModifiableModuleModelBridge(
       source = entitySource
     )
 
-    val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStorageOnDiff, diff = diff, isNew = true)
-    diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
-    myModulesToAdd[moduleName] = moduleInstance
+    return createModuleInstance(moduleEntity, true)
+  }
 
+  private fun createModuleInstance(moduleEntity: ModuleEntity, isNew: Boolean): ModuleBridge {
+    val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStorageOnDiff, diff = diff, isNew = isNew)
+    diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
+    myModulesToAdd[moduleEntity.name] = moduleInstance
     return moduleInstance
   }
 
@@ -125,9 +131,24 @@ internal class ModifiableModuleModelBridge(
     }
   }
 
-  // TODO Actually load module content
-  override fun loadModule(filePath: String): Module =
-    newModule(filePath, "")
+  override fun loadModule(filePath: String): Module {
+    val moduleName = getModuleNameByFilePath(filePath)
+    if (findModuleByName(moduleName) != null) {
+      error("Module name '$moduleName' already exists. Trying to load module: $filePath")
+    }
+
+    removeUnloadedModule(moduleName)
+
+    val builder = WorkspaceEntityStorageBuilder.create()
+    JpsProjectEntitiesLoader.loadModule(File(filePath), project.configLocation!!, builder, virtualFileManager)
+    diff.addDiff(builder)
+    val moduleEntity = diff.entities(ModuleEntity::class.java).find { it.name == moduleName }
+    if (moduleEntity == null) {
+      throw IOException("Failed to load module from $filePath")
+    }
+
+    return createModuleInstance(moduleEntity, false)
+  }
 
   override fun disposeModule(module: Module) {
     if (Disposer.isDisposing(module.project)) {

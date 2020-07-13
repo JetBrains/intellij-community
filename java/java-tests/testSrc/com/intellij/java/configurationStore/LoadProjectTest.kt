@@ -2,6 +2,7 @@
 package com.intellij.java.configurationStore
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
@@ -37,6 +38,36 @@ class LoadProjectTest {
     loadProjectAndCheckResults("single-module") { project ->
       val module = ModuleManager.getInstance(project).modules.single()
       assertThat(module.name).isEqualTo("foo")
+      assertThat(module.moduleTypeName).isEqualTo("EMPTY_MODULE")
+    }
+  }
+
+  @Test
+  fun `load detached module`() {
+    loadProjectAndCheckResults("detached-module") { project ->
+      val fooModule = ModuleManager.getInstance(project).modules.single()
+      assertThat(fooModule.name).isEqualTo("foo")
+      val barModule = runWriteActionAndWait { ModuleManager.getInstance(project).loadModule("${project.basePath}/bar/bar.iml") }
+      assertThat(barModule.name).isEqualTo("bar")
+      assertThat(barModule.moduleTypeName).isEqualTo("EMPTY_MODULE")
+      assertThat(ModuleManager.getInstance(project).modules).containsExactlyInAnyOrder(fooModule, barModule)
+    }
+  }
+
+  @Test
+  fun `load detached module via modifiable model`() {
+    loadProjectAndCheckResults("detached-module") { project ->
+      val fooModule = ModuleManager.getInstance(project).modules.single()
+      assertThat(fooModule.name).isEqualTo("foo")
+      runWriteActionAndWait {
+        val model = ModuleManager.getInstance(project).modifiableModel
+        model.loadModule("${project.basePath}/bar/bar.iml")
+        model.commit()
+      }
+      val barModule = ModuleManager.getInstance(project).findModuleByName("bar")
+      assertThat(barModule).isNotNull()
+      assertThat(barModule!!.moduleTypeName).isEqualTo("EMPTY_MODULE")
+      assertThat(ModuleManager.getInstance(project).modules).containsExactlyInAnyOrder(fooModule, barModule)
     }
   }
 
