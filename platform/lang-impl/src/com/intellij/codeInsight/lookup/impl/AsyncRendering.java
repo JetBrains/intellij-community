@@ -81,6 +81,7 @@ public class AsyncRendering {
       renderer.renderElement(element, presentation);
     }, DumbModeAccessType.RELIABLE_DATA_ONLY);
 
+    presentation.freeze();
     rememberPresentation(element, presentation);
     scheduleLookupUpdate(element, presentation);
   }

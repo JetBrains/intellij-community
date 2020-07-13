@@ -4,6 +4,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,24 +30,30 @@ public class LookupElementPresentation {
   private boolean myItemTextItalic;
   private boolean myTypeGrayed;
   @Nullable private List<TextFragment> myTail;
+  private boolean myFrozen;
 
   public void setIcon(@Nullable Icon icon) {
+    ensureMutable();
     myIcon = icon;
   }
 
   public void setItemText(@Nullable String text) {
+    ensureMutable();
     myItemText = text;
   }
 
   public void setStrikeout(boolean strikeout) {
+    ensureMutable();
     myStrikeout = strikeout;
   }
 
   public void setItemTextBold(boolean bold) {
+    ensureMutable();
     myItemTextBold = bold;
   }
 
   public void setItemTextItalic(boolean itemTextItalic) {
+    ensureMutable();
     myItemTextItalic = itemTextItalic;
   }
 
@@ -55,6 +62,7 @@ public class LookupElementPresentation {
   }
 
   public void clearTail() {
+    ensureMutable();
     myTail = null;
   }
 
@@ -67,6 +75,7 @@ public class LookupElementPresentation {
   }
 
   private void appendTailText(@NotNull TextFragment fragment) {
+    ensureMutable();
     if (fragment.text.isEmpty()) return;
 
     if (myTail == null) {
@@ -94,6 +103,7 @@ public class LookupElementPresentation {
   }
 
   public void setTypeText(@Nullable String text, @Nullable Icon icon) {
+    ensureMutable();
     myTypeText = text;
     myTypeIcon = icon;
   }
@@ -155,6 +165,7 @@ public class LookupElementPresentation {
   }
 
   public void setItemTextUnderlined(boolean itemTextUnderlined) {
+    ensureMutable();
     myItemTextUnderlined = itemTextUnderlined;
   }
 
@@ -163,6 +174,7 @@ public class LookupElementPresentation {
   }
 
   public void setItemTextForeground(@NotNull Color itemTextForeground) {
+    ensureMutable();
     myItemTextForeground = itemTextForeground;
   }
 
@@ -189,7 +201,12 @@ public class LookupElementPresentation {
   }
 
   public void setTypeGrayed(boolean typeGrayed) {
+    ensureMutable();
     myTypeGrayed = typeGrayed;
+  }
+
+  private void ensureMutable() {
+    if (myFrozen) throw new IllegalStateException("This lookup element presentation can't be changed");
   }
 
   public boolean isTypeIconRightAligned() {
@@ -197,6 +214,7 @@ public class LookupElementPresentation {
   }
 
   public void setTypeIconRightAligned(boolean typeIconRightAligned) {
+    ensureMutable();
     myTypeIconRightAligned = typeIconRightAligned;
   }
 
@@ -204,6 +222,14 @@ public class LookupElementPresentation {
     LookupElementPresentation presentation = new LookupElementPresentation();
     element.renderElement(presentation);
     return presentation;
+  }
+
+  /**
+   * Disallow any further changes to this presentation object.
+   */
+  @ApiStatus.Internal
+  public void freeze() {
+    myFrozen = true;
   }
 
   @Override
