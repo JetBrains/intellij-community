@@ -21,7 +21,8 @@ import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.JavacMain;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -59,25 +60,43 @@ public class JavacCompilerTool extends JavaCompilingTool {
   @NotNull
   @Override
   public JavaCompiler createCompiler() throws CannotCreateJavaCompilerException {
-    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    if (compiler != null) {
-      return compiler;
+    Throwable err1 = null, err2 = null;
+    try {
+      JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+      if (compiler != null) {
+        return compiler;
+      }
+    }
+    catch (Throwable ex) {
+      err1 = ex;
     }
 
-    String message;
     // trying to obtain additional diagnostic for the case when compiler.jar is present, but there were problems with compiler class loading:
     try {
       //temporary workaround for IDEA-169747: try to create the instance by hand if it was found
       return (JavaCompiler)Class.forName("com.sun.tools.javac.api.JavacTool", true, JavacMain.class.getClassLoader()).newInstance();
     }
     catch (Throwable ex) {
-      StringWriter stringWriter = new StringWriter();
-      stringWriter.write("System Java Compiler was not found in classpath");
-      stringWriter.write(":\n");
-      ex.printStackTrace(new PrintWriter(stringWriter));
-      message = stringWriter.getBuffer().toString();
+      err2 = ex;
+    }
+    
+    String message = "";
+    if (err1 != null) {
+      message = formatErrorMessage("Error obtaining system java compiler", err1);
+    }
+    if (err2 != null) {
+      message = (message.isEmpty()? "" : message + "\n") + formatErrorMessage("System Java Compiler was not found in classpath", err2);
     }
     throw new CannotCreateJavaCompilerException(message);
+  }
+
+  @NotNull
+  private static String formatErrorMessage(final String header, Throwable ex) {
+    StringWriter stringWriter = new StringWriter();
+    stringWriter.write(header);
+    stringWriter.write(":\n");
+    ex.printStackTrace(new PrintWriter(stringWriter));
+    return stringWriter.getBuffer().toString();
   }
 
   @NotNull
