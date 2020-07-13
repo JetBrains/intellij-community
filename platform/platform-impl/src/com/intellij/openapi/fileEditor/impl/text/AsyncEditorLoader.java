@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -93,6 +95,12 @@ public class AsyncEditorLoader {
             return myTextEditor.loadEditorInBackground();
           } catch (ProcessCanceledException e) {
             throw e;
+          } catch (IndexOutOfBoundsException e) {
+            // EA-232290 investigation
+            Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e,
+                                                              new Attachment("file.txt", myTextEditor.getFile().toString()),
+                                                              new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+            return null;
           } catch (Exception e) {
             Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e);
             return null;
