@@ -13,10 +13,8 @@ import java.io.Serializable
 /**
  * A prototype of implementation of the current (legacy) project model via [WorkspaceEntity]. It uses similar concepts to simplify implementation
  * of the bridge to the current model. Some peculiarities are fixed though:
- * * source roots are moved out from content entries, content roots are stored separately in a module;
- * * module libraries are stored in a real library table, unnamed libraries aren't allowed;
+ * * unnamed libraries aren't allowed: module-level libraries without a name get automatically generated names;
  * * 'jar directory' flag is stored in a library root itself;
- * * SDKs are represented as [LibraryEntity] with additional properties specified in [SdkEntity] attached to it.
  */
 
 @Suppress("unused")
