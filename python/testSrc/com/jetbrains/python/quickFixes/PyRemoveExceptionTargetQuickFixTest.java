@@ -28,6 +28,7 @@ public class PyRemoveExceptionTargetQuickFixTest extends PyQuickFixTestCase {
     doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
   }
 
+  // PY-20893
   public void testExcept2() {
     runWithLanguageLevel(LanguageLevel.PYTHON27,
                          () -> doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr")));
