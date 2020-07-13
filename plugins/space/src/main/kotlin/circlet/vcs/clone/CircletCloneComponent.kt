@@ -213,6 +213,7 @@ private class CloneView(
             // selection change is triggered when repo details update, so we can use value here.
             updateSelectedUrl()
         }
+        setExpandableItemsEnabled(false)
     }
 
     val accountLabel = JLabel()
