@@ -313,9 +313,9 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof MatchedValue)) return false;
       MatchedValue value1 = (MatchedValue)o;
       return Objects.equals(value, value1.value) &&
              Objects.equals(pattern, value1.pattern);
