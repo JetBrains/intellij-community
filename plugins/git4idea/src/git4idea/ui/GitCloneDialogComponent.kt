@@ -77,23 +77,23 @@ class GitCloneDialogComponent(project: Project,
   override fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {
     updateOkActionState(dialogStateListener)
 
-      val scheduleCheckVersion = {
-        if (!errorNotifier.isTaskInProgress) {
-          checkVersionAlarm.addRequest({ checkGitVersion(dialogStateListener) }, 0)
-        }
-      }
-
     if (versionCheckState == VersionCheckState.NOT_CHECKED) {
       versionCheckState = VersionCheckState.IN_PROGRESS
-      scheduleCheckVersion()
+      scheduleCheckVersion(dialogStateListener)
 
       ApplicationActivationListener.TOPIC.subscribe(this, object : ApplicationActivationListener {
         override fun applicationActivated(ideFrame: IdeFrame) {
           if (versionCheckState == VersionCheckState.FAILED) {
-            scheduleCheckVersion()
+            scheduleCheckVersion(dialogStateListener)
           }
         }
       })
+    }
+  }
+
+  private fun scheduleCheckVersion(dialogStateListener: VcsCloneDialogComponentStateListener) {
+    if (!errorNotifier.isTaskInProgress) {
+      checkVersionAlarm.addRequest({ checkGitVersion(dialogStateListener) }, 0)
     }
   }
 
