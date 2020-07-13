@@ -29,7 +29,7 @@ public class CommandLinePanel extends JPanel {
     manager.registerFragments(fragments);
 
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    setMinimumSize(new Dimension(500, 30));
+    setMinimumSize(new JBDimension(500, 30));
     buildRows();
     addComponentListener(new ComponentAdapter() {
       @Override
