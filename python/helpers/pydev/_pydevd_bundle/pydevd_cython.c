@@ -2602,7 +2602,7 @@ static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_ThreadTracer(PyTy
 static __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_get = {0, &__pyx_n_s_get, 0, 0, 0};
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
-static PyObject *__pyx_int_28;
+static PyObject *__pyx_int_29;
 static PyObject *__pyx_int_160;
 static PyObject *__pyx_int_19394913;
 static PyObject *__pyx_int_64458794;
@@ -10632,7 +10632,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
  *                                 should_stop, frame = result
  *                         if main_debugger.stop_on_failed_tests and main_debugger.is_test_item_or_set_up_caller(trace) \             # <<<<<<<<<<<<<<
  *                                 and not is_exception_in_test_unit_can_be_ignored(exception):
- *                             should_stop, frame = should_stop_on_failed_test(trace), frame
+ *                             should_stop, frame = should_stop_on_failed_test(arg), frame
  */
             __pyx_t_14 = __Pyx_PyObject_GetAttrStr(__pyx_v_main_debugger, __pyx_n_s_stop_on_failed_tests); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 416, __pyx_L33_error)
             __Pyx_GOTREF(__pyx_t_14);
@@ -10648,7 +10648,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
  *                                 should_stop, frame = result
  *                         if main_debugger.stop_on_failed_tests and main_debugger.is_test_item_or_set_up_caller(trace) \
  *                                 and not is_exception_in_test_unit_can_be_ignored(exception):             # <<<<<<<<<<<<<<
- *                             should_stop, frame = should_stop_on_failed_test(trace), frame
+ *                             should_stop, frame = should_stop_on_failed_test(arg), frame
  *                             info.pydev_message = "python-AssertionError"
  */
             __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_v_main_debugger, __pyx_n_s_is_test_item_or_set_up_caller); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 416, __pyx_L33_error)
@@ -10659,7 +10659,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
  *                                 should_stop, frame = result
  *                         if main_debugger.stop_on_failed_tests and main_debugger.is_test_item_or_set_up_caller(trace) \             # <<<<<<<<<<<<<<
  *                                 and not is_exception_in_test_unit_can_be_ignored(exception):
- *                             should_stop, frame = should_stop_on_failed_test(trace), frame
+ *                             should_stop, frame = should_stop_on_failed_test(arg), frame
  */
             __pyx_t_4 = NULL;
             if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_10))) {
@@ -10688,7 +10688,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
  *                                 should_stop, frame = result
  *                         if main_debugger.stop_on_failed_tests and main_debugger.is_test_item_or_set_up_caller(trace) \
  *                                 and not is_exception_in_test_unit_can_be_ignored(exception):             # <<<<<<<<<<<<<<
- *                             should_stop, frame = should_stop_on_failed_test(trace), frame
+ *                             should_stop, frame = should_stop_on_failed_test(arg), frame
  *                             info.pydev_message = "python-AssertionError"
  */
             __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_is_exception_in_test_unit_can_be); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 417, __pyx_L33_error)
@@ -10719,14 +10719,14 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
  *                                 should_stop, frame = result
  *                         if main_debugger.stop_on_failed_tests and main_debugger.is_test_item_or_set_up_caller(trace) \             # <<<<<<<<<<<<<<
  *                                 and not is_exception_in_test_unit_can_be_ignored(exception):
- *                             should_stop, frame = should_stop_on_failed_test(trace), frame
+ *                             should_stop, frame = should_stop_on_failed_test(arg), frame
  */
             if (__pyx_t_7) {
 
               /* "_pydevd_bundle/pydevd_cython.pyx":418
  *                         if main_debugger.stop_on_failed_tests and main_debugger.is_test_item_or_set_up_caller(trace) \
  *                                 and not is_exception_in_test_unit_can_be_ignored(exception):
- *                             should_stop, frame = should_stop_on_failed_test(trace), frame             # <<<<<<<<<<<<<<
+ *                             should_stop, frame = should_stop_on_failed_test(arg), frame             # <<<<<<<<<<<<<<
  *                             info.pydev_message = "python-AssertionError"
  *                     except:
  */
@@ -10742,7 +10742,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
                   __Pyx_DECREF_SET(__pyx_t_10, function);
                 }
               }
-              __pyx_t_14 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_10, __pyx_t_4, __pyx_v_trace) : __Pyx_PyObject_CallOneArg(__pyx_t_10, __pyx_v_trace);
+              __pyx_t_14 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_10, __pyx_t_4, __pyx_v_arg) : __Pyx_PyObject_CallOneArg(__pyx_t_10, __pyx_v_arg);
               __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
               if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 418, __pyx_L33_error)
               __Pyx_GOTREF(__pyx_t_14);
@@ -10756,7 +10756,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
 
               /* "_pydevd_bundle/pydevd_cython.pyx":419
  *                                 and not is_exception_in_test_unit_can_be_ignored(exception):
- *                             should_stop, frame = should_stop_on_failed_test(trace), frame
+ *                             should_stop, frame = should_stop_on_failed_test(arg), frame
  *                             info.pydev_message = "python-AssertionError"             # <<<<<<<<<<<<<<
  *                     except:
  *                         should_stop = False
@@ -10772,7 +10772,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
  *                                 should_stop, frame = result
  *                         if main_debugger.stop_on_failed_tests and main_debugger.is_test_item_or_set_up_caller(trace) \             # <<<<<<<<<<<<<<
  *                                 and not is_exception_in_test_unit_can_be_ignored(exception):
- *                             should_stop, frame = should_stop_on_failed_test(trace), frame
+ *                             should_stop, frame = should_stop_on_failed_test(arg), frame
  */
             }
 
@@ -10797,7 +10797,7 @@ static PyObject *__pyx_pf_14_pydevd_bundle_13pydevd_cython_9PyDBFrame_10should_s
           __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
 
           /* "_pydevd_bundle/pydevd_cython.pyx":420
- *                             should_stop, frame = should_stop_on_failed_test(trace), frame
+ *                             should_stop, frame = should_stop_on_failed_test(arg), frame
  *                             info.pydev_message = "python-AssertionError"
  *                     except:             # <<<<<<<<<<<<<<
  *                         should_stop = False
@@ -36754,7 +36754,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitGlobals(void) {
   if (__Pyx_InitStrings(__pyx_string_tab) < 0) __PYX_ERR(0, 1, __pyx_L1_error);
   __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_28 = PyInt_FromLong(28); if (unlikely(!__pyx_int_28)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_int_29 = PyInt_FromLong(29); if (unlikely(!__pyx_int_29)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_160 = PyInt_FromLong(160); if (unlikely(!__pyx_int_160)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_19394913 = PyInt_FromLong(19394913L); if (unlikely(!__pyx_int_19394913)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_64458794 = PyInt_FromLong(64458794L); if (unlikely(!__pyx_int_64458794)) __PYX_ERR(0, 1, __pyx_L1_error)
@@ -37252,14 +37252,14 @@ if (!__Pyx_RefNanny) {
   /* "_pydevd_bundle/pydevd_cython.pyx":16
  * # ENDIF
  * 
- * version = 28             # <<<<<<<<<<<<<<
+ * version = 29             # <<<<<<<<<<<<<<
  * 
  * if not hasattr(sys, '_current_frames'):
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_int_28) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_int_29) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
 
   /* "_pydevd_bundle/pydevd_cython.pyx":18
- * version = 28
+ * version = 29
  * 
  * if not hasattr(sys, '_current_frames'):             # <<<<<<<<<<<<<<
  * 
@@ -37562,7 +37562,7 @@ if (!__Pyx_RefNanny) {
     __pyx_L3:;
 
     /* "_pydevd_bundle/pydevd_cython.pyx":18
- * version = 28
+ * version = 29
  * 
  * if not hasattr(sys, '_current_frames'):             # <<<<<<<<<<<<<<
  * 
