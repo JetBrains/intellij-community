@@ -379,4 +379,33 @@ class MyClass {
 }
 '''
   }
+
+  void 'test @Newify with pattern'() {
+    myFixture.addClass 'package hello; public class Abc {}'
+    myFixture.configureByText('_.groovy', '''\
+import groovy.transform.CompileStatic
+import hello.Abc
+
+import java.lang.Integer
+
+@Newify(pattern = /[A-Z][A-Za-z0-9_]+/)
+@CompileStatic
+void newifyImportsIncorrectlyMarkedAsUnused() {
+    final a = Integer(1)
+    def b = Abc()
+}
+''')
+    doOptimizeImports()
+    myFixture.checkResult('''\
+import groovy.transform.CompileStatic
+import hello.Abc
+
+@Newify(pattern = /[A-Z][A-Za-z0-9_]+/)
+@CompileStatic
+void newifyImportsIncorrectlyMarkedAsUnused() {
+    final a = Integer(1)
+    def b = Abc()
+}
+''')
+  }
 }
