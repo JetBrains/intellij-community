@@ -120,25 +120,30 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
   }
 
   private void updateHighlighted(@NotNull Project project, @NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (editor.getDocument().isInBulkUpdate()) {
       return;
     }
 
-    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (foundFile, newEditor) -> {
+    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (foundFile, newEditor)->{
+      IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().
+        createHighlightingPass(foundFile, newEditor, foundFile.getTextRange());
+      if (pass != null) {
+        pass.doCollectInformation();
+      }
+      return pass;
+    }, (foundFile, newEditor, pass) -> {
       BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, foundFile);
       handler.updateBraces();
 
-      IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().
-        createHighlightingPass(foundFile, newEditor);
       if (pass != null) {
-        pass.doCollectInformation();
         pass.doApplyInformationToEditor();
       }
     });
   }
 
   private void clearBraces(@NotNull Project project, @NotNull Editor editor) {
-    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (foundFile, newEditor) -> {
+    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (__,___)->null, (foundFile, newEditor,__) -> {
       BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, foundFile);
       handler.clearBraceHighlighters();
     });

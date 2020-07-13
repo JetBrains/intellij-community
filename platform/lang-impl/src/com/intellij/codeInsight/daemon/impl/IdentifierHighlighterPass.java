@@ -61,11 +61,11 @@ public class IdentifierHighlighterPass {
   private final int myCaretOffset;
   private final ProperTextRange myVisibleRange;
 
-  IdentifierHighlighterPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor) {
+  IdentifierHighlighterPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull TextRange visibleRange) {
     myFile = file;
     myEditor = editor;
     myCaretOffset = myEditor.getCaretModel().getOffset();
-    myVisibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(myEditor);
+    myVisibleRange = new ProperTextRange(visibleRange);
   }
 
   public void doCollectInformation() {

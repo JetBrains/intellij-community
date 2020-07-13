@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestModeFlags;
 import org.jetbrains.annotations.NotNull;
@@ -18,13 +19,15 @@ import org.jetbrains.annotations.TestOnly;
 public final class IdentifierHighlighterPassFactory {
   private static final Key<Boolean> ourTestingIdentifierHighlighting = Key.create("TestingIdentifierHighlighting");
 
-  public IdentifierHighlighterPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
+  public IdentifierHighlighterPass createHighlightingPass(@NotNull final PsiFile file,
+                                                          @NotNull final Editor editor,
+                                                          @NotNull TextRange visibleRange) {
     if (!editor.isOneLineMode() &&
         CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
         !DumbService.isDumb(file.getProject()) &&
         isEnabledInHeadlessMode() &&
         (file.isPhysical() || file.getOriginalFile().isPhysical())) {
-      return new IdentifierHighlighterPass(file.getProject(), file, editor);
+      return new IdentifierHighlighterPass(file, editor, visibleRange);
     }
 
     return null;

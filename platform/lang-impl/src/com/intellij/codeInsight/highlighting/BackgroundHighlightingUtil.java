@@ -11,22 +11,30 @@ import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 public class BackgroundHighlightingUtil {
-  static void lookForInjectedFileInOtherThread(@NotNull Project project,
-                                               @NotNull Editor editor,
-                                               @NotNull BiConsumer<? super PsiFile, ? super EditorEx> processor) {
+  /**
+   * start background thread where find injected fragment at the caret position,
+   * invoke {@code backgroundProcessor} on that fragment and invoke later {@code edtProcessor} in EDT,
+   * cancel if anything changes.
+   */
+  static <T> void lookForInjectedFileInOtherThread(@NotNull Project project,
+                                                   @NotNull Editor editor,
+                                                   @NotNull BiFunction<? super PsiFile, ? super EditorEx, ? extends T> backgroundProcessor,
+                                                   @NotNull TriConsumer<? super PsiFile, ? super EditorEx, ? super T> edtProcessor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isValidEditor(editor)) return;
 
@@ -42,20 +50,26 @@ public class BackgroundHighlightingUtil {
         if (psiFile instanceof PsiBinaryFile && BinaryFileTypeDecompilers.getInstance().forFileType(psiFile.getFileType()) == null) {
           return null;
         }
-        return getInjectedFileIfAny(offsetBefore, psiFile);
+        PsiFile newFile = getInjectedFileIfAny(offsetBefore, psiFile);
+        EditorEx newEditor = (EditorEx)InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, newFile);
+        T result = backgroundProcessor.apply(newFile, newEditor);
+        return Trinity.create(newFile, newEditor, result);
       })
       .withDocumentsCommitted(project)
       .expireWhen(() -> !isValidEditor(editor))
       .coalesceBy(BraceHighlightingHandler.class, editor)
-      .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), foundFile -> {
+      .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), t -> {
+        if (t == null) return;
+        PsiFile foundFile = t.getFirst();
+        EditorEx newEditor = t.getSecond();
+        T result = t.getThird();
         if (foundFile == null) return;
 
         if (foundFile.isValid() && offsetBefore == editor.getCaretModel().getOffset()) {
-          EditorEx newEditor = (EditorEx)InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, foundFile);
-          processor.accept(foundFile, newEditor);
+          edtProcessor.accept(foundFile, newEditor, result);
         }
         else {
-          lookForInjectedFileInOtherThread(project, editor, processor);
+          lookForInjectedFileInOtherThread(project, editor, backgroundProcessor, edtProcessor);
         }
       })
       .submit(AppExecutorUtil.getAppExecutorService());
@@ -70,7 +84,7 @@ public class BackgroundHighlightingUtil {
   @NotNull
   private static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
     PsiElement injectedElement = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, offset);
-    if (injectedElement != null /*&& !(injectedElement instanceof PsiWhiteSpace)*/) {
+    if (injectedElement != null) {
       PsiFile injected = injectedElement.getContainingFile();
       if (injected != null) {
         return injected;
