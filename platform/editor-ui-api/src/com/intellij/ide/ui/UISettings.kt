@@ -50,7 +50,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   val allowMergeButtons: Boolean
-    get() = state.allowMergeButtons && Registry.`is`("ide.allow.merge.buttons")
+    get() = Registry.`is`("ide.allow.merge.buttons")
 
   val animateWindows: Boolean
     get() = Registry.`is`("ide.animate.toolwindows")
@@ -655,6 +655,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (state.moveMouseOnDefaultButton) {
       Registry.get("ide.settings.move.mouse.on.default.button").setValue(true)
       state.moveMouseOnDefaultButton = false
+    }
+    if (state.allowMergeButtons) {
+      Registry.get("ide.allow.merge.buttons").setValue(true)
+      state.allowMergeButtons = false
     }
   }
 
