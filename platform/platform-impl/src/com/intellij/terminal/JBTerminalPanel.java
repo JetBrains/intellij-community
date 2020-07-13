@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.JBHiDPIScaledImage;
@@ -332,9 +333,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
         LOG.info("Already registered terminal event dispatcher");
       }
       else {
-        IdeEventQueue.getInstance().addDispatcher(this, JBTerminalPanel.this);
+        if (Disposer.isDisposed(JBTerminalPanel.this)) {
+          LOG.info("Already disposed " + JBTerminalPanel.this);
+        }
+        else {
+          IdeEventQueue.getInstance().addDispatcher(this, JBTerminalPanel.this);
+          myRegistered = true;
+        }
       }
-      myRegistered = true;
     }
 
     void unregister() {
