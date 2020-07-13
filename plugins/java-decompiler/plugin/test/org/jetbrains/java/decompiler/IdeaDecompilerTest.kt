@@ -117,8 +117,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   private fun highlightUnderCaret(): List<HighlightInfo> {
-    // wait for async "highlight identifier" computation to apply in com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    IdentifierHighlighterPassFactory.waitForIdentifierHighlighting()
     return myFixture.doHighlighting().filter { it.severity === HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY }
   }
 
