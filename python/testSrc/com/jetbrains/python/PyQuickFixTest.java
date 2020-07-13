@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestDataFile;
@@ -227,14 +228,25 @@ public class PyQuickFixTest extends PyTestCase {
                          () -> doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.unresolved.reference.create.function", "my_function"), true, true));
   }
 
-  // PY-1602
-  public void testAddFunctionToModule() {
-    doInspectionTest(
-      "AddFunctionToModule.py",
-      PyUnresolvedReferencesInspection.class,
-      PyPsiBundle.message("QFIX.NAME.add.function.$0.to.module.$1", "frob", "AddFunctionToModule.py"),
-      true, true
-    );
+  // PY-1465
+  public void testAddFunctionToModuleInImport() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.NAME.add.function.$0.to.module.$1", "func", "mod.py"),
+                               "mod.py");
+  }
+
+  // PY-34710
+  public void testAddFunctionToModuleInFromImport() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.NAME.add.function.$0.to.module.$1", "foo", "mod.py"),
+                               "mod.py");
+  }
+
+  // PY-34710
+  public void testAddFunctionToPackageInFromImport() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.NAME.add.function.$0.to.module.$1", "foo", "__init__.py"),
+                               "mypack/__init__.py");
   }
 
   // PY-1470
@@ -724,7 +736,7 @@ public class PyQuickFixTest extends PyTestCase {
     return PythonTestUtil.getTestDataPath() + "/inspections/";
   }
 
-  private void doInspectionTest(@NotNull Class inspectionClass,
+  private void doInspectionTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass,
                                 @NotNull String quickFixName,
                                 boolean applyFix,
                                 boolean available) {
@@ -732,7 +744,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   protected void doInspectionTest(@TestDataFile @NonNls @NotNull String testFileName,
-                                  @NotNull Class inspectionClass,
+                                  @NotNull Class<? extends LocalInspectionTool> inspectionClass,
                                   @NonNls @NotNull String quickFixName,
                                   boolean applyFix,
                                   boolean available) {
@@ -750,7 +762,7 @@ public class PyQuickFixTest extends PyTestCase {
    * @throws Exception
    */
   protected void doInspectionTest(@NonNls String @NotNull [] testFiles,
-                                  @NotNull Class inspectionClass,
+                                  @NotNull Class<? extends LocalInspectionTool> inspectionClass,
                                   @NonNls @NotNull String quickFixName,
                                   boolean applyFix,
                                   boolean available) {
@@ -775,6 +787,20 @@ public class PyQuickFixTest extends PyTestCase {
     else {
       assertEmpty("Quick fix \"" + quickFixName + "\" should not be available", intentionActions);
     }
+  }
+
+  private void doMultiFilesInspectionTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass,
+                                          @NotNull String intentionStr,
+                                          @NotNull String modifiedFile) {
+    myFixture.enableInspections(inspectionClass);
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureFromTempProjectFile(getTestName(true) + ".py");
+    myFixture.checkHighlighting(true, false, false);
+    final IntentionAction intentionAction = myFixture.findSingleIntention(intentionStr);
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    final String expectedFile = getTestName(true) + "/" + graftBeforeExt(modifiedFile, "_after");
+    myFixture.checkResultByFile(modifiedFile, expectedFile, true);
   }
 
   // Turns "name.ext" to "name_insertion.ext"
