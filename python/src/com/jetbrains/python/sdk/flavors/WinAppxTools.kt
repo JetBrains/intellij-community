@@ -29,7 +29,10 @@ import java.util.concurrent.TimeUnit
 private const val storeMarker = "DesktopAppInstaller"
 
 /**
- * Files in [userAppxFolder] that matches [filePattern] and contains [expectedProduct]] in their product name
+ * Files in [userAppxFolder] that matches [filePattern] and contains [expectedProduct]] in their product name.
+ * For example: ``PythonSoftwareFoundation.Python.3.8_qbz5n2kfra8p0``.
+ * There may be several files linked to this product, we need only first.
+ * And for 3.7 there could be ``PythonSoftwareFoundation.Python.3.7_(SOME_OTHER_UID)``.
  */
 fun getAppxFiles(expectedProduct: String, filePattern: Regex): Collection<File> =
   userAppxFolder?.listFiles(FilenameFilter { _, name -> filePattern.matches(name) })
@@ -64,7 +67,8 @@ private val userAppxFolder =
     null
   }
   else {
-    val localappdata = System.getenv("LOCALAPPDATA") ?: null
-    val appsPath = File(localappdata, "Microsoft//WindowsApps")
-    if (appsPath.exists()) appsPath else null
+    System.getenv("LOCALAPPDATA")?.let { localappdata ->
+      val appsPath = File(localappdata, "Microsoft//WindowsApps")
+      if (appsPath.exists()) appsPath else null
+    }
   }
