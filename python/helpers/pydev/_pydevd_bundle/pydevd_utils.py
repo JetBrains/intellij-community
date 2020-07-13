@@ -386,13 +386,16 @@ def is_test_item_or_set_up_caller(trace):
     return False
 
 
-def should_stop_on_failed_test(trace):
+# noinspection SpellCheckingInspection
+def should_stop_on_failed_test(exc_info):
     """Check if the debugger should stop on failed test. Some failed tests can be marked as expected failures
     and should be ignored because of that.
 
-    :param trace: stack trace object from a test item caller
+    :param exc_info: exception type, value, and traceback
     :return: `False` if test is marked as an expected failure, ``True`` otherwise.
     """
+    exc_type, _, trace = exc_info
+
     # unittest
     test_item = trace.tb_frame.f_locals.get('method') if IS_PY38_OR_GREATER else trace.tb_frame.f_locals.get('testMethod')
     if test_item:
@@ -401,10 +404,19 @@ def should_stop_on_failed_test(trace):
     # pytest
     testfunction = trace.tb_frame.f_locals.get('testfunction')
     if testfunction and hasattr(testfunction, 'pytestmark'):
+        # noinspection PyBroadException
         try:
             for attr in testfunction.pytestmark:
+                # noinspection PyUnresolvedReferences
                 if attr.name == 'xfail':
-                    return False
+                    # noinspection PyUnresolvedReferences
+                    exc_to_ignore = attr.kwargs.get('raises')
+                    if not exc_to_ignore:
+                        return True
+                    elif hasattr(exc_to_ignore, '__iter__'):
+                        return exc_type not in exc_to_ignore
+                    else:
+                        return exc_type is not exc_to_ignore
         except BaseException:
             pass
     return True
