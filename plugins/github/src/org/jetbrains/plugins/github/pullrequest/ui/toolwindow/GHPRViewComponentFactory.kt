@@ -310,10 +310,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         ComponentUtil.putClientProperty(splitter, CHANGES_TREE_KEY, changesTree)
       }
       .createWithUpdatesStripe(uiDisposable) { parent, model ->
-        val reviewUnsupportedWarning = createReviewUnsupportedPlaque()
-        model.addValueChangedListener {
-          reviewUnsupportedWarning.isVisible = !model.value.linearHistory
-        }
+        val reviewUnsupportedWarning = createReviewUnsupportedPlaque(model)
         JBUI.Panels.simplePanel(createChangesTree(parent, createCommitChangesModel(model, commitSelectionListener),
                                                   GithubBundle.message("pull.request.commit.does.not.contain.changes")))
           .addToTop(reviewUnsupportedWarning)
@@ -332,10 +329,12 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
   }
 
-  private fun createReviewUnsupportedPlaque(): JComponent {
-    return HtmlInfoPanel().apply {
-      setInfo(GithubBundle.message("pull.request.review.not.supported.non.linear"), HtmlInfoPanel.Severity.WARNING)
-      border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
+  private fun createReviewUnsupportedPlaque(model: SingleValueModel<GHPRChangesProvider>) = HtmlInfoPanel().apply {
+    setInfo(GithubBundle.message("pull.request.review.not.supported.non.linear"), HtmlInfoPanel.Severity.WARNING)
+    border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
+
+    model.addAndInvokeValueChangedListener {
+      isVisible = !model.value.linearHistory
     }
   }
 
