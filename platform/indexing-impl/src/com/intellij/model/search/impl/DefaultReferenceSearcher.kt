@@ -15,6 +15,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.util.Query
 
 internal class DefaultReferenceSearcher : PsiSymbolReferenceSearcher {
+
   override fun collectSearchRequests(parameters: PsiSymbolReferenceSearchParameters): Collection<Query<out PsiSymbolReference>> {
     val project: Project = parameters.project
     val inputScope: SearchScope = parameters.searchScope
@@ -29,8 +30,7 @@ internal class DefaultReferenceSearcher : PsiSymbolReferenceSearcher {
       val language: Language = searcher.referencingLanguage
       val searchScope: SearchScope = request.searchScope?.intersectWith(inputScope) ?: inputScope
       val injectionSearchScope: SearchScope = request.injectionSearchScope?.intersectWith(inputScope) ?: inputScope
-      val mapper: LeafOccurrenceMapper<PsiSymbolReference> = CodeReferenceMapper(
-        targetPointer, searcher)
+      val mapper: LeafOccurrenceMapper<PsiSymbolReference> = CodeReferenceMapper(targetPointer, searcher)
       val builder: SearchWordQueryBuilder = service.searchWord(project, request.searchString)
       result += builder
         .inContexts(IN_CODE)
