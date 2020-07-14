@@ -8,6 +8,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.lang.Language;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -169,6 +170,7 @@ public class UsageViewImpl implements UsageViewEx {
     .createBoundedApplicationPoolExecutor("Usage View Update Requests", AppExecutorUtil.getAppExecutorService(),
                                           JobSchedulerImpl.getJobPoolParallelism(), this);
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
+  private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses = ContainerUtil.newConcurrentSet();
 
   public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -1369,24 +1371,38 @@ public class UsageViewImpl implements UsageViewEx {
     for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
       listener.beforeUsageAdded(this, usage);
     }
+    reportToFUS(usage);
 
     UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtNodeChangeQueue, invalidatedUsagesConsumer);
-    if (child == null) {
-      return null;
-    }
+    myUsageNodes.put(usage, child == null ? NULL_NODE : child);
 
-    myUsageNodes.put(child.getUsage(), child == null ? NULL_NODE : child);
-    for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
-      child.update(this, edtNodeChangedQueue);
-    }
     if (child != null && getPresentation().isExcludeAvailable()) {
       for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
-        if (listener.isExcludedByDefault(this, child.getUsage())) {
+        if (listener.isExcludedByDefault(this, usage)) {
           myExclusionHandler.excludeNodeSilently(child);
         }
       }
     }
+
+    for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
+      node.update(this, edtNodeChangedQueue);
+    }
+
     return child;
+  }
+
+  private void reportToFUS(@NotNull Usage usage) {
+    if (usage instanceof PsiElementUsage) {
+      PsiElementUsage elementUsage = (PsiElementUsage)usage;
+      Class<? extends PsiReference> referenceClass = elementUsage.getReferenceClass();
+      PsiElement element = elementUsage.getElement();
+      if (referenceClass != null || element != null) {
+        Pair<Class<? extends PsiReference>, Language> pair = new Pair<>(referenceClass, element != null ? element.getLanguage() : null);
+        if (myReportedReferenceClasses.add(pair)) {
+          UsageViewStatisticsCollector.logUsageShown(myProject, pair.first, pair.second);
+        }
+      }
+    }
   }
 
   @Override
@@ -2227,7 +2243,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private class MyPerformOperationRunnable implements Runnable {
+  private final class MyPerformOperationRunnable implements Runnable {
     private final String myCannotMakeString;
     private final Runnable myProcessRunnable;
     private final String myCommandName;
