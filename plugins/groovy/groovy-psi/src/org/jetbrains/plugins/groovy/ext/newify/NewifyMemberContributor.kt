@@ -33,7 +33,7 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     if (!processor.shouldProcessMethods()) return
     if (place !is GrReferenceExpression) return
     val referenceName = place.referenceName ?: return
-    val newifyAnnotations = place.listNewifyAnnotations()
+    val newifyAnnotations = getNewifyAnnotations(place)
     if (newifyAnnotations.isEmpty()) return
 
     val qualifier = place.qualifierExpression
@@ -64,15 +64,7 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
                                                  place: PsiElement,
                                                  processor: PsiScopeProcessor,
                                                  state: ResolveState) {
-    val regex = try {
-      val pattern = GrAnnotationUtil.inferStringAttribute(annotation, "pattern") ?: return
-      Regex(pattern)
-    }
-    catch (e: PatternSyntaxException) {
-      return
-    }
-
-    if (regex matches referenceName) {
+    if (matchesPattern(referenceName, annotation)) {
       val classProcessor = ClassProcessor(referenceName, place)
       place.processUnqualified(classProcessor, ResolveState.initial())
 
@@ -80,7 +72,8 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
         .map { result ->
           val clazz = (result.element as? PsiClass)?.takeIf { GrStaticChecker.isStaticsOK(it, place, it, false) }
           val import = (result.currentFileResolveContext as? GrImportStatement)?.takeIf {
-            !GroovyImportHelper.isImplicitlyImported(result.element, referenceName, place.containingFile as GroovyFile)
+            val containingFile = place.containingFile as? GroovyFile ?: return@takeIf false
+            !GroovyImportHelper.isImplicitlyImported(result.element, referenceName, containingFile)
           }
           clazz to import
         }
@@ -93,11 +86,26 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     }
   }
 
-  private fun PsiElement.listNewifyAnnotations() = parentsWithSelf.flatMap {
-    val owner = it as? PsiModifierListOwner
-    val seq = owner?.modifierList?.annotations?.asSequence()?.filter { it.qualifiedName == newifyAnnotationFqn }
-    return@flatMap seq ?: emptySequence()
-  }.toList()
+  companion object {
+    @JvmStatic
+    fun getNewifyAnnotations(element: PsiElement): List<PsiAnnotation> = element.parentsWithSelf.flatMap {
+      val owner = it as? PsiModifierListOwner
+      val seq = owner?.modifierList?.annotations?.asSequence()?.filter { it.qualifiedName == newifyAnnotationFqn }
+      return@flatMap seq ?: emptySequence()
+    }.toList()
+
+    @JvmStatic
+    fun matchesPattern(name: String, annotation: PsiAnnotation): Boolean {
+      val regex = try {
+        val pattern = GrAnnotationUtil.inferStringAttribute(annotation, "pattern") ?: return false
+        Regex(pattern)
+      }
+      catch (e: PatternSyntaxException) {
+        return false
+      }
+      return regex matches name
+    }
+  }
 
   private fun buildConstructors(clazz: PsiClass, newName: String?): List<NewifiedConstructor> {
     newName ?: return emptyList()
