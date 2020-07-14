@@ -2,7 +2,6 @@
 package com.intellij.util.io
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
 import java.io.File
 import java.io.IOException
@@ -113,7 +112,11 @@ private fun doDelete(file: Path) {
       return FileVisitResult.CONTINUE
     }
 
-    override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+    override fun postVisitDirectory(dir: Path, exception: IOException?): FileVisitResult {
+      if (exception != null) {
+        throw exception
+      }
+
       Files.deleteIfExists(dir)
       return FileVisitResult.CONTINUE
     }
@@ -121,33 +124,33 @@ private fun doDelete(file: Path) {
 }
 
 private fun deleteFile(file: Path) {
-  try {
-    Files.deleteIfExists(file)
-  }
-  catch (e: IOException) {
-    if (SystemInfoRt.isWindows && e is AccessDeniedException) {
-      val view = Files.getFileAttributeView(file, DosFileAttributeView::class.java)
-      if (view != null && view.readAttributes().isReadOnly) {
-        view.setReadOnly(false)
+  // repeated delete is required for bad OS like Windows
+  val maxAttemptCount = 10
+  var attemptCount = 0
+  while (true) {
+    try {
+      Files.deleteIfExists(file)
+      return
+    }
+    catch (e: IOException) {
+      if (++attemptCount == maxAttemptCount) {
+        throw e
+      }
+
+      if (SystemInfoRt.isWindows && e is AccessDeniedException) {
+        val view = Files.getFileAttributeView(file, DosFileAttributeView::class.java)
+        if (view != null && view.readAttributes().isReadOnly) {
+          view.setReadOnly(false)
+        }
+      }
+
+      try {
+        Thread.sleep(10)
+      }
+      catch (ignored: InterruptedException) {
+        throw e
       }
     }
-
-    // repeated delete is required for bad OS like Windows
-    FileUtilRt.doIOOperation(FileUtilRt.RepeatableIOOperation<Boolean, IOException> { lastAttempt ->
-      try {
-        Files.deleteIfExists(file)
-      }
-      catch (e: IOException) {
-        return@RepeatableIOOperation if (lastAttempt) {
-          false
-        }
-        else {
-          throw e
-        }
-      }
-
-      true
-    })
   }
 }
 
