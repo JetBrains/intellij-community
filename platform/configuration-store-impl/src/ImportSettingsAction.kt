@@ -152,7 +152,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 }
 
 fun getPaths(input: InputStream): Set<String> {
-  val result = CollectionFactory.createSmallMemoryFootprintSet<String>()
+  val result = mutableSetOf<String>()
   val zipIn = ZipInputStream(input)
   zipIn.use {
     while (true) {
