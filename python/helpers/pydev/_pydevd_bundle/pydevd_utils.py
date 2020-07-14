@@ -341,8 +341,7 @@ def is_test_item_or_set_up_caller(trace):
         # This can happen when the exception has been raised inside a test item or set up caller.
         return False
 
-    abs_path, _, _ = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(trace.tb_next.tb_frame)
-    if not in_project_roots(abs_path):
+    if not _is_next_stack_trace_in_project_roots(trace):
         # The next stack frame must be the frame of a project scope function, otherwise we risk stopping
         # at a line a few times since multiple test framework functions we are looking for may appear in the stack.
         return False
@@ -359,13 +358,22 @@ def is_test_item_or_set_up_caller(trace):
 
     f = frame
     while f:
+        # noinspection SpellCheckingInspection
         if f.f_code.co_name == 'pytest_cmdline_main':
             is_pytest = True
         f = f.f_back
 
+    unittest_caller_names = ['_callTestMethod', 'runTest', 'run']
+    if IS_PY3K:
+        unittest_caller_names.append('subTest')
+
     if is_pytest:
+        # noinspection SpellCheckingInspection
         if frame.f_code.co_name in ('pytest_pyfunc_call', 'call_fixture_func', '_eval_scope_callable', '_teardown_yield_fixture'):
             return True
+        else:
+            return frame.f_code.co_name in unittest_caller_names
+
     else:
         import unittest
         test_case_obj = frame.f_locals.get('self')
@@ -375,14 +383,17 @@ def is_test_item_or_set_up_caller(trace):
         if isinstance(test_case_obj, getattr(getattr(unittest, 'loader', None), '_FailedTest', None)):
             return False
 
-        if frame.f_code.co_name in ('_callTestMethod', 'runTest', 'subTest'):
+        if frame.f_code.co_name in unittest_caller_names:
             # unittest and nose
             return True
-        elif frame.f_code.co_name == 'run':
-            if not IS_PY38_OR_GREATER:
-                # unittest for Python versions < 3.8
-                return isinstance(test_case_obj, unittest.TestCase)
 
+    return False
+
+
+def _is_next_stack_trace_in_project_roots(trace):
+    if trace and trace.tb_next and trace.tb_next.tb_frame:
+        frame = trace.tb_next.tb_frame
+        return in_project_roots(pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(frame)[0])
     return False
 
 
