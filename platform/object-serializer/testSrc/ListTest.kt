@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.SmartList
@@ -119,16 +120,16 @@ class ListTest {
     val list = listOf("foo", "bar")
     val configuration = WriteConfiguration(binary = false)
     file.writeList(list, String::class.java, configuration = configuration)
-    assertThat(file.file.readChars().trim()).isEqualToIgnoringNewLines("""
-      {
-        version:42,
-        formatVersion:3,
-        data:[
-          foo,
-          bar
-        ]
-      }
-    """.trimIndent())
+    assertThat(file.file.readChars().trim()).isEqualTo(StringUtil.convertLineSeparators("""
+    {
+      version: 42,
+      formatVersion: 3,
+      data: [
+        foo,
+        bar
+      ]
+    }
+    """.trimIndent()))
     assertThat(file.readList(String::class.java)).isEqualTo(list)
 
     // test that we can read regardless of compressed setting
