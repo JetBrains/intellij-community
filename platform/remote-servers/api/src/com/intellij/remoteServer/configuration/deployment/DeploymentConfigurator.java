@@ -40,16 +40,6 @@ public abstract class DeploymentConfigurator<D extends DeploymentConfiguration, 
   public boolean isGeneratedConfigurationName(@NotNull String name,
                                               @NotNull DeploymentSource deploymentSource,
                                               @NotNull D deploymentConfiguration) {
-    return isGeneratedConfigurationName(name, deploymentSource);
-  }
-
-  /**
-   * @see LocatableConfiguration#isGeneratedName()
-   * @deprecated Since 2017.3, subclasses should directly override {@link
-   * #isGeneratedConfigurationName(String, DeploymentSource, DeploymentConfiguration)}
-   */
-  @Deprecated
-  protected boolean isGeneratedConfigurationName(@NotNull String name, @NotNull DeploymentSource deploymentSource) {
     return false;
   }
 
@@ -58,17 +48,6 @@ public abstract class DeploymentConfigurator<D extends DeploymentConfiguration, 
    */
   @Nullable
   public String suggestConfigurationName(@NotNull DeploymentSource deploymentSource, @NotNull D deploymentConfiguration) {
-    return suggestConfigurationName(deploymentSource);
-  }
-
-  /**
-   * @see LocatableConfiguration#suggestedName()
-   * @deprecated Since 2017.3, subclasses should directly override {@link
-   * {@link #suggestConfigurationName(DeploymentSource, DeploymentConfiguration)}
-   */
-  @Deprecated
-  @Nullable
-  protected String suggestConfigurationName(@NotNull DeploymentSource deploymentSource) {
     return null;
   }
 }
