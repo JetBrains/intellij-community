@@ -45,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
 
 internal val LOG = logger<ComponentManagerImpl>()
 
@@ -947,6 +948,16 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   override fun getDisposed(): Condition<*> {
     return Condition<Any?> { isDisposed }
+  }
+
+  @Internal
+  fun processServices(processor: Consumer<Any>) {
+    lightServices?.values?.forEach(processor)
+    for (adapter in picoContainer.componentAdapters) {
+      if (adapter is ServiceComponentAdapter) {
+        processor.accept(adapter.getInitializedInstance() ?: continue)
+      }
+    }
   }
 }
 
