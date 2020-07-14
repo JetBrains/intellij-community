@@ -444,7 +444,7 @@
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
 
-      <action id="IdeScriptingConsole" class="com.intellij.execution.console.RunIdeConsoleAction"/>
+      <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction"/>
     </group>
     <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
     <action id="Scratch.ChangeLanguage" class="com.intellij.ide.scratch.ScratchFileActions$LanguageAction">

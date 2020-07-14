@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.console;
+package com.intellij.ide.script;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
@@ -12,9 +12,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.ide.script.IdeConsoleScriptBindings;
-import com.intellij.ide.script.IdeScriptEngine;
-import com.intellij.ide.script.IdeScriptEngineManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;

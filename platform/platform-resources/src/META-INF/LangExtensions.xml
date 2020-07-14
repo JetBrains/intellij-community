@@ -430,7 +430,7 @@
 
     <scratch.rootType implementation="com.intellij.ide.scratch.ScratchRootType"/>
     <scratch.rootType implementation="com.intellij.execution.console.HistoryRootType"/>
-    <scratch.rootType implementation="com.intellij.execution.console.IdeConsoleRootType"/>
+    <scratch.rootType implementation="com.intellij.ide.script.IdeConsoleRootType"/>
 
     <!--  Inlay hints  -->
     <applicationService serviceImplementation="com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager"/>
