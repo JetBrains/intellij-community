@@ -9,7 +9,6 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
@@ -20,6 +19,8 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.ui.JBColor
+
+import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
 
 class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/normalSorting"
@@ -244,9 +245,9 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   void testPreferInterfacesInImplements() {
     checkPreferredItems(0, "XFooIntf", "XFoo", "XFooClass")
-    assert LookupElementPresentation.renderElement(lookup.items[0]).itemTextForeground == JBColor.foreground()
-    assert LookupElementPresentation.renderElement(lookup.items[1]).itemTextForeground == JBColor.RED
-    assert LookupElementPresentation.renderElement(lookup.items[2]).itemTextForeground == JBColor.RED
+    assert renderElement(lookup.items[0]).itemTextForeground == JBColor.foreground()
+    assert renderElement(lookup.items[1]).itemTextForeground == JBColor.RED
+    assert renderElement(lookup.items[2]).itemTextForeground == JBColor.RED
   }
 
   void testPreferClassesInExtends() {
@@ -356,7 +357,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     }
     invokeCompletion(getTestName(false) + ".java")
     for (i in 0..<pkgs.size()) {
-      assert LookupElementPresentation.renderElement(myFixture.lookupElements[i]).tailText?.contains(pkgs[i])
+      assert renderElement(myFixture.lookupElements[i]).tailText?.contains(pkgs[i])
     }
   }
 
@@ -692,15 +693,15 @@ interface TxANotAnno {}
     def items = myFixture.completeBasic()
     assertPreferredItems 0, 'FOO', 'GOO', 'BAR'
 
-    assert LookupElementPresentation.renderElement(items[0]).itemTextForeground == JBColor.foreground()
-    assert LookupElementPresentation.renderElement(items.find { it.lookupString == 'BAR' }).itemTextForeground == JBColor.RED
+    assert renderElement(items[0]).itemTextForeground == JBColor.foreground()
+    assert renderElement(items.find { it.lookupString == 'BAR' }).itemTextForeground == JBColor.RED
   }
 
   @NeedsIndex.ForStandardLibrary
   void testPreferValueTypesReturnedFromMethod() {
     checkPreferredItems 0, 'StringBuffer', 'String', 'Serializable', 'SomeInterface', 'SomeInterface', 'SomeOtherClass'
-    assert 'SomeInterface<String>' == LookupElementPresentation.renderElement(myFixture.lookupElements[3]).itemText
-    assert 'SomeInterface' == LookupElementPresentation.renderElement(myFixture.lookupElements[4]).itemText
+    assert 'SomeInterface<String>' == renderElement(myFixture.lookupElements[3]).itemText
+    assert 'SomeInterface' == renderElement(myFixture.lookupElements[4]).itemText
   }
 
   @NeedsIndex.Full
@@ -728,11 +729,11 @@ interface TxANotAnno {}
     myFixture.addClass("package bar; @Deprecated public class Assert { public static void assertTrue() {}; public static void assertTrue2() {} }")
     checkPreferredItems 0, 'Assert.assertTrue', 'Assert.assertTrue', 'Assert.assertTrue2'
 
-    def p = LookupElementPresentation.renderElement(myFixture.lookup.items[0])
+    def p = renderElement(myFixture.lookup.items[0])
     assert p.tailText.contains('foo')
     assert !p.strikeout
 
-    p = LookupElementPresentation.renderElement(myFixture.lookup.items[1])
+    p = renderElement(myFixture.lookup.items[1])
     assert p.tailText.contains('bar')
     assert p.strikeout
   }
@@ -775,8 +776,8 @@ class ContainerUtil extends ContainerUtilRt {
     myFixture.addClass 'package pack1; public class SameNamed {}'
     myFixture.addClass 'package pack2; public class SameNamed {}'
     checkPreferredItems 1, 'SameNamed', 'SameNamed'
-    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).tailText.contains('pack1')
-    assert LookupElementPresentation.renderElement(myFixture.lookupElements[1]).tailText.contains('pack2')
+    assert renderElement(myFixture.lookupElements[0]).tailText.contains('pack1')
+    assert renderElement(myFixture.lookupElements[1]).tailText.contains('pack2')
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -819,7 +820,7 @@ class ContainerUtil extends ContainerUtilRt {
     // use foo.String
     myFixture.configureByText 'a.java', 'class Foo { Stri<caret> }'
     myFixture.completeBasic()
-    myFixture.lookup.currentItem = myFixture.lookupElements.find { it.lookupString == 'String' && LookupElementPresentation.renderElement(it).tailText.contains('foo') }
+    myFixture.lookup.currentItem = myFixture.lookupElements.find { it.lookupString == 'String' && renderElement(it).tailText.contains('foo') }
     myFixture.type('\n')
     myFixture.checkResult 'import foo.String;\n\nclass Foo { String<caret>\n}'
 
@@ -827,7 +828,7 @@ class ContainerUtil extends ContainerUtilRt {
     myFixture.configureByText 'b.java', 'class Bar { Stri<caret> }'
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'String', 'String'
-    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).tailText.contains('java.lang')
+    assert renderElement(myFixture.lookupElements[0]).tailText.contains('java.lang')
   }
 
   void testClassNameStatisticsDoesntDependOnExpectedType() {
@@ -842,8 +843,8 @@ class ContainerUtil extends ContainerUtilRt {
   @NeedsIndex.ForStandardLibrary
   void testPreferListAddWithoutIndex() {
     checkPreferredItems 0, 'add', 'add', 'addAll', 'addAll'
-    assert LookupElementPresentation.renderElement(myFixture.lookupElements[1]).tailText.contains('int index')
-    assert LookupElementPresentation.renderElement(myFixture.lookupElements[3]).tailText.contains('int index')
+    assert renderElement(myFixture.lookupElements[1]).tailText.contains('int index')
+    assert renderElement(myFixture.lookupElements[3]).tailText.contains('int index')
   }
 
   @NeedsIndex.Full

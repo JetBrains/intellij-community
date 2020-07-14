@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.StdModuleTypes
@@ -33,6 +32,8 @@ import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+
+import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
 /**
  * @author peter
  */
@@ -192,20 +193,20 @@ public class SocketChannel {
 
     myFixture.configureByText 'a.java', 'class Foo {{ new SocketChanne<caret>x }}'
     myFixture.completeBasic()
-    def p = LookupElementPresentation.renderElement(myFixture.lookup.items[0])
+    def p = renderElement(myFixture.lookup.items[0])
     assert p.itemText == 'SocketChannel'
     assert p.itemTextForeground == JBColor.foreground()
 
-    p = LookupElementPresentation.renderElement(myFixture.lookup.items.find { it.lookupString == 'AsynchronousServerSocketChannel' })
+    p = renderElement(myFixture.lookup.items.find { it.lookupString == 'AsynchronousServerSocketChannel' })
     assert p.itemTextForeground == JBColor.RED
 
     myFixture.type('\n.s')
     myFixture.completeBasic()
-    p = LookupElementPresentation.renderElement(myFixture.lookup.items[0])
+    p = renderElement(myFixture.lookup.items[0])
     assert p.itemText == 'shutdownInput'
     assert p.itemTextForeground == JBColor.RED
 
-    p = LookupElementPresentation.renderElement(myFixture.lookup.items.find { it.lookupString == 'isConnected' })
+    p = renderElement(myFixture.lookup.items.find { it.lookupString == 'isConnected' })
     assert p.itemTextForeground == JBColor.foreground()
   }
 

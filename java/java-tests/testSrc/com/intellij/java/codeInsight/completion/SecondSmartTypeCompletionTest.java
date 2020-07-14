@@ -25,6 +25,8 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 
+import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement;
+
 @SuppressWarnings({"ALL"})
 public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
@@ -141,8 +143,8 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     configure();
     checkResultByFile(getTestName(false) + ".java");
     assertStringItems("bar()", "foo()");
-    assertEquals("Arrays.asList(f.bar())", LookupElementPresentation.renderElement(myItems[0]).getItemText());
-    assertEquals("Arrays.asList(f.foo())", LookupElementPresentation.renderElement(myItems[1]).getItemText());
+    assertEquals("Arrays.asList(f.bar())", renderElement(myItems[0]).getItemText());
+    assertEquals("Arrays.asList(f.foo())", renderElement(myItems[1]).getItemText());
     selectItem(myItems[1]);
     checkResult();
   }
@@ -252,6 +254,6 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testNoAsListWhenSetExpected() {
     configure();
-    assertNull(ContainerUtil.find(myFixture.getLookupElements(), e -> LookupElementPresentation.renderElement(e).getItemText().contains("asList")));
+    assertNull(ContainerUtil.find(myFixture.getLookupElements(), e -> renderElement(e).getItemText().contains("asList")));
   }
 }

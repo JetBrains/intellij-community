@@ -412,8 +412,8 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   void testPreferGlobalMembersReturningExpectedType() {
     configureNoCompletion(getTestName(false) + ".java")
     def items = myFixture.complete(CompletionType.SMART, 2)
-    assert LookupElementPresentation.renderElement(items[0]).itemText == 'Map.builder'
-    assert LookupElementPresentation.renderElement(items[1]).itemText == 'BiMap.builder'
+    assert NormalCompletionTestCase.renderElement(items[0]).itemText == 'Map.builder'
+    assert NormalCompletionTestCase.renderElement(items[1]).itemText == 'BiMap.builder'
   }
 
   void testPreferExpectedLocalOverExactlyDefaultMember() {

@@ -119,7 +119,7 @@ public class Constructed<T> {
     val elements = myFixture.lookupElements
     assertNotNull(elements)
     val lookupTexts = elements!!.map {
-      val presentation = LookupElementPresentation.renderElement(it)
+      val presentation = NormalCompletionTestCase.renderElement(it)
       (presentation.itemText ?: "") + (presentation.tailText ?: "")
     }
 

@@ -26,6 +26,8 @@ import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 
+import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement;
+
 public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   @Override
@@ -668,31 +670,31 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testNewVararg() {
     configureByTestName();
     assertStringItems("Foo", "Foo", "Foo");
-    assertEquals("{...} (default package)", LookupElementPresentation.renderElement(myItems[0]).getTailText());
-    assertEquals("[] (default package)", LookupElementPresentation.renderElement(myItems[1]).getTailText());
-    assertEquals("[]{...} (default package)", LookupElementPresentation.renderElement(myItems[2]).getTailText());
+    assertEquals("{...} (default package)", renderElement(myItems[0]).getTailText());
+    assertEquals("[] (default package)", renderElement(myItems[1]).getTailText());
+    assertEquals("[]{...} (default package)", renderElement(myItems[2]).getTailText());
   }
 
   @NeedsIndex.ForStandardLibrary
   public void testNewVararg2() {
     configureByTestName();
     assertStringItems("String", "String", "String");
-    assertEquals(" (java.lang)", LookupElementPresentation.renderElement(myItems[0]).getTailText());
-    assertEquals("[] (java.lang)", LookupElementPresentation.renderElement(myItems[1]).getTailText());
-    assertEquals("[]{...} (java.lang)", LookupElementPresentation.renderElement(myItems[2]).getTailText());
+    assertEquals(" (java.lang)", renderElement(myItems[0]).getTailText());
+    assertEquals("[] (java.lang)", renderElement(myItems[1]).getTailText());
+    assertEquals("[]{...} (java.lang)", renderElement(myItems[2]).getTailText());
   }
 
   public void testNewByteArray() {
     configureByTestName();
     assertStringItems("byte");
-    assertEquals("[]", LookupElementPresentation.renderElement(myItems[0]).getTailText());
+    assertEquals("[]", renderElement(myItems[0]).getTailText());
   }
 
   public void testNewByteArray2() {
     configureByTestName();
     assertStringItems("byte", "byte");
-    assertEquals("[]", LookupElementPresentation.renderElement(myItems[0]).getTailText());
-    assertEquals("[]{...}", LookupElementPresentation.renderElement(myItems[1]).getTailText());
+    assertEquals("[]", renderElement(myItems[0]).getTailText());
+    assertEquals("[]{...}", renderElement(myItems[1]).getTailText());
   }
 
   public void testInsideStringLiteral() { doAntiTest(); }
@@ -896,7 +898,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("String.class");
 
     LookupElement item = myFixture.getLookupElements()[0];
-    LookupElementPresentation p = LookupElementPresentation.renderElement(item);
+    LookupElementPresentation p = renderElement(item);
     assertEquals("String.class", p.getItemText());
     assertEquals(" (java.lang)", p.getTailText());
     assertNull(p.getTypeText());
@@ -1416,7 +1418,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testStaticBuilderWithGenerics() {
     configureByTestName();
-    assertEquals("Map.builder().get(...)", LookupElementPresentation.renderElement(myItems[0]).getItemText());
+    assertEquals("Map.builder().get(...)", renderElement(myItems[0]).getItemText());
     myFixture.type('\t');
     checkResultByTestName();
   }

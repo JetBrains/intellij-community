@@ -128,10 +128,6 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert presentation.itemTextBold
   }
 
-  private static LookupElementPresentation renderElement(LookupElement element) {
-    return LookupElementPresentation.renderElement(element)
-  }
-
   void testFieldItemPresentationGenerics() {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
@@ -385,7 +381,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
 
   void testFieldOfLocalClass() {
     configure()
-    assert LookupElementPresentation.renderElement(myItems[0]).itemText == 'field'
+    assert renderElement(myItems[0]).itemText == 'field'
     type('\t')
     checkResult()
   }
@@ -511,7 +507,7 @@ public class Outer {
   void testStaticMethodFromOuterClass() {
     configure()
     assertStringItems 'foo', 'A.foo', 'for'
-    assert LookupElementPresentation.renderElement(myItems[1]).itemText == 'A.foo'
+    assert renderElement(myItems[1]).itemText == 'A.foo'
     selectItem(myItems[1])
     checkResult()
   }
@@ -519,7 +515,7 @@ public class Outer {
   void testInstanceMethodFromOuterClass() {
     configure()
     assertStringItems 'foo', 'A.this.foo', 'for'
-    assert LookupElementPresentation.renderElement(myItems[1]).itemText == 'A.this.foo'
+    assert renderElement(myItems[1]).itemText == 'A.this.foo'
     selectItem(myItems[1])
     checkResult()
   }
@@ -1203,7 +1199,7 @@ public class ListUtils {
   @NeedsIndex.ForStandardLibrary
   void testOuterSuperMethodCall() {
     configure()
-    assert 'Class2.super.put' == LookupElementPresentation.renderElement(myItems[0]).itemText
+    assert 'Class2.super.put' == renderElement(myItems[0]).itemText
     type '\n'
     checkResult() }
 
@@ -1296,7 +1292,7 @@ public class ListUtils {
     """)
     configure()
     myFixture.assertPreferredCompletionItems 0, 'bar', 'bar'
-    assert LookupElementPresentation.renderElement(myFixture.lookupElements[1]).itemText == 'Foo.bar'
+    assert renderElement(myFixture.lookupElements[1]).itemText == 'Foo.bar'
     myFixture.lookup.currentItem = myFixture.lookupElements[1]
     myFixture.type '\t'
     checkResult()
@@ -1501,7 +1497,7 @@ class XInternalError {}
     configure()
     def items = myFixture.lookupElements.findAll { it.lookupString == 'String' }
     assert items.size() == 1
-    assert LookupElementPresentation.renderElement(items[0]).tailText == ' (java.lang)'
+    assert renderElement(items[0]).tailText == ' (java.lang)'
   }
 
   void testDuplicateInnerClass() {
@@ -1534,7 +1530,7 @@ class XInternalError {}
   @NeedsIndex.Full
   void testCastVisually() {
     configure()
-    def p = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
+    def p = renderElement(myFixture.lookupElements[0])
     assert p.itemText == 'getValue'
     assert p.itemTextBold
     assert p.typeText == 'Foo'
@@ -1552,7 +1548,7 @@ class XInternalError {}
   void testSuggestAllTypeArguments() {
     configure()
     assert 'String, List<String>' == lookup.items[0].lookupString
-    assert 'String, List<String>' == LookupElementPresentation.renderElement(lookup.items[0]).itemText
+    assert 'String, List<String>' == renderElement(lookup.items[0]).itemText
     type '\n'
     checkResult()
   }
@@ -1591,7 +1587,7 @@ class XInternalError {}
     myFixture.assertPreferredCompletionItems 0, 'private', 'protected', 'public', 'public void run'
     def item = lookup.items[3]
 
-    def p = LookupElementPresentation.renderElement(item)
+    def p = renderElement(item)
     assert p.itemText == 'public void run'
     assert p.tailText == '(String t, int myInt) {...}'
     assert p.typeText == 'Foo'
@@ -1605,8 +1601,8 @@ class XInternalError {}
   void testImplementViaCompletionWithGenerics() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'public void methodWithGenerics', 'public void methodWithTypeParam'
-    assert LookupElementPresentation.renderElement(lookup.items[0]).tailText == '(List k) {...}'
-    assert LookupElementPresentation.renderElement(lookup.items[1]).tailText == '(K k) {...}'
+    assert renderElement(lookup.items[0]).tailText == '(List k) {...}'
+    assert renderElement(lookup.items[1]).tailText == '(K k) {...}'
   }
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
@@ -1638,8 +1634,8 @@ class XInternalError {}
   void testStrikeOutDeprecatedSuperMethods() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'void foo1', 'void foo2'
-    assert !LookupElementPresentation.renderElement(lookup.items[0]).strikeout
-    assert LookupElementPresentation.renderElement(lookup.items[1]).strikeout
+    assert !renderElement(lookup.items[0]).strikeout
+    assert renderElement(lookup.items[1]).strikeout
   }
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for equals() and hashCode())")
@@ -1656,12 +1652,12 @@ class XInternalError {}
     assert getter : myFixture.lookupElementStrings
     assert setter : myFixture.lookupElementStrings
 
-    def p = LookupElementPresentation.renderElement(getter)
+    def p = renderElement(getter)
     assert p.itemText == getter.lookupString
     assert p.tailText == '() {...}'
     assert !p.typeText
 
-    p = LookupElementPresentation.renderElement(setter)
+    p = renderElement(setter)
     assert p.itemText == setter.lookupString
     assert p.tailText == '(int field) {...}'
     assert !p.typeText
@@ -1815,13 +1811,13 @@ class Bar {
 
   void testShowMostSpecificOverride() {
     configure()
-    assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
+    assert 'B' == renderElement(myFixture.lookup.items[0]).typeText
   }
 
   @NeedsIndex.ForStandardLibrary
   void testShowMostSpecificOverrideOnlyFromClass() {
     configure()
-    assert 'Door' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
+    assert 'Door' == renderElement(myFixture.lookup.items[0]).typeText
   }
 
   void testNoOverrideWithMiddleMatchedName() {
@@ -1833,8 +1829,8 @@ class Bar {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'FIELD1', 'FIELD2', 'FIELD3', 'FIELD4'
     def items = myFixture.lookup.items
-    assert items.collect { LookupElementPresentation.renderElement(it).tailText } == ['( "x")', '("y") {...}', null, ' ( = 42)']
-    assert LookupElementPresentation.renderElement(items[3]).tailFragments[0].italic
+    assert items.collect { renderElement(it).tailText } == ['( "x")', '("y") {...}', null, ' ( = 42)']
+    assert renderElement(items[3]).tailFragments[0].italic
   }
 
   @NeedsIndex.Full
@@ -1842,23 +1838,23 @@ class Bar {
     configure()
     myFixture.assertPreferredCompletionItems 1, 'Field', 'FIELD1', 'FIELD2', 'FIELD3', 'FIELD4'
     def fieldItems = myFixture.lookup.items[1..4]
-    assert fieldItems.collect { LookupElementPresentation.renderElement(it).tailText } == ['( "x") in E', '("y") {...} in E', null, ' ( = 42) in E']
-    assert LookupElementPresentation.renderElement(fieldItems[3]).tailFragments[0].italic
-    assert !LookupElementPresentation.renderElement(fieldItems[3]).tailFragments[1].italic
+    assert fieldItems.collect { renderElement(it).tailText } == ['( "x") in E', '("y") {...} in E', null, ' ( = 42) in E']
+    assert renderElement(fieldItems[3]).tailFragments[0].italic
+    assert !renderElement(fieldItems[3]).tailFragments[1].italic
   }
 
   @NeedsIndex.ForStandardLibrary
   void testSuggestInterfaceArrayWhenObjectIsExpected() {
     configure()
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
+    assert renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
+    assert renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
   }
 
   @NeedsIndex.ForStandardLibrary
   void testSuggestInterfaceArrayWhenObjectArrayIsExpected() {
     configure()
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
+    assert renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
+    assert renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
   }
 
   void testDispreferPrimitiveTypesInCallArgs() throws Throwable {
@@ -1873,7 +1869,7 @@ class Bar {
   @NeedsIndex.ForStandardLibrary
   void testGetClassType() {
     configure()
-    assert 'Class<? extends Number>' == LookupElementPresentation.renderElement(myFixture.lookupElements[0]).typeText
+    assert 'Class<? extends Number>' == renderElement(myFixture.lookupElements[0]).typeText
   }
 
   @NeedsIndex.Full
@@ -1920,7 +1916,7 @@ class Bar {
   @NeedsIndex.ForStandardLibrary
   void testDuplicateEnumValueOf() {
     configure()
-    assert myFixture.lookupElements.collect { LookupElementPresentation.renderElement((LookupElement)it).itemText } == ['Bar.valueOf', 'Foo.valueOf', 'Enum.valueOf']
+    assert myFixture.lookupElements.collect { renderElement((LookupElement)it).itemText } == ['Bar.valueOf', 'Foo.valueOf', 'Enum.valueOf']
   }
 
   void testTypeArgumentInCast() {
@@ -1953,7 +1949,7 @@ class Bar {{
 }}""")
     myFixture.configureFromExistingVirtualFile(cls.containingFile.virtualFile)
     def item = myFixture.completeBasic()[0]
-    assert LookupElementPresentation.renderElement(item).tailText.contains('local class')
+    assert renderElement(item).tailText.contains('local class')
   }
 
   void testNoDuplicateInCast() {
@@ -2142,7 +2138,7 @@ class Abc {
     myFixture.assertPreferredCompletionItems(0, 'smth = true', 'value = false')
 
     def smthDefault = myItems.find { it.lookupString == 'smth = false' }
-    def presentation = LookupElementPresentation.renderElement(smthDefault)
+    def presentation = renderElement(smthDefault)
     assert presentation.tailText == ' (default)'
     assert presentation.tailFragments[0].grayed
 
