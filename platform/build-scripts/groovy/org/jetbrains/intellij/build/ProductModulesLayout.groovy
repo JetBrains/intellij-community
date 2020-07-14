@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
-import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.PlatformLayout
@@ -34,13 +33,6 @@ class ProductModulesLayout {
    * bundled plugins are specified in {@link #allNonTrivialPlugins} list.
    */
   List<String> bundledPluginModules = new ArrayList<>(DEFAULT_BUNDLED_PLUGINS)
-
-  /**
-   * @deprecated use {@link #bundledPluginModules} directly instead
-   */
-  Set<String> getAllBundledPluginsModules() {
-    return bundledPluginModules as Set<String>
-  }
 
   private LinkedHashSet<String> pluginsToPublish = new LinkedHashSet<>()
 
