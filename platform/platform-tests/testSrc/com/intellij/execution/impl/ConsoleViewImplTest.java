@@ -737,7 +737,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
     FoldRegion region = assertOneElement(editor.getFoldingModel().getAllFoldRegions());
     assertEquals("folded", region.getPlaceholderText());
-    assertEquals(1, editor.getDocument().getLineNumber(region.getStartOffset()));
+    assertEquals(0, editor.getDocument().getLineNumber(region.getStartOffset()));
     assertEquals(2, editor.getDocument().getLineNumber(region.getEndOffset()));
 
     myConsole.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT);
