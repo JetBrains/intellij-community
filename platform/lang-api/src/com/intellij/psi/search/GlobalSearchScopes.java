@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,5 +46,15 @@ public final class GlobalSearchScopes {
     return GlobalSearchScope.union(ContainerUtil.map2List(modules, module -> {
       return GlobalSearchScope.moduleRuntimeScope(module, true);
     }));
+  }
+
+  public static @NotNull GlobalSearchScope directoryScope(@NotNull PsiDirectory directory, boolean withSubdirectories) {
+    return GlobalSearchScopesCore.directoryScope(directory, withSubdirectories);
+  }
+
+  public static @NotNull GlobalSearchScope directoryScope(@NotNull Project project,
+                                                          @NotNull VirtualFile directory,
+                                                          boolean withSubdirectories) {
+    return GlobalSearchScopesCore.directoryScope(project, directory, withSubdirectories);
   }
 }
