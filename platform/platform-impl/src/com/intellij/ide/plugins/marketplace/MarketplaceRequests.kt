@@ -336,11 +336,6 @@ open class MarketplaceRequests {
       }
     } else {}
 
-  private fun parseBrokenPlugins(reader: Reader) = objectMapper.readValue(
-    reader,
-    object : TypeReference<List<MarketplaceBrokenPlugin>>() {}
-  )
-
   private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<List<String>>() {})
 
   private fun parseJsonPluginMeta(reader: Reader) = objectMapper.readValue(reader, IntellijUpdateMetadata::class.java)
