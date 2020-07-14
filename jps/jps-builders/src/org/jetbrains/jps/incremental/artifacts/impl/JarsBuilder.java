@@ -31,6 +31,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.*;
 import java.util.*;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -131,7 +132,15 @@ public class JarsBuilder {
     FileUtil.createParentDirs(jarFile);
     final String targetJarPath = jar.getDestination().getOutputFilePath();
     List<String> packedFilePaths = new ArrayList<>();
-    Manifest manifest = loadManifest(jar, packedFilePaths);
+    Pair<Manifest, File> manifestData = loadManifest(jar, packedFilePaths);
+    Manifest manifest = manifestData != null ? manifestData.first : null;
+    if (manifest != null && manifest.getMainAttributes().getValue(Attributes.Name.MANIFEST_VERSION) == null &&
+        manifest.getMainAttributes().getValue(Attributes.Name.SIGNATURE_VERSION) == null && !manifest.getMainAttributes().isEmpty()) {
+      String messageText =
+        "Manifest file '" + manifestData.second + "' included into archive '" + jar.getPresentableDestination() + "' doesn't contain '" +
+        Attributes.Name.MANIFEST_VERSION + "' attribute. Such manifest files are invalid and their content aren't included into JAR files.";
+      myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING, messageText));
+    }
     final JarOutputStream jarOutputStream = createJarOutputStream(jarFile, manifest);
 
     final THashSet<String> writtenPaths = new THashSet<>();
@@ -213,7 +222,7 @@ public class JarsBuilder {
   }
 
   @Nullable
-  private Manifest loadManifest(JarInfo jar, List<? super String> packedFilePaths) throws IOException {
+  private Pair<Manifest, File> loadManifest(JarInfo jar, List<? super String> packedFilePaths) throws IOException {
     for (Pair<String, Object> pair : jar.getContent()) {
       if (pair.getSecond() instanceof ArtifactRootDescriptor) {
         final String rootPath = pair.getFirst();
@@ -228,7 +237,7 @@ public class JarsBuilder {
             final String fullManifestPath = FileUtil.toSystemIndependentName(manifestFile.getAbsolutePath());
             packedFilePaths.add(fullManifestPath);
             try (FileInputStream stream = new FileInputStream(manifestFile)) {
-              return createManifest(stream, manifestFile);
+              return new Pair<>(createManifest(stream, manifestFile), manifestFile);
             }
           }
         }
@@ -245,7 +254,7 @@ public class JarsBuilder {
             }
           });
           if (!manifestRef.isNull()) {
-            return manifestRef.get();
+            return new Pair<>(manifestRef.get(), descriptor.getRootFile());
           }
         }
       }
