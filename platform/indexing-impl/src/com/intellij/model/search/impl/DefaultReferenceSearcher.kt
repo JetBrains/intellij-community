@@ -27,7 +27,7 @@ internal class DefaultReferenceSearcher : PsiSymbolReferenceSearcher {
 
     for (searcher: CodeReferenceSearcher in CodeReferenceSearcher.EP_NAME.extensionList) {
       val request: SearchRequest = searcher.getSearchRequest(project, target) ?: continue
-      val language: Language = searcher.referencingLanguage
+      val language: Language = searcher.getReferencingLanguage(target)
       val searchScope: SearchScope = request.searchScope?.intersectWith(inputScope) ?: inputScope
       val injectionSearchScope: SearchScope = request.injectionSearchScope?.intersectWith(inputScope) ?: inputScope
       val mapper: LeafOccurrenceMapper<PsiSymbolReference> = CodeReferenceMapper(targetPointer, searcher)
