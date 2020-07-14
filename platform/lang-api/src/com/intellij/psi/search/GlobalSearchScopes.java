@@ -14,13 +14,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author yole
  */
-public final class GlobalSearchScopes extends GlobalSearchScopesCore {
-
+public final class GlobalSearchScopes {
   private GlobalSearchScopes() {}
 
   @NotNull
@@ -41,9 +39,11 @@ public final class GlobalSearchScopes extends GlobalSearchScopesCore {
 
   @Nullable
   public static GlobalSearchScope executionScope(@NotNull Collection<? extends Module> modules) {
-    if (modules.isEmpty()) return null;
-    List<GlobalSearchScope> scopes = ContainerUtil.map2List(
-      modules, module -> GlobalSearchScope.moduleRuntimeScope(module, true));
-    return GlobalSearchScope.union(scopes);
+    if (modules.isEmpty()) {
+      return null;
+    }
+    return GlobalSearchScope.union(ContainerUtil.map2List(modules, module -> {
+      return GlobalSearchScope.moduleRuntimeScope(module, true);
+    }));
   }
 }

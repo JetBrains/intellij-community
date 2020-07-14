@@ -16,7 +16,7 @@ import java.util.Queue;
  * <li>The {@link #contains(Object)} method is O(1)</li>
  * <li>The {@link #remove(Object)} method is O(1)</li>
  * </ul>
- * Implementation is backed by {@link gnu.trove.THashSet} containing double-linked QueueEntry nodes holding elements themselves.
+ * Implementation is backed by {@link ObjectOpenHashSet} containing double-linked QueueEntry nodes holding elements themselves.
  */
 public final class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
   private final ObjectOpenHashSet<QueueEntry<T>> set = new ObjectOpenHashSet<>();

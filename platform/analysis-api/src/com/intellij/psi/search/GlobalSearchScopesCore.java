@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class GlobalSearchScopesCore {
+public final class GlobalSearchScopesCore {
   @NotNull
   public static GlobalSearchScope projectProductionScope(@NotNull Project project) {
     return new ProductionScopeFilter(project);
@@ -94,13 +94,6 @@ public class GlobalSearchScopesCore {
     @Override
     public Icon getIcon() {
       return mySet.getIcon();
-    }
-
-    @NotNull
-    @Override
-    public Project getProject() {
-      //noinspection ConstantConditions
-      return super.getProject();
     }
 
     @Override
@@ -211,17 +204,17 @@ public class GlobalSearchScopesCore {
     }
   }
 
-  public static class DirectoryScope extends GlobalSearchScope {
+  public static final class DirectoryScope extends GlobalSearchScope {
     private final VirtualFile myDirectory;
     private final boolean myWithSubdirectories;
 
-    private DirectoryScope(@NotNull PsiDirectory psiDirectory, final boolean withSubdirectories) {
+    private DirectoryScope(@NotNull PsiDirectory psiDirectory, boolean withSubdirectories) {
       super(psiDirectory.getProject());
       myWithSubdirectories = withSubdirectories;
       myDirectory = psiDirectory.getVirtualFile();
     }
 
-    public DirectoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
+    public DirectoryScope(@NotNull Project project, @NotNull VirtualFile directory, boolean withSubdirectories) {
       super(project);
       myWithSubdirectories = withSubdirectories;
       myDirectory = directory;
@@ -295,13 +288,6 @@ public class GlobalSearchScopesCore {
       if (addDir1) return Collections.singleton(dir1);
       if (addDir2) return Collections.singleton(dir2);
       return Collections.emptySet();
-    }
-
-    @NotNull
-    @Override
-    public Project getProject() {
-      //noinspection ConstantConditions
-      return super.getProject();
     }
 
     @NotNull
@@ -412,13 +398,6 @@ public class GlobalSearchScopesCore {
         return new DirectoriesScope(getProject(), directories, directoriesWithSubdirectories);
       }
       return super.uniteWith(scope);
-    }
-
-    @NotNull
-    @Override
-    public Project getProject() {
-      //noinspection ConstantConditions
-      return super.getProject();
     }
 
     @NotNull

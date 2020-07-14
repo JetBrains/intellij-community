@@ -2,7 +2,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
@@ -28,12 +27,11 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author yole
  */
-public class LibraryScopeCache {
-
+public final class LibraryScopeCache {
   private final LibrariesOnlyScope myLibrariesOnlyScope;
 
-  public static LibraryScopeCache getInstance(Project project) {
-    return ServiceManager.getService(project, LibraryScopeCache.class);
+  public static LibraryScopeCache getInstance(@NotNull Project project) {
+    return project.getService(LibraryScopeCache.class);
   }
 
   private final Project myProject;
