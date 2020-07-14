@@ -145,7 +145,13 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   protected JComponent getEditorComponent() {
     JComponent component = component();
     if (myEditorGetter != null) return myEditorGetter.apply(component());
-    return component instanceof LabeledComponent ? ((LabeledComponent<?>)component).getComponent() : component;
+    if (component instanceof LabeledComponent) {
+      return ((LabeledComponent<?>)component).getComponent();
+    }
+    else if (component instanceof  TagButton) {
+      return ((TagButton)component).myButton;
+    }
+    return component;
   }
 
   public int getCommandLinePosition() {
