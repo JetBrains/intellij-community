@@ -235,29 +235,32 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   private void invalidateAllChildren(@NotNull Consumer<? super Usage> usagesToAddAgain) {
     setTreePathValid(false);
+    ArrayList<Node> myChildrenCopy;
     synchronized (this) {
-      for (Node n : this.myChildren) {
-        if (n instanceof GroupNode) {
-          ((GroupNode)n).invalidateAllChildren(usagesToAddAgain);
-        }
-        else if (n instanceof UsageNode) {
-          n.setTreePathValid(false);
-          usagesToAddAgain.consume(((UsageNode)n).getUsage());
-        }
+      myChildrenCopy = new ArrayList<>(this.myChildren);
+    }
+    for (Node n : myChildrenCopy) {
+      if (n instanceof GroupNode) {
+        ((GroupNode)n).invalidateAllChildren(usagesToAddAgain);
+      }
+      else if (n instanceof UsageNode) {
+        n.setTreePathValid(false);
+        usagesToAddAgain.consume(((UsageNode)n).getUsage());
       }
     }
   }
 
   private void removeAllNodesRecursively(@NotNull Consumer<? super UsageViewImpl.NodeChange> edtNodeChangeQueue) {
+    ArrayList<Node> myChildrenCopy;
     synchronized (this) {
-      ArrayList<Node> myChildrenCopy = new ArrayList<>(this.myChildren);
-      for (Node n : myChildrenCopy) {
-        if (n instanceof GroupNode) {
-          ((GroupNode)n).removeAllNodesRecursively(edtNodeChangeQueue);
-        }
-        this.myChildren.remove(n);
-        edtNodeChangeQueue.consume(new UsageViewImpl.NodeChange(UsageViewImpl.NodeChangeType.REMOVED, n, null));
+      myChildrenCopy = new ArrayList<>(this.myChildren);
+    }
+    for (Node n : myChildrenCopy) {
+      if (n instanceof GroupNode) {
+        ((GroupNode)n).removeAllNodesRecursively(edtNodeChangeQueue);
       }
+      this.myChildren.remove(n);
+      edtNodeChangeQueue.consume(new UsageViewImpl.NodeChange(UsageViewImpl.NodeChangeType.REMOVED, n, null));
     }
   }
 

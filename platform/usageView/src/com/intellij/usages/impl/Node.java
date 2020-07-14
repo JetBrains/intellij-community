@@ -13,12 +13,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Vector;
 
 abstract class Node extends DefaultMutableTreeNode {
-  /**
-   * It is false if there was a structural change in one of the parent nodes,
-   * therefore this node has to be deleted.
-   * Otherwise true
-   */
-  private volatile boolean treePathValid = true;
+
 
   private int myCachedTextHash;
 
@@ -30,10 +25,16 @@ abstract class Node extends DefaultMutableTreeNode {
   static final byte EXCLUDED_MASK = 1 << 3;
   private static final byte UPDATED_MASK = 1 << 4;
   private static final byte FORCE_UPDATE_REQUESTED_MASK = 1 << 5;
+  /**
+   * It is unset if there was a structural change in one of the parent nodes,
+   * therefore this node has to be deleted.
+   * Otherwise set
+   */
+  private static final byte TREE_PATH_VALID_MASK = 1 << 6;
 
   @MagicConstant(intValues = {
     CACHED_INVALID_MASK, CACHED_READ_ONLY_MASK, READ_ONLY_COMPUTED_MASK,
-    EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_REQUESTED_MASK})
+    EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_REQUESTED_MASK, TREE_PATH_VALID_MASK})
   private @interface FlagConstant {
   }
 
@@ -46,6 +47,7 @@ abstract class Node extends DefaultMutableTreeNode {
   }
 
   Node() {
+    setFlag(TREE_PATH_VALID_MASK, true);
   }
 
   /**
@@ -162,10 +164,10 @@ abstract class Node extends DefaultMutableTreeNode {
    * otherwise true
    */
   public boolean isTreePathValid() {
-    return treePathValid;
+    return isFlagSet(TREE_PATH_VALID_MASK);
   }
 
   public void setTreePathValid(boolean valid) {
-    this.treePathValid = valid;
+    setFlag(TREE_PATH_VALID_MASK, valid);
   }
 }

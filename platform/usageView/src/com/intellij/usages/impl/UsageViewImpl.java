@@ -368,7 +368,7 @@ public class UsageViewImpl implements UsageViewEx {
           if (userObject instanceof Usage) {
             affectedUsages.add((Usage)userObject);
           }
-          node.setExcluded(excluded, edtNodeChangedQueue);
+          node.setExcluded(excluded, edtChangedNodesToFireQueue);
         }
 
         if (updateImmediately) {
@@ -413,7 +413,7 @@ public class UsageViewImpl implements UsageViewEx {
   // has to be linked because events for child nodes should be fired after events for parent nodes
   private final MultiMap<Node, Node> changedNodesToFire = MultiMap.createLinked(); // guarded by changedNodesToFire
 
-  private final Consumer<Node> edtNodeChangedQueue = node -> {
+  private final Consumer<Node> edtChangedNodesToFireQueue = node -> {
     if (!getPresentation().isDetachedMode()) {
       synchronized (changedNodesToFire) {
         Node parent = (Node)node.getParent();
@@ -485,20 +485,9 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     public boolean isValid() {
-      boolean parentValid = true;
-      boolean childValid = true;
-      if (parentNode instanceof GroupNode) {
-        parentValid = parentNode.isTreePathValid();
-      }
-      else if (parentNode instanceof UsageNode) {
-        parentValid = parentNode.isTreePathValid();
-      }
-      if (childNode instanceof GroupNode) {
-        childValid = childNode.isTreePathValid();
-      }
-      else if (childNode instanceof UsageNode) {
-        childValid = childNode.isTreePathValid();
-      }
+      boolean parentValid = parentNode.isTreePathValid();
+      boolean childValid = childNode.isTreePathValid();
+
       return parentValid && childValid;
     }
   }
@@ -547,6 +536,8 @@ public class UsageViewImpl implements UsageViewEx {
     Iterating over all changes that come from the model children list in a GroupNode
     and applying all those changes to the swing list of children to synchronize those
      */
+    TIntArrayList indicesToFire = new TIntArrayList();
+    List<Node> nodesToFire = new ArrayList<>();
 
     //first grouping changes by parent node
     Map<Node, List<NodeChange>> groupByParent = nodeChanges.stream().collect(groupingBy(NodeChange::getParentNode));
@@ -555,7 +546,7 @@ public class UsageViewImpl implements UsageViewEx {
         List<NodeChange> changes = groupByParent.get(parentNode);
         List<NodeChange> addedToThisNode = new ArrayList<>();
         //removing node
-        for(NodeChange change: changes) {
+        for (NodeChange change : changes) {
           if (change.nodeChangeType.equals(NodeChangeType.REMOVED) || change.nodeChangeType.equals(NodeChangeType.REPLACED)) {
             GroupNode grandParent = (GroupNode)parentNode.getParent();
             int index = grandParent.getSwingChildren().indexOf(parentNode);
@@ -577,8 +568,6 @@ public class UsageViewImpl implements UsageViewEx {
         }
 
         //adding children nodes in batch
-        TIntArrayList indicesToFire = new TIntArrayList();
-        List<Node> nodesToFire = new ArrayList<>();
 
         if (!addedToThisNode.isEmpty()) {
           for (NodeChange change : addedToThisNode) {
@@ -607,10 +596,34 @@ public class UsageViewImpl implements UsageViewEx {
             if (!indicesToFire.isEmpty()) {
               myModel.fireTreeNodesInserted(parentNode, myModel.getPathToRoot(parentNode), indicesToFire.toNativeArray(),
                                             nodesToFire.toArray(new Node[0]));
+              indicesToFire.clear();
+              nodesToFire.clear();
             }
           }
         }
       }
+    }
+    // group nodes from changedNodesToFire by their parents and issue corresponding javax.swing.tree.DefaultTreeModel.fireTreeNodesChanged()
+    List<? extends Map.Entry<Node, Collection<Node>>> changed;
+    synchronized (changedNodesToFire) {
+      changed = new ArrayList<>(changedNodesToFire.entrySet());
+      changedNodesToFire.clear();
+    }
+    for (Map.Entry<Node, Collection<Node>> entry : changed) {
+      Node parentNode = entry.getKey();
+      Set<Node> childrenToUpdate = new HashSet<>(entry.getValue());
+      for (int i = 0; i < parentNode.getChildCount(); i++) {
+        Node childNode = (Node)parentNode.getChildAt(i);
+        if (childrenToUpdate.contains(childNode)) {
+          nodesToFire.add(childNode);
+          indicesToFire.add(i);
+        }
+      }
+
+      myModel.fireTreeNodesChanged(parentNode, myModel.getPathToRoot(parentNode), indicesToFire.toNativeArray(),
+                                   nodesToFire.toArray(new Node[0]));
+      nodesToFire.clear();
+      indicesToFire.clear();
     }
   }
 
@@ -1372,8 +1385,14 @@ public class UsageViewImpl implements UsageViewEx {
     reportToFUS(usage);
 
     UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtNodeChangeQueue, invalidatedUsagesConsumer);
-    myUsageNodes.put(usage, child == null ? NULL_NODE : child);
+    if (child == null) {
+      return null;
+    }
 
+    myUsageNodes.put(child.getUsage(), child == null ? NULL_NODE : child);
+    for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
+      child.update(this, edtChangedNodesToFireQueue);
+    }
     if (child != null && getPresentation().isExcludeAvailable()) {
       for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
         if (listener.isExcludedByDefault(this, usage)) {
@@ -1381,11 +1400,6 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
     }
-
-    for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
-      node.update(this, edtNodeChangedQueue);
-    }
-
     return child;
   }
 
@@ -1515,7 +1529,7 @@ public class UsageViewImpl implements UsageViewEx {
       .nonBlocking(() -> {
         for (Node node : toUpdate) {
           try {
-            node.update(this, edtNodeChangedQueue);
+            node.update(this, edtChangedNodesToFireQueue);
           }
           catch (IndexNotReadyException ignore) {
           }

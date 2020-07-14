@@ -39,7 +39,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   protected final Project myProject;
   private final boolean myFlattenDirs;
   /**
-   * A flag specifying
+   * A flag specifying if the middle paths (that do not contain a usage) should be compacted
    */
   private final boolean compactMiddleDirectories;
 
