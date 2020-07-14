@@ -730,7 +730,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public <T> T computeWithPreloadedContentHint(byte @NotNull [] preloadedContentHint, @NotNull Supplier<? extends T> computable) {
-    return null;
+    return computable.get();
   }
 
   /**
