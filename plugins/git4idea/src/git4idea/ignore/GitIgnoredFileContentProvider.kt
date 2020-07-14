@@ -107,7 +107,7 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
            && FileUtil.isAncestor(ignoreFileRoot.path, path, false)
            && Comparing.equal(ignoreFileVcsRoot,
                                VcsUtil.getVcsRootFor(project, vcsContextFactory.createFilePath(path, true)))
-           && gitIgnoreChecker.isIgnored(ignoreFileVcsRoot, file.toFile()) is NotIgnored
+           && gitIgnoreChecker.isIgnored(ignoreFileVcsRoot, file) is NotIgnored
            && shouldNotConsiderInternalIgnoreFile(ignoredBean, ignoreFileRoot)
   }
 

@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible
 
 import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.Consumer
 import com.intellij.util.Function
 import com.intellij.vcs.log.*
@@ -19,6 +19,7 @@ import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
 import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import org.junit.Rule
 import org.junit.Test
 import java.util.*
 import kotlin.random.nextInt
@@ -26,6 +27,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class VisiblePackBuilderTest {
+  @Rule
+  @JvmField
+  val tempDir = TemporaryDirectory()
 
   @Test fun `no filters`() {
     val graph = graph {
@@ -146,8 +150,7 @@ class VisiblePackBuilderTest {
       4()
     }
 
-    val tempDirectory = FileUtil.getTempDirectory()
-    val filePath = object : LocalFilePath(tempDirectory, true) {
+    val filePath = object : LocalFilePath(tempDir.createDir(), true) {
       override fun getVirtualFile(): VirtualFile? {
         return graph.providers.keys.first()
       }
