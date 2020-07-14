@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.ide.HelpTooltipManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -17,7 +16,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -294,6 +292,9 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     }
     panel.add(c, getPositionIndex(position, anchor));
     myWidgetMap.put(widget.ID(), WidgetBean.create(widget, position, c, anchor));
+    if (c instanceof StatusBarWidgetWrapper) {
+      ((StatusBarWidgetWrapper)c).beforeUpdate();
+    }
     widget.install(this);
     panel.revalidate();
     Disposer.register(this, widget);
@@ -589,14 +590,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
       if (widgetComponent != null) {
         if (widgetComponent instanceof StatusBarWidgetWrapper) {
           ((StatusBarWidgetWrapper)widgetComponent).beforeUpdate();
-
-          StatusBarWidget.WidgetPresentation presentation = ((StatusBarWidgetWrapper)widgetComponent).getPresentation();
-          widgetComponent.setToolTipText(presentation.getTooltipText());
-          if (Registry.is("ide.helptooltip.enabled")) {
-            widgetComponent.putClientProperty(HelpTooltipManager.SHORTCUT_PROPERTY, presentation.getShortcutText());
-          }
         }
-
         widgetComponent.repaint();
       }
 

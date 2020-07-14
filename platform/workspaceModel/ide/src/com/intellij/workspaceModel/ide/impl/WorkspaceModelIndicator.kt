@@ -32,7 +32,6 @@ class WorkspaceModelIndicator : StatusBarWidgetFactory {
       }
 
       override fun install(statusBar: StatusBar) {
-        statusBar.updateWidget(ID())
       }
 
       override fun dispose() {
