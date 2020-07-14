@@ -50,7 +50,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   val allowMergeButtons: Boolean
-    get() = Registry.`is`("ide.allow.merge.buttons", false)
+    get() = Registry.`is`("ide.allow.merge.buttons", true)
 
   val animateWindows: Boolean
     get() = Registry.`is`("ide.animate.toolwindows", false)
