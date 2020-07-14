@@ -49,7 +49,7 @@ class InvokeAfterUpdateCallback {
                                     @Nullable String title,
                                     @Nullable ModalityState state) {
     if (mode.isSilent()) {
-      return new SilentCallbackData(project, afterUpdate, mode.isCallbackOnAwt(), state);
+      return new SilentCallbackData(project, afterUpdate, mode.isCallbackOnAwt());
     }
     else {
       return new TaskCallbackData(project, afterUpdate, mode.isSynchronous(), mode.isCancellable(), title, state);
@@ -59,18 +59,10 @@ class InvokeAfterUpdateCallback {
   private abstract static class CallbackDataBase implements CallbackData {
     protected final Project myProject;
     private final Runnable myAfterUpdate;
-    protected final ModalityState myModalityState;
 
-    CallbackDataBase(@NotNull Project project, @NotNull Runnable afterUpdate, @Nullable ModalityState modalityState) {
+    CallbackDataBase(@NotNull Project project, @NotNull Runnable afterUpdate) {
       myProject = project;
       myAfterUpdate = afterUpdate;
-      myModalityState = modalityState;
-    }
-
-    @Override
-    public void handleStoppedQueue() {
-      ModalityState modalityState = notNull(myModalityState, ModalityState.defaultModalityState());
-      ApplicationManager.getApplication().invokeLater(this::invokeCallback, modalityState);
     }
 
     protected final void invokeCallback() {
@@ -84,9 +76,8 @@ class InvokeAfterUpdateCallback {
 
     SilentCallbackData(@NotNull Project project,
                        @NotNull Runnable afterUpdate,
-                       boolean callbackOnAwt,
-                       @Nullable ModalityState state) {
-      super(project, afterUpdate, state);
+                       boolean callbackOnAwt) {
+      super(project, afterUpdate);
       myCallbackOnAwt = callbackOnAwt;
     }
 
@@ -96,6 +87,15 @@ class InvokeAfterUpdateCallback {
 
     @Override
     public void endProgress() {
+      scheduleCallback();
+    }
+
+    @Override
+    public void handleStoppedQueue() {
+      scheduleCallback();
+    }
+
+    private void scheduleCallback() {
       if (myCallbackOnAwt) {
         ApplicationManager.getApplication().invokeLater(this::invokeCallback);
       }
@@ -109,6 +109,7 @@ class InvokeAfterUpdateCallback {
     private final boolean mySynchronous;
     private final boolean myCanBeCancelled;
     private final @NlsContexts.ProgressTitle String myTaskTitle;
+    private final ModalityState myModalityState;
 
     @NotNull private final Semaphore mySemaphore = new Semaphore(1);
 
@@ -118,10 +119,11 @@ class InvokeAfterUpdateCallback {
                      boolean canBeCancelled,
                      String title,
                      @Nullable ModalityState state) {
-      super(project, afterUpdate, state);
+      super(project, afterUpdate);
       mySynchronous = synchronous;
       myCanBeCancelled = canBeCancelled;
       myTaskTitle = VcsBundle.message("change.list.manager.wait.lists.synchronization", title);
+      myModalityState = state;
     }
 
     @Override
@@ -137,6 +139,12 @@ class InvokeAfterUpdateCallback {
     @Override
     public void endProgress() {
       mySemaphore.up();
+    }
+
+    @Override
+    public void handleStoppedQueue() {
+      ModalityState modalityState = notNull(myModalityState, ModalityState.defaultModalityState());
+      ApplicationManager.getApplication().invokeLater(this::invokeCallback, modalityState);
     }
 
     private void awaitSemaphore(@NotNull ProgressIndicator indicator) {
