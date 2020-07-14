@@ -4,6 +4,7 @@ package com.intellij.tests.targets.java
 import com.intellij.debugger.ExecutionWithDebuggerToolsTestCase
 import com.intellij.debugger.impl.OutputChecker
 import com.intellij.execution.ExecutionManager
+import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -22,9 +23,11 @@ import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.*
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import kotlin.coroutines.resume
@@ -79,6 +82,20 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
 
   @Test
   fun `test can read file at target`(): Unit = runBlocking {
+    doTestCanReadFileAtTarget(ShortenCommandLine.NONE)
+  }
+
+  @Test
+  fun `test can read file at target with manifest shortener`(): Unit = runBlocking {
+    doTestCanReadFileAtTarget(ShortenCommandLine.MANIFEST)
+  }
+
+  @Test
+  fun `test can read file at target with args file shortener`(): Unit = runBlocking {
+    doTestCanReadFileAtTarget(ShortenCommandLine.ARGS_FILE)
+  }
+
+  private suspend fun doTestCanReadFileAtTarget(shortenCommandLine: ShortenCommandLine) {
     val cwd = tempDir.createDir()
     val executor = DefaultRunExecutor.getRunExecutorInstance()
     val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
@@ -90,6 +107,7 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
             conf.mainClassName = "Cat"
             conf.programParameters = targetFilePath
             conf.defaultTargetName = targetName
+            conf.shortenCommandLine = shortenCommandLine
           }
         )
         .build()
@@ -115,6 +133,7 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
 
   @Test
   fun `test java debugger`(): Unit = runBlocking {
+    assertThat(SystemInfo.IS_AT_LEAST_JAVA9).describedAs("The test is intended to verifying Java 9 options.").isTrue()
     val cwd = tempDir.createDir()
     val executor = DefaultDebugExecutor.getDebugExecutorInstance()
     val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
@@ -180,7 +199,7 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
             continuation.resume(stdout.toString())
           }
           else {
-            continuation.resumeWithException(IllegalStateException(wholeOutput.toString()))
+            continuation.resumeWithException(IllegalStateException("\n=== CONSOLE ===\n$wholeOutput\n=== CONSOLE END ==="))
           }
         }
 
