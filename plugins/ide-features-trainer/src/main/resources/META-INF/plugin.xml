@@ -27,6 +27,7 @@
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.ExclamationCompletionSuggester"/>
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.RenamingSuggester"/>
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.CopyPasteSuggester"/>
+        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">

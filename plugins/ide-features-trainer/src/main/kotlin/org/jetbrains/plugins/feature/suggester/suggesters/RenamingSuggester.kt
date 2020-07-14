@@ -53,6 +53,9 @@ class RenamingSuggester : FeatureSuggester {
                 if (parent == null || newChild == null || oldChild == null) return NoSuggestion
                 if (oldChild.isIdentifier()) {
                     if (!renamedIdentifiersData.references.contains(parent)) {
+                        // TODO Find out why resolve reference causes:
+                        //  "java.lang.Throwable: Somebody has requested stubbed spine during PSI operations; not only is this expensive, but will also cause stub PSI invalidation"
+                        //  Can be reproduced placing '{' before another code block "{ ... }"
                         val declaration = parent.resolveRef() ?: parent
                         val references = arrayListOf(declaration, *declaration.getAllReferences().toTypedArray())
                         renamedIdentifiersData = RenamedIdentifiersData(oldChild.text, references)

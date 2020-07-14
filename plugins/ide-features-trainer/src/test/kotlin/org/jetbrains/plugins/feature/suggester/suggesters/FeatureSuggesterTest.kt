@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.EditorCopyPasteHelper
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
@@ -115,7 +116,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         println(myFixture.file.text)
     }
 
-    fun moveCaretRelatively(columnShift: Int, lineShift: Int, withSelection: Boolean) {
+    fun moveCaretRelatively(columnShift: Int, lineShift: Int, withSelection: Boolean = false) {
         editor.caretModel.moveCaretRelatively(columnShift, lineShift, withSelection, false, true)
     }
 
@@ -158,6 +159,23 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
                 null
             )
         }
+    }
+
+    fun type(text: String) {
+        for(ch in text) {
+            myFixture.type(ch)
+            commitAllDocuments()
+        }
+    }
+
+    fun commitAllDocuments() {
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+    }
+
+    fun insertNewLineAt(index: Int) {
+        moveCaretToLogicalPosition(index, 0)
+        type("\n")
+        moveCaretRelatively(0, -1)
     }
 
     /**
