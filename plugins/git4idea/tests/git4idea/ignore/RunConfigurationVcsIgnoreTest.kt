@@ -4,17 +4,15 @@ package git4idea.ignore
 import com.intellij.configurationStore.saveComponentManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
-import com.intellij.util.io.write
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.VfsTestUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
 import org.assertj.core.api.Assertions.assertThat
-import java.nio.file.Path
 
 class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
-  private val gitIgnore: Path
-    get() = projectNioRoot.resolve(GITIGNORE)
-
   private val configurationName = "Unnamed"
 
   override fun isCreateDirectoryBasedProject() = true
@@ -30,6 +28,7 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
   }
 
   fun `test run configuration not ignored`() {
+    val gitIgnore = VfsTestUtil.createFile(projectRoot, GITIGNORE)
     gitIgnore.write("!$configurationName")
 
     val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
@@ -44,6 +43,7 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
   }
 
   fun `test run configuration ignored`() {
+    val gitIgnore = VfsTestUtil.createFile(projectRoot, GITIGNORE)
     gitIgnore.write("$configurationName*")
     ApplicationManager.getApplication().invokeAndWait {
       assertThat(VcsIgnoreManager.getInstance(project).isRunConfigurationVcsIgnored(configurationName)).isTrue()
@@ -51,6 +51,7 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
   }
 
   fun `test remove run configuration from ignore`() {
+    val gitIgnore = VfsTestUtil.createFile(projectRoot, GITIGNORE)
     gitIgnore.write(".idea")
     val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
     ApplicationManager.getApplication().invokeAndWait {
@@ -90,5 +91,11 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
 
     invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
+  }
+}
+
+private fun VirtualFile.write(data: String) {
+  runWriteActionAndWait {
+    setBinaryContent(data.toByteArray())
   }
 }

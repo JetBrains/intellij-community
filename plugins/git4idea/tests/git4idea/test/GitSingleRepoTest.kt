@@ -47,8 +47,9 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
 
   protected fun VirtualFile.createDir(dir: String) = VcsTestUtil.findOrCreateDir(project, this, dir)!!
 
-  protected fun VirtualFile.createFile(fileName: String, content: String = Math.random().toString()) =
-    VcsTestUtil.createFile(project, this, fileName, content)!!
+  protected fun VirtualFile.createFile(fileName: String, content: String = Math.random().toString()): VirtualFile {
+    return VcsTestUtil.createFile(project, this, fileName, content)!!
+  }
 
   protected fun renameFile(file: VirtualFile, newName: String) {
     VcsTestUtil.renameFileInCommand(project, file, newName)

@@ -31,12 +31,13 @@ internal class GitIgnoreChecker : VcsIgnoreChecker {
     handler.endOptions()
     handler.addParameters(checkForIgnore)
     val commandResult = Git.getInstance().runCommand(handler)
-
     return parseOutput(vcsRoot, checkForIgnore, commandResult.output, isPattern)
   }
 
   private fun parseOutput(vcsRoot: VirtualFile, checkForIgnorePath: String, output: List<String>, isPattern: Boolean): IgnoredCheckResult {
-    if (output.isEmpty()) return NotIgnored
+    if (output.isEmpty()) {
+      return NotIgnored
+    }
 
     for (line in output) {
       //Output form: <source> <COLON> <linenum> <COLON> <pattern> <HT> <pathname>
@@ -45,19 +46,24 @@ internal class GitIgnoreChecker : VcsIgnoreChecker {
       val path = lineElements[1]
 
       val prefixParts = lineElements[0].split(":")
-      if (prefixParts.size != 3) continue
+      if (prefixParts.size != 3) {
+        continue
+      }
 
       val gitIgnoreRelPath = prefixParts[0]
       val matchedPattern = prefixParts[2]
-
-      if (matchedPattern.startsWith("!")) continue //skip matching by negative pattern
+      if (matchedPattern.startsWith("!")) {
+        // skip matching by negative pattern
+        continue
+      }
 
       val gitIgnoreFile = VfsUtil.findRelativeFile(vcsRoot, *gitIgnoreRelPath.split("/").toTypedArray()) ?: continue
-
       if (isPattern && path.equals(checkForIgnorePath, !SystemInfo.isFileSystemCaseSensitive)) {
         return Ignored(virtualToIoFile(gitIgnoreFile), matchedPattern)
       }
-      else if (!isPattern) return Ignored(virtualToIoFile(gitIgnoreFile), matchedPattern)
+      else if (!isPattern) {
+        return Ignored(virtualToIoFile(gitIgnoreFile), matchedPattern)
+      }
     }
 
     return NotIgnored
