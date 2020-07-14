@@ -46,10 +46,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -555,10 +552,10 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         vTemp.refresh(false, true);
 
         // ptr is now null, cached as map
-        VirtualFile v = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr));
+        VirtualFile v = Objects.requireNonNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr));
         WriteAction.runAndWait(() -> {
           v.delete(this); //inc FS modCount
-          VirtualFile file = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr.getParentFile()));
+          VirtualFile file = Objects.requireNonNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr.getParentFile()));
           file.createChildData(this, ioSandPtr.getName());
         });
 
@@ -756,7 +753,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         }
       }));
       TimeoutUtil.sleep(100);
-      VirtualFile vFile = PlatformTestUtil.notNull(getVirtualFile(file));
+      VirtualFile vFile = Objects.requireNonNull(getVirtualFile(file));
       assertTrue(vFile.isValid());
       assertTrue(pointer.isValid());
       assertTrue(file.delete());

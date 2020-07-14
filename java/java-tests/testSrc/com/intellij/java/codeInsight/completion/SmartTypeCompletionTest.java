@@ -1206,16 +1206,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testAutoImportExpectedType() {
-    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
-    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-    try {
-      configureByTestName();
-      performAction();
-      myFixture.assertPreferredCompletionItems(1, "List", "ArrayList", "AbstractList");
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-    }
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(1, "List", "ArrayList", "AbstractList");
   }
 
   @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")

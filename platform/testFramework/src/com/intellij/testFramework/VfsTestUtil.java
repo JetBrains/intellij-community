@@ -15,12 +15,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
@@ -34,33 +34,28 @@ public final class VfsTestUtil {
 
   private VfsTestUtil() { }
 
-  @NotNull
-  public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath) {
-    return createFile(root, relativePath, "");
+  public static @NotNull VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath) {
+    return createFile(root, relativePath, (byte[])null);
   }
 
-  @NotNull
-  public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, @NotNull String text) {
+  public static @NotNull VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, @Nullable String text) {
     try {
-      return createFileOrDir(root, relativePath, VfsUtil.toByteArray(root, text), false);
+      return createFileOrDir(root, relativePath, text == null ? null : VfsUtil.toByteArray(root, text), false);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  @NotNull
-  public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, byte @NotNull [] data) {
+  public static @NotNull VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, byte @Nullable [] data) {
     return createFileOrDir(root, relativePath, data, false);
   }
 
-  @NotNull
-  public static VirtualFile createDir(@NotNull VirtualFile root, @NotNull String relativePath) {
-    return createFileOrDir(root, relativePath, ArrayUtil.EMPTY_BYTE_ARRAY, true);
+  public static @NotNull VirtualFile createDir(@NotNull VirtualFile root, @NotNull String relativePath) {
+    return createFileOrDir(root, relativePath, null, true);
   }
 
-  @NotNull
-  private static VirtualFile createFileOrDir(VirtualFile root, String relativePath, byte @NotNull [] data, boolean dir) {
+  private static @NotNull VirtualFile createFileOrDir(VirtualFile root, String relativePath, byte @Nullable [] data, boolean dir) {
     try {
       return WriteAction.computeAndWait(() -> {
         VirtualFile parent = root;
@@ -89,7 +84,9 @@ public final class VfsTestUtil {
             Document document = manager.getCachedDocument(file);
             if (document != null) manager.saveDocument(document);  // save changes to prevent possible conflicts
           }
-          file.setBinaryContent(data);
+          if (data != null) {
+            file.setBinaryContent(data);
+          }
           manager.reloadFiles(file);  // update the document now, otherwise MemoryDiskConflictResolver will do it later at unexpected moment of time
         }
         return file;

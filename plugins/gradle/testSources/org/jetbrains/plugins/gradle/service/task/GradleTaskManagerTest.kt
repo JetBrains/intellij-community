@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.task
 
 import com.intellij.openapi.application.runWriteAction
@@ -64,7 +64,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
   @Test
   fun `test task manager uses wrapper task when wrapper already exists`() {
     runWriteAction {
-      val baseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(myProject)
+      val baseDir = PlatformTestUtil.getOrCreateProjectBaseDir(myProject)
       val wrapperProps = baseDir
         .createChildDirectory(this, "gradle")
         .createChildDirectory(this, "wrapper")
@@ -103,7 +103,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
 
   private fun writeBuildScript(scriptText: String) {
     runWriteAction {
-      VfsUtil.saveText(PlatformTestUtil.getOrCreateProjectTestBaseDir(myProject).createChildData(this, "build.gradle"), scriptText)
+      VfsUtil.saveText(PlatformTestUtil.getOrCreateProjectBaseDir(myProject).createChildData(this, "build.gradle"), scriptText)
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
@@ -64,8 +64,9 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   override fun getIgnoredFilePaths(): Set<FilePath> = SET_LOCK.read { ignoredSet.toHashSet() }
 
-  override fun containsFile(file: FilePath) =
-    SET_LOCK.read { isUnder(repositoryRootPath, ignoredSet, file) }
+  override fun containsFile(file: FilePath): Boolean {
+    return SET_LOCK.read { isUnder(repositoryRootPath, ignoredSet, file) }
+  }
 
   override fun getSize() = SET_LOCK.read { ignoredSet.size }
 
@@ -98,6 +99,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
     val affectedFiles = events
       .flatMap(::getAffectedFilePaths)
+      .asSequence()
       .filter { repository.root == VcsUtil.getVcsRootFor(repository.project, it) }
       .toList()
 
@@ -106,24 +108,26 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  fun setupListeners() =
+  fun setupListeners() {
     runReadAction {
       if (repository.project.isDisposed) return@runReadAction
       AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
       repository.project.messageBus.connect(this).subscribe(ChangeListListener.TOPIC, this)
     }
+  }
 
   @Throws(VcsException::class)
   protected abstract fun requestIgnored(paths: Collection<FilePath>? = null): Set<FilePath>
 
-  private fun tryRequestIgnored(paths: Collection<FilePath>? = null): Set<FilePath> =
-    try {
+  private fun tryRequestIgnored(paths: Collection<FilePath>? = null): Set<FilePath> {
+    return try {
       requestIgnored(paths)
     }
     catch (e: VcsException) {
       LOG.warn("Cannot request ignored: ", e)
       emptySet()
     }
+  }
 
   protected abstract fun scanTurnedOff(): Boolean
 
@@ -182,9 +186,11 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
                          val action: () -> Unit)
     : DisposableUpdate(repository, ComparableObject.Impl(repository, isFullRescan)) {
 
-    override fun canEat(update: Update) = update is MyUpdate &&
-                                          update.repository == repository &&
-                                          isFullRescan
+    override fun canEat(update: Update): Boolean {
+      return update is MyUpdate &&
+             update.repository == repository &&
+             isFullRescan
+    }
 
     override fun doRun() = action()
   }
@@ -197,7 +203,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     return ignored.toSet()
   }
 
-  private fun addNotContainedIgnores(ignored: Collection<FilePath>) =
+  private fun addNotContainedIgnores(ignored: Collection<FilePath>) {
     SET_LOCK.write {
       ignored.forEach { ignored ->
         if (!isUnder(repositoryRootPath, ignoredSet, ignored)) {
@@ -205,6 +211,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
         }
       }
     }
+  }
 
   private fun doRescan(): Set<FilePath> {
     val ignored = tryRequestIgnored().filterByRepository(repository)
@@ -216,8 +223,9 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     return ignored.toSet()
   }
 
-  private fun <REPOSITORY> Set<FilePath>.filterByRepository(repository: REPOSITORY) =
-    filter { repositoryManager.getRepositoryForFileQuick(it) == repository }
+  private fun <REPOSITORY> Set<FilePath>.filterByRepository(repository: REPOSITORY): List<FilePath> {
+    return filter { repositoryManager.getRepositoryForFileQuick(it) == repository }
+  }
 
   private fun fireUpdateStarted() {
     listeners.multicaster.updateStarted()
@@ -229,7 +237,6 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   @TestOnly
   inner class Waiter : VcsIgnoredHolderUpdateListener {
-
     private val awaitLatch = CountDownLatch(1)
 
     init {

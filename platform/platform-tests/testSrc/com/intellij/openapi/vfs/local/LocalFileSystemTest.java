@@ -88,7 +88,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testBasics() throws IOException {
-    VirtualFile dir = PlatformTestUtil.notNull(myFS.refreshAndFindFileByIoFile(tempDir.newDirectory("xxx")));
+    VirtualFile dir = Objects.requireNonNull(myFS.refreshAndFindFileByIoFile(tempDir.newDirectory("xxx")));
     assertTrue(dir.isValid());
     assertEquals(0, dir.getChildren().length);
 
@@ -539,7 +539,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testCaseInsensitiveRename() throws IOException {
     File file = tempDir.newFile("file.txt");
-    File home = PlatformTestUtil.notNull(file.getParentFile());
+    File home = Objects.requireNonNull(file.getParentFile());
     assertThat(home.list()).containsExactly("file.txt");
 
     VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);

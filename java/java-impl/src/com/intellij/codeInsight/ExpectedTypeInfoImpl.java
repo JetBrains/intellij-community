@@ -16,14 +16,18 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   public static final NullableComputable<String> NULL = () -> null;
@@ -123,7 +127,6 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return equals((Object)obj);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "ExpectedTypeInfo[type='" + type + "' kind='" + kind + "']";
   }
@@ -174,5 +177,32 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     //todo: the following cases are not implemented: SUPERxSUB, SUBxSUPER
 
     return ExpectedTypeInfo.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  ExpectedTypeInfoImpl fixUnresolvedTypes(@NotNull PsiElement context) {
+    PsiType resolvedType = fixUnresolvedType(context, type);
+    PsiType resolvedDefaultType = fixUnresolvedType(context, defaultType);
+    if (resolvedType != type || resolvedDefaultType != defaultType) {
+      return new ExpectedTypeInfoImpl(resolvedType, kind, resolvedDefaultType, myTailType, myCalledMethod, expectedNameComputable);
+    }
+    return this;
+  }
+
+  @NotNull
+  private static PsiType fixUnresolvedType(@NotNull PsiElement context, @NotNull PsiType type) {
+    if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
+      String className = ((PsiClassType)type).getClassName();
+      int typeParamCount = ((PsiClassType)type).getParameterCount();
+      Project project = context.getProject();
+      PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(project);
+      List<PsiClass> suitableClasses = ContainerUtil.filter(
+        PsiShortNamesCache.getInstance(project).getClassesByName(className, context.getResolveScope()),
+        c -> c.getTypeParameters().length == typeParamCount && helper.isAccessible(c, context, null));
+      if (suitableClasses.size() == 1) {
+        return PsiElementFactory.getInstance(project).createType(suitableClasses.get(0), ((PsiClassType)type).getParameters());
+      }
+    }
+    return type;
   }
 }

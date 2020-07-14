@@ -223,11 +223,9 @@ open class SourceRootEntity(
   val tests: Boolean,
   val rootType: String
 ) : WorkspaceEntityBase() {
-  val module: ModuleEntity by moduleDelegate
   val contentRoot: ContentRootEntity by contentRootDelegate
 
   companion object {
-    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, SourceRootEntity>(ModuleEntity::class.java)
     val contentRootDelegate = ManyToOne.NotNull<ContentRootEntity, SourceRootEntity>(ContentRootEntity::class.java)
   }
 }

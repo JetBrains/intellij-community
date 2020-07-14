@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.TempFiles;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,7 +20,7 @@ public class VirtualFilePointersTreeTest extends HeavyPlatformTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myVirtualFilePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    myDir = new TempFiles(myFilesToDelete).createTempVDir();
+    myDir = getTempDir().createVirtualDir();
   }
 
   public void testRecursivePointersForSubdirectories() {

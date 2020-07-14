@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.intellij.lang.annotations.Language;
@@ -19,12 +18,11 @@ import org.jdom.Element;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ProjectJdkTest extends HeavyPlatformTestCase {
   public void testDoesntCrashOnJdkRootDisappearance() throws Exception {
-    VirtualFile nDir = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDir("nroot", true)));
+    VirtualFile nDir = getTempDir().createVirtualDir();
     String nUrl = nDir.getUrl();
     ProjectJdkImpl jdk = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<ProjectJdkImpl, Exception>)()->{
       ProjectJdkImpl myJdk = (ProjectJdkImpl)ProjectJdkTable.getInstance().createSdk("my", JavaSdk.getInstance());

@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.bracket
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
@@ -430,6 +431,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
   override fun getModuleGrouper(model: ModifiableModuleModel?): ModuleGrouper = createGrouper(project, model)
 
+  override fun loadModule(file: Path): Module {
+    return loadModule(file.systemIndependentPath)
+  }
+
   override fun loadModule(filePath: String): Module {
     val model = modifiableModel
     val module = model.loadModule(filePath)
@@ -580,10 +585,12 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
     private fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges() = filter { it.isModuleLibrary() }
 
-    private fun EntityChange<*>.entity(): WorkspaceEntity = when (this) {
-      is EntityChange.Added -> entity
-      is EntityChange.Removed -> entity
-      is EntityChange.Replaced -> oldEntity
+    private fun entity(entityChange: EntityChange<*>): WorkspaceEntity {
+      return when (entityChange) {
+        is EntityChange.Added -> entityChange.entity
+        is EntityChange.Removed -> entityChange.entity
+        is EntityChange.Replaced -> entityChange.oldEntity
+      }
     }
 
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {

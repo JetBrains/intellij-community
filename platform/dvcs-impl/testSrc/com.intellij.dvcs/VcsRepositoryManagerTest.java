@@ -35,7 +35,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    cd(projectRoot);
+    cd(getProjectRoot());
 
     myVcs = new MockAbstractVcs(myProject);
     vcsManager.registerVcs(myVcs);
@@ -54,7 +54,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     FutureTask<Repository> readExistingRepo = new FutureTask<>(() -> repositoryManager.getRepositoryForRoot(repositoryFile));
 
     FutureTask<Boolean> modifyRepositoryMapping = new FutureTask<>(() -> {
-      vcsManager.setDirectoryMappings(VcsUtil.addMapping(vcsManager.getDirectoryMappings(), projectRoot.getPath(), myVcs.getName()));
+      vcsManager.setDirectoryMappings(VcsUtil.addMapping(vcsManager.getDirectoryMappings(), getProjectRoot().getPath(), myVcs.getName()));
       repositoryManager.waitForAsyncTaskCompletion();
       return !repositoryManager.getRepositories().isEmpty();
     });
@@ -72,11 +72,11 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
   }
 
   private @NotNull VirtualFile createExternalRepository() {
-    cd(projectRoot);
+    cd(getProjectRoot());
     String externalName = "external";
     mkdir(externalName);
-    projectRoot.refresh(false, true);
-    final VirtualFile repositoryFile = Objects.requireNonNull(this.projectRoot.findChild(externalName));
+    getProjectRoot().refresh(false, true);
+    final VirtualFile repositoryFile = Objects.requireNonNull(this.getProjectRoot().findChild(externalName));
     MockRepositoryImpl externalRepo = new MockRepositoryImpl(myProject, repositoryFile, myProject);
     VcsRepositoryManager.getInstance(myProject).addExternalRepository(repositoryFile, externalRepo);
     return repositoryFile;

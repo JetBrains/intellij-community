@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -25,8 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
-
-import static java.util.Collections.singletonList;
 
 /**
  * The handler that is based on per-line processing of the text.
@@ -72,7 +70,7 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   public void setUrl(@NotNull String url) {
-    setUrls(singletonList(url));
+    setUrls(Collections.singletonList(url));
   }
 
   public void setUrls(@NotNull Collection<String> urls) {

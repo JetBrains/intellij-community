@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -39,7 +38,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
+public final class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
   private static final Logger LOG = Logger.getInstance(ApplyPatchSaveToFileExecutor.class);
 
   @NotNull private final Project myProject;
@@ -63,7 +62,6 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
                     @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     FileSaverDialog dialog = FileChooserFactory.getInstance().createSaveFileDialog(new FileSaverDescriptor("Save Patch to", ""), myProject);
     VirtualFileWrapper targetFile = dialog.save(myProject.getBaseDir(), "TheirsChanges.patch");
-
     if (targetFile != null) {
       savePatch(patchGroupsToApply, targetFile);
     }
@@ -73,13 +71,13 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
     VirtualFile newPatchBase = notNull(myNewPatchBase, myProject.getBaseDir());
     try {
       List<FilePatch> textPatches = toOnePatchGroup(patchGroups, newPatchBase);
-      PatchWriter.writePatches(myProject, targetFile.getFile().getPath(), newPatchBase.getPath(), textPatches, new CommitContext(),
-                               StandardCharsets.UTF_8);
+      PatchWriter.writePatches(myProject, targetFile.getFile().toPath(), newPatchBase.toNioPath(), textPatches, new CommitContext());
     }
     catch (IOException e) {
       LOG.info(e);
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(
-        () -> Messages.showErrorDialog(myProject, message("create.patch.error.title", e.getMessage()), getErrorTitle()), null, myProject);
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
+        Messages.showErrorDialog(myProject, message("create.patch.error.title", e.getMessage()), getErrorTitle());
+      }, null, myProject);
     }
   }
 

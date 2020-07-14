@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFilePatchInProgress> {
+public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFilePatchInProgress<?>> {
   protected final Project myProject;
 
   public ApplyPatchDefaultExecutor(Project project) {
@@ -38,7 +38,8 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
 
   @CalledInAwt
   @Override
-  public void apply(@NotNull List<? extends FilePatch> remaining, @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
+  public void apply(@NotNull List<? extends FilePatch> remaining,
+                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
                     @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
@@ -54,15 +55,14 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
   }
 
   @NotNull
-  protected Collection<PatchApplier> getPatchAppliers(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
+  protected Collection<PatchApplier> getPatchAppliers(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroups,
                                                       @Nullable LocalChangeList localList,
                                                       @NotNull CommitContext commitContext) {
-    final Collection<PatchApplier> appliers = new ArrayList<>();
+    Collection<PatchApplier> appliers = new ArrayList<>();
     for (VirtualFile base : patchGroups.keySet()) {
-      appliers.add(new PatchApplier(myProject, base,
-                                    ContainerUtil
-                                      .map(patchGroups.get(base), patchInProgress -> patchInProgress.getPatch()), localList,
-                                    commitContext));
+      appliers.add(new PatchApplier(myProject, base, ContainerUtil.map(patchGroups.get(base), patchInProgress -> {
+        return patchInProgress.getPatch();
+      }), localList, commitContext));
     }
     return appliers;
   }
@@ -93,9 +93,9 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     }
   }
 
-  public static Set<String> pathsFromGroups(MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups) {
+  public static Set<String> pathsFromGroups(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroups) {
     final Set<String> selectedPaths = new HashSet<>();
-    final Collection<? extends AbstractFilePatchInProgress> values = patchGroups.values();
+    final Collection<? extends AbstractFilePatchInProgress<?>> values = patchGroups.values();
     for (AbstractFilePatchInProgress value : values) {
       final String path = value.getPatch().getBeforeName() == null ? value.getPatch().getAfterName() : value.getPatch().getBeforeName();
       selectedPaths.add(path);

@@ -163,25 +163,23 @@ public class VcsUtil {
     return findVcsByKey(project, key);
   }
 
-  @Nullable
-  public static VirtualFile getVcsRootFor(@NotNull Project project, FilePath filePath) {
+  public static @Nullable VirtualFile getVcsRootFor(@NotNull Project project, FilePath filePath) {
     return computeValue(project, manager -> manager.getVcsRootFor(filePath));
   }
 
-  @Nullable
-  public static VirtualFile getVcsRootFor(@NotNull Project project, @Nullable VirtualFile file) {
+  public static @Nullable VirtualFile getVcsRootFor(@NotNull Project project, @Nullable VirtualFile file) {
     return computeValue(project, manager -> manager.getVcsRootFor(file));
   }
 
   @Nullable
-  private static <T> T computeValue(@NotNull Project project, @NotNull Function<? super ProjectLevelVcsManager, ? extends T> provider) {
+  private static <T> T computeValue(@NotNull Project project, @NotNull java.util.function.Function<? super ProjectLevelVcsManager, ? extends T> provider) {
     return ReadAction.compute(() -> {
       //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
       //  a future task after the component has been disposed.
       T result = null;
       if (!project.isDisposed()) {
         ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
-        result = manager != null ? provider.fun(manager) : null;
+        result = manager != null ? provider.apply(manager) : null;
       }
       return result;
     });
@@ -259,10 +257,9 @@ public class VcsUtil {
   /**
    * @deprecated use {@link #getFilePath(String, boolean)}
    */
-  @NotNull
   @Deprecated
-  public static FilePath getFilePathForDeletedFile(@NotNull String path, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path), isDirectory);
+  public static @NotNull FilePath getFilePathForDeletedFile(@NotNull String path, boolean isDirectory) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePath(path, isDirectory);
   }
 
   @NotNull

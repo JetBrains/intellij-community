@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.stateStore
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.LineSeparator
 import git4idea.GitCommit
@@ -27,9 +28,9 @@ import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.test.GitScenarios.*
 import java.io.File
+import java.nio.file.Files
 
 class GitBranchWorkerTest : GitPlatformTest() {
-
   private lateinit var first: GitRepository
   private lateinit var second: GitRepository
   private lateinit var last: GitRepository
@@ -213,7 +214,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertCurrentBranch("master")
     assertCurrentRevision("master")
-    assertErrorNotification("Couldn't checkout unknown_ref", "Revision not found in community, contrib and project")
+    assertErrorNotification("Couldn't checkout unknown_ref", "Revision not found in community, contrib and ${project.stateStore.projectBasePath.fileName}")
   }
 
   fun `test checkout revision checkout ref with partial success`() {
@@ -226,7 +227,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertDetachedState(second, "feature")
 
     assertSuccessfulNotification("Checked out ${bcode("feature")} in community and contrib<br/>" +
-                                 "Revision not found in project<br><a href='rollback'>Rollback</a>")
+                                 "Revision not found in ${project.stateStore.projectBasePath.fileName}<br><a href='rollback'>Rollback</a>")
   }
 
   fun `test checkout with untracked files overwritten by checkout in first repo should show notification`() {
@@ -858,11 +859,11 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun prepareLocalAndRemoteBranch(name: String, track: Boolean) {
-    val parentRoot = File(testRoot, "parentRoot")
-    parentRoot.mkdir()
+    val parentRoot = testNioRoot.resolve("parentRoot")
+    Files.createDirectories(parentRoot)
     for (repository in myRepositories) {
       repository.git("branch $name")
-      prepareRemoteRepo(repository, File(parentRoot, "${repository.root.name}-parent.git"))
+      prepareRemoteRepo(repository, parentRoot.resolve("${repository.root.name}-parent.git"))
       repository.git("push ${if (track) "-u" else ""} origin $name")
     }
   }

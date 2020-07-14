@@ -65,7 +65,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     assertStructureEqual(expected, maxRowCount, rootNode);
   }
 
-  protected void assertStructureEqual(String expected) {
+  protected void assertStructureEqual(@NotNull String expected) {
     assertStructureEqual(expected, -1, myStructure.getRootElement());
   }
 

@@ -38,26 +38,33 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     PsiTestUtil.addContentRoot(createModule("unloaded"), root.findChild("unloaded")!!)
     PsiTestUtil.addContentRoot(createModule("loaded-inner"), root.findFileByRelativePath("unloaded/loaded-inner")!!)
     val expected = """
-          |Project
-          | loaded
-          |  unloaded-inner
-          |   subdir
-          |   y.txt
-          | loaded-inner.iml
-          | loaded.iml
-          | test unloaded modules.iml
-          | unloaded
-          |  loaded-inner
-          |   subdir
-          |   z.txt
-          | unloaded-inner.iml
-          | unloaded.iml
-          |
-          """.trimMargin()
+      Project
+       loaded
+        unloaded-inner
+         subdir
+         y.txt
+       unloaded
+        loaded-inner
+         subdir
+         z.txt
+
+    """.trimIndent()
     assertStructureEqual(expected)
 
     ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
-    assertStructureEqual(expected)
+    assertStructureEqual("""
+      Project
+       loaded
+        unloaded-inner
+         subdir
+         y.txt
+       unloaded
+        loaded-inner
+         subdir
+         z.txt
+       unloaded-inner.iml
+       unloaded.iml
+    """.trimIndent())
   }
 
   fun `test unloaded module with qualified name`() {
@@ -74,18 +81,14 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     PsiTestUtil.addContentRoot(createModule("unloaded2"), root.findChild("unloaded2")!!)
 
     val expected = """
-          |Project
-          | Group: foo.bar
-          |  unloaded
-          |   subdir
-          |   y.txt
-          | foo.bar.unloaded.iml
-          | test unloaded module with qualified name.iml
-          | unloaded2
-          |  subdir
-          | unloaded2.iml
-          |
-          """.trimMargin()
+      Project
+       Group: foo.bar
+        unloaded
+         subdir
+         y.txt
+       unloaded2
+        subdir
+    """.trimIndent()
     assertStructureEqual(expected)
 
     ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
@@ -101,10 +104,8 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     PsiTestUtil.addContentRoot(createModule("foo.bar.module"), root.findChild("module")!!)
     assertStructureEqual("""
           |Project
-          | foo.bar.module.iml
           | module
           |  subdir
-          | test do not show parent groups for single module.iml
           |
           """.trimMargin())
   }
@@ -119,11 +120,8 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     myStructure.isFlattenModules = true
     assertStructureEqual("""
           |Project
-          | foo.bar.module1.iml
-          | foo.bar.module2.iml
           | module1
           | module2
-          | test flatten modules option.iml
           |
           """.trimMargin())
   }
@@ -140,9 +138,6 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
           | Group: xxx
           |  foo
           |  foo.bar
-          | test do not show groups duplicating module names.iml
-          | xxx.foo.bar.iml
-          | xxx.foo.iml
           |
           """.trimMargin())
   }
@@ -159,19 +154,16 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     PsiTestUtil.addContentRoot(createModule("foo.bar.module1"), root.findChild("module1")!!)
     PsiTestUtil.addContentRoot(createModule("foo.baz.module2"), root.findChild("module2")!!)
     assertStructureEqual("""
-          |Project
-          | Group: foo
-          |  Group: bar
-          |   module1
-          |    subdir
-          |  Group: baz
-          |   module2
-          |    subdir
-          | foo.bar.module1.iml
-          | foo.baz.module2.iml
-          | test modules with common parent group.iml
-          |
-          """.trimMargin())
+      |Project
+      | Group: foo
+      |  Group: bar
+      |   module1
+      |    subdir
+      |  Group: baz
+      |   module2
+      |    subdir
+      |
+      """.trimMargin())
   }
 
   override fun getTestPath(): String? = null

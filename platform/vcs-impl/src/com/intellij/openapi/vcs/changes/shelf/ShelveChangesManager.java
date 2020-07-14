@@ -480,7 +480,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         ProgressManager.checkCanceled();
         iterSw = StopWatch.start("Building patches" + inbatch);
         patches.addAll(IdeaTextPatchBuilder
-                         .buildPatch(myProject, list, PathUtil.toSystemDependentName(myProject.getBasePath()), false,
+                         .buildPatch(myProject, list, ProjectKt.getStateStore(myProject).getProjectBasePath(), false,
                                      honorExcludedFromCommit));
         iterSw.report(LOG);
         ProgressManager.checkCanceled();

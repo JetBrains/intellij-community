@@ -5,18 +5,18 @@ import git4idea.test.cd
 import git4idea.test.cloneRepo
 import git4idea.test.initRepo
 import git4idea.test.tac
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 class GitBareWorkTreeTest : GitWorkTreeBaseTest() {
-  override fun initMainRepo(): String {
-    val sourceRepo = File(testRoot, "source")
-    assertTrue(sourceRepo.mkdir())
-    initRepo(project, sourceRepo.path, true)
+  override fun initMainRepo(): Path {
+    val sourceRepo = testNioRoot.resolve("source")
+    Files.createDirectories(testNioRoot)
+    initRepo(project, sourceRepo, true)
 
-    val mainDir = File(testRoot, "main.git")
-    val path = mainDir.path
-    cloneRepo(sourceRepo.path, path, true)
-    return path
+    val mainDir = testNioRoot.resolve("main.git")
+    cloneRepo(sourceRepo.toString(), mainDir.toString(), true)
+    return mainDir
   }
 
   // IDEA-151598

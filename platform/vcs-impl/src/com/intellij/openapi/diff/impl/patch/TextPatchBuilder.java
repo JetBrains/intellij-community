@@ -15,11 +15,11 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,11 +35,11 @@ public final class TextPatchBuilder {
   @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
   @NonNls private static final String DATE_NAME_TEMPLATE = "(date {0})";
 
-  @NotNull private final String myBasePath;
+  @NotNull private final Path myBasePath;
   private final boolean myIsReversePath;
   @Nullable private final Runnable myCancelChecker;
 
-  private TextPatchBuilder(@NotNull String basePath,
+  private TextPatchBuilder(@NotNull Path basePath,
                            boolean isReversePath,
                            @Nullable Runnable cancelChecker) {
     myBasePath = basePath;
@@ -47,31 +47,15 @@ public final class TextPatchBuilder {
     myCancelChecker = cancelChecker;
   }
 
-  @NotNull
-  public static List<FilePatch> buildPatch(@NotNull Collection<? extends BeforeAfter<AirContentRevision>> changes,
-                                           @NotNull String basePath,
-                                           boolean reversePatch,
-                                           @Nullable Runnable cancelChecker) throws VcsException {
-    TextPatchBuilder builder = new TextPatchBuilder(basePath, reversePatch, cancelChecker);
-    return builder.build(changes);
-  }
-
-  /**
-   * @deprecated use method without caseSensitive parameter
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public static List<FilePatch> buildPatch(@NotNull Collection<? extends BeforeAfter<AirContentRevision>> changes,
-                                           @NotNull String basePath,
-                                           boolean reversePatch,
-                                           boolean isCaseSensitive,
-                                           @Nullable Runnable cancelChecker) throws VcsException {
-    return buildPatch(changes, basePath, reversePatch, cancelChecker);
+  public static @NotNull List<FilePatch> buildPatch(@NotNull Collection<BeforeAfter<AirContentRevision>> changes,
+                                                    @NotNull Path basePath,
+                                                    boolean reversePatch,
+                                                    @Nullable Runnable cancelChecker) throws VcsException {
+    return new TextPatchBuilder(basePath, reversePatch, cancelChecker).build(changes);
   }
 
   @NotNull
-  private List<FilePatch> build(@NotNull Collection<? extends BeforeAfter<AirContentRevision>> changes) throws VcsException {
+  private List<FilePatch> build(@NotNull Collection<BeforeAfter<AirContentRevision>> changes) throws VcsException {
     List<FilePatch> result = new ArrayList<>();
     for (BeforeAfter<AirContentRevision> c : changes) {
       if (myCancelChecker != null) myCancelChecker.run();
@@ -347,14 +331,12 @@ public final class TextPatchBuilder {
     return hunk;
   }
 
-  @NotNull
-  public static String getRelativePath(@NotNull String basePath, @NotNull String secondPath) {
+  public static @NotNull String getRelativePath(@NotNull String basePath, @NotNull String secondPath) {
     String baseModified = FileUtil.toSystemIndependentName(basePath);
     String secondModified = FileUtil.toSystemIndependentName(secondPath);
 
     String relPath = FileUtil.getRelativePath(baseModified, secondModified, '/', SystemInfo.isFileSystemCaseSensitive);
-    if (relPath == null) return secondModified;
-    return relPath;
+    return relPath == null ? secondModified : relPath;
   }
 
   @NotNull
@@ -368,10 +350,10 @@ public final class TextPatchBuilder {
   private void setPatchHeading(@NotNull FilePatch result,
                                @NotNull AirContentRevision beforeRevision,
                                @NotNull AirContentRevision afterRevision) {
-    result.setBeforeName(getRelativePath(myBasePath, beforeRevision.getPath().getPath()));
+    result.setBeforeName(getRelativePath(myBasePath.toString(), beforeRevision.getPath().getPath()));
     result.setBeforeVersionId(getRevisionName(beforeRevision));
 
-    result.setAfterName(getRelativePath(myBasePath, afterRevision.getPath().getPath()));
+    result.setAfterName(getRelativePath(myBasePath.toString(), afterRevision.getPath().getPath()));
     result.setAfterVersionId(getRevisionName(afterRevision));
   }
 

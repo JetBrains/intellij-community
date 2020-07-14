@@ -11,7 +11,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.xml.actions.validate.TestErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.util.XmlResourceResolver;
@@ -232,9 +231,7 @@ public class ValidateXmlTest extends JavaCodeInsightTestCase {
   }
 
   private void perform(String fileName, String message, String[] urls, String[] files, boolean caseInsensitive, String pattern, String replacement) throws Throwable {
-    VirtualFile root = PsiTestUtil.createTestProjectStructure(
-      myProject, myModule, PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/validateXml", myFilesToDelete
-    );
+    VirtualFile root = createTestProjectStructure(PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/validateXml");
     VirtualFile virtualFile = VfsUtil.findRelativeFile(root, fileName.split("/"));
 
     if (urls != null && files != null) {

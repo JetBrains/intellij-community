@@ -152,7 +152,11 @@ public class ExpectedTypesProvider {
     if (parent != null) {
       parent.accept(visitor);
     }
-    return visitor.getResult();
+    ExpectedTypeInfo[] result = visitor.getResult();
+    if (forCompletion) {
+      return ContainerUtil.map2Array(result, ExpectedTypeInfo.class, i -> ((ExpectedTypeInfoImpl)i).fixUnresolvedTypes(expr));
+    }
+    return result;
   }
 
   private static PsiFunctionalExpression extractFunctionalExpression(PsiExpression expr) {

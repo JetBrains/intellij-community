@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.configLocation
@@ -28,6 +29,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 
 internal class ModifiableModuleModelBridge(
   private val project: Project,
@@ -50,8 +52,7 @@ internal class ModifiableModuleModelBridge(
     return modules.toTypedArray()
   }
 
-  override fun newModule(filePath: String, moduleTypeId: String): Module =
-    newModule(filePath, moduleTypeId, null)
+  override fun newModule(filePath: String, moduleTypeId: String): Module = newModule(filePath, moduleTypeId, null)
 
   override fun newNonPersistentModule(moduleName: String, moduleTypeId: String): Module {
     val moduleEntity = diff.addModuleEntity(
@@ -130,6 +131,8 @@ internal class ModifiableModuleModelBridge(
       diff.removeEntity(moduleEntity)
     }
   }
+
+  override fun loadModule(file: Path) = loadModule(file.systemIndependentPath)
 
   override fun loadModule(filePath: String): Module {
     val moduleName = getModuleNameByFilePath(filePath)

@@ -21,11 +21,13 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class NavigateFromSourceTest extends BaseProjectViewTestCase {
@@ -49,7 +51,6 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
                                                      "     -[Class1]\n" +
                                                      "      InnerClass\n" +
                                                      "     +Class2\n" +
-                                                     getRootFiles() +
                                                      " +External Libraries\n"
       , true);
 
@@ -61,7 +62,6 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
                                                                                            "     -Class1.java\n" +
                                                                                            "      [Class11]\n" +
                                                                                            "     +Class2\n" +
-                                                                                           getRootFiles() +
                                                                                            " +External Libraries\n");
 
     changeClassTextAndTryToNavigate("class Class1 {}", (PsiJavaFile)containingFile, pane, "-Project\n" +
@@ -71,7 +71,6 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
                                                                                           "    -PsiDirectory: package1\n" +
                                                                                           "     [Class1]\n" +
                                                                                           "     +Class2\n" +
-                                                                                          getRootFiles() +
                                                                                           " +External Libraries\n");
 
     doTestMultipleSelection(pane, ((PsiJavaFile)containingFile).getClasses()[0]);
@@ -92,15 +91,15 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     new ProjectViewToolWindowFactory().createToolWindowContent(getProject(), toolWindow);
 
     projectView.changeView(ProjectViewPane.ID);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     JComponent component = ((ProjectViewImpl)projectView).getComponent();
     DataContext context = DataManager.getInstance().getDataContext(component);
     PsiElement element = CommonDataKeys.PSI_FILE.getData(context);
-    assertEquals("Class1.java", ((PsiJavaFile)element).getName());
+    assertThat(((PsiJavaFile)element).getName()).isEqualTo("Class1.java");
   }
 
-  private static void doTestMultipleSelection(final AbstractProjectViewPSIPane pane, final PsiClass psiClass) {
+  private static void doTestMultipleSelection(@NotNull AbstractProjectViewPSIPane pane, PsiClass psiClass) {
     JTree tree = pane.getTree();
     int rowCount = tree.getRowCount();
     for (int i = 0; i < rowCount; i++) {
@@ -109,16 +108,16 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
 
     pane.select(psiClass, psiClass.getContainingFile().getVirtualFile(), true);
 
-    assertEquals(8, tree.getSelectionCount());
+    assertThat(tree.getSelectionPaths()).hasSize(7);
   }
 
-  private static void changeClassTextAndTryToNavigate(final String newClassString,
+  private static void changeClassTextAndTryToNavigate(String newClassString,
                                                       PsiJavaFile psiFile,
-                                                      final AbstractProjectViewPSIPane pane,
-                                                      final String expected) {
+                                                      AbstractProjectViewPSIPane pane,
+                                                      String expected) {
     PsiClass psiClass = psiFile.getClasses()[0];
-    final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
-    final JTree tree = pane.getTree();
+    VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
+    JTree tree = pane.getTree();
     setBinaryContent(virtualFile, newClassString.getBytes(StandardCharsets.UTF_8));
 
     PlatformTestUtil.waitForAlarm(600);
@@ -155,9 +154,6 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
                                                      "    PsiDirectory: META-INF\n" +
                                                      "    [Main]\n" +
                                                      " PsiDirectory: selectFileInArchiveUnderModuleGroup\n" +
-                                                     " group.module.iml\n" +
-                                                     getRootFiles() +
-                                                     " +External Libraries\n"
-      , true);
+                                                     " +External Libraries\n", true);
   }
 }

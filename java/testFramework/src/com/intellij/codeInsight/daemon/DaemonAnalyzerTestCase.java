@@ -396,8 +396,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       }
       else {
         dir = createTempDirectory();
-        VirtualFile vDir =
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+        VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
         addSourceContentToRoots(module, vDir);
       }
 

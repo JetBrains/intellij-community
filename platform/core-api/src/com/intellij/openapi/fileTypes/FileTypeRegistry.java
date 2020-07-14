@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
@@ -130,7 +130,7 @@ public abstract class FileTypeRegistry {
    * Pluggable file type detector by content
    */
   public interface FileTypeDetector {
-    ExtensionPointName<FileTypeDetector> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeDetector");
+    ExtensionPointName<FileTypeDetector> EP_NAME = new ExtensionPointName<>("com.intellij.fileTypeDetector");
     /**
      * Detects file type by its (may be binary) content on disk.
      * Your detector must be as light as possible.
@@ -147,7 +147,7 @@ public abstract class FileTypeRegistry {
     /**
      * Returns the file type that this detector is capable of detecting, or null if it can detect
      * multiple file types.
-     * 
+     *
      * @deprecated unused
      */
     @Deprecated

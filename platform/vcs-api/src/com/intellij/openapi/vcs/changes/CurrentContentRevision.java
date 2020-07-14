@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ReadAction;
@@ -18,7 +17,7 @@ import java.io.IOException;
 public class CurrentContentRevision implements ByteBackedContentRevision {
   protected FilePath myFile;
 
-  public CurrentContentRevision(final FilePath file) {
+  public CurrentContentRevision(FilePath file) {
     myFile = file;
   }
 
@@ -29,9 +28,8 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
     if (vFile == null) {
       return null;
     }
-    final Document doc = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(vFile));
-    if (doc == null) return null;
-    return doc.getText();
+    Document doc = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(vFile));
+    return doc == null ? null : doc.getText();
   }
 
   @Override
@@ -50,9 +48,8 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
 
   @Nullable
   public VirtualFile getVirtualFile() {
-    final VirtualFile vFile = myFile.getVirtualFile();
-    if (vFile == null || !vFile.isValid()) return null;
-    return vFile;
+    VirtualFile vFile = myFile.getVirtualFile();
+    return vFile == null || !vFile.isValid() ? null : vFile;
   }
 
   @Override

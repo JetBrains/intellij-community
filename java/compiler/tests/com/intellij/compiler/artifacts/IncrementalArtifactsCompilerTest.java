@@ -163,8 +163,8 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     make(a);
     assertOutput(a, fs().file("1.txt"));
 
-    VirtualFile virtualDir = getVirtualFile(createTempDir("externalDir"));
-    final VirtualFile file = VfsTestUtil.createFile(virtualDir, "2.txt", "a");
+    VirtualFile virtualDir = getTempDir().createVirtualDir();
+    VirtualFile file = VfsTestUtil.createFile(virtualDir, "2.txt", "a");
     WriteAction.runAndWait(() -> {
       ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
       model.getOrCreateModifiableArtifact(a).getRootElement()

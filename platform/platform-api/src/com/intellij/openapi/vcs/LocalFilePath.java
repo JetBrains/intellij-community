@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 
 public class LocalFilePath implements FilePath {
   @NotNull private final String myPath;
@@ -27,6 +28,11 @@ public class LocalFilePath implements FilePath {
 
   public LocalFilePath(@NotNull String path, boolean isDirectory) {
     myPath = FileUtil.toCanonicalPath(path);
+    myIsDirectory = isDirectory;
+  }
+
+  public LocalFilePath(@NotNull Path path, boolean isDirectory) {
+    myPath = path.toAbsolutePath().normalize().toString();
     myIsDirectory = isDirectory;
   }
 

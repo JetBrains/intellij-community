@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,28 +29,25 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.util.containers.ContainerUtil.mapNotNull;
-
-public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
+public final class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   private static final Logger LOG = Logger.getInstance(UnshelvePatchDefaultExecutor.class);
 
   @NotNull private final ShelvedChangeList myCurrentShelveChangeList;
 
-  public UnshelvePatchDefaultExecutor(@NotNull Project project,
-                                      @NotNull ShelvedChangeList changeList) {
+  public UnshelvePatchDefaultExecutor(@NotNull Project project, @NotNull ShelvedChangeList changeList) {
     super(project);
     myCurrentShelveChangeList = changeList;
   }
 
   @Override
   public void apply(@NotNull List<? extends FilePatch> remaining,
-                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
+                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
                     @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
-    final CommitContext commitContext = new CommitContext();
+    CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
-    final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
+    Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
     new Task.Backgroundable(myProject, VcsBundle.getString("unshelve.changes.progress.title")) {
       ApplyPatchStatus myApplyPatchStatus;
 
@@ -69,18 +67,22 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
 
   @CalledInAwt
   private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<? extends FilePatch> remaining,
-                                                    @NotNull Collection<? extends PatchApplier> appliers,
+                                                    @NotNull Collection<PatchApplier> appliers,
                                                     @NotNull CommitContext commitContext) {
     ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
-    if (!shelveChangesManager.isRemoveFilesFromShelf()) return;
+    if (!shelveChangesManager.isRemoveFilesFromShelf()) {
+      return;
+    }
+
     try {
       List<FilePatch> patches = new ArrayList<>(remaining);
-      patches.addAll(ContainerUtil.concat(appliers, PatchApplier::getRemainingPatches));
-      shelveChangesManager
-        .updateListAfterUnshelve(myCurrentShelveChangeList, patches, mapNotNull(patches, patch -> patch instanceof ShelvedBinaryFilePatch
-                                                                                                  ? ((ShelvedBinaryFilePatch)patch)
-                                                                                                    .getShelvedBinaryFile()
-                                                                                                  : null), commitContext);
+      for (PatchApplier applier : appliers) {
+        patches.addAll(applier.getRemainingPatches());
+      }
+      List<ShelvedBinaryFile> binaries = ContainerUtil.mapNotNull(patches, patch -> {
+        return patch instanceof ShelvedBinaryFilePatch ? ((ShelvedBinaryFilePatch)patch).getShelvedBinaryFile() : null;
+      });
+      shelveChangesManager.updateListAfterUnshelve(myCurrentShelveChangeList, patches, binaries, commitContext);
     }
     catch (Exception e) {
       LOG.error("Couldn't update and store remaining patches", e);

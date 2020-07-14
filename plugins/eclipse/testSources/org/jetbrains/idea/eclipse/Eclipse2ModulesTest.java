@@ -31,7 +31,7 @@ public abstract class Eclipse2ModulesTest extends JavaProjectTestCase {
 
     getOrCreateProjectBaseDir();
     VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
-    copyDirContentsTo(vTestRoot, getProject().getBaseDir());
+    copyDirContentsTo(vTestRoot, getOrCreateProjectBaseDir());
   }
 
   @Override
@@ -40,7 +40,7 @@ public abstract class Eclipse2ModulesTest extends JavaProjectTestCase {
   }
 
   protected void doTest(@NotNull String workspaceRoot, @NotNull String projectRoot) throws Exception {
-    VirtualFile baseDir = getProject().getBaseDir();
+    VirtualFile baseDir = getOrCreateProjectBaseDir();
     assert baseDir != null;
     final String path = baseDir.getPath() + "/" + workspaceRoot + "/" + myDependantModulePath;
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);

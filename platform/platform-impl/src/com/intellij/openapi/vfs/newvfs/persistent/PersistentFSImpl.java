@@ -492,7 +492,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static boolean isUtf8BomRequired(@NotNull VirtualFile file) {
-    for (Utf8BomOptionProvider encodingProvider : Utf8BomOptionProvider.EP_NAME.getExtensionList()) {
+    for (Utf8BomOptionProvider encodingProvider : Utf8BomOptionProvider.EP_NAME.getIterable()) {
       if (encodingProvider.shouldAddBOMForNewUtf8File(file)) {
         return true;
       }
@@ -1100,7 +1100,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void applyCreateEventsInDirectory(@NotNull VirtualDirectoryImpl parent,
-                                            @NotNull Collection<? extends VFileCreateEvent> createEvents) {
+                                            @NotNull Collection<VFileCreateEvent> createEvents) {
     int parentId = getFileId(parent);
     NewVirtualFile vf = findFileById(parentId);
     if (!(vf instanceof VirtualDirectoryImpl)) return;
@@ -1125,7 +1125,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     saveScannedChildrenRecursively(createEvents, delegate, hashingStrategy);
   }
 
-  private static void saveScannedChildrenRecursively(@NotNull Collection<? extends VFileCreateEvent> createEvents,
+  private static void saveScannedChildrenRecursively(@NotNull Collection<VFileCreateEvent> createEvents,
                                                      @NotNull NewVirtualFileSystem delegate,
                                                      @NotNull TObjectHashingStrategy<? super CharSequence> hashingStrategy) {
     for (VFileCreateEvent createEvent : createEvents) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.fetch
 
 import com.intellij.openapi.vcs.Executor.cd
@@ -6,17 +6,16 @@ import git4idea.fetch.GitFetchSupport.fetchSupport
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.test.*
-import java.io.File
+import java.nio.file.Path
 
 class GitFetchTest : GitPlatformTest() {
-
   private lateinit var repo: GitRepository
-  private lateinit var broRepo : File
+  private lateinit var broRepo : Path
 
   override fun setUp() {
     super.setUp()
 
-    repo = createRepository(project, projectPath, true)
+    repo = createRepository(project, projectNioRoot, true)
     cd(projectPath)
 
     val parent = prepareRemoteRepo(repo)
@@ -69,9 +68,9 @@ class GitFetchTest : GitPlatformTest() {
   }
 
   private fun prepareSecondRemote() : GitRemote {
-    val second = prepareRemoteRepo(repo, File(testRoot, "second.git"), "second")
+    val second = prepareRemoteRepo(repo, testNioRoot.resolve("second.git"), "second")
     cd(broRepo)
-    git("remote add second '${second.path}'")
+    git("remote add second '$second'")
 
     repo.update()
     return repo.remotes.first { it.name == "second" }

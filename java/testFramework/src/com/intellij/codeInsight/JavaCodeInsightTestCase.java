@@ -192,16 +192,15 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  public VirtualFile doConfigureByFiles(final @Nullable File rawProjectRoot, final VirtualFile @NotNull ... vFiles) throws IOException {
+  public VirtualFile doConfigureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
     return configureByFiles(rawProjectRoot, vFiles);
   }
 
-  protected VirtualFile configureByFiles(final @Nullable File rawProjectRoot, final VirtualFile @NotNull ... vFiles) throws IOException {
+  protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
     myFile = null;
     myEditor = null;
 
-    final File toDirIO = createTempDirectory();
-    final VirtualFile toDir = getVirtualFile(toDirIO);
+    VirtualFile toDir = createVirtualDirectoryForContentFile();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
@@ -215,17 +214,18 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
         VirtualFile[] reversed = ArrayUtil.reverseArray(vFiles);
         Map<VirtualFile, EditorInfo> editorInfos;
         if (rawProjectRoot != null) {
-          final File projectRoot = rawProjectRoot.getCanonicalFile();
-          FileUtil.copyDir(projectRoot, toDirIO);
-          VirtualFile fromDir = getVirtualFile(projectRoot);
-          editorInfos =
-            copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(reversed, String.class, s -> s.getPath().substring(projectRoot.getPath().length())));
+          FileUtil.copyDir(rawProjectRoot, toDir.toNioPath().toFile());
+          File projectRoot = rawProjectRoot.getCanonicalFile();
+          VirtualFile aNull = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectRoot));
+          editorInfos = copyFilesFillingEditorInfos(aNull, toDir, ContainerUtil.map2Array(reversed, String.class, s -> {
+            return s.getPath().substring(projectRoot.getPath().length());
+          }));
 
           toDir.refresh(false, true);
         }
         else {
           editorInfos = new LinkedHashMap<>();
-          for (final VirtualFile vFile : reversed) {
+          for (VirtualFile vFile : reversed) {
             VirtualFile parent = vFile.getParent();
             assert parent.isDirectory() : parent;
             editorInfos.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
@@ -254,6 +254,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
 
     return toDir;
+  }
+
+  protected @NotNull VirtualFile createVirtualDirectoryForContentFile() {
+    return getTempDir().createVirtualDir();
   }
 
   protected boolean isAddDirToTests() {
@@ -480,10 +484,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     if (data.getSelectionEndLineNumber() >= 0) {
       assertEquals(dataName + ":selectionEndLine", data.getSelectionEndLineNumber(), endPosition.line + 1);
     }
-  }
-
-  protected @NotNull VirtualFile getVirtualFile(@NotNull String filePath) {
-    return findVirtualFile(filePath);
   }
 
   protected @NotNull VirtualFile findVirtualFile(@NotNull String filePath) {

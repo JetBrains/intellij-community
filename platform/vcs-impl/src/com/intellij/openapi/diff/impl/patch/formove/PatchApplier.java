@@ -4,7 +4,6 @@ package com.intellij.openapi.diff.impl.patch.formove;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -95,16 +94,6 @@ public final class PatchApplier {
     this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null);
   }
 
-  @Deprecated
-  public PatchApplier(@NotNull Project project,
-                      @NotNull VirtualFile baseDirectory,
-                      @NotNull List<? extends FilePatch> patches,
-                      @Nullable LocalChangeList targetChangeList,
-                      @Nullable CustomBinaryPatchApplier ignored,
-                      @Nullable CommitContext commitContext) {
-    this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null);
-  }
-
   @NotNull
   public List<FilePatch> getRemainingPatches() {
     return myRemainingPatches;
@@ -156,11 +145,15 @@ public final class PatchApplier {
     return executePatchGroup(group, localChangeList, true, false);
   }
 
-  static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList targetChangeList,
-                                            boolean showSuccessNotification, boolean silentAddDelete) {
-    if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
-    final Project project = group.iterator().next().myProject;
+  private static ApplyPatchStatus executePatchGroup(@NotNull Collection<PatchApplier> group,
+                                                    @Nullable LocalChangeList targetChangeList,
+                                                    boolean showSuccessNotification,
+                                                    boolean silentAddDelete) {
+    if (group.isEmpty()) {
+      return ApplyPatchStatus.SUCCESS; //?
+    }
 
+    Project project = group.iterator().next().myProject;
     return PartialChangesUtil.computeUnderChangeList(project, targetChangeList, VcsBundle.getString("patch.apply.progress.title"), () -> {
       ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
       for (PatchApplier patchApplier : group) {
@@ -173,21 +166,25 @@ public final class PatchApplier {
       final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
       ApplicationManager.getApplication().invokeAndWait(() -> {
         try {
-          runWithDefaultConfirmations(project, silentAddDelete, () -> CommandProcessor.getInstance().executeCommand(project, () -> {
-            for (PatchApplier applier : group) {
-              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
-              applier.addSkippedItems(trigger);
-            }
-            trigger.prepare();
-            if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
-              // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
-              refStatus.set(null);
-            }
-            for (PatchApplier applier : group) {
-              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
-              if (refStatus.get() == ApplyPatchStatus.ABORT) break;
-            }
-          }, VcsBundle.message("patch.apply.command"), null));
+          runWithDefaultConfirmations(project, silentAddDelete, () -> {
+            CommandProcessor.getInstance().executeCommand(project, () -> {
+              for (PatchApplier applier : group) {
+                refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
+                applier.addSkippedItems(trigger);
+              }
+              trigger.prepare();
+              if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
+                // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
+                refStatus.set(null);
+              }
+              for (PatchApplier applier : group) {
+                refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+                if (refStatus.get() == ApplyPatchStatus.ABORT) {
+                  break;
+                }
+              }
+            }, VcsBundle.message("patch.apply.command"), null);
+          });
         }
         finally {
           VcsFileListenerContextHelper.getInstance(project).clearContext();
@@ -213,8 +210,8 @@ public final class PatchApplier {
         showApplyStatus(project, result);
       }
 
-      final Set<FilePath> directlyAffected = new HashSet<>();
-      final Set<VirtualFile> indirectlyAffected = new HashSet<>();
+      Set<FilePath> directlyAffected = new HashSet<>();
+      Set<VirtualFile> indirectlyAffected = new HashSet<>();
       for (PatchApplier applier : group) {
         directlyAffected.addAll(applier.getDirectlyAffected());
         indirectlyAffected.addAll(applier.getIndirectlyAffected());
@@ -309,11 +306,9 @@ public final class PatchApplier {
     }
   }
 
-  @NotNull
-  private ApplyPatchStatus createFiles() {
-    final Application application = ApplicationManager.getApplication();
-    Boolean isSuccess = application.runWriteAction((Computable<Boolean>)() -> {
-      final List<FilePatch> filePatches = myVerifier.execute();
+  private @NotNull ApplyPatchStatus createFiles() {
+    Boolean isSuccess = ApplicationManager.getApplication().runWriteAction((Computable<Boolean>)() -> {
+      List<FilePatch> filePatches = myVerifier.execute();
       myFailedPatches.addAll(filePatches);
       myPatches.removeAll(filePatches);
       return myFailedPatches.isEmpty();

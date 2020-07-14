@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -35,8 +34,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   protected void setUpProject() throws Exception {
     final String root = PathManagerEx.getTestDataPath() + BASE_PATH;
 
-    VirtualFile tempProjectRootDir =
-      PsiTestUtil.createTestProjectStructure(getTestName(true), null, FileUtil.toSystemIndependentName(root), myFilesToDelete, false);
+    VirtualFile tempProjectRootDir = createTestProjectStructure(null, FileUtil.toSystemIndependentName(root), false, getTempDir());
 
     VirtualFile projectFile = tempProjectRootDir.findChild("orderEntry.ipr");
 

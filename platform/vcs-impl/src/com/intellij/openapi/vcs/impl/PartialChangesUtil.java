@@ -117,19 +117,19 @@ public final class PartialChangesUtil {
   }
 
   public static <T> T computeUnderChangeList(@NotNull Project project,
-                                                        @Nullable LocalChangeList targetChangeList,
-                                                        @Nullable String title,
-                                                        @NotNull Computable<T> task,
-                                                        boolean shouldAwaitCLMRefresh) {
-    ChangeListManagerImpl clm = ChangeListManagerImpl.getInstanceImpl(project);
-    LocalChangeList oldDefaultList = clm.getDefaultChangeList();
+                                             @Nullable LocalChangeList targetChangeList,
+                                             @Nullable String title,
+                                             @NotNull Computable<T> task,
+                                             boolean shouldAwaitCLMRefresh) {
+    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+    LocalChangeList oldDefaultList = changeListManager.getDefaultChangeList();
 
     if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
       return task.compute();
     }
 
-    switchChangeList(clm, targetChangeList, oldDefaultList);
-    ChangelistConflictTracker clmConflictTracker = clm.getConflictTracker();
+    switchChangeList(changeListManager, targetChangeList, oldDefaultList);
+    ChangelistConflictTracker clmConflictTracker = changeListManager.getConflictTracker();
     try {
       clmConflictTracker.setIgnoreModifications(true);
       return task.compute();
@@ -140,10 +140,10 @@ public final class PartialChangesUtil {
         InvokeAfterUpdateMode mode = title != null
                                      ? InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE
                                      : InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED;
-        clm.invokeAfterUpdate(() -> restoreChangeList(clm, targetChangeList, oldDefaultList), mode, title, ModalityState.NON_MODAL);
+        changeListManager.invokeAfterUpdate(() -> restoreChangeList(changeListManager, targetChangeList, oldDefaultList), mode, title, ModalityState.NON_MODAL);
       }
       else {
-        restoreChangeList(clm, targetChangeList, oldDefaultList);
+        restoreChangeList(changeListManager, targetChangeList, oldDefaultList);
       }
     }
   }

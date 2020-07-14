@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,7 @@ public class ConvertLineSeparatorsActionTest extends HeavyPlatformTestCase {
 
   @NotNull
   private VirtualFile checkConvert(@NotNull String oldContent, @NotNull AbstractConvertLineSeparatorsAction action, @NotNull String expectedContent) throws IOException {
-    VirtualFile vf = createTempFile("txt", null, oldContent, CharsetToolkit.UTF8_CHARSET);
+    VirtualFile vf = getTempDir().createVirtualFile(".txt", oldContent);
     DataContext context = SimpleDataContext
       .getSimpleContext(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), new VirtualFile[]{vf}, SimpleDataContext.getProjectContext(getProject()));
     action.actionPerformed(AnActionEvent.createFromDataContext("", null, context));
@@ -46,7 +45,7 @@ public class ConvertLineSeparatorsActionTest extends HeavyPlatformTestCase {
   }
 
   public void testChangeLineSeparatorOnEmptyFileShouldPersist() throws IOException {
-    VirtualFile vf = createTempFile("txt", null, "", CharsetToolkit.UTF8_CHARSET);
+    VirtualFile vf = getTempDir().createVirtualFile(".txt");
     String separator = FileDocumentManager.getInstance().getLineSeparator(vf, getProject());
     AbstractConvertLineSeparatorsAction action = separator.equals("\n") ? new ConvertToWindowsLineSeparatorsAction() : new ConvertToUnixLineSeparatorsAction();
 

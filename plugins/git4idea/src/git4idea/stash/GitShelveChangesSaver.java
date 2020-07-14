@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -14,16 +14,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class GitShelveChangesSaver extends GitChangesSaver {
+public final class GitShelveChangesSaver extends GitChangesSaver {
   private final VcsShelveChangesSaver myVcsShelveChangesSaver;
-  private final ShelvedChangesViewManager myShelveViewManager;
 
   public GitShelveChangesSaver(@NotNull Project project,
                                @NotNull Git git,
                                @NotNull ProgressIndicator indicator,
                                @NotNull String stashMessage) {
     super(project, git, indicator, GitSaveChangesPolicy.SHELVE, stashMessage);
-    myShelveViewManager = ShelvedChangesViewManager.getInstance(myProject);
     myVcsShelveChangesSaver = new VcsShelveChangesSaver(project, indicator, stashMessage) {
       @Override
       protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave) {
@@ -54,7 +52,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
     if (myVcsShelveChangesSaver.getShelvedLists() == null) {
       return;
     }
-    myShelveViewManager
+    ShelvedChangesViewManager.getInstance(myProject)
       .activateView(myVcsShelveChangesSaver.getShelvedLists().get(myVcsShelveChangesSaver.getShelvedLists().keySet().iterator().next()));
   }
 

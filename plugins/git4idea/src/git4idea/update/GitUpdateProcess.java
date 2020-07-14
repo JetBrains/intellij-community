@@ -54,7 +54,7 @@ import static git4idea.util.GitUIUtil.*;
  *
  * The class is not thread-safe and is stateful. It is intended to be used only once.
  */
-public class GitUpdateProcess {
+public final class GitUpdateProcess {
   private static final Logger LOG = Logger.getInstance(GitUpdateProcess.class);
 
   @NotNull private final Project myProject;
@@ -279,8 +279,7 @@ public class GitUpdateProcess {
   @NotNull
   private Map<GitRepository, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<GitRepository, GitUpdater> updaters) {
     Map<GitRepository, GitUpdater> modifiedUpdaters = new LinkedHashMap<>();
-    Map<VirtualFile, Collection<Change>> changesUnderRoots =
-      new LocalChangesUnderRoots(myChangeListManager, myVcsManager).getChangesUnderRoots(getRootsFromRepositories(updaters.keySet()));
+    Map<VirtualFile, Collection<Change>> changesUnderRoots = LocalChangesUnderRoots.getChangesUnderRoots(getRootsFromRepositories(updaters.keySet()), myProject);
     for (GitRepository repository : updaters.keySet()) {
       GitUpdater updater = updaters.get(repository);
       Collection<Change> changes = changesUnderRoots.get(repository.getRoot());

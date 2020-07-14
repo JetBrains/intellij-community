@@ -34,8 +34,11 @@ import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
   private final List<Module> myModulesToDispose = new ArrayList<>();
@@ -81,20 +84,20 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
     ModuleManager.getInstance(myProject).disposeModule(missingModule);
   }
 
-  protected Module createEmptyModule() {
+  protected @NotNull Module createEmptyModule() {
     Module module = createTempModule();
     myModulesToDispose.add(module);
     return module;
   }
 
-  private Module createTempModule() {
+  private @NotNull Module createTempModule() {
     return createTempModule(getTempDir(), myProject);
   }
 
-  @NotNull
-  public static Module createTempModule(TempFiles tempFiles, final Project project) {
-    final String tempPath = tempFiles.createTempFile("xxx", ".iml").getAbsolutePath();
-    Module result = WriteAction.compute(() -> ModuleManager.getInstance(project).newModule(tempPath, StdModuleTypes.JAVA.getId()));
+  public static @NotNull Module createTempModule(@NotNull TemporaryDirectory tempDir, Project project) {
+    Path tempPath = tempDir.newPath(".iml");
+    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    Module result = WriteAction.compute(() -> moduleManager.newModule(tempPath, StdModuleTypes.JAVA.getId()));
     PlatformTestUtil.saveProject(project);
     return result;
   }
@@ -142,8 +145,7 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
                                                         @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
                                                         @NotNull MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
-    RunConfigurationProducer producer = RunConfigurationProducer.getInstance(producerClass);
-    assert producer != null;
+    RunConfigurationProducer<?> producer = RunConfigurationProducer.getInstance(producerClass);
     ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
     assertNotNull(fromContext);
     return (JUnitConfiguration)fromContext.getConfiguration();
@@ -153,9 +155,9 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
                                                           @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
                                                           @NotNull MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
-    RunConfigurationProducer producer = RunConfigurationProducer.getInstance(producerClass);
+    RunConfigurationProducer<?> producer = RunConfigurationProducer.getInstance(producerClass);
     ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
-    assertNotNull(fromContext);
+    assertThat(fromContext).isNotNull();
     return (TestNGConfiguration)fromContext.getConfiguration();
   }
 

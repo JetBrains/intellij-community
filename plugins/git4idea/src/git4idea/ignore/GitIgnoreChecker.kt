@@ -3,22 +3,24 @@ package git4idea.ignore
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtil.virtualToIoFile
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.io.systemIndependentPath
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
-import java.io.File
+import java.nio.file.Path
 
 internal class GitIgnoreChecker(val project: Project) : VcsIgnoreChecker {
   override fun getSupportedVcs(): VcsKey = GitVcs.getKey()
 
-  override fun isIgnored(vcsRoot: VirtualFile, file: File) = isIgnored(vcsRoot, FileUtil.toSystemIndependentName(file.absolutePath), false)
+  override fun isIgnored(vcsRoot: VirtualFile, file: Path): IgnoredCheckResult {
+    return isIgnored(vcsRoot, file.toAbsolutePath().normalize().systemIndependentPath, false)
+  }
 
   override fun isFilePatternIgnored(vcsRoot: VirtualFile, filePattern: String) = isIgnored(vcsRoot, filePattern, true)
 

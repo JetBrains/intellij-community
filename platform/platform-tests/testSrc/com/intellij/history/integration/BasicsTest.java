@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
 import com.intellij.history.LocalHistory;
@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class BasicsTest extends IntegrationTestCase {
   public void testProcessingCommands() {
     final VirtualFile[] f = new VirtualFile[1];
@@ -32,8 +34,7 @@ public class BasicsTest extends IntegrationTestCase {
       }
     }, "name", null));
 
-
-    assertEquals(2, getRevisionsFor(f[0]).size());
+    assertThat(getRevisionsFor(f[0])).hasSize(2);
   }
 
   public void testPuttingUserLabel() {
@@ -42,7 +43,7 @@ public class BasicsTest extends IntegrationTestCase {
     LocalHistory.getInstance().putUserLabel(myProject, "global");
 
     assertEquals(3, getRevisionsFor(f).size());
-    assertEquals(4, getRevisionsFor(myRoot).size());
+    assertThat(getRevisionsFor(myRoot)).hasSize(4);
 
     LocalHistory.getInstance().putUserLabel(myProject, "file");
 
@@ -139,11 +140,10 @@ public class BasicsTest extends IntegrationTestCase {
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfile);
     assertEquals(1, jarRoot.findChild("file.txt").contentsToByteArray()[0]);
 
-    assertEquals(3, getRevisionsFor(myRoot).size());
+    assertThat(getRevisionsFor(myRoot)).hasSize(3);
 
     ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
       try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(f))) {
-
         JarEntry e = new JarEntry("file.txt");
         e.setTime(f.lastModified() + 10000);
         jar.putNextEntry(e);
@@ -158,9 +158,9 @@ public class BasicsTest extends IntegrationTestCase {
     LocalFileSystem.getInstance().refreshWithoutFileWatcher(false);
     JarFileSystem.getInstance().refreshWithoutFileWatcher(false);
     jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfile);
-    assertEquals(2, jarRoot.findChild("file.txt").contentsToByteArray()[0]);
+    assertThat((int)jarRoot.findChild("file.txt").contentsToByteArray()[0]).isEqualTo(2);
 
-    assertEquals(3, getRevisionsFor(myRoot).size());
-    assertEquals(2, getRevisionsFor(jarRoot).size());
+    assertThat(getRevisionsFor(myRoot)).hasSize(3);
+    assertThat(getRevisionsFor(jarRoot)).hasSize(3);
   }
 }

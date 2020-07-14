@@ -219,7 +219,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
 
   private static MockGitRepository repo(final String name) {
     final Ref<VirtualFile> root = Ref.create();
-    EdtTestUtil.runInEdtAndWait(() -> root.set(createChildData(PlatformTestUtil.getOrCreateProjectTestBaseDir(ourProject), name)));
+    EdtTestUtil.runInEdtAndWait(() -> root.set(createChildData(PlatformTestUtil.getOrCreateProjectBaseDir(ourProject), name)));
     return new MockGitRepository(ourProject, root.get());
   }
 }

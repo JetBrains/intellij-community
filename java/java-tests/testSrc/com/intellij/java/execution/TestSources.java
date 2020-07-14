@@ -13,25 +13,23 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.TempFiles;
+import com.intellij.testFramework.TemporaryDirectory;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 
-public class TestSources {
+public final class TestSources {
   private final Project myProject;
-  private final TempFiles myTempFiles;
-  private File mySrc;
+  private final TemporaryDirectory myTempFiles;
+  private Path mySrc;
   private Module myModule;
 
-  public TestSources(@NotNull Project project, @NotNull Collection<Path> filesToDelete) {
+  public TestSources(@NotNull Project project, @NotNull TemporaryDirectory temporaryDirectory) {
     myProject = project;
-    myTempFiles = new TempFiles(filesToDelete);
+    myTempFiles = temporaryDirectory;
   }
 
   public void tearDown() {
@@ -41,11 +39,10 @@ public class TestSources {
     }
   }
 
-  @NotNull
-  public PsiPackage createPackage(@NotNull String name) {
-    File dir = new File(mySrc, name);
-    dir.mkdir();
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+  public @NotNull PsiPackage createPackage(@NotNull String name) throws IOException {
+    Path dir = mySrc.resolve(name);
+    Files.createDirectories(dir);
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir);
     return findPackage(name);
   }
 
@@ -53,21 +50,25 @@ public class TestSources {
     return JavaPsiFacade.getInstance(myProject).findPackage(name);
   }
 
-  @NotNull
-  public PsiClass createClass(@NotNull String className, @NotNull String code) throws FileNotFoundException {
-    File file = new File(mySrc, className + ".java");
-    try (PrintStream stream = new PrintStream(new FileOutputStream(file))) {
+  public @NotNull PsiClass createClass(@NotNull String className, @NotNull String code) throws IOException {
+    Path file = mySrc.resolve(className + ".java");
+    try (PrintStream stream = new PrintStream(Files.newOutputStream(file))) {
       stream.println(code);
     }
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
     return JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
   }
 
-  public void initModule() {
-    if (myModule != null) disposeModule(myModule);
-    mySrc = myTempFiles.createTempDir();
+  public void initModule() throws IOException {
+    if (myModule != null) {
+      disposeModule(myModule);
+    }
+
+    mySrc = myTempFiles.newPath();
+    Files.createDirectories(mySrc);
+    VirtualFile moduleContent = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(mySrc);
+
     myModule = BaseConfigurationTestCase.createTempModule(myTempFiles, myProject);
-    VirtualFile moduleContent = TempFiles.getVFileByFile(mySrc);
     PsiTestUtil.addSourceRoot(myModule, moduleContent);
 
     Module tempModule = BaseConfigurationTestCase.createTempModule(myTempFiles, myProject);
@@ -88,11 +89,10 @@ public class TestSources {
   }
 
   @NotNull
-  public VirtualFile createPackageDir(@NotNull String packageName) {
-    File pkg = new File(mySrc, packageName);
-    pkg.mkdirs();
-    VirtualFile pkgFile = TempFiles.getVFileByFile(pkg);
-    return pkgFile;
+  public VirtualFile createPackageDir(@NotNull String packageName) throws IOException {
+    Path pkg = mySrc.resolve(packageName);
+    Files.createDirectories(pkg);
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pkg);
   }
 
   public PsiClass findClass(@NotNull String fqName) {

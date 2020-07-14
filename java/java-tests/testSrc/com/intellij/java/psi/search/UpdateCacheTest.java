@@ -46,8 +46,6 @@ public class UpdateCacheTest extends JavaPsiTestCase {
   }
 
   private void loadAndSetupProject(@NotNull Path path) {
-    LocalFileSystem.getInstance().refreshNioFiles(myFilesToDelete);
-
     myProject = PlatformTestUtil.loadAndOpenProject(path);
 
     setUpModule();

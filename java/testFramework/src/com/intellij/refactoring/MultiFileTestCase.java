@@ -34,7 +34,7 @@ public abstract class MultiFileTestCase extends JavaCodeInsightTestCase {
       String path = getTestDataPath() + getTestRoot() + testName;
 
       String pathBefore = path + "/before";
-      VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, pathBefore, myFilesToDelete, false);
+      VirtualFile rootDir = createTestProjectStructure(pathBefore, false);
       prepareProject(rootDir);
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
