@@ -14,8 +14,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.AnnotationBuilder;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -145,7 +149,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
             .create();
           fail("Must have rejected crazy annotation range");
         }
-        catch (IllegalArgumentException ignored) {
+        catch (PluginException ignored) {
         }
       }
     }
