@@ -75,6 +75,9 @@ import static org.junit.Assume.assumeThat;
 @RunWith(value = Parameterized.class)
 public abstract class AbstractModelBuilderTest {
 
+  /**
+   * !When adding new versions here cnahge also list in Idea_Tests_BuildToolsTests in Intellij Teamcity configuration
+   */
   public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
     // Support for builds using Gradle older than 2.6 was deprecated and will be removed in Gradle 5.0.
     {"2.6"}, /*{"2.7"}, {"2.8"}, {"2.9"}, {"2.10"}, {"2.11"}, {"2.12"}, {"2.13"}, */{"2.14.1"},
