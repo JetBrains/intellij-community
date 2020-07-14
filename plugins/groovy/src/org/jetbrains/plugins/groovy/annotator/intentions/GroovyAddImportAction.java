@@ -17,17 +17,21 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.List;
 
@@ -35,8 +39,11 @@ import java.util.List;
  * @author peter
  */
 public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement, GrReferenceElement> {
+  private final GrReferenceElement<?> ref;
+
   public GroovyAddImportAction(@NotNull GrReferenceElement ref) {
     super(ref, ref);
+    this.ref = ref;
   }
 
   @Override
@@ -117,5 +124,36 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   @Override
   protected boolean isAccessible(@NotNull PsiMember member, @NotNull GrReferenceElement reference) {
     return true;
+  }
+
+  @Override
+  public boolean showHint(@NotNull Editor editor) {
+    List<PsiClass> imports =
+      ContainerUtil.map(((GroovyFile)(ref.getContainingFile())).getImportStatements(), GrImportStatement::resolveTargetClass);
+    for (PsiClass classToImport : getClassesToImport()) {
+      if (!imports.contains(classToImport)) {
+        return super.showHint(editor);
+      }
+    }
+    return false;
+  }
+
+  @Override
+  protected void bindReference(@NotNull PsiReference reference, @NotNull PsiClass targetClass) {
+    PsiElement referredElement = reference.getElement();
+    if (referredElement instanceof GrReferenceExpression && PsiUtil.isNewified(referredElement)) {
+      handleNewifiedClass(referredElement, targetClass);
+    }
+    else {
+      super.bindReference(reference, targetClass);
+    }
+  }
+
+  private static void handleNewifiedClass(@NotNull PsiElement referredElement, @NotNull PsiClass targetClass) {
+    PsiFile file = referredElement.getContainingFile();
+    String qualifiedClassName = targetClass.getQualifiedName();
+    if (file instanceof GroovyFile && qualifiedClassName != null) {
+      ((GroovyFile)file).importClass(targetClass);
+    }
   }
 }
