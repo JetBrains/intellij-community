@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
@@ -149,10 +148,9 @@ public final class UpdateRequestsQueue {
 
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
-                                @Nullable String title,
-                                @Nullable ModalityState state) {
+                                @Nullable String title) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
-    final InvokeAfterUpdateCallback.CallbackData data = InvokeAfterUpdateCallback.create(myProject, mode, afterUpdate, title, state);
+    final InvokeAfterUpdateCallback.CallbackData data = InvokeAfterUpdateCallback.create(myProject, mode, afterUpdate, title);
 
     boolean stopped;
     synchronized (myLock) {

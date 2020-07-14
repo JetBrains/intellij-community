@@ -367,7 +367,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     if (dirtyScopeManagerFiller != null && !myProject.isDisposed()) {
       dirtyScopeManagerFiller.consume(VcsDirtyScopeManager.getInstance(myProject));
     }
-    myUpdater.invokeAfterUpdate(afterUpdate, mode, title, state);
+    myUpdater.invokeAfterUpdate(afterUpdate, mode, title);
   }
 
   @Override

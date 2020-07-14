@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -28,7 +27,6 @@ import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 class InvokeAfterUpdateCallback {
@@ -46,13 +44,12 @@ class InvokeAfterUpdateCallback {
   public static CallbackData create(@NotNull Project project,
                                     @NotNull InvokeAfterUpdateMode mode,
                                     @NotNull Runnable afterUpdate,
-                                    @Nullable String title,
-                                    @Nullable ModalityState state) {
+                                    @Nullable String title) {
     if (mode.isSilent()) {
       return new SilentCallbackData(project, afterUpdate, mode.isCallbackOnAwt());
     }
     else {
-      return new TaskCallbackData(project, afterUpdate, mode.isSynchronous(), mode.isCancellable(), title, state);
+      return new TaskCallbackData(project, afterUpdate, mode.isSynchronous(), mode.isCancellable(), title);
     }
   }
 
@@ -109,7 +106,6 @@ class InvokeAfterUpdateCallback {
     private final boolean mySynchronous;
     private final boolean myCanBeCancelled;
     private final @NlsContexts.ProgressTitle String myTaskTitle;
-    @NotNull private final ModalityState myModalityState;
 
     @NotNull private final Semaphore mySemaphore = new Semaphore(1);
 
@@ -117,13 +113,11 @@ class InvokeAfterUpdateCallback {
                      @NotNull Runnable afterUpdate,
                      boolean synchronous,
                      boolean canBeCancelled,
-                     String title,
-                     @Nullable ModalityState state) {
+                     String title) {
       super(project, afterUpdate);
       mySynchronous = synchronous;
       myCanBeCancelled = canBeCancelled;
       myTaskTitle = VcsBundle.message("change.list.manager.wait.lists.synchronization", title);
-      myModalityState = notNull(state, ModalityState.NON_MODAL);
     }
 
     @Override
@@ -143,7 +137,7 @@ class InvokeAfterUpdateCallback {
 
     @Override
     public void handleStoppedQueue() {
-      ApplicationManager.getApplication().invokeLater(this::invokeCallback, myModalityState);
+      ApplicationManager.getApplication().invokeLater(this::invokeCallback);
     }
 
     private void awaitSemaphore(@NotNull ProgressIndicator indicator) {
@@ -178,7 +172,7 @@ class InvokeAfterUpdateCallback {
       public void run(@NotNull ProgressIndicator indicator) {
         awaitSemaphore(indicator);
 
-        runOrInvokeLaterAboveProgress(() -> invokeCallback(), myModalityState, myProject);
+        runOrInvokeLaterAboveProgress(() -> invokeCallback(), null, myProject);
       }
 
       @Override
