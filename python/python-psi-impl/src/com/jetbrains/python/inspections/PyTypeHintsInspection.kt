@@ -4,7 +4,6 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInsight.controlflow.ControlFlowUtil
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -35,8 +34,7 @@ class PyTypeHintsInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(
-    holder, session)
+                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder, session)
 
   private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
@@ -99,9 +97,7 @@ class PyTypeHintsInspection : PyInspection() {
       if (node.referencedName == PyNames.CANONICAL_SELF && PyTypingTypeProvider.isInAnnotationOrTypeComment(node)) {
         val typeName = myTypeEvalContext.getType(node)?.name
         if (typeName != null && typeName != PyNames.CANONICAL_SELF) {
-          registerProblem(node, "Invalid type 'self'", ProblemHighlightType.GENERIC_ERROR, null,
-                          ReplaceWithTypeNameQuickFix(
-                            typeName))
+          registerProblem(node, "Invalid type 'self'", ProblemHighlightType.GENERIC_ERROR, null, ReplaceWithTypeNameQuickFix(typeName))
         }
       }
 
@@ -111,6 +107,7 @@ class PyTypeHintsInspection : PyInspection() {
           .mapNotNull { it.element }
           .filterIsInstance<PyQualifiedNameOwner>()
           .mapNotNull { it.qualifiedName }
+          .toList()
         if (qNames.any { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT }) {
           registerProblem(node, "'Literal' must have at least one parameter")
         }
@@ -138,20 +135,13 @@ class PyTypeHintsInspection : PyInspection() {
 
         if (node is PyFunction) {
           if (node.annotationValue != null || node.parameterList.parameters.any { it is PyNamedParameter && it.annotationValue != null }) {
-            registerProblem(node.typeComment, message,
-                            RemoveElementQuickFix(
-                              "Remove type comment"))
-            registerProblem(node.nameIdentifier, message,
-                            RemoveFunctionAnnotations())
+            registerProblem(node.typeComment, message, RemoveElementQuickFix("Remove type comment"))
+            registerProblem(node.nameIdentifier, message, RemoveFunctionAnnotations())
           }
         }
         else if (node.annotationValue != null) {
-          registerProblem(node.typeComment, message,
-                          RemoveElementQuickFix(
-                            "Remove type comment"))
-          registerProblem(node.annotation, message,
-                          RemoveElementQuickFix(
-                            "Remove annotation"))
+          registerProblem(node.typeComment, message, RemoveElementQuickFix("Remove type comment"))
+          registerProblem(node.annotation, message, RemoveElementQuickFix("Remove annotation"))
         }
       }
     }
@@ -220,8 +210,7 @@ class PyTypeHintsInspection : PyInspection() {
                   if (targetName != null && targetName != argument.stringValue) {
                     registerProblem(argument,
                                     "The argument to 'TypeVar()' must be a string equal to the variable name to which it is assigned",
-                                    ReplaceWithTargetNameQuickFix(
-                                      targetName))
+                                    ReplaceWithTargetNameQuickFix(targetName))
                   }
                 }
               "covariant" -> covariant = PyEvaluator.evaluateAsBoolean(argument, false)
@@ -387,8 +376,7 @@ class PyTypeHintsInspection : PyInspection() {
             .map { if (it is PyFunction) it.containingClass else it }
             .any { it is PyWithAncestors && PyTypingTypeProvider.isGeneric(it, myTypeEvalContext) }
             .also {
-              if (it) registerProblem(call, "Generics should be specified through square brackets",
-                                      ReplaceWithSubscriptionQuickFix())
+              if (it) registerProblem(call, "Generics should be specified through square brackets", ReplaceWithSubscriptionQuickFix())
             }
         }
       }
@@ -528,7 +516,7 @@ class PyTypeHintsInspection : PyInspection() {
       if (subParameter is PyReferenceExpression &&
           PyResolveUtil
             .resolveImportedElementQNameLocally(subParameter)
-            .any { qName -> qName.toString().let { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT} }) {
+            .any { qName -> qName.toString().let { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT } }) {
         // if `index` is like `typing.Literal[...]` and has invalid form,
         // outer `typing.Literal[...]` won't be highlighted
         return
@@ -693,7 +681,7 @@ class PyTypeHintsInspection : PyInspection() {
 
       val self = scopeOwner.parameterList.parameters.firstOrNull()?.takeIf { it.isSelf }
       if (self == null ||
-          PyUtil.multiResolveTopPriority(qualifier, resolveContext).let { it.isNotEmpty() && it.all { e -> e != self }}) {
+          PyUtil.multiResolveTopPriority(qualifier, resolveContext).let { it.isNotEmpty() && it.all { e -> e != self } }) {
         registerProblem(node, "Non-self attribute could not be type hinted")
       }
     }
@@ -871,7 +859,7 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private class ReplaceWithTypingGenericAliasQuickFix : LocalQuickFix {
-      override fun getFamilyName(): String = "Replace with typing alias"
+      override fun getFamilyName(): String = PyPsiBundle.message("QFIX.replace.with.typing.alias")
 
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val subscription = descriptor.psiElement as? PySubscriptionExpression ?: return
