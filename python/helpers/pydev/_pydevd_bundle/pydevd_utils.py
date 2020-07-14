@@ -412,7 +412,8 @@ def should_stop_on_failed_test(exc_info):
                     # noinspection PyUnresolvedReferences
                     exc_to_ignore = attr.kwargs.get('raises')
                     if not exc_to_ignore:
-                        return True
+                        # All exceptions should be ignored, if no type is specified.
+                        return False
                     elif hasattr(exc_to_ignore, '__iter__'):
                         return exc_type not in exc_to_ignore
                     else:
