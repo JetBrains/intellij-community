@@ -131,11 +131,11 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
     List<PsiClass> imports =
       ContainerUtil.map(((GroovyFile)(ref.getContainingFile())).getImportStatements(), GrImportStatement::resolveTargetClass);
     for (PsiClass classToImport : getClassesToImport()) {
-      if (!imports.contains(classToImport)) {
-        return super.showHint(editor);
+      if (imports.contains(classToImport)) {
+        return false;
       }
     }
-    return false;
+    return super.showHint(editor);
   }
 
   @Override
