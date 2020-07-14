@@ -1339,7 +1339,6 @@ public final class SearchEverywhereUIMixedResults extends SearchEverywhereUIBase
       Collection<SearchEverywhereContributor<?>> contributorsForAdditionalSearch;
       contributorsForAdditionalSearch = ContainerUtil.filter(contributors, contributor -> myListModel.hasMoreElements(contributor));
 
-      closePopup();
       if (!contributorsForAdditionalSearch.isEmpty()) {
         ProgressManager.getInstance().run(new Task.Modal(myProject, tabCaptionText, true) {
           private final ProgressIndicator progressIndicator = new ProgressIndicatorBase();
@@ -1398,6 +1397,7 @@ public final class SearchEverywhereUIMixedResults extends SearchEverywhereUIBase
 
           @Override
           public void onThrowable(@NotNull Throwable error) {
+            super.onThrowable(error);
             progressIndicator.cancel();
           }
         });
@@ -1405,6 +1405,7 @@ public final class SearchEverywhereUIMixedResults extends SearchEverywhereUIBase
       else {
         showInFindWindow(targets, usages, presentation);
       }
+      closePopup();
     }
 
     private void fillUsages(Collection<Object> foundElements, Collection<? super Usage> usages, Collection<? super PsiElement> targets) {
