@@ -232,10 +232,6 @@ public final class Switcher extends AnAction implements DumbAware {
       Project project = e.getProject();
       e.getPresentation().setEnabledAndVisible(SWITCHER_KEY.get(project) != null);
     }
-
-    static boolean isEnabled() {
-      return getActiveKeymapShortcuts(TOGGLE_CHECK_BOX_ACTION_ID).getShortcuts().length > 0;
-    }
   }
 
   public static class IterateItemsAction extends DumbAwareAction implements DumbAware {
@@ -552,9 +548,7 @@ public final class Switcher extends AnAction implements DumbAware {
       myClickListener.installOn(files);
       ScrollingUtil.ensureSelectionExists(files);
 
-      myShowOnlyEditedFilesCheckBox = new MyCheckBox(ToggleCheckBoxAction.isEnabled() ? TOGGLE_CHECK_BOX_ACTION_ID
-                                                                                      : actionId,
-                                                     onlyEdited);
+      myShowOnlyEditedFilesCheckBox = new MyCheckBox(TOGGLE_CHECK_BOX_ACTION_ID, onlyEdited);
       myTopPanel = createTopPanel(myShowOnlyEditedFilesCheckBox,
                                   isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title,
                                   pinned);
@@ -1407,12 +1401,14 @@ public final class Switcher extends AnAction implements DumbAware {
     }
 
     private static String layoutText(@NotNull String actionId) {
+      String text = "<html>" + IdeBundle.message("recent.files.checkbox.label");
       ShortcutSet shortcuts = getActiveKeymapShortcuts(actionId);
-      return "<html>"
-             + IdeBundle.message("recent.files.checkbox.label")
-             + " <font color=\"" + RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR + "\">"
-             + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
-             + "</html>";
+      if (shortcuts.getShortcuts().length > 0) {
+        text += " <font color=\"" + RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR + "\">"
+                + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
+                + "</html>";
+      }
+      return text;
     }
   }
 
