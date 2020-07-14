@@ -57,7 +57,7 @@ public class BackgroundHighlightingUtil {
       })
       .withDocumentsCommitted(project)
       .expireWhen(() -> !isValidEditor(editor))
-      .coalesceBy(BraceHighlightingHandler.class, editor)
+      .coalesceBy(BackgroundHighlightingUtil.class, editor)
       .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), t -> {
         if (t == null) return;
         PsiFile foundFile = t.getFirst();
