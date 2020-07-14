@@ -139,7 +139,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     }
 
     private Icon getIcon() {
-      return myEditorInfo.isUnsaved() ? myUnsavedIcon : AllIcons.Actions.Close;
+      return myEditorInfo.isSaveRequired() ? myUnsavedIcon : AllIcons.Actions.Close;
     }
 
     private void closeCurrentTab() {
@@ -160,7 +160,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   private void closeTab(@NotNull TabInfo tabInfo) {
     final LightEditorInfo editorInfo = getEditorInfo(tabInfo);
     if (editorInfo != null) {
-      if (!editorInfo.isUnsaved() ||
+      if (!editorInfo.isSaveRequired() ||
           autosaveDocument(editorInfo) ||
           LightEditUtil.confirmClose(
             ApplicationBundle.message("light.edit.close.message"),

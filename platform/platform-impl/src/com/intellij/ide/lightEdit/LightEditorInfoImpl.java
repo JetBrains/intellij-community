@@ -74,6 +74,12 @@ public class LightEditorInfoImpl implements LightEditorInfo {
     return myProvider;
   }
 
+  @Override
+  public boolean isSaveRequired() {
+    return isUnsaved() &&
+           (!isNew() || myFileEditor instanceof TextEditor && ((TextEditor)myFileEditor).getEditor().getDocument().getTextLength() > 0);
+  }
+
   @Nullable
   @Override
   public Path getPreferredSavePath() {

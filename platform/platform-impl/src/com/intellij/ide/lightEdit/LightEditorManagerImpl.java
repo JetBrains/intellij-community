@@ -202,12 +202,12 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
 
   @Override
   public boolean containsUnsavedDocuments() {
-    return myEditors.stream().anyMatch(editorInfo -> editorInfo.isUnsaved());
+    return myEditors.stream().anyMatch(editorInfo -> editorInfo.isSaveRequired());
   }
 
   @NotNull
   List<LightEditorInfo> getUnsavedEditors() {
-    return ContainerUtil.filter(myEditors, editorInfo -> editorInfo.isUnsaved());
+    return ContainerUtil.filter(myEditors, editorInfo -> editorInfo.isSaveRequired());
   }
 
   private String getUniqueName() {
