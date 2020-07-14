@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vfs.VfsUtil
@@ -15,7 +14,7 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import java.nio.file.Path
 
-internal class GitIgnoreChecker(val project: Project) : VcsIgnoreChecker {
+internal class GitIgnoreChecker : VcsIgnoreChecker {
   override fun getSupportedVcs(): VcsKey = GitVcs.getKey()
 
   override fun isIgnored(vcsRoot: VirtualFile, file: Path): IgnoredCheckResult {

@@ -25,7 +25,7 @@ class GitIgnoredCheckerTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
     createRepository(project, projectPath)
-    gitIgnoreChecker = VcsIgnoreManagerImpl.EP_NAME.getExtensionList(project).find { it.supportedVcs == GitVcs.getKey() }
+    gitIgnoreChecker = VcsIgnoreManagerImpl.EP_NAME.extensionList.find { it.supportedVcs == GitVcs.getKey() }
       ?: throw IllegalStateException("Cannot find registered GitRootChecker")
     gitIgnore = File("$projectPath/${GitRepositoryFiles.GITIGNORE}").apply {
       createNewFile()

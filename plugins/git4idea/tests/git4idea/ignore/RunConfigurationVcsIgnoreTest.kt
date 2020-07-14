@@ -33,8 +33,10 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
     gitIgnore.write("!$configurationName")
 
     val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations") })
+    ApplicationManager.getApplication().invokeAndWait {
+      assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+      assertFalse(vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations"))
+    }
 
     gitIgnore.write("!$configurationName*")
 

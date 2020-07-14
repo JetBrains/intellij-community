@@ -27,7 +27,7 @@ import java.nio.file.Paths
 private val LOG = logger<GitIgnoredFileContentProvider>()
 
 open class GitIgnoredFileContentProvider(private val project: Project) : IgnoredFileContentProvider {
-  private val gitIgnoreChecker = GitIgnoreChecker(project)
+  private val gitIgnoreChecker = GitIgnoreChecker()
 
   override fun getSupportedVcs(): VcsKey = GitVcs.getKey()
 
