@@ -95,10 +95,12 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
 
     component.setOpaque(true);
     panel.setOpaque(true);
-    panel.setBackground(selected ? list.getSelectionBackground() : list.getBackground());
+    Color background = selected ? list.getSelectionBackground() : list.getBackground();
+    panel.setBackground(background);
     if (value instanceof GroupItem) {
-      JBLabel toggle = new JBLabel(AllIcons.Icons.Ide.NextStep);
-      toggle.setOpaque(false);
+      JBLabel toggle = new JBLabel(selected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
+      toggle.setOpaque(true);
+      toggle.setBackground(background);
       panel.add(toggle, BorderLayout.EAST);
     }
 
