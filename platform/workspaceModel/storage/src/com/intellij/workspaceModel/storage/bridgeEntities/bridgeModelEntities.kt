@@ -79,7 +79,8 @@ class ModuleEntity(
 
   override fun persistentId(): ModuleId = ModuleId(name)
 
-  val sourceRoots: Sequence<SourceRootEntity> by sourceRootDelegate
+  val sourceRoots: Sequence<SourceRootEntity>
+    get() = contentRoots.flatMap { it.sourceRoots }
 
   val contentRoots: Sequence<ContentRootEntity> by contentRootDelegate
 
@@ -90,7 +91,6 @@ class ModuleEntity(
   val javaSettings: JavaModuleSettingsEntity? by javaSettingsDelegate
 
   companion object {
-    val sourceRootDelegate = OneToMany<ModuleEntity, SourceRootEntity>(SourceRootEntity::class.java, false)
     val contentRootDelegate = OneToMany<ModuleEntity, ContentRootEntity>(ContentRootEntity::class.java, false)
     val moduleImlDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleCustomImlDataEntity>(ModuleCustomImlDataEntity::class.java, false)
     val moduleGroupDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleGroupPathEntity>(ModuleGroupPathEntity::class.java, false)

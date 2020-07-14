@@ -56,7 +56,6 @@ internal class ModifiableContentEntryBridge(
     val contentRootEntity = currentContentEntry.value.entity
     val entitySource = contentRootEntity.entitySource
     val sourceRootEntity = diff.addSourceRootEntity(
-      module = contentRootEntity.module,
       contentRoot = contentRootEntity,
       url = sourceFolderUrl,
       tests = type.isForTests,

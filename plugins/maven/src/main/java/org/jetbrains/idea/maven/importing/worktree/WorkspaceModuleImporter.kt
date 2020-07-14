@@ -159,7 +159,7 @@ class WorkspaceModuleImporter(private val project: Project,
         .firstOrNull { it.type == entry.value }) as? JpsModuleSourceRootPropertiesSerializer
                        ?: error("Module source root type ${entry}.value is not registered as JpsModelSerializerExtension")
 
-      val sourceRootEntity = diff.addSourceRootEntity(moduleEntity, contentRootEntity,
+      val sourceRootEntity = diff.addSourceRootEntity(contentRootEntity,
                                                       virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(entry.key)),
                                                       entry.value.isForTests,
                                                       serializer.typeId,

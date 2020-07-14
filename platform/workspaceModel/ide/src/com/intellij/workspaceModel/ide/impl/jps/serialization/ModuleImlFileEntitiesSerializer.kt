@@ -162,7 +162,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                    ?: (if (isTestSource) JAVA_TEST_ROOT_TYPE_ID else JAVA_SOURCE_ROOT_TYPE_ID)
         val virtualFileUrl = virtualFileManager.fromUrl(url)
         orderOfItems += virtualFileUrl
-        val sourceRoot = builder.addSourceRootEntity(moduleEntity, contentRootEntity, virtualFileUrl,
+        val sourceRoot = builder.addSourceRootEntity(contentRootEntity, virtualFileUrl,
                                                      type == JAVA_TEST_ROOT_TYPE_ID || type == JAVA_TEST_RESOURCE_ROOT_ID,
                                                      type, entitySource)
         if (type == JAVA_SOURCE_ROOT_TYPE_ID || type == JAVA_TEST_ROOT_TYPE_ID) {

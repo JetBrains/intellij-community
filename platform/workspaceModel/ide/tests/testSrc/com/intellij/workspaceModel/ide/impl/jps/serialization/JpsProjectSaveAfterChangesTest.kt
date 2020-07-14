@@ -87,7 +87,7 @@ class JpsProjectSaveAfterChangesTest {
       }
       val contentRootEntity = builder.addContentRootEntity(configLocation.baseDirectoryUrl.append("new"), emptyList(), emptyList(),
                                                            module, source)
-      val sourceRootEntity = builder.addSourceRootEntity(module, contentRootEntity, configLocation.baseDirectoryUrl.append("new"), false,
+      val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, configLocation.baseDirectoryUrl.append("new"), false,
                                                          "java-source", source)
       builder.addJavaSourceRootEntity(sourceRootEntity, false, "", source)
       builder.addJavaModuleSettingsEntity(true, true, null, null, module, source)
