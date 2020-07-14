@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationBuilder;
@@ -168,8 +169,8 @@ class B implements AnnotationBuilder {
     TextRange currentElementRange = myCurrentElement.getTextRange();
     if (!currentElementRange.contains(range)) {
       markNotAbandoned();
-      //LOG.warn("Range must be inside element being annotated: "+currentElementRange+"; but got: "+range, new IllegalArgumentException());
-      throw new IllegalArgumentException("Range must be inside element being annotated: "+currentElementRange+"; but got: "+range);
+      throw PluginException.createByClass("Range must be inside element being annotated: " + currentElementRange + "; but got: " + range,
+                                          null, myCurrentElement.getClass());
     }
 
     this.range = range;
