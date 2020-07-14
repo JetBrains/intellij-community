@@ -38,7 +38,7 @@ import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamAp
 /**
  * @author Vladislav.Soroka
  */
-public class IdeaProjectSerializationService implements SerializationService<IdeaProject> {
+public final class IdeaProjectSerializationService implements SerializationService<IdeaProject> {
   private final GradleVersionComparator myGradleVersionComparator;
   private final WriteContext myWriteContext;
   private final ReadContext myReadContext;
