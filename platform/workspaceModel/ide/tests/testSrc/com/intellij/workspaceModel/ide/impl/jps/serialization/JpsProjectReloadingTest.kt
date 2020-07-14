@@ -83,6 +83,12 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     }
   }
 
+  fun `test remove all libraries`() {
+    checkProjectAfterReload("directoryBased/removeAllLibraries", "fileBased/removeAllLibraries") { (storage, _) ->
+      assertEquals(emptySet<String>(), storage.projectLibraries.mapTo(HashSet()) {it.name})
+    }
+  }
+
   private fun checkProjectAfterReload(directoryNameForDirectoryBased: String,
                                       directoryNameForFileBased: String,
                                       checkAction: (ReloadedProjectData) -> Unit) {

@@ -167,7 +167,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
     val tmpBuilder = WorkspaceEntityStorageBuilder.create()
     val unloaded = unloadedModulePaths.map { modulePath ->
-      serializers.fileSerializersByUrl.get(VfsUtilCore.pathToUrl(modulePath.path)).first()
+      serializers.fileSerializersByUrl.getValues(VfsUtilCore.pathToUrl(modulePath.path)).first()
         .loadEntities(tmpBuilder, fileContentReader, virtualFileManager)
 
       val moduleEntity = tmpBuilder.resolve(ModuleId(modulePath.moduleName)) ?: return@map null
