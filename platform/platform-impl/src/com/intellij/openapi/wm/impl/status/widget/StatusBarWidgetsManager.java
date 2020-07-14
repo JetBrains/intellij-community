@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.wm.*;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +56,23 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
         removeWidgetFactory(new StatusBarWidgetProviderToFactoryAdapter(myProject, provider));
       }
     }, true, this);
+  }
+
+  public void updateAllWidgets() {
+    synchronized (myWidgetFactories) {
+      for (StatusBarWidgetFactory factory : myWidgetFactories.keySet()) {
+        updateWidget(factory);
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public void disableAllWidgets() {
+    synchronized (myWidgetFactories) {
+      for (StatusBarWidgetFactory factory : myWidgetFactories.keySet()) {
+        disableWidget(factory);
+      }
+    }
   }
 
   public void updateWidget(@NotNull Class<? extends StatusBarWidgetFactory> factoryExtension) {
