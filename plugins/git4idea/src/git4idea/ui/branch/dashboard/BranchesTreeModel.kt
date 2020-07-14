@@ -13,9 +13,9 @@ internal val GIT_BRANCHES = DataKey.create<Set<BranchInfo>>("GitBranchKey")
 internal data class BranchInfo(val branchName: String,
                                val isLocal: Boolean,
                                val isCurrent: Boolean,
+                               val isFavorite: Boolean,
                                val repositories: List<GitRepository>) {
   var isMy: ThreeState = ThreeState.UNSURE
-  var isFavorite = false
   override fun toString() = branchName
 }
 
