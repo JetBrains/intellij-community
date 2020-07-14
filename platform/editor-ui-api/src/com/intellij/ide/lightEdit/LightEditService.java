@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,9 @@ import java.util.Collection;
 
 @ApiStatus.Experimental
 public interface LightEditService {
+  @Topic.AppLevel Topic<LightEditServiceListener> TOPIC = new Topic<>(LightEditServiceListener.class);
+
+  String WINDOW_NAME = "LightEdit";
 
   static LightEditService getInstance() {
     return ServiceManager.getService(LightEditService.class);

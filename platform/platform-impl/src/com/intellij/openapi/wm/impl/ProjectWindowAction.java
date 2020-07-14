@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -80,6 +81,9 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
 
   @Nullable
   private Project findProject() {
+    if (LightEditService.WINDOW_NAME.equals(myProjectName)) {
+      return LightEditService.getInstance().getProject();
+    }
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       if (myProjectLocation.equals(project.getPresentableUrl())) {
