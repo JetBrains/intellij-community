@@ -93,7 +93,7 @@ public final class IJSwingUtilities {
 
   public static void moveMousePointerOn(Component component) {
     if (component != null && component.isShowing()) {
-      if (Registry.is("ide.settings.move.mouse.on.default.button")) {
+      if (Registry.is("ide.settings.move.mouse.on.default.button", false)) {
         Point point = component.getLocationOnScreen();
         int dx = component.getWidth() / 2;
         int dy = component.getHeight() / 2;
