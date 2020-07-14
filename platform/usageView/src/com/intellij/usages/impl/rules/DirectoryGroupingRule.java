@@ -41,9 +41,9 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   /**
    * A flag specifying
    */
-  private boolean compactMiddleDirectories;
+  private final boolean compactMiddleDirectories;
 
-  public DirectoryGroupingRule(Project project) {
+  public DirectoryGroupingRule(@NotNull Project project) {
     this(project, true, false);
   }
 
@@ -51,7 +51,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
    * @param compactMiddleDirectories if true then middle directories that do not contain any UsageNodes and only one GroupNode
    *                                 will be merged with the child directory in the usage tree
    */
-  DirectoryGroupingRule(Project project, boolean flattenDirs, boolean compactMiddleDirectories) {
+  DirectoryGroupingRule(@NotNull Project project, boolean flattenDirs, boolean compactMiddleDirectories) {
     myProject = project;
     myFlattenDirs = flattenDirs;
     this.compactMiddleDirectories = compactMiddleDirectories;
@@ -87,7 +87,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   private final class DirectoryGroup implements UsageGroup, TypeSafeDataProvider, CompactGroup {
     private final VirtualFile myDir;
     private Icon myIcon;
-    private volatile String relativePathText;
+    private final String relativePathText;
 
     private DirectoryGroup(@NotNull VirtualFile dir) {
       myDir = dir;
@@ -217,7 +217,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     @Override
     public boolean isParentOf(@NotNull CompactGroup group) {
       if (group instanceof DirectoryGroup) {
-        return (((DirectoryGroup)group).myDir.getPath().startsWith(this.myDir.getPath()));
+        return ((DirectoryGroup)group).myDir.getPath().startsWith(this.myDir.getPath());
       }
       return false;
     }
@@ -258,7 +258,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
             Collections.reverse(newCommonPath);
           }
 
-          ArrayList<CompactGroup> newGroups = new ArrayList<>();
+          List<CompactGroup> newGroups = new ArrayList<>();
           newGroups.add(new DirectoryGroup(parent, paths.get(0)));
           if (paths.size() == 2) {
             if (this.isParentOf(group)) {

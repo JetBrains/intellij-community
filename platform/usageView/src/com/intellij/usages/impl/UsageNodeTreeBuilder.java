@@ -12,9 +12,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.TreeModel;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 class UsageNodeTreeBuilder {

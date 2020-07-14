@@ -429,7 +429,7 @@ public class UsageViewImpl implements UsageViewEx {
    * and has to be applied to the swing children list
    */
   public enum NodeChangeType {
-    ADDED, REMOVED, REPLACED;
+    ADDED, REMOVED, REPLACED
   }
 
   /**
@@ -488,16 +488,16 @@ public class UsageViewImpl implements UsageViewEx {
       boolean parentValid = true;
       boolean childValid = true;
       if (parentNode instanceof GroupNode) {
-        parentValid = ((GroupNode)parentNode).isTreePathValid();
+        parentValid = parentNode.isTreePathValid();
       }
       else if (parentNode instanceof UsageNode) {
-        parentValid = ((UsageNode)parentNode).isTreePathValid();
+        parentValid = parentNode.isTreePathValid();
       }
       if (childNode instanceof GroupNode) {
-        childValid = ((GroupNode)childNode).isTreePathValid();
+        childValid = childNode.isTreePathValid();
       }
       else if (childNode instanceof UsageNode) {
-        childValid = ((UsageNode)childNode).isTreePathValid();
+        childValid = childNode.isTreePathValid();
       }
       return parentValid && childValid;
     }
@@ -920,8 +920,6 @@ public class UsageViewImpl implements UsageViewEx {
 
   /**
    * Creates filtering actions for the toolbar
-   *
-   * @param group
    */
   protected void addFilteringFromExtensionPoints(@NotNull DefaultActionGroup group) {
     for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {

@@ -76,8 +76,8 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       //if a new group is a CompactGroup - try to merge it with the current group if it is also one,
       // otherwise try to merge it with it's children
       if (group instanceof CompactGroup) {
-        GroupNode node = makeCompact(this, (CompactGroup)group, ruleIndex, edtNodeChangeQueue, invalidatedUsagesConsumer);
-        //was not possible t make compact
+        GroupNode node = makeCompact((CompactGroup)group, ruleIndex, edtNodeChangeQueue, invalidatedUsagesConsumer);
+        //was not possible to make compact
         if (node == null) {
           return insertGroupNode(group, ruleIndex, edtNodeChangeQueue);
         }
@@ -103,6 +103,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
 
+  @NotNull
   private GroupNode insertGroupNode(@NotNull UsageGroup group,
                                     int ruleIndex,
                                     @NotNull Consumer<? super UsageViewImpl.NodeChange> edtNodeChangeQueue) {
@@ -122,41 +123,39 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
 
   /**
-   * Adds the newGroup as a new node(containing the group) to the tree, following the logic of compact representation of the group:
+   * Adds the {@code newGroup} as a new node(containing the group) to the tree, following the logic of compact representation of the group:
    * if it is possible to merge with an existing group - returns a new node containing a new merged group (deletes previously existing node and it's descendants)
    * if the group splits the existing one, then the old one id deleted (with descendants) and the new node and the splitted old one are created
    * if the group is a child of the current node's group - apply makeCompact recursively to the child elements
    *
    * @return the last node to be used to add the next node
    */
-  private GroupNode makeCompact(@NotNull GroupNode node,
-                                @NotNull CompactGroup newGroup,
+  private GroupNode makeCompact(@NotNull CompactGroup newGroup,
                                 int ruleIndex,
                                 @NotNull Consumer<? super UsageViewImpl.NodeChange> edtNodeChangeQueue,
                                 @NotNull Consumer<? super Usage> invalidatedUsagesConsumer) {
-    synchronized (node) {
+    synchronized (this) {
       GroupNode newNode;
-      UsageGroup existingGroup = node.getGroup();
+      UsageGroup existingGroup = getGroup();
       if (!(existingGroup instanceof CompactGroup)) {
-        List<Node> myChildrenCopy = new ArrayList<>(node.myChildren);
+        List<Node> myChildrenCopy = new ArrayList<>(myChildren);
         for (Node n : myChildrenCopy) {
           if (n instanceof GroupNode) {
             existingGroup = ((GroupNode)n).getGroup();
             if (existingGroup instanceof CompactGroup) {
-              newNode =
-                makeCompact((GroupNode)n, newGroup, ruleIndex, edtNodeChangeQueue, invalidatedUsagesConsumer);
+              newNode = ((GroupNode)n).makeCompact(newGroup, ruleIndex, edtNodeChangeQueue, invalidatedUsagesConsumer);
               if (newNode != null) {
                 return newNode;
               }
             }
           }
         }
-        //not possible to make compact;
+        //not possible to make compact
         return null;
       }
 
       if (existingGroup.equals(newGroup)) {
-        return node;
+        return this;
       }
       if (!newGroup.hasCommonParent((CompactGroup)existingGroup)) {
         return null;
@@ -165,25 +164,25 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       boolean isNewGroupParentOfExisting = newGroup.isParentOf((CompactGroup)existingGroup);
 
       //try splitting first
-      List<CompactGroup> splitted = ((CompactGroup)existingGroup).split(newGroup, node.myChildren.size() == 0);
+      List<CompactGroup> splitted = ((CompactGroup)existingGroup).split(newGroup, myChildren.isEmpty());
 
       if (splitted.isEmpty()) {
         //if splitting did not work then merge
-        GroupNode newParentNode = node;
+        GroupNode newParentNode = this;
         CompactGroup mergedGroup = ((CompactGroup)existingGroup).merge(newGroup);
         if (!mergedGroup.equals(existingGroup)) {
-          newParentNode = replaceNode(node, ruleIndex, (UsageGroup)mergedGroup, edtNodeChangeQueue, invalidatedUsagesConsumer);
+          newParentNode = replaceNode(ruleIndex, (UsageGroup)mergedGroup, edtNodeChangeQueue, invalidatedUsagesConsumer);
         }
         return newParentNode;
       }
       else {
         GroupNode newChildNode2 = null;
-        GroupNode newParentNode = node;
+        GroupNode newParentNode = this;
         if (splitted.size() == 1) {
-          return node;
+          return this;
         }
         if (splitted.size() == 3 || isNewGroupParentOfExisting) {
-          newParentNode = replaceNode(node, ruleIndex, (UsageGroup)splitted.get(0), edtNodeChangeQueue, invalidatedUsagesConsumer);
+          newParentNode = replaceNode(ruleIndex, (UsageGroup)splitted.get(0), edtNodeChangeQueue, invalidatedUsagesConsumer);
 
           newParentNode.insertGroupNode((UsageGroup)splitted.get(1), ruleIndex, edtNodeChangeQueue);
           if (splitted.size() == 3) {
@@ -191,18 +190,17 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
           }
         }
         else {
-          List<Node> children = new ArrayList<>(node.myChildren);
+          List<Node> children = new ArrayList<>(myChildren);
           for (Node childNode : children) {
             if (childNode instanceof GroupNode) {
-              newChildNode2 = makeCompact((GroupNode)childNode, splitted.get(1),
-                                          ruleIndex, edtNodeChangeQueue, invalidatedUsagesConsumer);
+              newChildNode2 = ((GroupNode)childNode).makeCompact(splitted.get(1), ruleIndex, edtNodeChangeQueue, invalidatedUsagesConsumer);
               if (newChildNode2 != null) {
                 break;
               }
             }
           }
           if (newChildNode2 == null) {
-            newChildNode2 = node.insertGroupNode((UsageGroup)splitted.get(1), ruleIndex, edtNodeChangeQueue);
+            newChildNode2 = insertGroupNode((UsageGroup)splitted.get(1), ruleIndex, edtNodeChangeQueue);
           }
         }
         if (isNewGroupParentOfExisting) {
@@ -215,35 +213,35 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
   }
 
-  private GroupNode replaceNode(@NotNull GroupNode node,
-                                int ruleIndex,
+  @NotNull
+  private GroupNode replaceNode(int ruleIndex,
                                 @NotNull UsageGroup newGroup,
                                 @NotNull Consumer<? super UsageViewImpl.NodeChange> edtNodeChangeQueue,
                                 @NotNull Consumer<? super Usage> invalidatedUsagesConsumer) {
-    GroupNode newParentNode;
-    GroupNode grandParentNode = (GroupNode)node.getParent();
+    GroupNode newNode;
+    GroupNode parentNode = (GroupNode)getParent();
 
-    synchronized (grandParentNode) {
-      node.invalidateAllChildren(invalidatedUsagesConsumer);
-      node.removeAllNodesRecursively(edtNodeChangeQueue);
+    synchronized (parentNode) {
+      invalidateAllChildren(invalidatedUsagesConsumer);
+      removeAllNodesRecursively(edtNodeChangeQueue);
 
-      grandParentNode.getChildren().remove(node);
-      edtNodeChangeQueue.consume(new UsageViewImpl.NodeChange(UsageViewImpl.NodeChangeType.REMOVED, node, null));
+      parentNode.getChildren().remove(this);
+      edtNodeChangeQueue.consume(new UsageViewImpl.NodeChange(UsageViewImpl.NodeChangeType.REMOVED, this, null));
 
-      newParentNode = grandParentNode.insertGroupNode(newGroup, ruleIndex, edtNodeChangeQueue);
+      newNode = parentNode.insertGroupNode(newGroup, ruleIndex, edtNodeChangeQueue);
     }
-    return newParentNode;
+    return newNode;
   }
 
   private void invalidateAllChildren(@NotNull Consumer<? super Usage> usagesToAddAgain) {
-    this.setTreePathValid(false);
+    setTreePathValid(false);
     synchronized (this) {
       for (Node n : this.myChildren) {
         if (n instanceof GroupNode) {
           ((GroupNode)n).invalidateAllChildren(usagesToAddAgain);
         }
         else if (n instanceof UsageNode) {
-          ((UsageNode)n).setTreePathValid(false);
+          n.setTreePathValid(false);
           usagesToAddAgain.consume(((UsageNode)n).getUsage());
         }
       }
@@ -313,7 +311,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
 
-  int removeUsagesBulk(@NotNull Set<UsageNode> usages, @NotNull DefaultTreeModel treeModel) {
+  int removeUsagesBulk(@NotNull Set<? extends UsageNode> usages, @NotNull DefaultTreeModel treeModel) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int removed = 0;
     synchronized (this) {
@@ -329,7 +327,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       }
       myChildren.removeAll(removedNodes);
 
-      if (usagesToPassFurther.size() != 0) {
+      if (!usagesToPassFurther.isEmpty()) {
         for (GroupNode groupNode : getSubGroups()) {
           int delta = groupNode.removeUsagesBulk(usagesToPassFurther, treeModel);
           if (delta > 0) {
@@ -395,7 +393,6 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       return new UsageNode(this, usage);
     }
     UsageNode newNode;
-    int insertionIndex = 0;
     synchronized (this) {
       if (filterDuplicateLines) {
         UsageNode mergedWith = tryMerge(usage);
@@ -410,7 +407,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
         newNode = (UsageNode)myChildren.get(i);
       }
       else {
-        insertionIndex = -i - 1;
+        int insertionIndex = -i - 1;
         myChildren.add(insertionIndex, newNode);
       }
     }

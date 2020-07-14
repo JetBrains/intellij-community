@@ -1,18 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class CompactGroupHelper {
-
   public static @NotNull List<String> findLongestCommonParent(@NotNull String path1, @NotNull String path2) {
-    ArrayList<String> result = new ArrayList<>();
+    List<String> result = new ArrayList<>();
     List<String> path1Arr = pathToPathList(path1);
     List<String> path2Arr = pathToPathList(path2);
     if (path1Arr.size() > path2Arr.size()) {
@@ -20,7 +18,7 @@ public class CompactGroupHelper {
       path2Arr = pathToPathList(path1);
     }
 
-    ArrayList<String> arrayList = new ArrayList<>();
+    List<String> arrayList = new ArrayList<>();
 
     for (int i = 0; i < path1Arr.size(); i++) {
       if (path1Arr.get(i).equals(path2Arr.get(i))) {
@@ -49,15 +47,15 @@ public class CompactGroupHelper {
 
   public static @NotNull List<String> pathToPathList(@NotNull String parentTextOrig) {
     if (parentTextOrig.contains("!")) {
-      int index = parentTextOrig.indexOf("!");
+      int index = parentTextOrig.indexOf('!');
       String zip = parentTextOrig.substring(1, index + 1);
       String rest = parentTextOrig.substring(index + 1);
-      ArrayList<String> subPaths = new ArrayList<>();
+      List<String> subPaths = new ArrayList<>();
       subPaths.add(zip);
-      subPaths.addAll(Arrays.stream(rest.split("/")).filter(s -> !s.isEmpty()).collect(Collectors.toList()));
+      subPaths.addAll(ContainerUtil.filter(rest.split("/"), s -> !s.isEmpty()));
       return subPaths;
     }
-    return Arrays.stream(parentTextOrig.split("/")).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+    return ContainerUtil.filter(parentTextOrig.split("/"), s -> !s.isEmpty());
   }
 
   protected static @NotNull String pathListToPath(@NotNull List<String> textArr) {
