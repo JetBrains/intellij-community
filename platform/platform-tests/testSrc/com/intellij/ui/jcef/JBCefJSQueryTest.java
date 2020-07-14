@@ -137,7 +137,7 @@ public class JBCefJSQueryTest {
     wait(LATCH_JS_AFTER);
   }
 
-  private static void wait(@NotNull CountDownLatch latch) {
+  public static void wait(@NotNull CountDownLatch latch) {
     boolean success = false;
     try {
       success = latch.await(20, TimeUnit.SECONDS);
