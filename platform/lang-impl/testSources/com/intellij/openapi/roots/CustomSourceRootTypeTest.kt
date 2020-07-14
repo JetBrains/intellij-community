@@ -119,46 +119,6 @@ class CustomSourceRootTypeTest {
     assertThat(committed.contentEntries.single().sourceFolders.single().customRootProperties).isEqualTo("foo")
   }
 
-  @Test
-  fun `test source roots are determined correctly for content roots`() = runWithRegisteredExtension {
-    val projectDir = projectModel.baseProjectDir
-    val firstContentRoot = projectDir.newVirtualDirectory("src")
-    val secondContentRoot = projectDir.newVirtualDirectory("src/main")
-
-    val model = createModifiableModel(module)
-    var firstContentEntry = model.addContentEntry(firstContentRoot)
-    val sourceFolderForFirstContentEntry = projectDir.newVirtualDirectory("src/main/java")
-    firstContentEntry.addSourceFolder(firstContentRoot, TestCustomSourceRootType.INSTANCE, TestCustomSourceRootProperties("src"))
-    firstContentEntry.addSourceFolder(sourceFolderForFirstContentEntry, TestCustomSourceRootType.INSTANCE,
-                                      TestCustomSourceRootProperties("java"))
-
-    var secondContentEntry = model.addContentEntry(secondContentRoot)
-    val sourceFolderForSecondContentEntry = projectDir.newVirtualDirectory("src/main/resources")
-    secondContentEntry.addSourceFolder(secondContentRoot, TestCustomSourceRootType.INSTANCE, TestCustomSourceRootProperties("src"))
-    secondContentEntry.addSourceFolder(sourceFolderForSecondContentEntry, TestCustomSourceRootType.INSTANCE,
-                                       TestCustomSourceRootProperties("java"))
-    val committed = commitModifiableRootModel(model)
-
-    assertThat(committed.contentEntries.size).isEqualTo(2)
-    committed.contentEntries.sortBy { it.url }
-    firstContentEntry = committed.contentEntries[0]
-    assertThat(firstContentEntry.url).isEqualTo(firstContentRoot.url)
-    var sourceFolders = firstContentEntry.sourceFolders
-    sourceFolders.sortBy { it.url }
-    assertThat(sourceFolders.size).isEqualTo(2)
-    assertThat(sourceFolders[0].url).isEqualTo(firstContentRoot.url)
-    assertThat(sourceFolders[1].url).isEqualTo(sourceFolderForFirstContentEntry.url)
-
-    secondContentEntry = committed.contentEntries[1]
-    assertThat(secondContentEntry.url).isEqualTo(secondContentRoot.url)
-    assertThat(secondContentEntry.sourceFolders.size).isEqualTo(2)
-    sourceFolders = secondContentEntry.sourceFolders
-    sourceFolders.sortBy { it.url }
-    assertThat(sourceFolders.size).isEqualTo(2)
-    assertThat(sourceFolders[0].url).isEqualTo(secondContentRoot.url)
-    assertThat(sourceFolders[1].url).isEqualTo(sourceFolderForSecondContentEntry.url)
-  }
-
   private var SourceFolder.customRootProperties: String?
     get() = (jpsElement.properties as TestCustomSourceRootProperties).testString
     set(value) {

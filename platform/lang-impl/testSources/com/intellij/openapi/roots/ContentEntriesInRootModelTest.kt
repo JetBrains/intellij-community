@@ -243,4 +243,35 @@ class ContentEntriesInRootModelTest {
     val moduleSourceEntry = committed.orderEntries.single() as ModuleSourceOrderEntry
     assertThat(moduleSourceEntry.ownerModule).isSameAs(module)
   }
+
+  @Test
+  fun `test source roots are determined correctly for content roots`() {
+    val projectDir = projectModel.baseProjectDir
+    val firstContentRoot = projectDir.newVirtualDirectory("src")
+    val secondContentRoot = projectDir.newVirtualDirectory("src/main")
+
+    val model = createModifiableModel(module)
+    var firstContentEntry = model.addContentEntry(firstContentRoot)
+    val sourceFolderForFirstContentEntry = projectDir.newVirtualDirectory("src/main/java")
+    firstContentEntry.addSourceFolder(firstContentRoot, false)
+    firstContentEntry.addSourceFolder(sourceFolderForFirstContentEntry, true)
+
+    var secondContentEntry = model.addContentEntry(secondContentRoot)
+    val sourceFolderForSecondContentEntry = projectDir.newVirtualDirectory("src/main/resources")
+    secondContentEntry.addSourceFolder(secondContentRoot, false)
+    secondContentEntry.addSourceFolder(sourceFolderForSecondContentEntry, true)
+    val committed = commitModifiableRootModel(model)
+
+    assertThat(committed.contentEntries.size).isEqualTo(2)
+    val sortedContentEntries = committed.contentEntries.sortedBy { it.url }
+    firstContentEntry = sortedContentEntries[0]
+    assertThat(firstContentEntry.url).isEqualTo(firstContentRoot.url)
+    assertThat(firstContentEntry.sourceFolders.map {it.url}).containsExactlyInAnyOrder(firstContentRoot.url,
+                                                                                       sourceFolderForFirstContentEntry.url)
+
+    secondContentEntry = sortedContentEntries[1]
+    assertThat(secondContentEntry.url).isEqualTo(secondContentRoot.url)
+    assertThat(secondContentEntry.sourceFolders.map { it.url }).containsExactlyInAnyOrder(secondContentRoot.url,
+                                                                                          sourceFolderForSecondContentEntry.url)
+  }
 }
