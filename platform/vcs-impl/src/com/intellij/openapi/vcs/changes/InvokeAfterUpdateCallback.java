@@ -18,15 +18,21 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 class InvokeAfterUpdateCallback {
   private final static Logger LOG = Logger.getInstance(InvokeAfterUpdateCallback.class);
@@ -133,5 +139,79 @@ class InvokeAfterUpdateCallback {
 
   private static void logUpdateFinished(@NotNull Project project, @NotNull InvokeAfterUpdateMode mode) {
     LOG.debug(mode + " changes update finished for project " + project.getName());
+  }
+
+  private static class Waiter extends Task.Modal {
+    @NotNull private final Runnable myRunnable;
+    @NotNull private final AtomicBoolean myStarted = new AtomicBoolean();
+    @NotNull private final Semaphore mySemaphore = new Semaphore();
+
+    Waiter(@NotNull Project project, @NotNull Runnable runnable, String title, boolean cancellable) {
+      super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
+      myRunnable = runnable;
+      mySemaphore.down();
+      setCancelText(VcsBundle.message("button.skip"));
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      indicator.setIndeterminate(true);
+      indicator.setText2(VcsBundle.message("commit.wait.util.synched.text"));
+
+      if (!myStarted.compareAndSet(false, true)) {
+        LOG.error("Waiter running under progress being started again.");
+      }
+      else {
+        ProgressIndicatorUtils.awaitWithCheckCanceled(mySemaphore, indicator);
+      }
+    }
+
+    @Override
+    public void onCancel() {
+      onSuccess();
+    }
+
+    @Override
+    public void onSuccess() {
+      // Be careful with changes here as "Waiter.onSuccess()" is explicitly invoked from "FictiveBackgroundable"
+      if (!myProject.isDisposed()) {
+        myRunnable.run();
+        ChangesViewManager.getInstance(myProject).scheduleRefresh();
+      }
+    }
+
+    public void done() {
+      mySemaphore.up();
+    }
+  }
+
+  private static class FictiveBackgroundable extends Task.Backgroundable {
+    @NotNull private final Waiter myWaiter;
+    @Nullable private final ModalityState myState;
+
+    FictiveBackgroundable(@NotNull Project project,
+                          @NotNull Runnable runnable,
+                          String title,
+                          boolean cancellable,
+                          @Nullable ModalityState state) {
+      super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
+      myState = state;
+      myWaiter = new Waiter(project, runnable, title, cancellable);
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      myWaiter.run(indicator);
+      runOrInvokeLaterAboveProgress(() -> myWaiter.onSuccess(), notNull(myState, ModalityState.NON_MODAL), myProject);
+    }
+
+    @Override
+    public boolean isHeadless() {
+      return false;
+    }
+
+    public void done() {
+      myWaiter.done();
+    }
   }
 }
