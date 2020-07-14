@@ -158,6 +158,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
   @Override
   public synchronized void addElement(LookupElement element, LookupElementPresentation presentation) {
+    presentation.freeze();
     element.putUserData(DEFAULT_PRESENTATION, presentation);
 
     CompletionSorterImpl sorter = obtainSorter(element);
@@ -491,8 +492,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       }
 
       for (int i = 0; i < items.size(); i++) {
-        LookupElementPresentation p1 = DEFAULT_PRESENTATION.get(items.get(i));
-        LookupElementPresentation p2 = DEFAULT_PRESENTATION.get(lastSelection);
+        LookupElementPresentation p1 = getDefaultPresentation(items.get(i));
+        LookupElementPresentation p2 = lastSelection == null ? null : getDefaultPresentation(lastSelection);
         if (p1 != null && p2 != null && PRESENTATION_COMPARATOR.compare(p1, p2) == 0) {
           return i;
         }
@@ -501,6 +502,14 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
     LookupElement exactMatch = getBestExactMatch(items);
     return Math.max(0, ContainerUtil.indexOfIdentity(items, exactMatch != null ? exactMatch : mostRelevant));
+  }
+
+  /**
+   * @return the presentation returned by {@link LookupElement#renderElement} at the moment of this item's addition to the lookup.
+   */
+  @ApiStatus.Internal
+  public static LookupElementPresentation getDefaultPresentation(@NotNull LookupElement item) {
+    return item.getUserData(DEFAULT_PRESENTATION);
   }
 
   protected List<LookupElement> getExactMatches(List<? extends LookupElement> items) {
