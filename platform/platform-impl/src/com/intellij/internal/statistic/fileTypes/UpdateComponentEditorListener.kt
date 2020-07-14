@@ -11,8 +11,11 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ObjectUtils
@@ -24,6 +27,15 @@ import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
 private class UpdateComponentEditorListener : EditorFactoryListener {
+
+  init {
+    FileTypeStatisticProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<FileTypeStatisticProvider> {
+      override fun extensionRemoved(extension: FileTypeStatisticProvider, pluginDescriptor: PluginDescriptor) {
+        Disposer.dispose(extension)
+      }
+    }, null)
+  }
+
   override fun editorCreated(event: EditorFactoryEvent) {
     if (ApplicationManager.getApplication().isUnitTestMode) return
 
@@ -35,7 +47,7 @@ private class UpdateComponentEditorListener : EditorFactoryListener {
       updateOnPooledThread(ep)
       (event.editor as? EditorEx)?.addFocusListener(FocusChangeListener {
         updateOnPooledThread(ep)
-      })
+      }, ep)
     }
   }
 
