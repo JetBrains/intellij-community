@@ -50,51 +50,12 @@ class InvokeAfterUpdateCallback {
                                     @NotNull Runnable afterUpdate,
                                     @Nullable String title,
                                     @Nullable ModalityState state) {
-    return mode.isSilent() ? createSilent(project, mode, afterUpdate, state) : createInteractive(project, mode, afterUpdate, title, state);
-  }
-
-  @NotNull
-  private static CallbackData createSilent(@NotNull Project project,
-                                           @NotNull InvokeAfterUpdateMode mode,
-                                           @NotNull Runnable afterUpdate,
-                                           @Nullable ModalityState state) {
-    return new CallbackDataBase(project, afterUpdate, state) {
-      @Override
-      public void startProgress() {
-      }
-
-      @Override
-      public void endProgress() {
-        if (mode.isCallbackOnAwt()) {
-          ApplicationManager.getApplication().invokeLater(this::invokeCallback);
-        }
-        else {
-          ApplicationManager.getApplication().executeOnPooledThread(this::invokeCallback);
-        }
-      }
-    };
-  }
-
-  @NotNull
-  private static CallbackData createInteractive(@NotNull Project project,
-                                                @NotNull InvokeAfterUpdateMode mode,
-                                                @NotNull Runnable afterUpdate,
-                                                String title,
-                                                @Nullable ModalityState state) {
-    Task task = mode.isSynchronous()
-                ? new Waiter(project, afterUpdate, title, mode.isCancellable())
-                : new FictiveBackgroundable(project, afterUpdate, title, mode.isCancellable(), state);
-    return new CallbackDataBase(project, afterUpdate, state) {
-      @Override
-      public void startProgress() {
-        ProgressManager.getInstance().run(task);
-      }
-
-      @Override
-      public void endProgress() {
-        setDone(task);
-      }
-    };
+    if (mode.isSilent()) {
+      return new SilentCallbackData(project, afterUpdate, mode.isCallbackOnAwt(), state);
+    }
+    else {
+      return new TaskCallbackData(project, afterUpdate, mode.isSynchronous(), mode.isCancellable(), title, state);
+    }
   }
 
   private static void setDone(@NotNull Task task) {
@@ -129,6 +90,58 @@ class InvokeAfterUpdateCallback {
     protected final void invokeCallback() {
       LOG.debug("changes update finished for project " + myProject.getName());
       if (!myProject.isDisposed()) myAfterUpdate.run();
+    }
+  }
+
+  private static class SilentCallbackData extends CallbackDataBase {
+    private final boolean myCallbackOnAwt;
+
+    SilentCallbackData(@NotNull Project project,
+                       @NotNull Runnable afterUpdate,
+                       boolean callbackOnAwt,
+                       @Nullable ModalityState state) {
+      super(project, afterUpdate, state);
+      myCallbackOnAwt = callbackOnAwt;
+    }
+
+    @Override
+    public void startProgress() {
+    }
+
+    @Override
+    public void endProgress() {
+      if (myCallbackOnAwt) {
+        ApplicationManager.getApplication().invokeLater(this::invokeCallback);
+      }
+      else {
+        ApplicationManager.getApplication().executeOnPooledThread(this::invokeCallback);
+      }
+    }
+  }
+
+  private static class TaskCallbackData extends CallbackDataBase {
+    private final Task myTask;
+
+    TaskCallbackData(@NotNull Project project,
+                     @NotNull Runnable afterUpdate,
+                     boolean synchronous,
+                     boolean canBeCancelled,
+                     String title,
+                     @Nullable ModalityState state) {
+      super(project, afterUpdate, state);
+      myTask = synchronous
+               ? new Waiter(project, afterUpdate, title, canBeCancelled)
+               : new FictiveBackgroundable(project, afterUpdate, title, canBeCancelled, state);
+    }
+
+    @Override
+    public void startProgress() {
+      ProgressManager.getInstance().run(myTask);
+    }
+
+    @Override
+    public void endProgress() {
+      setDone(myTask);
     }
   }
 
