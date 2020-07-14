@@ -320,7 +320,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
     myTemplateIndented = false;
     myCurrentVariableNumber = -1;
-    setSegments(new TemplateSegments(getEditor()));
+    setSegments(new TemplateSegments(getEditor().getDocument()));
     myPrevTemplate = getTemplate();
 
     setPredefinedVariableValues(predefinedVarValues);
