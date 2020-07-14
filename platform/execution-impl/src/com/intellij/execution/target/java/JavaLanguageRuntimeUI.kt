@@ -46,7 +46,7 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
   override fun reset() {
     super.reset()
     targetVolumeContributions.forEach { (volume, contribution) ->
-      contribution.resetFrom(config.getTargetSpecificData(volume))
+      contribution.resetFrom(volume)
     }
   }
 
@@ -60,11 +60,15 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
     target.getTargetType().createVolumeContributionUI()?.let {
       targetVolumeContributions[volumeDescriptor] = it
       val component = it.createComponent()
-      it.resetFrom(config.getTargetSpecificData(volumeDescriptor))
+      it.resetFrom(volumeDescriptor)
       row("") {
         component()
         largeGapAfter()
       }
     }
+  }
+
+  private fun TargetSpecificVolumeContributionUI.resetFrom(volume: VolumeDescriptor) {
+    this.resetFrom(config.getTargetSpecificData(volume)?.toStorableMap() ?: emptyMap())
   }
 }
