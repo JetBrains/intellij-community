@@ -4700,6 +4700,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertFunctionToProperty/recursiveFunction.kt");
         }
 
+        @TestMetadata("sameNameFunWithDifferentReceiver.kt")
+        public void testSameNameFunWithDifferentReceiver() throws Exception {
+            runTest("testData/intentions/convertFunctionToProperty/sameNameFunWithDifferentReceiver.kt");
+        }
+
         @TestMetadata("typeArgumentsConflict.kt")
         public void testTypeArgumentsConflict() throws Exception {
             runTest("testData/intentions/convertFunctionToProperty/typeArgumentsConflict.kt");
@@ -6211,6 +6216,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("recursiveAccessor.kt")
         public void testRecursiveAccessor() throws Exception {
             runTest("testData/intentions/convertPropertyToFunction/recursiveAccessor.kt");
+        }
+
+        @TestMetadata("sameNameFunAsStdlibFun.kt")
+        public void testSameNameFunAsStdlibFun() throws Exception {
+            runTest("testData/intentions/convertPropertyToFunction/sameNameFunAsStdlibFun.kt");
+        }
+
+        @TestMetadata("sameNameFunWithDifferentReceiver.kt")
+        public void testSameNameFunWithDifferentReceiver() throws Exception {
+            runTest("testData/intentions/convertPropertyToFunction/sameNameFunWithDifferentReceiver.kt");
         }
 
         @TestMetadata("unchangedElements.kt")

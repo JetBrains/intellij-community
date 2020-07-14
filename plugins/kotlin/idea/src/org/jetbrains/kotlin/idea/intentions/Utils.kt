@@ -397,3 +397,5 @@ fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
 
 val CallableDescriptor.isInvokeOperator: Boolean
     get() = this is FunctionDescriptor && this !is FunctionInvokeDescriptor && isOperator && name == OperatorNameConventions.INVOKE
+
+fun CallableDescriptor.receiverType(): KotlinType? = (dispatchReceiverParameter ?: extensionReceiverParameter)?.type
