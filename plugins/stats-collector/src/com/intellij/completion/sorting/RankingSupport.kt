@@ -4,7 +4,6 @@ package com.intellij.completion.sorting
 import com.intellij.application.options.CodeCompletionOptions
 import com.intellij.completion.StatsCollectorBundle
 import com.intellij.completion.settings.CompletionMLRankingSettings
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
 import com.intellij.notification.*
@@ -16,12 +15,12 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.stats.sender.isCompletionLogsSendAllowed
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.stats.experiment.ExperimentInfo
 import com.intellij.stats.experiment.ExperimentStatus
 import com.jetbrains.completion.ranker.WeakModelProvider
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
-  private const val LANGUAGES_RANKING_UPDATED_PROPERTY_KEY = "ml.completion.experiment.languages.ranking.updated"
   private const val SHOW_ARROWS_NOTIFICATION_REGISTRY = "completion.stats.show.arrows.notification"
   private val LOG = logger<RankingSupport>()
   private var enabledInTests: Boolean = false
@@ -65,39 +64,23 @@ object RankingSupport {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) return enabledInTests
     val experimentStatus = ExperimentStatus.getInstance()
-    if (application.isEAP && experimentStatus.isExperimentOnCurrentIDE(language) && isCompletionLogsSendAllowed()) {
-      configureSettingsInExperiment(experimentStatus, language, provider.displayNameInSettings)
+    val experimentInfo = experimentStatus.forLanguage(language)
+    if (application.isEAP && isCompletionLogsSendAllowed() && experimentInfo.inExperiment && experimentStatus.experimentChanged(language)) {
+      configureSettingsInExperimentOnce(experimentInfo, provider.displayNameInSettings)
     }
 
     val settings = CompletionMLRankingSettings.getInstance()
     return settings.isRankingEnabled && settings.isLanguageEnabled(provider.displayNameInSettings)
   }
 
-  private fun configureSettingsInExperiment(experimentStatus: ExperimentStatus, language: Language, languageName: String) {
-    val shouldRank = experimentStatus.shouldRank(language)
-    val shouldShowArrows = experimentStatus.shouldShowArrows(language)
+  private fun configureSettingsInExperimentOnce(experimentInfo: ExperimentInfo, language: String) {
     val settings = CompletionMLRankingSettings.getInstance()
-    if (experimentStatus.experimentChanged()) {
-      updateSettingsOnce(settings, shouldRank, shouldShowArrows)
-    }
-    val properties = PropertiesComponent.getInstance()
-    val languages = properties.getValues(LANGUAGES_RANKING_UPDATED_PROPERTY_KEY) ?: emptyArray()
-    if (languageName !in languages) {
-      settings.setLanguageEnabled(languageName, shouldRank)
-      properties.setValues(LANGUAGES_RANKING_UPDATED_PROPERTY_KEY, languages + arrayOf(languageName))
-    }
-  }
-
-  private fun updateSettingsOnce(settings: CompletionMLRankingSettings, shouldRank: Boolean, shouldShowArrows: Boolean) {
-    settings.isRankingEnabled = shouldRank
-    val languages = availableLanguages()
-    languages.forEach { settings.setLanguageEnabled(it, shouldRank) }
-    settings.isShowDiffEnabled = shouldShowArrows
-    if (shouldShowArrows && shouldShowArrowsNotification()) {
+    if (experimentInfo.shouldRank) settings.isRankingEnabled = experimentInfo.shouldRank
+    settings.setLanguageEnabled(language, experimentInfo.shouldRank)
+    settings.isShowDiffEnabled = experimentInfo.shouldShowArrows
+    if (experimentInfo.shouldShowArrows && shouldShowArrowsNotification()) {
       showNotificationAboutArrows()
     }
-    val properties = PropertiesComponent.getInstance()
-    properties.setValues(LANGUAGES_RANKING_UPDATED_PROPERTY_KEY, languages.toTypedArray())
   }
 
   private fun shouldShowArrowsNotification(): Boolean = Registry.`is`(SHOW_ARROWS_NOTIFICATION_REGISTRY, true)
@@ -108,18 +91,18 @@ object RankingSupport {
       StatsCollectorBundle.message("ml.completion.show.diff.notification.title"),
       StatsCollectorBundle.message("ml.completion.show.diff.notification.content"),
       NotificationType.INFORMATION
-    ).addAction(object : NotificationAction("OK") {
+    ).addAction(object : NotificationAction(StatsCollectorBundle.message("ml.completion.show.diff.notification.ok")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           notification.expire()
         }
       })
-      .addAction(object : NotificationAction("Disable") {
+      .addAction(object : NotificationAction(StatsCollectorBundle.message("ml.completion.show.diff.notification.disable")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           CompletionMLRankingSettings.getInstance().isShowDiffEnabled = false
           notification.expire()
         }
       })
-      .addAction(object : NotificationAction("Open settings...") {
+      .addAction(object : NotificationAction(StatsCollectorBundle.message("ml.completion.show.diff.notification.settings")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionOptions::class.java)
           notification.expire()

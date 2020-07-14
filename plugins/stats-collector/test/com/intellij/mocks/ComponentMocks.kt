@@ -3,6 +3,7 @@
 package com.intellij.mocks
 
 import com.intellij.lang.Language
+import com.intellij.stats.experiment.ExperimentInfo
 import com.intellij.stats.experiment.ExperimentStatus
 import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.sender.StatisticSender
@@ -35,17 +36,10 @@ internal class TestExperimentStatus : ExperimentStatus {
     private var shouldShowArrows = false
     private var shouldCalculateFeatures = false
 
-    override fun isExperimentOnCurrentIDE(language: Language): Boolean = inExperiment
+    override fun forLanguage(language: Language): ExperimentInfo =
+      ExperimentInfo(inExperiment, 0, shouldRank, shouldShowArrows, shouldCalculateFeatures)
 
-    override fun experimentVersion(language: Language): Int = 0
-
-    override fun shouldRank(language: Language): Boolean = shouldRank
-
-    override fun shouldShowArrows(language: Language): Boolean = shouldShowArrows
-
-    override fun shouldCalculateFeatures(language: Language): Boolean = shouldCalculateFeatures
-
-    override fun experimentChanged(): Boolean = false
+    override fun experimentChanged(language: Language): Boolean = false
 
     fun updateExperimentSettings(inExperiment: Boolean, shouldRank: Boolean, shouldShowArrows: Boolean, shouldCalculateFeatures: Boolean) {
         this.inExperiment = inExperiment

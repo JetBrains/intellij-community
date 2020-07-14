@@ -126,9 +126,9 @@ class MutableLookupStorage(
   }
 
   private fun experimentWithoutComputingFeatures(): Boolean {
-    val experimentStatus = ExperimentStatus.getInstance()
-    if (experimentStatus.isExperimentOnCurrentIDE(language)) {
-      return !experimentStatus.shouldCalculateFeatures(language)
+    val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
+    if (experimentInfo.inExperiment) {
+      return !experimentInfo.shouldCalculateFeatures
     }
     return false
   }

@@ -5,15 +5,14 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.stats.experiment.ExperimentStatus
+import com.intellij.stats.experiment.ExperimentInfo
 import com.intellij.stats.storage.factors.LookupStorage
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val lookupStorage: LookupStorage,
                                private val logger: CompletionLogger,
-                               private val experimentStatus: ExperimentStatus)
+                               private val experimentInfo: ExperimentInfo)
     : CompletionActionsListener {
 
     private var completionStarted = false
@@ -50,9 +49,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         val timestamp = System.currentTimeMillis()
         completionStarted = true
         deferredLog.defer {
-            val isPerformExperiment = experimentStatus.isExperimentOnCurrentIDE(lookupStorage.language)
-            val experimentVersion = experimentStatus.experimentVersion(lookupStorage.language)
-            logger.completionStarted(lookup, isPerformExperiment, experimentVersion, timestamp)
+            logger.completionStarted(lookup, experimentInfo.inExperiment, experimentInfo.version, timestamp)
         }
     }
 

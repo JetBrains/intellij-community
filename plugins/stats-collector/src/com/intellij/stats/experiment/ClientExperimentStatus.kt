@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.logger
-import java.util.concurrent.atomic.AtomicBoolean
 
 class ClientExperimentStatus : ExperimentStatus {
   companion object {
@@ -15,55 +14,74 @@ class ClientExperimentStatus : ExperimentStatus {
     private val GSON by lazy { Gson() }
     private val LOG = logger<ClientExperimentStatus>()
 
-    fun loadExperimentInfo(): ExperimentInfo {
+    fun loadExperimentInfo(): ExperimentConfig {
       try{
         val json = ClientExperimentStatus::class.java.getResource(PATH_TO_EXPERIMENT_CONFIG).readText()
-        val experimentInfo = GSON.fromJson(json, ExperimentInfo::class.java)
+        val experimentInfo = GSON.fromJson(json, ExperimentConfig::class.java)
         checkExperimentGroups(experimentInfo)
         return experimentInfo
       }
       catch (e: Throwable) {
         LOG.error("Error on loading ML Completion experiment info", e)
-        return ExperimentInfo.disabledExperiment()
+        return ExperimentConfig.disabledExperiment()
       }
     }
 
-    private fun checkExperimentGroups(experimentInfo: ExperimentInfo) {
+    private fun checkExperimentGroups(experimentInfo: ExperimentConfig) {
       for (group in experimentInfo.groups) {
-        assert(group.experimentBucket < experimentInfo.experimentBucketsCount) { "Group bucket must be less than the total number of buckets" }
         if (group.showArrows) assert(group.useMLRanking) { "Showing arrows requires ML ranking" }
         if (group.useMLRanking) assert(group.calculateFeatures) { "ML ranking requires calculating features" }
       }
+      for (language in experimentInfo.languages) {
+        assert(language.includeGroups.size <= language.experimentBucketsCount)
+        { "Groups count must be less than the total number of buckets (${language.id})" }
+        assert(language.includeGroups.all { number ->
+          experimentInfo.groups.any { it.number == number }
+        }) { "Group included for language (${language.id}) should be among general list of groups" }
+      }
     }
   }
 
-  private var experimentChanged: AtomicBoolean = AtomicBoolean(false)
-  private val experimentInfo: ExperimentInfo = loadExperimentInfo()
-  private val experimentBucket: Int = EventLogConfiguration.bucket % experimentInfo.experimentBucketsCount
-  private val experimentGroup: ExperimentGroupInfo? = experimentInfo.groups.find { it.experimentBucket == experimentBucket }
+  private val experimentConfig: ExperimentConfig = loadExperimentInfo()
+  private val language2group: MutableMap<String, ExperimentInfo> = mutableMapOf()
+  private val language2experimentChanged: MutableMap<String, Boolean> = mutableMapOf()
 
   init {
     val properties = PropertiesComponent.getInstance()
-    val groupNumber = experimentGroup?.number ?: experimentInfo.version
-    if (properties.getInt(EXPERIMENT_GROUP_PROPERTY_KEY, experimentInfo.version) != groupNumber) {
-      properties.setValue(EXPERIMENT_GROUP_PROPERTY_KEY, groupNumber, experimentInfo.version)
-      experimentChanged.set(true)
+    for (languageSettings in experimentConfig.languages) {
+      val bucket = EventLogConfiguration.bucket % languageSettings.experimentBucketsCount
+      val groupNumber = if (languageSettings.includeGroups.size > bucket) languageSettings.includeGroups[bucket] else experimentConfig.version
+      val group = experimentConfig.groups.find { it.number == groupNumber }
+      val groupInfo = if (group == null) ExperimentInfo(false, experimentConfig.version)
+      else ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures)
+      language2group[languageSettings.id] = groupInfo
+      val propertyName = "$EXPERIMENT_GROUP_PROPERTY_KEY.$languageSettings"
+      val experimentChanged = properties.getInt(propertyName, experimentConfig.version) != groupNumber
+      language2experimentChanged[languageSettings.id] = experimentChanged
+      if (experimentChanged) {
+        properties.setValue(propertyName, groupNumber, experimentConfig.version)
+      }
     }
   }
 
-  override fun isExperimentOnCurrentIDE(language: Language): Boolean = checkExperimentGroup(language) { true }
+  override fun forLanguage(language: Language): ExperimentInfo {
+    val matchingLanguage = findMatchingLanguage(language) ?: return ExperimentInfo(false, experimentConfig.version)
+    return language2group[matchingLanguage] ?: ExperimentInfo(false, experimentConfig.version)
+  }
 
-  // later it will support excluding group from experiment for some languages
-  override fun experimentVersion(language: Language): Int = experimentGroup?.number ?: experimentInfo.version
+  override fun experimentChanged(language: Language): Boolean {
+    val matchingLanguage = findMatchingLanguage(language) ?: return false
+    val experimentChanged = language2experimentChanged[matchingLanguage] ?: return false
+    if (experimentChanged) {
+      language2experimentChanged[matchingLanguage] = false
+    }
+    return experimentChanged
+  }
 
-  override fun shouldRank(language: Language): Boolean = checkExperimentGroup(language) { it.useMLRanking }
-
-  override fun shouldShowArrows(language: Language): Boolean = checkExperimentGroup(language) { it.showArrows }
-
-  override fun shouldCalculateFeatures(language: Language): Boolean = checkExperimentGroup(language) { it.calculateFeatures }
-
-  override fun experimentChanged(): Boolean = experimentChanged.getAndSet(false)
-
-  private fun checkExperimentGroup(language: Language, predicate: (ExperimentGroupInfo) -> Boolean): Boolean =
-    experimentInfo.groups.any { it.number == experimentVersion(language) && predicate(it) }
+  private fun findMatchingLanguage(language: Language): String? {
+    val baseLanguages = Language.getRegisteredLanguages().filter { language.isKindOf(it) }
+    return language2group.keys.find { languageId ->
+      baseLanguages.any { languageId.equals(it.id, ignoreCase = true) }
+    }
+  }
 }

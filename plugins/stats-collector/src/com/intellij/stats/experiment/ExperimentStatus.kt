@@ -9,10 +9,6 @@ interface ExperimentStatus {
     fun getInstance(): ExperimentStatus = service()
   }
 
-  fun isExperimentOnCurrentIDE(language: Language): Boolean
-  fun experimentVersion(language: Language): Int
-  fun shouldRank(language: Language): Boolean
-  fun shouldShowArrows(language: Language): Boolean
-  fun shouldCalculateFeatures(language: Language): Boolean
-  fun experimentChanged(): Boolean
+  fun forLanguage(language: Language): ExperimentInfo
+  fun experimentChanged(language: Language): Boolean
 }

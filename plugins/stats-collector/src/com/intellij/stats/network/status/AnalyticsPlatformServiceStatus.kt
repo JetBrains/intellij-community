@@ -40,7 +40,7 @@ class AnalyticsPlatformServiceStatus(private val statusUrl: String) : WebService
 
       val satisfyingEndpoints = settings.versions.filter { it.satisfies() && it.endpoint != null }
       if (satisfyingEndpoints.isEmpty()) {
-        LOG.warn("Analytics Platform completion web service status. No satisfying endpoints.")
+        LOG.debug("Analytics Platform completion web service status. No satisfying endpoints.")
         return
       }
       if (satisfyingEndpoints.size > 1) {
