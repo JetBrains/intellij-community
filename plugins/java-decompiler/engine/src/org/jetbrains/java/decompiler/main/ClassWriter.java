@@ -243,6 +243,12 @@ public class ClassWriter {
         }
       }
 
+      boolean isModuleInfo = cl.hasModifier(CodeConstants.ACC_MODULE) && cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
+
+      if (isModuleInfo) {
+        writeModuleInfoBody(buffer, cl);
+      }
+
       buffer.appendIndent(indent).append('}');
 
       if (node.type != ClassNode.CLASS_ANONYMOUS) {
@@ -254,6 +260,104 @@ public class ClassWriter {
     }
 
     DecompilerContext.getLogger().endWriteClass();
+  }
+
+  private void writeModuleInfoBody(TextBuffer buffer, StructClass cl) {
+    StructModuleAttribute moduleAttribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
+
+    for (StructModuleAttribute.RequiresEntry requires : moduleAttribute.requires) {
+      String moduleName = requires.moduleName.replace('/', '.');
+
+      buffer.appendIndent(1)
+        .append("requires ")
+        .append(moduleName)
+        .append(';')
+        .appendLineSeparator();
+    }
+
+    for (StructModuleAttribute.ExportsEntry exports : moduleAttribute.exports) {
+      String packageName = exports.packageName.replace('/', '.');
+
+      buffer.appendIndent(1).append("exports ").append(packageName);
+
+      List<String> exportToModules = exports.exportToModules;
+      if (exportToModules.size() > 0) {
+        buffer.append(" to").appendLineSeparator();
+
+        int lastIndex = exportToModules.size() - 1;
+        for (int i = 0; i < exportToModules.size(); i++) {
+          String moduleName = exportToModules.get(i).replace('/', '.');
+          char separator = i == lastIndex ? ';' : ',';
+
+          buffer.appendIndent(2)
+            .append(moduleName)
+            .append(separator)
+            .appendLineSeparator();
+        }
+      } else {
+        buffer.append(';').appendLineSeparator();
+      }
+    }
+
+    for (StructModuleAttribute.OpensEntry opens : moduleAttribute.opens) {
+      String packageName = opens.packageName.replace('/', '.');
+
+      buffer.appendIndent(1).append("opens ").append(packageName);
+
+      List<String> opensToModules = opens.opensToModules;
+      if (opensToModules.size() > 0) {
+        buffer.append(" to").appendLineSeparator();
+
+        int lastIndex = opensToModules.size() - 1;
+        for (int i = 0; i < opensToModules.size(); i++) {
+          String moduleName = opensToModules.get(i).replace('/', '.');
+          char separator = i == lastIndex ? ';' : ',';
+
+          buffer.appendIndent(2)
+            .append(moduleName)
+            .append(separator)
+            .appendLineSeparator();
+        }
+      } else {
+        buffer.append(';').appendLineSeparator();
+      }
+    }
+
+    for (String uses : moduleAttribute.uses) {
+      String className = internalClassNameToJava(uses);
+
+      buffer.appendIndent(1)
+        .append("uses ")
+        .append(className)
+        .append(';')
+        .appendLineSeparator();
+    }
+
+    for (StructModuleAttribute.ProvidesEntry provides : moduleAttribute.provides) {
+      String interfaceName = internalClassNameToJava(provides.interfaceName);
+
+      buffer.appendIndent(1)
+        .append("provides ")
+        .append(interfaceName)
+        .append(" with")
+        .appendLineSeparator();
+
+      int lastIndex = provides.implementationNames.size() - 1;
+      for (int i = 0; i < provides.implementationNames.size(); i++) {
+        String className = internalClassNameToJava(provides.implementationNames.get(i));
+        char separator = i == lastIndex ? ';' : ',';
+
+        buffer.appendIndent(2)
+          .append(className)
+          .append(separator)
+          .appendLineSeparator();
+      }
+    }
+  }
+
+  private static String internalClassNameToJava(String internal) {
+    // TODO: replace both at once...?
+    return internal.replace('/', '.').replace('$', '.');
   }
 
   private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {
@@ -278,6 +382,7 @@ public class ClassWriter {
     boolean isEnum = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && (flags & CodeConstants.ACC_ENUM) != 0;
     boolean isInterface = (flags & CodeConstants.ACC_INTERFACE) != 0;
     boolean isAnnotation = (flags & CodeConstants.ACC_ANNOTATION) != 0;
+    boolean isModuleInfo = (flags & CodeConstants.ACC_MODULE) != 0 && cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
 
     if (isDeprecated) {
       appendDeprecation(buffer, indent);
@@ -313,11 +418,24 @@ public class ClassWriter {
       }
       buffer.append("interface ");
     }
+    else if (isModuleInfo) {
+      StructModuleAttribute moduleAttribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
+
+      if ((moduleAttribute.moduleFlags & CodeConstants.ACC_OPEN) != 0) {
+        buffer.append("open ");
+      }
+
+      buffer.append("module ");
+      buffer.append(moduleAttribute.moduleName);
+    }
     else {
       buffer.append("class ");
     }
 
-    buffer.append(node.simpleName);
+    // Handled above
+    if (!isModuleInfo) {
+      buffer.append(node.simpleName);
+    }
 
     GenericClassDescriptor descriptor = getGenericClassDescriptor(cl);
     if (descriptor != null && !descriptor.fparameters.isEmpty()) {

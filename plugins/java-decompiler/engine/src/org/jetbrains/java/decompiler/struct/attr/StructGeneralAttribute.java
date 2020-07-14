@@ -34,6 +34,7 @@ public class StructGeneralAttribute {
   public static final Key<StructGeneralAttribute> ATTRIBUTE_DEPRECATED = new Key<>("Deprecated");
   public static final Key<StructLineNumberTableAttribute> ATTRIBUTE_LINE_NUMBER_TABLE = new Key<>("LineNumberTable");
   public static final Key<StructMethodParametersAttribute> ATTRIBUTE_METHOD_PARAMETERS = new Key<>("MethodParameters");
+  public static final Key<StructModuleAttribute> ATTRIBUTE_MODULE = new Key<>("Module");
 
   public static class Key<T extends StructGeneralAttribute> {
     private final String name;
@@ -96,6 +97,9 @@ public class StructGeneralAttribute {
     }
     else if (ATTRIBUTE_METHOD_PARAMETERS.getName().equals(name)) {
       attr = new StructMethodParametersAttribute();
+    }
+    else if (ATTRIBUTE_MODULE.getName().equals(name)) {
+      attr = new StructModuleAttribute();
     }
     else {
       // unsupported attribute

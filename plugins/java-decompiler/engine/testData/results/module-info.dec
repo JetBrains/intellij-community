@@ -1,3 +1,4 @@
-class module-info {
+module sample.module {
+   requires java.base;
 }
 

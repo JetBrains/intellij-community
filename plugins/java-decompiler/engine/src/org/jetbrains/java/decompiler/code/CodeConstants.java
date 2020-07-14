@@ -64,6 +64,7 @@ public interface CodeConstants {
   int ACC_STATIC = 0x0008;
   int ACC_FINAL = 0x0010;
   int ACC_SYNCHRONIZED = 0x0020;
+  int ACC_OPEN = 0x0020;
   int ACC_NATIVE = 0x0100;
   int ACC_ABSTRACT = 0x0400;
   int ACC_STRICT = 0x0800;
@@ -75,6 +76,7 @@ public interface CodeConstants {
   int ACC_ANNOTATION = 0x2000;
   int ACC_ENUM = 0x4000;
   int ACC_MANDATED = 0x8000;
+  int ACC_MODULE = 0x8000;
 
   // ----------------------------------------------------------------------
   // CLASS FLAGS
