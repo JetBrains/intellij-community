@@ -308,17 +308,18 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return ReadAction.compute(() -> PsiUtil.getJarFile(aClass));
   }
 
-  @Nullable
-  private static CompilerDirectHierarchyInfo performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
-                                                                               @NotNull Project project) {
+  private static @Nullable CompilerDirectHierarchyInfo performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
+                                                                                         @NotNull Project project) {
     SearchScope scope = parameters.getScope();
-    if (!(scope instanceof GlobalSearchScope)) return null;
+    if (!(scope instanceof GlobalSearchScope)) {
+      return null;
+    }
 
-    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
-    if (compilerReferenceService == null) return null; //This is possible in CLion, where Java compiler is not defined
-
-    return compilerReferenceService.getDirectInheritors(getClassToSearch(parameters),
-                                                        (GlobalSearchScope)scope,
-                                                        JavaFileType.INSTANCE);
+    CompilerReferenceService compilerReferenceService = CompilerReferenceService.isEnabled() ? CompilerReferenceService.getInstance(project) : null;
+    // this is possible in CLion, where Java compiler is not defined
+    if (compilerReferenceService == null) {
+      return null;
+    }
+    return compilerReferenceService.getDirectInheritors(getClassToSearch(parameters), (GlobalSearchScope)scope, JavaFileType.INSTANCE);
   }
 }
