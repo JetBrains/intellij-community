@@ -14,9 +14,13 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import com.intellij.vcs.log.VcsLogBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -227,6 +231,36 @@ public abstract class VcsLogPopupComponent extends JPanel {
     public String getText() {
       if (myText == null) return "";
       return myText.get();
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleVcsLogPopupComponent(super.getAccessibleContext());
+    }
+    return accessibleContext;
+  }
+
+  private class AccessibleVcsLogPopupComponent extends AccessibleContextDelegate {
+
+    AccessibleVcsLogPopupComponent(AccessibleContext context) {
+      super(context);
+    }
+
+    @Override
+    protected Container getDelegateParent() {
+      return null;
+    }
+
+    @Override
+    public String getAccessibleName() {
+      return VcsLogBundle.message("vcs.log.Accessibility.filter.label", myNameLabel.getText(), myValueLabel.getText());
+    }
+
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.POPUP_MENU;
     }
   }
 }
