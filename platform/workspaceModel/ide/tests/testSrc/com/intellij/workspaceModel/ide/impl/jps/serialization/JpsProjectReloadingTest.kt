@@ -49,6 +49,19 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     }
   }
 
+  fun `test add all libraries for directory based project`() {
+    val checkAction = { (storage, projectDirUrl): ReloadedProjectData ->
+      val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
+      assertEquals(1, libraries.size)
+      val junitLibrary = libraries[0]
+      assertEquals("junit2", junitLibrary.name)
+      val root = assertOneElement(junitLibrary.roots.toList())
+      assertEquals("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/", root.url.url)
+    }
+    val dirBasedData = reload(File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/imlUnderDotIdea"), "directoryBased/addLibrary")
+    checkAction(dirBasedData)
+  }
+
   fun `test add module`() {
     checkProjectAfterReload("directoryBased/addModule", "fileBased/addModule") { (storage, projectDirUrl) ->
       val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()

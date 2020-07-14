@@ -100,7 +100,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
         //todo support move/rename
         //todo optimize: filter events before creating lists
         val toProcess = events.asSequence().filter { isFireStorageFileChangedEvent(it) }
-        val addedUrls = toProcess.filterIsInstance<VFileCreateEvent>().mapTo(ArrayList()) { JpsPathUtil.pathToUrl(it.path) }
+        val addedUrls = toProcess.filterIsInstance<VFileCreateEvent>().filterNot { it.isEmptyDirectory }.mapTo(ArrayList()) { JpsPathUtil.pathToUrl(it.path) }
         val removedUrls = toProcess.filterIsInstance<VFileDeleteEvent>().mapTo(ArrayList()) { JpsPathUtil.pathToUrl(it.path) }
         val changedUrls = toProcess.filterIsInstance<VFileContentChangeEvent>().mapTo(ArrayList()) { JpsPathUtil.pathToUrl(it.path) }
         if (addedUrls.isNotEmpty() || removedUrls.isNotEmpty() || changedUrls.isNotEmpty()) {
