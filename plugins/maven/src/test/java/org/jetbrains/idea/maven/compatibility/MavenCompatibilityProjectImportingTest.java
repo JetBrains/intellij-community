@@ -24,8 +24,8 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
   public static List<String[]> getMavenVersions() {
     return Arrays.asList(
       new String[]{"3.7.0-SNAPSHOT"},
-      new String[]{"3.6.3"}
-      /*new String[]{"3.6.2"},
+      new String[]{"3.6.3"},
+      new String[]{"3.6.2"},
       new String[]{"3.6.1"},
       new String[]{"3.6.0"},
       new String[]{"3.5.4"},
@@ -46,7 +46,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
       new String[]{"3.0.3"},
       new String[]{"3.0.2"},
       new String[]{"3.0.1"},
-      new String[]{"3.0"}*/
+      new String[]{"3.0"}
     );
   }
 

@@ -24,7 +24,7 @@ public class MavenWrapperTestFixture {
     "https://repository.apache.org/content/repositories/snapshots/org/apache/maven/apache-maven/$version$/maven-metadata.xml";
 
   private final static String SNAPSHOT_URL_PATTERN =
-    "https://cache-redirector.jetbrains.com/repository.apache.org/content/repositories/snapshots/org/apache/maven/apache-maven/$version$/apache-maven-$versionWithoutSnapshot$-$timestamp$-$build$-bin.zip";
+    "https://repository.apache.org/content/repositories/snapshots/org/apache/maven/apache-maven/$version$/apache-maven-$versionWithoutSnapshot$-$timestamp$-$build$-bin.zip";
 
   private final Project myProject;
   private final String myMavenVersion;
