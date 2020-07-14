@@ -21,33 +21,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.EmptyRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 class InvokeAfterUpdateCallback {
   private final static Logger LOG = Logger.getInstance(InvokeAfterUpdateCallback.class);
 
-  public static class CallbackData {
-    @NotNull private final Runnable myCallback;
-    @NotNull private final Runnable myWrapperStarter;
+  interface CallbackData {
+    void startProgress();
 
-    CallbackData(@NotNull Runnable callback, @NotNull Runnable wrapperStarter) {
-      myCallback = callback;
-      myWrapperStarter = wrapperStarter;
-    }
+    void endProgress();
 
-    @NotNull
-    public Runnable getCallback() {
-      return myCallback;
-    }
-
-    @NotNull
-    public Runnable getWrapperStarter() {
-      return myWrapperStarter;
-    }
+    void handleStoppedQueue();
   }
 
   @NotNull
@@ -56,11 +45,14 @@ class InvokeAfterUpdateCallback {
                                     @NotNull Runnable afterUpdate,
                                     @Nullable String title,
                                     @Nullable ModalityState state) {
-    return mode.isSilent() ? createSilent(project, mode, afterUpdate) : createInteractive(project, mode, afterUpdate, title, state);
+    return mode.isSilent() ? createSilent(project, mode, afterUpdate, state) : createInteractive(project, mode, afterUpdate, title, state);
   }
 
   @NotNull
-  private static CallbackData createSilent(@NotNull Project project, @NotNull InvokeAfterUpdateMode mode, @NotNull Runnable afterUpdate) {
+  private static CallbackData createSilent(@NotNull Project project,
+                                           @NotNull InvokeAfterUpdateMode mode,
+                                           @NotNull Runnable afterUpdate,
+                                           @Nullable ModalityState state) {
     Consumer<Runnable> callbackCaller = mode.isCallbackOnAwt()
                                         ? ApplicationManager.getApplication()::invokeLater
                                         : ApplicationManager.getApplication()::executeOnPooledThread;
@@ -68,7 +60,16 @@ class InvokeAfterUpdateCallback {
       logUpdateFinished(project, mode);
       if (!project.isDisposed()) afterUpdate.run();
     };
-    return new CallbackData(() -> callbackCaller.accept(callback), EmptyRunnable.INSTANCE);
+    return new CallbackDataBase(project, afterUpdate, state) {
+      @Override
+      public void startProgress() {
+      }
+
+      @Override
+      public void endProgress() {
+        callbackCaller.accept(callback);
+      }
+    };
   }
 
   @NotNull
@@ -84,7 +85,17 @@ class InvokeAfterUpdateCallback {
       logUpdateFinished(project, mode);
       setDone(task);
     };
-    return new CallbackData(callback, () -> ProgressManager.getInstance().run(task));
+    return new CallbackDataBase(project, afterUpdate, state) {
+      @Override
+      public void startProgress() {
+        ProgressManager.getInstance().run(task);
+      }
+
+      @Override
+      public void endProgress() {
+        callback.run();
+      }
+    };
   }
 
   private static void setDone(@NotNull Task task) {
@@ -96,6 +107,27 @@ class InvokeAfterUpdateCallback {
     }
     else {
       throw new IllegalArgumentException("Unknown task type " + task.getClass());
+    }
+  }
+
+  private abstract static class CallbackDataBase implements CallbackData {
+    private final Project myProject;
+    private final Runnable myAfterUpdate;
+    private final ModalityState myModalityState;
+
+    CallbackDataBase(@NotNull Project project, @NotNull Runnable afterUpdate, @Nullable ModalityState modalityState) {
+      myProject = project;
+      myAfterUpdate = afterUpdate;
+      myModalityState = modalityState;
+    }
+
+    @Override
+    public void handleStoppedQueue() {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myProject.isDisposed()) {
+          myAfterUpdate.run();
+        }
+      }, notNull(myModalityState, ModalityState.defaultModalityState()));
     }
   }
 

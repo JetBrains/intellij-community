@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 /**
  * ChangeListManager updates scheduler.
  * Tries to zip several update requests into one (if starts and see several requests in the queue)
@@ -160,22 +158,18 @@ public final class UpdateRequestsQueue {
     synchronized (myLock) {
       stopped = myStopped;
       if (!stopped) {
-        myWaitingUpdateCompletionQueue.add(data.getCallback());
+        myWaitingUpdateCompletionQueue.add(data::endProgress);
         schedule();
       }
     }
     if (stopped) {
       LOG.debug("invokeAfterUpdate: stopped, invoke right now for project: " + myProject.getName());
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myProject.isDisposed()) {
-          afterUpdate.run();
-        }
-      }, notNull(state, ModalityState.defaultModalityState()));
-      return;
+      data.handleStoppedQueue();
     }
-    // invoke progress if needed
-    data.getWrapperStarter().run();
-    LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
+    else {
+      data.startProgress();
+      LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
+    }
   }
 
   // true = do not execute
