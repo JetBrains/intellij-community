@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.XDebugSessionService;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
@@ -41,16 +42,29 @@ final class ProjectData {
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        String activeId = toolWindowManager.getActiveToolWindowId();
-        if (activeId != null &&
-            (activeId.equals(ToolWindowId.DEBUG) ||
-             activeId.equals(ToolWindowId.RUN_DASHBOARD) ||
-             activeId.equals(ToolWindowId.SERVICES))) {
-
-          final BarContainer bc = myPermanentBars.get(BarType.DEBUGGER);
-          if (bc != null)
-            bc.show();
+        BarContainer bc = myPermanentBars.get(BarType.DEBUGGER);
+        if (bc != null) {
+          handleDebugBar(toolWindowManager, bc);
         }
+      }
+
+      private void handleDebugBar(@NotNull ToolWindowManager toolWindowManager,
+                                  @NotNull BarContainer debugBar) {
+        boolean hasActiveDebugSession = XDebugSessionService.getInstance(project).hasActiveDebugSession(project);
+        if (isRelatesToDebug(toolWindowManager.getActiveToolWindowId()) &&
+            hasActiveDebugSession) {
+          debugBar.show();
+        }
+        else if (!hasActiveDebugSession) {
+          debugBar.hide();
+        }
+      }
+
+      private boolean isRelatesToDebug(@Nullable String toolWindowId) {
+        return toolWindowId != null &&
+               (toolWindowId.equals(ToolWindowId.DEBUG) ||
+                toolWindowId.equals(ToolWindowId.RUN_DASHBOARD) ||
+                toolWindowId.equals(ToolWindowId.SERVICES));
       }
 
       @Override
