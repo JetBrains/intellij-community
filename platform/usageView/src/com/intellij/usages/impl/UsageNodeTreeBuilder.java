@@ -12,6 +12,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.tree.TreeModel;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 class UsageNodeTreeBuilder {
@@ -47,7 +50,8 @@ class UsageNodeTreeBuilder {
 
   UsageNode appendOrGet(@NotNull Usage usage,
                         boolean filterDuplicateLines,
-                        @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
+                        @NotNull Consumer<? super UsageViewImpl.NodeChange> edtNodeChangeQueue,
+                        @NotNull Consumer<? super Usage> invalidatedUsagesConsumer) {
     if (!isVisible(usage)) return null;
 
     final boolean dumb = DumbService.isDumb(myProject);
@@ -59,10 +63,10 @@ class UsageNodeTreeBuilder {
 
       List<UsageGroup> groups = rule.getParentGroupsFor(usage, myTargets);
       for (UsageGroup group : groups) {
-        groupNode = groupNode.addOrGetGroup(group, i, edtInsertedUnderQueue);
+        groupNode = groupNode.addOrGetGroup(group, i, edtNodeChangeQueue, invalidatedUsagesConsumer);
       }
     }
 
-    return groupNode.addOrGetUsage(usage, filterDuplicateLines, edtInsertedUnderQueue);
+    return groupNode.addOrGetUsage(usage, filterDuplicateLines, edtNodeChangeQueue, invalidatedUsagesConsumer);
   }
 }

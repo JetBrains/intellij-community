@@ -13,6 +13,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Vector;
 
 abstract class Node extends DefaultMutableTreeNode {
+  /**
+   * It is false if there was a structural change in one of the parent nodes,
+   * therefore this node has to be deleted.
+   * Otherwise true
+   */
+  private volatile boolean treePathValid = true;
+
   private int myCachedTextHash;
 
   private byte myCachedFlags; // guarded by this; bit packed flags below:
@@ -27,7 +34,8 @@ abstract class Node extends DefaultMutableTreeNode {
   @MagicConstant(intValues = {
     CACHED_INVALID_MASK, CACHED_READ_ONLY_MASK, READ_ONLY_COMPUTED_MASK,
     EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_REQUESTED_MASK})
-  private @interface FlagConstant {}
+  private @interface FlagConstant {
+  }
 
   private synchronized boolean isFlagSet(@FlagConstant byte mask) {
     return BitUtil.isSet(myCachedFlags, mask);
@@ -52,7 +60,9 @@ abstract class Node extends DefaultMutableTreeNode {
    * to be compared later with cached data stored in {@link #myCachedFlags} and {@link #myCachedTextHash}
    */
   protected abstract boolean isDataValid();
+
   protected abstract boolean isDataReadOnly();
+
   protected abstract boolean isDataExcluded();
 
   protected void updateCachedPresentation() {}
@@ -117,6 +127,7 @@ abstract class Node extends DefaultMutableTreeNode {
   void markNeedUpdate() {
     setFlag(UPDATED_MASK, false);
   }
+
   boolean needsUpdate() {
     return !isFlagSet(UPDATED_MASK);
   }
@@ -144,5 +155,17 @@ abstract class Node extends DefaultMutableTreeNode {
   void setExcluded(boolean excluded, @NotNull Consumer<? super Node> edtNodeChangedQueue) {
     setFlag(EXCLUDED_MASK, excluded);
     edtNodeChangedQueue.consume(this);
+  }
+
+  /**
+   * @return false if there was a structural change in the tree from the root element to the current one,
+   * otherwise true
+   */
+  public boolean isTreePathValid() {
+    return treePathValid;
+  }
+
+  public void setTreePathValid(boolean valid) {
+    this.treePathValid = valid;
   }
 }

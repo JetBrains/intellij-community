@@ -16,10 +16,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.*;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
@@ -29,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.*;
 
 /**
  * @author yole
@@ -40,13 +38,23 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
 
   protected final Project myProject;
   private final boolean myFlattenDirs;
+  /**
+   * A flag specifying
+   */
+  private boolean compactMiddleDirectories;
 
   public DirectoryGroupingRule(Project project) {
-    this(project, true);
+    this(project, true, false);
   }
-  DirectoryGroupingRule(Project project, boolean flattenDirs) {
+
+  /**
+   * @param compactMiddleDirectories if true then middle directories that do not contain any UsageNodes and only one GroupNode
+   *                                 will be merged with the child directory in the usage tree
+   */
+  DirectoryGroupingRule(Project project, boolean flattenDirs, boolean compactMiddleDirectories) {
     myProject = project;
     myFlattenDirs = flattenDirs;
+    this.compactMiddleDirectories = compactMiddleDirectories;
   }
 
   @Nullable
@@ -76,19 +84,27 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     return "UsageGrouping.Directory";
   }
 
-  private final class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {
+  private final class DirectoryGroup implements UsageGroup, TypeSafeDataProvider, CompactGroup {
     private final VirtualFile myDir;
     private Icon myIcon;
+    private volatile String relativePathText;
 
     private DirectoryGroup(@NotNull VirtualFile dir) {
       myDir = dir;
+      relativePathText = myDir.getPath();
+      update();
+    }
+
+    private DirectoryGroup(@NotNull VirtualFile dir, @NotNull String relativePathText) {
+      myDir = dir;
+      this.relativePathText = relativePathText;
       update();
     }
 
     @Override
     public void update() {
       if (isValid()) {
-       myIcon = IconUtil.getIcon(myDir, 0, myProject);
+        myIcon = IconUtil.getIcon(myDir, 0, myProject);
       }
     }
 
@@ -100,10 +116,28 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     @Override
     @NotNull
     public String getText(UsageView view) {
-      if (myFlattenDirs || myDir.getParent() == null) {
-        VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
-        String relativePath = baseDir == null ? null : VfsUtilCore.getRelativePath(myDir, baseDir, File.separatorChar);
-        return relativePath == null ? myDir.getPresentableUrl() : relativePath;
+
+      if (compactMiddleDirectories) {
+        List<String> parentPathList = CompactGroupHelper.pathToPathList(myDir.getPath());
+        List<String> relativePathList = CompactGroupHelper.pathToPathList(relativePathText);
+        if (parentPathList.size() == relativePathList.size()) {
+          VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
+          String relativePath = null;
+          if (baseDir != null && baseDir.getParent() != null) {
+            relativePath = VfsUtilCore.getRelativePath(myDir, baseDir.getParent(), File.separatorChar)
+              .replace("\\", "/");
+          }
+          return relativePath == null ?
+                 relativePathText.startsWith("/") ? relativePathText.substring(1) : relativePathText : relativePath;
+        }
+        return relativePathText.startsWith("/") ? relativePathText.substring(1) : relativePathText;
+      }
+      else {
+        if (myFlattenDirs || myDir.getParent() == null) {
+          VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
+          String relativePath = baseDir == null ? null : VfsUtilCore.getRelativePath(myDir, baseDir, File.separatorChar);
+          return relativePath == null ? myDir.getPresentableUrl() : relativePath;
+        }
       }
       return myDir.getName();
     }
@@ -129,6 +163,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     private PsiDirectory getDirectory() {
       return myDir.isValid() ? PsiManager.getInstance(myProject).findDirectory(myDir) : null;
     }
+
     @Override
     public boolean canNavigate() {
       final PsiDirectory directory = getDirectory();
@@ -169,6 +204,79 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     @Override
     public String toString() {
       return "Directory:" + myDir.getName();
+    }
+
+    @Override
+    public boolean hasCommonParent(@NotNull CompactGroup group) {
+      if (group instanceof DirectoryGroup) {
+        return !CompactGroupHelper.findLongestCommonParent(this.relativePathText, ((DirectoryGroup)group).relativePathText).isEmpty();
+      }
+      return false;
+    }
+
+    @Override
+    public boolean isParentOf(@NotNull CompactGroup group) {
+      if (group instanceof DirectoryGroup) {
+        return (((DirectoryGroup)group).myDir.getPath().startsWith(this.myDir.getPath()));
+      }
+      return false;
+    }
+
+    @Override
+    public CompactGroup merge(@NotNull CompactGroup group) {
+      if (this.isParentOf(group)) {
+        return new DirectoryGroup(((DirectoryGroup)group).myDir, ((DirectoryGroup)group).relativePathText);
+      }
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public List<CompactGroup> split(@NotNull CompactGroup group, boolean doNothingIfSubGroup) {
+      List<String> paths;
+      if (group instanceof DirectoryGroup) {
+        if (this.isParentOf(group)) {
+          if (doNothingIfSubGroup) {
+            return new ArrayList<>();
+          }
+        }
+        VirtualFile myDir = this.myDir;
+        paths = CompactGroupHelper.findLongestCommonParent(this.relativePathText, ((DirectoryGroup)group).relativePathText);
+
+        if (!paths.isEmpty()) {
+          VirtualFile parent = myDir;
+          List<String> parentPath = CompactGroupHelper.pathToPathList(parent.getPath());
+          List<String> newCommonPath = CompactGroupHelper.pathToPathList(paths.get(0));
+          Collections.reverse(parentPath);
+          Collections.reverse(newCommonPath);
+
+          while (parent.getParent() != null && !CompactGroupHelper.listStartsWith(parentPath, newCommonPath)) {
+            parent = parent.getParent();
+            parentPath = CompactGroupHelper.pathToPathList(parent.getPath());
+            newCommonPath = CompactGroupHelper.pathToPathList(paths.get(0));
+            Collections.reverse(parentPath);
+            Collections.reverse(newCommonPath);
+          }
+
+          ArrayList<CompactGroup> newGroups = new ArrayList<>();
+          newGroups.add(new DirectoryGroup(parent, paths.get(0)));
+          if (paths.size() == 2) {
+            if (this.isParentOf(group)) {
+              newGroups.add(new DirectoryGroup(((DirectoryGroup)group).myDir, paths.get(1)));
+            }
+            else {
+              newGroups.add(new DirectoryGroup(myDir, paths.get(1)));
+            }
+          }
+          else if (paths.size() == 3) {
+            newGroups.add(new DirectoryGroup(myDir, paths.get(1)));
+            newGroups.add(new DirectoryGroup(((DirectoryGroup)group).myDir, paths.get(2)));
+          }
+          return newGroups;
+        }
+      }
+
+      return new ArrayList<>();
     }
   }
 }

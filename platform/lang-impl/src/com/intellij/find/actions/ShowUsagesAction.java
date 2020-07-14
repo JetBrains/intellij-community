@@ -84,6 +84,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
@@ -374,7 +375,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     addUsageNodes(usageView.getRoot(), usageView, new ArrayList<>());
 
     List<Usage> usages = new ArrayList<>();
-    Set<UsageNode> visibleNodes = new LinkedHashSet<>();
+    Set<Usage> visibleUsages = new LinkedHashSet<>();
     table.setTableModel(new SmartList<>(createStringNode(UsageViewBundle.message("progress.searching"))));
 
     Runnable itemChosenCallback = table.prepareTable(
@@ -463,20 +464,20 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Processor<Usage> collect = usage -> {
       if (!UsageViewManagerImpl.isInScope(usage, searchScope)) {
         if (outOfScopeUsages.getAndIncrement() == 0) {
-          visibleNodes.add(USAGES_OUTSIDE_SCOPE_NODE);
+          visibleUsages.add(USAGES_OUTSIDE_SCOPE_NODE.getUsage());
           usages.add(table.USAGES_OUTSIDE_SCOPE_SEPARATOR);
         }
         return true;
       }
       synchronized (usages) {
-        if (visibleNodes.size() >= parameters.maxUsages) return false;
-        UsageNode node = ReadAction.compute(() -> usageView.doAppendUsage(usage));
+        if (visibleUsages.size() >= parameters.maxUsages) return false;
+        UsageNode nodes = ReadAction.compute(() -> usageView.doAppendUsage(usage));
         usages.add(usage);
-        if (node != null) {
-          visibleNodes.add(node);
+        if (nodes != null) {
+          visibleUsages.add(nodes.getUsage());
           boolean continueSearch = true;
-          if (visibleNodes.size() == parameters.maxUsages) {
-            visibleNodes.add(MORE_USAGES_SEPARATOR_NODE);
+          if (visibleUsages.size() == parameters.maxUsages) {
+            visibleUsages.add(MORE_USAGES_SEPARATOR_NODE.getUsage());
             usages.add(table.MORE_USAGES_SEPARATOR);
             continueSearch = false;
           }
@@ -500,7 +501,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         }
         pingEDT.ping(); // repaint status
         synchronized (usages) {
-          if (visibleNodes.isEmpty()) {
+          if (visibleUsages.isEmpty()) {
             if (usages.isEmpty()) {
               String hint = UsageViewBundle.message("no.usages.found.in", searchScope.getDisplayName());
               hint(false, hint, parameters, actionHandler);
@@ -508,10 +509,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
             }
             // else all usages filtered out
           }
-          else if (visibleNodes.size() == 1) {
+          else if (visibleUsages.size() == 1) {
             if (usages.size() == 1) {
               //the only usage
-              Usage usage = visibleNodes.iterator().next().getUsage();
+              Usage usage = visibleUsages.iterator().next();
               if (usage == table.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
                 String hint = UsageViewManagerImpl.outOfScopeMessage(outOfScopeUsages.get(), searchScope);
                 hint(true, hint, parameters, actionHandler);
@@ -525,7 +526,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
             else {
               assert usages.size() > 1 : usages;
               // usage view can filter usages down to one
-              Usage visibleUsage = visibleNodes.iterator().next().getUsage();
+              Usage visibleUsage = visibleUsages.iterator().next();
               if (areAllUsagesInOneLine(visibleUsage, usages)) {
                 String hint = UsageViewBundle.message("all.usages.are.in.this.line", usages.size(), searchScope.getDisplayName());
                 navigateAndHint(visibleUsage, hint, parameters, actionHandler);
