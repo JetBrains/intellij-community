@@ -109,7 +109,7 @@ class InvokeAfterUpdateCallback {
     private final boolean mySynchronous;
     private final boolean myCanBeCancelled;
     private final @NlsContexts.ProgressTitle String myTaskTitle;
-    private final ModalityState myModalityState;
+    @NotNull private final ModalityState myModalityState;
 
     @NotNull private final Semaphore mySemaphore = new Semaphore(1);
 
@@ -123,7 +123,7 @@ class InvokeAfterUpdateCallback {
       mySynchronous = synchronous;
       myCanBeCancelled = canBeCancelled;
       myTaskTitle = VcsBundle.message("change.list.manager.wait.lists.synchronization", title);
-      myModalityState = state;
+      myModalityState = notNull(state, ModalityState.NON_MODAL);
     }
 
     @Override
@@ -143,8 +143,7 @@ class InvokeAfterUpdateCallback {
 
     @Override
     public void handleStoppedQueue() {
-      ModalityState modalityState = notNull(myModalityState, ModalityState.defaultModalityState());
-      ApplicationManager.getApplication().invokeLater(this::invokeCallback, modalityState);
+      ApplicationManager.getApplication().invokeLater(this::invokeCallback, myModalityState);
     }
 
     private void awaitSemaphore(@NotNull ProgressIndicator indicator) {
@@ -179,8 +178,7 @@ class InvokeAfterUpdateCallback {
       public void run(@NotNull ProgressIndicator indicator) {
         awaitSemaphore(indicator);
 
-        ModalityState modalityState = notNull(myModalityState, ModalityState.NON_MODAL);
-        runOrInvokeLaterAboveProgress(() -> invokeCallback(), modalityState, myProject);
+        runOrInvokeLaterAboveProgress(() -> invokeCallback(), myModalityState, myProject);
       }
 
       @Override
