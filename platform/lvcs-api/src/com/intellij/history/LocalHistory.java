@@ -21,15 +21,15 @@ public abstract class LocalHistory {
 
   public abstract LocalHistoryAction startAction(@Nullable String name);
 
-  public abstract Label putSystemLabel(Project p, @NotNull String name, int color);
+  public abstract Label putSystemLabel(@NotNull Project p, @NotNull String name, int color);
 
-  public Label putSystemLabel(Project p, @NotNull String name) {
+  public Label putSystemLabel(@NotNull Project p, @NotNull String name) {
     return putSystemLabel(p, name, -1);
   }
 
-  public abstract Label putUserLabel(Project p, @NotNull String name);
+  public abstract Label putUserLabel(@NotNull Project p, @NotNull String name);
 
-  public abstract byte @Nullable [] getByteContent(VirtualFile f, FileRevisionTimestampComparator c);
+  public abstract byte @Nullable [] getByteContent(@NotNull VirtualFile f, @NotNull FileRevisionTimestampComparator c);
 
   public abstract boolean isUnderControl(@NotNull VirtualFile f);
 }

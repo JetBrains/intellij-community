@@ -136,7 +136,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   }
 
   @Override
-  public Label putUserLabel(Project p, @NotNull String name) {
+  public Label putUserLabel(@NotNull Project p, @NotNull String name) {
     if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
     return label(myVcs.putUserLabel(name, getProjectId(p)));
@@ -147,7 +147,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   }
 
   @Override
-  public Label putSystemLabel(Project p, @NotNull String name, int color) {
+  public Label putSystemLabel(@NotNull Project p, @NotNull String name, int color) {
     if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
     return label(myVcs.putSystemLabel(name, getProjectId(p), color));
@@ -173,7 +173,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   }
 
   @Override
-  public byte @Nullable [] getByteContent(final VirtualFile f, final FileRevisionTimestampComparator c) {
+  public byte @Nullable [] getByteContent(@NotNull VirtualFile f, @NotNull FileRevisionTimestampComparator c) {
     if (!isInitialized()) return null;
     if (!myGateway.areContentChangesVersioned(f)) return null;
     return ReadAction.compute(() -> new ByteContentRetriever(myGateway, myVcs, f, c).getResult());
