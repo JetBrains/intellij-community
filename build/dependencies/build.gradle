@@ -48,11 +48,12 @@ apply from: 'setupBuildScriptsDeps.gradle'
 apply from: 'setupToolboxLiteGen.gradle'
 apply from: 'setupBundledMaven.gradle'
 apply from: 'setupCidr.gradle'
+apply from: 'setupCodeWithMe.gradle'
 apply from: 'setupDelve.gradle'
 apply from: 'setupRpluginDeps.gradle'
 apply from: 'setupZkm.gradle'
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupThirdPartyPlugins', 
+task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupThirdPartyPlugins',
                                    'setupJetSign', 'setupBundledMaven'], group: 'dependencies')
 clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign', 'cleanSetupBundledMaven')
 

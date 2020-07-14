@@ -1,0 +1,31 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+def quicheJnaStubsLibXml = new File(project.projectDir, "../../../.idea/libraries/quiche_jna_stubs.xml")
+if (quicheJnaStubsLibXml.exists()) {
+  def quicheLib = new XmlSlurper().parse(quicheJnaStubsLibXml)
+  def quicheJnaStubsMavenId = quicheLib.library.properties.@'maven-id'.toString()
+  logger.log(LogLevel.WARN, "Quiche JNA stubs artifact coordinates: $quicheJnaStubsMavenId")
+  def quicheBuild = quicheJnaStubsMavenId.substring(quicheJnaStubsMavenId.lastIndexOf(':') + 1)
+  logger.log(LogLevel.WARN, "Quiche JNA stubs version (build): $quicheBuild")
+
+  configurations {
+    quiche
+  }
+
+  dependencies {
+    //noinspection GrUnresolvedAccess
+    quiche "com.jetbrains.quiche:quiche-bin:$quicheBuild@zip"
+  }
+
+  task setupQuiche(dependsOn: configurations.quiche, type: Sync) {
+    def outputDir = file("$buildDir/quiche")
+    from(zipTree(configurations.quiche.singleFile))
+    into(outputDir)
+  }
+} else {
+  task setupQuiche {
+    doFirst {
+      logger.log(LogLevel.WARN, "Skipping Quiche dependencies download since not in IDEA Ultimate project")
+    }
+  }
+}
