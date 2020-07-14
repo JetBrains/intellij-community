@@ -266,7 +266,7 @@ private simple_command_element_inner ::=  literal assignment_command?
                                         | old_arithmetic_expansion {pin(".*")=1}
 
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?] newlines
-            HEREDOC_CONTENT*
+            HEREDOC_CONTENT?
             (HEREDOC_MARKER_END | <<eof>>)
 private heredoc_pipeline_separator ::= ('&&' | '||' | '&' | '|' | '|&' | ';')
 

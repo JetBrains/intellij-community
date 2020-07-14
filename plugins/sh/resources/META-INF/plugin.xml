@@ -25,7 +25,8 @@ Adds support for working with shell script files
     <fileType language="Shell Script" extensions="sh;bash;zsh" hashBangs="sh" fieldName="INSTANCE" name="Shell Script" implementationClass="com.intellij.sh.ShFileType"/>
     <lang.syntaxHighlighter language="Shell Script" implementationClass="com.intellij.sh.highlighter.ShSyntaxHighlighter"/>
     <lang.parserDefinition language="Shell Script" implementationClass="com.intellij.sh.parser.ShParserDefinition"/>
-    <lang.commenter language="Shell Script" implementationClass="com.intellij.sh.ShCommenter"/>
+    <lang.commenter language="Shell Script" implementationClass="com.intellij.sh.editor.ShCommenter"/>
+    <lang.foldingBuilder language="Shell Script" implementationClass="com.intellij.sh.editor.ShFoldingBuilder"/>
     <lang.quoteHandler language="Shell Script" implementationClass="com.intellij.sh.ShQuoteHandler"/>
     <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.codeInsight.ShFindUsagesProvider"/>
     <resolveScopeProvider implementation="com.intellij.sh.psi.impl.ShResolveScopeProvider"/>

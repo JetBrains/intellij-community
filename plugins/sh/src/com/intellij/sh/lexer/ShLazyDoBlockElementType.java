@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IReparseableElementType;
 import com.intellij.sh.ShLanguage;
-import com.intellij.sh.psi.impl.ShLazyDoBlockImpl;
+import com.intellij.sh.psi.impl.ShDoBlockImpl;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.sh.ShTypes.DO;
@@ -27,7 +27,7 @@ public class ShLazyDoBlockElementType extends IReparseableElementType implements
   @NotNull
   @Override
   public ASTNode createNode(CharSequence text) {
-    return new ShLazyDoBlockImpl(this, text);
+    return new ShDoBlockImpl(this, text);
   }
 
   @Override
