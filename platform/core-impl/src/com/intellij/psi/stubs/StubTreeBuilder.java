@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class StubTreeBuilder {
@@ -66,8 +67,11 @@ public final class StubTreeBuilder {
       VirtualFile vFile = file.getFile();
       boolean shouldBuildStubFor = ((IStubFileElementType)elementType).shouldBuildStubFor(vFile);
       if (toBuild && !shouldBuildStubFor) return null;
-      @NotNull List<String> properties = PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(vFile);
-      return new StubBuilderType((IStubFileElementType)elementType, properties);
+      PushedFilePropertiesRetriever pushedFilePropertiesRetriever = PushedFilePropertiesRetriever.getInstance();
+      @NotNull List<String> properties = pushedFilePropertiesRetriever != null
+                                         ? pushedFilePropertiesRetriever.dumpSortedPushedProperties(vFile)
+                                         : Collections.emptyList();
+      return new StubBuilderType((IStubFileElementType)elementType,  properties);
     }
 
     return null;
