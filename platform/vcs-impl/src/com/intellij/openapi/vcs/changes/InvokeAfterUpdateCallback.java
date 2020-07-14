@@ -27,25 +27,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
-class CallbackData {
-  private final static Logger LOG = Logger.getInstance(CallbackData.class);
+class InvokeAfterUpdateCallback {
+  private final static Logger LOG = Logger.getInstance(InvokeAfterUpdateCallback.class);
 
-  @NotNull private final Runnable myCallback;
-  @NotNull private final Runnable myWrapperStarter;
+  public static class CallbackData {
+    @NotNull private final Runnable myCallback;
+    @NotNull private final Runnable myWrapperStarter;
 
-  CallbackData(@NotNull Runnable callback, @NotNull Runnable wrapperStarter) {
-    myCallback = callback;
-    myWrapperStarter = wrapperStarter;
-  }
+    CallbackData(@NotNull Runnable callback, @NotNull Runnable wrapperStarter) {
+      myCallback = callback;
+      myWrapperStarter = wrapperStarter;
+    }
 
-  @NotNull
-  public Runnable getCallback() {
-    return myCallback;
-  }
+    @NotNull
+    public Runnable getCallback() {
+      return myCallback;
+    }
 
-  @NotNull
-  public Runnable getWrapperStarter() {
-    return myWrapperStarter;
+    @NotNull
+    public Runnable getWrapperStarter() {
+      return myWrapperStarter;
+    }
   }
 
   @NotNull

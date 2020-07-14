@@ -154,7 +154,7 @@ public final class UpdateRequestsQueue {
                                 @Nullable String title,
                                 @Nullable ModalityState state) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
-    final CallbackData data = CallbackData.create(myProject, mode, afterUpdate, title, state);
+    final InvokeAfterUpdateCallback.CallbackData data = InvokeAfterUpdateCallback.create(myProject, mode, afterUpdate, title, state);
 
     boolean stopped;
     synchronized (myLock) {
