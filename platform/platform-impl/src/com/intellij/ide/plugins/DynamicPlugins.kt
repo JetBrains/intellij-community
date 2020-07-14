@@ -334,7 +334,7 @@ object DynamicPlugins {
       val element = pathResolver.resolvePath(newBasePath, dependencyConfigFile, pluginXmlFactory)
       val subDescriptor = IdeaPluginDescriptorImpl(descriptor.pluginPath, newBasePath, false)
       if (!subDescriptor.readExternal(element, pathResolver, context.parentContext, descriptor)) {
-        LOG.error("Can't read descriptor $dependencyConfigFile for optional dependency of plugin being loaded/unloaded")
+        LOG.info("Can't read descriptor $dependencyConfigFile for optional dependency of plugin being loaded/unloaded")
         return null
       }
       return subDescriptor
