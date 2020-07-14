@@ -8,10 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
@@ -70,8 +67,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
     PsiClass result = map.get(qualifiedName);
     if (result == null) {
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       result = doFindClass(qualifiedName, scope);
-      if (result != null) {
+      if (result != null && stamp.mayCacheNow()) {
         map.put(qualifiedName, result);
       }
     }

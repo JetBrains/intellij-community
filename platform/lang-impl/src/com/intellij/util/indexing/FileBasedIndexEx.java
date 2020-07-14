@@ -10,11 +10,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -40,12 +44,14 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.IntPredicate;
 
+import static com.intellij.util.indexing.FileBasedIndexImpl.LOG;
 import static com.intellij.util.indexing.FileBasedIndexImpl.getCauseToRebuildIndex;
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack = ThreadLocal.withInitial(() -> new com.intellij.util.containers.Stack<>());
+  private static final RecursionGuard<Object> ourIgnoranceGuard = RecursionManager.createGuard("ignoreDumbMode");
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
   @ApiStatus.Internal
@@ -485,8 +491,32 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @Override
   public @Nullable DumbModeAccessType getCurrentDumbModeAccessType() {
+    DumbModeAccessType result = getCurrentDumbModeAccessType_NoDumbChecks();
+    if (result != null) {
+      LOG.assertTrue(ContainerUtil.exists(ProjectManager.getInstance().getOpenProjects(), p -> DumbService.isDumb(p)), "getCurrentDumbModeAccessType may only be called during indexing");
+    }
+    return result;
+  }
+
+  @Nullable DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
     Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
-    return dumbModeAccessTypeStack.isEmpty() ? null : dumbModeAccessTypeStack.peek();
+    if (dumbModeAccessTypeStack.isEmpty()) {
+      return null;
+    }
+
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ourIgnoranceGuard.prohibitResultCaching(dumbModeAccessTypeStack.get(0));
+    return dumbModeAccessTypeStack.peek();
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public <T> @NotNull Processor<? super T> inheritCurrentDumbAccessType(@NotNull Processor<? super T> processor) {
+    Stack<DumbModeAccessType> stack = ourDumbModeAccessTypeStack.get();
+    if (stack.isEmpty()) return processor;
+
+    DumbModeAccessType access = stack.peek();
+    return t -> ignoreDumbMode(access, () -> processor.process(t));
   }
 
   @ApiStatus.Internal
@@ -494,12 +524,15 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
                                                    @NotNull ThrowableComputable<T, E> computable) throws E {
-    assert ApplicationManager.getApplication().isReadAccessAllowed();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
       Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
+      boolean preventCaching = dumbModeAccessTypeStack.empty();
       dumbModeAccessTypeStack.push(dumbModeAccessType);
       try {
-        return computable.compute();
+        return preventCaching
+               ? ourIgnoranceGuard.computePreventingRecursion(dumbModeAccessType, false, computable)
+               : computable.compute();
       }
       finally {
         DumbModeAccessType type = dumbModeAccessTypeStack.pop();

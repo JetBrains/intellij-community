@@ -39,10 +39,18 @@ public abstract class FileBasedIndex {
   @Nullable
   public abstract VirtualFile getFileBeingCurrentlyIndexed();
 
+  /**
+   * Should be called only in dumb mode and only in a read action
+   */
   @ApiStatus.Internal
   @Nullable
   public DumbModeAccessType getCurrentDumbModeAccessType() {
     throw new UnsupportedOperationException();
+  }
+
+  @ApiStatus.Internal
+  public <T> @NotNull Processor<? super T> inheritCurrentDumbAccessType(@NotNull Processor<? super T> processor) {
+    return processor;
   }
 
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);

@@ -649,8 +649,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (filter == GlobalSearchScope.EMPTY_SCOPE) {
       return false;
     }
-    boolean dumbModeAccessRestricted = getCurrentDumbModeAccessType() == null;
-    if (dumbModeAccessRestricted && ActionUtil.isDumbMode(project)) {
+    if (ActionUtil.isDumbMode(project) && getCurrentDumbModeAccessType_NoDumbChecks() == null) {
       handleDumbMode(project);
     }
 
@@ -664,12 +663,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (isUpToDateCheckEnabled()) {
         try {
           if (!RebuildStatus.isOk(indexId)) {
-            if (dumbModeAccessRestricted) {
+            if (getCurrentDumbModeAccessType_NoDumbChecks() == null) {
               throw new ServiceNotReadyException();
             }
             return false;
           }
-          if (dumbModeAccessRestricted || !ActionUtil.isDumbMode(project)) {
+          if (!ActionUtil.isDumbMode(project) || getCurrentDumbModeAccessType_NoDumbChecks() == null) {
             forceUpdate(project, filter, restrictedFile);
           }
           if (!areUnsavedDocumentsIndexed(indexId)) { // todo: check scope ?

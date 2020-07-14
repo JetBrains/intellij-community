@@ -13,9 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
@@ -186,7 +184,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return classes;
     }
 
-    map.put(name, classes = findAllClasses(name, new EverythingGlobalScope(getProject())));
+    RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+    classes = findAllClasses(name, new EverythingGlobalScope(getProject()));
+    if (stamp.mayCacheNow()) {
+      map.put(name, classes);
+    }
     return classes;
   }
 
@@ -207,6 +209,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       PsiClass[] array = findClassesHeuristically(name, scope);
       if (array != null) return array;
 
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       map = new HashMap<>();
       for (PsiClass psiClass : getClasses(scope)) {
         String psiClassName = psiClass.getName();
@@ -215,7 +218,9 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
           map.put(psiClassName, existing == null ? new PsiClass[]{psiClass} : ArrayUtil.append(existing, psiClass));
         }
       }
-      scopeMap.put(scope, map);
+      if (stamp.mayCacheNow()) {
+        scopeMap.put(scope, map);
+      }
     }
     PsiClass[] classes = map.get(name);
     return classes == null ? PsiClass.EMPTY_ARRAY : classes;
@@ -232,6 +237,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }
     PsiClass[] result = partial.get(Pair.create(scope, name));
     if (result == null) {
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       List<PsiClass> fastClasses = new ArrayList<>();
       for (PsiDirectory directory : getDirectories(scope)) {
         List<PsiFile> sameNamed = ContainerUtil.filter(directory.getFiles(), file -> file.getName().contains(name));
@@ -242,7 +248,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
           }
         }
       }
-      if (!fastClasses.isEmpty()) {
+      if (!fastClasses.isEmpty() && stamp.mayCacheNow()) {
         partial.put(Pair.create(scope, name), result = fastClasses.toArray(PsiClass.EMPTY_ARRAY));
       }
     }

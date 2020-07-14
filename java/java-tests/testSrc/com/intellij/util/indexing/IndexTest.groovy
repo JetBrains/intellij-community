@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -43,6 +44,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.PsiDocumentManagerImpl
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.cache.impl.id.IdIndex
@@ -56,6 +58,9 @@ import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.*
 import com.intellij.psi.search.*
 import com.intellij.psi.stubs.*
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -1333,7 +1338,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       found = fileBasedIndex.getContainingFiles(IdIndex.NAME, wordHash, scope).contains(file)
     }
     if (inDumbMode) {
-      fileBasedIndex.ignoreDumbMode(runnable, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE)
+      fileBasedIndex.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, runnable)
     } else {
       runnable.run()
     }
@@ -1348,5 +1353,67 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   @NotNull
   private Map<IdIndexEntry, Integer> getIdIndexData(@NotNull VirtualFile file) {
     FileBasedIndex.getInstance().getFileData(IdIndex.NAME, file, getProject())
+  }
+
+  void 'test no caching for index queries with different ignoreDumbMode kinds'() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+    
+    def clazz = myFixture.addClass('class Foo {}')
+    assert clazz == myFixture.findClass('Foo')
+
+    DumbServiceImpl.getInstance(project).setDumb(true)
+
+    def indexQueries = 0
+    def plainQueries = 0
+
+    def stubQuery = CachedValuesManager.getManager(project).createCachedValue {
+      indexQueries++
+      CachedValueProvider.Result.create(myFixture.findClass('Foo'), PsiModificationTracker.MODIFICATION_COUNT)
+    }
+    def idQuery = CachedValuesManager.getManager(project).createCachedValue {
+      indexQueries++
+      GlobalSearchScope fileScope = GlobalSearchScope.fileScope(clazz.containingFile);
+      IdIndexEntry key = new IdIndexEntry('Foo', true);
+      def hasId = !FileBasedIndex.instance.getContainingFiles(IdIndex.NAME, key, fileScope).isEmpty()
+      CachedValueProvider.Result.create(hasId,
+                                        PsiModificationTracker.MODIFICATION_COUNT)
+    }
+    def plainValue = CachedValuesManager.getManager(project).createCachedValue {
+      plainQueries++
+      CachedValueProvider.Result.create("x", PsiModificationTracker.MODIFICATION_COUNT)
+    }
+
+    // index queries aren't cached
+    5.times {
+      assert clazz == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) { stubQuery.getValue() }
+    }
+    assert indexQueries >= 5
+
+    indexQueries = 0
+    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) { idQuery.getValue() }
+    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) { idQuery.getValue() }
+    assert indexQueries >= 2
+
+    // non-index queries should work as usual
+    3.times {
+      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) { plainValue.getValue() }
+      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) { plainValue.getValue() }
+    }
+    assert plainQueries > 0 && plainQueries < 3*2
+
+    // cache queries inside single ignoreDumbMode
+    indexQueries = 0
+    psiManager.dropPsiCaches()
+    FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
+      5.times {assert idQuery.getValue() }
+      assert indexQueries > 0 && indexQueries < 5
+    }
+
+    indexQueries = 0
+    psiManager.dropPsiCaches()
+    FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+      5.times {assert clazz == stubQuery.getValue() }
+      assert indexQueries > 0 && indexQueries < 5
+    }
   }
 }

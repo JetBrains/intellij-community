@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import junit.framework.TestCase;
@@ -28,6 +29,7 @@ public interface TestIndexingModeSupporter {
       @Override
       public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {
         indexEverythingAndBecomeDumb(project);
+        RecursionManager.disableMissedCacheAssertions(testRootDisposable);
       }
 
       @Override
@@ -43,6 +45,7 @@ public interface TestIndexingModeSupporter {
       @Override
       public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {
         becomeDumb(project);
+        RecursionManager.disableMissedCacheAssertions(testRootDisposable);
       }
     }, DUMB_EMPTY_INDEX {
       @Override
@@ -50,6 +53,7 @@ public interface TestIndexingModeSupporter {
         ServiceContainerUtil
           .replaceService(ApplicationManager.getApplication(), FileBasedIndex.class, new EmptyFileBasedIndex(), testRootDisposable);
         becomeDumb(project);
+        RecursionManager.disableMissedCacheAssertions(testRootDisposable);
       }
     };
 
