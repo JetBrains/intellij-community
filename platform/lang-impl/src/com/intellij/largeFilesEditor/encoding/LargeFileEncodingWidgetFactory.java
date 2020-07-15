@@ -38,4 +38,9 @@ public class LargeFileEncodingWidgetFactory extends StatusBarEditorBasedWidgetFa
   public void disposeWidget(@NotNull StatusBarWidget widget) {
     Disposer.dispose(widget);
   }
+
+  @Override
+  public boolean isConfigurable() {
+    return false;
+  }
 }
