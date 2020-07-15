@@ -31,10 +31,11 @@ final class PreferMostUsedWeigher extends LookupElementWeigher {
   }
 
   // optimization: do not even create weigher if compiler indices aren't available for now
-  @Nullable
-  static PreferMostUsedWeigher create(@NotNull PsiElement position) {
-    final CompilerReferenceService service = CompilerReferenceService.getInstance(position.getProject());
-    if (service == null) return null;
+  static @Nullable PreferMostUsedWeigher create(@NotNull PsiElement position) {
+    CompilerReferenceService service = CompilerReferenceService.getInstanceIfEnabled(position.getProject());
+    if (service == null) {
+      return null;
+    }
     return service.isActive() || UNIT_TEST_MODE ? new PreferMostUsedWeigher(service, JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) : null;
   }
 

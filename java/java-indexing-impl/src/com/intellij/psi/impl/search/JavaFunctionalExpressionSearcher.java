@@ -55,7 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
+public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
   private static final Logger LOG = Logger.getInstance(JavaFunctionalExpressionSearcher.class);
   public static final int SMART_SEARCH_THRESHOLD = 5;
 
@@ -410,8 +410,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
                                                            @NotNull GlobalSearchScope searchScope,
                                                            @NotNull Project project,
                                                            @NotNull Processor<? super PsiFunctionalExpression> consumer) {
-    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
-    if (compilerReferenceService == null) return true;
+    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstanceIfEnabled(project);
+    if (compilerReferenceService == null) {
+      return true;
+    }
     for (SamDescriptor descriptor : descriptors) {
       CompilerDirectHierarchyInfo info = compilerReferenceService.getFunExpressions(descriptor.samClass, searchScope, JavaFileType.INSTANCE);
       if (info != null && !processFunctionalExpressions(info, descriptor, consumer)) {

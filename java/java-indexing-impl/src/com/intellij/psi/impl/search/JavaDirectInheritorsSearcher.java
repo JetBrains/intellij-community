@@ -315,8 +315,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return null;
     }
 
-    CompilerReferenceService compilerReferenceService = CompilerReferenceService.isEnabled() ? CompilerReferenceService.getInstance(project) : null;
-    // this is possible in CLion, where Java compiler is not defined
+    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstanceIfEnabled(project);
     if (compilerReferenceService == null) {
       return null;
     }

@@ -44,16 +44,14 @@ public class JavaCompilerElementRetriever {
     }
 
     if (result.length != resIdx) {
-      final CompilerReferenceServiceImpl compilerReferenceService =
-        (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(psiFile.getProject());
-      final Set<Module> state = compilerReferenceService.getDirtyScopeHolder().getAllDirtyModules();
-      final VirtualFile file = psiFile.getVirtualFile();
-      final Module moduleForFile = ProjectFileIndex.getInstance(psiFile.getProject()).getModuleForFile(file);
+      CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(psiFile.getProject());
+      Set<Module> state = compilerReferenceService.getDirtyScopeHolder().getAllDirtyModules();
+      VirtualFile file = psiFile.getVirtualFile();
+      Module moduleForFile = ProjectFileIndex.getInstance(psiFile.getProject()).getModuleForFile(file);
       LOG.error("Compiler functional expression index doesn't match to stub index.\n" +
                 "Functional expression indices: " + indices + "\n" +
                 "Does the file belong to dirty scope?: " + state.contains(moduleForFile),
                 new Attachment(psiFile.getName(), psiFile.getText()));
-
       return ContainerUtil.filter(result, Objects::nonNull).toArray(PsiFunctionalExpression.EMPTY_ARRAY);
     }
 

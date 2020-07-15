@@ -119,7 +119,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
     if (qName == null) return Collections.emptyList();
 
     final Project project = aClass.getProject();
-    final CompilerReferenceServiceEx compilerRefService = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(project);
+    CompilerReferenceServiceEx compilerRefService = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(project);
     try {
       int id = compilerRefService.getNameId(qName);
       if (id == 0) return Collections.emptyList();

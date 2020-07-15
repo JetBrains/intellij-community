@@ -79,8 +79,11 @@ public class MethodChainCompletionContributor extends CompletionContributor {
   }
 
   private static List<LookupElement> searchForLookups(ChainCompletionContext context) {
-    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(context.getProject());
-    if (compilerReferenceService == null) return Collections.emptyList();
+    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstanceIfEnabled(context.getProject());
+    if (compilerReferenceService == null) {
+      return Collections.emptyList();
+    }
+
     CompilerReferenceServiceEx compilerReferenceServiceEx = (CompilerReferenceServiceEx) compilerReferenceService;
     ChainSearchTarget target = context.getTarget();
     List<OperationChain> searchResult =

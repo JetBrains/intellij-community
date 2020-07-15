@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
@@ -11,8 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TestCompilerRefFunctionalExpressionSearchAction extends TestCompilerHierarchyBaseAction {
-
+public final class TestCompilerRefFunctionalExpressionSearchAction extends TestCompilerHierarchyBaseAction {
   public TestCompilerRefFunctionalExpressionSearchAction() {
     super("Compiler Reference Functional Expression Search");
   }

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Objects;
 
-public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, ImplicitToStringSearch.SearchParameters> {
+public final class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, ImplicitToStringSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance(ImplicitToStringSearcher.class);
 
   @Override
@@ -38,7 +38,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, I
     DumbService dumbService = DumbService.getInstance(project);
     Map<VirtualFile, int[]> fileOffsets = new THashMap<>();
     dumbService.runReadActionInSmartMode(() -> {
-      CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
+      CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstanceIfEnabled(project);
       GlobalSearchScope scopeWithoutToString = compilerReferenceService == null ? null : compilerReferenceService.getScopeWithoutImplicitToStringCodeReferences(aClass);
       GlobalSearchScope filter = GlobalSearchScopeUtil.toGlobalSearchScope(scopeWithoutToString == null
                                                                            ? parameters.getSearchScope()
