@@ -401,53 +401,6 @@ fun isInSkeletons(element: PsiElement): Boolean {
 private fun isInProvidedSdk(element: PsiElement): Boolean =
   PyThirdPartySdkDetector.EP_NAME.extensions().anyMatch { it.isInThirdPartySdk(element) }
 
-private fun isNamespacePackage(element: PsiElement): Boolean {
-  if (element is PsiDirectory) {
-    val level = LanguageLevel.forElement(element)
-    val initFile = PyUtil.turnDirIntoInit(element) ?: return !level.isPython2
-
-    var nextMultiLinePattern: Pattern? = null
-    var nextTryPattern: Pattern? = null
-    var inDocstring = false
-    var afterTry = false
-
-    loop@ for (line in initFile.text.lineSequence()) {
-      when {
-        inDocstring -> inDocstring = !line.endsWith("\"\"\"")
-        line.isBlank() || line.trim().startsWith("#") || line.startsWith("except") -> continue@loop
-        line.startsWith("\"\"\"") -> inDocstring = true
-        line.startsWith("try:") -> afterTry = true
-
-        afterTry && nextTryPattern != null -> return nextTryPattern.matcher(line).matches()
-        afterTry -> nextTryPattern = when {
-          oneLineNamespaceDeclarations[0].matcher(line).matches() -> oneLineNamespaceDeclarations[1]
-          oneLineNamespaceDeclarations[1].matcher(line).matches() -> oneLineNamespaceDeclarations[0]
-          else -> return false
-        }
-
-        oneLineNamespaceDeclarations.any { it.matcher(line).matches()} -> return true
-        nextMultiLinePattern == null -> {
-          nextMultiLinePattern = multilineNamespaceDeclarations.find { it[0].matcher(line).matches() }?.get(1) ?: return false
-        }
-        nextMultiLinePattern.matcher(line).matches() -> return true
-        else -> return false
-      }
-    }
-  }
-  return false
-}
-
-private val oneLineNamespaceDeclarations = listOf(
-  Pattern.compile("\\s*__path__[ ]?=[ ]?__import__\\(['\"]pkgutil['\"]\\).extend_path\\(__path__, __name__\\).*"),
-  Pattern.compile("\\s*__import__\\(['\"]pkg_resources['\"]\\).declare_namespace\\(__name__\\).*"))
-
-private val multilineNamespaceDeclarations = listOf(
-  listOf(Pattern.compile("^from pkgutil import extend_path.*"), Pattern.compile("^__path__[ ]?=[ ]?extend_path\\(__path__,[ ]?__name__\\).*")),
-  listOf(Pattern.compile("^import pkgutil.*"), Pattern.compile("^__path__[ ]?=[ ]?pkgutil\\.extend_path\\(__path__,[ ]?__name__\\).*")),
-  listOf(Pattern.compile("^from pkg_resources import declare_namespace.*"), Pattern.compile("^declare_namespace\\(__name__\\).*")),
-  listOf(Pattern.compile("^import pkg_resources.*"), Pattern.compile("^pkg_resources.declare_namespace\\(__name__\\).*")))
-
-
 private fun isUserFile(element: PsiElement, module: Module?) =
   module != null &&
   element is PsiFileSystemItem &&
