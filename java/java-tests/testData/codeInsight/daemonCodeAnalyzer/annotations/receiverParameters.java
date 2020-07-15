@@ -22,6 +22,8 @@ class C {
   void m1b(<error descr="'@A' not applicable to type use">@A</error> C this) { }
 
   void m2(@TA Object other, @TA C <error descr="The receiver should be the first parameter">this</error>) { }
+  void m2b(//comment
+    @TA C this) { }
 
   void m3a(@TA <error descr="The receiver type does not match the enclosing class type">Object</error> this) { }
   void m3b(@TA <error descr="The receiver type does not match the enclosing class type">int</error> this) { }

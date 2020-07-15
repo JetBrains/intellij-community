@@ -668,7 +668,7 @@ public class AnnotationsHighlightUtil {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
     }
 
-    PsiElement leftNeighbour = PsiTreeUtil.skipWhitespacesBackward(parameter);
+    PsiElement leftNeighbour = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parameter);
     if (leftNeighbour != null && !PsiUtil.isJavaToken(leftNeighbour, JavaTokenType.LPARENTH)) {
       String text = JavaErrorBundle.message("receiver.wrong.position");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
