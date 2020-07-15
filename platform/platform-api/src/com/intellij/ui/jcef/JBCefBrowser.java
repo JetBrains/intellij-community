@@ -49,6 +49,7 @@ public class JBCefBrowser implements JBCefDisposable {
   @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
   @NotNull private final CefFocusHandler myCefFocusHandler;
   @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
+  @NotNull private final CefKeyboardHandler myKeyboardHandler;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
   private final AtomicInteger myJSQueryCounter = new AtomicInteger(0);
@@ -204,9 +205,9 @@ public class JBCefBrowser implements JBCefDisposable {
       });
     }
 
-    myCefClient.addKeyboardHandler(new CefKeyboardHandlerAdapter() {
+    myCefClient.addKeyboardHandler(myKeyboardHandler = new CefKeyboardHandlerAdapter() {
       @Override
-      public boolean onPreKeyEvent(CefBrowser browser, CefKeyEvent cefKeyEvent, BoolRef is_keyboard_shortcut) {
+      public boolean onKeyEvent(CefBrowser browser, CefKeyEvent cefKeyEvent) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         boolean consume = focusOwner != browser.getUIComponent();
         if (consume && SystemInfoRt.isMac && isUpDownKeyEvent(cefKeyEvent)) return true; // consume
@@ -367,6 +368,7 @@ public class JBCefBrowser implements JBCefDisposable {
   public void dispose() {
     myDisposeHelper.dispose(() -> {
       myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
+      myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
       if (myLifeSpanHandler != null) myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
       myCefBrowser.stopLoad();
       myCefBrowser.close(false);
