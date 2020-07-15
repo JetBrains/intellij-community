@@ -26,6 +26,7 @@ import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
@@ -84,27 +85,10 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
     List<PsiClass> inheritors = new ArrayList<>();
     Ref<String> message = new Ref<>();
     ClassInheritorsSearch.search(aClass, false).forEach(inheritor -> {
-      if (PsiUtil.isLocalOrAnonymousClass(inheritor)) {
-        message.set("intention.error.make.sealed.class.has.anonymous.or.local.inheritors");
+      String errorTitle = checkInheritor(parentFile, module, inheritor);
+      if (errorTitle != null) {
+        message.set(errorTitle);
         return false;
-      }
-
-      if (module == null) {
-        PsiJavaFile file = tryCast(inheritor.getContainingFile(), PsiJavaFile.class);
-        if (file == null) {
-          message.set("intention.error.make.sealed.class.inheritors.not.in.java.file");
-          return false;
-        }
-        if (!parentFile.getPackageName().equals(file.getPackageName())) {
-          message.set("intention.error.make.sealed.class.different.packages");
-          return false;
-        }
-      }
-      else {
-        if (JavaModuleGraphUtil.findDescriptorByElement(inheritor) != module) {
-          message.set("intention.error.make.sealed.class.different.modules");
-          return false;
-        }
       }
 
       inheritors.add(inheritor);
@@ -142,6 +126,26 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
       PsiModifierList modifierList = Objects.requireNonNull(aClass.getModifierList());
       modifierList.setModifierProperty(modifier, true);
     });
+  }
+
+  static @Nullable String checkInheritor(@NotNull PsiJavaFile parentFile, @Nullable PsiJavaModule module, @NotNull PsiClass inheritor) {
+    if (PsiUtil.isLocalOrAnonymousClass(inheritor)) {
+      return "intention.error.make.sealed.class.has.anonymous.or.local.inheritors";
+    }
+
+    if (module == null) {
+      PsiJavaFile file = tryCast(inheritor.getContainingFile(), PsiJavaFile.class);
+      if (file == null) return "intention.error.make.sealed.class.inheritors.not.in.java.file";
+      if (!parentFile.getPackageName().equals(file.getPackageName())) {
+        return "intention.error.make.sealed.class.different.packages";
+      }
+    }
+    else {
+      if (JavaModuleGraphUtil.findDescriptorByElement(inheritor) != module) {
+        return "intention.error.make.sealed.class.different.modules";
+      }
+    }
+    return null;
   }
 
   private static void showError(@NotNull Project project, Editor editor, @PropertyKey(resourceBundle = JavaBundle.BUNDLE) String message) {

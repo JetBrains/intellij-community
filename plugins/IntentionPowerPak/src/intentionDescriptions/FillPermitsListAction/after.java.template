@@ -1,0 +1,4 @@
+public sealed class X permits Y {
+}
+
+final class Y extends X {}

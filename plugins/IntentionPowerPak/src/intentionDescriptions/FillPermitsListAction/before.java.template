@@ -1,0 +1,4 @@
+public sealed class <spot>X</spot> {
+}
+
+final class Y extends X {}
