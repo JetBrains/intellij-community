@@ -3,6 +3,7 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Iterator;
 
 final class StackTouchBars {
   private final ArrayDeque<BarContainer> myContainersStack = new ArrayDeque<>();
@@ -31,6 +33,18 @@ final class StackTouchBars {
   TouchBar getTopTouchBar() {
     final BarContainer topContainer = myContainersStack.peek();
     return topContainer == null ? null : topContainer.get();
+  }
+
+  synchronized
+  @Nullable
+  BarContainer findTopProjectContainer(@NotNull Project project) {
+    for (Iterator<BarContainer> it = myContainersStack.descendingIterator(); it.hasNext(); ) {
+      BarContainer b = it.next();
+      if (b.getProject() == project) {
+        return b;
+      }
+    }
+    return null;
   }
 
   synchronized void pop(@Nullable Condition<? super BarContainer> condition) {

@@ -57,6 +57,13 @@ final class ProjectData {
         }
         else if (!hasActiveDebugSession) {
           debugBar.hide();
+          // TODO remove previous workaround by Artem Bochkarev after 2020.2 release
+          // This helps with permanently open debug touchbar
+          // Also these lines are probably should be removed after refactoring
+          BarContainer defaultBar = myPermanentBars.get(BarType.DEFAULT);
+          if (defaultBar != null) {
+            defaultBar.show();
+          }
         }
       }
 
@@ -108,7 +115,7 @@ final class ProjectData {
     BarContainer result = myPermanentBars.get(type);
     if (result == null) {
       result = new BarContainer(type, TouchBar.EMPTY, null, null);
-      _fillBarContainer(result);
+      _fillBarContainer(result, myProject);
       myPermanentBars.put(type, result);
     }
     return result;
@@ -190,7 +197,7 @@ final class ProjectData {
     removed.release();
   }
 
-  private static void _fillBarContainer(@NotNull BarContainer container) {
+  private static void _fillBarContainer(@NotNull BarContainer container, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final @NotNull BarType type = container.getType();
@@ -233,6 +240,7 @@ final class ProjectData {
     }
 
     container.set(BuildUtils.buildFromCustomizedGroup(type.name(), mainLayout, replaceEsc), alts);
+    container.setProject(project);
   }
 
   void releaseAll() {
@@ -250,7 +258,7 @@ final class ProjectData {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myPermanentBars.forEach((t, bc) -> {
       bc.release();
-      _fillBarContainer(bc);
+      _fillBarContainer(bc, myProject);
     });
     // System.out.println("reloaded permanent bars");
   }
