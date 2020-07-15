@@ -100,11 +100,7 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun clearSourceFolders() {
-    for (sourceRoot in modifiableRootModel.currentModel.moduleEntity?.sourceRoots ?: emptySequence()) {
-      if (contentEntryUrl.isEqualOrParentOf(sourceRoot.url)) {
-        diff.removeEntity(sourceRoot)
-      }
-    }
+    currentContentEntry.value.sourceRootEntities.forEach { sourceRoot -> diff.removeEntity(sourceRoot) }
   }
 
   private fun addExcludeFolder(excludeUrl: VirtualFileUrl): ExcludeFolder {

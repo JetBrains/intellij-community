@@ -273,10 +273,6 @@ class ModifiableRootModelBridge(
     for (contentRoot in moduleEntity.contentRoots) {
       diff.removeEntity(contentRoot)
     }
-
-    for (sourceRoot in moduleEntity.sourceRoots) {
-      diff.removeEntity(sourceRoot)
-    }
   }
 
   fun collectChangesAndDispose(): WorkspaceEntityStorageBuilder? {
