@@ -84,9 +84,9 @@ internal class ConnectionId private constructor(
   companion object {
     /** This function should be [@Synchronized] because interner is not thread-save */
     @Synchronized
-    fun <T : WorkspaceEntity, SUBT : WorkspaceEntity> create(
-      parentClass: Class<T>,
-      childClass: Class<SUBT>,
+    fun <Parent : WorkspaceEntity, Child : WorkspaceEntity> create(
+      parentClass: Class<Parent>,
+      childClass: Class<Child>,
       connectionType: ConnectionType,
       isParentNullable: Boolean,
       isChildNullable: Boolean
@@ -194,10 +194,10 @@ internal class MutableRefsTable(
   fun removeRefsByParent(connectionId: ConnectionId, parentId: EntityId) {
     @Suppress("IMPLICIT_CAST_TO_ANY")
     when (connectionId.connectionType) {
-      ConnectionId.ConnectionType.ONE_TO_MANY -> getOneToManyMutableMap(connectionId).removeValue(parentId.arrayId)
-      ConnectionId.ConnectionType.ONE_TO_ONE -> getOneToOneMutableMap(connectionId).removeValue(parentId.arrayId)
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> getOneToAbstractManyMutableMap(connectionId).removeValue(parentId)
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> getAbstractOneToOneMutableMap(connectionId).inverse().remove(parentId)
+      ConnectionType.ONE_TO_MANY -> getOneToManyMutableMap(connectionId).removeValue(parentId.arrayId)
+      ConnectionType.ONE_TO_ONE -> getOneToOneMutableMap(connectionId).removeValue(parentId.arrayId)
+      ConnectionType.ONE_TO_ABSTRACT_MANY -> getOneToAbstractManyMutableMap(connectionId).removeValue(parentId)
+      ConnectionType.ABSTRACT_ONE_TO_ONE -> getAbstractOneToOneMutableMap(connectionId).inverse().remove(parentId)
     }.let { }
   }
 
@@ -216,31 +216,31 @@ internal class MutableRefsTable(
   fun removeParentToChildRef(connectionId: ConnectionId, parentId: EntityId, childId: EntityId) {
     @Suppress("IMPLICIT_CAST_TO_ANY")
     when (connectionId.connectionType) {
-      ConnectionId.ConnectionType.ONE_TO_MANY -> getOneToManyMutableMap(connectionId).remove(childId.arrayId, parentId.arrayId)
-      ConnectionId.ConnectionType.ONE_TO_ONE -> getOneToOneMutableMap(connectionId).remove(childId.arrayId, parentId.arrayId)
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> getOneToAbstractManyMutableMap(connectionId).remove(childId, parentId)
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> getAbstractOneToOneMutableMap(connectionId).remove(childId, parentId)
+      ConnectionType.ONE_TO_MANY -> getOneToManyMutableMap(connectionId).remove(childId.arrayId, parentId.arrayId)
+      ConnectionType.ONE_TO_ONE -> getOneToOneMutableMap(connectionId).remove(childId.arrayId, parentId.arrayId)
+      ConnectionType.ONE_TO_ABSTRACT_MANY -> getOneToAbstractManyMutableMap(connectionId).remove(childId, parentId)
+      ConnectionType.ABSTRACT_ONE_TO_ONE -> getAbstractOneToOneMutableMap(connectionId).remove(childId, parentId)
     }.let { }
   }
 
   internal fun updateChildrenOfParent(connectionId: ConnectionId, parentId: EntityId, childrenIds: Collection<EntityId>) {
     when (connectionId.connectionType) {
-      ConnectionId.ConnectionType.ONE_TO_MANY -> {
+      ConnectionType.ONE_TO_MANY -> {
         val copiedMap = getOneToManyMutableMap(connectionId)
         copiedMap.removeValue(parentId.arrayId)
         val children = childrenIds.map { it.arrayId }.toIntArray()
         copiedMap.putAll(children, parentId.arrayId)
       }
-      ConnectionId.ConnectionType.ONE_TO_ONE -> {
+      ConnectionType.ONE_TO_ONE -> {
         val copiedMap = getOneToOneMutableMap(connectionId)
         copiedMap.putForce(childrenIds.single().arrayId, parentId.arrayId)
       }
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
+      ConnectionType.ONE_TO_ABSTRACT_MANY -> {
         val copiedMap = getOneToAbstractManyMutableMap(connectionId)
         copiedMap.removeValue(parentId)
         childrenIds.forEach { copiedMap[it] = parentId }
       }
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
+      ConnectionType.ABSTRACT_ONE_TO_ONE -> {
         val copiedMap = getAbstractOneToOneMutableMap(connectionId)
         copiedMap.inverse().remove(parentId)
         childrenIds.forEach { copiedMap[it] = parentId }
@@ -248,34 +248,35 @@ internal class MutableRefsTable(
     }.let { }
   }
 
-  fun <SUBT : WorkspaceEntityBase> updateOneToManyChildrenOfParent(connectionId: ConnectionId, parentId: Int, childrenEntities: Sequence<SUBT>) {
+  fun <Child : WorkspaceEntityBase> updateOneToManyChildrenOfParent(connectionId: ConnectionId, parentId: Int, childrenEntities: Sequence<Child>) {
     val copiedMap = getOneToManyMutableMap(connectionId)
     copiedMap.removeValue(parentId)
     val children = childrenEntities.map { it.id.arrayId }.toList().toIntArray()
     copiedMap.putAll(children, parentId)
   }
 
-  fun <SUBT : WorkspaceEntityBase> updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
+  fun <Child : WorkspaceEntityBase> updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
                                                                            parentId: EntityId,
-                                                                           childrenEntities: Sequence<SUBT>) {
+                                                                           childrenEntities: Sequence<Child>) {
     val copiedMap = getOneToAbstractManyMutableMap(connectionId)
     copiedMap.removeValue(parentId)
     childrenEntities.forEach { copiedMap[it.id] = parentId }
   }
 
-  fun <T : WorkspaceEntityBase, REALT : T> updateOneToAbstractOneParentOfChild(connectionId: ConnectionId, childId: EntityId, parentEntity: REALT) {
+  fun <Parent : WorkspaceEntityBase, OriginParent : Parent> updateOneToAbstractOneParentOfChild(connectionId: ConnectionId, childId: EntityId,
+                                                                                                parentEntity: OriginParent) {
     val copiedMap = getAbstractOneToOneMutableMap(connectionId)
     copiedMap.remove(childId)
     copiedMap[childId] = parentEntity.id
   }
 
-  fun <SUBT : WorkspaceEntityBase> updateOneToOneChildOfParent(connectionId: ConnectionId, parentId: Int, childEntity: SUBT) {
+  fun <Child : WorkspaceEntityBase> updateOneToOneChildOfParent(connectionId: ConnectionId, parentId: Int, childEntity: Child) {
     val copiedMap = getOneToOneMutableMap(connectionId)
     copiedMap.removeValue(parentId)
     copiedMap.put(childEntity.id.arrayId, parentId)
   }
 
-  fun <T : WorkspaceEntityBase> updateOneToOneParentOfChild(connectionId: ConnectionId, childId: Int, parentEntity: T) {
+  fun <Parent : WorkspaceEntityBase> updateOneToOneParentOfChild(connectionId: ConnectionId, childId: Int, parentEntity: Parent) {
     val copiedMap = getOneToOneMutableMap(connectionId)
     copiedMap.removeKey(childId)
     copiedMap.put(childId, parentEntity.id.arrayId)
@@ -283,22 +284,22 @@ internal class MutableRefsTable(
 
   internal fun updateParentOfChild(connectionId: ConnectionId, childId: EntityId, parentId: EntityId) {
     when (connectionId.connectionType) {
-      ConnectionId.ConnectionType.ONE_TO_MANY -> {
+      ConnectionType.ONE_TO_MANY -> {
         val copiedMap = getOneToManyMutableMap(connectionId)
         copiedMap.removeKey(childId.arrayId)
         copiedMap.putAll(intArrayOf(childId.arrayId), parentId.arrayId)
       }
-      ConnectionId.ConnectionType.ONE_TO_ONE -> {
+      ConnectionType.ONE_TO_ONE -> {
         val copiedMap = getOneToOneMutableMap(connectionId)
         copiedMap.removeKey(childId.arrayId)
         copiedMap.putForce(childId.arrayId, parentId.arrayId)
       }
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
+      ConnectionType.ONE_TO_ABSTRACT_MANY -> {
         val copiedMap = getOneToAbstractManyMutableMap(connectionId)
         copiedMap.remove(childId)
         copiedMap[childId] = parentId
       }
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
+      ConnectionType.ABSTRACT_ONE_TO_ONE -> {
         val copiedMap = getAbstractOneToOneMutableMap(connectionId)
         copiedMap.remove(childId)
         copiedMap[childId] = parentId
@@ -306,7 +307,7 @@ internal class MutableRefsTable(
     }.let { }
   }
 
-  fun <T : WorkspaceEntityBase> updateOneToManyParentOfChild(connectionId: ConnectionId, childId: Int, parent: T) {
+  fun <Parent : WorkspaceEntityBase> updateOneToManyParentOfChild(connectionId: ConnectionId, childId: Int, parent: Parent) {
     val copiedMap = getOneToManyMutableMap(connectionId)
     copiedMap.removeKey(childId)
     copiedMap.putAll(intArrayOf(childId), parent.id.arrayId)
@@ -346,7 +347,7 @@ internal sealed class AbstractRefsTable {
   internal abstract val oneToAbstractManyContainer: Map<ConnectionId, LinkedBidirectionalMap<EntityId, EntityId>>
   internal abstract val abstractOneToOneContainer: Map<ConnectionId, BiMap<EntityId, EntityId>>
 
-  fun <T : WorkspaceEntity, SUBT : WorkspaceEntity> findConnectionId(parentClass: Class<T>, childClass: Class<SUBT>): ConnectionId? {
+  fun <Parent : WorkspaceEntity, Child : WorkspaceEntity> findConnectionId(parentClass: Class<Parent>, childClass: Class<Child>): ConnectionId? {
     val parentClassId = parentClass.toClassId()
     val childClassId = childClass.toClassId()
     return (oneToManyContainer.keys.find { it.parentClass == parentClassId && it.childClass == childClassId }
@@ -470,21 +471,21 @@ internal sealed class AbstractRefsTable {
     return abstractOneToOneContainer[connectionId]?.get(childId)
   }
 
-  fun <SUBT : WorkspaceEntity> getOneToOneChild(connectionId: ConnectionId, parentId: Int, transformer: (Int) -> SUBT?): SUBT? {
+  fun <Child : WorkspaceEntity> getOneToOneChild(connectionId: ConnectionId, parentId: Int, transformer: (Int) -> Child?): Child? {
     val bimap = oneToOneContainer[connectionId] ?: return null
     if (!bimap.containsValue(parentId)) return null
 
     return transformer(bimap.getKey(parentId))
   }
 
-  fun <T : WorkspaceEntity> getOneToOneParent(connectionId: ConnectionId, childId: Int, transformer: (Int) -> T?): T? {
+  fun <Parent : WorkspaceEntity> getOneToOneParent(connectionId: ConnectionId, childId: Int, transformer: (Int) -> Parent?): Parent? {
     val bimap = oneToOneContainer[connectionId] ?: return null
     if (!bimap.containsKey(childId)) return null
 
     return transformer(bimap.get(childId))
   }
 
-  fun <T : WorkspaceEntity> getOneToManyParent(connectionId: ConnectionId, childId: Int, transformer: (Int) -> T?): T? {
+  fun <Parent : WorkspaceEntity> getOneToManyParent(connectionId: ConnectionId, childId: Int, transformer: (Int) -> Parent?): Parent? {
     val bimap = oneToManyContainer[connectionId] ?: return null
     if (!bimap.containsKey(childId)) return null
 
