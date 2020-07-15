@@ -62,7 +62,7 @@ private fun getEditorFont() = fontOptions.getSize(fontOptions.fontFamily)
 class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title")) {
   private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
-  private val lafProperty = propertyGraph.graphProperty { laf.getLookAndFeelReference(LafManager.LafReferenceType.CURRENT) }
+  private val lafProperty = propertyGraph.graphProperty { laf.getLookAndFeelReference(LafManager.LafType.ALL) }
   private val ideFontProperty = propertyGraph.graphProperty { getIdeFont() }
   private val editorFontProperty = propertyGraph.graphProperty { getEditorFont() }
   private val keymapProperty = propertyGraph.graphProperty { keymapManager.activeKeymap }
@@ -130,7 +130,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       blockRow {
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         row {
-          comboBox<LafManager.LafReference>(laf.lafComboBoxModel, lafProperty)
+          comboBox<LafManager.LafReference>(laf.getLafComboBoxModel(LafManager.LafType.ALL), lafProperty)
         }
       }.largeGapAfter()
       blockRow {

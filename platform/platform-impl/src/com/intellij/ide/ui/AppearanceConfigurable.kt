@@ -94,22 +94,22 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           titledRow(message("label.preferred.theme")) {
             fullRow {
               label(message("combobox.preferred.light.laf"))
-              comboBox(lafManager.getLafComboBoxModel(LafManager.ModelType.LIGHT),
-                       { lafManager.getLookAndFeelReference(LafManager.LafType.PREFERRED_LIGHT) },
-                       { })
+              comboBox(lafManager.getLafComboBoxModel(LafManager.LafType.LIGHT),
+                       { lafManager.getLookAndFeelReference(LafManager.LafType.LIGHT) },
+                       { lafManager.setLookAndFeelReference(LafManager.LafType.LIGHT, it) })
 
               label(message("combobox.preferred.dark.laf")).withLargeLeftGap()
-              comboBox(lafManager.getLafComboBoxModel(LafManager.ModelType.DARK),
-                       { lafManager.getLookAndFeelReference(LafManager.LafType.PREFERRED_DARK) },
-                       { })
+              comboBox(lafManager.getLafComboBoxModel(LafManager.LafType.DARK),
+                       { lafManager.getLookAndFeelReference(LafManager.LafType.DARK) },
+                       { lafManager.setLookAndFeelReference(LafManager.LafType.DARK, it)})
             }.largeGapAfter()
           }
         }
         else {
           fullRow {
             label(message("combobox.look.and.feel"))
-            comboBox(lafManager.lafComboBoxModel,
-                     { lafManager.getLookAndFeelReference(LafManager.LafType.CURRENT) },
+            comboBox(lafManager.getLafComboBoxModel(LafManager.LafType.ALL),
+                     { lafManager.getLookAndFeelReference(LafManager.LafType.ALL) },
                      { QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) })
               .shouldUpdateLaF()
           }.largeGapAfter()
