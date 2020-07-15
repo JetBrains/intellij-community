@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,18 +24,14 @@ class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
 
   private static final Logger logger = Logger.getInstance(ChangeLargeFileEncodingAction.class);
 
-  private final LargeFileEditorAccessor myLargeFileEditorAccessor;
-  private final Project project;
   private final StatusBar statusBar;
 
-  ChangeLargeFileEncodingAction(LargeFileEditorAccessor largeFileEditorAccessor, Project project, StatusBar statusBar) {
-    this.myLargeFileEditorAccessor = largeFileEditorAccessor;
-    this.project = project;
+  ChangeLargeFileEncodingAction(StatusBar statusBar) {
     this.statusBar = statusBar;
   }
 
   private boolean chosen(@NotNull Charset charset) {
-    LargeFileEditorAccess largeFileEditorAccess = myLargeFileEditorAccessor.getAccess(project, statusBar);
+    LargeFileEditorAccess largeFileEditorAccess = LargeFileEditorAccessor.getAccess(statusBar);
     if (largeFileEditorAccess == null) {
       logger.warn("tried to change encoding while editor is not accessible");
       return false;

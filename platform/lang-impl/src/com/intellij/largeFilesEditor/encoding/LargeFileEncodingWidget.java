@@ -31,13 +31,10 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
   private final TextPanel myComponent;
   private Alarm myUpdateAlarm;
 
-  private final LargeFileEditorAccessor myLargeFileEditorAccessor;
-
   private boolean myActionEnabled;
 
-  public LargeFileEncodingWidget(@NotNull final Project project, LargeFileEditorAccessor largeFileEditorAccessor) {
+  public LargeFileEncodingWidget(@NotNull final Project project) {
     super(project);
-    myLargeFileEditorAccessor = largeFileEditorAccessor;
     myComponent = new TextPanel.WithIconAndArrows();
     myComponent.setBorder(WidgetBorder.WIDE);
   }
@@ -54,7 +51,7 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
 
   @Override
   public StatusBarWidget copy() {
-    return new LargeFileEncodingWidget(getProject(), myLargeFileEditorAccessor);
+    return new LargeFileEncodingWidget(getProject());
   }
 
   @Override
@@ -80,13 +77,14 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
         return true;
       }
     }.installOn(myComponent, true);
+    update();
   }
 
   private void tryShowPopup() {
     if (!myActionEnabled) {
       return;
     }
-    LargeFileEditorAccess largeFileEditorAccess = myLargeFileEditorAccessor.getAccess(getProject(), myStatusBar);
+    LargeFileEditorAccess largeFileEditorAccess = LargeFileEditorAccessor.getAccess(myStatusBar);
     if (largeFileEditorAccess != null) {
       showPopup(largeFileEditorAccess);
     }
@@ -98,7 +96,7 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
   }
 
   private void showPopup(@NotNull LargeFileEditorAccess largeFileEditorAccess) {
-    ChangeLargeFileEncodingAction action = new ChangeLargeFileEncodingAction(myLargeFileEditorAccessor, getProject(), myStatusBar);
+    ChangeLargeFileEncodingAction action = new ChangeLargeFileEncodingAction(myStatusBar);
     JComponent where = getComponent();
     ListPopup popup = action.createPopup(largeFileEditorAccess.getVirtualFile(), largeFileEditorAccess.getEditor(),
                                          where);
@@ -116,7 +114,7 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
   private void update() {
     if (isDisposed()) return;
 
-    LargeFileEditorAccess largeFileEditorAccess = myLargeFileEditorAccessor.getAccess(getProject(), myStatusBar);
+    LargeFileEditorAccess largeFileEditorAccess = LargeFileEditorAccessor.getAccess(myStatusBar);
 
     myActionEnabled = false;
     String charsetName;
