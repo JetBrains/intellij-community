@@ -13742,6 +13742,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unsafeCastFromDynamic/nullable.kt");
         }
 
+        @TestMetadata("nullableAny.kt")
+        public void testNullableAny() throws Exception {
+            runTest("testData/inspectionsLocal/unsafeCastFromDynamic/nullableAny.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/unsafeCastFromDynamic/simple.kt");
