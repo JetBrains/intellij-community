@@ -39,7 +39,6 @@ import java.util.stream.Stream;
  directly in storage used for offset and in case of btree enumerator directly in btree leaf.
  **/
 public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value> {
-
   private static final Logger LOG = Logger.getInstance(PersistentHashMap.class);
   private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
   private static final int DEAD_KEY_NUMBER_MASK = 0xFFFFFFFF;
@@ -831,7 +830,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     }
   }
 
-  static class CompactionRecordInfo {
+  static final class CompactionRecordInfo {
     final int key;
     final int address;
     long valueAddress;

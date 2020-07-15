@@ -736,19 +736,17 @@ public final class Switcher extends AnAction implements DumbAware {
       return myPopup.isDisposed() ? null : myPopup.getContent().getFocusCycleRootAncestor();
     }
 
-    @NotNull
-    static List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
-      return onlyEdited ? Arrays.asList(IdeDocumentHistory.getInstance(project).getChangedFiles())
-                        : getRecentFiles(project);
+    static @NotNull List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
+      return onlyEdited ? IdeDocumentHistory.getInstance(project).getChangedFiles() : getRecentFiles(project);
     }
 
     @NotNull
     static List<FileInfo> getFilesToShow(@NotNull Project project, @NotNull List<VirtualFile> filesForInit,
                                          int toolWindowsCount, boolean pinned) {
-      final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-      final ArrayList<FileInfo> filesData = new ArrayList<>();
-      final ArrayList<FileInfo> editors = new ArrayList<>();
-      LinkedHashSet<VirtualFile> addedFiles = new LinkedHashSet<>();
+      FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+      List<FileInfo> filesData = new ArrayList<>();
+      ArrayList<FileInfo> editors = new ArrayList<>();
+      Set<VirtualFile> addedFiles = new LinkedHashSet<>();
       if (!pinned) {
         for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
           editors.add(new FileInfo(pair.first, pair.second, project));

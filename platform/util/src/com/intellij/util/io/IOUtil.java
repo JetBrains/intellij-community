@@ -4,9 +4,8 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +20,7 @@ import java.util.function.IntFunction;
 
 public final class IOUtil {
   @SuppressWarnings("SpellCheckingInspection") public static final boolean BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER =
-    SystemProperties.getBooleanProperty("idea.bytebuffers.use.native.byte.order", true);
+    Boolean.parseBoolean(System.getProperty("idea.bytebuffers.use.native.byte.order", "true"));
 
   private static final int STRING_HEADER_SIZE = 1;
   private static final int STRING_LENGTH_THRESHOLD = 255;
@@ -169,7 +168,7 @@ public final class IOUtil {
     boolean ok = true;
     if (files != null) {
       for (File f : files) {
-        ok &= FileUtil.delete(f);
+        ok &= FileUtilRt.delete(f);
       }
     }
 
@@ -201,12 +200,12 @@ public final class IOUtil {
   }
 
   public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, ? extends IOException> factoryComputable,
-                                             @NotNull final Path file) throws IOException {
+                                             @NotNull Path file) throws IOException {
     return openCleanOrResetBroken(factoryComputable, file.toFile());
   }
 
   public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, ? extends IOException> factoryComputable,
-                                             @NotNull final File file) throws IOException {
+                                             @NotNull File file) throws IOException {
     return openCleanOrResetBroken(factoryComputable, () -> deleteAllFilesStartingWith(file));
   }
 

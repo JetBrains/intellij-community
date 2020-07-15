@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.ide.IdeBundle;
@@ -46,8 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+// used by Rider
 public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProvider {
-
   @NotNull
   @Override
   public List<SearchScope> getPredefinedScopes(@NotNull Project project,
@@ -221,7 +221,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
   @NotNull
   public static GlobalSearchScope recentFilesScope(@NotNull Project project, boolean changedOnly) {
     String name = changedOnly ? IdeBundle.message("scope.recent.modified.files") : IdeBundle.message("scope.recent.files");
-    List<VirtualFile> files = changedOnly ? Arrays.asList(IdeDocumentHistory.getInstance(project).getChangedFiles()) :
+    List<VirtualFile> files = changedOnly ? IdeDocumentHistory.getInstance(project).getChangedFiles() :
                               JBIterable.from(EditorHistoryManager.getInstance(project).getFileList())
                                 .append(FileEditorManager.getInstance(project).getOpenFiles()).unique().toList();
 
