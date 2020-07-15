@@ -190,29 +190,33 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @NotNull
   public Runnable wrapLaterInvocation(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
-    if (isWriteSafeModality(modalityState)) {
-      return new Runnable() {
-        @Override
-        public void run() {
+    return new Runnable() {
+      @Override
+      public void run() {
+        if (isWriteSafeModality(modalityState)) {
           ApplicationManager.getApplication().assertIsWriteThread();
-          final boolean prev = myWritingAllowed;
-          myWritingAllowed = true;
-          try {
-            runnable.run();
-          }
-          finally {
-            myWritingAllowed = prev;
-          }
+          allowWritingInside(runnable);
+        } else {
+          runnable.run();
         }
+      }
 
-        @Override
-        public String toString() {
-          return runnable.toString();
-        }
-      };
+      @Override
+      public String toString() {
+        return runnable.toString();
+      }
+    };
+  }
+
+  private void allowWritingInside(@NotNull Runnable runnable) {
+    final boolean prev = myWritingAllowed;
+    myWritingAllowed = true;
+    try {
+      runnable.run();
     }
-
-    return runnable;
+    finally {
+      myWritingAllowed = prev;
+    }
   }
 
   @Override
