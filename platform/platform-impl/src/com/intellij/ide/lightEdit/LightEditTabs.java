@@ -15,7 +15,9 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -33,11 +35,11 @@ import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.Collection;
 import java.util.Collections;
@@ -64,6 +66,13 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
       }
     });
     myEditorManager.addListener(this, parentDisposable);
+    MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    busConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
+        revalidateAndRepaint();
+      }
+    });
   }
 
   void addEditorTab(@NotNull LightEditorInfo editorInfo) {
@@ -113,8 +122,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   private final class CloseTabAction extends DumbAwareAction implements LightEditCompatible {
     private final LightEditorInfo myEditorInfo;
 
-    @SuppressWarnings("UseJBColor")
-    private final Icon myUnsavedIcon = LightEditSaveStatusIcon.create(new Color(0x4083c9));
+    private final Icon myUnsavedIcon = LightEditSaveStatusIcon.create();
 
     private CloseTabAction(@NotNull LightEditorInfo editorInfo) {
       myEditorInfo = editorInfo;

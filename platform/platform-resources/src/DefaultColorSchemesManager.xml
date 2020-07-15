@@ -37,9 +37,11 @@
       <option name="IGNORED_ADDED_LINES_BORDER_COLOR" value="a0c495"/>
       <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="95b2ce"/>
       <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="9f9f9f"/>
-      <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
+      <option name="CONSOLE_BACKGROUND_KEY" value="ffffff"/>
       <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
       <option name="STRING_CONTENT_INDENT_GUIDE" value="afd5b5"/>
+
+      <option name="MODIFIED_TAB_ICON" value="4083C9"/>
 
       <option name="FILESTATUS_ADDED" value="0a7700"/>
       <option name="FILESTATUS_COPIED" value="0a7700"/>
@@ -1297,6 +1299,8 @@
       <option name="INLINE_REFACTORING_SETTINGS_DEFAULT" value="5959598c"/>
       <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="6969698c"/>
       <option name="INLINE_REFACTORING_SETTINGS_HOVERED" value="6969698c"/>
+
+      <option name="MODIFIED_TAB_ICON" value="4083C9"/>
 
       <option name="VCS_ANNOTATIONS_COLOR_1" value="464c43"/>
       <option name="VCS_ANNOTATIONS_COLOR_2" value="444342"/>
