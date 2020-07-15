@@ -457,16 +457,8 @@ public class UsageViewImpl implements UsageViewEx {
       this.childNode = childNode;
     }
 
-    public @Nullable Node getChildNode() {
-      return childNode;
-    }
-
-    public @NotNull Node getParentNode() {
+    @NotNull Node getParentNode() {
       return parentNode;
-    }
-
-    public @NotNull NodeChangeType getNodeChangeType() {
-      return nodeChangeType;
     }
 
     @Override
@@ -484,7 +476,7 @@ public class UsageViewImpl implements UsageViewEx {
       return Objects.hash(nodeChangeType, parentNode, childNode);
     }
 
-    public boolean isValid() {
+    private boolean isValid() {
       boolean parentValid = !parentNode.isStructuralChangeDetected();
       boolean childValid = !childNode.isStructuralChangeDetected();
 
@@ -525,7 +517,7 @@ public class UsageViewImpl implements UsageViewEx {
    * (fireTreeNodesInserted/nodesWereRemoved/fireTreeStructureChanged)
    * this method is called regularly every 50ms to fire events in batch
    */
-    private void fireEvents() {
+  private void fireEvents() {
     EDT.assertIsEdt();
     List<NodeChange> nodeChanges;
     synchronized (modelToSwingNodeChanges) {
@@ -772,11 +764,11 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  public boolean isPreviewUsages() {
+  boolean isPreviewUsages() {
     return myPresentation.isReplaceMode() ? getUsageViewSettings().isReplacePreviewUsages() : getUsageViewSettings().isPreviewUsages();
   }
 
-  public void setPreviewUsages(boolean state) {
+  void setPreviewUsages(boolean state) {
     if (myPresentation.isReplaceMode()) {
       getUsageViewSettings().setReplacePreviewUsages(state);
     }
