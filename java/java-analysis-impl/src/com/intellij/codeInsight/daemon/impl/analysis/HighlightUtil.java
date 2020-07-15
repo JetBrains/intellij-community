@@ -2288,9 +2288,10 @@ public final class HighlightUtil {
     PsiExpression qualifierExpr = expression.getQualifierExpression();
     // simple reference can be illegal (JLS 8.3.3)
     if (qualifierExpr == null) return false;
+    if (!(qualifierExpr instanceof PsiReferenceExpression)) return true;
 
-    PsiReference qualifiedReference = qualifierExpr.getReference();
-    if (qualifiedReference != null && containingClass.equals(qualifiedReference.resolve())) {
+    PsiElement qualifiedReference = ((PsiReferenceExpression)qualifierExpr).resolve();
+    if (qualifiedReference != null && containingClass.equals(qualifiedReference)) {
       // static fields that are constant variables (4.12.4) are initialized before other static fields (12.4.2),
       // so a qualified reference to the constant variable is possible.
       return PsiUtil.isCompileTimeConstant(referencedField);

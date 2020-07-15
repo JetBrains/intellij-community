@@ -61,7 +61,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   private void doTest7(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, checkWarnings); }
   private void doTest7Incompatibility() { doTest(LanguageLevel.JDK_1_5, JavaSdkVersion.JDK_1_7, false); }
   private void doTest8Incompatibility(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, checkWarnings); }
-  private void doTest15(boolean checkWarnings) {doTest(LanguageLevel.JDK_15, JavaSdkVersion.JDK_15, checkWarnings);}
 
   public void testReferenceTypeParams() { doTest5(false); }
   public void testOverridingMethods() { doTest5(false); }
@@ -86,7 +85,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testEnum() { doTest5(false); }
   public void testEnum56239() { doTest6(false); }
   public void testEnum242390() { doTest7(false); }
-  public void testEnum242390_15() { doTest15(false); }
   public void testSameErasure() { doTest5(false); }
   public void testPairsWithSameErasure() { doTest5(false); }
   public void testMethods() { doTest5(false); }
