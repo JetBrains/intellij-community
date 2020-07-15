@@ -59,7 +59,7 @@ class FilePointerProviderTest {
 
     val virtualFile1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
     val pointer1 = provider.getAndCacheFilePointer(url, FilePointerScope.Test)
-    val parentDisposable = Disposer.newDisposable()
+    val parentDisposable = Disposer.newDisposable().also { Disposer.register(disposable.disposable, it) }
     val container1 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()),
                                                        parentDisposable)
 
@@ -94,7 +94,7 @@ class FilePointerProviderTest {
 
     val virtualFile1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
     val pointer1 = provider.getAndCacheFilePointer(url, FilePointerScope.Test)
-    val parentDisposable = Disposer.newDisposable()
+    val parentDisposable = Disposer.newDisposable().also { Disposer.register(disposable.disposable, it) }
     val container1 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()),
                                                        parentDisposable)
 
