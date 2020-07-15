@@ -368,7 +368,7 @@ public class UsageViewImpl implements UsageViewEx {
           if (userObject instanceof Usage) {
             affectedUsages.add((Usage)userObject);
           }
-          node.setExcluded(excluded, edtChangedNodesToFireQueue);
+          node.setExcluded(excluded, edtFireTreeNodesChangedQueue);
         }
 
         if (updateImmediately) {
@@ -411,14 +411,14 @@ public class UsageViewImpl implements UsageViewEx {
   // nodes just changed: parent node -> changed child
   // this collection is needed for firing javax.swing.tree.DefaultTreeModel.nodesChanged() events in batch
   // has to be linked because events for child nodes should be fired after events for parent nodes
-  private final MultiMap<Node, Node> changedNodesToFire = MultiMap.createLinked(); // guarded by changedNodesToFire
+  private final MultiMap<Node, Node> fireTreeNodesChangedMap = MultiMap.createLinked(); // guarded by changedNodesToFire
 
-  private final Consumer<Node> edtChangedNodesToFireQueue = node -> {
+  private final Consumer<Node> edtFireTreeNodesChangedQueue = node -> {
     if (!getPresentation().isDetachedMode()) {
-      synchronized (changedNodesToFire) {
+      synchronized (fireTreeNodesChangedMap) {
         Node parent = (Node)node.getParent();
         if (parent != null) {
-          changedNodesToFire.putValue(parent, node);
+          fireTreeNodesChangedMap.putValue(parent, node);
         }
       }
     }
@@ -485,8 +485,8 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     public boolean isValid() {
-      boolean parentValid = parentNode.isTreePathValid();
-      boolean childValid = childNode.isTreePathValid();
+      boolean parentValid = !parentNode.isStructuralChangeDetected();
+      boolean childValid = !childNode.isStructuralChangeDetected();
 
       return parentValid && childValid;
     }
@@ -507,12 +507,12 @@ public class UsageViewImpl implements UsageViewEx {
   /**
    * Set of node changes coming from the model to be applied to the Swing elements
    */
-  private final Set<NodeChange> myNodeChanges = new LinkedHashSet<>(); //guarded by myNodeChanges
+  private final Set<NodeChange> modelToSwingNodeChanges = new LinkedHashSet<>(); //guarded by myNodeChanges
 
-  private final Consumer<NodeChange> edtNodeChangeQueue = (@NotNull NodeChange parent) -> {
+  private final Consumer<NodeChange> edtModelToSwingNodeChangesQueue = (@NotNull NodeChange parent) -> {
     if (!getPresentation().isDetachedMode()) {
-      synchronized (myNodeChanges) {
-        myNodeChanges.add(parent);
+      synchronized (modelToSwingNodeChanges) {
+        modelToSwingNodeChanges.add(parent);
       }
     }
   };
@@ -525,12 +525,12 @@ public class UsageViewImpl implements UsageViewEx {
    * (fireTreeNodesInserted/nodesWereRemoved/fireTreeStructureChanged)
    * this method is called regularly every 50ms to fire events in batch
    */
-  private void fireEvents() {
+    private void fireEvents() {
     EDT.assertIsEdt();
     List<NodeChange> nodeChanges;
-    synchronized (myNodeChanges) {
-      nodeChanges = new ArrayList<>(myNodeChanges);
-      myNodeChanges.clear();
+    synchronized (modelToSwingNodeChanges) {
+      nodeChanges = new ArrayList<>(modelToSwingNodeChanges);
+      modelToSwingNodeChanges.clear();
     }
     /*
     Iterating over all changes that come from the model children list in a GroupNode
@@ -605,13 +605,13 @@ public class UsageViewImpl implements UsageViewEx {
     }
     // group nodes from changedNodesToFire by their parents and issue corresponding javax.swing.tree.DefaultTreeModel.fireTreeNodesChanged()
     List<? extends Map.Entry<Node, Collection<Node>>> changed;
-    synchronized (changedNodesToFire) {
-      changed = new ArrayList<>(changedNodesToFire.entrySet());
-      changedNodesToFire.clear();
+    synchronized (fireTreeNodesChangedMap) {
+      changed = new ArrayList<>(fireTreeNodesChangedMap.entrySet());
+      fireTreeNodesChangedMap.clear();
     }
     for (Map.Entry<Node, Collection<Node>> entry : changed) {
       Node parentNode = entry.getKey();
-      Set<Node> childrenToUpdate = new HashSet<>(entry.getValue());
+      Collection<Node> childrenToUpdate = entry.getValue();
       for (int i = 0; i < parentNode.getChildCount(); i++) {
         Node childNode = (Node)parentNode.getChildAt(i);
         if (childrenToUpdate.contains(childNode)) {
@@ -1384,15 +1384,9 @@ public class UsageViewImpl implements UsageViewEx {
     }
     reportToFUS(usage);
 
-    UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtNodeChangeQueue, invalidatedUsagesConsumer);
-    if (child == null) {
-      return null;
-    }
+    UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtModelToSwingNodeChangesQueue, invalidatedUsagesConsumer);
+    myUsageNodes.put(usage, child == null ? NULL_NODE : child);
 
-    myUsageNodes.put(child.getUsage(), child == null ? NULL_NODE : child);
-    for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
-      child.update(this, edtChangedNodesToFireQueue);
-    }
     if (child != null && getPresentation().isExcludeAvailable()) {
       for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
         if (listener.isExcludedByDefault(this, usage)) {
@@ -1400,6 +1394,11 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
     }
+
+    for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
+      node.update(this, edtFireTreeNodesChangedQueue);
+    }
+
     return child;
   }
 
@@ -1529,7 +1528,7 @@ public class UsageViewImpl implements UsageViewEx {
       .nonBlocking(() -> {
         for (Node node : toUpdate) {
           try {
-            node.update(this, edtChangedNodesToFireQueue);
+            node.update(this, edtFireTreeNodesChangedQueue);
           }
           catch (IndexNotReadyException ignore) {
           }
@@ -2276,9 +2275,11 @@ public class UsageViewImpl implements UsageViewEx {
       if (myCannotMakeString != null && myChangesDetected) {
         String title = UsageViewBundle.message("changes.detected.error.title");
         if (canPerformReRun()) {
-          String[] options = {UsageViewBundle.message("action.description.rerun"), UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("usage.view.cancel.button")};
+          String[] options = {UsageViewBundle.message("action.description.rerun"), UsageViewBundle.message("button.text.continue"),
+            UsageViewBundle.message("usage.view.cancel.button")};
           String message = myCannotMakeString + "\n\n" + UsageViewBundle.message("dialog.rerun.search");
-          int answer = Messages.showYesNoCancelDialog(myProject, message, title, options[0], options[1], options[2], Messages.getErrorIcon());
+          int answer =
+            Messages.showYesNoCancelDialog(myProject, message, title, options[0], options[1], options[2], Messages.getErrorIcon());
           if (answer == Messages.YES) {
             refreshUsages();
           }

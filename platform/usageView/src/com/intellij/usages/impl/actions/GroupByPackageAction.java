@@ -4,10 +4,13 @@ package com.intellij.usages.impl.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-class GroupByDirectoryAction extends RuleAction {
-  GroupByDirectoryAction() {
+import static com.intellij.usages.rules.UsageFilteringRuleProvider.RULES_CHANGED;
+
+class GroupByPackageAction extends RuleAction {
+  GroupByPackageAction() {
     super(IdeBundle.message("action.title.group.by.directory"), AllIcons.Actions.GroupByPackage);
   }
 
@@ -21,6 +24,8 @@ class GroupByDirectoryAction extends RuleAction {
     getUsageViewSettings(e).setGroupByPackage(value);
     if (value) {
       getUsageViewSettings(e).setGroupByDirectoryStructure(false); // mutually exclusive
+      Project project = e.getProject();
+      project.getMessageBus().syncPublisher(RULES_CHANGED).run();
     }
   }
 }

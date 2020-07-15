@@ -26,15 +26,14 @@ abstract class Node extends DefaultMutableTreeNode {
   private static final byte UPDATED_MASK = 1 << 4;
   private static final byte FORCE_UPDATE_REQUESTED_MASK = 1 << 5;
   /**
-   * It is unset if there was a structural change in one of the parent nodes,
-   * therefore this node has to be deleted.
-   * Otherwise set
+   * It is set if there was a structural change in one of the parent nodes (so the node has to be deleted),
+   * Otherwise unset
    */
-  private static final byte TREE_PATH_VALID_MASK = 1 << 6;
+  private static final byte STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK = 1 << 6;
 
   @MagicConstant(intValues = {
     CACHED_INVALID_MASK, CACHED_READ_ONLY_MASK, READ_ONLY_COMPUTED_MASK,
-    EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_REQUESTED_MASK, TREE_PATH_VALID_MASK})
+    EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_REQUESTED_MASK, STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK})
   private @interface FlagConstant {
   }
 
@@ -47,7 +46,6 @@ abstract class Node extends DefaultMutableTreeNode {
   }
 
   Node() {
-    setFlag(TREE_PATH_VALID_MASK, true);
   }
 
   /**
@@ -94,20 +92,20 @@ abstract class Node extends DefaultMutableTreeNode {
     return isFlagSet(EXCLUDED_MASK);
   }
 
-  final void update(@NotNull UsageView view, @NotNull Consumer<? super Node> edtNodeChangedQueue) {
+  final void update(@NotNull UsageView view, @NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     // performance: always update in background because smart pointer' isValid() can cause PSI chameleons expansion which is ridiculously expensive in cpp
     assert !ApplicationManager.getApplication().isDispatchThread();
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
     String text = getText(view);
     updateCachedPresentation();
-    doUpdate(edtNodeChangedQueue, isDataValid, isReadOnly, text);
+    doUpdate(isDataValid, isReadOnly, text, edtFireTreeNodesChangedQueue);
   }
 
-  private synchronized void doUpdate(@NotNull Consumer<? super Node> edtNodeChangedQueue,
-                                     boolean isDataValid,
+  private synchronized void doUpdate(boolean isDataValid,
                                      boolean isReadOnly,
-                                     String text) {
+                                     @NotNull String text,
+                                     @NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     boolean cachedValid = isValid();
     boolean cachedReadOnly = isFlagSet(CACHED_READ_ONLY_MASK);
 
@@ -121,7 +119,7 @@ abstract class Node extends DefaultMutableTreeNode {
 
       myCachedTextHash = text.hashCode();
       updateNotify();
-      edtNodeChangedQueue.consume(this);
+      edtFireTreeNodesChangedQueue.consume(this);
     }
     setFlag(UPDATED_MASK, true);
   }
@@ -154,20 +152,20 @@ abstract class Node extends DefaultMutableTreeNode {
     children.insertElementAt(newChild, childIndex);
   }
 
-  void setExcluded(boolean excluded, @NotNull Consumer<? super Node> edtNodeChangedQueue) {
+  void setExcluded(boolean excluded, @NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     setFlag(EXCLUDED_MASK, excluded);
-    edtNodeChangedQueue.consume(this);
+    edtFireTreeNodesChangedQueue.consume(this);
   }
 
   /**
-   * @return false if there was a structural change in the tree from the root element to the current one,
-   * otherwise true
+   * @return true if there was a structural change in the tree from the root element to the current one,
+   * otherwise false
    */
-  public boolean isTreePathValid() {
-    return isFlagSet(TREE_PATH_VALID_MASK);
+  public boolean isStructuralChangeDetected() {
+    return isFlagSet(STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK);
   }
 
-  public void setTreePathValid(boolean valid) {
-    setFlag(TREE_PATH_VALID_MASK, valid);
+  public void setStructuralChangeDetected(boolean valid) {
+    setFlag(STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK, valid);
   }
 }

@@ -3,8 +3,11 @@ package com.intellij.usages.impl.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.usages.rules.UsageFilteringRuleProvider.RULES_CHANGED;
 
 class GroupByDirectoryStructureAction extends RuleAction {
   GroupByDirectoryStructureAction() {
@@ -21,6 +24,8 @@ class GroupByDirectoryStructureAction extends RuleAction {
     getUsageViewSettings(e).setGroupByDirectoryStructure(value);
     if (value) {
       getUsageViewSettings(e).setGroupByPackage(false); // mutually exclusive
+      Project project = e.getProject();
+      project.getMessageBus().syncPublisher(RULES_CHANGED).run();
     }
   }
 }
