@@ -35,7 +35,8 @@ internal class LibraryModifiableModelBridgeImpl(
       libraryEntity = storage.resolve(entityId) ?: error("Can't resolve library via $entityId"),
       filePointerProvider = originalLibrarySnapshot.filePointerProvider,
       storage = storage,
-      libraryTable = originalLibrarySnapshot.libraryTable
+      libraryTable = originalLibrarySnapshot.libraryTable,
+      parentDisposable = originalLibrary
     )
 
     newLibrary

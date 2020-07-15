@@ -1,6 +1,7 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.configurationStore.ComponentSerializationUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -24,22 +25,29 @@ internal class LibraryStateSnapshot(
   val libraryEntity: LibraryEntity,
   internal val filePointerProvider: FilePointerProvider,
   val storage: WorkspaceEntityStorage,
-  val libraryTable: LibraryTable) {
-  private val roots = libraryEntity.roots.groupBy { it.type }.mapValues {(_, roots) ->
+  val libraryTable: LibraryTable,
+  val parentDisposable: Disposable) {
+  private val roots = libraryEntity.roots.groupBy { it.type }.mapValues { (_, roots) ->
     val urls = roots.filter { it.inclusionOptions == LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }
     val jarDirs = roots
       .filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }
-      .map { JarDirectoryDescription(it.url, it.inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY)
-    }
+      .map {
+        JarDirectoryDescription(it.url, it.inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY)
+      }
     FileContainerDescription(urls, jarDirs)
   }
-  private val excludedRootsContainer = if (libraryEntity.excludedRoots.isNotEmpty()) FileContainerDescription(libraryEntity.excludedRoots, emptyList()) else null
+  private val excludedRootsContainer = if (libraryEntity.excludedRoots.isNotEmpty()) FileContainerDescription(libraryEntity.excludedRoots,
+                                                                                                              emptyList())
+  else null
 
   val kind: PersistentLibraryKind<*>?
   val properties: LibraryProperties<*>?
+
   init {
     val customProperties = libraryEntity.getCustomProperties()
-    kind = customProperties?.libraryType?.let { LibraryKind.findById(it) ?: UnknownLibraryKind.getOrCreate(it) } as? PersistentLibraryKind<*>
+    kind = customProperties?.libraryType?.let {
+      LibraryKind.findById(it) ?: UnknownLibraryKind.getOrCreate(it)
+    } as? PersistentLibraryKind<*>
     properties = loadProperties(kind, customProperties)
   }
 
@@ -60,7 +68,7 @@ internal class LibraryStateSnapshot(
 
   fun getFiles(rootType: OrderRootType): Array<VirtualFile> {
     return roots[LibraryRootTypeId(rootType.name())]
-             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider)
+             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)
              ?.files ?: VirtualFile.EMPTY_ARRAY
   }
 
@@ -71,20 +79,22 @@ internal class LibraryStateSnapshot(
   }
 
   val excludedRootUrls: Array<String>
-    get() = excludedRootsContainer?.getAndCacheVirtualFilePointerContainer(filePointerProvider)?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
+    get() = excludedRootsContainer?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)?.urls
+            ?: ArrayUtil.EMPTY_STRING_ARRAY
 
   val excludedRoots: Array<VirtualFile>
-    get() = excludedRootsContainer?.getAndCacheVirtualFilePointerContainer(filePointerProvider)?.files ?: VirtualFile.EMPTY_ARRAY
+    get() = excludedRootsContainer?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)?.files
+            ?: VirtualFile.EMPTY_ARRAY
 
   fun isValid(url: String, rootType: OrderRootType): Boolean {
     return roots[LibraryRootTypeId(rootType.name())]
-             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider)
+             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)
              ?.findByUrl(url)?.isValid ?: false
   }
 
   fun getInvalidRootUrls(type: OrderRootType): List<String> {
     return roots[LibraryRootTypeId(type.name())]
-             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider)
+             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)
              ?.list?.filterNot { it.isValid }?.map { it.url } ?: emptyList()
   }
 
@@ -92,7 +102,7 @@ internal class LibraryStateSnapshot(
 
   fun isJarDirectory(url: String, rootType: OrderRootType): Boolean {
     return roots[LibraryRootTypeId(rootType.name())]
-             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider)
+             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)
              ?.jarDirectories?.any { it.first == url } ?: false
   }
 

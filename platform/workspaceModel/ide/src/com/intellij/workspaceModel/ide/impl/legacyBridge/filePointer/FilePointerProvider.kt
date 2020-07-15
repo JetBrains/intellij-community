@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -21,7 +22,7 @@ data class JarDirectoryDescription(val directoryUrl: VirtualFileUrl, val recursi
 
 internal interface FilePointerProvider {
   fun getAndCacheFilePointer(url: VirtualFileUrl, scope: FilePointerScope): VirtualFilePointer
-  fun getAndCacheFileContainer(description: FileContainerDescription): VirtualFilePointerContainer
+  fun getAndCacheFileContainer(description: FileContainerDescription, scope: Disposable): VirtualFilePointerContainer
 
   companion object {
     @JvmStatic
@@ -34,8 +35,8 @@ internal interface FilePointerProvider {
   }
 }
 
-internal fun FileContainerDescription.getAndCacheVirtualFilePointerContainer(provider: FilePointerProvider) =
-  provider.getAndCacheFileContainer(this)
+internal fun FileContainerDescription.getAndCacheVirtualFilePointerContainer(provider: FilePointerProvider, scope: Disposable) =
+  provider.getAndCacheFileContainer(this, scope)
 
 /**
  * This class defines rules when virtual file url became invalid and virtual file pointer should be disposed

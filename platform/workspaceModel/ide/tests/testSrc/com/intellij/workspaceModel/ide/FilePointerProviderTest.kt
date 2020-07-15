@@ -59,7 +59,9 @@ class FilePointerProviderTest {
 
     val virtualFile1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
     val pointer1 = provider.getAndCacheFilePointer(url, FilePointerScope.Test)
-    val container1 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()))
+    val parentDisposable = Disposer.newDisposable()
+    val container1 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()),
+                                                       parentDisposable)
 
     assertTrue(file.exists())
     WriteAction.runAndWait<Throwable> { virtualFile1.rename(null, "y.txt") }
@@ -68,7 +70,8 @@ class FilePointerProviderTest {
     file.writeText("")
 
     val pointer2 = provider.getAndCacheFilePointer(url, FilePointerScope.Test)
-    val container2 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()))
+    val container2 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()),
+                                                       parentDisposable)
 
     assertEquals(url.url, pointer2.url)
     assertEquals(url.url, container2.urls.single())
@@ -91,7 +94,9 @@ class FilePointerProviderTest {
 
     val virtualFile1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
     val pointer1 = provider.getAndCacheFilePointer(url, FilePointerScope.Test)
-    val container1 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()))
+    val parentDisposable = Disposer.newDisposable()
+    val container1 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()),
+                                                       parentDisposable)
 
     assertTrue(file.exists())
     WriteAction.runAndWait<Throwable> { virtualFile1.move(null, targetFolderVirtualFile) }
@@ -100,7 +105,8 @@ class FilePointerProviderTest {
     file.writeText("")
 
     val pointer2 = provider.getAndCacheFilePointer(url, FilePointerScope.Test)
-    val container2 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()))
+    val container2 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()),
+                                                       parentDisposable)
 
     assertEquals(url.url, pointer2.url)
     assertEquals(url.url, container2.urls.single())
