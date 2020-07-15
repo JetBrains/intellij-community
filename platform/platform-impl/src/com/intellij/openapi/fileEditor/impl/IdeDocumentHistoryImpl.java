@@ -43,6 +43,7 @@ import com.intellij.psi.ExternalChangeAction;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.io.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -87,7 +88,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private final Set<VirtualFile> myChangedFilesInCurrentCommand = new HashSet<>();
   private boolean myCurrentCommandHasMoves;
 
-  private final PersistentHashMap<String, Long> myRecentFilesTimestampsMap;
+  private final SynchronizedClearableLazy<PersistentHashMap<String, Long>> recentFileTimestampMap;
 
   private final RecentlyChangedFilesState state = new RecentlyChangedFilesState();
 
@@ -150,11 +151,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         }
       }
     };
+
+    recentFileTimestampMap = new SynchronizedClearableLazy<>(() -> initRecentFilesTimestampMap(myProject));
+
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addDocumentListener(listener, this);
     multicaster.addCaretListener(listener, this);
 
-    myRecentFilesTimestampsMap = initRecentFilesTimestampMap(project);
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(new ExtensionPointListener<FileEditorProvider>() {
       @Override
       public void extensionRemoved(@NotNull FileEditorProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
@@ -194,12 +197,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   private void registerViewed(@NotNull VirtualFile file) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || !UISettings.getInstance().getShowInplaceComments()) {
       return;
     }
 
     try {
-      myRecentFilesTimestampsMap.put(file.getPath(), System.currentTimeMillis());
+      recentFileTimestampMap.getValue().put(file.getPath(), System.currentTimeMillis());
     }
     catch (IOException e) {
       LOG.info("Cannot put a timestamp from a persistent hash map", e);
@@ -214,7 +217,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
 
     try {
-      Long timestamp = ((IdeDocumentHistoryImpl)getInstance(project)).myRecentFilesTimestampsMap.get(file.getPath());
+      Long timestamp = ((IdeDocumentHistoryImpl)getInstance(project)).recentFileTimestampMap.getValue().get(file.getPath());
       if (timestamp != null) {
         component.append(" ").append(DateFormatUtil.formatPrettyDateTime(timestamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
       }
@@ -713,7 +716,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   @Override
   public final void dispose() {
     myLastGroupId = null;
-    PersistentHashMap<String, Long> map = myRecentFilesTimestampsMap;
+    PersistentHashMap<String, Long> map = recentFileTimestampMap.getValueIfInitialized();
     if (map != null) {
       try {
         map.close();
