@@ -2,7 +2,6 @@
 package com.intellij.grazie.utils
 
 import com.intellij.lang.ASTNode
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.TreeUtil
@@ -24,10 +23,6 @@ fun ASTNode.hasType(tokens: Set<IElementType>) = this.elementType in tokens
 inline fun <reified T : PsiElement> T.toPointer(): PsiPointer<T> = SmartPointerManager.createPointer(this)
 
 fun PsiElement.parents(): Sequence<PsiElement> = generateSequence(this) { it.parent }
-
-fun PsiElement.isInjectedFragment(): Boolean {
-  return InjectedLanguageManager.getInstance(this.project).isInjectedFragment(this.containingFile)
-}
 
 fun PsiElementProcessor<in PsiElement>.processElements(element: PsiElement?) {
   ProgressManager.checkCanceled()

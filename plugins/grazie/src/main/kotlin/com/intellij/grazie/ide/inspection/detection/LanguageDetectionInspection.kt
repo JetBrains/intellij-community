@@ -13,8 +13,8 @@ import com.intellij.grazie.ide.inspection.detection.problem.LanguageDetectionPro
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
-import com.intellij.grazie.utils.isInjectedFragment
 import com.intellij.grazie.utils.lazyConfig
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -66,7 +66,7 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
 
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        if (element.isInjectedFragment()) return
+        if (InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(holder.file)) return
 
         val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
 
