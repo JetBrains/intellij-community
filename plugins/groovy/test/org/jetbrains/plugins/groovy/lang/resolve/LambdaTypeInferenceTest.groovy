@@ -350,4 +350,26 @@ class W {
 ''', 'W'
   }
 
+  void 'test use parent DFA'() {
+    doTest '''
+  def foo(a) {
+    a = 1
+    1.with(x -> {
+      <caret>a
+    })
+  }
+''', 'java.lang.Integer'
+  }
+
+  void 'test use outer types inside unknown lambdas'() {
+    doTest '''
+def foo() {
+  def a = 1
+  lambda = x -> {
+    <caret>a
+  }
+  a = ""
+}
+''', 'java.lang.Integer'
+  }
 }
