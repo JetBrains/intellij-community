@@ -119,10 +119,12 @@ public final class PsiTestUtil {
                                                                   @NotNull VirtualFile vDir,
                                                                   @NotNull JpsModuleSourceRootType<P> rootType,
                                                                   @NotNull P properties) {
-    Ref<SourceFolder> result = Ref.create();
+    Ref<SourceFolder> result = new Ref<>();
     ModuleRootModificationUtil.updateModel(module, model -> {
       ContentEntry entry = findContentEntry(model, vDir);
-      if (entry == null) entry = model.addContentEntry(vDir);
+      if (entry == null) {
+        entry = model.addContentEntry(vDir);
+      }
       result.set(entry.addSourceFolder(vDir, rootType, properties));
     });
     return result.get();

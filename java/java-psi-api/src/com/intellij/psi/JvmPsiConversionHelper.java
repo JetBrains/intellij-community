@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmMethod;
@@ -6,7 +6,6 @@ import com.intellij.lang.jvm.JvmTypeDeclaration;
 import com.intellij.lang.jvm.JvmTypeParameter;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
 import com.intellij.lang.jvm.types.JvmType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
@@ -14,10 +13,9 @@ import org.jetbrains.annotations.Nullable;
 
 @Experimental
 public interface JvmPsiConversionHelper {
-
   @NotNull
   static JvmPsiConversionHelper getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, JvmPsiConversionHelper.class);
+    return project.getService(JvmPsiConversionHelper.class);
   }
 
   @Nullable

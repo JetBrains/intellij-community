@@ -13,9 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class JpsServiceManagerImpl extends JpsServiceManager {
-  private final ConcurrentMap<Class, Object> myServices = new ConcurrentHashMap<>(16, 0.75f, 1);
-  private final Map<Class, List<?>> myExtensions = new HashMap<>();
+public final class JpsServiceManagerImpl extends JpsServiceManager {
+  private final ConcurrentMap<Class<?>, Object> myServices = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final Map<Class<?>, List<?>> myExtensions = new HashMap<>();
   private final AtomicInteger myModificationStamp = new AtomicInteger(0);
   private JpsPluginManager myPluginManager;
 
@@ -105,7 +105,7 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
     return pluginManager.loadExtensions(extensionClass);
   }
 
-  private static class SingleClassLoaderPluginManager extends JpsPluginManager {
+  private static final class SingleClassLoaderPluginManager extends JpsPluginManager {
     @NotNull
     @Override
     public <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {

@@ -21,14 +21,14 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 
-public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
+public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private static final Logger LOG = Logger.getInstance(JavaPsiFacadeImpl.class);
 
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
@@ -40,7 +40,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final AtomicNotNullLazyValue<JvmFacadeImpl> myJvmFacade;
   private final JvmPsiConversionHelper myConversionHelper;
 
-  public JavaPsiFacadeImpl(Project project) {
+  public JavaPsiFacadeImpl(@NotNull Project project) {
     myProject = project;
     myFileManager = JavaFileManager.getInstance(myProject);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
@@ -60,11 +60,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
-    Map<String, PsiClass> map = myClassCache.get(scope);
-    if (map == null) {
-      map = ContainerUtil.createConcurrentWeakValueMap();
-      map = ConcurrencyUtil.cacheOrGet(myClassCache, scope, map);
-    }
+    Map<String, PsiClass> map = myClassCache.computeIfAbsent(scope, scope1 -> ContainerUtil.createConcurrentWeakValueMap());
     PsiClass result = map.get(qualifiedName);
     if (result == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
@@ -88,11 +84,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     List<PsiElementFinder> finders = filteredFinders();
-    Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
-
+    Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
     for (PsiElementFinder finder : finders) {
       PsiClass aClass = finder.findClass(qualifiedName, scope);
-      if (aClass != null && (classesFilter == null || classesFilter.value(aClass))) {
+      if (aClass != null && (classesFilter == null || classesFilter.test(aClass))) {
         return aClass;
       }
     }
@@ -155,7 +150,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return Arrays.asList(findClassesInDumbMode(qualifiedName, scope));
     }
     List<PsiElementFinder> finders = filteredFinders();
-    Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
+    Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
     List<PsiClass> result = null;
     for (PsiElementFinder finder : finders) {
@@ -169,12 +164,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result == null ? Collections.emptyList() : result;
   }
 
-  private static Condition<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull List<PsiElementFinder> finders) {
-    Condition<PsiClass> filter = null;
+  private static Predicate<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull List<PsiElementFinder> finders) {
+    Predicate<PsiClass> filter = null;
     for (PsiElementFinder finder : finders) {
-      Condition<PsiClass> finderFilter = finder.getClassesFilter(scope);
+      Predicate<PsiClass> finderFilter = finder.getClassesFilter(scope);
       if (finderFilter != null) {
-        filter = filter == null ? finderFilter : Conditions.and(filter, finderFilter);
+        filter = filter == null ? finderFilter : filter.and(finderFilter);
       }
     }
     return filter;
@@ -247,7 +242,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @NotNull
   public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    Set<String> result = new THashSet<>();
+    Set<String> result = new HashSet<>();
     for (PsiElementFinder finder : filteredFinders()) {
       result.addAll(finder.getClassNames(psiPackage, scope));
     }
@@ -256,7 +251,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   public PsiClass @NotNull [] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     List<PsiElementFinder> finders = filteredFinders();
-    Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
+    Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
     List<PsiClass> result = null;
     for (PsiElementFinder finder : finders) {
@@ -270,7 +265,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   private static void filterClassesAndAppend(PsiElementFinder finder,
-                                             @Nullable Condition<? super PsiClass> classesFilter,
+                                             @Nullable Predicate<? super PsiClass> classesFilter,
                                              PsiClass @NotNull [] classes,
                                              @NotNull List<? super PsiClass> result) {
     for (PsiClass psiClass : classes) {
@@ -278,7 +273,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         LOG.error("Finder " + finder + " returned null PsiClass");
         continue;
       }
-      if (classesFilter == null || classesFilter.value(psiClass)) {
+      if (classesFilter == null || classesFilter.test(psiClass)) {
         result.add(psiClass);
       }
     }
@@ -328,7 +323,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    LinkedHashMap<String, PsiPackage> result = new LinkedHashMap<>();
+    Map<String, PsiPackage> result = new LinkedHashMap<>();
     for (PsiElementFinder finder : filteredFinders()) {
       // Ensure uniqueness of names in the returned list of subpackages. If a plugin PsiElementFinder
       // returns the same package from its getSubPackages() implementation that Java already knows about

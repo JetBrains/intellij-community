@@ -39,7 +39,7 @@ final class UserDataInterner {
   }
 }
 
-class MapReference extends WeakReference<KeyFMap> {
+final class MapReference extends WeakReference<KeyFMap> {
   private final int myHash;
 
   MapReference(@NotNull KeyFMap referent) {

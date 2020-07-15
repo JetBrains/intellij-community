@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Memory-efficient CharSequence interner which stores file paths as an array of FileNameCache-enumerated ints
  */
-public class FilePathInterner extends WeakInterner<CharSequence> {
+public final class FilePathInterner extends WeakInterner<CharSequence> {
   @NotNull
   @Override
   public CharSequence intern(@NotNull CharSequence path) {

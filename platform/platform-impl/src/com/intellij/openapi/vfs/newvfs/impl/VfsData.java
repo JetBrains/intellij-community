@@ -62,7 +62,7 @@ import static com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry.ALL_FL
  *
  * @author peter
  */
-public class VfsData {
+public final class VfsData {
   private static final Logger LOG = Logger.getInstance(VfsData.class);
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
@@ -207,7 +207,7 @@ public class VfsData {
     }
   }
 
-  static class Segment {
+  static final class Segment {
     private final int myIndex;
     // user data for files, DirectoryData for folders
     private final AtomicReferenceArray<Object> myObjectArray;
@@ -306,7 +306,7 @@ public class VfsData {
   }
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
-  static class DirectoryData {
+  static final class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap> MY_USER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
     @NotNull
     volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;

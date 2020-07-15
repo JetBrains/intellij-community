@@ -625,7 +625,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     Disposer.register(disposable, () -> app.runWriteAction(() -> getInstance().removeResource(url)));
   }
 
-  static class Resource {
+  static final class Resource {
     private final String myFile;
     private final ClassLoader myClassLoader;
     private final Class myClass;

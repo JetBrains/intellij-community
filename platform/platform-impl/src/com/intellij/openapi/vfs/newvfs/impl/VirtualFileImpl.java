@@ -33,10 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Supplier;
 
-/**
- * @author max
- */
-public class VirtualFileImpl extends VirtualFileSystemEntry {
+public final class VirtualFileImpl extends VirtualFileSystemEntry {
   VirtualFileImpl(int id, @NotNull VfsData.Segment segment, VirtualDirectoryImpl parent) {
     super(id, segment, parent);
     registerLink(getFileSystem());

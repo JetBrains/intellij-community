@@ -119,21 +119,18 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
     return uri;
   }
 
-  @NotNull
-  private static Path checkExists(String dir) {
+  private static @NotNull Path checkExists(String dir) {
     Path path = Paths.get(dir);
-    if (!path.toFile().isDirectory()) {
-      try {
-        Files.createDirectories(path);
-      }
-      catch (IOException e) {
-        LOG.warn("Unable to create: " + path, e);
-      }
+    try {
+      Files.createDirectories(path);
+    }
+    catch (IOException e) {
+      LOG.warn("Unable to create: " + path, e);
     }
     return path;
   }
 
-  static class FetchingResourceIOException extends IOException {
+  static final class FetchingResourceIOException extends IOException {
     private final String url;
 
     FetchingResourceIOException(Throwable cause, String url) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.Disposable;
@@ -86,7 +86,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   @Nullable
   public Project getProject(@Nullable String projectId) {
-    Project project = ProjectManagerEx.getInstanceEx().findOpenProjectByHash(projectId);
+    Project project = projectId == null ? null : ProjectManagerEx.getInstanceEx().findOpenProjectByHash(projectId);
     if (ApplicationManager.getApplication().isUnitTestMode() && project != null) {
       registerDisposeCallback(project);
       DISPOSE_CALLBACK.set(project, Boolean.TRUE);
