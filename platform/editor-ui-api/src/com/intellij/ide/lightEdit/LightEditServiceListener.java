@@ -5,6 +5,6 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental
 public interface LightEditServiceListener {
-  void lightEditWindowOpened();
-  void lightEditWindowClosed();
+  default void lightEditWindowOpened() {}
+  default void lightEditWindowClosed() {}
 }

@@ -9,6 +9,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.ide.lightEdit.LightEditServiceListener;
 import com.intellij.ide.plugins.PluginDropHandler;
 import com.intellij.ide.plugins.newui.VerticalLayout;
 import com.intellij.idea.SplashManager;
@@ -153,6 +155,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
+        Disposer.dispose(FlatWelcomeFrame.this);
+      }
+    });
+    connection.subscribe(LightEditService.TOPIC, new LightEditServiceListener() {
+      @Override
+      public void lightEditWindowOpened() {
         Disposer.dispose(FlatWelcomeFrame.this);
       }
     });
