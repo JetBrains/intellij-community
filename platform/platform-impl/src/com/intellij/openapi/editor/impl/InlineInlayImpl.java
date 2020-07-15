@@ -105,6 +105,6 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
 
   @Override
   public String toString() {
-    return "[Inline inlay, offset=" + getOffset() + ", width=" + myWidthInPixels + ", renderer=" + myRenderer + "]";
+    return "[Inline inlay, offset=" + getOffset() + ", width=" + myWidthInPixels + ", renderer=" + myRenderer + "]" + (isValid() ? "" : "(invalid)");
   }
 }

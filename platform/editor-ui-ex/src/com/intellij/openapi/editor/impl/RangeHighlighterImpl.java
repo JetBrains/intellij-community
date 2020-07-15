@@ -450,6 +450,6 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   public String toString() {
-    return "RangeHighlighter: ("+getStartOffset()+","+getEndOffset()+"); layer:"+getLayer()+"; tooltip: "+getErrorStripeTooltip();
+    return "RangeHighlighter: ("+getStartOffset()+","+getEndOffset()+"); layer:"+getLayer()+"; tooltip: "+getErrorStripeTooltip() + (isValid() ? "" : "(invalid)");
   }
 }
