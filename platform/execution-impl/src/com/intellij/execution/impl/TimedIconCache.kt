@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ProgramRunnerUtil
@@ -12,15 +12,14 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.ui.IconDeferrer
 import com.intellij.util.containers.ObjectLongHashMap
-import gnu.trove.THashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 internal class TimedIconCache {
-  private val idToIcon = THashMap<String, Icon>()
-  private val idToInvalid = THashMap<String, Boolean>()
+  private val idToIcon = HashMap<String, Icon>()
+  private val idToInvalid = HashMap<String, Boolean>()
   private val iconCheckTimes = ObjectLongHashMap<String>()
   private val iconCalcTime = ObjectLongHashMap<String>()
 

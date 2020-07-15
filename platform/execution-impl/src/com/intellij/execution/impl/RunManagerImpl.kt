@@ -42,7 +42,6 @@ import com.intellij.util.ThreeState
 import com.intellij.util.containers.*
 import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.UniqueNameGenerator
-import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -133,7 +132,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   @Suppress("LeakingThis")
   private val listManager = RunConfigurationListManagerHelper(this)
 
-  private val templateIdToConfiguration = THashMap<String, RunnerAndConfigurationSettingsImpl>()
+  private val templateIdToConfiguration = HashMap<String, RunnerAndConfigurationSettingsImpl>()
 
   // template configurations are not included here
   private val idToSettings: LinkedHashMap<String, RunnerAndConfigurationSettings>
@@ -701,7 +700,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           }
         }
 
-        lock.write {  templateIdToConfiguration.retainEntries { _, settings -> settings.type != extension } }
+        lock.write {
+          templateIdToConfiguration.values.removeIf(java.util.function.Predicate { it.type == extension })
+        }
       }
     }, this)
 

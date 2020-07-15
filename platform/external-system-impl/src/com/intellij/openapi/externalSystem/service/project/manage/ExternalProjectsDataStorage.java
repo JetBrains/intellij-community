@@ -38,8 +38,6 @@ import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +56,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 /**
  * @author Vladislav.Soroka
  */
-@State(name = "ExternalProjectsData", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "ExternalProjectsData", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ExternalProjectsDataStorage implements SettingsSavingComponentJavaAdapter, PersistentStateComponent<ExternalProjectsDataStorage.State> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
@@ -490,13 +488,13 @@ public final class ExternalProjectsDataStorage implements SettingsSavingComponen
   static final class State {
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false, keyAttributeName = "path", entryTagName = "projectState")
-    public final Map<String, ProjectState> map = new THashMap<>();
+    public final Map<String, ProjectState> map = new HashMap<>();
   }
 
   static class ProjectState {
     @Property(surroundWithTag = false)
     @XMap(keyAttributeName = "path", entryTagName = "dataType")
-    public final Map<String, ModuleState> map = new THashMap<>();
+    public final Map<String, ModuleState> map = new HashMap<>();
     public boolean isInclusion;
   }
 
@@ -507,11 +505,11 @@ public final class ExternalProjectsDataStorage implements SettingsSavingComponen
 
     @SuppressWarnings("unused")
     ModuleState() {
-      set = new THashSet<>();
+      set = new HashSet<>();
     }
 
     ModuleState(@NotNull Collection<String> values) {
-      set = new THashSet<>(values);
+      set = new HashSet<>(values);
     }
   }
 }
