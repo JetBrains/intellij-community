@@ -93,8 +93,7 @@ public final class InspectionDescriptionInfo {
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
       Extension extension = module == null ? null : doFindExtension(module, psiClass);
-      return CachedValueProvider.Result
-        .create(extension, extension == null ? PsiModificationTracker.MODIFICATION_COUNT : extension.getXmlTag());
+      return CachedValueProvider.Result.create(extension, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
