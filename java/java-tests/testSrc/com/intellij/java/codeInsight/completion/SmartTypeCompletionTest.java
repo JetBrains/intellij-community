@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.completion.StaticallyImportable;
@@ -1208,6 +1209,13 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testAutoImportExpectedType() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(1, "List", "ArrayList", "AbstractList");
+  }
+
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  public void testExpectedTypeAutoImportHonorsExcludes() {
+    JavaProjectCodeInsightSettings.setExcludedNames(getProject(), getTestRootDisposable(), "java.awt");
     configureByTestName();
     myFixture.assertPreferredCompletionItems(1, "List", "ArrayList", "AbstractList");
   }

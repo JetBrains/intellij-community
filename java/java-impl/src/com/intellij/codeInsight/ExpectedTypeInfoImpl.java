@@ -16,6 +16,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -198,7 +199,9 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
       PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(project);
       List<PsiClass> suitableClasses = ContainerUtil.filter(
         PsiShortNamesCache.getInstance(project).getClassesByName(className, context.getResolveScope()),
-        c -> c.getTypeParameters().length == typeParamCount && helper.isAccessible(c, context, null));
+        c -> (typeParamCount == 0 || c.hasTypeParameters()) &&
+             helper.isAccessible(c, context, null) &&
+             ImportClassFixBase.qualifiedNameAllowsAutoImport(context.getContainingFile(), c));
       if (suitableClasses.size() == 1) {
         return PsiElementFactory.getInstance(project).createType(suitableClasses.get(0), ((PsiClassType)type).getParameters());
       }
