@@ -236,7 +236,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
       myBalloon.show(new PositionTracker<Balloon>(myIcon) {
         @Override
-        public RelativePoint recalculateLocation(Balloon object) {
+        public RelativePoint recalculateLocation(@NotNull Balloon object) {
           return new RelativePoint(myIcon, new Point(myIcon.getSize().width / 2, 4));
         }
       }, Balloon.Position.above);

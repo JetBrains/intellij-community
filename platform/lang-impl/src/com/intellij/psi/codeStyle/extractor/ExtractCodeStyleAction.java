@@ -167,7 +167,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
         if (layout != null) {
           balloon.show(new PositionTracker<Balloon>(((IdeFrame)window).getComponent()) {
             @Override
-            public RelativePoint recalculateLocation(Balloon object) {
+            public RelativePoint recalculateLocation(@NotNull Balloon object) {
               Component c = getComponent();
               int y = c.getHeight() - 45;
               return new RelativePoint(c, new Point(c.getWidth() - 150, y));

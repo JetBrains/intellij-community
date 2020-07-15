@@ -209,7 +209,7 @@ public class InplaceChangeSignature implements DocumentListener {
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
       @Override
-      public RelativePoint recalculateLocation(Balloon object) {
+      public RelativePoint recalculateLocation(@NotNull Balloon object) {
         int offset = myStableChange.getMethod().getTextOffset();
         VisualPosition visualPosition = myEditor.offsetToVisualPosition(offset);
         Point point = myEditor.visualPositionToXY(new VisualPosition(visualPosition.line, visualPosition.column));

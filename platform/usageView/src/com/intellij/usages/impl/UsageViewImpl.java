@@ -151,6 +151,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private JPanel myCentralPanel; // accessed in EDT only
 
+  @NotNull
   private final GroupNode myRoot;
   private final UsageViewTreeModelBuilder myModel;
   private final Object lock = new Object();
@@ -2308,11 +2309,13 @@ public class UsageViewImpl implements UsageViewEx {
     return USAGE_INFO_LIST_KEY.getData(DataManager.getInstance().getDataContext(myRootPanel));
   }
 
+  @NotNull
   public GroupNode getRoot() {
     return myRoot;
   }
 
   @TestOnly
+  @NotNull
   public String getNodeText(@NotNull TreeNode node) {
     return myUsageViewTreeCellRenderer.getPlainTextForNode(node);
   }

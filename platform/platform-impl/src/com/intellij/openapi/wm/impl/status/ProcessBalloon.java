@@ -86,7 +86,7 @@ class ProcessBalloon {
 
         indicator.myPresentationModeBalloon.show(new PositionTracker<Balloon>(getAnchor(pane)) {
           @Override
-          public RelativePoint recalculateLocation(Balloon balloon) {
+          public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
             Component c = getAnchor(pane);
             int y = c.getHeight() - JBUIScale.scale(45);
 
