@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,15 +23,13 @@ import java.util.Collection;
 public final class GlobalSearchScopes {
   private GlobalSearchScopes() {}
 
-  @NotNull
-  public static GlobalSearchScope openFilesScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope openFilesScope(@NotNull Project project) {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
     final VirtualFile[] files = fileEditorManager != null ? fileEditorManager.getOpenFiles() : VirtualFile.EMPTY_ARRAY;
     return GlobalSearchScope.filesScope(project, Arrays.asList(files), IdeBundle.message("scope.open.files"));
   }
 
-  @NotNull
-  public static GlobalSearchScope executionScope(@NotNull Project project, @Nullable RunProfile runProfile) {
+  public static @NotNull GlobalSearchScope executionScope(@NotNull Project project, @Nullable RunProfile runProfile) {
     if (runProfile instanceof SearchScopeProvidingRunProfile) {
       GlobalSearchScope scope = ((SearchScopeProvidingRunProfile)runProfile).getSearchScope();
       if (scope != null) return scope;
@@ -38,8 +37,7 @@ public final class GlobalSearchScopes {
     return GlobalSearchScope.allScope(project);
   }
 
-  @Nullable
-  public static GlobalSearchScope executionScope(@NotNull Collection<? extends Module> modules) {
+  public static @Nullable GlobalSearchScope executionScope(@NotNull Collection<? extends Module> modules) {
     if (modules.isEmpty()) {
       return null;
     }
@@ -56,5 +54,23 @@ public final class GlobalSearchScopes {
                                                           @NotNull VirtualFile directory,
                                                           boolean withSubdirectories) {
     return GlobalSearchScopesCore.directoryScope(project, directory, withSubdirectories);
+  }
+
+  public static @NotNull GlobalSearchScope filterScope(@NotNull Project project, @NotNull NamedScope set) {
+    return GlobalSearchScopesCore.filterScope(project, set);
+  }
+
+  public static @NotNull GlobalSearchScope projectTestScope(@NotNull Project project) {
+    return GlobalSearchScopesCore.projectTestScope(project);
+  }
+
+  public static @NotNull GlobalSearchScope directoriesScope(@NotNull Project project,
+                                                            boolean withSubdirectories,
+                                                            VirtualFile @NotNull ... directories) {
+    return GlobalSearchScopesCore.directoriesScope(project, withSubdirectories, directories);
+  }
+
+  public static @NotNull GlobalSearchScope projectProductionScope(@NotNull Project project) {
+    return GlobalSearchScopesCore.projectProductionScope(project);
   }
 }
