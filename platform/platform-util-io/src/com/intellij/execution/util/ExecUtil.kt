@@ -76,38 +76,33 @@ object ExecUtil {
 
   @JvmStatic
   @Throws(ExecutionException::class)
-  fun execAndGetOutput(commandLine: GeneralCommandLine): ProcessOutput {
-    return CapturingProcessHandler(commandLine).runProcess()
-  }
+  fun execAndGetOutput(commandLine: GeneralCommandLine): ProcessOutput =
+    CapturingProcessHandler(commandLine).runProcess()
 
   @JvmStatic
   @Throws(ExecutionException::class)
-  fun execAndGetOutput(commandLine: GeneralCommandLine, timeoutInMilliseconds: Int): ProcessOutput {
-    return CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds)
-  }
+  fun execAndGetOutput(commandLine: GeneralCommandLine, timeoutInMilliseconds: Int): ProcessOutput =
+    CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds)
 
   @JvmStatic
-  fun execAndReadLine(commandLine: GeneralCommandLine): String? {
-    return try {
-      readFirstLine(commandLine.createProcess().inputStream,
-        commandLine.charset)
+  fun execAndReadLine(commandLine: GeneralCommandLine): String? =
+    try {
+      readFirstLine(commandLine.createProcess().inputStream, commandLine.charset)
     }
     catch (e: ExecutionException) {
       Logger.getInstance(ExecUtil::class.java).debug(e)
       null
     }
-  }
 
   @JvmStatic
-  fun readFirstLine(stream: InputStream, cs: Charset?): String? {
-    return try {
+  fun readFirstLine(stream: InputStream, cs: Charset?): String? =
+    try {
       BufferedReader(if (cs == null) InputStreamReader(stream) else InputStreamReader(stream, cs)).use { it.readLine() }
     }
     catch (e: IOException) {
       Logger.getInstance(ExecUtil::class.java).debug(e)
       null
     }
-  }
 
   /**
    * Run the command with superuser privileges using safe escaping and quoting.
@@ -120,9 +115,8 @@ object ExecUtil {
    */
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
-  fun sudo(commandLine: GeneralCommandLine, prompt: String): Process {
-    return sudoCommand(commandLine, prompt).createProcess()
-  }
+  fun sudo(commandLine: GeneralCommandLine, prompt: String): Process =
+    sudoCommand(commandLine, prompt).createProcess()
 
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
@@ -143,9 +137,7 @@ object ExecUtil {
         throw UnsupportedOperationException("Executing as Administrator is only available in Windows Vista or newer")
       }
       SystemInfo.isMac -> {
-        val escapedCommand = StringUtil.join(command, {
-          escapeAppleScriptArgument(it)
-        }, " & \" \" & ")
+        val escapedCommand = StringUtil.join(command, { escapeAppleScriptArgument(it) }, " & \" \" & ")
         val messageArg = if (SystemInfo.isMacOSYosemite) " with prompt \"${StringUtil.escapeQuotes(prompt)}\"" else ""
         val escapedScript =
           "tell current application\n" +
@@ -165,14 +157,10 @@ object ExecUtil {
         GeneralCommandLine(listOf("pkexec") + envCommand(commandLine) + command)
       }
       hasTerminalApp() -> {
-        val escapedCommandLine = StringUtil.join(command, {
-          escapeUnixShellArgument(it)
-        }, " ")
+        val escapedCommandLine = StringUtil.join(command, { escapeUnixShellArgument(it) }, " ")
         val escapedEnvCommand = when (val args = envCommandArgs(commandLine)) {
           emptyList<String>() -> ""
-          else -> "env " + StringUtil.join(args, {
-            escapeUnixShellArgument(it)
-          }, " ") + " "
+          else -> "env " + StringUtil.join(args, { escapeUnixShellArgument(it) }, " ") + " "
         }
         val script = createTempExecutableScript(
           "sudo", ".sh",
@@ -233,8 +221,7 @@ object ExecUtil {
   @JvmStatic
   fun getTerminalCommand(title: String?, command: String): List<String> = when {
     SystemInfo.isWindows -> {
-      listOf(
-        windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""), command)
+      listOf(windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""), command)
     }
     SystemInfo.isMac -> {
       listOf(openCommandPath, "-a", "Terminal", command)
