@@ -412,7 +412,7 @@ public class UsageViewImpl implements UsageViewEx {
   // nodes just changed: parent node -> changed child
   // this collection is needed for firing javax.swing.tree.DefaultTreeModel.nodesChanged() events in batch
   // has to be linked because events for child nodes should be fired after events for parent nodes
-  private final MultiMap<Node, Node> fireTreeNodesChangedMap = MultiMap.createLinked(); // guarded by changedNodesToFire
+  private final MultiMap<Node, Node> fireTreeNodesChangedMap = MultiMap.createLinked(); // guarded by fireTreeNodesChangedMap
 
   private final Consumer<Node> edtFireTreeNodesChangedQueue = node -> {
     if (!getPresentation().isDetachedMode()) {
@@ -487,8 +487,6 @@ public class UsageViewImpl implements UsageViewEx {
 
   /**
    * Executes a new appendUsage request with the updateRequests executor
-   * Has to have read access to perform doAppendUsage()
-   * After appendUsage finishes, calls fireEvents on the EDT thread from the same executor
    */
   private final Consumer<Usage> invalidatedUsagesConsumer = (@NotNull Usage usage) -> {
     if (!getPresentation().isDetachedMode() && !isDisposed) {
@@ -500,7 +498,7 @@ public class UsageViewImpl implements UsageViewEx {
   /**
    * Set of node changes coming from the model to be applied to the Swing elements
    */
-  private final Set<NodeChange> modelToSwingNodeChanges = new LinkedHashSet<>(); //guarded by myNodeChanges
+  private final Set<NodeChange> modelToSwingNodeChanges = new LinkedHashSet<>(); //guarded by modelToSwingNodeChanges
 
   private final Consumer<NodeChange> edtModelToSwingNodeChangesQueue = (@NotNull NodeChange parent) -> {
     if (!getPresentation().isDetachedMode()) {
