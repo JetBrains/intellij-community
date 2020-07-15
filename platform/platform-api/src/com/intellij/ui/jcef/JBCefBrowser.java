@@ -10,7 +10,6 @@ import org.cef.browser.CefFrame;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
-import org.cef.misc.BoolRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +19,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -38,6 +38,7 @@ import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 public class JBCefBrowser implements JBCefDisposable {
   private static final String BLANK_URI = "about:blank";
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
 
   @NotNull private static final List<Consumer<JBCefBrowser>> ourOnBrowserMoveResizeCallbacks =
@@ -311,7 +312,7 @@ public class JBCefBrowser implements JBCefDisposable {
       if (myJBCefCookieManager == null) {
         myJBCefCookieManager = new JBCefCookieManager();
       }
-      return myJBCefCookieManager;
+      return Objects.requireNonNull(myJBCefCookieManager);
     }
     finally {
       myCookieManagerLock.unlock();
