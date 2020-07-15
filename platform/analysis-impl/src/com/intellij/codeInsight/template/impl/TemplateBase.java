@@ -20,14 +20,14 @@ public abstract class TemplateBase extends Template {
   private boolean toParseSegments = true;
 
   public void parseSegments() {
-    if(!isToParseSegments()) {
+    if(!toParseSegments) {
       return;
     }
-    if(getSegments() != null) {
+    if(mySegments != null) {
       return;
     }
 
-    setSegments(new SmartList<>());
+    mySegments = new SmartList<>();
     StringBuilder buffer = new StringBuilder(myString.length());
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(myString);
@@ -88,9 +88,9 @@ public abstract class TemplateBase extends Template {
    */
   public void setString(@NotNull String string) {
     myString = StringUtil.convertLineSeparators(string);
-    setSegments(null);
-    setToParseSegments(true);
-    setBuildingTemplateTrace(new Throwable());
+    mySegments = null;
+    toParseSegments = true;
+    myBuildingTemplateTrace = new Throwable();
   }
 
   @NotNull
@@ -119,8 +119,8 @@ public abstract class TemplateBase extends Template {
 
   int getVariableSegmentNumber(String variableName) {
     parseSegments();
-    for (int i = 0; i < getSegments().size(); i++) {
-      Segment segment = getSegments().get(i);
+    for (int i = 0; i < mySegments.size(); i++) {
+      Segment segment = mySegments.get(i);
       if (segment.name.equals(variableName)) {
         return i;
       }
@@ -143,19 +143,19 @@ public abstract class TemplateBase extends Template {
   @Override
   public String getSegmentName(int i) {
     parseSegments();
-    return getSegments().get(i).name;
+    return mySegments.get(i).name;
   }
 
   @Override
   public int getSegmentOffset(int i) {
     parseSegments();
-    return getSegments().get(i).offset;
+    return mySegments.get(i).offset;
   }
 
   @Override
   public int getSegmentsCount() {
     parseSegments();
-    return getSegments().size();
+    return mySegments.size();
   }
 
   protected static final class Segment {
