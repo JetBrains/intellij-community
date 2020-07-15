@@ -34,15 +34,15 @@ public class ClassMethodsInliner implements CallInliner {
         OBJECT_GET_CLASS.matches(nestedCall) ? nestedCall.getMethodExpression().getQualifierExpression() : null;
       if (getClassQualifier != null) {
         builder.pushExpression(qualifier)
-               .pushExpression(getClassQualifier);
+               .pushExpression(getClassQualifier)
+               .swap()
+               .isInstance(call);
       }
       else {
         builder.pushExpression(qualifier)
                .pushExpression(arg)
-               .objectOf();
+               .isAssignableFrom(call);
       }
-      builder.swap()
-             .isInstance(call);
       return true;
     }
     else if (IS_INSTANCE.matches(call)) {
