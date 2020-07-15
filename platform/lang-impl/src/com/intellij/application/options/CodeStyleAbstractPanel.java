@@ -89,8 +89,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   protected CodeStyleAbstractPanel(@Nullable Language defaultLanguage,
                                    @Nullable CodeStyleSettings currentSettings,
-                                   @NotNull CodeStyleSettings settings)
-  {
+                                   @NotNull CodeStyleSettings settings) {
     myCurrentSettings = currentSettings;
     mySettings = settings;
     myDefaultLanguage = defaultLanguage;
@@ -106,7 +105,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     updatePreview(true);
   }
 
-  @SuppressWarnings("SameParameterValue")
   protected void setShouldUpdatePreview(boolean shouldUpdatePreview) {
     myShouldUpdatePreview = shouldUpdatePreview;
   }
@@ -494,6 +492,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
       public void run() {
         try {
           myUpdateAlarm.cancelAllRequests();
+          Project project = myEditor.getProject();
+          if (myEditor.isDisposed() || project != null && project.isDisposed()) {
+            return;
+          }
           if (isSomethingChanged()) {
             updateEditor(false);
           }
