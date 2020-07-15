@@ -24,7 +24,7 @@ public enum AntialiasingType {
   }
 
   public static boolean canUseSubpixelAAForIDE() {
-    return !SystemInfo.isMac || Boolean.getBoolean("enable.macos.ide.subpixelAA");
+    return !SystemInfo.isMacOSMojave || Boolean.getBoolean("enable.macos.ide.subpixelAA");
   }
 
   public static Object getKeyForCurrentScope(boolean inEditor) {
