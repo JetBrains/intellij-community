@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,9 +72,16 @@ public class FragmentHintManager {
       hint = fragment.getHint();
     }
     else {
-      SettingsEditorFragment<?, ?> focused = ContainerUtil.find(myFragments, f -> f.component().hasFocus());
-      if (focused != null) {
-        hint = focused.getHint();
+      fragment = ContainerUtil.find(myFragments, f -> f.component().hasFocus());
+      if (fragment != null) {
+        hint = fragment.getHint();
+      }
+    }
+    if (fragment != null) {
+      ShortcutSet shortcut = ActionUtil.getMnemonicAsShortcut(new EmptyAction(fragment.getName(), null, null));
+      if (shortcut != null) {
+        String text = KeymapUtil.getShortcutsText(shortcut.getShortcuts());
+        hint = hint == null ? text : hint + ". " + text;
       }
     }
     myHintConsumer.consume(hint == null ? myDefaultHint : hint);

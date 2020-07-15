@@ -141,14 +141,17 @@ public class CommonJavaFragments {
     jrePathEditor.getLabel().setVisible(false);
     jrePathEditor.getComponent().getAccessibleContext().setAccessibleName(jrePathEditor.getLabel().getText());
     jrePathEditor.setDefaultJreSelector(DefaultJreSelector.projectSdk(project));
-    return new SettingsEditorFragment<>("jrePath", null, null, jrePathEditor, 5,
-                                        (configuration, editor) -> editor
-                                          .setPathOrName(configuration.getAlternativeJrePath(),
-                                                         configuration.isAlternativeJrePathEnabled()),
-                                        (configuration, editor) -> {
-                                          configuration.setAlternativeJrePath(editor.getJrePathOrName());
-                                          configuration.setAlternativeJrePathEnabled(editor.isAlternativeJreSelected());
-                                        },
-                                        configuration -> true);
+    SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath =
+      new SettingsEditorFragment<>("jrePath", ExecutionBundle.message("run.configuration.jre.name"), null, jrePathEditor, 5,
+                                   (configuration, editor) -> editor.setPathOrName(configuration.getAlternativeJrePath(),
+                                                                                   configuration.isAlternativeJrePathEnabled()),
+                                   (configuration, editor) -> {
+                                     configuration.setAlternativeJrePath(editor.getJrePathOrName());
+                                     configuration.setAlternativeJrePathEnabled(editor.isAlternativeJreSelected());
+                                   },
+                                   configuration -> true);
+    jrePath.setRemovable(false);
+    jrePath.setHint(ExecutionBundle.message("run.configuration.jre.hint"));
+    return jrePath;
   }
 }

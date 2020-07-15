@@ -33,6 +33,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private @Nullable String myHint;
   private @Nullable JComponent myHintComponent;
   private @Nullable Function<C, JComponent> myEditorGetter;
+  private boolean myRemovable = true;
 
   public SettingsEditorFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
@@ -121,6 +122,14 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public boolean isInitiallyVisible(Settings settings) {
     return myInitialSelection.test(settings);
+  }
+
+  public boolean isRemovable() {
+    return myRemovable;
+  }
+
+  public void setRemovable(boolean removable) {
+    myRemovable = removable;
   }
 
   public void setSelected(boolean selected) {

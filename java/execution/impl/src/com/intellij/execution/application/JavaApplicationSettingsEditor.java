@@ -79,11 +79,12 @@ public final class JavaApplicationSettingsEditor extends RunConfigurationFragmen
     mainClass.getAccessibleContext().setAccessibleName(placeholder);
     setMinimumWidth(mainClass, 300);
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment =
-      new SettingsEditorFragment<>("mainClass", null, null, mainClass, 20,
+      new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClass, 20,
                                    (configuration, component) -> component.setText(configuration.getMainClassName()),
                                    (configuration, component) -> configuration.setMainClassName(component.getText()),
                                    configuration -> true);
     mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
+    mainClassFragment.setRemovable(false);
     fragments.add(mainClassFragment);
     fragments.add(moduleClasspath);
 

@@ -4,6 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.options.CompositeSettingsBuilder;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SettingsEditor;
@@ -28,16 +29,24 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
   static final int TOP_INSET = 5;
   static final int GROUP_INSET = 20;
-  private final JPanel myPanel = new JPanel(new GridBagLayout());
+  private final JPanel myPanel = new JPanel(new GridBagLayout()) {
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      registerShortcuts();
+    }
+  };
   private final GridBagConstraints myConstraints =
     new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(TOP_INSET), 0, 0);
   private final Collection<SettingsEditorFragment<Settings, ?>> myFragments;
   private final SettingsEditorFragment<Settings, ?> myMain;
   private DropDownLink<String> myLinkLabel;
+  private final DefaultActionGroup myActionGroup;
 
   FragmentedSettingsBuilder(Collection<SettingsEditorFragment<Settings, ?>> fragments, SettingsEditorFragment<Settings, ?> main) {
     myFragments = fragments;
     myMain = main;
+    myActionGroup = buildGroup(ContainerUtil.filter(fragments, fragment -> fragment.getName() != null));
   }
 
   @Override
@@ -127,15 +136,27 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     return panel;
   }
 
+  private void registerShortcuts() {
+    for (AnAction action : myActionGroup.getChildActionsOrStubs()) {
+      ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(action);
+      if (shortcutSet != null && action instanceof ToggleFragmentAction) {
+        action.registerCustomShortcutSet(shortcutSet, null);
+        new AnAction(action.getTemplateText()) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            ((ToggleFragmentAction)action).myFragment.toggle(true); // show or set focus
+          }
+        }.registerCustomShortcutSet(shortcutSet, myPanel.getRootPane());
+      }
+    }
+  }
+
   private JBPopup showOptions() {
-    List<SettingsEditorFragment<Settings, ?>> fragments =
-      ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null);
-    DefaultActionGroup actionGroup = buildGroup(fragments);
     DataContext dataContext = DataManager.getInstance().getDataContext(myLinkLabel);
     return JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),
-                                                        actionGroup,
-                                                        dataContext,
-                                                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+                                                               myActionGroup,
+                                                               dataContext,
+                                                               JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
   }
 
   @NotNull
@@ -144,7 +165,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     String group = null;
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
-      if (!Objects.equals(group, fragment.getGroup())) {
+      if (fragment.isRemovable() && !Objects.equals(group, fragment.getGroup())) {
         group = fragment.getGroup();
         actionGroup.add(new Separator(group));
       }
@@ -195,6 +216,12 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myFragment.toggle(state);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(myFragment.isRemovable());
     }
   }
 }
