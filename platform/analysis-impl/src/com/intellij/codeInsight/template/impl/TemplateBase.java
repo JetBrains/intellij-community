@@ -96,6 +96,9 @@ public abstract class TemplateBase extends Template {
     return myTemplateText;
   }
 
+  protected String templateText() {
+    return myTemplateText;
+  }
 
   protected void setTemplateText(String templateText) {
     myTemplateText = templateText;
@@ -124,12 +127,12 @@ public abstract class TemplateBase extends Template {
   @Override
   public void addTextSegment(@NotNull String text) {
     text = StringUtil.convertLineSeparators(text);
-    setTemplateText(getTemplateText() + text);
+    myTemplateText += text;
   }
 
   @Override
   public void addVariableSegment(@NotNull String name) {
-    getSegments().add(new Segment(name, getTemplateText().length()));
+    mySegments.add(new Segment(name, myTemplateText.length()));
   }
 
   @NotNull

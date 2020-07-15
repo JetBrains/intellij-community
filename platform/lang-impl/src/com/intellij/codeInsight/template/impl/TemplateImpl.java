@@ -38,7 +38,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     if (myGroupName != null ? !myGroupName.equals(template.myGroupName) : template.myGroupName != null) return false;
     if (myKey != null ? !myKey.equals(template.myKey) : template.myKey != null) return false;
     if (!getString().equals(template.getString())) return false;
-    if (getTemplateText() != null ? !getTemplateText().equals(template.getTemplateText()) : template.getTemplateText() != null) return false;
+    if (templateText() != null ? !templateText().equals(template.templateText()) : template.templateText() != null) return false;
 
     if (!new THashSet<>(myVariables).equals(new THashSet<>(template.myVariables))) return false;
     if (isDeactivated != template.isDeactivated) return false;
@@ -166,7 +166,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
 
     myKey = another.getKey();
     setString(another.getString());
-    setTemplateText(another.getTemplateText());
+    setTemplateText(another.templateText());
     myGroupName = another.myGroupName;
     myId = another.myId;
     myDescription = another.myDescription;
