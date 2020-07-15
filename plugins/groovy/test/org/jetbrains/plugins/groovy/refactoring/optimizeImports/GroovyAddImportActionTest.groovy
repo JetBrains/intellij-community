@@ -61,6 +61,26 @@ void newifyImportsIncorrectlyMarkedAsUnused() {
 }''')
   }
 
+  void testNewifySupportForNestedClass() {
+    myFixture.addClass 'package hello; public class Abc { public static class Cde {} }'
+    doTest('''
+import groovy.transform.CompileStatic
+
+@Newify(pattern = /[A-Z][A-Za-z0-9_]+/)
+@CompileStatic
+void newifyImportsIncorrectlyMarkedAsUnused() {
+    def e = Cd<caret>e()
+}''', '''
+import groovy.transform.CompileStatic
+import hello.Abc.Cde
+
+@Newify(pattern = /[A-Z][A-Za-z0-9_]+/)
+@CompileStatic
+void newifyImportsIncorrectlyMarkedAsUnused() {
+    def e = Cd<caret>e()
+}''')
+  }
+
   private void doTest(String before, String after) {
     myFixture.configureByText 'a.groovy', before
     importClass()

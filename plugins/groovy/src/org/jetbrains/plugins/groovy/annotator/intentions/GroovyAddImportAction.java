@@ -128,6 +128,8 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
 
   @Override
   public boolean showHint(@NotNull Editor editor) {
+    // Lines below are required to prevent the "Add import" popup appearing two times in a row
+    // Similar issue is in com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase.calcClassesToImport
     List<PsiClass> imports =
       ContainerUtil.map(((GroovyFile)(ref.getContainingFile())).getImportStatements(), GrImportStatement::resolveTargetClass);
     for (PsiClass classToImport : getClassesToImport()) {
@@ -151,8 +153,7 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
 
   private static void handleNewifiedClass(@NotNull PsiElement referredElement, @NotNull PsiClass targetClass) {
     PsiFile file = referredElement.getContainingFile();
-    String qualifiedClassName = targetClass.getQualifiedName();
-    if (file instanceof GroovyFile && qualifiedClassName != null) {
+    if (file instanceof GroovyFile) {
       ((GroovyFile)file).importClass(targetClass);
     }
   }
