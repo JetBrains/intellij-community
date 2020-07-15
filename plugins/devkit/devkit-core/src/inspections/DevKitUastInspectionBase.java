@@ -7,8 +7,6 @@ import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UElement;
 
-import static org.jetbrains.idea.devkit.inspections.DevKitInspectionBase.isAllowed;
-
 /**
  * @author yole
  */
@@ -25,6 +23,10 @@ public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInsp
   @Override
   public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiElementVisitor.EMPTY_VISITOR;
+  }
+
+  protected boolean isAllowed(@NotNull ProblemsHolder holder) {
+    return DevKitInspectionBase.isAllowed(holder);
   }
 
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

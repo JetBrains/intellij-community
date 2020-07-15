@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
+import java.util.function.Predicate;
+
 /**
  * Consider using {@link DevKitUastInspectionBase} instead.
  *
@@ -24,29 +26,41 @@ public abstract class DevKitInspectionBase extends AbstractBaseJavaLocalInspecti
     return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiElementVisitor.EMPTY_VISITOR;
   }
 
-  static boolean isAllowed(@NotNull ProblemsHolder holder) {
-    if (PsiUtil.isIdeaProject(holder.getProject())) {
-      return true;
-    }
+  protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return super.buildVisitor(holder, isOnTheFly);
+  }
 
+  static boolean isAllowed(@NotNull ProblemsHolder holder) {
+    return isAllowed(holder, h -> true);
+  }
+
+  static boolean isAllowedInPluginsOnly(@NotNull ProblemsHolder holder) {
+    return isAllowed(holder, DevKitInspectionBase::isPluginFile);
+  }
+
+  static boolean isAllowed(@NotNull ProblemsHolder holder,
+                           @NotNull Predicate<? super ProblemsHolder> predicate) {
+    return ApplicationManager.getApplication().isUnitTestMode() /* always run in tests */ ||
+           (PsiUtil.isIdeaProject(holder.getProject()) && predicate.test(holder)) ||
+           isInPluginModule(holder);
+  }
+
+  private static boolean isInPluginModule(@NotNull ProblemsHolder holder) {
     Module module = ModuleUtilCore.findModuleForPsiElement(holder.getFile());
     if (module == null) {
       return false;
     }
 
-    if (PluginModuleType.isPluginModuleOrDependency(module)) {
-      return true;
-    }
-
-    if (PsiUtil.isPluginModule(module)) {
-      return true;
-    }
-
-    // always run in tests
-    return ApplicationManager.getApplication().isUnitTestMode();
+    return PluginModuleType.isPluginModuleOrDependency(module) ||
+           PsiUtil.isPluginModule(module);
   }
 
-  protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return super.buildVisitor(holder, isOnTheFly);
+  // TODO expand this check
+  private static boolean isPluginFile(@NotNull ProblemsHolder holder) {
+    return !holder
+      .getFile()
+      .getVirtualFile()
+      .getPath()
+      .contains("/platform/");
   }
 }

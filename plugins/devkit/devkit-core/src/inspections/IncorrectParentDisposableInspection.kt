@@ -8,30 +8,23 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
 import com.intellij.uast.UastHintedVisitorAdapter.Companion.create
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class IncorrectParentDisposableInspection : DevKitUastInspectionBase(UCallExpression::class.java) {
-  override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    if (PsiUtil.isIdeaProject(holder.file.project) && isPlatformFile(holder.file)) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
 
-    return create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {
+  override fun isAllowed(holder: ProblemsHolder): Boolean =
+    DevKitInspectionBase.isAllowedInPluginsOnly(holder)
+
+  override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {
       override fun visitCallExpression(node: UCallExpression): Boolean {
         checkCallExpression(node, holder)
 
         return true
       }
     }, arrayOf(UCallExpression::class.java))
-  }
-
-  private fun isPlatformFile(file: PsiFile): Boolean {
-    return "/platform/" in file.virtualFile.path  // TODO expand this check
-  }
 
   private val sdkLink = "(<a href=\"https://www.jetbrains.org/intellij/sdk/docs/basics/disposers.html#choosing-a-disposable-parent\">Choosing a Disposable Parent</a>)"
 
