@@ -19,14 +19,16 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.LeakHunter;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.IntStreamEx;
 import org.apache.log4j.Logger;
@@ -490,8 +492,17 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
     for (int i = 0; i < 50; i++) {
       List<Disposable> parents = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
-      List<Future<Void>> futures = ContainerUtil.map(parents, parent ->
-        executor.submit(() -> ReadAction.nonBlocking(() -> {}).expireWith(parent).submit(executor).get()));
+      List<Future<?>> futures = new ArrayList<>();
+      for (Disposable parent : parents) {
+        futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {}).expireWith(parent).submit(executor).get()));
+        futures.add(executor.submit(() -> {
+          try {
+            ReadAction.nonBlocking(() -> {}).expireWith(parent).executeSynchronously();
+          }
+          catch (ProcessCanceledException ignore) {
+          }
+        }));
+      }
       WriteAction.run(() -> parents.forEach(Disposer::dispose));
 
       futures.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));

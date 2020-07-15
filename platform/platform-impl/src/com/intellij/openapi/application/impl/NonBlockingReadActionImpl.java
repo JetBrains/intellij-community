@@ -192,16 +192,14 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
 
   @Override
   public @NotNull CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
-    return ReadAction.compute(() -> {
-      Submission submission = new Submission(backgroundThreadExecutor, myProgressIndicator);
-      if (myCoalesceEquality == null) {
-        submission.transferToBgThread();
-      }
-      else {
-        submission.submitOrScheduleCoalesced(myCoalesceEquality);
-      }
-      return submission;
-    });
+    Submission submission = new Submission(backgroundThreadExecutor, myProgressIndicator);
+    if (myCoalesceEquality == null) {
+      submission.transferToBgThread();
+    }
+    else {
+      submission.submitOrScheduleCoalesced(myCoalesceEquality);
+    }
+    return submission;
   }
 
   private class Submission extends AsyncPromise<T> {
@@ -234,7 +232,13 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
       if (shouldTrackInTests()) {
         ourTasks.add(this);
       }
-      for (Disposable parent : myDisposables) {
+      if (!myDisposables.isEmpty()) {
+        ReadAction.run(() -> expireWithDisposables(myDisposables));
+      }
+    }
+
+    private void expireWithDisposables(Set<? extends Disposable> disposables) {
+      for (Disposable parent : disposables) {
         if (parent instanceof Project ? ((Project)parent).isDisposed() : Disposer.isDisposed(parent)) {
           cancel();
           break;
