@@ -3,6 +3,7 @@ package com.intellij.java.execution;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -10,12 +11,14 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.OpenProjectTaskBuilder;
+import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractTestFrameworkCompilingIntegrationTest extends AbstractTestFrameworkIntegrationTest {
   @Override
@@ -37,12 +40,26 @@ public abstract class AbstractTestFrameworkCompilingIntegrationTest extends Abst
     pathMacros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, getDefaultMavenRepositoryPath());
     try {
       myCompilerTester = new CompilerTester(myModule);
-      assertThat(myCompilerTester.rebuild().stream()
-                   .filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
-                   .collect(Collectors.toSet())).isEmpty();
+      String errors = myCompilerTester.rebuild().stream()
+        .filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
+        .map(message -> message.toString())
+        .collect(Collectors.joining("\n"));
+      if (!errors.isEmpty()) {
+        Path optionDir = PathManager.getConfigDir().resolve("options");
+        throw new AssertionError(errors + getConfigFile("jdk.table.xml", optionDir) + getConfigFile("path.macros.xml", optionDir));
+      }
     }
     finally {
       pathMacros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, oldMacroValue);
+    }
+  }
+
+  private @NotNull static String getConfigFile(@NotNull String name, @NotNull Path optionDir) throws IOException {
+    try {
+      return "\n---\n" + name + " content: " + PathKt.readText(optionDir.resolve(name)) + "\n---\n";
+    }
+    catch (NoSuchFileException e) {
+      return name + " doesn't exist";
     }
   }
 
