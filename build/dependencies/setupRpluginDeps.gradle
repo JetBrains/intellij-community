@@ -2,6 +2,12 @@ import java.util.concurrent.TimeUnit
 
 task setupRkernel {
   group = 'rplugin'
+  inputs.property('version', rkernelVersion)
+  def artifact = file("$buildDir/rplugin/rkernelVersion.txt")
+  outputs.file(artifact)
+  doLast {
+    artifact.write("$rkernelVersion")
+  }
 }
 
 ['osx', 'windows.exe', 'linux'].each { osSuffix ->
