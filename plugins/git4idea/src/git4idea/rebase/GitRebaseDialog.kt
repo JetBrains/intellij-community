@@ -14,7 +14,6 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.DropDownLink
@@ -40,12 +39,12 @@ import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Container
 import java.awt.Insets
+import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.ItemEvent
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class GitRebaseDialog(private val project: Project,
@@ -80,6 +79,11 @@ class GitRebaseDialog(private val project: Project,
 
   private var updatingFields = false
 
+  private var okActionTriggered = false
+
+  private var upstreamValidator = RevValidator(upstreamField)
+  private var ontoValidator = RevValidator(ontoField)
+
   init {
     title = GitBundle.message("rebase.dialog.title")
     setOKButtonText(GitBundle.message("rebase.dialog.start.rebase"))
@@ -90,6 +94,8 @@ class GitRebaseDialog(private val project: Project,
 
     updateUi()
     init()
+
+    startTrackingValidation()
   }
 
   override fun createCenterPanel() = panel
@@ -102,6 +108,8 @@ class GitRebaseDialog(private val project: Project,
     validateUpstream()?.let { validationResult += it }
     validateRebaseInProgress()?.let { validationResult += it }
     validateBranch()?.let { validationResult += it }
+
+    okActionTriggered = false
 
     return validationResult
   }
@@ -125,6 +133,17 @@ class GitRebaseDialog(private val project: Project,
     }
     finally {
       super.doOKAction()
+    }
+  }
+
+  override fun createDefaultActions() {
+    super.createDefaultActions()
+
+    myOKAction = object : OkAction() {
+      override fun doAction(e: ActionEvent?) {
+        okActionTriggered = true
+        super.doAction(e)
+      }
     }
   }
 
@@ -185,11 +204,7 @@ class GitRebaseDialog(private val project: Project,
         ValidationInfo(GitBundle.message("rebase.dialog.error.base.not.selected"), upstreamField)
     }
 
-    if (!isValidRevision(upstream)) {
-      return ValidationInfo(GitBundle.message("rebase.dialog.error.branch.or.tag.not.exist"), upstreamField)
-    }
-
-    return null
+    return upstreamValidator.validate()
   }
 
   private fun validateOnto(): ValidationInfo? {
@@ -200,9 +215,7 @@ class GitRebaseDialog(private val project: Project,
         return ValidationInfo(GitBundle.message("rebase.dialog.error.base.not.selected"), ontoField)
       }
 
-      if (!isValidRevision(newBase)) {
-        return ValidationInfo(GitBundle.message("rebase.dialog.error.branch.or.tag.not.exist"), ontoField)
-      }
+      return ontoValidator.validate()
     }
     return null
   }
@@ -431,12 +444,6 @@ class GitRebaseDialog(private val project: Project,
     editor = object : BasicComboBoxEditor() {
       override fun createEditorComponent() = JBTextField().apply {
         emptyText.text = GitBundle.message("rebase.dialog.onto.field")
-
-        document.addDocumentListener(object : DocumentAdapter() {
-          override fun textChanged(e: DocumentEvent) {
-            startTrackingValidation()
-          }
-        })
       }
     }
     ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
@@ -448,12 +455,6 @@ class GitRebaseDialog(private val project: Project,
     editor = object : BasicComboBoxEditor() {
       override fun createEditorComponent() = JBTextField().apply {
         emptyText.text = GitBundle.message("rebase.dialog.upstream.field.placeholder")
-
-        document.addDocumentListener(object : DocumentAdapter() {
-          override fun textChanged(e: DocumentEvent) {
-            startTrackingValidation()
-          }
-        })
       }
     }
     ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
@@ -478,12 +479,6 @@ class GitRebaseDialog(private val project: Project,
     editor = object : BasicComboBoxEditor() {
       override fun createEditorComponent() = JBTextField().apply {
         emptyText.text = GitBundle.message("rebase.dialog.branch.field")
-
-        document.addDocumentListener(object : DocumentAdapter() {
-          override fun textChanged(e: DocumentEvent) {
-            startTrackingValidation()
-          }
-        })
       }
     }
     ui = FlatComboBoxUI(
@@ -671,6 +666,33 @@ class GitRebaseDialog(private val project: Project,
   private fun createOptionButton(option: RebaseOption) = OptionButton(option, option.option) { optionChosen(option) }
 
   private fun isAlreadyAdded(component: JComponent, container: Container) = component.parent == container
+
+  internal inner class RevValidator(private val field: ComboBox<GitReference>) {
+
+    private var lastValidatedRevision = ""
+    private var lastValid = true
+
+    fun validate(): ValidationInfo? {
+      val revision = getTextField(field).text
+
+      if (!okActionTriggered) {
+        return if (revision == lastValidatedRevision)
+          getValidationResult()
+        else
+          null
+      }
+
+      lastValidatedRevision = revision
+      lastValid = isValidRevision(lastValidatedRevision)
+
+      return getValidationResult()
+    }
+
+    private fun getValidationResult() = if (lastValid)
+      null
+    else
+      ValidationInfo(GitBundle.message("rebase.dialog.error.branch.or.tag.not.exist"), field)
+  }
 
   companion object {
     val LOG = Logger.getInstance(GitRebaseDialog::class.java)
