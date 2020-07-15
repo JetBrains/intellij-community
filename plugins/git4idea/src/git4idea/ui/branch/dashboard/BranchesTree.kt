@@ -302,6 +302,7 @@ internal class FilteringBranchesTree(project: Project,
   fun refreshTree() {
     val treeState = project.service<BranchesTreeStateHolder>()
     treeState.createNewState()
+    tree.selectionModel.clearSelection()
     refreshNodeDescriptorsModel()
     searchModel.updateStructure()
     treeState.applyStateToTree()
