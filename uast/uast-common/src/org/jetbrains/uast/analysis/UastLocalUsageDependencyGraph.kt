@@ -384,6 +384,10 @@ private fun UExpression.accumulateBranchesResult(results: MutableSet<UExpression
     is USwitchExpression -> body.expressions.filterIsInstance<USwitchClauseExpression>()
       .mapNotNull { it.lastExpression }
       .forEach { it.accumulateBranchesResult(results) }
+    is UTryExpression -> {
+      tryClause.lastExpression?.accumulateBranchesResult(results)
+      catchClauses.mapNotNull { it.body.lastExpression }.forEach { it.accumulateBranchesResult(results) }
+    }
     else -> results += this
   }
 }
