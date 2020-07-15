@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -29,12 +28,9 @@ public final class PsiEventWrapperAspect implements PomModelAspect {
 
   @Override
   public void update(PomModelEvent event) {
-    final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
+    TreeChangeEventImpl changeSet = (TreeChangeEventImpl)event.getChangeSet(myTreeAspect);
     if(changeSet == null) return;
-    sendAfterEvents(changeSet);
-  }
 
-  private static void sendAfterEvents(TreeChangeEvent changeSet) {
     ASTNode rootElement = changeSet.getRootElement();
     PsiFile file = (PsiFile)rootElement.getPsi();
     if (!file.isPhysical()) {
@@ -43,7 +39,8 @@ public final class PsiEventWrapperAspect implements PomModelAspect {
       return;
     }
 
-    ((TreeChangeEventImpl)changeSet).fireEvents();
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getSynchronizer().processEvents(changeSet, file);
+    changeSet.fireEvents();
   }
 
   private static void promoteNonPhysicalChangesToDocument(ASTNode rootElement, PsiFile file) {
