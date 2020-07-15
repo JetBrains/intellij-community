@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-class PyRemoteDebugVirtualFile extends LightVirtualFile {
+public class PyRemoteDebugVirtualFile extends LightVirtualFile {
   private final String myRemotePath;
   private final PyRemoteDebugVirtualFS myVirtualFileSystem;
   private final PyRemotePathMapper myPathMapper;
