@@ -20,6 +20,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public final class PsiEventWrapperAspect implements PomModelAspect {
+  @NotNull
   private final TreeAspect myTreeAspect;
 
   public PsiEventWrapperAspect(@NotNull TreeAspect treeAspect) {
@@ -27,7 +28,7 @@ public final class PsiEventWrapperAspect implements PomModelAspect {
   }
 
   @Override
-  public void update(PomModelEvent event) {
+  public void update(@NotNull PomModelEvent event) {
     TreeChangeEventImpl changeSet = (TreeChangeEventImpl)event.getChangeSet(myTreeAspect);
     if(changeSet == null) return;
 

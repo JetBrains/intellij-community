@@ -34,12 +34,13 @@ public abstract class PomService {
   @NotNull
   protected abstract PsiElement convertToPsi(@NotNull PomTarget target);
 
+  @NotNull
   public static PsiElement convertToPsi(@NotNull Project project, @NotNull PomTarget target) {
     return getInstance(project).convertToPsi(target);
   }
 
+  @NotNull
   public static PsiElement convertToPsi(@NotNull PsiTarget target) {
     return getInstance(target.getNavigationElement().getProject()).convertToPsi((PomTarget)target);
   }
-
 }

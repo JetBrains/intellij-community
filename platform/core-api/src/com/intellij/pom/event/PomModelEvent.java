@@ -25,7 +25,7 @@ import java.util.*;
 public class PomModelEvent extends EventObject {
   private Map<PomModelAspect, PomChangeSet> myChangeSets;
 
-  public PomModelEvent(PomModel source) {
+  public PomModelEvent(@NotNull PomModel source) {
     super(source);
   }
 
@@ -39,7 +39,7 @@ public class PomModelEvent extends EventObject {
     }
   }
 
-  public void registerChangeSet(PomModelAspect aspect, PomChangeSet set) {
+  public void registerChangeSet(@NotNull PomModelAspect aspect, @Nullable PomChangeSet set) {
     if (myChangeSets == null) {
       myChangeSets = new HashMap<>();
     }
@@ -51,8 +51,7 @@ public class PomModelEvent extends EventObject {
     }
   }
 
-  @Nullable
-  public PomChangeSet getChangeSet(PomModelAspect aspect) {
+  public PomChangeSet getChangeSet(@NotNull PomModelAspect aspect) {
     if (myChangeSets == null) return null;
     return myChangeSets.get(aspect);
   }
