@@ -2291,7 +2291,7 @@ public final class HighlightUtil {
     if (!(qualifierExpr instanceof PsiReferenceExpression)) return true;
 
     PsiElement qualifiedReference = ((PsiReferenceExpression)qualifierExpr).resolve();
-    if (qualifiedReference != null && containingClass.equals(qualifiedReference)) {
+    if (containingClass.equals(qualifiedReference)) {
       // static fields that are constant variables (4.12.4) are initialized before other static fields (12.4.2),
       // so a qualified reference to the constant variable is possible.
       return PsiUtil.isCompileTimeConstant(referencedField);
