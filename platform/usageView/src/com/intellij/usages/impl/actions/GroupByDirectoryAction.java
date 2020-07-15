@@ -9,8 +9,11 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.usages.rules.UsageFilteringRuleProvider.RULES_CHANGED;
 
-class GroupByPackageAction extends RuleAction {
-  GroupByPackageAction() {
+/**
+ * Groups by package
+ */
+class GroupByDirectoryAction extends RuleAction {
+  GroupByDirectoryAction() {
     super(IdeBundle.message("action.title.group.by.directory"), AllIcons.Actions.GroupByPackage);
   }
 
