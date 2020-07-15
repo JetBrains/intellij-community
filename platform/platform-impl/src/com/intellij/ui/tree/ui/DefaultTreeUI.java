@@ -43,7 +43,7 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
 import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
-import static com.intellij.ui.tree.DoubleClickExpandable.isExpandOnDoubleClickAllowed;
+import static com.intellij.util.EditSourceOnDoubleClickHandler.isExpandPreferable;
 import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
@@ -290,7 +290,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   protected boolean isToggleEvent(MouseEvent event) {
     if (!super.isToggleEvent(event)) return false;
     JTree tree = getTree();
-    return tree != null && isExpandOnDoubleClickAllowed(tree.getSelectionPath());
+    return tree != null && isExpandPreferable(tree, tree.getSelectionPath());
   }
 
   @Override

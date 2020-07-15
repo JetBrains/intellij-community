@@ -10,7 +10,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
@@ -57,8 +59,24 @@ public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance(TreeUtil.class);
   private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
   private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
+  private static final Key<Function<TreePath, Navigatable>> NAVIGATABLE_PROVIDER = Key.create("TreeUtil: convert TreePath to Navigatable");
 
   private TreeUtil() {}
+
+  /**
+   * @return a navigatable object that corresponds to the specified path,  or {@code null} otherwise
+   */
+  public static @Nullable Navigatable getNavigatable(@NotNull JTree tree, @Nullable TreePath path) {
+    Function<TreePath, Navigatable> supplier = UIUtil.getClientProperty(tree, NAVIGATABLE_PROVIDER);
+    return supplier != null ? supplier.apply(path) : getLastUserObject(Navigatable.class, path);
+  }
+
+  /**
+   * Sets the mapping function that provides a navigatable object for a tree path.
+   */
+  public static void setNavigatableProvider(@NotNull JTree tree, @NotNull Function<TreePath, Navigatable> provider) {
+    tree.putClientProperty(NAVIGATABLE_PROVIDER, provider);
+  }
 
   @NotNull
   public static JBTreeTraverser<Object> treeTraverser(@NotNull JTree tree) {

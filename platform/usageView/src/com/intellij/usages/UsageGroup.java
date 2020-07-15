@@ -1,16 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.tree.DoubleClickExpandable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface UsageGroup extends Comparable<UsageGroup>, Navigatable, DoubleClickExpandable {
+public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
   @Nullable
   Icon getIcon(boolean isOpen);
 
@@ -22,9 +20,4 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable, DoubleC
 
   boolean isValid();
   void update();
-
-  @Override
-  default boolean expandOnDoubleClick() {
-    return Registry.is("ide.usage.group.navigate.on.double.click.disabled", false) || !canNavigateToSource();
-  }
 }
