@@ -58,6 +58,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsUser;
@@ -72,6 +73,7 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -432,7 +434,20 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private PatchReader loadPatches(@NotNull VirtualFile patchFile) {
     PatchReader reader;
     try {
-      reader = ReadAction.compute(() -> new PatchReader(patchFile.toNioPath()));
+      reader = ReadAction.compute(() -> {
+        try (InputStreamReader inputStreamReader = new InputStreamReader(patchFile.getInputStream(), patchFile.getCharset())) {
+          char[] chars = new char[(int)patchFile.getLength()];
+          int count = 0;
+          while (count < chars.length) {
+            int n = inputStreamReader.read(chars, count, chars.length - count);
+            if (n <= 0) {
+              break;
+            }
+            count += n;
+          }
+          return new PatchReader(new CharArrayCharSequence(chars, 0, count));
+        }
+      });
     }
     catch (Exception e) {
       addNotificationAndWarn(VcsBundle.message("patch.apply.cannot.read.patch", patchFile.getPresentableName(), e.getMessage()));
