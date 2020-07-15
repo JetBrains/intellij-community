@@ -37,7 +37,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     if (myDescription != null ? !myDescription.equals(template.myDescription) : template.myDescription != null) return false;
     if (myGroupName != null ? !myGroupName.equals(template.myGroupName) : template.myGroupName != null) return false;
     if (myKey != null ? !myKey.equals(template.myKey) : template.myKey != null) return false;
-    if (!getString().equals(template.getString())) return false;
+    if (!string().equals(template.string())) return false;
     if (templateText() != null ? !templateText().equals(template.templateText()) : template.templateText() != null) return false;
 
     if (!new THashSet<>(myVariables).equals(new THashSet<>(template.myVariables))) return false;
@@ -53,7 +53,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     }
     int result;
     result = myKey.hashCode();
-    result = 29 * result + getString().hashCode();
+    result = 29 * result + string().hashCode();
     result = 29 * result + myGroupName.hashCode();
     return result;
   }
@@ -155,7 +155,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   @NotNull
   @Override
   public TemplateImpl copy() {
-    TemplateImpl template = new TemplateImpl(myKey, getString(), myGroupName);
+    TemplateImpl template = new TemplateImpl(myKey, string(), myGroupName);
     template.resetFrom(this);
     return template;
   }
@@ -165,7 +165,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     setToParseSegments(another.isToParseSegments());
 
     myKey = another.getKey();
-    setString(another.getString());
+    setString(another.string());
     setTemplateText(another.templateText());
     myGroupName = another.myGroupName;
     myId = another.myId;

@@ -28,20 +28,20 @@ public abstract class TemplateBase extends Template {
     }
 
     setSegments(new SmartList<>());
-    StringBuilder buffer = new StringBuilder(getString().length());
+    StringBuilder buffer = new StringBuilder(myString.length());
     TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(getString());
+    lexer.start(myString);
 
     while(true){
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;
       int start = lexer.getTokenStart();
       int end = lexer.getTokenEnd();
-      String token = getString().substring(start, end);
+      String token = myString.substring(start, end);
       if (tokenType == TemplateTokenType.VARIABLE){
         String name = token.substring(1, token.length() - 1);
         Segment segment = new Segment(name, buffer.length());
-        getSegments().add(segment);
+        mySegments.add(segment);
       }
       else if (tokenType == TemplateTokenType.ESCAPE_DOLLAR){
         buffer.append("$");
@@ -51,7 +51,7 @@ public abstract class TemplateBase extends Template {
       }
       lexer.advance();
     }
-    setTemplateText(buffer.toString());
+    myTemplateText = buffer.toString();
   }
 
   protected List<Segment> getSegments() {
@@ -74,6 +74,10 @@ public abstract class TemplateBase extends Template {
   @Override
   public String getString() {
     parseSegments();
+    return myString;
+  }
+
+  protected String string() {
     return myString;
   }
 
