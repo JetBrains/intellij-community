@@ -28,7 +28,7 @@ import java.util.List;
 
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.*;
 
-public class CreateMethodFromUsageFix {
+public final class CreateMethodFromUsageFix {
   private static final Logger LOG = Logger.getInstance(CreateMethodFromUsageFix.class);
 
   public static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {

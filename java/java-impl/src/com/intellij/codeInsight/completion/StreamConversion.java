@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,7 +28,7 @@ import static com.intellij.psi.CommonClassNames.*;
 /**
  * @author peter
  */
-class StreamConversion {
+final class StreamConversion {
 
   static List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
     PsiExpression qualifier = ref.getQualifierExpression();
@@ -146,7 +146,7 @@ class StreamConversion {
       consumer.consume(new CollectLookupElement(pair.first, pair.second, ref));
     }
   }
-  
+
   // each pair of method name in Collectors class, and the corresponding collection type
   private static List<Pair<String, PsiType>> suggestCollectors(Collection<? extends ExpectedTypeInfo> expectedTypes, PsiExpression qualifier) {
     PsiType component = PsiUtil.substituteTypeParameter(qualifier.getType(), JAVA_UTIL_STREAM_STREAM, 0, true);
@@ -157,7 +157,7 @@ class StreamConversion {
     GlobalSearchScope scope = qualifier.getResolveScope();
 
     boolean joiningApplicable = InheritanceUtil.isInheritor(component, CharSequence.class.getName());
-    
+
     PsiClass list = facade.findClass(JAVA_UTIL_LIST, scope);
     PsiClass set = facade.findClass(JAVA_UTIL_SET, scope);
     PsiClass collection = facade.findClass(JAVA_UTIL_COLLECTION, scope);
@@ -174,7 +174,7 @@ class StreamConversion {
         hasString = true;
         continue;
       }
-      
+
       PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(type);
       PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(type, true);
       if (expectedClass == null || expectedComponent == null || !TypeConversionUtil.isAssignable(expectedComponent, component)) continue;
@@ -256,7 +256,7 @@ class StreamConversion {
     public void handleInsert(@NotNull InsertionContext context) {
       context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), getInsertString());
       context.commitDocument();
-      
+
       PsiMethodCallExpression call =
         PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiMethodCallExpression.class, false);
       if (call == null) return;

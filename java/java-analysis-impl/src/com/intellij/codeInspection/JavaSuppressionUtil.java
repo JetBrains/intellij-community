@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -31,7 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Matcher;
 
-public class JavaSuppressionUtil {
+public final class JavaSuppressionUtil {
   private static final String GENERATED_ANNOTATION_NAME = "javax.annotation.Generated";
   private static final String JDK9_GENERATED_ANNOTATION_NAME = "javax.annotation.processing.Generated";
 

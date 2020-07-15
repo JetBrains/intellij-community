@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiLiteralUtil {
+public final class PsiLiteralUtil {
   @NonNls public static final String HEX_PREFIX = "0x";
   @NonNls public static final String BIN_PREFIX = "0b";
   @NonNls public static final String _2_IN_31 = Long.toString(-1L << 31).substring(1);
@@ -566,9 +566,9 @@ public class PsiLiteralUtil {
   /**
    * @param literal numeric literal to convert
    * @param wantedType wanted type
-   * @return textual representation of converted numeric literal; null if not supported 
-   * or conversion overflows, or supplied literal is not a numeric literal, 
-   * or wanted type is not a numeric type. 
+   * @return textual representation of converted numeric literal; null if not supported
+   * or conversion overflows, or supplied literal is not a numeric literal,
+   * or wanted type is not a numeric type.
    */
   public static @Nullable String tryConvertNumericLiteral(@NotNull PsiLiteralExpression literal, PsiType wantedType) {
     PsiType exprType = literal.getType();

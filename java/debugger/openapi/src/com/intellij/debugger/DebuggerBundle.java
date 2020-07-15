@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated use {@link JavaDebuggerBundle} instead
  */
 @Deprecated
-public class DebuggerBundle {
+public final class DebuggerBundle {
   @NotNull
   public static String message(@NotNull String key, Object @NotNull ... params) {
     return JavaDebuggerBundle.message(key, params);

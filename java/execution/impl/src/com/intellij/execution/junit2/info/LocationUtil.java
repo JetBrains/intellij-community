@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class LocationUtil {
+public final class LocationUtil {
   public static boolean isJarAttached(@NotNull Location location, @NotNull final PsiPackage aPackage, final String... fqn) {
     return isJarAttached(location, aPackage.getDirectories(), fqn);
   }

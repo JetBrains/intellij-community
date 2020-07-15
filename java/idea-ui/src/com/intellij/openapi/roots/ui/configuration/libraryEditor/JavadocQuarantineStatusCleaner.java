@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.JavaUiBundle;
@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  * Implementation note: UserDefinedFileAttributeView is not supported on macOS (https://bugs.openjdk.java.net/browse/JDK-8030048),
  * so the class resorts to JNA.
  */
-public class JavadocQuarantineStatusCleaner {
+public final class JavadocQuarantineStatusCleaner {
   private static final Logger LOG = Logger.getInstance(JavadocQuarantineStatusCleaner.class);
 
   private static final String QUARANTINE_ATTRIBUTE = "com.apple.quarantine";

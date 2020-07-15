@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -27,7 +27,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class JavadocHighlightUtil {
+public final class JavadocHighlightUtil {
   private static final String[] TAGS_TO_CHECK = {"author", "version", "since"};
   private static final Set<String> UNIQUE_TAGS = ContainerUtil.newHashSet("return", "deprecated", "serial", "serialData");
   private static final TokenSet SEE_TAG_REFS = TokenSet.create(

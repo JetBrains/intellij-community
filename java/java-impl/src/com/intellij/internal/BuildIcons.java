@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
-public class BuildIcons {
+public final class BuildIcons {
   public static void main(String[] args) throws Exception {
     File root = new File("/Users/max/IDEA/out/classes/production/");
     final MultiMap<Couple<Integer>, String> dimToPath = new MultiMap<>();

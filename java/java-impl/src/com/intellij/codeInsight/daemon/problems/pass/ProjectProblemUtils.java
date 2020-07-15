@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class ProjectProblemUtils {
+public final class ProjectProblemUtils {
 
   private static final Key<Map<PsiMember, Set<Problem>>> PROBLEMS_KEY = Key.create("project.problems.problem.key");
   private static final Key<Long> MODIFICATION_COUNT = Key.create("ProjectProblemModificationCount");

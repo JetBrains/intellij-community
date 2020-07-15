@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -30,7 +30,7 @@ import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueC
 /**
  * A facade for all inference algorithms which work on Java source code (Light AST) and cache results in the index.
  */
-public class JavaSourceInference {
+public final class JavaSourceInference {
   public static final int MAX_CONTRACT_COUNT = 10;
   private static final Logger LOG = Logger.getInstance(JavaSourceInference.class);
 
@@ -41,7 +41,7 @@ public class JavaSourceInference {
   private static class MethodInferenceData {
     static final MethodInferenceData UNKNOWN =
       new MethodInferenceData(Mutability.UNKNOWN, Nullability.UNKNOWN, Collections.emptyList(), MutationSignature.unknown(), new BitSet());
-    
+
     final @NotNull Mutability myMutability;
     final @NotNull Nullability myNullability;
     final @NotNull List<StandardMethodContract> myContracts;
@@ -75,7 +75,7 @@ public class JavaSourceInference {
     if (mode == InferenceMode.PARAMETERS) {
       // Infer parameters nullability only (for unstable methods)
       return notNullParameters.isEmpty() ? MethodInferenceData.UNKNOWN :
-             new MethodInferenceData(Mutability.UNKNOWN, Nullability.UNKNOWN, Collections.emptyList(), 
+             new MethodInferenceData(Mutability.UNKNOWN, Nullability.UNKNOWN, Collections.emptyList(),
                                      MutationSignature.unknown(), notNullParameters);
     }
 
@@ -130,7 +130,7 @@ public class JavaSourceInference {
       throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
     }
   }
-  
+
   private static @NotNull MutationSignature findMutationSignature(@NotNull PsiMethodImpl method, @NotNull MethodData data) {
     PurityInferenceResult result = data.getPurity();
     if (result == null) return MutationSignature.unknown();

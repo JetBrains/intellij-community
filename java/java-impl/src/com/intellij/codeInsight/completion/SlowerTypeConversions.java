@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -21,7 +21,7 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
 /**
  * @author peter
  */
-class SlowerTypeConversions {
+final class SlowerTypeConversions {
   static void addChainedSuggestions(CompletionParameters parameters,
                                     CompletionResultSet result,
                                     Set<ExpectedTypeInfo> expectedInfos,

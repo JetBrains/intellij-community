@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JavaCompilerElementRetriever {
+public final class JavaCompilerElementRetriever {
   private static final Logger LOG = Logger.getInstance(JavaCompilerElementRetriever.class);
 
   private final static TokenSet FUN_EXPR = TokenSet.create(JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);

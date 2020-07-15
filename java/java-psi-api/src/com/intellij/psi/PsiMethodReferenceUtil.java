@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.core.JavaPsiBundle;
@@ -11,7 +11,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiMethodReferenceUtil {
+public final class PsiMethodReferenceUtil {
   private static final Logger LOG = Logger.getInstance(PsiMethodReferenceUtil.class);
 
   public static boolean isSecondSearchPossible(PsiType[] parameterTypes,
@@ -163,7 +163,7 @@ public class PsiMethodReferenceUtil {
       if (TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType)) {
         return true;
       }
-     
+
       if (errorMessage != null) {
         errorMessage.set(JavaPsiBundle.message("bad.return.type.in.method.reference", methodReturnType.getCanonicalText(),
                                                interfaceReturnType.getCanonicalText()));
@@ -252,7 +252,7 @@ public class PsiMethodReferenceUtil {
     }
     return new QualifierResolveResult(containingClass, substitutor, false);
   }
-  
+
   public static boolean isStaticallyReferenced(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
     final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
     if (qualifierExpression != null) {
@@ -262,13 +262,13 @@ public class PsiMethodReferenceUtil {
     return true;
   }
 
-  //if P1, ..., Pn is not empty and P1 is a subtype of ReferenceType, then the method reference expression is treated as 
+  //if P1, ..., Pn is not empty and P1 is a subtype of ReferenceType, then the method reference expression is treated as
   // if it were a method invocation expression with argument expressions of types P2, ...,Pn.
   public static boolean isReceiverType(@Nullable PsiType receiverType, PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
     if (receiverType == null) {
       return false;
     }
-    return TypeConversionUtil.isAssignable(JavaPsiFacade.getElementFactory(containingClass.getProject()).createType(containingClass, psiSubstitutor), 
+    return TypeConversionUtil.isAssignable(JavaPsiFacade.getElementFactory(containingClass.getProject()).createType(containingClass, psiSubstitutor),
                                            replaceArrayType(receiverType, containingClass));
   }
 

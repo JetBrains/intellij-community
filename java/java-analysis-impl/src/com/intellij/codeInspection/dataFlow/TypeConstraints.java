@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class TypeConstraints {
+public final class TypeConstraints {
   /**
    * Top constraint (no restriction; any non-primitive value satisfies this)
    */
@@ -82,7 +82,7 @@ public class TypeConstraints {
 
   /**
    * @param type PsiType
-   * @return a constraint for the object that has exactly given PsiType; 
+   * @return a constraint for the object that has exactly given PsiType;
    * {@link #BOTTOM} if the object of given type cannot be instantiated.
    */
   @NotNull
@@ -433,7 +433,7 @@ public class TypeConstraints {
       if (!(other instanceof ExactArray)) return false;
       return myComponent.isAssignableFrom(((ExactArray)other).myComponent);
     }
-    
+
     @Override
     public boolean isConvertibleFrom(@NotNull Exact other) {
       if (other instanceof ExactArray) {

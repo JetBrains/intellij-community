@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.openapi.compiler.CompileContext;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class ArtifactsCompiler {
+public final class ArtifactsCompiler {
   private static final Key<Set<String>> WRITTEN_PATHS_KEY = Key.create("artifacts_written_paths");
 
   public static void addWrittenPaths(final CompileContext context, Set<String> writtenPaths) {

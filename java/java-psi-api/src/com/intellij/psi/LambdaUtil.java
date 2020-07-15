@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 /**
  * @author anna
  */
-public class LambdaUtil {
+public final class LambdaUtil {
   private static final Logger LOG = Logger.getInstance(LambdaUtil.class);
 
   public static @Nullable PsiType getFunctionalInterfaceReturnType(PsiFunctionalExpression expr) {
@@ -740,7 +740,7 @@ public class LambdaUtil {
         break;
       }
 
-      final PsiCall psiCall = PsiTreeUtil.getParentOfType(parent, PsiCall.class, false, PsiMember.class, PsiVariable.class, 
+      final PsiCall psiCall = PsiTreeUtil.getParentOfType(parent, PsiCall.class, false, PsiMember.class, PsiVariable.class,
                                                           PsiAssignmentExpression.class, PsiTypeCastExpression.class);
       if (psiCall == null) {
         break;
@@ -893,9 +893,9 @@ public class LambdaUtil {
         if (function instanceof PsiFunctionalExpression && ((PsiFunctionalExpression)function).getFunctionalInterfaceType() == null) {
           return false;
         }
-        if (origType instanceof PsiClassType && !((PsiClassType)origType).isRaw() && 
+        if (origType instanceof PsiClassType && !((PsiClassType)origType).isRaw() &&
             //when lambda has no formal parameter types, it's ignored during applicability check
-            //so unchecked warnings inside lambda's body won't lead to erasure of the type of the containing call 
+            //so unchecked warnings inside lambda's body won't lead to erasure of the type of the containing call
             //but after replacement of lambda with the equivalent method call, unchecked warning won't be ignored anymore
             //and the type of the call would be erased => red code may appear
             !lambda.hasFormalParameterTypes()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -13,7 +13,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 
-public class ReplaceExpressionUtil {
+public final class ReplaceExpressionUtil {
   private static final Logger LOG = Logger.getInstance(ReplaceExpressionUtil.class);
 
   public static boolean isNeedParenthesis(ASTNode oldExpr, ASTNode newExpr) {

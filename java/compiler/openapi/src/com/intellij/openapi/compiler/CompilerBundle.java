@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated use {@link JavaCompilerBundle} instead
  */
 @Deprecated
-public class CompilerBundle {
+public final class CompilerBundle {
   @NotNull
   public static String message(@NotNull String key, Object @NotNull ... params) {
     return JavaCompilerBundle.message(key, params);

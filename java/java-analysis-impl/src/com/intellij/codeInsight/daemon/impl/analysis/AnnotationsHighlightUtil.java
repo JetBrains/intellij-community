@@ -37,7 +37,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 /**
  * @author ven
  */
-public class AnnotationsHighlightUtil {
+public final class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationsHighlightUtil.class);
 
   static HighlightInfo checkNameValuePair(@NotNull PsiNameValuePair pair,
@@ -569,7 +569,7 @@ public class AnnotationsHighlightUtil {
           if (errorMessage != null) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
           }
-          
+
           if (((PsiClass)parent).hasModifierProperty(PsiModifier.SEALED)) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
               .range(annotation)

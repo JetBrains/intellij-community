@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaPsiPatternUtil {
+public final class JavaPsiPatternUtil {
   /**
    * @param expression expression to search pattern variables in
    * @return list of pattern variables declared within an expression that could be visible outside of given expression.

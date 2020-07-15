@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaOptionalConversionUtil {
+public final class GuavaOptionalConversionUtil {
   static boolean isOptionalOrContext(@Nullable PsiExpression context) {
     if (context == null) return false;
     final PsiElement parent = context.getParent();

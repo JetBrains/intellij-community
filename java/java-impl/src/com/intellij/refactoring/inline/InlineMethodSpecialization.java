@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class InlineMethodSpecialization {
+public final class InlineMethodSpecialization {
   private static final CallMatcher
     CLASS_METHODS = CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_CLASS, "getName", "getSimpleName").parameterCount(0);
   private static final CallMatcher

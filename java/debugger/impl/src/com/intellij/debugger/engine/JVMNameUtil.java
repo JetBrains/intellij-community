@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class JVMNameUtil {
+public final class JVMNameUtil {
   private static final Logger LOG = Logger.getInstance(JVMNameUtil.class);
 
   public static final String CONSTRUCTOR_NAME = "<init>";

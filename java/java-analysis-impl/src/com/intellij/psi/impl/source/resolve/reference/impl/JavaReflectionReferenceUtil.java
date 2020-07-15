@@ -35,7 +35,7 @@ import java.util.function.Function;
 /**
  * @author Pavel.Dolgov
  */
-public class JavaReflectionReferenceUtil {
+public final class JavaReflectionReferenceUtil {
   // MethodHandle (Java 7) and VarHandle (Java 9) infrastructure
   public static final String JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP = "java.lang.invoke.MethodHandles.Lookup";
   public static final String JAVA_LANG_INVOKE_METHOD_TYPE = "java.lang.invoke.MethodType";

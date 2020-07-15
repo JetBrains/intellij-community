@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class SuspendManagerUtil {
+public final class SuspendManagerUtil {
   private static final Logger LOG = Logger.getInstance(SuspendManagerUtil.class);
 
   public static boolean isEvaluating(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
-public class JavaGenericsUtil {
+public final class JavaGenericsUtil {
   public static boolean isReifiableType(PsiType type) {
     if (type instanceof PsiArrayType) {
       return isReifiableType(((PsiArrayType)type).getComponentType());

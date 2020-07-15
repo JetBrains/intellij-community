@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-public class DebuggerUtilsAsync {
+public final class DebuggerUtilsAsync {
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsAsync.class);
 
   // Debugger manager thread

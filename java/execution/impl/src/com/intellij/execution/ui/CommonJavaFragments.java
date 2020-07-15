@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
 import static com.intellij.util.containers.ContainerUtil.exists;
 
-public class CommonJavaFragments {
+public final class CommonJavaFragments {
 
   public static <S extends RunConfigurationBase<?>> SettingsEditorFragment<S, JLabel> createBuildBeforeRun(BeforeRunComponent beforeRunComponent) {
     String buildAndRun = ExecutionBundle.message("application.configuration.title.build.and.run");

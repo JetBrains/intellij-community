@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -52,7 +38,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-class SliceUtil {
+final class SliceUtil {
   static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
                                           @NotNull Processor<? super SliceUsage> processor,
                                           @NotNull JavaSliceBuilder builder) {
@@ -192,7 +178,7 @@ class SliceUtil {
         return builder.withFilter(filter -> filter.withType(analysis.myDfType)).process(analysis.myAnchor, processor);
       }
     }
-    
+
     if (builder.hasNesting()) {
       // consider container creation
       PsiElement initializer = expression instanceof PsiNewExpression ? ((PsiNewExpression)expression).getArrayInitializer() : expression;
@@ -292,7 +278,7 @@ class SliceUtil {
 
       PsiSubstitutor origSubstitutor = builder.getSubstitutor();
       final PsiSubstitutor s = methodCalled == override ? origSubstitutor :
-                               MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodCalled.getSignature(origSubstitutor), 
+                               MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodCalled.getSignature(origSubstitutor),
                                                                                       override.getSignature(origSubstitutor));
       final PsiSubstitutor superSubstitutor = s == null ? parentSubstitutor : s;
 
@@ -402,7 +388,7 @@ class SliceUtil {
     SliceUsage specificMethodCall = findSpecificMethodCallUpTheTree(builder.getParent(), method);
     if (specificMethodCall != null) {
       SliceValueFilter filter = specificMethodCall.params.valueFilter;
-      return processMethodCall(builder.withFilter(f -> f.copyStackFrom(filter)), 
+      return processMethodCall(builder.withFilter(f -> f.copyStackFrom(filter)),
                                processor, actualParameterType, actualParameters, paramSeqNo, specificMethodCall.getElement());
     }
 

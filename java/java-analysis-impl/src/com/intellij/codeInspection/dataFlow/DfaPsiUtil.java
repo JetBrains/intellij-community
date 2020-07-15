@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -37,7 +37,7 @@ import java.util.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class DfaPsiUtil {
+public final class DfaPsiUtil {
 
   private static final CallMatcher NON_NULL_VAR_ARG = CallMatcher.anyOf(
     staticCall(JAVA_UTIL_LIST, "of"),

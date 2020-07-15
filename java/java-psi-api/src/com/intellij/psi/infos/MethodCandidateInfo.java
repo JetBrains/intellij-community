@@ -328,7 +328,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     return incompleteSubstitutor;
   }
-  
+
   @NotNull
   public PsiSubstitutor getSubstitutorFromQualifier() {
     return super.getSubstitutor();
@@ -515,7 +515,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myInferenceError;
   }
 
-  public static class ApplicabilityLevel {
+  public static final class ApplicabilityLevel {
     public static final int NOT_APPLICABLE = 1;
     public static final int VARARGS = 2;
     public static final int FIXED_ARITY = 3;

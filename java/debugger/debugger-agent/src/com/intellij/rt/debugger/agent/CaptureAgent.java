@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.jar.JarFile;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class CaptureAgent {
+public final class CaptureAgent {
   public static final String AGENT_STORAGE_JAR = "debugger-agent-storage.jar";
   private static Instrumentation ourInstrumentation;
 

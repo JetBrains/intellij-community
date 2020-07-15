@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class HighlightClassUtil {
+public final class HighlightClassUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   /**
@@ -965,7 +965,7 @@ public class HighlightClassUtil {
     }
     return null;
   }
-  
+
   public static HighlightInfo checkIllegalInstanceMemberInRecord(PsiMember member) {
     if (!member.hasModifierProperty(PsiModifier.STATIC)) {
       PsiClass aClass = member.getContainingClass();
@@ -1038,7 +1038,7 @@ public class HighlightClassUtil {
     return null;
   }
 
-  static void checkPermitsList(PsiReferenceList list, 
+  static void checkPermitsList(PsiReferenceList list,
                                HighlightInfoHolder holder) {
     PsiElement parent = list.getParent();
     if (parent instanceof PsiClass && list.equals(((PsiClass)parent).getPermitsList())) {
@@ -1062,8 +1062,8 @@ public class HighlightClassUtil {
           PsiClass inheritorClass = (PsiClass)resolve;
           if (Arrays.stream(inheritorClass.getSuperTypes()).noneMatch(type -> aClass.equals(type.resolve()))) {
             holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(permitted)
-                         .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause.direct.implementation", 
-                                                                        inheritorClass.getName(), 
+                         .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause.direct.implementation",
+                                                                        inheritorClass.getName(),
                                                                         inheritorClass.isInterface() == aClass.isInterface() ? 1 : 2,
                                                                         aClass.getName()))
                          .create());

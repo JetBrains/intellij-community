@@ -59,7 +59,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.Attributes;
 
-public class MemoryAgentUtil {
+public final class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
   private static final String MEMORY_AGENT_EXTRACT_DIRECTORY = "memory.agent.extract.dir";
   private static final Key<Boolean> LISTEN_MEMORY_AGENT_STARTUP_FAILED = Key.create("LISTEN_MEMORY_AGENT_STARTUP_FAILED");

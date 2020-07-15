@@ -67,7 +67,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CreateFromUsageUtils {
+public final class CreateFromUsageUtils {
   private static final Logger LOG = Logger.getInstance(CreateFromUsageUtils.class);
   private static final int MAX_GUESSED_MEMBERS_COUNT = 10;
   private static final int MAX_RAW_GUESSED_MEMBERS_COUNT = 2 * MAX_GUESSED_MEMBERS_COUNT;

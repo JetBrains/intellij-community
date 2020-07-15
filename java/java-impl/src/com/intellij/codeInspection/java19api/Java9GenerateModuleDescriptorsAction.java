@@ -524,7 +524,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
   }
 
-  public static class NameConverter { // "public" is for tests
+  public static final class NameConverter { // "public" is for tests
     private static final Pattern NON_NAME = Pattern.compile("[^A-Za-z0-9]");
     private static final Pattern DOT_SEQUENCE = Pattern.compile("\\.{2,}");
     private static final Pattern SINGLE_DOT = Pattern.compile("\\.");

@@ -23,6 +23,7 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.stream.Stream;
 
+@ApiStatus.NonExtendable
 public class AnnotationUtil {
   public static final String NULLABLE = "org.jetbrains.annotations.Nullable";
   public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";

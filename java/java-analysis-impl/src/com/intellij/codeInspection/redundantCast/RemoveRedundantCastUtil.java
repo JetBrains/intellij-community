@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 
-public class RemoveRedundantCastUtil {
+public final class RemoveRedundantCastUtil {
   private static final Logger LOG = Logger.getInstance(RemoveRedundantCastUtil.class);
 
   public static PsiExpression removeCast(PsiTypeCastExpression castExpression) {
@@ -21,7 +21,7 @@ public class RemoveRedundantCastUtil {
     if (operand instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parExpr = (PsiParenthesizedExpression)operand;
       PsiElement topParent = PsiUtil.skipParenthesizedExprUp(parent);
-      if (!(topParent instanceof PsiExpression) || 
+      if (!(topParent instanceof PsiExpression) ||
           !PsiPrecedenceUtil.areParenthesesNeeded(parExpr.getExpression(), (PsiExpression)topParent, true)) {
         operand = parExpr.getExpression();
       }

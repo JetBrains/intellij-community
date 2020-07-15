@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -31,7 +31,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author Gregory.Shrago
  */
-public class DfaUtil {
+public final class DfaUtil {
 
   public static @NotNull Collection<PsiExpression> getVariableValues(@Nullable PsiVariable variable, @Nullable PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
@@ -110,7 +110,7 @@ public class DfaUtil {
       return operands.get(0);
     }
     return JavaPsiFacade.getElementFactory(block.getProject()).createExpressionFromText(
-      StreamEx.ofReversed(operands).map(op -> ParenthesesUtils.getText(op, PsiPrecedenceUtil.ADDITIVE_PRECEDENCE)).joining("+"), 
+      StreamEx.ofReversed(operands).map(op -> ParenthesesUtils.getText(op, PsiPrecedenceUtil.ADDITIVE_PRECEDENCE)).joining("+"),
       assignment);
   }
 
@@ -324,7 +324,7 @@ public class DfaUtil {
 
   /**
    * Returns a surrounding PSI element which should be analyzed via DFA
-   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor)}) to cover 
+   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor)}) to cover
    * given expression.
    *
    * @param expression expression to cover
@@ -407,7 +407,7 @@ public class DfaUtil {
   }
 
   public static boolean isNaN(Object value) {
-    return value instanceof Double && ((Double)value).isNaN() || 
+    return value instanceof Double && ((Double)value).isNaN() ||
            value instanceof Float && ((Float)value).isNaN();
   }
 }

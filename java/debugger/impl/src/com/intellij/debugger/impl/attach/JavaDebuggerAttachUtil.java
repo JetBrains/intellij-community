@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Set;
 
-public class JavaDebuggerAttachUtil {
+public final class JavaDebuggerAttachUtil {
   public static boolean canAttach(BaseProcessHandler processHandler) {
     return JavaAttachDebuggerProvider.getProcessAttachInfo(processHandler) != null;
   }

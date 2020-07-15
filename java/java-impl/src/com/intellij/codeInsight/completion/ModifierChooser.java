@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModifierChooser {
+public final class ModifierChooser {
   private static final String[][] CLASS_MODIFIERS = {
     {PsiKeyword.PUBLIC},
     {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}

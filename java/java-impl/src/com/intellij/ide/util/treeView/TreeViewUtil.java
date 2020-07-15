@@ -20,7 +20,7 @@ import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
 /**
  * @author Eugene Zhuravlev
  */
-public class TreeViewUtil {
+public final class TreeViewUtil {
   private static final int SUBPACKAGE_LIMIT = 2;
   private static final Key<ConcurrentMap<PsiPackage,Boolean>> SHOULD_ABBREV_PACK_KEY = Key.create("PACK_ABBREV_CACHE");
 

@@ -12,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Utility methods to support Java records
  */
-public class JavaPsiRecordUtil {
+public final class JavaPsiRecordUtil {
   /**
-   * @param accessor accessor method for record component 
+   * @param accessor accessor method for record component
    * @return a corresponding record component, or null if the supplied method is not an accessor for the record component.
    * Note that if accessor is not well-formed (e.g. has wrong return type), the corresponding record component will still be returned.
    */
@@ -40,7 +40,7 @@ public class JavaPsiRecordUtil {
 
   /**
    * @param component record component
-   * @return synthetic field that corresponds to given component, or null if not found (e.g. if this component doesn't belong to a class) 
+   * @return synthetic field that corresponds to given component, or null if not found (e.g. if this component doesn't belong to a class)
    */
   @Nullable
   public static PsiField getFieldForComponent(@NotNull PsiRecordComponent component) {
@@ -116,7 +116,7 @@ public class JavaPsiRecordUtil {
 
   /**
    * @param recordClass record class
-   * @return first explicitly declared canonical or compact constructor; 
+   * @return first explicitly declared canonical or compact constructor;
    * null if the supplied class is not a record. Returns a synthetic constructor if it's not explicitly defined.
    */
   @Nullable
