@@ -150,10 +150,13 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private void updateVariableType(@NotNull TypeDfaState state,
                                   @NotNull Instruction instruction,
                                   @NotNull VariableDescriptor descriptor,
-                                  @NotNull Computable<? extends DFAType> computation) {
+                                  @NotNull Computable<DFAType> computation) {
     if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
       state.removeBinding(descriptor);
       return;
+    }
+    else {
+      state.restoreBinding(descriptor);
     }
 
     DFAType type = myCache.getCachedInferredType(descriptor, instruction);

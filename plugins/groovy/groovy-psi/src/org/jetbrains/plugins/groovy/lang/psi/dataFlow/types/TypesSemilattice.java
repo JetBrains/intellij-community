@@ -10,9 +10,9 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.intellij.util.containers.ContainerUtil.filter;
 
 /**
  * @author ven
@@ -54,13 +54,16 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
 
 class TypeDfaState {
   private final Map<VariableDescriptor, DFAType> myVarTypes;
+  private final Set<VariableDescriptor> myEvictedDescriptors;
 
   TypeDfaState() {
     myVarTypes = new HashMap<>();
+    myEvictedDescriptors = new HashSet<>();
   }
 
   TypeDfaState(TypeDfaState another) {
     myVarTypes = new HashMap<>(another.myVarTypes);
+    myEvictedDescriptors = new HashSet<>(another.myEvictedDescriptors);
   }
 
   Map<VariableDescriptor, DFAType> getVarTypes() {
@@ -72,7 +75,9 @@ class TypeDfaState {
       return this;
     }
     TypeDfaState state = new TypeDfaState(this);
-    state.myVarTypes.putAll(another.myVarTypes);
+    Map<VariableDescriptor, DFAType> retainedDescriptors =
+      filter(another.myVarTypes, descriptor -> !another.myEvictedDescriptors.contains(descriptor));
+    state.myVarTypes.putAll(retainedDescriptors);
     return state;
   }
 
@@ -93,10 +98,11 @@ class TypeDfaState {
         myVarTypes.put(descriptor, dfaType.addFlushingType(t1.getFlushingType(), manager));
       }
     }
+    myEvictedDescriptors.addAll(another.myEvictedDescriptors);
   }
 
   boolean contentsEqual(TypeDfaState another) {
-    return myVarTypes.equals(another.myVarTypes);
+    return myVarTypes.equals(another.myVarTypes) && myEvictedDescriptors.equals(another.myEvictedDescriptors);
   }
 
   @Nullable
@@ -121,14 +127,19 @@ class TypeDfaState {
 
   @Override
   public String toString() {
-    return myVarTypes.toString();
+    String evicted = myEvictedDescriptors.isEmpty() ? "" : " (evicted: " + myEvictedDescriptors.toString() + ")";
+    return myVarTypes.toString() + evicted;
   }
 
   public boolean containsVariable(@NotNull VariableDescriptor descriptor) {
     return myVarTypes.containsKey(descriptor);
   }
 
-  public void removeBinding(VariableDescriptor descriptor) {
-    myVarTypes.remove(descriptor);
+  public void removeBinding(@NotNull VariableDescriptor descriptor) {
+    myEvictedDescriptors.add(descriptor);
+  }
+
+  public void restoreBinding(@NotNull VariableDescriptor descriptor) {
+    myEvictedDescriptors.remove(descriptor);
   }
 }
