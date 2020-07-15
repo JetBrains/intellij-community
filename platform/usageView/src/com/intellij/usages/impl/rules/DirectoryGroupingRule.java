@@ -120,17 +120,18 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
       if (compactMiddleDirectories) {
         List<String> parentPathList = CompactGroupHelper.pathToPathList(myDir.getPath());
         List<String> relativePathList = CompactGroupHelper.pathToPathList(relativePathText);
+        String rel = relativePathText.startsWith("/") ? relativePathText.substring(1) : relativePathText;
+
         if (parentPathList.size() == relativePathList.size()) {
           VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
           String relativePath = null;
           if (baseDir != null && baseDir.getParent() != null) {
-            relativePath = VfsUtilCore.getRelativePath(myDir, baseDir.getParent(), File.separatorChar)
-              .replace("\\", "/");
+            relativePath = VfsUtilCore.getRelativePath(myDir, baseDir.getParent(), File.separatorChar);
           }
           return relativePath == null ?
-                 relativePathText.startsWith("/") ? relativePathText.substring(1) : relativePathText : relativePath;
+                 rel : relativePath.replace("\\", "/");
         }
-        return relativePathText.startsWith("/") ? relativePathText.substring(1) : relativePathText;
+        return rel;
       }
       else {
         if (myFlattenDirs || myDir.getParent() == null) {
