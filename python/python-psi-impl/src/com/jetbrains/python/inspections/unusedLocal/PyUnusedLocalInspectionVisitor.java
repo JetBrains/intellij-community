@@ -26,6 +26,7 @@ import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveExceptionTargetQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveParameterQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveStatementQuickFix;
+import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -395,22 +396,34 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (myIgnoreVariablesStartingWithUnderscore && element.getText().startsWith(PyNames.UNDERSCORE)) continue;
           if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) continue;
 
+          final String warningMsg = PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name);
+
           final PyForStatement forStatement = PyForStatementNavigator.getPyForStatementByIterable(element);
           if (forStatement != null) {
             if (!myIgnoreRangeIterationVariables || !isRangeIteration(forStatement)) {
-              registerProblem(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name),
-                              ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new ReplaceWithWildCard());
+              registerWarning(element, warningMsg, new ReplaceWithWildCard());
             }
             continue;
           }
 
           final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(element);
           if (exceptPart != null) {
-            registerWarning(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveExceptionTargetQuickFix());
+            registerWarning(element, warningMsg, new PyRemoveExceptionTargetQuickFix());
             continue;
           }
 
-          registerWarning(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveStatementQuickFix());
+          final PyWithItem withItem = PsiTreeUtil.getParentOfType(element, PyWithItem.class);
+          if (withItem != null && PsiTreeUtil.isAncestor(withItem.getTarget(), element, false)) {
+            if (withItem.getTarget() == element) {
+              registerWarning(element, warningMsg, new PyRemoveWithPartQuickFix());
+            }
+            else {
+              registerWarning(element, warningMsg, new ReplaceWithWildCard());
+            }
+            continue;
+          }
+
+          registerWarning(element, warningMsg, new PyRemoveStatementQuickFix());
         }
       }
     }
