@@ -1,11 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView
 
+import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.ui.Queryable
+import com.intellij.project.stateStore
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import java.lang.RuntimeException
 
 // directory-based project must be used to ensure that .iws/.ipr file won't break the test (they may be created if workspace model is used)
 class ModulesInProjectViewTest : BaseProjectViewTestCase() {
@@ -62,8 +67,6 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
         loaded-inner
          subdir
          z.txt
-       unloaded-inner.iml
-       unloaded.iml
     """.trimIndent())
   }
 
@@ -164,6 +167,16 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
       |    subdir
       |
       """.trimMargin())
+  }
+
+  override fun doCreateRealModule(moduleName: String): Module {
+    return WriteAction.computeAndWait<Module, RuntimeException> {
+      /* iml files are created under .idea directory to ensure that they won't affect expected structure of Project View;
+         this is needed to ensure that tests work the same way under the old project model and under workspace model where all modules
+         are saved when a single module is unloaded */
+      val imlPath = project.stateStore.projectBasePath.resolve(".idea/$moduleName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+      ModuleManager.getInstance(myProject).newModule(imlPath, moduleType.id)
+    }
   }
 
   override fun getTestPath(): String? = null
