@@ -64,6 +64,7 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     return getSecondaryConsoleView();
   }
 
+  @Nullable
   public ConsoleViewImpl getTextConsole() {
     ConsoleView consoleView = getPrimaryConsoleView();
     if (consoleView instanceof ConsoleViewImpl) {
