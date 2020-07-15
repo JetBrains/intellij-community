@@ -12,6 +12,11 @@ public class TerminalCopySelectedTextAction extends DumbAwareAction {
   }
 
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(false);
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     // should never be called normally
     // handled by com.intellij.terminal.JBTerminalSystemSettingsProviderBase.getCopyActionPresentation
