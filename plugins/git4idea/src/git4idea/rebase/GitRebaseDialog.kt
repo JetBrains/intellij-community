@@ -134,10 +134,8 @@ class GitRebaseDialog(private val project: Project,
     val selectedBranch = branchField.item
     val branch = if (currentBranch?.name != selectedBranch) selectedBranch else null
 
-    val showOnto = RebaseOption.ONTO in selectedOptions
-    val upstreamField = if (showOnto) ontoField else upstreamField
+    val newBase = if (RebaseOption.ONTO in selectedOptions) getTextField(ontoField).text else null
     val upstream = getTextField(upstreamField).text
-    val newBase = if (showOnto) getTextField(ontoField).text else null
 
     return GitRebaseParams(GitVcs.getInstance(project).version, branch, newBase, upstream,
                            RebaseOption.INTERACTIVE in selectedOptions,
