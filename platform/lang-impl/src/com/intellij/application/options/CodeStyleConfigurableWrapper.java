@@ -135,7 +135,7 @@ public class CodeStyleConfigurableWrapper
   }
 
   @Override
-  public Map<String, Set<String>> processListOptionsWithPaths() {
+  public @NotNull Map<String, Set<String>> processListOptionsWithPaths() {
     return getOptionIndexer().processListOptionsWithPaths();
   }
 

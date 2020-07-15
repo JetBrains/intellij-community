@@ -566,7 +566,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       }
 
       @Override
-      public Map<String, Set<String>> processListOptionsWithPaths() {
+      public @NotNull Map<String, Set<String>> processListOptionsWithPaths() {
         final Map<String,Set<String>> result = new HashMap<>();
         for (CodeStyleAbstractPanel tab : myTabs) {
           result.put(tab.getTabTitle(), tab.processListOptions());

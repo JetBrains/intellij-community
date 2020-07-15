@@ -102,7 +102,7 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
   }
 
   @Override
-  public Map<String, Set<String>> processListOptionsWithPaths() {
+  public @NotNull Map<String, Set<String>> processListOptionsWithPaths() {
     return myPanel.getOptionIndexer().processListOptionsWithPaths();
   }
 
