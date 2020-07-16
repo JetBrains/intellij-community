@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
 
 /**
@@ -148,6 +148,26 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testDeclaration$meth_err14() throws Throwable { doTest() }
 
   void testDeclaration$nl_trows() throws Throwable { doTest() }
+
+  void testDeclaration$var1() throws Throwable { doTest() }
+
+  void testDeclaration$var2() throws Throwable { doTest() }
+
+  void testDeclaration$var3() throws Throwable { doTest() }
+
+  void testDeclaration$var4() throws Throwable { doTest() }
+
+  void testDeclaration$var5() throws Throwable { doTest() }
+
+  void testDeclaration$var6() throws Throwable { doTest() }
+
+  void testDeclaration$var7() throws Throwable { doTest() }
+
+  void testDeclaration$var8() throws Throwable { doTest() }
+
+  void testDeclaration$var9() throws Throwable { doTest() }
+
+  void testDeclaration$var10() throws Throwable { doTest() }
 
   void testFor$for1() throws Throwable { doTest() }
 

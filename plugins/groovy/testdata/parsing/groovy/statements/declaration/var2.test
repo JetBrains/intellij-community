@@ -1,5 +1,5 @@
 @Anno
-var
+var int var
 -----
 Groovy script
   Variable definitions
@@ -10,6 +10,11 @@ Groovy script
           PsiElement(identifier)('Anno')
         Annotation arguments
           <empty list>
-    PsiElement(new line)('\n')
+      PsiElement(new line)('\n')
+      PsiElement(var)('var')
+    PsiWhiteSpace(' ')
+    Built in type
+      PsiElement(int)('int')
+    PsiWhiteSpace(' ')
     Variable
       PsiElement(var)('var')

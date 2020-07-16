@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.tree.TokenSet;
@@ -15,7 +15,7 @@ public interface GroovyTokenSets {
   TokenSet KEYWORDS = create(
     KW_AS, KW_ASSERT, KW_BREAK, KW_CASE,
     KW_CATCH, KW_CLASS, /*const,*/ KW_CONTINUE,
-    KW_DEF, KW_DEFAULT, KW_DO, KW_ELSE,
+    KW_DEF, KW_VAR, KW_DEFAULT, KW_DO, KW_ELSE,
     KW_ENUM, KW_EXTENDS, KW_FALSE, KW_FINALLY,
     KW_FOR, /*goto,*/ KW_IF, KW_IMPLEMENTS,
     KW_IMPORT, KW_IN, KW_INSTANCEOF, KW_INTERFACE,
