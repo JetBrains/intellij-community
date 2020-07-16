@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.marketplace
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.newui.Tags
 
 /**
@@ -63,6 +64,9 @@ data class IntellijUpdateMetadata(
     for (dep in optionalDependencies) {
       pluginNode.addDepends(dep, true)
     }
+
+    RepositoryHelper.addMarketplacePluginDependencyIfRequired(pluginNode)
+
     return pluginNode
   }
 }
