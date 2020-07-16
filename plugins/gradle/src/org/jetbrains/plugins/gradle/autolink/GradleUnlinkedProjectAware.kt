@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.autolink
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectListener
+import com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkListener
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,7 +26,7 @@ class GradleUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
     return projectSettings != null
   }
 
-  override fun subscribe(project: Project, listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
+  override fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable) {
     val gradleSettings = GradleSettings.getInstance(project)
     gradleSettings.subscribe(object : GradleSettingsListenerAdapter() {
       override fun onProjectsLinked(settings: Collection<GradleProjectSettings>) =

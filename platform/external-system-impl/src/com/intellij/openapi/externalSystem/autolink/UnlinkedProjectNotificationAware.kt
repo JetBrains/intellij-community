@@ -44,7 +44,7 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
     Disposer.register(project, notificationDisposable)
     notifiedNotifications.add(systemId, notificationDisposable)
     notification.whenExpired { Disposer.dispose(notificationDisposable) }
-    unlinkedProjectAware.subscribe(project, object : ExternalSystemProjectListener {
+    unlinkedProjectAware.subscribe(project, object : ExternalSystemProjectLinkListener {
       override fun onProjectLinked(externalProjectPath: String) {
         notification.expire()
       }

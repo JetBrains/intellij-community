@@ -259,8 +259,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                 try {
                   myInitThread = Thread.currentThread();
                   // first, remove existing files
-                  for (AntBuildFile file : myBuildFiles) {
-                    myBuildFiles.remove(file);
+                  Iterator<AntBuildFileBase> it = myBuildFiles.iterator();
+                  while (it.hasNext()) {
+                    AntBuildFile file = it.next();
+                    it.remove();
                     removeBuildFileImpl(file);
                   }
 

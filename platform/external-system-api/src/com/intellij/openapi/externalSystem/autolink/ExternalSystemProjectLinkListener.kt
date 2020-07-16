@@ -4,11 +4,11 @@ package com.intellij.openapi.externalSystem.autolink
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Is used to track bounds of build system's life cycle into external system core
- * Idea automatically subscribes by [ExternalSystemUnlinkedProjectAware]
+ * Instance of this interface should be notified by external system plugin code when related project is (un)linked
+ * @see ExternalSystemUnlinkedProjectAware for details
  */
 @ApiStatus.Experimental
-interface ExternalSystemProjectListener {
+interface ExternalSystemProjectLinkListener {
 
   fun onProjectLinked(externalProjectPath: String) {}
 

@@ -28,48 +28,48 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
 
   override fun runActivity(project: Project) {
     val externalProjectPath = project.guessProjectDir()?.path ?: return
-    notifyNotificationWhenNonEmptyProjectUnlinked(project)
-    notifyNotificationWhenBuildToolPluginEnabled(project, externalProjectPath)
-    notifyNotificationWhenNewBuildFileCreated(project, externalProjectPath)
+    showNotificationWhenNonEmptyProjectUnlinked(project)
+    showNotificationWhenBuildToolPluginEnabled(project, externalProjectPath)
+    showNotificationWhenNewBuildFileCreated(project, externalProjectPath)
     if (!ExternalSystemUtil.isNewProject(project)) {
-      findUnlinkedProjectsAndNotifyNotificationIfFound(project, externalProjectPath)
+      showNotificationIfUnlinkedProjectsFound(project, externalProjectPath)
     }
   }
 
-  private fun findUnlinkedProjectsAndNotifyNotificationIfFound(project: Project, externalProjectPath: String) {
+  private fun showNotificationIfUnlinkedProjectsFound(project: Project, externalProjectPath: String) {
     EP_NAME.forEachExtensionSafe {
-      findUnlinkedProjectsAndNotifyNotificationIfFound(project, externalProjectPath, it)
+      showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, it)
     }
   }
 
-  private fun findUnlinkedProjectsAndNotifyNotificationIfFound(project: Project, externalProjectPath: String, buildFiles: Set<VirtualFile>) {
+  private fun showNotificationIfUnlinkedProjectsFound(project: Project, externalProjectPath: String, buildFiles: Set<VirtualFile>) {
     EP_NAME.forEachExtensionSafe {
-      findUnlinkedProjectsAndNotifyNotificationIfFound(project, externalProjectPath, buildFiles, it)
+      showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, buildFiles, it)
     }
   }
 
-  private fun findUnlinkedProjectsAndNotifyNotificationIfFound(
+  private fun showNotificationIfUnlinkedProjectsFound(
     project: Project,
     externalProjectPath: String,
     unlinkedProjectAware: ExternalSystemUnlinkedProjectAware
   ) {
-    findUnlinkedProjectsAndNotifyNotificationIfFound(project, externalProjectPath, unlinkedProjectAware) {
+    showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, unlinkedProjectAware) {
       unlinkedProjectAware.getBuildFiles(project, externalProjectPath)
     }
   }
 
-  private fun findUnlinkedProjectsAndNotifyNotificationIfFound(
+  private fun showNotificationIfUnlinkedProjectsFound(
     project: Project,
     externalProjectPath: String,
     possibleBuildFiles: Set<VirtualFile>,
     unlinkedProjectAware: ExternalSystemUnlinkedProjectAware
   ) {
-    findUnlinkedProjectsAndNotifyNotificationIfFound(project, externalProjectPath, unlinkedProjectAware) {
+    showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, unlinkedProjectAware) {
       possibleBuildFiles.filter { unlinkedProjectAware.isBuildFile(project, it) }
     }
   }
 
-  private fun findUnlinkedProjectsAndNotifyNotificationIfFound(
+  private fun showNotificationIfUnlinkedProjectsFound(
     project: Project,
     externalProjectPath: String,
     unlinkedProjectAware: ExternalSystemUnlinkedProjectAware,
@@ -88,37 +88,37 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
       .submit(backgroundExecutor)
   }
 
-  private fun notifyNotificationWhenNonEmptyProjectUnlinked(project: Project) {
+  private fun showNotificationWhenNonEmptyProjectUnlinked(project: Project) {
     EP_NAME.forEachExtensionSafe {
-      notifyNotificationWhenNonEmptyProjectUnlinked(project, it)
+      showNotificationWhenNonEmptyProjectUnlinked(project, it)
     }
     EP_NAME.addExtensionPointListener(
       object : ExtensionPointListener<ExternalSystemUnlinkedProjectAware> {
         override fun extensionAdded(extension: ExternalSystemUnlinkedProjectAware, pluginDescriptor: PluginDescriptor) {
-          notifyNotificationWhenNonEmptyProjectUnlinked(project, extension)
+          showNotificationWhenNonEmptyProjectUnlinked(project, extension)
         }
       }, project)
   }
 
-  private fun notifyNotificationWhenNonEmptyProjectUnlinked(project: Project, unlinkedProjectAware: ExternalSystemUnlinkedProjectAware) {
+  private fun showNotificationWhenNonEmptyProjectUnlinked(project: Project, unlinkedProjectAware: ExternalSystemUnlinkedProjectAware) {
     val extensionDisposable = createExtensionDisposable(project, unlinkedProjectAware)
-    unlinkedProjectAware.subscribe(project, object : ExternalSystemProjectListener {
+    unlinkedProjectAware.subscribe(project, object : ExternalSystemProjectLinkListener {
       override fun onProjectUnlinked(externalProjectPath: String) {
-        findUnlinkedProjectsAndNotifyNotificationIfFound(project, externalProjectPath)
+        showNotificationIfUnlinkedProjectsFound(project, externalProjectPath)
       }
     }, extensionDisposable)
   }
 
-  private fun notifyNotificationWhenBuildToolPluginEnabled(project: Project, externalProjectPath: String) {
+  private fun showNotificationWhenBuildToolPluginEnabled(project: Project, externalProjectPath: String) {
     EP_NAME.addExtensionPointListener(
       object : ExtensionPointListener<ExternalSystemUnlinkedProjectAware> {
         override fun extensionAdded(extension: ExternalSystemUnlinkedProjectAware, pluginDescriptor: PluginDescriptor) {
-          findUnlinkedProjectsAndNotifyNotificationIfFound(project, externalProjectPath, extension)
+          showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, extension)
         }
       }, project)
   }
 
-  private fun notifyNotificationWhenNewBuildFileCreated(project: Project, externalProjectPath: String) {
+  private fun showNotificationWhenNewBuildFileCreated(project: Project, externalProjectPath: String) {
     val asyncNewFilesListener = NewBuildFilesListener(project, externalProjectPath)
     val fileManager = VirtualFileManager.getInstance()
     fileManager.addAsyncFileListener(asyncNewFilesListener, project)
@@ -148,7 +148,7 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
 
     override fun apply() {
       if (buildFiles.isEmpty()) return
-      findUnlinkedProjectsAndNotifyNotificationIfFound(project, externalProjectPath, buildFiles)
+      showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, buildFiles)
     }
 
     override fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean =

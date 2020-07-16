@@ -5,9 +5,8 @@ import com.intellij.lang.ant.config.AntBuildFile
 import com.intellij.lang.ant.config.AntConfigurationBase
 import com.intellij.lang.ant.config.AntConfigurationListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectListener
+import com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkListener
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
-import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -42,7 +41,7 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
       .forEach { antConfiguration.addBuildFile(it) }
   }
 
-  override fun subscribe(project: Project, listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
+  override fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable) {
     val antConfiguration = AntConfigurationBase.getInstance(project)
     antConfiguration.addAntConfigurationListener(object : AntConfigurationListener {
       override fun buildFileAdded(buildFile: AntBuildFile) {
