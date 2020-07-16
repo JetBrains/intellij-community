@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actions.BackspaceAction
 import com.intellij.openapi.editor.actions.CopyAction
 import com.intellij.openapi.editor.actions.PasteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -98,7 +99,7 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
             }
 
             override fun beforeChildAddition(event: PsiTreeChangeEvent) {
-                actionPerformed(BeforeChildAddedAction(event.parent, event.newChild))
+                actionPerformed(BeforeChildAddedAction(event.parent, event.child))
             }
 
             override fun beforeChildReplacement(event: PsiTreeChangeEvent) {
@@ -130,7 +131,7 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
             }
 
             override fun childAdded(event: PsiTreeChangeEvent) {
-                actionPerformed(ChildAddedAction(event.parent, event.newChild))
+                actionPerformed(ChildAddedAction(event.parent, event.child))
             }
 
             override fun childrenChanged(event: PsiTreeChangeEvent) {
@@ -147,6 +148,7 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
                 private val copyPasteManager = CopyPasteManager.getInstance()
 
                 override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+                    val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
                     when (action) {
                         is CopyAction -> {
                             val copiedText = copyPasteManager.contents?.asString() ?: return
@@ -154,26 +156,71 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
                         }
                         is PasteAction -> {
                             val pastedText = copyPasteManager.contents?.asString() ?: return
-                            anActionPerformed(EditorPasteAction(pastedText, System.currentTimeMillis()))
+                            val caretOffset = editor.getCaretOffset()
+                            anActionPerformed(EditorPasteAction(pastedText, caretOffset, System.currentTimeMillis()))
+                        }
+                        is BackspaceAction -> {
+                            val psiFile = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return
+                            anActionPerformed(
+                                EditorBackspaceAction(
+                                    editor.getSelection(),
+                                    editor.getCaretOffset(),
+                                    psiFile,
+                                    System.currentTimeMillis()
+                                )
+                            )
                         }
                     }
                 }
 
                 override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+                    val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
                     when (action) {
                         is CopyAction -> {
-                            val selectedText = dataContext.getSelectedText() ?: return
+                            val selectedText = editor.getSelectedText() ?: return
                             anActionPerformed(BeforeEditorCopyAction(selectedText, System.currentTimeMillis()))
                         }
                         is PasteAction -> {
                             val pastedText = copyPasteManager.contents?.asString() ?: return
-                            anActionPerformed(BeforeEditorPasteAction(pastedText, System.currentTimeMillis()))
+                            val caretOffset = editor.getCaretOffset()
+                            anActionPerformed(
+                                BeforeEditorPasteAction(
+                                    pastedText,
+                                    caretOffset,
+                                    System.currentTimeMillis()
+                                )
+                            )
+                        }
+                        is BackspaceAction -> {
+                            val psiFile = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return
+                            anActionPerformed(
+                                BeforeEditorBackspaceAction(
+                                    editor.getSelection(),
+                                    editor.getCaretOffset(),
+                                    psiFile,
+                                    System.currentTimeMillis()
+                                )
+                            )
                         }
                     }
                 }
 
-                private fun DataContext.getSelectedText(): String? {
-                    return getData(CommonDataKeys.EDITOR)?.selectionModel?.selectedText
+                private fun Editor.getSelectedText(): String? {
+                    return selectionModel.selectedText
+                }
+
+                private fun Editor.getCaretOffset(): Int {
+                    return caretModel.offset
+                }
+
+                private fun Editor.getSelection(): Selection? {
+                    with(selectionModel) {
+                        return if (selectedText != null) {
+                            Selection(selectionStart, selectionEnd, selectedText!!)
+                        } else {
+                            null
+                        }
+                    }
                 }
             })
 

@@ -124,6 +124,14 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         editor.caretModel.moveToLogicalPosition(LogicalPosition(lineIndex, columnIndex))
     }
 
+    fun selectBetweenLogicalPositions(
+        lineStartIndex: Int, columnStartIndex: Int,
+        lineEndIndex: Int, columnEndIndex: Int
+    ) {
+        moveCaretToLogicalPosition(lineStartIndex, columnStartIndex)
+        moveCaretRelatively(columnEndIndex - columnStartIndex, lineEndIndex - lineStartIndex, true)
+    }
+
     fun copyCurrentSelection() {
         val action = ActionManager.getInstance().getAction("EditorCopy")
         DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
@@ -144,8 +152,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         lineEndIndex: Int, columnEndIndex: Int
     ) {
         val oldOffset = editor.caretModel.offset
-        moveCaretToLogicalPosition(lineStartIndex, columnStartIndex)
-        moveCaretRelatively(columnEndIndex - columnStartIndex, lineEndIndex - lineStartIndex, true)
+        selectBetweenLogicalPositions(lineStartIndex, columnStartIndex, lineEndIndex, columnEndIndex)
         copyCurrentSelection()
         editor.caretModel.moveToOffset(oldOffset)
     }
@@ -172,8 +179,8 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
 
-    fun insertNewLineAt(index: Int) {
-        moveCaretToLogicalPosition(index, 0)
+    fun insertNewLineAt(lineIndex: Int, columnIndex: Int = 0) {
+        moveCaretToLogicalPosition(lineIndex, columnIndex)
         type("\n")
         moveCaretRelatively(0, -1)
     }
@@ -189,7 +196,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     fun deleteSymbolAtCaret() {
-        myFixture.type('\b')
+        type("\b")
     }
 
     fun deleteSymbolsAtCaret(symbolsNumber: Int) {

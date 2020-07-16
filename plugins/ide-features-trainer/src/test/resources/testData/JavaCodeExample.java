@@ -27,5 +27,20 @@ public class Main {
         }
 
         private static boolean function = true;
+
+        public int cyclesFunction(int ere) {
+            int i = 10;
+            for(int j = 0; j < i; j++) {
+                int res = j - j + j;
+                System.out.println(res - j);
+            }
+            i += 10;
+            while(i > 0) {
+                System.out.println(i * i);
+                i--;
+            }
+            if  (true) { i++; }
+            return i;
+        }
     }
 }

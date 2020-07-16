@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.feature.suggester.changes
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 
 sealed class UserAction(open val parent: PsiElement?)
 
@@ -26,8 +27,11 @@ data class BeforeChildMovedAction(override val parent: PsiElement?, val child: P
 
 sealed class UserAnAction(open val timeMillis: Long)
 
-data class BackspaceAction(val selectedText: String, override val timeMillis: Long) : UserAnAction(timeMillis)
+data class EditorBackspaceAction(val selection: Selection?, val caretOffset: Int, val psiFile: PsiFile, override val timeMillis: Long) : UserAnAction(timeMillis)
 data class EditorCopyAction(val copiedText: String, override val timeMillis: Long): UserAnAction(timeMillis)
-data class EditorPasteAction(val pastedText: String, override val timeMillis: Long): UserAnAction(timeMillis)
+data class EditorPasteAction(val pastedText: String, val caretOffset: Int, override val timeMillis: Long): UserAnAction(timeMillis)
+data class BeforeEditorBackspaceAction(val selection: Selection?, val caretOffset: Int, val psiFile: PsiFile, override val timeMillis: Long) : UserAnAction(timeMillis)
 data class BeforeEditorCopyAction(val copiedText: String, override val timeMillis: Long): UserAnAction(timeMillis)
-data class BeforeEditorPasteAction(val pastedText: String, override val timeMillis: Long): UserAnAction(timeMillis)
+data class BeforeEditorPasteAction(val pastedText: String, val caretOffset: Int, override val timeMillis: Long): UserAnAction(timeMillis)
+
+data class Selection(val startOffset: Int, val endOffset: Int, val text: String)
