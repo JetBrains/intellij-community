@@ -64,7 +64,6 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   private final NamedScopesHolder myDependencyValidationManager;
   private final NamedScopesHolder myNamedScopeManager;
   private ScopeViewTreeModel myTreeModel;
-  private Comparator<? super NodeDescriptor<?>> myComparator;
   private LinkedHashMap<String, NamedScopeFilter> myFilters;
   private JScrollPane myScrollPane;
 
@@ -124,14 +123,6 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
     myDependencyValidationManager.addScopeListener(scopeListener, this);
     myNamedScopeManager.addScopeListener(scopeListener, this);
-
-    if (myTreeModel == null) {
-      // not initialized yet
-      myComparator = createComparator();
-    }
-    else {
-      myTreeModel.setComparator(createComparator());
-    }
   }
 
   @Override
@@ -174,12 +165,9 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       myTreeModel.setStructureProvider(CompoundTreeStructureProvider.get(myProject));
       myTreeModel.setNodeDecorator(CompoundProjectViewNodeDecorator.get(myProject));
       myTreeModel.setFilter(getFilter(getSubId()));
-      if (myComparator != null) {
-        myTreeModel.setComparator(myComparator);
-        // lazy #installComparator
-        myComparator = null;
-      }
+      myTreeModel.setComparator(createComparator());
     }
+
     if (myTree == null) {
       myTree = new ProjectViewTree(new AsyncTreeModel(myTreeModel, this));
       myTree.setName("ScopeViewTree");
@@ -336,13 +324,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Override
   protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
-    if (myTreeModel == null) {
-      // not initialized yet
-      myComparator = comparator;
-    }
-    else {
-      myTreeModel.setComparator(comparator);
-    }
+    // comparator is always set in init
   }
 
   @Nullable
