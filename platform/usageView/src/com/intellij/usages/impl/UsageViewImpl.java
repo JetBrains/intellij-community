@@ -588,7 +588,7 @@ public class UsageViewImpl implements UsageViewEx {
               myModel.nodesWereRemoved(grandParent, new int[]{index}, new Object[]{parentNode});
               myModel.fireTreeStructureChanged(grandParent, myModel.getPathToRoot(parentNode), new int[]{index}, new Object[]{parentNode});
               if (parentNode instanceof UsageNode) {
-                myUsageNodes.remove(parentNode);
+                myUsageNodes.remove(((UsageNode)parentNode).getUsage());
                 grandParent.incrementUsageCount(-1);
               }
               //if this node was removed than we can skip all the other changes related to it
