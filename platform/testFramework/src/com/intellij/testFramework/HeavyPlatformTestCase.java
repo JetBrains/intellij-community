@@ -413,7 +413,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
 
     FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
-    if (fileBasedIndex != null) {
+    if (fileBasedIndex instanceof FileBasedIndexImpl) {
       ((FileBasedIndexImpl)fileBasedIndex).cleanupForNextTest();
     }
 
