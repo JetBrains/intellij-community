@@ -192,9 +192,20 @@ public final class FileManagerImpl implements FileManager {
 
     viewProvider = createFileViewProvider(file, ModelBranch.getFileBranch(file) == null);
     if (file instanceof LightVirtualFile) {
+      checkHasNoOtherPsi(file);
       return file.putUserDataIfAbsent(myPsiHardRefKey, viewProvider);
     }
     return ConcurrencyUtil.cacheOrGet(getVFileToViewProviderMap(), file, viewProvider);
+  }
+
+  private void checkHasNoOtherPsi(@NotNull VirtualFile file) {
+    FileViewProvider vp = FileDocumentManager.getInstance().findCachedPsiInAnyProject(file);
+    if (vp != null) {
+      Project project = vp.getManager().getProject();
+      if (project != myManager.getProject()) {
+        LOG.error("Light files should have PSI only in one project, existing=" + vp + " in " + project + ", requested in " + myManager.getProject());
+      }
+    }
   }
 
   @Override
@@ -233,6 +244,7 @@ public final class FileManagerImpl implements FileManager {
       getVFileToViewProviderMap().remove(virtualFile);
     }
     else if (virtualFile instanceof LightVirtualFile) {
+      checkHasNoOtherPsi(virtualFile);
       virtualFile.putUserData(myPsiHardRefKey, fileViewProvider);
     }
     else {

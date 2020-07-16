@@ -335,7 +335,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   public void testDocumentFromAlienProjectGetsCommittedInBackground() throws Exception {
-    LightVirtualFile virtualFile = createFile();
+    VirtualFile virtualFile = getTempDir().createVirtualFile("a.txt", "abc");
     PsiFile file = findFile(virtualFile);
 
     final Document document = getDocument(file);

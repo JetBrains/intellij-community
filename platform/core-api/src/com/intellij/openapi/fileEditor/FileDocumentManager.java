@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,6 +161,12 @@ public abstract class FileDocumentManager implements SavingRequestor {
 
   @ApiStatus.Internal
   public void reloadBinaryFiles() { }
+
+  @ApiStatus.Internal
+  @Nullable
+  public FileViewProvider findCachedPsiInAnyProject(VirtualFile file) {
+    return null;
+  }
 
   /**
    * Stores the write access status (true if the document has the write access; false otherwise)

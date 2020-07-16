@@ -31,6 +31,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -46,10 +47,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.pom.core.impl.PomModelImpl;
-import com.intellij.psi.AbstractFileViewProvider;
-import com.intellij.psi.ExternalChangeAction;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
@@ -211,7 +210,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
       if (file.getFileType().isBinary() && tooLarge) return null;
 
-      CharSequence text = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
+      CharSequence text = loadText(file, tooLarge);
       synchronized (lock) {
         document = (DocumentEx)getCachedDocument(file);
         if (document != null) return document; // Double checking
@@ -239,6 +238,18 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     }
 
     return document;
+  }
+
+  @NotNull
+  private CharSequence loadText(@NotNull VirtualFile file, boolean tooLarge) {
+    if (file instanceof LightVirtualFile) {
+      FileViewProvider vp = findCachedPsiInAnyProject(file);
+      if (vp != null) {
+        return vp.getPsi(vp.getBaseLanguage()).getText();
+      }
+    }
+
+    return tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
   }
 
   public static boolean areTooManyDocumentsInTheQueue(@NotNull Collection<? extends Document> documents) {
@@ -825,6 +836,22 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     return (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
   }
 
+  @Override
+  public @Nullable FileViewProvider findCachedPsiInAnyProject(VirtualFile file) {
+    ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
+    for (Project project : manager.getOpenProjects()) {
+      FileViewProvider vp = PsiManagerEx.getInstanceEx(project).getFileManager().findCachedViewProvider(file);
+      if (vp != null) return vp;
+    }
+
+    if (manager.isDefaultProjectInitialized()) {
+      FileViewProvider vp = PsiManagerEx.getInstanceEx(manager.getDefaultProject()).getFileManager().findCachedViewProvider(file);
+      if (vp != null) return vp;
+    }
+
+    return null;
+  }
+
   private void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       IOException ioException = ContainerUtil.getFirstItem(failures.values());
@@ -887,7 +914,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   /** @deprecated another dirty Rider hack; don't use */
   @Deprecated
-  @SuppressWarnings({"StaticNonFinalField", "DeprecatedIsStillUsed"})
+  @SuppressWarnings("StaticNonFinalField")
   public static boolean ourConflictsSolverEnabled = true;
 
   protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {

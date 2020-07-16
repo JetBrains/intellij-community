@@ -69,4 +69,17 @@ public class PsiDocumentManager2Test extends LightPlatformTestCase {
     assertFalse(PsiDocumentManager.getInstance(getProject()).isUncommited(document));
   }
 
+  public void test_nonPhysical_PSI_matches_document_loaded_after_modifications() {
+    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject())
+      .createFileFromText("a.java", JavaLanguage.INSTANCE, "class Foo {}\nclass Bar{}", false, false);
+
+    file.getClasses()[1].delete();
+    String expectedText = "class Foo {}\n";
+    assertEquals(expectedText, file.getText());
+
+    Document document = file.getViewProvider().getDocument();
+    assertTrue(PsiDocumentManager.getInstance(getProject()).isCommitted(document));
+    assertEquals(expectedText, document.getText());
+  }
+
 }
