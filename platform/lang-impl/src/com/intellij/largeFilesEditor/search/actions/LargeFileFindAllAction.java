@@ -12,11 +12,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class FindAllAction extends AnAction implements DumbAware {
+public class LargeFileFindAllAction extends AnAction implements DumbAware {
   //private static final Logger logger = Logger.getInstance(FindAllAction.class);
   private final LfeSearchManager searchManager;
 
-  public FindAllAction(LfeSearchManager searchManager) {
+  public LargeFileFindAllAction(LfeSearchManager searchManager) {
     this.searchManager = searchManager;
 
     getTemplatePresentation().setDescription(

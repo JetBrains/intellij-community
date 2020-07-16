@@ -4,33 +4,38 @@ package com.intellij.largeFilesEditor.search.actions;
 import com.intellij.largeFilesEditor.search.LfeSearchManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("ComponentNotRegistered")
-public class ToggleAction extends CheckboxAction implements DumbAware {
-  @SuppressWarnings("unused")
-  private static final Logger logger = Logger.getInstance(ToggleAction.class);
+public class LargeFileToggleAction extends CheckboxAction implements DumbAware {
   private final LfeSearchManager searchManager;
 
-  boolean isSelected = false;
+  private boolean isSelected;
 
-  public ToggleAction(LfeSearchManager searchManager, String name) {
+  public LargeFileToggleAction(LfeSearchManager searchManager, String name) {
     super(name);
     this.searchManager = searchManager;
   }
 
+  public boolean isSelected() {
+    return isSelected;
+  }
+
+  public void setSelected(boolean selected) {
+    if (isSelected != selected) {
+      isSelected = selected;
+      searchManager.onSearchParametersChanged();
+    }
+  }
+
   @Override
-  public boolean isSelected(@Nullable AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return isSelected;
   }
 
   @Override
-  public void setSelected(@Nullable AnActionEvent e, boolean state) {
-    if (isSelected != state) {
-      isSelected = state;
-      searchManager.onSearchParametersChanged();
-    }
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    setSelected(state);
   }
 }

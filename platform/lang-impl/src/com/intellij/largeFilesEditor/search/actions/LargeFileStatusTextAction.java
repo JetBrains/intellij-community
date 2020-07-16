@@ -3,18 +3,15 @@ package com.intellij.largeFilesEditor.search.actions;
 
 import com.intellij.largeFilesEditor.search.LfeSearchManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class StatusTextAction extends com.intellij.find.editorHeaderActions.StatusTextAction {
-  @SuppressWarnings("unused")
-  private static final Logger logger = Logger.getInstance(StatusTextAction.class);
+public class LargeFileStatusTextAction extends com.intellij.find.editorHeaderActions.StatusTextAction {
   private final LfeSearchManager searchManager;
 
-  public StatusTextAction(LfeSearchManager searchManager) {
+  public LargeFileStatusTextAction(LfeSearchManager searchManager) {
     super();
     this.searchManager = searchManager;
   }

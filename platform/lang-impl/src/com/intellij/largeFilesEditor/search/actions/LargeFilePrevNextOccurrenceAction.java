@@ -18,12 +18,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PrevNextOccurrenceAction extends DumbAwareAction implements ContextAwareShortcutProvider {
+public class LargeFilePrevNextOccurrenceAction extends DumbAwareAction implements ContextAwareShortcutProvider {
 
   private final LfeSearchManager mySearchManager;
   private final boolean myDirectionForward;
 
-  public PrevNextOccurrenceAction(LfeSearchManager searchManager, boolean directionForward) {
+  public LargeFilePrevNextOccurrenceAction(LfeSearchManager searchManager, boolean directionForward) {
     mySearchManager = searchManager;
     myDirectionForward = directionForward;
 
