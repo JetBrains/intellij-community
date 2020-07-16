@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyrioht 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -13,14 +13,16 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
@@ -69,7 +71,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
   }
 
   /**
-   * The method extracts throws declarations that are probably redundant from both the method's throws list and javadoc.
+   * The method extracts throws declarations that are probably redundant from the method's throws list
    * It filters out throws declarations that are either of java.lang.RuntimeException or java.rmi.RemoteException type.
    *
    * @param method            method to extract throws declarations from
@@ -88,27 +90,12 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
                                                                       throwsList.getReferencedTypes(),
                                                                       ThrowRefType::new);
 
-    final PsiDocComment comment = method.getDocComment();
-    final Stream<ThrowRefType> redundantInJavadoc;
-    if (comment != null) {
-      redundantInJavadoc = Arrays.stream(comment.getTags())
-        .filter(tag -> "throws".equals(tag.getName()))
-        .flatMap(tag -> {
-          final PsiClass throwsClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());
-          if (throwsClass == null) return Stream.empty();
-          return Stream.of(new ThrowRefType(tag, TypeUtils.getType(throwsClass)));
-        });
-    }
-    else {
-      redundantInJavadoc = Stream.empty();
-    }
-
-    return redundantInThrowsList.append(redundantInJavadoc)
+    return redundantInThrowsList
       .filter(ThrowRefType::isCheckedException)
       .filter(p -> !p.isRemoteExceptionInRemoteMethod(method));
   }
 
-  private static final class RedundantThrowsVisitor extends JavaElementVisitor {
+  static final class RedundantThrowsVisitor extends JavaElementVisitor {
 
     private @NotNull final ProblemsHolder myHolder;
     private final boolean myIgnoreEntryPoints;
@@ -132,7 +119,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
         });
     }
 
-    private static final class RedundantThrowsQuickFix implements LocalQuickFix {
+    static final class RedundantThrowsQuickFix implements LocalQuickFix {
 
       @NotNull private final String myMethodName;
       @NotNull private final String myExceptionName;
@@ -155,11 +142,82 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         final PsiElement elem = descriptor.getPsiElement();
+        if (!(elem instanceof PsiJavaCodeReferenceElement)) return;
 
-        final CommentTracker ct = new CommentTracker();
-        ct.deleteAndRestoreComments(elem);
+        final PsiElement maybeMethod = PsiTreeUtil.skipParentsOfType(elem, PsiReferenceList.class);
+        if (!(maybeMethod instanceof PsiMethod)) return;
+
+        final PsiMethod method = (PsiMethod)maybeMethod;
+
+        getRelatedJavadocThrows((PsiJavaCodeReferenceElement)elem, method.getDocComment())
+          .forEach(e -> e.delete());
+
+        new CommentTracker().deleteAndRestoreComments(elem);
       }
 
+      /**
+       * The method returns a {@link Stream<PsiDocTag>} of @throws declarations from the javadoc that are related to the throw declaration.
+       * This method works like this:
+       * <ul>
+       *   <li>If the javadoc is null, then return {@link Stream#empty()}</li>
+       *   <li>All the @throws declarations that are subclasses of the current throw declaration are returned except if there is a more specific throw declaration in the throws list that matches exactly the @throws tag.</li>
+       *   <li>If there are no other throws declarations in the throws list but the current one then all the @throws declarations are returned.</li>
+       *   <li>If there are duplicates in the throws list and one of the duplicates is being removed then all @throws tag that match the throws list's declaration are returned (either the same class or an inheritor of it).</li>
+       * </ul>
+       * @param currentThrowsRef current throws list element to get the {@link Stream<PsiDocTag>} for
+       * @param comment current javadoc
+       * @return
+       */
+      @NotNull
+      static Stream<PsiDocTag> getRelatedJavadocThrows(@NotNull final PsiJavaCodeReferenceElement currentThrowsRef,
+                                                       @Nullable final PsiDocComment comment) {
+        if (comment == null) return Stream.empty();
+
+        final PsiElement maybeThrowsList = currentThrowsRef.getParent();
+        if (!(maybeThrowsList instanceof PsiReferenceList)) return Stream.empty();
+
+        final PsiReferenceList throwsList = (PsiReferenceList)maybeThrowsList;
+
+        // return all @throws declarations from javadoc if the last throws declaration in the throws list is getting eliminated.
+        if (throwsList.getReferenceElements().length == 1) {
+          return Arrays.stream(comment.getTags())
+            .filter(tag -> "throws".equals(tag.getName()));
+        }
+
+        final PsiElement maybeClass = currentThrowsRef.resolve();
+        if (!(maybeClass instanceof PsiClass)) return Stream.empty();
+
+        final PsiClass reference = (PsiClass)maybeClass;
+        if (reference.getQualifiedName() == null) return Stream.empty();
+
+        final Set<String> throwsListWithoutCurrent = getThrowsListWithoutCurrent(throwsList, currentThrowsRef);
+
+        return StreamEx.of(comment.getTags())
+          .filterBy(tag -> tag.getName(), "throws")
+          .filter(tag -> {
+            final PsiClass throwsClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());
+            if (throwsClass == null) return false;
+            if (throwsClass.getQualifiedName() == null) return false;
+            return throwsClass.getManager().areElementsEquivalent(throwsClass, reference) ||
+                   (!throwsListWithoutCurrent.contains(throwsClass.getQualifiedName()) && throwsClass.isInheritor(reference, true));
+          });
+      }
+
+      /**
+       * This method returns the set of throws types as strings declared in the throws list excluding the currently eliminated throws exception.
+       *
+       * @param throwsList throws list of a method
+       * @param currentRef the currently eliminated throws declaration in the throws list
+       * @return the set of throws declarations as strings from the throws list excluding the currently eliminated throws declaration
+       */
+      private static Set<String> getThrowsListWithoutCurrent(@NotNull final PsiReferenceList throwsList,
+                                                             @NotNull final PsiJavaCodeReferenceElement currentRef) {
+        return StreamEx.zip(throwsList.getReferenceElements(), throwsList.getReferencedTypes(), Pair::create)
+          .filter(pair -> pair.getFirst() != currentRef)
+          .map(pair -> pair.getSecond())
+          .map(PsiType::getCanonicalText)
+          .toSet();
+      }
     }
   }
 
@@ -167,10 +225,10 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
    * Holder for a throw declaration (either in throws list or javadoc) in a method and its exception class type.
    */
   static final class ThrowRefType {
-    @NotNull private final PsiElement myReference;
+    @NotNull private final PsiJavaCodeReferenceElement myReference;
     @NotNull private final PsiClassType myType;
 
-    private ThrowRefType(@NotNull final PsiElement reference, @NotNull final PsiClassType type) {
+    private ThrowRefType(@NotNull final PsiJavaCodeReferenceElement reference, @NotNull final PsiClassType type) {
       myReference = reference;
       myType = type;
     }
@@ -243,7 +301,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
                containingClass.hasModifierProperty(PsiModifier.FINAL));
     }
 
-    @NotNull PsiElement getReference() {
+    @NotNull PsiJavaCodeReferenceElement getReference() {
       return myReference;
     }
 

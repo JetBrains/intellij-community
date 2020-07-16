@@ -7,12 +7,14 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection.RedundantThrowsVisitor.RedundantThrowsQuickFix;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection.ThrowRefType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
@@ -209,7 +211,8 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
                                                  @NotNull final PsiMethod psiMethod) {
       final StreamEx<PsiElement> elements = RedundantThrowsDeclarationLocalInspection.getRedundantThrowsCandidates(psiMethod, myIgnoreEntryPoints)
         .filter(throwRefType -> exceptionType.isAssignableFrom(throwRefType.getType()))
-        .map(ThrowRefType::getReference);
+        .map(ThrowRefType::getReference)
+        .flatMap(ref -> appendRelatedJavadocThrows(psiMethod, ref));
 
       final Stream<PsiElement> tail;
       if (refMethod != null) {
@@ -224,6 +227,12 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
           .flatMap(method -> removeException(null, exceptionType, method));
       }
       return elements.append(tail);
+    }
+
+    private static StreamEx<PsiElement> appendRelatedJavadocThrows(@NotNull final PsiMethod psiMethod, @NotNull final PsiJavaCodeReferenceElement ref) {
+      final Stream<PsiDocTag> relatedJavadocThrows = RedundantThrowsQuickFix.getRelatedJavadocThrows(ref, psiMethod.getDocComment());
+
+      return StreamEx.of((PsiElement)ref).append(relatedJavadocThrows);
     }
 
     @Override
