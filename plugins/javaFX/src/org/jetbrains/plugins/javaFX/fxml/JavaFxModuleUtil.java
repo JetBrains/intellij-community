@@ -2,13 +2,12 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
@@ -17,6 +16,7 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 
@@ -73,17 +73,17 @@ public final class JavaFxModuleUtil {
   /**
    * Avoids freeze on first use of Java intentions
    */
-  static final class JavaFxDetectionStartupActivity implements StartupActivity {
+  static final class JavaFxDetectionStartupActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return;
       }
-      StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          DumbService.getInstance(project).runReadActionInSmartMode(() -> populateCachedJavaFxModules(project));
-        });
-      });
+
+      ReadAction.nonBlocking(() -> populateCachedJavaFxModules(project))
+        .inSmartMode(project)
+        .expireWith(project)
+        .submit(NonUrgentExecutor.getInstance());
     }
 
     private static void populateCachedJavaFxModules(@NotNull Project project) {
