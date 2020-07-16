@@ -7,7 +7,6 @@ import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarksListener;
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.CompoundIconProvider;
-import com.intellij.ide.projectView.impl.ShowModulesAction;
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -61,6 +60,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.ui.tree.project.ProjectFileTreeModel;
 import com.intellij.util.Consumer;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
@@ -179,9 +179,11 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     });
   }
 
-  public void setComparator(Comparator<? super NodeDescriptor<?>> comparator) {
+  void setComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     model.onValidThread(() -> {
-      if (this.comparator == null && comparator == null) return;
+      if (this.comparator == comparator) {
+        return;
+      }
       this.comparator = comparator;
       treeStructureChanged(null, null, null);
     });
@@ -218,12 +220,10 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return deque.toArray();
     }
     if (object instanceof NodeDescriptor) {
-      NodeDescriptor descriptor = (NodeDescriptor)object;
-      object = descriptor.getElement();
+      object = ((NodeDescriptor<?>)object).getElement();
     }
     if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
-      object = node.getValue();
+      object = ((AbstractTreeNode<?>)object).getValue();
     }
     return object;
   }
@@ -245,13 +245,13 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
         Class<? extends NamedScope> type = filter == null ? null : filter.getScope().getClass();
         isShowExcludedFiles = !NamedScope.class.equals(type); // disable excluded files for custom scopes
       }
-      model.setSettings(isShowExcludedFiles, ShowModulesAction.hasModules() && settings.isShowModules());
+      model.setSettings(isShowExcludedFiles, PlatformUtils.isIntelliJ() && settings.isShowModules());
       treeStructureChanged(null, null, null);
       if (onDone != null) onDone.run();
     });
   }
 
-  private void update(@NotNull AbstractTreeNode node, boolean structure) {
+  private void update(@NotNull AbstractTreeNode<?> node, boolean structure) {
     model.onValidThread(() -> {
       boolean updated = node.update();
       boolean changed = structure || !(node instanceof Node);
@@ -287,8 +287,10 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       if (found instanceof Node) {
         Node node = (Node)found;
         if (resolveCompactedFolder) {
-          AbstractTreeNode parent = node.getParent();
-          if (parent instanceof Node) node = (Node)parent;
+          AbstractTreeNode<?> parent = node.getParent();
+          if (parent instanceof Node) {
+            node = (Node)parent;
+          }
         }
         if (node.childrenValid) {
           node.childrenValid = false;
@@ -296,7 +298,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
         }
       }
       else if (found instanceof AbstractTreeNode) {
-        update((AbstractTreeNode)found, true);
+        update((AbstractTreeNode<?>)found, true);
       }
     });
   }
@@ -311,7 +313,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     find(file, list, found -> {
       list.forEach(node -> update(node, false));
       if (found instanceof AbstractTreeNode) {
-        update((AbstractTreeNode)found, false);
+        update((AbstractTreeNode<?>)found, false);
       }
     });
   }
@@ -325,15 +327,19 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
           protected boolean matches(@NotNull AbstractTreeNode pathComponent, @NotNull VirtualFile thisComponent) {
             if (pathComponent.canRepresent(thisComponent)) return true;
             if (pathComponent instanceof Node) return false;
-            ProjectViewNode node = pathComponent instanceof ProjectViewNode ? (ProjectViewNode)pathComponent : null;
+            ProjectViewNode<?> node = pathComponent instanceof ProjectViewNode ? (ProjectViewNode<?>)pathComponent : null;
             return node != null && node.contains(thisComponent);
           }
 
           @Override
           protected boolean contains(@NotNull AbstractTreeNode pathComponent, @NotNull VirtualFile thisComponent) {
             Node node = pathComponent instanceof Node ? (Node)pathComponent : null;
-            if (node == null || !node.contains(thisComponent, area)) return false;
-            if (list != null) list.add(node);
+            if (node == null || !node.contains(thisComponent, area)) {
+              return false;
+            }
+            if (list != null) {
+              list.add(node);
+            }
             return true;
           }
         };
@@ -364,9 +370,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
   @Override
   public int getChildCount(Object object) {
-    if (object instanceof AbstractTreeNode && model.isValidThread()) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
-      return node.getChildren().size();
+    if (object instanceof AbstractTreeNode<?> && model.isValidThread()) {
+      return ((AbstractTreeNode<?>)object).getChildren().size();
     }
     return 0;
   }
@@ -375,20 +380,22 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
   @Override
   public List<AbstractTreeNode<?>> getChildren(Object object) {
     if (object instanceof AbstractTreeNode && model.isValidThread()) {
-      AbstractTreeNode parent = (AbstractTreeNode)object;
+      AbstractTreeNode<?> parent = (AbstractTreeNode<?>)object;
       Collection<?> children = parent.getChildren();
       if (!children.isEmpty()) {
         List<AbstractTreeNode<?>> result = new SmartList<>();
         children.forEach(child -> {
           if (child instanceof AbstractTreeNode) {
-            AbstractTreeNode node = (AbstractTreeNode)child;
+            AbstractTreeNode<?> node = (AbstractTreeNode<?>)child;
             node.setParent(parent);
             node.update();
             result.add(node);
           }
         });
         Comparator<? super NodeDescriptor<?>> comparator = this.comparator;
-        if (comparator != null) result.sort(comparator);
+        if (comparator != null) {
+          result.sort(comparator);
+        }
         return result;
       }
     }
@@ -397,25 +404,30 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
   @Nullable
   ErrorStripe getStripe(Object object, boolean expanded) {
-    if (expanded && object instanceof Node) return null;
+    if (expanded && object instanceof Node) {
+      return null;
+    }
     if (object instanceof PresentableNodeDescriptor) {
-      PresentableNodeDescriptor node = (PresentableNodeDescriptor)object;
+      PresentableNodeDescriptor<?> node = (PresentableNodeDescriptor<?>)object;
       TextAttributesKey key = node.getPresentation().getTextAttributesKey();
       TextAttributes attributes = key == null ? null : EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getAttributes(key);
       Color color = attributes == null ? null : attributes.getErrorStripeColor();
-      if (color != null) return ErrorStripe.create(color, 1);
+      if (color != null) {
+        return ErrorStripe.create(color, 1);
+      }
     }
     return null;
   }
 
-  boolean updateScopeIf(@NotNull Class<? extends NamedScope> type) {
+  private boolean updateScopeIf(@NotNull Class<? extends NamedScope> type) {
     NamedScopeFilter filter = getFilter();
-    if (filter == null || !type.isInstance(filter.getScope())) return false;
+    if (filter == null || !type.isInstance(filter.getScope())) {
+      return false;
+    }
     LOG.debug("update filter", filter);
     model.setFilter(filter);
     return true;
   }
-
 
   private abstract static class Node extends ProjectViewNode<Object> {
     volatile NamedScopeFilter filter;
@@ -523,8 +535,10 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
     @SuppressWarnings("SameParameterValue")
     final <N> N findParent(Class<N> type) {
-      for (AbstractTreeNode node = this; node != null; node = node.getParent()) {
-        if (type.isInstance(node)) return type.cast(node);
+      for (AbstractTreeNode<?> node = this; node != null; node = node.getParent()) {
+        if (type.isInstance(node)) {
+          return type.cast(node);
+        }
       }
       return null;
     }
@@ -764,7 +778,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     @NotNull
     private String getNodeName(@Nullable String name) {
       if (name != null) {
-        AbstractTreeNode parent = getParent();
+        AbstractTreeNode<?> parent = getParent();
         FileNode node = parent instanceof FileNode ? (FileNode)parent : null;
         String prefix = node == null ? null : node.getPackageName();
         if (prefix == null) return name;

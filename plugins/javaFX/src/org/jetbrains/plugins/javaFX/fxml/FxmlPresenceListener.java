@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class FxmlPresenceListener implements BulkFileListener {
+public final class FxmlPresenceListener implements BulkFileListener {
   private static final Key<ModificationTracker> KEY = Key.create("fxml.presence.modification.tracker");
   private final SimpleModificationTracker myModificationTracker;
 

@@ -42,11 +42,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class AssociationsEditor {
+final class AssociationsEditor {
   private JPanel myComponent;
   private JBList myList;
   private Tree myTree;
-  private JBSplitter mySplitter;
 
   private final AssociationsModel myListModel;
   private final TransactionalManager myManager;
@@ -98,8 +97,8 @@ class AssociationsEditor {
 
   private void initUI() {
     myComponent = new JPanel(new BorderLayout());
-    mySplitter = new JBSplitter("AssociationsEditor.dividerProportion", 0.3f);
-    myComponent.add(mySplitter, BorderLayout.CENTER);
+    JBSplitter splitter = new JBSplitter("AssociationsEditor.dividerProportion", 0.3f);
+    myComponent.add(splitter, BorderLayout.CENTER);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.setBorder(IdeBorderFactory.createTitledBorder("Project XSLT files:", false, JBUI.emptyInsets()).setShowLine(false));
@@ -107,7 +106,7 @@ class AssociationsEditor {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
     leftPanel.add(new JBScrollPane(myTree), BorderLayout.CENTER);
-    mySplitter.setFirstComponent(leftPanel);
+    splitter.setFirstComponent(leftPanel);
 
     myList = new JBList();
     myList.setCellRenderer(new MyCellRenderer());
@@ -118,7 +117,7 @@ class AssociationsEditor {
       .addExtraAction(AnActionButton.fromAction(new RemoveAssociationAction()))
       .disableUpDownActions().disableAddAction().disableRemoveAction().createPanel();
     UIUtil.addBorder(rightPanel, IdeBorderFactory.createTitledBorder("Associated files:", false, JBUI.emptyInsets()).setShowLine(false));
-    mySplitter.setSecondComponent(rightPanel);
+    splitter.setSecondComponent(rightPanel);
   }
 
   private void expandTree(DefaultTreeModel newModel) {
@@ -224,7 +223,7 @@ class AssociationsEditor {
     }
   }
 
-  private static class MyGroupByTypeComparator extends GroupByTypeComparator {
+  private static final class MyGroupByTypeComparator extends GroupByTypeComparator {
     MyGroupByTypeComparator() {
       super(true);
     }
@@ -236,8 +235,7 @@ class AssociationsEditor {
   }
 
   @SuppressWarnings({"ALL"})
-  private static class MyProjectStructure extends AbstractProjectTreeStructure {
-
+  private static final class MyProjectStructure extends AbstractProjectTreeStructure {
     public MyProjectStructure(@NotNull Project project) {
       super(project);
     }

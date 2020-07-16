@@ -81,7 +81,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
+  public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = new ExtensionPointName<>("com.intellij.projectViewPane");
 
   protected final @NotNull Project myProject;
   protected DnDAwareTree myTree;
@@ -498,7 +498,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return element;
   }
 
-  public AbstractTreeBuilder getTreeBuilder() {
+  public final AbstractTreeBuilder getTreeBuilder() {
     return myTreeBuilder;
   }
 
@@ -555,9 +555,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
-  @NotNull
-  protected Comparator<NodeDescriptor<?>> createComparator() {
-    return new GroupByTypeComparator(ProjectView.getInstance(myProject), getId());
+  protected @NotNull Comparator<NodeDescriptor<?>> createComparator() {
+    return new GroupByTypeComparator(myProject, getId());
   }
 
   public void installComparator() {
@@ -574,7 +573,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
-    if (builder != null) builder.setNodeDescriptorComparator(comparator);
+    if (builder != null) {
+      builder.setNodeDescriptorComparator(comparator);
+    }
   }
 
   public JTree getTree() {
