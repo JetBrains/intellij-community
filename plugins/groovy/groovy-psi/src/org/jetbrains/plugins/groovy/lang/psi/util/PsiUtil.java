@@ -1212,6 +1212,9 @@ public final class PsiUtil {
     if (!(expr instanceof GrReferenceExpression)) {
       return false;
     }
+    if (!expr.isValid()) {
+      return false;
+    }
     GrReferenceExpression refExpr = (GrReferenceExpression)expr;
     if (refExpr.isQualified()) {
       return false;

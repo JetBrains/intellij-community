@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -130,11 +131,14 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   public boolean showHint(@NotNull Editor editor) {
     // Lines below are required to prevent the "Add import" popup appearing two times in a row
     // Similar issue is in com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase.calcClassesToImport
-    List<PsiClass> imports =
-      ContainerUtil.map(((GroovyFile)(ref.getContainingFile())).getImportStatements(), GrImportStatement::resolveTargetClass);
-    for (PsiClass classToImport : getClassesToImport()) {
-      if (imports.contains(classToImport)) {
-        return false;
+    PsiFile containingFile = ref.isValid() ? ref.getContainingFile() : null;
+    if (containingFile instanceof GroovyFile) {
+      List<PsiClass> alreadyImportedClasses =
+        ContainerUtil.map(((GroovyFile)containingFile).getImportStatements(), GrImportStatement::resolveTargetClass);
+      for (PsiClass classToImport : getClassesToImport()) {
+        if (alreadyImportedClasses.contains(classToImport)) {
+          return false;
+        }
       }
     }
     return super.showHint(editor);
@@ -142,17 +146,19 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
 
   @Override
   protected void bindReference(@NotNull PsiReference reference, @NotNull PsiClass targetClass) {
-    PsiElement referredElement = reference.getElement();
-    if (referredElement instanceof GrReferenceExpression && PsiUtil.isNewified(referredElement)) {
-      handleNewifiedClass(referredElement, targetClass);
+    PsiElement referringElement = reference.getElement();
+    if (referringElement.getParent() instanceof GrMethodCall &&
+        referringElement instanceof GrReferenceExpression &&
+        PsiUtil.isNewified(referringElement)) {
+      handleNewifiedClass(referringElement, targetClass);
     }
     else {
       super.bindReference(reference, targetClass);
     }
   }
 
-  private static void handleNewifiedClass(@NotNull PsiElement referredElement, @NotNull PsiClass targetClass) {
-    PsiFile file = referredElement.getContainingFile();
+  private static void handleNewifiedClass(@NotNull PsiElement referringElement, @NotNull PsiClass targetClass) {
+    PsiFile file = referringElement.getContainingFile();
     if (file instanceof GroovyFile) {
       ((GroovyFile)file).importClass(targetClass);
     }
