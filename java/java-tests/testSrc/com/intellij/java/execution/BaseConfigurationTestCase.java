@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
 import com.intellij.execution.Location;
@@ -133,16 +133,16 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
     return getModule(2);
   }
 
-  protected PsiClass findClass(Module module, String qualifiedName) {
+  protected PsiClass findClass(@NotNull Module module, String qualifiedName) {
     return findClass(qualifiedName, GlobalSearchScope.moduleScope(module));
   }
 
-  protected PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
+  protected PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return JavaPsiFacade.getInstance(myProject).findClass(qualifiedName, scope);
   }
 
   protected JUnitConfiguration createJUnitConfiguration(@NotNull PsiElement psiElement,
-                                                        @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
+                                                        @NotNull Class<? extends AbstractJavaTestConfigurationProducer<?>> producerClass,
                                                         @NotNull MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
     RunConfigurationProducer<?> producer = RunConfigurationProducer.getInstance(producerClass);
@@ -152,7 +152,7 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
   }
 
   protected TestNGConfiguration createTestNGConfiguration(@NotNull PsiElement psiElement,
-                                                          @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
+                                                          @NotNull Class<? extends AbstractJavaTestConfigurationProducer<?>> producerClass,
                                                           @NotNull MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
     RunConfigurationProducer<?> producer = RunConfigurationProducer.getInstance(producerClass);

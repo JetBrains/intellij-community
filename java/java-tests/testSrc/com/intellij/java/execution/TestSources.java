@@ -6,7 +6,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -14,22 +13,18 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TemporaryDirectory;
+import com.intellij.testFramework.VfsTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-public final class TestSources {
+final class TestSources {
   private final Project myProject;
-  private final TemporaryDirectory myTempFiles;
-  private Path mySrc;
+  private final TemporaryDirectory tempDir;
+  private VirtualFile mySrc;
   private Module myModule;
 
-  public TestSources(@NotNull Project project, @NotNull TemporaryDirectory temporaryDirectory) {
+  TestSources(@NotNull Project project, @NotNull TemporaryDirectory temporaryDirectory) {
     myProject = project;
-    myTempFiles = temporaryDirectory;
+    tempDir = temporaryDirectory;
   }
 
   public void tearDown() {
@@ -39,10 +34,8 @@ public final class TestSources {
     }
   }
 
-  public @NotNull PsiPackage createPackage(@NotNull String name) throws IOException {
-    Path dir = mySrc.resolve(name);
-    Files.createDirectories(dir);
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir);
+  public @NotNull PsiPackage createPackage(@NotNull String name) {
+    VfsTestUtil.createDir(mySrc, name);
     return findPackage(name);
   }
 
@@ -50,28 +43,21 @@ public final class TestSources {
     return JavaPsiFacade.getInstance(myProject).findPackage(name);
   }
 
-  public @NotNull PsiClass createClass(@NotNull String className, @NotNull String code) throws IOException {
-    Path file = mySrc.resolve(className + ".java");
-    try (PrintStream stream = new PrintStream(Files.newOutputStream(file))) {
-      stream.println(code);
-    }
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+  public @NotNull PsiClass createClass(@NotNull String className, @NotNull String code) {
+    VfsTestUtil.createFile(mySrc, className + ".java", code + System.lineSeparator());
     return JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
   }
 
-  public void initModule() throws IOException {
+  public void initModule() {
     if (myModule != null) {
       disposeModule(myModule);
     }
 
-    mySrc = myTempFiles.newPath();
-    Files.createDirectories(mySrc);
-    VirtualFile moduleContent = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(mySrc);
+    mySrc = tempDir.createVirtualDir();
+    myModule = BaseConfigurationTestCase.createTempModule(tempDir, myProject);
+    PsiTestUtil.addSourceRoot(myModule, mySrc);
 
-    myModule = BaseConfigurationTestCase.createTempModule(myTempFiles, myProject);
-    PsiTestUtil.addSourceRoot(myModule, moduleContent);
-
-    Module tempModule = BaseConfigurationTestCase.createTempModule(myTempFiles, myProject);
+    Module tempModule = BaseConfigurationTestCase.createTempModule(tempDir, myProject);
     ModuleRootModificationUtil.addDependency(myModule, tempModule);
     disposeModule(tempModule);
   }
@@ -88,11 +74,9 @@ public final class TestSources {
     ModuleRootModificationUtil.addModuleLibrary(myModule, lib.getUrl());
   }
 
-  @NotNull
-  public VirtualFile createPackageDir(@NotNull String packageName) throws IOException {
-    Path pkg = mySrc.resolve(packageName);
-    Files.createDirectories(pkg);
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pkg);
+  public @NotNull VirtualFile createPackageDir(@NotNull String packageName) {
+    VirtualFile result = mySrc.findChild(packageName);
+    return result == null ? VfsTestUtil.createDir(mySrc, packageName) : result;
   }
 
   public PsiClass findClass(@NotNull String fqName) {
