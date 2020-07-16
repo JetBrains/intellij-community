@@ -112,7 +112,7 @@ public final class MacUtil {
 
     AtomicBoolean result = new AtomicBoolean();
     executeOnMainThread(true, true, () -> {
-      result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").intValue() == 1);
+      result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").booleanValue());
     });
     return result.get();
   }

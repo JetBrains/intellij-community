@@ -105,7 +105,7 @@ final class NSScrollerHelper {
     try {
       ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
       invoke(defaults, "synchronize");
-      ourClickBehavior = invoke(defaults, "boolForKey:", Foundation.nsString("AppleScrollerPagingBehavior")).intValue() == 1
+      ourClickBehavior = invoke(defaults, "boolForKey:", Foundation.nsString("AppleScrollerPagingBehavior")).booleanValue()
                          ? ClickBehavior.JumpToSpot : ClickBehavior.NextPage;
     }
     finally {

@@ -18,4 +18,8 @@ public class ID extends NativeLong {
   }
 
   public static final ID NIL = new ID(0L);
+
+  public boolean booleanValue() {
+    return intValue() != 0;
+  }
 }

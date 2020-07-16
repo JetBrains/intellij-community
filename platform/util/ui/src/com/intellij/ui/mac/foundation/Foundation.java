@@ -83,7 +83,7 @@ public final class Foundation {
   public static ID safeInvoke(final String stringCls, final String stringSelector, Object... args) {
     ID cls = getObjcClass(stringCls);
     Pointer selector = createSelector(stringSelector);
-    if (invoke(cls, "respondsToSelector:", selector).intValue() == 0) {
+    if (!invoke(cls, "respondsToSelector:", selector).booleanValue()) {
       throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, stringCls));
     }
     return invoke(cls, selector, args);
@@ -109,7 +109,7 @@ public final class Foundation {
 
   public static ID safeInvoke(final ID id, final String stringSelector, Object... args) {
     Pointer selector = createSelector(stringSelector);
-    if (!id.equals(ID.NIL) && invoke(id, "respondsToSelector:", selector).intValue() == 0) {
+    if (!id.equals(ID.NIL) && !invoke(id, "respondsToSelector:", selector).booleanValue()) {
       throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, toStringViaUTF8(invoke(id, "description"))));
     }
     return invoke(id, selector, args);
@@ -184,7 +184,7 @@ public final class Foundation {
     final ID workspace = invoke("NSWorkspace", "sharedWorkspace");
     final ID result = invoke(workspace, createSelector("isFilePackageAtPath:"), nsString(path));
 
-    return result.intValue() == 1;
+    return result.booleanValue();
   }
 
   public static boolean isPackageAtPath(@NotNull final File file) {
@@ -297,7 +297,7 @@ public final class Foundation {
   }
 
   public static boolean isMainThread() {
-    return invoke("NSThread", "isMainThread").intValue() > 0;
+    return invoke("NSThread", "isMainThread").booleanValue();
   }
 
   private static Callback ourRunnableCallback;

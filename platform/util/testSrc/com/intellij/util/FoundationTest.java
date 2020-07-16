@@ -87,9 +87,9 @@ public class FoundationTest {
   @Test
   public void testObjcMsgSend_bool() {
     ID number = autorelease(invoke("NSNumber", "numberWithBool:", false));
-    assertFalse(invoke(number, "boolValue").intValue() != 0);
+    assertFalse(invoke(number, "boolValue").booleanValue());
     number = autorelease(invoke("NSNumber", "numberWithBool:", true));
-    assertTrue(invoke(number, "boolValue").intValue() != 0);
+    assertTrue(invoke(number, "boolValue").booleanValue());
   }
 
   @Test
