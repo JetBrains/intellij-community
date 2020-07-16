@@ -64,9 +64,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -118,7 +116,6 @@ public abstract class UsefulTestCase extends TestCase {
 
   private @Nullable Disposable myTestRootDisposable;
 
-  private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
@@ -264,6 +261,11 @@ public abstract class UsefulTestCase extends TestCase {
     return result;
   }
 
+  @ApiStatus.Internal
+  void removeGlobalTempDirectory(@NotNull Path dir) {
+    PathKt.delete(dir);
+  }
+
   protected boolean isIconRequired() {
     return false;
   }
@@ -280,20 +282,7 @@ public abstract class UsefulTestCase extends TestCase {
       () -> {
         if (myTempDir != null) {
           FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-          if (myPathsToKeep == null || myPathsToKeep.isEmpty()) {
-            PathKt.delete(myTempDir);
-          }
-          else {
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(myTempDir)) {
-              for (Path file : directoryStream) {
-                if (!shouldKeepTmpFile(file)) {
-                  FileUtil.delete(file);
-                }
-              }
-            }
-            catch (NoSuchFileException ignore) {
-            }
-          }
+          removeGlobalTempDirectory(myTempDir);
         }
       },
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
@@ -303,25 +292,6 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected final void disposeRootDisposable() {
     Disposer.dispose(getTestRootDisposable());
-  }
-
-  protected void addTmpFileToKeep(@NotNull Path file) {
-    if (myPathsToKeep == null) {
-      myPathsToKeep = new ArrayList<>();
-    }
-    myPathsToKeep.add(file.toAbsolutePath());
-  }
-
-  private boolean shouldKeepTmpFile(@NotNull Path file) {
-    if (myPathsToKeep == null || myPathsToKeep.isEmpty()) {
-      return false;
-    }
-    for (Path pathToKeep : myPathsToKeep) {
-      if (file.equals(pathToKeep)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;

@@ -234,6 +234,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
+  final void removeGlobalTempDirectory(@NotNull Path dir) {
+    temporaryDirectory.after();
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -503,8 +508,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         JarFileSystemImpl.cleanupForNextTest();
-
-        temporaryDirectory.after();
         LaterInvocator.dispatchPendingFlushes();
       },
       () -> {

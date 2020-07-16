@@ -272,11 +272,9 @@ public class ImmediatePainterTest extends AbstractEditorTest {
                     @NotNull BufferedImage actualImage) throws IOException {
 
     File expectedImageFile = FileUtil.createTempFile(getName() + "-expected", ".png", false);
-    addTmpFileToKeep(expectedImageFile.toPath());
     ImageIO.write(expectedImage, "png", expectedImageFile);
 
     File actualImageFile = FileUtil.createTempFile(getName() + "-actual", ".png", false);
-    addTmpFileToKeep(actualImageFile.toPath());
     ImageIO.write(actualImage, "png", actualImageFile);
 
     throw new FileComparisonFailure(message,

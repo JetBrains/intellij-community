@@ -33,7 +33,7 @@ public final class RunAll implements Runnable {
 
   @SafeVarargs
   public static void runAll(ThrowableRunnable<Throwable> @NotNull ... actions) {
-    CompoundRuntimeException.throwIfNotEmpty(collectExceptions(Arrays.asList(actions)));
+    ErrorKt.throwIfNotEmpty(collectExceptions(Arrays.asList(actions)));
   }
 
   @SafeVarargs
