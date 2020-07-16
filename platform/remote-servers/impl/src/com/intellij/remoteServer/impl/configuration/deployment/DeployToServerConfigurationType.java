@@ -21,7 +21,7 @@ import java.util.Map;
 public final class DeployToServerConfigurationType extends ConfigurationTypeBase {
   private final ServerType<?> myServerType;
   private final MultiSourcesConfigurationFactory myMultiSourcesFactory;
-  private final Map<SingletonDeploymentSourceType, SingletonTypeConfigurationFactory> myPerTypeFactories = new HashMap<>();
+  private final Map<String, SingletonTypeConfigurationFactory> myPerTypeFactories = new HashMap<>();
 
   public DeployToServerConfigurationType(@NotNull ServerType<?> serverType) {
     super(serverType.getId() + "-deploy", serverType.getDeploymentConfigurationTypePresentableName(),
@@ -40,7 +40,7 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     for (SingletonDeploymentSourceType next : serverType.getSingletonDeploymentSourceTypes()) {
       SingletonTypeConfigurationFactory nextFactory = new SingletonTypeConfigurationFactory(next);
       addFactory(nextFactory);
-      myPerTypeFactories.put(next, nextFactory);
+      myPerTypeFactories.put(next.getId(), nextFactory);
     }
   }
 
@@ -55,7 +55,7 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
   public ConfigurationFactory getFactoryForType(@Nullable DeploymentSourceType<?> sourceType) {
     ConfigurationFactory result = null;
     if (sourceType instanceof SingletonDeploymentSourceType && myServerType.getSingletonDeploymentSourceTypes().contains(sourceType)) {
-      result = myPerTypeFactories.get(sourceType);
+      result = myPerTypeFactories.get(sourceType.getId());
     }
     if (result == null) {
       result = myMultiSourcesFactory;
@@ -114,31 +114,41 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
   }
 
   public final class SingletonTypeConfigurationFactory extends DeployToServerConfigurationFactory {
-    private final SingletonDeploymentSourceType mySourceType;
+    private final String mySourceTypeId;
+    private final String myPresentableName;
 
     public SingletonTypeConfigurationFactory(@NotNull SingletonDeploymentSourceType sourceType) {
-      mySourceType = sourceType;
+      mySourceTypeId = sourceType.getId();
+      myPresentableName = sourceType.getPresentableName();
     }
 
     @NotNull
     @Override
     public String getId() {
-      return mySourceType.getId();
+      return mySourceTypeId;
     }
 
     @NotNull
     @Nls
     @Override
     public String getName() {
-      return mySourceType.getPresentableName();
+      return myPresentableName;
     }
 
     @NotNull
     @Override
     public DeployToServerRunConfiguration createTemplateConfiguration(@NotNull Project project) {
       DeployToServerRunConfiguration result = super.createTemplateConfiguration(project);
-      result.lockDeploymentSource(mySourceType);
+      DeploymentSourceType<?> type = getSourceTypeImpl();
+      if (type instanceof SingletonDeploymentSourceType) {
+        result.lockDeploymentSource((SingletonDeploymentSourceType)type);
+      }
       return result;
+    }
+
+    @Nullable
+    private DeploymentSourceType<?> getSourceTypeImpl() {
+      return DeploymentSourceType.EP_NAME.findFirstSafe(next -> mySourceTypeId.equals(next.getId()));
     }
   }
 }
