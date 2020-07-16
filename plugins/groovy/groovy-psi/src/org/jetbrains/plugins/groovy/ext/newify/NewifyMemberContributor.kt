@@ -40,11 +40,15 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     val qualifier = place.qualifierExpression
     val type = (qualifier as? GrReferenceExpression)?.resolve() as? PsiClass
 
+    if (qualifier == null && newifyAnnotations.any { matchesPattern(referenceName, it) }) {
+       if (!processByName(referenceName, place, processor, state)) {
+         return
+       }
+    }
+
     for (annotation in newifyAnnotations) {
 
       if (qualifier == null) {
-        processClassesWithPatternAttribute(annotation, referenceName, place, processor, state)
-
         val newifiedClasses = getClassArrayValue(annotation, "value", true)
         newifiedClasses
           .filter { psiClass -> GrStaticChecker.isStaticsOK(psiClass, place, psiClass, false) }
@@ -60,27 +64,27 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     }
   }
 
-  private fun processClassesWithPatternAttribute(annotation: PsiAnnotation,
-                                                 referenceName: String,
-                                                 place: PsiElement,
-                                                 processor: PsiScopeProcessor,
-                                                 state: ResolveState) {
-    if (matchesPattern(referenceName, annotation)) {
-      val classProcessor = ClassProcessor(referenceName, place)
-      place.processUnqualified(classProcessor, ResolveState.initial())
+  private fun processByName(referenceName: String,
+                            place: PsiElement,
+                            processor: PsiScopeProcessor,
+                            state: ResolveState): Boolean {
+    val classProcessor = ClassProcessor(referenceName, place)
+    place.processUnqualified(classProcessor, ResolveState.initial())
 
-      loop@ for (result in classProcessor.results) {
-        val clazz = result.element as? PsiClass
-        if (clazz == null || !GrStaticChecker.isStaticsOK(clazz, place, clazz, false)) {
-          continue
-        }
-        val newState: ResolveState = produceStateWithContext(result, place, referenceName, state)
-        val newifiedConstructors: List<NewifiedConstructor> = buildConstructors(clazz, clazz.name)
-        for (newifiedConstructor in newifiedConstructors) {
-          if (!ResolveUtil.processElement(processor, newifiedConstructor, newState)) break@loop
+    for (result in classProcessor.results) {
+      val clazz = result.element as? PsiClass
+      if (clazz == null || !GrStaticChecker.isStaticsOK(clazz, place, clazz, false)) {
+        continue
+      }
+      val newState: ResolveState = produceStateWithContext(result, place, referenceName, state)
+      val newifiedConstructors: List<NewifiedConstructor> = buildConstructors(clazz, clazz.name)
+      for (newifiedConstructor in newifiedConstructors) {
+        if (!ResolveUtil.processElement(processor, newifiedConstructor, newState)) {
+          return false
         }
       }
     }
+    return true
   }
 
   private fun produceStateWithContext(result: GroovyResolveResult,
