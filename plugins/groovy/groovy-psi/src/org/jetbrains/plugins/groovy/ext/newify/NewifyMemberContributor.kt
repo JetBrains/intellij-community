@@ -6,6 +6,7 @@ import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parentsWithSelf
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
@@ -68,22 +69,30 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
       val classProcessor = ClassProcessor(referenceName, place)
       place.processUnqualified(classProcessor, ResolveState.initial())
 
-      classProcessor.results
-        .map { result ->
-          val clazz = (result.element as? PsiClass)?.takeIf { GrStaticChecker.isStaticsOK(it, place, it, false) }
-          val import = (result.currentFileResolveContext as? GrImportStatement)?.takeIf {
-            val containingFile = place.containingFile as? GroovyFile ?: return@takeIf false
-            !GroovyImportHelper.isImplicitlyImported(result.element, referenceName, containingFile)
-          }
-          clazz to import
+      loop@ for (result in classProcessor.results) {
+        val clazz = result.element as? PsiClass
+        if (clazz == null || !GrStaticChecker.isStaticsOK(clazz, place, clazz, false)) {
+          continue
         }
-        .filterIsInstance<Pair<PsiClass, GrImportStatement?>>()
-        .flatMap { (clazz, import) -> buildConstructors(clazz, clazz.name).map { it to import } }
-        .forEach { (clazz, import) ->
-          val newState = if (import == null) state else state.put(RESOLVE_CONTEXT, import)
-          ResolveUtil.processElement(processor, clazz, newState)
+        val newState: ResolveState = produceStateWithContext(result, place, referenceName, state)
+        val newifiedConstructors: List<NewifiedConstructor> = buildConstructors(clazz, clazz.name)
+        for (newifiedConstructor in newifiedConstructors) {
+          if (!ResolveUtil.processElement(processor, newifiedConstructor, newState)) break@loop
         }
+      }
     }
+  }
+
+  private fun produceStateWithContext(result: GroovyResolveResult,
+                                      place: PsiElement,
+                                      referenceName: String,
+                                      state: ResolveState): ResolveState {
+    val import = result.currentFileResolveContext as? GrImportStatement ?: return state
+    val containingFile = place.takeIf(PsiElement::isValid)?.containingFile as? GroovyFile ?: return state
+    if (GroovyImportHelper.isImplicitlyImported(result.element, referenceName, containingFile)) {
+      return state
+    }
+    return state.put(RESOLVE_CONTEXT, import)
   }
 
   companion object {
