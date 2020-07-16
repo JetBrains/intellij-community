@@ -32,7 +32,8 @@ class GithubGitHelper {
   fun findRemote(repository: GitRepository, httpUrl: String?, sshUrl: String?): GitRemote? =
     repository.remotes.find { it.firstUrl != null && (it.firstUrl == httpUrl ||
                                                       it.firstUrl == httpUrl + GitUtil.DOT_GIT ||
-                                                      it.firstUrl == sshUrl) }
+                                                      it.firstUrl == sshUrl ||
+                                                      it.firstUrl == sshUrl + GitUtil.DOT_GIT) }
 
   companion object {
     @JvmStatic
