@@ -170,12 +170,13 @@ public final class HighlightFixUtil {
 
     registerChangeVariableTypeFixes((PsiVariable)element, type, lExpr, highlightInfo);
 
-    if (lExpr instanceof PsiMethodCallExpression && lExpr.getParent() instanceof PsiAssignmentExpression) {
+    PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(lExpr);
+    if (stripped instanceof PsiMethodCallExpression && lExpr.getParent() instanceof PsiAssignmentExpression) {
       PsiElement parent = lExpr.getParent();
       if (parent.getParent() instanceof PsiStatement) {
-        PsiMethod method = ((PsiMethodCallExpression)lExpr).resolveMethod();
+        PsiMethod method = ((PsiMethodCallExpression)stripped).resolveMethod();
         if (method != null && PsiType.VOID.equals(method.getReturnType())) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, new ReplaceAssignmentFromVoidWithStatementIntentionAction(parent, lExpr));
+          QuickFixAction.registerQuickFixAction(highlightInfo, new ReplaceAssignmentFromVoidWithStatementIntentionAction(parent, stripped));
         }
       }
     }
