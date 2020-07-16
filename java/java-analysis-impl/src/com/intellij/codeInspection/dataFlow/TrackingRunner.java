@@ -1220,36 +1220,30 @@ public final class TrackingRunner extends DataFlowRunner {
     String conditionsText = StringUtil.join(conditions, c -> c.getPresentationText(method), " and ");
     String returnValueText = contract.getReturnValue().isFail() ? "throws exception" : "returns '" + contract.getReturnValue() + "' value";
     CauseItem causeItem = new CauseItem(prefix + " " + returnValueText + " when " + conditionsText,
-      call.getMethodExpression().getReferenceNameElement());
-    for (ContractValue condition : conditions) {
-      DfaRelation relation = ObjectUtils.tryCast(condition.fromCall(getFactory(), call), DfaRelation.class);
-      PsiExpression leftPlace = condition.findLeftPlace(call);
-      MemoryStateChange leftPush = history.findExpressionPush(leftPlace);
-      PsiExpression rightPlace = condition.findRightPlace(call);
-      MemoryStateChange rightPush = history.findExpressionPush(rightPlace);
-      if (relation != null) {
-        DfaValue left = relation.getLeftOperand();
-        DfaValue right = relation.getRightOperand();
-        RelationType type = relation.getRelation();
-        MemoryStateChange leftChange = history;
-        MemoryStateChange rightChange = history;
-        if (leftPush != null) {
-          if (leftPush.myTopOfStack == left) {
-            leftChange = leftPush;
-          }
-          else if (leftPush.myTopOfStack == right) {
-            rightChange = leftPush;
-          }
-        }
-        if (rightPush != null) {
-          if (rightPush.myTopOfStack == right) {
-            rightChange = rightPush;
-          }
-          else if (rightPush.myTopOfStack == left) {
-            leftChange = rightPush;
-          }
-        }
-        causeItem.addChildren(findRelationCause(type, leftChange, left, rightChange, right));
+                                        call.getMethodExpression().getReferenceNameElement());
+    for (ContractValue contractValue : conditions) {
+      if (!(contractValue instanceof ContractValue.Condition)) {
+        continue;
+      }
+      ContractValue.Condition condition = (ContractValue.Condition)contractValue;
+      ContractValue leftVal = condition.getLeft();
+      ContractValue rightVal = condition.getRight();
+      RelationType type = condition.getRelationType();
+      DfaCallArguments arguments = DfaCallArguments.fromCall(getFactory(), call);
+      PsiExpression leftPlace = leftVal.findPlace(call);
+      MemoryStateChange leftPush = history.findSubExpressionPush(leftPlace);
+      if (leftPush == null && arguments != null) {
+        DfaValue left = leftVal.makeDfaValue(getFactory(), arguments);
+        leftPush = MemoryStateChange.create(history.getPrevious(), new PushInstruction(left, null), Collections.emptyMap(), left);
+      }
+      PsiExpression rightPlace = rightVal.findPlace(call);
+      MemoryStateChange rightPush = history.findSubExpressionPush(rightPlace);
+      if (rightPush == null && arguments != null) {
+        DfaValue right = rightVal.makeDfaValue(getFactory(), arguments);
+        rightPush = MemoryStateChange.create(history.getPrevious(), new PushInstruction(right, null), Collections.emptyMap(), right);
+      }
+      if (leftPush != null && rightPush != null) {
+        causeItem.addChildren(findRelationCause(type, leftPush, rightPush));
       }
     }
     return causeItem;
