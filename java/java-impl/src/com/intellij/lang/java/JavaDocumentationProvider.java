@@ -53,6 +53,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
@@ -278,7 +279,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String generateMethodInfo(PsiMethod method, PsiSubstitutor substitutor) {
     StringBuilder buffer = new StringBuilder();
 
@@ -635,8 +635,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (comment != null) sink.accept(comment);
   }
 
+  @Contract(value = "null -> null", pure = true)
   @Nullable
-  public static String generateExternalJavadoc(@NotNull final PsiElement element) {
+  public static String generateExternalJavadoc(@Nullable final PsiElement element) {
+    if (element == null) return null;
+
     List<String> docURLs = getExternalJavaDocUrl(element);
     return generateExternalJavadoc(element, docURLs);
   }
@@ -913,6 +916,27 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         return JavaDirectoryService.getInstance().getPackage(directory);
       }
     }
+    final PsiElement element = getDocumentedElementOfKeyword(contextElement);
+    if (element != null) return element;
+
+    return null;
+  }
+
+  /**
+   * The method returns either class or interface or method or field or anything with a javadoc that is annotated with the keyword.
+   * The method inspects keywords in the modifier lists, the class-level keywords (e.g. class, interface, implements, record, sealed, permits, etc.)
+   * and primitive types
+   * @param contextElement element that is supposed to be a keyword
+   * @return an instance of {@link PsiJavaDocumentedElement} that has javadoc if the keyword is either on the class or method or field level,
+   * null otherwise
+   */
+  @Nullable
+  private static PsiElement getDocumentedElementOfKeyword(@Nullable final PsiElement contextElement) {
+    if (!(contextElement instanceof PsiKeyword)) return null;
+
+    final PsiElement element = PsiTreeUtil.skipParentsOfType(contextElement, PsiModifierList.class, PsiReferenceList.class, PsiTypeElement.class);
+    if (element instanceof PsiJavaDocumentedElement) return element;
+
     return null;
   }
 
