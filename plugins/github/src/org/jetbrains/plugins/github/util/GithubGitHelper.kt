@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
+import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -27,6 +28,11 @@ class GithubGitHelper {
       "https://${server.host}${server.suffix.orEmpty()}/$user/$repo.git"
     }
   }
+
+  fun findRemote(repository: GitRepository, httpUrl: String?, sshUrl: String?): GitRemote? =
+    repository.remotes.find { it.firstUrl != null && (it.firstUrl == httpUrl ||
+                                                      it.firstUrl == httpUrl + GitUtil.DOT_GIT ||
+                                                      it.firstUrl == sshUrl) }
 
   companion object {
     @JvmStatic
