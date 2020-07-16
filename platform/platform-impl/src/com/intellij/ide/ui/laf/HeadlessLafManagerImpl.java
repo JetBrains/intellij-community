@@ -43,7 +43,7 @@ public class HeadlessLafManagerImpl extends LafManager {
 
   @Override
   public CollectionComboBoxModel<LafReference> getLafComboBoxModel(@NotNull LafManager.LafType type) {
-    return null;
+    return new CollectionComboBoxModel<>();
   }
 
   @Override
