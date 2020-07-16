@@ -46,6 +46,7 @@ import com.intellij.usages.impl.actions.RuleAction;
 import com.intellij.usages.rules.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -824,28 +825,7 @@ public class UsageViewImpl implements UsageViewEx {
     SmartExpander.installOn(myTree);
     TreeUtil.installActions(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
-    myTree.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (KeyEvent.VK_ENTER == e.getKeyCode()) {
-          TreePath leadSelectionPath = myTree.getLeadSelectionPath();
-          if (leadSelectionPath == null) return;
-
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadSelectionPath.getLastPathComponent();
-          if (node instanceof UsageNode) {
-            Usage usage = ((UsageNode)node).getUsage();
-            usage.navigate(false);
-            usage.highlightInEditor();
-          }
-          else if (node.isLeaf()) {
-            Navigatable navigatable = getNavigatableForNode(node, !myPresentation.isReplaceMode());
-            if (navigatable != null && navigatable.canNavigate()) {
-              navigatable.navigate(false);
-            }
-          }
-        }
-      }
-    });
+    EditSourceOnEnterKeyHandler.install(myTree);
 
     TreeUtil.promiseSelectFirst(myTree);
     PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
