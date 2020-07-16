@@ -24,10 +24,6 @@ class GroupByDirectoryStructureAction extends RuleAction {
     getUsageViewSettings(e).setGroupByDirectoryStructure(value);
     if (value) {
       getUsageViewSettings(e).setGroupByPackage(false); // mutually exclusive
-      Project project = e.getProject();
-      if (project != null) {
-        project.getMessageBus().syncPublisher(UsageFilteringRuleProvider.RULES_CHANGED).run();
-      }
     }
   }
 }

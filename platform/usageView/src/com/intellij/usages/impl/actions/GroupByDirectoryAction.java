@@ -27,8 +27,6 @@ class GroupByDirectoryAction extends RuleAction {
     getUsageViewSettings(e).setGroupByPackage(value);
     if (value) {
       getUsageViewSettings(e).setGroupByDirectoryStructure(false); // mutually exclusive
-      Project project = e.getProject();
-      project.getMessageBus().syncPublisher(RULES_CHANGED).run();
     }
   }
 }
