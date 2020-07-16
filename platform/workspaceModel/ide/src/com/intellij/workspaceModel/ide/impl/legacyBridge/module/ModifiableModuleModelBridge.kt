@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.util.io.systemIndependentPath
@@ -150,6 +151,8 @@ internal class ModifiableModuleModelBridge(
       throw IOException("Failed to load module from $filePath")
     }
 
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(
+      ModuleManagerComponentBridge.getInstance(project).getModuleFilePath(moduleEntity))
     return createModuleInstance(moduleEntity, false)
   }
 

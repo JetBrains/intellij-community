@@ -40,7 +40,6 @@ internal class ModuleBridgeImpl(
   override var diff: WorkspaceEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, filePath?.toString()), ModuleBridge {
   private val directoryPath: Path? = filePath?.parent
-  private var vfsRefreshWasCalled = false
 
   init {
     // default project doesn't have modules
@@ -76,22 +75,6 @@ internal class ModuleBridgeImpl(
       registerService(IComponentStore::class.java, ModuleStoreBridgeImpl::class.java, corePlugin, true)
       registerService(ExternalSystemModulePropertyManager::class.java, ExternalSystemModulePropertyManagerBridge::class.java, corePlugin, true)
       (picoContainer as MutablePicoContainer).unregisterComponent(FacetFromExternalSourcesStorage::class.java.name)
-    }
-  }
-
-  override fun getModuleFile(): VirtualFile? {
-    if (directoryPath == null) return null
-    val localFileSystem = LocalFileSystem.getInstance()
-    val moduleFile = File(moduleFilePath)
-    val fileWithoutRefresh = localFileSystem.findFileByIoFile(moduleFile)
-    // Call refreshAndFind only once if simple find's result was null on first call
-    return if (fileWithoutRefresh != null) {
-      vfsRefreshWasCalled = true
-      fileWithoutRefresh
-    } else {
-      if (vfsRefreshWasCalled) return null
-      vfsRefreshWasCalled = true
-      localFileSystem.refreshAndFindFileByIoFile(moduleFile)
     }
   }
 

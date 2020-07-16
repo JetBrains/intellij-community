@@ -337,10 +337,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   private val entityStore by lazy { WorkspaceModel.getInstance(project).entityStorage }
 
   private fun loadModules(entities: List<ModuleEntity>) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      val fileSystem = LocalFileSystem.getInstance()
-      entities.forEach { module -> fileSystem.refreshAndFindFileByNioFile(getModuleFilePath(module)) }
-    }
+    val fileSystem = LocalFileSystem.getInstance()
+    entities.forEach { module -> fileSystem.refreshAndFindFileByNioFile(getModuleFilePath(module)) }
 
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
     try {
@@ -534,7 +532,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = this.unloadedModules.keys.toList()
   }
 
-  private fun getModuleFilePath(moduleEntity: ModuleEntity): Path {
+  internal fun getModuleFilePath(moduleEntity: ModuleEntity): Path {
     val entitySource = (moduleEntity.entitySource as? JpsImportedEntitySource)?.internalFile ?: moduleEntity.entitySource
     val directoryPath = when (entitySource) {
       is JpsFileEntitySource.FileInDirectory -> entitySource.directory.filePath!!
