@@ -992,6 +992,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestMark = load("/runConfigurations/testMark.svg");
     /** 16x16 */ public static final @NotNull Icon TestNotRan = load("/runConfigurations/testNotRan.svg");
     /** 16x16 */ public static final @NotNull Icon TestPassed = load("/runConfigurations/testPassed.svg");
+    /** 16x16 */ public static final @NotNull Icon TestPassedIgnored = load("/runConfigurations/testPassedIgnored.svg");
     /** 16x16 */ public static final @NotNull Icon TestPaused = load("/runConfigurations/testPaused.svg");
     /** 16x16 */ public static final @NotNull Icon TestSkipped = load("/runConfigurations/testSkipped.svg");
 
