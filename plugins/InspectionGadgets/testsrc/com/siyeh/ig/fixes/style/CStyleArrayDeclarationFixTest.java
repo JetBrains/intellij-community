@@ -18,8 +18,11 @@ public class CStyleArrayDeclarationFixTest extends IGQuickFixesTestCase {
     builder.setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
   }
 
-  public void testSimpleMethod() { doTest(); }
-  public void testFieldWithWhitespace() { doTest(); }
+  public void testMethod() { doTest(); }
+  public void testLocalVariable() {
+    doTest();
+  }
+  public void testField() { doTest(); }
   public void testInForLoop() { doTest(); }
   public void testMultipleVariablesSingleDeclaration() { doTest(); }
   public void testMultipleFieldsSingleDeclaration() { doTest(); }
@@ -27,10 +30,35 @@ public class CStyleArrayDeclarationFixTest extends IGQuickFixesTestCase {
   public void testRecord() { doTest(); }
 
   @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[]{
+      "import java.lang.annotation.ElementType;\n" +
+      "import java.lang.annotation.Retention;\n" +
+      "import java.lang.annotation.RetentionPolicy;\n" +
+      "import java.lang.annotation.Target;\n" +
+      "\n" +
+      "@Retention(RetentionPolicy.CLASS)\n" +
+      "@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})\n" +
+      "public @interface Required {\n" +
+      "}",
+
+      "import java.lang.annotation.ElementType;\n" +
+      "import java.lang.annotation.Retention;\n" +
+      "import java.lang.annotation.RetentionPolicy;\n" +
+      "import java.lang.annotation.Target;\n" +
+      "\n" +
+      "@Retention(RetentionPolicy.CLASS)\n" +
+      "@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})\n" +
+      "public @interface Preliminary {\n" +
+      "}"
+    };
+  }
+
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new CStyleArrayDeclarationInspection());
     myRelativePath = "style/cstyle_array_declaration";
-    myDefaultHint = InspectionGadgetsBundle.message("c.style.array.declaration.replace.quickfix");
+    myDefaultHint = "Fix all 'C-style array declaration' problems in file";
   }
 }

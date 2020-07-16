@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -91,6 +92,7 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
         count++;
         nextField = DeclarationSearchUtils.findNextFieldInDeclaration(nextField);
       }
+      assert field != null;
       field.normalizeDeclaration();
       for (int i = 1; i < count; i++) {
         field = PsiTreeUtil.getNextSiblingOfType(field, PsiField.class);
@@ -109,18 +111,23 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
         return;
       }
       PsiElement child = method.getParameterList();
-      while (!(child instanceof PsiCodeBlock)) {
+      List<PsiElement> psiAnnotationsToDelete = new SmartList<>();
+      while (child != null && !(child instanceof PsiCodeBlock)) {
         final PsiElement elementToDelete = child;
-        child = child.getNextSibling();
+        child = PsiTreeUtil.skipWhitespacesAndCommentsForward(child);
         if (elementToDelete instanceof PsiJavaToken) {
           final IElementType tokenType = ((PsiJavaToken)elementToDelete).getTokenType();
           if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
             elementToDelete.delete();
           }
         }
+        else if (elementToDelete instanceof PsiAnnotation) {
+          psiAnnotationsToDelete.add(elementToDelete);
+        }
       }
       final PsiTypeElement typeElement = JavaPsiFacade.getElementFactory(project).createTypeElement(returnType);
       returnTypeElement.replace(typeElement);
+      psiAnnotationsToDelete.forEach(PsiElement::delete);
     }
   }
 
