@@ -37,7 +37,8 @@ public final class NewInstanceFactory<T> implements Factory<T> {
       return () -> {
         try {
           return clazz.newInstance();
-        } catch (Exception e1) {
+        }
+        catch (Exception e1) {
           LOG.error(e1);
           return null;
         }

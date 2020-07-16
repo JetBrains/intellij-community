@@ -53,8 +53,8 @@ public final class GlobalAntConfiguration implements PersistentStateComponent<El
   @NonNls private static final String ANT_JAR_FILE_NAME = "ant.jar";
 
   public GlobalAntConfiguration() {
-    myProperties.registerProperty(FILTERS_TABLE_LAYOUT);
-    myProperties.registerProperty(PROPERTIES_TABLE_LAYOUT);
+    myProperties.registerProperty(FILTERS_TABLE_LAYOUT, Externalizer.STORAGE);
+    myProperties.registerProperty(PROPERTIES_TABLE_LAYOUT, Externalizer.STORAGE);
     myProperties.registerProperty(ANTS, ANT_FILE, AntInstallation.EXTERNALIZER);
     INSTANCE.set(myProperties, this);
     myProperties.rememberKey(INSTANCE);

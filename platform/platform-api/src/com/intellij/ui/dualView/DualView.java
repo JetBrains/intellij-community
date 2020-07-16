@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dualView;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -27,7 +13,6 @@ import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import com.intellij.util.config.Storage;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
@@ -53,7 +38,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 
-public class DualView extends JPanel {
+public final class DualView extends JPanel {
   private static final String TREE = "TREE";
   private static final String FLAT = "FLAT";
 
@@ -62,24 +47,24 @@ public class DualView extends JPanel {
   private TreeTableView myTreeView;
 
   private JBTable myCurrentView;
-  private TableView myFlatView;
+  private TableView<?> myFlatView;
   private boolean myRootVisible;
   private CellWrapper myCellWrapper;
 
-  private final Storage.PropertiesComponentStorage myFlatStorage;
-  private final Storage.PropertiesComponentStorage myTreeStorage;
+  private final String myFlatStorePrefix;
+  private final Project project;
+  private final String myTreeStorePrefix;
   private final PropertyChangeListener myPropertyChangeListener;
 
   private boolean myZipByHeight;
   private boolean mySuppressStore;
 
-  public DualView(Object root, DualViewColumnInfo[] columns, @NonNls String columnServiceKey, Project project) {
+  public DualView(Object root, DualViewColumnInfo[] columns, @NonNls String columnServiceKey, @NotNull Project project) {
     super(new CardLayout());
 
-    myTreeStorage = new Storage.PropertiesComponentStorage(columnServiceKey + "_tree",
-                                                           PropertiesComponent.getInstance(project));
-    myFlatStorage = new Storage.PropertiesComponentStorage(columnServiceKey + "_flat",
-                                                           PropertiesComponent.getInstance(project));
+    myTreeStorePrefix = columnServiceKey + "_tree";
+    myFlatStorePrefix = columnServiceKey + "_flat";
+    this.project = project;
 
     myCardLayout = (CardLayout)getLayout();
 
@@ -136,8 +121,9 @@ public class DualView extends JPanel {
   }
 
   public void restoreState() {
-    BaseTableView.restore(myFlatStorage, myFlatView);
-    BaseTableView.restore(myTreeStorage, myTreeView);
+    PropertiesComponent propertyComponent = PropertiesComponent.getInstance(project);
+    BaseTableView.restore(propertyComponent, myFlatStorePrefix, myFlatView);
+    BaseTableView.restore(propertyComponent, myTreeStorePrefix, myTreeView);
   }
 
   private void refreshFlatModel() {
@@ -145,9 +131,9 @@ public class DualView extends JPanel {
   }
 
   private static ColumnInfo[] createTreeColumns(DualViewColumnInfo[] columns) {
-    Collection<ColumnInfo> result = new ArrayList<>();
+    Collection<ColumnInfo<?, ?>> result = new ArrayList<>();
 
-    final ColumnInfo firstColumn = columns[0];
+    ColumnInfo firstColumn = columns[0];
     ColumnInfo firstTreeColumn = new ColumnInfo(firstColumn.getName()) {
       @Override
       public Object valueOf(Object object) {
@@ -397,8 +383,9 @@ public class DualView extends JPanel {
   }
 
   public void saveState() {
-    BaseTableView.store(myFlatStorage, myFlatView);
-    BaseTableView.store(myTreeStorage, myTreeView);
+    PropertiesComponent propertyComponent = PropertiesComponent.getInstance(project);
+    BaseTableView.store(propertyComponent, myFlatStorePrefix, myFlatView);
+    BaseTableView.store(propertyComponent, myTreeStorePrefix, myTreeView);
   }
 
   public void setRoot(final TreeNode node, final List<Object> selection) {

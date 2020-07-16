@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.table;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.config.Storage;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -25,7 +13,8 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import java.util.ArrayList;
 import java.util.Arrays;
-
+import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * Do NOT add code that assumes that table has same number of rows as model. It isn't true!
@@ -47,20 +36,20 @@ public class BaseTableView extends JBTable {
   }
 
   @NonNls
-  private static String widthPropertyName(final int index) {
+  private static String widthPropertyName(int index) {
     return "Width" + index;
   }
 
-  public static void store(final Storage storage, final JTable table) {
-    final TableColumnModel model = table.getTableHeader().getColumnModel();
-    final int columnCount = model.getColumnCount();
-    final boolean[] storedColumns = new boolean[columnCount];
+  public static void store(@NotNull PropertiesComponent propertyComponent, @NotNull String prefix, @NotNull JTable table) {
+    TableColumnModel model = table.getTableHeader().getColumnModel();
+    int columnCount = model.getColumnCount();
+    boolean[] storedColumns = new boolean[columnCount];
     Arrays.fill(storedColumns, false);
     for (int i = 0; i < columnCount; i++) {
-      final TableColumn column = model.getColumn(i);
-      storage.put(widthPropertyName(i), String.valueOf(column.getWidth()));
-      final int modelIndex = column.getModelIndex();
-      storage.put(orderPropertyName(i), String.valueOf(modelIndex));
+      TableColumn column = model.getColumn(i);
+      propertyComponent.setValue(prefix + widthPropertyName(i), String.valueOf(column.getWidth()));
+      int modelIndex = column.getModelIndex();
+      propertyComponent.setValue(prefix + orderPropertyName(i), String.valueOf(modelIndex));
       if (storedColumns[modelIndex]) {
         LOG.error("columnCount: " + columnCount + " current: " + i + " modelINdex: " + modelIndex);
       }
@@ -68,38 +57,47 @@ public class BaseTableView extends JBTable {
     }
   }
 
-  public static void storeWidth(final Storage storage, final TableColumnModel columns) {
+  public static void storeWidth(@NotNull PropertiesComponent propertyComponent, @NotNull String prefix, @NotNull TableColumnModel columns) {
     for (int i = 0; i < columns.getColumnCount(); i++) {
-      storage.put(widthPropertyName(i), String.valueOf(columns.getColumn(i).getWidth()));
+      propertyComponent.setValue(prefix + widthPropertyName(i), String.valueOf(columns.getColumn(i).getWidth()));
     }
   }
 
-  public static void restore(final Storage storage, final JTable table) {
-    final TableColumnModel columnModel = table.getTableHeader().getColumnModel();
+  public static void storeWidth(@NotNull BiConsumer<String, String> consumer, @NotNull TableColumnModel columns) {
+    for (int i = 0; i < columns.getColumnCount(); i++) {
+      consumer.accept(widthPropertyName(i), String.valueOf(columns.getColumn(i).getWidth()));
+    }
+  }
+
+  public static void restore(@NotNull PropertiesComponent propertyComponent, @NotNull String prefix, JTable table) {
+    TableColumnModel columnModel = table.getTableHeader().getColumnModel();
     int index = 0;
-    final ArrayList<String> columnIndices = new ArrayList<>();
+    List<String> columnIndices = new ArrayList<>();
     while (true) {
-      final String order = storage.get(orderPropertyName(index));
-      if (order == null) break;
+      String order = propertyComponent.getValue(prefix + orderPropertyName(index));
+      if (order == null) {
+        break;
+      }
       columnIndices.add(order);
       index++;
       if (index == table.getColumnCount()) break;
     }
     index = 0;
-    for (final String columnIndex : columnIndices) {
-      final int modelColumnIndex = indexbyModelIndex(columnModel, Integer.parseInt(columnIndex));
+    for (String columnIndex : columnIndices) {
+      int modelColumnIndex = indexByModelIndex(columnModel, Integer.parseInt(columnIndex));
       if (modelColumnIndex > 0 && modelColumnIndex < columnModel.getColumnCount()) {
         columnModel.moveColumn(modelColumnIndex, index);
       }
       index++;
     }
     for (int i = 0; i < columnIndices.size(); i++) {
-      final String width = storage.get(widthPropertyName(i));
+      String width = propertyComponent.getValue(prefix + widthPropertyName(i));
       if (width != null && width.length() > 0) {
         try {
           columnModel.getColumn(i).setPreferredWidth(Integer.parseInt(width));
-        } catch(NumberFormatException e) {
-          LOG.error("Bad width: " + width + " at column: "+ i + " from: " + storage +
+        }
+        catch(NumberFormatException e) {
+          LOG.error("Bad width: " + width + " at column: "+ i + " from: " + prefix +
                     " actual columns count: " + columnModel.getColumnCount() +
                     " info count: " + columnIndices.size(), e);
         }
@@ -107,19 +105,27 @@ public class BaseTableView extends JBTable {
     }
   }
 
-  public static void restoreWidth(final Storage storage, final TableColumnModel columns) {
+  public static void restoreWidth(@NotNull PropertiesComponent propertyComponent, @NotNull String prefix, TableColumnModel columns) {
+    restoreWidth(s -> propertyComponent.getValue(prefix + s), columns);
+  }
+
+  public static void restoreWidth(@NotNull Function<String, String> map, TableColumnModel columns) {
     for (int index = 0; true; index++) {
-      final String widthValue = storage.get(widthPropertyName(index));
-      if (widthValue == null) break;
+      String widthValue = map.fun(widthPropertyName(index));
+      if (widthValue == null) {
+        break;
+      }
+
       try {
         columns.getColumn(index).setPreferredWidth(Integer.parseInt(widthValue));
-      } catch(NumberFormatException e) {
-        LOG.error("Bad width: " + widthValue + " at column: " + index + " from: " + storage, e);
+      }
+      catch (NumberFormatException e) {
+        LOG.error("Bad width: " + widthValue + " at column: " + index + " from: " + map, e);
       }
     }
   }
 
-  private static int indexbyModelIndex(final TableColumnModel model, final int index) {
+  private static int indexByModelIndex(TableColumnModel model, int index) {
     for (int i = 0; i < model.getColumnCount(); i++)
       if (model.getColumn(i).getModelIndex() == index)
         return i;

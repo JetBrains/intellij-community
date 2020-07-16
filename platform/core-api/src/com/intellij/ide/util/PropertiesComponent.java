@@ -69,7 +69,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
    * Returns the project-level instance.
    */
   public static PropertiesComponent getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, PropertiesComponent.class);
+    return project.getService(PropertiesComponent.class);
   }
 
   /**
