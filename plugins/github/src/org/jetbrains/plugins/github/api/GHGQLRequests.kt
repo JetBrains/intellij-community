@@ -78,7 +78,9 @@ object GHGQLRequests {
                                                     "repoName" to repository.repositoryPath.repository,
                                                     "number" to number),
                                               GHPullRequest::class.java,
-                                              "repository", "pullRequest")
+                                              "repository", "pullRequest").apply {
+        acceptMimeType = "application/vnd.github.shadow-cat-preview+json"
+      }
     }
 
 
@@ -88,13 +90,17 @@ object GHGQLRequests {
       if (description != null) parameters["body"] = description
       return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.updatePullRequest, parameters,
                                       GHPullRequest::class.java,
-                                      "updatePullRequest", "pullRequest")
+                                      "updatePullRequest", "pullRequest").apply {
+        acceptMimeType = "application/vnd.github.shadow-cat-preview+json"
+      }
     }
 
     fun markReadyForReview(repository: GHRepositoryCoordinates, pullRequestId: String): GQLQuery<Any?> =
       GQLQuery.Parsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.markPullRequestReadyForReview,
                       mutableMapOf<String, Any>("pullRequestId" to pullRequestId),
-                      Any::class.java)
+                      Any::class.java).apply {
+        acceptMimeType = "application/vnd.github.shadow-cat-preview+json"
+      }
 
     fun mergeabilityData(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPullRequestMergeabilityData?> =
       GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestMergeabilityData,
@@ -113,7 +119,9 @@ object GHGQLRequests {
                              mapOf("query" to query,
                                    "pageSize" to pagination?.pageSize,
                                    "cursor" to pagination?.afterCursor),
-                             PRSearch::class.java)
+                             PRSearch::class.java).apply {
+        acceptMimeType = "application/vnd.github.shadow-cat-preview+json"
+      }
     }
 
     private class PRSearch(search: SearchConnection<GHPullRequestShort>)
