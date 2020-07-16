@@ -17,6 +17,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,6 +172,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
 
   protected void installHandlers() {
     EditSourceOnDoubleClickHandler.install(this);
+    EditSourceOnEnterKeyHandler.install(this);
     new TreeSpeedSearch(this, path -> {
       final AbstractTestProxy testProxy = getSelectedTest(path);
       if (testProxy == null) return null;
