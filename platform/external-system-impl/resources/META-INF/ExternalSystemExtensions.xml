@@ -25,6 +25,8 @@
 
     <projectConfigurable groupId="build" id="build.tools" groupWeight="1000"
                          instance="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfigurable"/>
+    <search.optionContributor
+      implementation="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupSearchableContributor"/>
 
     <!--Auto-reload-->
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker"
