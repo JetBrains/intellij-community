@@ -838,7 +838,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
         }
       }
       Pair<JpsSdk<JpsDummyElement>, Integer> sdk = getAssociatedSdk(chunk);
-      if (compilerOptions instanceof EclipseCompilerOptions && sdk != null && sdk.second > 9 && customArgs.contains("add-modules")) {
+      if (compilerOptions instanceof EclipseCompilerOptions && sdk != null && sdk.second > 8 && customArgs.contains("add-modules")) {
         appender.accept(compilationOptions, "--module-path");
         appender.accept(compilationOptions, sdk.first.getHomePath()+ "/jmods" );
       }
