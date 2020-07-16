@@ -129,7 +129,7 @@ public class AddTypeArgumentsConditionalFix implements IntentionAction {
       if (returnType != null && aClass != null && aClass.getQualifiedName() != null) {
         final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(method.getProject());
         final PsiDeclarationStatement variableDeclarationStatement =
-          javaPsiFacade.getElementFactory().createVariableDeclarationStatement("xxx", lType, thenExpression);
+          javaPsiFacade.getElementFactory().createVariableDeclarationStatement("xxx", lType, thenExpression, thenExpression);
         final PsiExpression initializer =
           ((PsiLocalVariable)variableDeclarationStatement.getDeclaredElements()[0]).getInitializer();
         LOG.assertTrue(initializer != null);
