@@ -343,14 +343,10 @@ private class VisitorWithVariablesTracking(
   }
 
   // Ignore class nodes
-  override fun visitClass(node: UClass): Boolean {
-    return true
-  }
+  override fun visitClass(node: UClass): Boolean = true
 
   // Ignore field nodes
-  override fun visitField(node: UField): Boolean {
-    return true
-  }
+  override fun visitField(node: UField): Boolean = true
 
   private fun registerDependency(dependent: Dependent,
                                  dependency: Dependency) {
