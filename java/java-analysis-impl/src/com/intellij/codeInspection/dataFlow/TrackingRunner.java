@@ -15,6 +15,7 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -33,6 +34,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
@@ -788,6 +790,22 @@ public final class TrackingRunner extends DataFlowRunner {
         findRangeCause(rightChange, rightValue, rightRange.myFact, "right operand is %s")};
     }
     if (leftValue instanceof DfaVariableValue) {
+      if (leftValue == rightValue) {
+        PsiExpression leftExpression = leftChange.getExpression();
+        PsiExpression rightExpression = rightChange.getExpression();
+        if (leftExpression instanceof PsiMethodCallExpression) {
+          CauseItem cause = fromCallContract(leftChange, (PsiMethodCallExpression)leftExpression, rightExpression);
+          if (cause != null) {
+            return new CauseItem[]{cause};
+          }
+        }
+        if (rightExpression instanceof PsiMethodCallExpression) {
+          CauseItem cause = fromCallContract(rightChange, (PsiMethodCallExpression)rightExpression, leftExpression);
+          if (cause != null) {
+            return new CauseItem[]{cause};
+          }
+        }
+      }
       Relation relation = new Relation(relationType, rightValue);
       MemoryStateChange change = findRelationAddedChange(leftChange, (DfaVariableValue)leftValue, relation);
       if (change != null) {
@@ -1158,6 +1176,20 @@ public final class TrackingRunner extends DataFlowRunner {
     return null;
   }
 
+  private CauseItem fromCallContract(MemoryStateChange history, PsiMethodCallExpression call, PsiExpression target) {
+    PsiExpression[] args = call.getArgumentList().getExpressions();
+    for (int i = 0; i < args.length; i++) {
+      if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(args[i], target)) {
+        return fromCallContract(history, call, ContractReturnValue.returnParameter(i));
+      }
+    }
+    PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+    if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifier, target)) {
+      return fromCallContract(history, call, ContractReturnValue.returnThis());
+    }
+    return null;
+  }
+
   private CauseItem fromCallContract(MemoryStateChange history, PsiCallExpression call, ContractReturnValue contractReturnValue) {
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
@@ -1178,8 +1210,10 @@ public final class TrackingRunner extends DataFlowRunner {
       }
       List<? extends MethodContract> nonIntersecting = MethodContract.toNonIntersectingContracts(contracts);
       if (nonIntersecting != null) {
-        MethodContract onlyContract = ContainerUtil
-          .getOnlyItem(ContainerUtil.filter(nonIntersecting, mc -> contractReturnValue.isSuperValueOf(mc.getReturnValue())));
+        Condition<MethodContract> condition = contractReturnValue instanceof ContractReturnValue.ParameterReturnValue ?
+                                              mc -> contractReturnValue.equals(mc.getReturnValue()) :
+                                              mc -> contractReturnValue.isSuperValueOf(mc.getReturnValue());
+        MethodContract onlyContract = ContainerUtil.getOnlyItem(ContainerUtil.filter(nonIntersecting, condition));
         if (onlyContract != null) {
           return fromSingleContract(history, (PsiMethodCallExpression)call, method, prefix, onlyContract);
         }
