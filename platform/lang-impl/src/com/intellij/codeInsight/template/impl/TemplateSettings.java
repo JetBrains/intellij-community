@@ -55,7 +55,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   public static final char SPACE_CHAR = ' ';
   public static final char TAB_CHAR = '\t';
   public static final char ENTER_CHAR = '\n';
-  public static final char DEFAULT_CHAR = 'D';
+  public static final char DEFAULT_CHAR = TemplateConstants.DEFAULT_CHAR;
   public static final char CUSTOM_CHAR = 'C';
   public static final char NONE_CHAR = 'N';
 
@@ -75,7 +75,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   @NonNls private static final String DEFAULT_VALUE = "defaultValue";
   @NonNls private static final String ALWAYS_STOP_AT = "alwaysStopAt";
 
-  @NonNls static final String CONTEXT = "context";
+  @NonNls static final String CONTEXT = TemplateConstants.CONTEXT;
   @NonNls private static final String TO_REFORMAT = "toReformat";
   @NonNls private static final String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
   @NonNls private static final String USE_STATIC_IMPORT = "useStaticImport";

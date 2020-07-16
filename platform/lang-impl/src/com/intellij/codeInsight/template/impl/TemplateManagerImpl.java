@@ -13,7 +13,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiCompiledElement;
@@ -37,8 +36,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 public class TemplateManagerImpl extends TemplateManager implements Disposable {
-  static final NotNullLazyValue<ExtensionPoint<TemplateContextType>> TEMPLATE_CONTEXT_EP =
-    NotNullLazyValue.createValue(() -> TemplateContextType.EP_NAME.getPoint());
 
   @NotNull
   private final Project myProject;
@@ -517,7 +514,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   @NotNull
   public static List<TemplateContextType> getAllContextTypes() {
-    return TEMPLATE_CONTEXT_EP.getValue().getExtensionList();
+    return TemplateContextTypes.getAllContextTypes();
   }
 
   @Override

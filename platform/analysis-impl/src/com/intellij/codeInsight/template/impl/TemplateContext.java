@@ -35,7 +35,7 @@ public final class TemplateContext {
     @Override
     protected Map<String, String> compute() {
       if (isListenerAdded.compareAndSet(false, true)) {
-        TemplateManagerImpl.TEMPLATE_CONTEXT_EP.getValue().addExtensionPointListener(new ExtensionPointAdapter<TemplateContextType>() {
+        TemplateContextTypes.TEMPLATE_CONTEXT_EP.getValue().addExtensionPointListener(new ExtensionPointAdapter<TemplateContextType>() {
           @Override
           public void areaReplaced(@NotNull ExtensionsArea oldArea) {
             drop();
@@ -48,7 +48,7 @@ public final class TemplateContext {
         }, false, null);
       }
 
-      return TemplateManagerImpl.getAllContextTypes().stream()
+      return TemplateContextTypes.getAllContextTypes().stream()
         .map(TemplateContextType::getContextId)
         .distinct()
         .collect(Collectors.toMap(Function.identity(), Function.identity()));
@@ -63,7 +63,7 @@ public final class TemplateContext {
 
   @Nullable
   TemplateContextType getDifference(@NotNull TemplateContext defaultContext) {
-    return ContainerUtil.find(TemplateManagerImpl.getAllContextTypes(), type -> isEnabled(type) != defaultContext.isEnabled(type));
+    return ContainerUtil.find(TemplateContextTypes.getAllContextTypes(), type -> isEnabled(type) != defaultContext.isEnabled(type));
   }
 
   public boolean isEnabled(@NotNull TemplateContextType contextType) {
@@ -121,7 +121,7 @@ public final class TemplateContext {
   @NotNull
   private Map<String, Boolean> makeInheritanceExplicit() {
     Map<String, Boolean> explicitStates = new HashMap<>();
-    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+    for (TemplateContextType type : TemplateContextTypes.getAllContextTypes()) {
       if (isDisabledByInheritance(type)) {
         explicitStates.put(type.getContextId(), false);
       }
@@ -151,7 +151,7 @@ public final class TemplateContext {
       return null;
     }
 
-    Element element = new Element(TemplateSettings.CONTEXT);
+    Element element = new Element(TemplateConstants.CONTEXT);
     List<Map.Entry<String, Boolean>> entries = new ArrayList<>(myContextStates.entrySet());
     entries.sort(Map.Entry.comparingByKey());
     for (Map.Entry<String, Boolean> entry : entries) {
@@ -178,7 +178,7 @@ public final class TemplateContext {
       @Override
       public Map<String, TemplateContextType> invoke() {
         Map<String, TemplateContextType> idToType = new HashMap<>();
-        for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+        for (TemplateContextType type : TemplateContextTypes.getAllContextTypes()) {
           idToType.put(type.getContextId(), type);
         }
         return idToType;

@@ -19,7 +19,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   private String myKey;
   private String myDescription;
   private String myGroupName;
-  private char myShortcutChar = TemplateSettings.DEFAULT_CHAR;
+  private char myShortcutChar = TemplateConstants.DEFAULT_CHAR;
   private final List<Variable> myVariables = new SmartList<>();
   private String myId;
 
