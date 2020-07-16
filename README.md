@@ -73,5 +73,5 @@ To run tests on the build, apply these setting to the **Run | Edit Configuration
     * `-Didea.config.path=../test-config`
     * `-Didea.system.path=../test-system`
  
-You can find other helpful information at [http://www.jetbrains.org](http://www.jetbrains.org).
-The [contribute section](http://www.jetbrains.org/display/IJOS/Contribute) of that site describes how you can contribute to IntelliJ IDEA.
+You can find other helpful information at [https://www.jetbrains.com/opensource/idea](https://www.jetbrains.com/opensource/idea).
+The "Contribute Code" section of that site describes how you can contribute to IntelliJ IDEA.
