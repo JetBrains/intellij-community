@@ -213,6 +213,11 @@ class DocumentTracker(
 
 
   @CalledInAwt
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean) {
+    partiallyApplyBlocks(side, condition, { _, _ -> })
+  }
+
+  @CalledInAwt
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean, consumer: (Block, shift: Int) -> Unit) {
     if (isDisposed) return
 

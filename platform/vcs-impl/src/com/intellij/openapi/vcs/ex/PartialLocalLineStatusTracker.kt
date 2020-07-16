@@ -497,7 +497,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
         val success = updateDocument(side) { doc ->
           documentTracker.doFrozen(side) {
-            documentTracker.partiallyApplyBlocks(side, toCommitCondition, { _, _ -> })
+            documentTracker.partiallyApplyBlocks(side, toCommitCondition)
 
             doc.setText(contentToCommit)
           }

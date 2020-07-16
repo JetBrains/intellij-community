@@ -3,8 +3,11 @@ package git4idea.index
 
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteThread
 import com.intellij.openapi.editor.Document
@@ -12,6 +15,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -21,6 +25,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.PeekableIteratorWrapper
+import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.*
 import java.util.*
@@ -192,23 +197,111 @@ class GitStageLineStatusTracker(
 
 
   override fun rollbackChanges(range: Range) {
-    TODO("Not yet implemented")
+    val newRange = blockOperations.findBlock(range) ?: return
+    runBulkRollback(listOf(newRange))
   }
 
   override fun rollbackChanges(lines: BitSet) {
-    TODO("Not yet implemented")
+    val toRevert = blockOperations.getRangesForLines(lines) ?: return
+    runBulkRollback(toRevert)
   }
 
+  @CalledInAwt
+  private fun runBulkRollback(toRevert: List<StagedRange>) {
+    if (!isValid()) return
+
+    if (toRevert.any { it.hasUnstaged }) {
+      val filter = BlockFilter.create(toRevert, Side.RIGHT)
+      updateDocument(ThreeSide.RIGHT, GitBundle.message("stage.revert.unstaged.range.command.name")) {
+        unstagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
+      }
+    }
+    else {
+      val filter = BlockFilter.create(toRevert, Side.LEFT)
+      updateDocument(ThreeSide.BASE, GitBundle.message("stage.revert.staged.range.command.name")) {
+        stagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
+      }
+    }
+  }
+
+  private fun stageChanges(range: Range) {
+    val newRange = blockOperations.findBlock(range) ?: return
+    runBulkStage(listOf(newRange))
+  }
+
+  @CalledInAwt
+  private fun runBulkStage(toRevert: List<StagedRange>) {
+    if (!isValid()) return
+
+    val filter = BlockFilter.create(toRevert, Side.RIGHT)
+    updateDocument(ThreeSide.BASE, GitBundle.message("stage.add.range.command.name")) {
+      unstagedTracker.partiallyApplyBlocks(Side.LEFT) { filter.matches(it) }
+    }
+  }
+
+  private class BlockFilter(private val bitSet1: BitSet,
+                            private val bitSet2: BitSet) {
+    fun matches(block: DocumentTracker.Block): Boolean {
+      return matches(block, Side.LEFT, bitSet1) ||
+             matches(block, Side.RIGHT, bitSet2)
+    }
+
+    private fun matches(block: DocumentTracker.Block, blockSide: Side, bitSet: BitSet): Boolean {
+      val start = blockSide.select(block.range.start1, block.range.start2)
+      val end = blockSide.select(block.range.end1, block.range.end2)
+      val next: Int = bitSet.nextSetBit(start)
+      return next != -1 && next < end
+    }
+
+    companion object {
+      fun create(ranges: List<StagedRange>, targetTracker: Side): BlockFilter {
+        val bitSet1 = collectAffectedLines(ranges, targetTracker.selectNotNull(ThreeSide.LEFT, ThreeSide.BASE))
+        val bitSet2 = collectAffectedLines(ranges, targetTracker.selectNotNull(ThreeSide.BASE, ThreeSide.RIGHT))
+        return BlockFilter(bitSet1, bitSet2)
+      }
+
+      private fun collectAffectedLines(ranges: List<StagedRange>, side: ThreeSide): BitSet {
+        return BitSet().apply {
+          for (stagedRange in ranges) {
+            val line1 = side.select(stagedRange.vcsLine1, stagedRange.stagedLine1, stagedRange.line1)
+            val line2 = side.select(stagedRange.vcsLine2, stagedRange.stagedLine2, stagedRange.line2)
+            this.set(line1, line2)
+          }
+        }
+      }
+    }
+  }
 
   private inner class MyDocumentTrackerHandler(private val unstaged: Boolean) : DocumentTracker.Handler {
     override fun afterBulkRangeChange(isDirty: Boolean) {
       cachedBlocks = null
 
       updateHighlighters()
+
+      if (unstaged) {
+        if (unstagedTracker.blocks.isEmpty()) {
+          fireFileUnchanged(document)
+        }
+      }
+      else {
+        if (stagedTracker.blocks.isEmpty()) {
+          fireFileUnchanged(stagedDocument)
+        }
+      }
     }
 
     override fun onUnfreeze(side: Side) {
       updateHighlighters()
+    }
+
+    @CalledInAwt
+    private fun fireFileUnchanged(documentToSave: Document) {
+      if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
+        // later to avoid saving inside document change event processing and deadlock with CLM.
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          FileDocumentManager.getInstance().saveDocument(documentToSave)
+        }, project.disposed)
+      }
     }
   }
 
@@ -289,8 +382,34 @@ class GitStageLineStatusTracker(
                        flags1.isUnstaged || flags2.isUnstaged)
     }
 
-    override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): MutableList<AnAction> {
-      return mutableListOf()
+    override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
+      val actions = ArrayList<AnAction>()
+      actions.add(ShowPrevChangeMarkerAction(editor, range))
+      actions.add(ShowNextChangeMarkerAction(editor, range))
+      actions.add(RollbackLineStatusRangeAction(editor, range))
+      actions.add(AddLineStatusRangeAction(editor, range))
+      actions.add(ShowLineStatusRangeDiffAction(editor, range))
+      actions.add(CopyLineStatusRangeAction(editor, range))
+      actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
+      return actions
+    }
+
+    private inner class AddLineStatusRangeAction(editor: Editor, range: Range) :
+      RangeMarkerAction(editor, range, "Git.Add"), LightEditCompatible {
+      override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasUnstaged
+
+      override fun actionPerformed(editor: Editor, range: Range) {
+        tracker.stageChanges(range)
+      }
+    }
+
+    private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
+      : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
+      override fun isEnabled(editor: Editor, range: Range): Boolean = true
+
+      override fun actionPerformed(editor: Editor, range: Range) {
+        RollbackLineStatusAction.rollback(tracker, range, editor)
+      }
     }
   }
 

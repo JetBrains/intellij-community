@@ -30,7 +30,7 @@ public class RollbackLineStatusAction extends LineStatusActionBase {
     tracker.rollbackChanges(selectedLines);
   }
 
-  public static void rollback(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Range range, @Nullable Editor editor) {
+  public static void rollback(@NotNull LineStatusTrackerI<?> tracker, @NotNull Range range, @Nullable Editor editor) {
     if (editor != null) DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
     tracker.rollbackChanges(range);
   }
