@@ -35,6 +35,7 @@ import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
+import com.intellij.workspaceModel.ide.impl.moduleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
@@ -128,6 +129,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   }
 
   internal fun loadInitialProject(configLocation: JpsProjectConfigLocation) {
+    moduleLoadingActivity = StartUpMeasurer.startMainActivity("module loading")
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
     var childActivity = activity.startChild("(wm) Prepare serializers")
     val baseDirUrl = configLocation.baseDirectoryUrlString
