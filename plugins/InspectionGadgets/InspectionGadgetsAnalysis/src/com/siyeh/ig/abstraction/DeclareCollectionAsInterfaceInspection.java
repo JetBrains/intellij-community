@@ -24,10 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.CollectionUtils;
-import com.siyeh.ig.psiutils.DeclarationSearchUtils;
-import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.psiutils.WeakestTypeFinder;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,9 +116,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
       if (!(grandParent instanceof PsiTypeElement)) {
         return;
       }
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiTypeElement newTypeElement = factory.createTypeElementFromText(newElementText.toString(), element);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(grandParent.replace(newTypeElement));
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(new CommentTracker().replaceAndRestoreComments(grandParent, newElementText.toString()));
     }
   }
 
