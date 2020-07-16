@@ -3,10 +3,9 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplatesScheme;
-import com.intellij.ide.fileTemplates.InternalTemplateBean;
+import com.intellij.ide.fileTemplates.*;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -66,6 +65,17 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
         return project;
       }
     };
+    project.getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+        for (FileTemplate template : getAllTemplates()) {
+          if (FileTemplateUtil.findHandler(template).getClass().getClassLoader() == pluginClassLoader) {
+            removeTemplate(template);
+          }
+        }
+      }
+    });
   }
 
   private FileTemplateSettings getSettings() {
