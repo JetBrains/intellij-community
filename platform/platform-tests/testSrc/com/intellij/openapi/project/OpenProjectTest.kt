@@ -9,7 +9,6 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
-import com.intellij.testFramework.rules.createDeleteAppConfigRule
 import com.intellij.util.io.createDirectories
 import org.junit.ClassRule
 import org.junit.Rule
@@ -43,15 +42,13 @@ internal class OpenProjectTest(private val opener: Opener) {
     }
   }
 
+  @JvmField
+  @Rule
   val tempDir = TemporaryDirectory()
 
   @JvmField
   @Rule
   val disposableRule = DisposableRule()
-
-  @JvmField
-  @Rule
-  val ruleChain = RuleChain(tempDir, createDeleteAppConfigRule())
 
   @Test
   fun `open valid existing project dir with ability to attach`() {

@@ -1,16 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.project.stateStore
-import com.intellij.testFramework.WrapRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.delete
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
@@ -50,15 +50,5 @@ fun checkDefaultProjectAsTemplate(task: (checkTask: (project: Project, defaultPr
   finally {
     // clear state
     defaultStateStore.removeComponent(TEST_COMPONENT_NAME)
-  }
-}
-
-@ApiStatus.Internal
-fun createDeleteAppConfigRule(): WrapRule {
-  return WrapRule {
-    val path = ApplicationManager.getApplication().stateStore.storageManager.expandMacro("\$APP_CONFIG$")
-    return@WrapRule {
-      path.delete()
-    }
   }
 }
