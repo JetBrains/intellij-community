@@ -553,6 +553,8 @@ public class UsageViewImpl implements UsageViewEx {
 
       myModel.fireTreeNodesChanged(parentNode, myModel.getPathToRoot(parentNode), indicesToFire.toNativeArray(),
                                    nodesToFire.toArray(new Node[0]));
+      indicesToFire.clear();
+      nodesToFire.clear();
     }
   }
 
