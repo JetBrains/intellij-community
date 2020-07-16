@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -11,10 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-@State(name = "XmlSettings", storages = {
-  @Storage("editor.xml"),
-  @Storage(value = "editor.codeinsight.xml", deprecated = true),
-})
+@State(name = "XmlSettings", storages = @Storage("editor.xml"))
 public class XmlSettings implements PersistentStateComponent<XmlSettings> {
   public boolean SHOW_XML_ADD_IMPORT_HINTS = true;
 

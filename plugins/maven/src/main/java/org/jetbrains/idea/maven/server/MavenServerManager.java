@@ -1,14 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -24,15 +21,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
-import com.intellij.util.xmlb.Converter;
-import com.intellij.util.xmlb.annotations.Attribute;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -47,23 +40,14 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
 
-@State(
-  name = "MavenVersion",
-  storages = @Storage(value = "mavenVersion.xml", deprecated = true)
-)
-public class MavenServerManager implements PersistentStateComponent<MavenServerManager.State>,
-                                           Disposable {
-
+public final class MavenServerManager implements Disposable {
   public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
   public static final String BUNDLED_MAVEN_3 = "Bundled (Maven 3)";
-
-  private static final String DEFAULT_VM_OPTIONS =
-    "-Xmx768m";
 
   private final Map<Project, MavenServerConnector> myServerConnectors = new HashMap<>();
   private File eventListenerJar;
 
-  public boolean checkMavenSettings(Project project, MavenSyncConsole console) {
+  public static boolean checkMavenSettings(Project project, MavenSyncConsole console) {
 
     MavenDistribution distribution = MavenDistribution.fromSettings(project);
     if (distribution == null) {
@@ -91,7 +75,7 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
   }
 
   public void shutdownServer(Project project) {
-    MavenServerConnector connector = null;
+    MavenServerConnector connector;
     synchronized (myServerConnectors) {
       connector = myServerConnectors.get(project);
     }
@@ -104,21 +88,6 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     synchronized (myServerConnectors) {
       return new ArrayList<>(myServerConnectors.values());
     }
-  }
-
-  static class State {
-    @Deprecated
-    @Attribute(value = "version", converter = UseMavenConverter.class)
-    public boolean useMaven2;
-    @Attribute
-    public String vmOptions = DEFAULT_VM_OPTIONS;
-    @Attribute
-    public String embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
-    @Attribute(converter = MavenDistributionConverter.class)
-    @Nullable
-    public MavenDistribution mavenHome;
-    @Attribute
-    public MavenExecutionOptions.LoggingLevel loggingLevel = MavenExecutionOptions.LoggingLevel.INFO;
   }
 
   public static MavenServerManager getInstance() {
@@ -138,10 +107,6 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
         });
       }
     });
-  }
-
-  public MavenServerConnector getConnector(MavenProject mavenProject, @NotNull Project project) {
-    return getConnector(project);
   }
 
   public MavenServerConnector getConnector(@NotNull Project project) {
@@ -169,7 +134,7 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     return connector;
   }
 
-  private Integer getDebugPort(Project project) {
+  private static Integer getDebugPort(Project project) {
     if ((project.isDefault() && Registry.is("maven.server.debug.default")) ||
         Registry.is("maven.server.debug")) {
       try {
@@ -183,16 +148,15 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
   }
 
   @NotNull
-  private Sdk getJdk(Project project, MavenWorkspaceSettings settings) {
+  private static Sdk getJdk(Project project, MavenWorkspaceSettings settings) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
     String jdkForImporterName = settings.importingSettings.getJdkForImporter();
-
     return MavenUtil.getJdk(project, jdkForImporterName);
   }
 
-  private boolean compatibleParameters(MavenServerConnector connector, Sdk jdk, MavenWorkspaceSettings settings) {
+  private static boolean compatibleParameters(MavenServerConnector connector, Sdk jdk, MavenWorkspaceSettings settings) {
     if (!StringUtil.equals(connector.getJdk().getName(), jdk.getName())) {
       return false;
     }
@@ -266,18 +230,17 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     return MavenUtil.getMavenVersion(getMavenHomeFile(mavenHome));
   }
 
-  @SuppressWarnings("unused")
   @Nullable
   public String getMavenVersion(@Nullable File mavenHome) {
     return MavenUtil.getMavenVersion(mavenHome);
   }
 
-  @Nullable
-  @Deprecated
   /**
    * @deprecated
    * use {@link MavenGeneralSettings.mavenHome} and {@link MavenUtil.getMavenVersion}
    */
+  @Nullable
+  @Deprecated
   public String getCurrentMavenVersion() {
     return null;
   }
@@ -435,20 +398,6 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     return result;
   }
 
-  private static class UseMavenConverter extends Converter<Boolean> {
-    @Nullable
-    @Override
-    public Boolean fromString(@NotNull String value) {
-      return "2.x".equals(value);
-    }
-
-    @NotNull
-    @Override
-    public String toString(@NotNull Boolean value) {
-      return value ? "2.x" : "3.x";
-    }
-  }
-
   public boolean isUseMaven2() {
     final String version = getCurrentMavenVersion();
     return version != null && StringUtil.compareVersionNumbers(version, "3") < 0 && StringUtil.compareVersionNumbers(version, "2") >= 0;
@@ -470,32 +419,21 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     return MavenUtil.isValidMavenHome(home) ? home : null;
   }
 
-  @NotNull
-  @Deprecated
   /**
    * @deprecated use MavenImportingSettings.setVmOptionsForImporter
    */
+  @NotNull
+  @Deprecated
   public String getMavenEmbedderVMOptions() {
     return "";
   }
 
 
-  @Deprecated
   /**
    * @deprecated use MavenImportingSettings.setVmOptionsForImporter
    */
+  @Deprecated
   public void setMavenEmbedderVMOptions(@NotNull String mavenEmbedderVMOptions) {
-  }
-
-
-  @Nullable
-  @Override
-  public State getState() {
-    return null;
-  }
-
-  @Override
-  public void loadState(@NotNull State state) {
   }
 
   @NotNull

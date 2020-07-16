@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.components.*;
@@ -16,10 +14,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.util.Map;
 import java.util.Set;
 
-@State(name = "GradleLocalSettings", storages = {
-  @Storage(StoragePathMacros.CACHE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(name = "GradleLocalSettings", storages = @Storage(StoragePathMacros.CACHE_FILE))
 public class GradleLocalSettings extends AbstractExternalSystemLocalSettings<GradleLocalSettings.MyState>
   implements PersistentStateComponent<GradleLocalSettings.MyState> {
 

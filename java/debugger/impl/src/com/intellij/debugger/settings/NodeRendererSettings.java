@@ -52,10 +52,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-@State(name = "NodeRendererSettings", storages = {
-  @Storage("debugger.xml"),
-  @Storage(value = "debugger.renderers.xml", deprecated = true),
-})
+@State(name = "NodeRendererSettings", storages = @Storage("debugger.xml"))
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(NodeRendererSettings.class);
 

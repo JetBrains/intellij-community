@@ -12,7 +12,7 @@ import com.intellij.util.messages.Topic
 import org.jdom.Element
 import java.util.*
 
-@State(name = "InlayHintsSettings", storages = [Storage("editor.xml"), Storage("workspace.xml", deprecated = true)])
+@State(name = "InlayHintsSettings", storages = [Storage("editor.xml")])
 class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   companion object {
     @JvmStatic

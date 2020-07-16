@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -20,10 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-@State(name = "debuggerHistoryManager", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(name = "debuggerHistoryManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class XDebuggerHistoryManager implements PersistentStateComponent<Element> {
   public static final int MAX_RECENT_EXPRESSIONS = 10;
   private static final String STATE_TAG = "root";

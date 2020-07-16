@@ -1,18 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.SERVICE_NAME_PREFIX
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.util.io.decodeBase64
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 
-@State(
-  name = "ErrorReportConfigurable",
-  storages = [Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED), Storage(value = "errorReporting.xml")])
+@State(name = "ErrorReportConfigurable", storages = [Storage(value = "errorReporting.xml")])
 internal class ErrorReportConfigurable : PersistentStateComponent<Element> {
   companion object {
     @JvmStatic

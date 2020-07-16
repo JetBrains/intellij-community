@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.components.*;
@@ -17,13 +17,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-@State(
-  name = "DslActivationStatus",
-  storages = {
-    @Storage(value = "dslActivation.xml", roamingType = RoamingType.DISABLED, deprecated = true),
-    @Storage(value = "dslActivationStatus.xml", roamingType = RoamingType.DISABLED)
-  }
-)
+@State(name = "DslActivationStatus", storages = @Storage(value = "dslActivationStatus.xml", roamingType = RoamingType.DISABLED))
 public class DslActivationStatus implements PersistentStateComponent<DslActivationStatus.State> {
   enum Status {
     ACTIVE,

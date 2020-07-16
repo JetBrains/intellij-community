@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -8,11 +8,8 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "ThreadsViewSettings", storages = {
-  @Storage("debugger.xml"),
-  @Storage(value = "debugger.threadsview.xml", deprecated = true),
-})
-public class ThreadsViewSettings implements PersistentStateComponent<ThreadsViewSettings> {
+@State(name = "ThreadsViewSettings", storages = @Storage("debugger.xml"))
+public final class ThreadsViewSettings implements PersistentStateComponent<ThreadsViewSettings> {
   public boolean SHOW_THREAD_GROUPS = false;
   public boolean SHOW_LINE_NUMBER = true;
   public boolean SHOW_CLASS_NAME = true;
