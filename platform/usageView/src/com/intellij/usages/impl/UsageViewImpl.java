@@ -479,7 +479,11 @@ public class UsageViewImpl implements UsageViewEx {
 
     private boolean isValid() {
       boolean parentValid = !parentNode.isStructuralChangeDetected();
-      boolean childValid = !childNode.isStructuralChangeDetected();
+
+      boolean childValid = true;
+      if (childNode != null) {
+        childValid = !childNode.isStructuralChangeDetected();
+      }
 
       return parentValid && childValid;
     }
@@ -518,15 +522,51 @@ public class UsageViewImpl implements UsageViewEx {
    */
   private void fireEvents() {
     EDT.assertIsEdt();
+
+    syncModelWithSwingNodes();
+    fireEventsForChangedNodes();
+  }
+
+  /**
+   * group nodes from changedNodesToFire by their parents
+   * and issue corresponding javax.swing.tree.DefaultTreeModel.fireTreeNodesChanged()
+   */
+  private void fireEventsForChangedNodes() {
+    TIntArrayList indicesToFire = new TIntArrayList();
+    List<Node> nodesToFire = new ArrayList<>();
+
+    List<Map.Entry<Node, Collection<Node>>> changed;
+    synchronized (fireTreeNodesChangedMap) {
+      changed = new ArrayList<>(fireTreeNodesChangedMap.entrySet());
+      fireTreeNodesChangedMap.clear();
+    }
+    for (Map.Entry<Node, Collection<Node>> entry : changed) {
+      Node parentNode = entry.getKey();
+      Collection<Node> childrenToUpdate = entry.getValue();
+      for (int i = 0; i < parentNode.getChildCount(); i++) {
+        Node childNode = (Node)parentNode.getChildAt(i);
+        if (childrenToUpdate.contains(childNode)) {
+          nodesToFire.add(childNode);
+          indicesToFire.add(i);
+        }
+      }
+
+      myModel.fireTreeNodesChanged(parentNode, myModel.getPathToRoot(parentNode), indicesToFire.toNativeArray(),
+                                   nodesToFire.toArray(new Node[0]));
+    }
+  }
+
+  /**
+   * Iterating over all changes that come from the model children list in a GroupNode
+   * and applying all those changes to the swing list of children to synchronize those
+   */
+  private void syncModelWithSwingNodes() {
     List<NodeChange> nodeChanges;
     synchronized (modelToSwingNodeChanges) {
       nodeChanges = new ArrayList<>(modelToSwingNodeChanges);
       modelToSwingNodeChanges.clear();
     }
-    /*
-    Iterating over all changes that come from the model children list in a GroupNode
-    and applying all those changes to the swing list of children to synchronize those
-     */
+
     TIntArrayList indicesToFire = new TIntArrayList();
     List<Node> nodesToFire = new ArrayList<>();
 
@@ -593,28 +633,6 @@ public class UsageViewImpl implements UsageViewEx {
           }
         }
       }
-    }
-    // group nodes from changedNodesToFire by their parents and issue corresponding javax.swing.tree.DefaultTreeModel.fireTreeNodesChanged()
-    List<Map.Entry<Node, Collection<Node>>> changed;
-    synchronized (fireTreeNodesChangedMap) {
-      changed = new ArrayList<>(fireTreeNodesChangedMap.entrySet());
-      fireTreeNodesChangedMap.clear();
-    }
-    for (Map.Entry<Node, Collection<Node>> entry : changed) {
-      Node parentNode = entry.getKey();
-      Collection<Node> childrenToUpdate = entry.getValue();
-      for (int i = 0; i < parentNode.getChildCount(); i++) {
-        Node childNode = (Node)parentNode.getChildAt(i);
-        if (childrenToUpdate.contains(childNode)) {
-          nodesToFire.add(childNode);
-          indicesToFire.add(i);
-        }
-      }
-
-      myModel.fireTreeNodesChanged(parentNode, myModel.getPathToRoot(parentNode), indicesToFire.toNativeArray(),
-                                   nodesToFire.toArray(new Node[0]));
-      nodesToFire.clear();
-      indicesToFire.clear();
     }
   }
 
