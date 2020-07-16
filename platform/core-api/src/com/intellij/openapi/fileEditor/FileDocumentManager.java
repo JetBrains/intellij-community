@@ -164,7 +164,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
 
   @ApiStatus.Internal
   @Nullable
-  public FileViewProvider findCachedPsiInAnyProject(VirtualFile file) {
+  public FileViewProvider findCachedPsiInAnyProject(@NotNull VirtualFile file) {
     return null;
   }
 

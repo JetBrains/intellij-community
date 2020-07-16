@@ -837,7 +837,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   }
 
   @Override
-  public @Nullable FileViewProvider findCachedPsiInAnyProject(VirtualFile file) {
+  public @Nullable FileViewProvider findCachedPsiInAnyProject(@NotNull VirtualFile file) {
     ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
     for (Project project : manager.getOpenProjects()) {
       FileViewProvider vp = PsiManagerEx.getInstanceEx(project).getFileManager().findCachedViewProvider(file);
