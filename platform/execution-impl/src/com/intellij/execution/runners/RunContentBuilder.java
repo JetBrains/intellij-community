@@ -177,22 +177,24 @@ public final class RunContentBuilder extends RunTab {
   }
 
   public static final class ConsoleToFrontListener implements ObservableConsoleView.ChangeListener {
-    @NotNull private final RunConfigurationBase myRunConfigurationBase;
     @NotNull private final Project myProject;
     @NotNull private final Executor myExecutor;
     @NotNull private final RunContentDescriptor myRunContentDescriptor;
     @NotNull private final RunnerLayoutUi myUi;
+    private final boolean myShowConsoleOnStdOut;
+    private final boolean myShowConsoleOnStdErr;
 
     public ConsoleToFrontListener(@NotNull RunConfigurationBase runConfigurationBase,
                                   @NotNull Project project,
                                   @NotNull Executor executor,
                                   @NotNull RunContentDescriptor runContentDescriptor,
                                   @NotNull RunnerLayoutUi ui) {
-      myRunConfigurationBase = runConfigurationBase;
       myProject = project;
       myExecutor = executor;
       myRunContentDescriptor = runContentDescriptor;
       myUi = ui;
+      myShowConsoleOnStdOut = runConfigurationBase.isShowConsoleOnStdOut();
+      myShowConsoleOnStdErr = runConfigurationBase.isShowConsoleOnStdErr();
     }
 
     @Override
@@ -200,8 +202,8 @@ public final class RunContentBuilder extends RunTab {
       if (myProject.isDisposed() || myUi.isDisposed())
         return;
       for (ConsoleViewContentType type : types) {
-        if ((type == ConsoleViewContentType.NORMAL_OUTPUT) && myRunConfigurationBase.isShowConsoleOnStdOut()
-            || (type == ConsoleViewContentType.ERROR_OUTPUT) && myRunConfigurationBase.isShowConsoleOnStdErr()) {
+        if ((type == ConsoleViewContentType.NORMAL_OUTPUT) && myShowConsoleOnStdOut
+            || (type == ConsoleViewContentType.ERROR_OUTPUT) && myShowConsoleOnStdErr) {
           RunContentManager.getInstance(myProject).toFrontRunContent(myExecutor, myRunContentDescriptor);
           myUi.selectAndFocus(myUi.findContent(ExecutionConsole.CONSOLE_CONTENT_ID), false, false);
           return;
