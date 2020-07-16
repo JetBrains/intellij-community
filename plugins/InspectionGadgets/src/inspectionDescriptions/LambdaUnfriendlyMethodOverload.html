@@ -5,7 +5,17 @@ any call sites will need a cast or parameter type specified on the lambda expres
 Such calls can look ugly and should be avoided if possible.
 It is preferable to give the overloaded methods a different name from each other, so that this problem does not occur.
 <!-- tooltip end -->
+<p>Example:</p>
+<pre>
+interface MyExecutor {
+  void execute(Supplier<?> supplier);
+  void execute(Callable<?> callable);
+}
+</pre>
 <p>
-<small>New in 16</small>
+Here, both <code>Supplier</code> and <code>Callable</code> are functional interfaces that accept single argument and have return value.
+As a result, it's not possible to call either of these methods with a lambda argument. If both methods are necessary it's better to
+rename one of them to avoid ambiguity.
+</p>
 </body>
 </html>
