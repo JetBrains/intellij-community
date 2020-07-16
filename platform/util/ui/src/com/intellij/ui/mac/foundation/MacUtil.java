@@ -48,10 +48,10 @@ public final class MacUtil {
       while (true) {
         // dirty hack: walks through all the windows to find a cocoa window to show sheet for
         final ID window = invoke(windowEnumerator, "nextObject");
-        if (0 == window.intValue()) break;
+        if (ID.NIL.equals(window)) break;
 
         final ID windowTitle = invoke(window, "title");
-        if (windowTitle != null && windowTitle.intValue() != 0) {
+        if (windowTitle != null && !ID.NIL.equals(windowTitle)) {
           final String titleString = toStringViaUTF8(windowTitle);
           if (Objects.equals(titleString, title)) {
             focusedWindow = window;

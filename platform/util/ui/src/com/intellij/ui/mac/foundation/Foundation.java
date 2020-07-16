@@ -2,6 +2,7 @@
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ImageLoader;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.*;
 
@@ -23,10 +25,13 @@ import java.util.*;
 @NonNls
 public final class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
+  private static final Function myObjcMsgSend;
 
   static {
     assert JnaLoader.isLoaded() : "JNA library is not available";
     myFoundationLibrary = Native.load("Foundation", FoundationLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
+    NativeLibrary nativeLibrary = ((Library.Handler)Proxy.getInvocationHandler(myFoundationLibrary)).getNativeLibrary();
+    myObjcMsgSend = nativeLibrary.getFunction("objc_msgSend");
   }
 
   public static void init() { /* fake method to init foundation */ }
@@ -48,8 +53,19 @@ public final class Foundation {
     return myFoundationLibrary.sel_registerName(s);
   }
 
+  private static Object @NotNull [] prepInvoke(ID id, Pointer selector, Object[] args) {
+    Object[] invokArgs = new Object[args.length + 2];
+    invokArgs[0] = id;
+    invokArgs[1] = selector;
+    System.arraycopy(args, 0, invokArgs, 2, args.length);
+    return invokArgs;
+  }
+
   public static ID invoke(final ID id, final Pointer selector, Object... args) {
-    return myFoundationLibrary.objc_msgSend(id, selector, args);
+    // objc_msgSend is called with the calling convention of the target method
+    // on x86_64 this does not make a difference, but arm64 uses a different calling convention for varargs
+    // it is therefore important to not call objc_msgSend as a vararg function
+    return new ID(myObjcMsgSend.invokeLong(prepInvoke(id, selector, args)));
   }
 
   public static ID invoke(final String cls, final String selector, Object... args) {
@@ -69,8 +85,15 @@ public final class Foundation {
     return invoke(id, createSelector(selector), args);
   }
 
-  public static double invoke_fpret(ID receiver, Pointer selector, Object... args) { return myFoundationLibrary.objc_msgSend_fpret(receiver, selector, args); }
-  public static double invoke_fpret(ID receiver, String selector, Object... args) { return myFoundationLibrary.objc_msgSend_fpret(receiver, createSelector(selector), args); }
+  public static double invoke_fpret(ID receiver, Pointer selector, Object... args) {
+    // calling objc_msgSend_fpret is exclusively needed on 32bit for double return values
+    if (SystemInfo.is32Bit) return myFoundationLibrary.objc_msgSend_fpret(receiver, selector, args);
+    return myObjcMsgSend.invokeDouble(prepInvoke(receiver, selector, args));
+  }
+
+  public static double invoke_fpret(ID receiver, String selector, Object... args) {
+    return invoke_fpret(receiver, createSelector(selector), args);
+  }
 
   public static boolean isNil(ID id) {
     return id == null || ID.NIL.equals(id);
@@ -124,11 +147,13 @@ public final class Foundation {
   @Nullable
   public static String stringFromSelector(Pointer selector) {
     ID id = myFoundationLibrary.NSStringFromSelector(selector);
-    if (id.intValue() > 0) {
-      return toStringViaUTF8(id);
+    return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
     }
 
-    return null;
+  @Nullable
+  public static String stringFromClass(ID aClass) {
+    ID id = myFoundationLibrary.NSStringFromClass(aClass);
+    return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
   }
 
   public static Pointer getClass(Pointer clazz) {
@@ -197,7 +222,7 @@ public final class Foundation {
 
   @Nullable
   public static String toStringViaUTF8(ID cfString) {
-    if (cfString.intValue() == 0) return null;
+    if (ID.NIL.equals(cfString)) return null;
 
     int lengthInChars = myFoundationLibrary.CFStringGetLength(cfString);
     int potentialLengthInBytes = 3 * lengthInChars + 1; // UTF8 fully escaped 16 bit chars, plus nul

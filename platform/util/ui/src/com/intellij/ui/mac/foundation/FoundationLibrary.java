@@ -42,8 +42,8 @@ public interface FoundationLibrary extends Library {
 
   ID objc_getMetaClass(String name);
 
-  ID objc_msgSend(ID receiver, Pointer selector, Object... args);
-  double objc_msgSend_fpret(ID receiver, Pointer selector, Object... args); // the same as objc_msgSend but returns double
+  // objc_msgSend is called via function pointer
+  double objc_msgSend_fpret(ID receiver, Pointer selector, Object... args); // the same as objc_msgSend but returns double (32-bit only)
 
   boolean class_respondsToSelector(ID cls, Pointer selName);
   boolean class_addMethod(ID cls, Pointer selName, Callback imp, String types);
@@ -54,6 +54,7 @@ public interface FoundationLibrary extends Library {
   boolean class_isMetaClass(ID cls);
 
   ID NSStringFromSelector(Pointer selector);
+  ID NSStringFromClass(ID aClass);
 
   Pointer objc_getClass(Pointer clazz);
 
