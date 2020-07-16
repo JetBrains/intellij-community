@@ -187,7 +187,7 @@ public final class Strings {
 
   @Contract(pure = true)
   public static int indexOfAny(final @NotNull CharSequence s, final @NotNull String chars, final int start, int end) {
-    if (s.length() == 0) return -1;
+    if (chars.length() == 0) return -1;
 
     end = Math.min(end, s.length());
     for (int i = Math.max(start, 0); i < end; i++) {
