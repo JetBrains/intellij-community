@@ -57,7 +57,7 @@ class MergeApplication extends DiffApplicationBase {
 
     List<VirtualFile> contents = Arrays.asList(files.get(0), files.get(2), files.get(1)); // left, base, right
     VirtualFile outputFile = files.get(files.size() - 1);
-    if (outputFile == null) throw new Exception("Can't find output file: " + ContainerUtil.getLastItem(filePaths));
+    if (outputFile == null) throw new Exception(DiffBundle.message("cannot.find.file.error", ContainerUtil.getLastItem(filePaths)));
 
     CompletableFuture<CliResult> future = new CompletableFuture<>();
     AtomicReference<CliResult> resultRef = new AtomicReference<>(new CliResult(127, null));
