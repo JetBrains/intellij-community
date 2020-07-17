@@ -174,7 +174,7 @@ public final class MemoryAgentUtil {
   }
 
   public static boolean isPlatformSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux;
+    return SystemInfo.isWindows || SystemInfo.isMacIntel64 || SystemInfo.isLinux;
   }
 
   private static boolean isIbmJdk(@NotNull JavaParameters parameters) {
