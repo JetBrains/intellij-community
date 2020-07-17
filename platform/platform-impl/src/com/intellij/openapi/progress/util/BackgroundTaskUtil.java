@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
@@ -256,8 +257,18 @@ public final class BackgroundTaskUtil {
   }
 
   private static boolean registerIfParentNotDisposed(@NotNull Disposable parent, @NotNull Disposable disposable) {
-    if (parent instanceof ComponentManager && ((ComponentManager)parent).isDisposed()) {
-      return false;
+    if (parent instanceof ComponentManager) {
+      if (((ComponentManager)parent).isDisposed()) {
+        return false;
+      }
+
+      try {
+        Disposer.register(parent, disposable);
+        return true;
+      }
+      catch (AlreadyDisposedException | IncorrectOperationException e) {
+        return false;
+      }
     }
 
     return ReadAction.compute(() -> {
