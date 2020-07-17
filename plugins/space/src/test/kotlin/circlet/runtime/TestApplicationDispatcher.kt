@@ -1,13 +1,20 @@
 package circlet.runtime
 
-import circlet.utils.*
-import com.intellij.mock.*
-import com.intellij.openapi.application.*
-import com.intellij.openapi.util.*
-import junit.framework.*
-import junit.framework.TestCase.*
-import kotlinx.coroutines.*
-import java.util.concurrent.*
+import circlet.utils.application
+import com.intellij.mock.MockApplication
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.util.Condition
+import junit.framework.TestCase
+import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 
 class TestApplicationDispatcher : TestCase() {
@@ -97,6 +104,10 @@ private class TestApplication : MockApplication({}) {
 
     override fun assertIsDispatchThread() {
         assertTrue(Thread.currentThread().name.startsWith(TEST_UI_DISPATCHER_NAME))
+    }
+
+    override fun assertIsNonDispatchThread() {
+        assertFalse(Thread.currentThread().name.startsWith(TEST_UI_DISPATCHER_NAME))
     }
 
     override fun invokeLater(runnable: Runnable) {

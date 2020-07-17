@@ -1045,6 +1045,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
+  public void assertIsNonDispatchThread() {
+    if (!isDispatchThread()) return;
+    if (ShutDownTracker.isShutdownHookRunning()) return;
+    throwThreadAccessException("Access from event dispatch thread is not allowed.");
+  }
+
+  @Override
   public void assertIsWriteThread() {
     if (isWriteThread()) return;
     if (ShutDownTracker.isShutdownHookRunning()) return;
@@ -1053,6 +1060,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private void assertIsDispatchThread(String message) {
     if (isDispatchThread()) return;
+    throwThreadAccessException(message);
+  }
+
+  private static void throwThreadAccessException(String message) {
     throw new RuntimeExceptionWithAttachments(
       message,
       "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +

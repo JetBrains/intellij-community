@@ -176,6 +176,12 @@ public interface Application extends ComponentManager {
   void assertIsDispatchThread();
 
   /**
+   * Asserts whether the method is being called from any thread outside EDT.
+   */
+  @ApiStatus.Experimental
+  void assertIsNonDispatchThread();
+
+  /**
    * Asserts whether the method is being called from under the Write Intent lock
    */
   @ApiStatus.Experimental
