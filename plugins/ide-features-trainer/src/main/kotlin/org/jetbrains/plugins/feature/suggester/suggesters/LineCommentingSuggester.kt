@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
@@ -40,12 +39,10 @@ class LineCommentingSuggester : FeatureSuggester {
         val curAction = anActions.lastOrNull() ?: return NoSuggestion
         if (this::alreadyHandledAction.isInitialized && curAction === alreadyHandledAction) return NoSuggestion
         if (curAction is EditorTextInsertedAction) {
-            val psiFile = curAction.psiFileRef.get() ?: return NoSuggestion
-            if (psiFile.language != JavaLanguage.INSTANCE) return NoSuggestion
-            if (isFirstSlashAdded(curAction)) {
+            if (isCommentSymbolAdded(curAction, '/')) {
                 firstSlashAddedAction = curAction
-            } else if (firstSlashAddedAction != null
-                && isSecondSlashAdded(curAction, firstSlashAddedAction!!)
+            } else if (firstSlashAddedAction != null && isSecondSlashAdded(curAction, firstSlashAddedAction!!)
+                || isCommentSymbolAdded(curAction, '#')
             ) {
                 val document = curAction.documentRef.get() ?: return NoSuggestion
                 val commentData = CommentData(
@@ -55,7 +52,6 @@ class LineCommentingSuggester : FeatureSuggester {
                 )
                 commentsHistory.add(commentData)
                 firstSlashAddedAction = null
-                println("Added CommentData: $commentData")
 
                 if (commentsHistory.size == NUMBER_OF_COMMENTS_TO_GET_SUGGESTION
                     && commentsHistory.isLinesCommentedInARow()
@@ -70,16 +66,16 @@ class LineCommentingSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    private fun isFirstSlashAdded(action: EditorTextInsertedAction): Boolean {
+    private fun isCommentSymbolAdded(action: EditorTextInsertedAction, symbol: Char): Boolean {
         with(action) {
             val psiFile = psiFileRef.get() ?: return false
             val document = documentRef.get() ?: return false
-            if (text != "/") return false
+            if (text != symbol.toString()) return false
             val psiElement = psiFile.findElementAt(offset) ?: return false
             if (psiElement is PsiComment || psiElement.nextSibling is PsiComment) return false
             val line = document.getLineByOffset(offset)
             val lineBeforeSlash = line.text.substring(0, offset - line.startOffset)
-            return lineBeforeSlash.isBlank() && line.text.trim() != "/"
+            return lineBeforeSlash.isBlank() && line.text.trim() != symbol.toString()
         }
     }
 

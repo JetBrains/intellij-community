@@ -6,7 +6,7 @@ import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 
-class LineCommentingSuggesterTest : FeatureSuggesterTest() {
+class LineCommentingSuggesterJavaTest : FeatureSuggesterTest() {
 
     override val testingCodeFileName: String = "JavaCodeExample.java"
 
