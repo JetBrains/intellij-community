@@ -23,13 +23,12 @@ import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.event.DocumentEvent
 
-class JdkDownloadDialog(
+internal class JdkDownloadDialog(
   val project: Project?,
   val parentComponent: Component?,
   val sdkType: SdkTypeId,
   val items: List<JdkItem>
 ) : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
-
   private val panel: JComponent
   private var installDirTextField: TextFieldWithBrowseButton
 
@@ -40,7 +39,7 @@ class JdkDownloadDialog(
     title = ProjectBundle.message("dialog.title.download.jdk")
     setResizable(false)
 
-    val defaultItem = items.filter { it.isDefaultItem }.firstOrNull() /*pick the newest default JDK */
+    val defaultItem = items.firstOrNull { it.isDefaultItem } /*pick the newest default JDK */
                       ?: items.firstOrNull() /* pick just the newest JDK is no default was set (aka the JSON is broken) */
                       ?: error("There must be at least one JDK to install") /* totally broken JSON */
 
@@ -81,7 +80,7 @@ class JdkDownloadDialog(
     )
 
     fun selectInstallPath(newVersion: JdkItem) {
-      installDirTextField.text = JdkInstaller.getInstance().defaultInstallDir(newVersion).path
+      installDirTextField.text = JdkInstaller.getInstance().defaultInstallDir(newVersion).toString()
       selectedItem = newVersion
     }
 

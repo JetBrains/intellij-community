@@ -162,6 +162,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
         //we select the newest matching version for a possible fix
         val jdkToDownload = lazyDownloadModel
+                              .asSequence()
                               .filter { req.matches(it) }
                               .mapNotNull {
                                 val v = JavaVersion.tryParse(it.versionString)
@@ -183,7 +184,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           override fun createTask(indicator: ProgressIndicator): SdkDownloadTask {
             val jdkInstaller = JdkInstaller.getInstance()
             val homeDir = jdkInstaller.defaultInstallDir(jdkToDownload)
-            val request = jdkInstaller.prepareJdkInstallation(jdkToDownload, homeDir)
+            val request = jdkInstaller.prepareJdkInstallation(jdkToDownload, homeDir.toFile())
             return newDownloadTask(request, project)
           }
         }

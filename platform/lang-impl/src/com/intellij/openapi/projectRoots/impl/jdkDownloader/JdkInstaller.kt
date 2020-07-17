@@ -15,9 +15,12 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.exists
 import org.jetbrains.annotations.Nls
 import java.io.File
 import java.io.IOException
+import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.math.absoluteValue
 
 interface JdkInstallRequest {
@@ -68,26 +71,25 @@ class JdkInstaller {
 
   private operator fun File.div(path: String) = File(this, path).absoluteFile
 
-  fun defaultInstallDir() : File {
-    val home = File(FileUtil.toCanonicalPath(System.getProperty("user.home") ?: "."))
+  fun defaultInstallDir() : Path {
+    val home = Paths.get(FileUtil.toCanonicalPath(System.getProperty("user.home") ?: "."))
     return when {
-      SystemInfo.isLinux   -> home / ".jdks"
+      SystemInfo.isLinux   -> home.resolve(".jdks")
       //see https://youtrack.jetbrains.com/issue/IDEA-206163#focus=streamItem-27-3270022.0-0
-      SystemInfo.isMac     -> home / "Library" / "Java" / "JavaVirtualMachines"
-      SystemInfo.isWindows -> home / ".jdks"
+      SystemInfo.isMac     -> home.resolve("Library/Java/JavaVirtualMachines")
+      SystemInfo.isWindows -> home.resolve(".jdks")
       else -> error("Unsupported OS: ${SystemInfo.getOsNameAndVersion()}")
     }
   }
 
-  fun defaultInstallDir(newVersion: JdkItem) : File {
-    val targetDir = defaultInstallDir() / newVersion.installFolderName
-
+  fun defaultInstallDir(newVersion: JdkItem) : Path {
+    val targetDir = defaultInstallDir().resolve(newVersion.installFolderName)
     var count = 1
     var uniqueDir = targetDir
-    while(uniqueDir.exists()) {
-      uniqueDir = File(targetDir.path + "-" + count++)
+    while (uniqueDir.exists()) {
+      uniqueDir = targetDir.parent.resolve("${targetDir.fileName}-${count++}")
     }
-    return uniqueDir.absoluteFile
+    return uniqueDir.toAbsolutePath()
   }
 
   fun validateInstallDir(selectedPath: String): Pair<File?, @Nls String?> {
