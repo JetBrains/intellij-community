@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
@@ -49,7 +50,7 @@ public final class JBUIScale {
   private static final AtomicNotNullLazyValue<Pair<String, Integer>> systemFontData = AtomicNotNullLazyValue.createValue(() -> {
     // with JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = UIManager.getFont("Label.font");
-    if (SystemInfo.isMacOSElCapitan) {
+    if (SystemInfoRt.isMac) {
       // text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
       font = new Font(".SF NS Text", font.getStyle(), font.getSize());
@@ -274,7 +275,7 @@ public final class JBUIScale {
   public static float sysScale(@Nullable GraphicsConfiguration gc) {
     if (JreHiDpiUtil.isJreHiDPIEnabled() && gc != null) {
       if (gc.getDevice().getType() != GraphicsDevice.TYPE_PRINTER) {
-        if (SystemInfo.isMac && JreHiDpiUtil.isJreHiDPI_earlierVersion()) {
+        if (SystemInfoRt.isMac && JreHiDpiUtil.isJreHiDPI_earlierVersion()) {
           return DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
         }
         return (float)gc.getDefaultTransform().getScaleX();

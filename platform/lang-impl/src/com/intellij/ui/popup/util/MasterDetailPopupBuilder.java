@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -27,8 +28,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 
-public class MasterDetailPopupBuilder implements MasterController {
-
+public final class MasterDetailPopupBuilder implements MasterController {
   private static final Color BORDER_COLOR = Gray._135;
 
   private final Project myProject;
@@ -244,8 +244,8 @@ public class MasterDetailPopupBuilder implements MasterController {
         }
       };
 
-      if ((SystemInfo.isMacOSLion || SystemInfo.isMacOSMountainLion) && !StartupUiUtil.isUnderDarcula()) {
-        final JButton done = new JButton("Done");
+      if (SystemInfoRt.isMac && !StartupUiUtil.isUnderDarcula()) {
+        JButton done = new JButton("Done");
         done.setOpaque(false);
         done.setMnemonic('o');
         done.addActionListener(actionListener);

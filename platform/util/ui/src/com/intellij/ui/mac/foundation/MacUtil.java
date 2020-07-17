@@ -4,7 +4,7 @@ package com.intellij.ui.mac.foundation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ import static com.intellij.ui.mac.foundation.Foundation.*;
  * @author pegov
  */
 public final class MacUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.foundation.MacUtil");
+  private static final Logger LOG = Logger.getInstance(MacUtil.class);
   public static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
 
   private MacUtil() {
@@ -106,15 +106,21 @@ public final class MacUtil {
   }
 
   public static boolean isFullKeyboardAccessEnabled() {
-    if (!SystemInfo.isMacOSSnowLeopard) return false;
-    final AtomicBoolean result = new AtomicBoolean();
-    executeOnMainThread(true, true,
-                        () -> result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").intValue() == 1));
+    if (!SystemInfoRt.isMac) {
+      return false;
+    }
+
+    AtomicBoolean result = new AtomicBoolean();
+    executeOnMainThread(true, true, () -> {
+      result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").intValue() == 1);
+    });
     return result.get();
   }
 
   public static void adjustFocusTraversal(@NotNull Disposable disposable) {
-    if (!SystemInfo.isMacOSSnowLeopard) return;
+    if (!SystemInfoRt.isMac) {
+      return;
+    }
     final AWTEventListener listener = new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
@@ -222,7 +228,7 @@ public final class MacUtil {
   }
 
   public static Activity wakeUpNeo(@NotNull Object reason) {
-    return SystemInfo.isMacOSMavericks && Registry.is("idea.mac.prevent.app.nap") ? new ActivityImpl(reason) : null;
+    return SystemInfoRt.isMac && Registry.is("idea.mac.prevent.app.nap") ? new ActivityImpl(reason) : null;
   }
 
   @NotNull

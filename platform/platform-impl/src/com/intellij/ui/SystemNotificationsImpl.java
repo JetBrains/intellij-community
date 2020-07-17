@@ -10,7 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
-public class SystemNotificationsImpl extends SystemNotifications {
+public final class SystemNotificationsImpl extends SystemNotifications {
   interface Notifier {
     void notify(@NotNull String name, @NotNull String title, @NotNull String description);
   }
@@ -30,7 +30,7 @@ public class SystemNotificationsImpl extends SystemNotifications {
   private static Notifier getPlatformNotifier() {
     try {
       if (SystemInfo.isMac) {
-        if (SystemInfo.isMacOSMountainLion && SystemProperties.getBooleanProperty("ide.mac.mountain.lion.notifications.enabled", true)) {
+        if (SystemProperties.getBooleanProperty("ide.mac.mountain.lion.notifications.enabled", true)) {
           return MountainLionNotifications.getInstance();
         }
         else {

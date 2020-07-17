@@ -99,15 +99,55 @@ public final class SystemInfo {
     return isXWindow && ourHasXdgMime.getValue();
   }
 
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSTiger = isMac && isOsVersionAtLeast("10.4");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSLeopard = isMac && isOsVersionAtLeast("10.5");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSSnowLeopard = isMac && isOsVersionAtLeast("10.6");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSLion = isMac && isOsVersionAtLeast("10.7");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSMountainLion = isMac && isOsVersionAtLeast("10.8");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSMavericks = isMac && isOsVersionAtLeast("10.9");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSYosemite = isMac && isOsVersionAtLeast("10.10");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSElCapitan = isMac && isOsVersionAtLeast("10.11");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
   public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
@@ -158,7 +198,7 @@ public final class SystemInfo {
   }
 
   public static String getOsNameAndVersion() {
-    return (isMacOSSierra ? "macOS" : OS_NAME) + ' ' + OS_VERSION;
+    return (isMac ? "macOS" : OS_NAME) + ' ' + OS_VERSION;
   }
 
   private static int normalize(int number) {

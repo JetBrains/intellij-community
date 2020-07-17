@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -110,7 +111,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private final UIManager.LookAndFeelInfo myDefaultLightLaf = getDefaultLightTheme();
   private final UIManager.LookAndFeelInfo myDefaultDarkLaf = new DarculaLookAndFeelInfo();
-  private final UIDefaults ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
+  private final Map<Object, Object> ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
 
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private UIManager.LookAndFeelInfo myPreferredLightLaf;
@@ -167,7 +168,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     lafList.add(myDefaultLightLaf);
     lafList.add(myDefaultDarkLaf);
 
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
         if (!"Metal".equalsIgnoreCase(name)
@@ -516,7 +517,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find wizard L&F: " + wizardLafName);
     }
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       String className = IntelliJLaf.class.getName();
       UIManager.LookAndFeelInfo laf = findLaf(className);
       if (laf != null) return laf;
@@ -660,7 +661,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    if (SystemInfo.isMacOSYosemite) {
+    if (SystemInfoRt.isMac) {
       installMacOSXFonts(UIManager.getLookAndFeelDefaults());
     }
 
@@ -776,7 +777,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @NotNull
   private static FontUIResource getFont(String yosemite, int size, @JdkConstants.FontStyle int style) {
-    if (SystemInfo.isMacOSElCapitan) {
+    if (SystemInfoRt.isMac) {
       // Text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
       Font font = enableKerning(new Font(SystemInfo.isMacOSCatalina ? ".AppleSystemUIFont" : ".SF NS Text", style, size));
@@ -925,7 +926,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
     String property = System.getProperty("idea.popup.weight");
     if (property != null) property = StringUtil.toLowerCase(property).trim();
-    if (SystemInfo.isMacOSLeopard) {
+    if (SystemInfoRt.isMac) {
       // force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
       popupWeight = OurPopupFactory.WEIGHT_HEAVY;
     }
@@ -1097,7 +1098,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       defaults.put(fontResource, uiFont);
     }
 
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       defaults.put("PasswordField.font", monoFont);
     }
     defaults.put("TextArea.font", monoFont);

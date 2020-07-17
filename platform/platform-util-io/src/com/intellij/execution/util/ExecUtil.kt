@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
@@ -138,7 +139,7 @@ object ExecUtil {
       }
       SystemInfo.isMac -> {
         val escapedCommand = StringUtil.join(command, { escapeAppleScriptArgument(it) }, " & \" \" & ")
-        val messageArg = if (SystemInfo.isMacOSYosemite) " with prompt \"${StringUtil.escapeQuotes(prompt)}\"" else ""
+        val messageArg = if (SystemInfoRt.isMac) " with prompt \"${StringUtil.escapeQuotes(prompt)}\"" else ""
         val escapedScript =
           "tell current application\n" +
           "   activate\n" +

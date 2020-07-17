@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
@@ -40,14 +40,14 @@ final class NSScrollerHelper {
   private static final List<Reference<ScrollbarStyleListener>> ourStyleListeners = new ArrayList<>();
 
   static {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       initNotificationObserver();
       updateBehaviorPreferences();
     }
   }
 
   private static boolean isOverlayScrollbarSupported() {
-    return SystemInfo.isMac && SystemInfo.isMacOSMountainLion;
+    return SystemInfoRt.isMac;
   }
 
   private static void initNotificationObserver() {
@@ -94,12 +94,12 @@ final class NSScrollerHelper {
 
   @Nullable
   public static ClickBehavior getClickBehavior() {
-    if (!SystemInfo.isMac) return null;
+    if (!SystemInfoRt.isMac) return null;
     return ourClickBehavior;
   }
 
   private static void updateBehaviorPreferences() {
-    if (!SystemInfo.isMac) return;
+    if (!SystemInfoRt.isMac) return;
 
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {

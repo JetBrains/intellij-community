@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,8 +83,12 @@ public class FontPreferences {
     if (SystemInfo.isJetBrainsJvm && SystemInfo.isJavaVersionAtLeast(11)) {
       return JETBRAINS_MONO;
     }
-    if (SystemInfo.isWindows) return WINDOWS_DEFAULT_FONT_FAMILY;
-    if (SystemInfo.isMacOSSnowLeopard) return MAC_OS_DEFAULT_FONT_FAMILY;
+    if (SystemInfo.isWindows) {
+      return WINDOWS_DEFAULT_FONT_FAMILY;
+    }
+    if (SystemInfoRt.isMac) {
+      return MAC_OS_DEFAULT_FONT_FAMILY;
+    }
     if (SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless() && !ApplicationManager.getApplication().isCommandLine()) {
       for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
         if (LINUX_DEFAULT_FONT_FAMILY.equals(font.getName())) {

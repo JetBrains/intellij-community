@@ -3,6 +3,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.ID;
@@ -251,7 +252,9 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
       @Override
       public void run() {
         Style oldStyle = get();
-        if (!Registry.is("ide.mac.disableMacScrollbars", false) && SystemInfo.isMacOSMountainLion) super.run();
+        if (SystemInfoRt.isMac && !Registry.is("ide.mac.disableMacScrollbars", false)) {
+          super.run();
+        }
         Style newStyle = get();
         if (newStyle != oldStyle) {
           List<MacScrollBarUI> list = new ArrayList<>();

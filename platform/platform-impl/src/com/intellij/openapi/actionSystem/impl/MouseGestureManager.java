@@ -25,7 +25,7 @@ public final class MouseGestureManager {
   }
 
   public void add(@NotNull IdeFrame frame) {
-    if (!SystemInfo.isMacOSSnowLeopard || !Registry.is("actionSystem.mouseGesturesEnabled")) {
+    if (!SystemInfo.isMac || !Registry.is("actionSystem.mouseGesturesEnabled", true)) {
       return;
     }
 
@@ -49,7 +49,7 @@ public final class MouseGestureManager {
   }
 
   public void remove(@NotNull IdeFrame frame) {
-    if (!SystemInfo.isMacOSSnowLeopard || !Registry.is("actionSystem.mouseGesturesEnabled")) {
+    if (!SystemInfo.isMac || !Registry.is("actionSystem.mouseGesturesEnabled", true)) {
       return;
     }
 
