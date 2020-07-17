@@ -495,6 +495,7 @@ public class UsageViewImpl implements UsageViewEx {
    */
   private final Consumer<Usage> invalidatedUsagesConsumer = (@NotNull Usage usage) -> {
     if (!getPresentation().isDetachedMode() && !isDisposed) {
+      myUsageNodes.remove(usage);
       addUpdateRequest(() -> ReadAction.run(() -> doAppendUsage(usage)));
     }
   };
@@ -589,7 +590,6 @@ public class UsageViewImpl implements UsageViewEx {
               myModel.nodesWereRemoved(grandParent, new int[]{index}, new Object[]{parentNode});
               myModel.fireTreeStructureChanged(grandParent, myModel.getPathToRoot(parentNode), new int[]{index}, new Object[]{parentNode});
               if (parentNode instanceof UsageNode) {
-                myUsageNodes.remove(((UsageNode)parentNode).getUsage());
                 grandParent.incrementUsageCount(-1);
               }
               //if this node was removed than we can skip all the other changes related to it
@@ -1306,6 +1306,10 @@ public class UsageViewImpl implements UsageViewEx {
     EDT.assertIsEdt();
     myUsageNodes.clear();
     myModel.reset();
+    synchronized (modelToSwingNodeChanges) {
+      modelToSwingNodeChanges.clear();
+    }
+
     if (!myPresentation.isDetachedMode()) {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> expandTree(2));
