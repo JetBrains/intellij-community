@@ -68,8 +68,6 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
     val messageBusConnection = project.messageBus.connect()
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(messageBusConnection, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChanged) = LOG.bracket("LibraryRootsWatcher.EntityStoreChange") {
-        // TODO It's also possible to calculate it on diffs
-
         event.getAllChanges().forEach { change ->
           when (change) {
             is EntityChange.Added -> updateVirtualFileUrlCollections(change.entity)
@@ -87,9 +85,9 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
         myCollectWatchRootsFuture = myExecutor.submit {
           ReadAction.run<Throwable> {
             newSync(
-              newRoots = roots.keys,
-              newJarDirectories = jarDirectories.keys,
-              newRecursiveJarDirectories = recursiveJarDirectories.keys
+              newRoots = synchronized(roots) { roots.keys.toHashSet() },
+              newJarDirectories = synchronized(jarDirectories) { jarDirectories.keys.toHashSet() },
+              newRecursiveJarDirectories = synchronized(recursiveJarDirectories) { recursiveJarDirectories.keys.toHashSet() }
             )
           }
         }
@@ -196,20 +194,24 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
   }
 
   private fun updateCollection(collection: Object2IntOpenHashMap<String>, fileUrl: VirtualFileUrl, removeAction: Boolean) {
-    collection.compute(fileUrl.url) { _, usagesCount ->
-      if (removeAction) {
-        if (usagesCount == null || usagesCount - 1 <= 0) return@compute null else return@compute usagesCount - 1
-      } else {
-        if (usagesCount == null) return@compute 1 else return@compute usagesCount + 1
+    synchronized(collection) {
+      collection.compute(fileUrl.url) { _, usagesCount ->
+        if (removeAction) {
+          if (usagesCount == null || usagesCount - 1 <= 0) return@compute null else return@compute usagesCount - 1
+        } else {
+          if (usagesCount == null) return@compute 1 else return@compute usagesCount + 1
+        }
       }
     }
   }
 
   private fun updateCollection(collection: Object2IntOpenHashMap<String>, oldUrl: String, newUrl: String) {
-    if (!collection.containsKey(oldUrl))  return
-    val valueByOldUrl = collection.removeInt(oldUrl)
-    val currentValueByNewUrl = collection.getInt(newUrl)
-    collection[newUrl] = currentValueByNewUrl + valueByOldUrl
+    synchronized(collection) {
+      if (!collection.containsKey(oldUrl)) return
+      val valueByOldUrl = collection.removeInt(oldUrl)
+      val currentValueByNewUrl = collection.getInt(newUrl)
+      collection[newUrl] = currentValueByNewUrl + valueByOldUrl
+    }
   }
 
   private fun newSync(newRoots: Set<String>,
