@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Consumer
 import com.intellij.util.NullableConsumer
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
+import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
@@ -83,11 +84,15 @@ internal object MarkdownPsiUtil {
                        consumer: Consumer<in PsiElement>,
                        nextHeaderConsumer: NullableConsumer<in PsiElement>) {
     if (myElement == null) return
-    val structureContainer = (if (myElement is MarkdownFile) myElement.getFirstChild()
+    val structureContainer = (if (myElement is MarkdownFile) findFirstChild(myElement)
     else getParentOfType(myElement, TRANSPARENT_CONTAINERS))
                              ?: return
     val currentHeader: MarkdownPsiElement? = if (myElement is MarkdownHeaderImpl) myElement else null
     processContainer(structureContainer, currentHeader, currentHeader, consumer, nextHeaderConsumer)
+  }
+
+  private fun findFirstChild(myElement: PsiElement): PsiElement? {
+    return myElement.children.asSequence().firstOrNull { it.language == MarkdownLanguage.INSTANCE }
   }
 
   private fun processContainer(container: PsiElement,
