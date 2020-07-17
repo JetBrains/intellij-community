@@ -1041,7 +1041,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void assertIsDispatchThread() {
     if (isDispatchThread()) return;
     if (ShutDownTracker.isShutdownHookRunning()) return;
-    assertIsDispatchThread("Access is allowed from event dispatch thread with IW lock only.");
+    throwThreadAccessException("Access is allowed from event dispatch thread with IW lock only.");
   }
 
   @Override
@@ -1056,11 +1056,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     if (isWriteThread()) return;
     if (ShutDownTracker.isShutdownHookRunning()) return;
     assertIsWriteThread("Access is allowed from write thread only.");
-  }
-
-  private void assertIsDispatchThread(String message) {
-    if (isDispatchThread()) return;
-    throwThreadAccessException(message);
   }
 
   private static void throwThreadAccessException(String message) {
