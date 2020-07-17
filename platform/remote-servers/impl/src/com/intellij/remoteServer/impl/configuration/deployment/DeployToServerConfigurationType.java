@@ -44,8 +44,8 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     }
   }
 
-  boolean isForServerType(@NotNull ServerType<?> serverType) {
-    return serverType.equals(getServerType());
+  boolean isForServerType(String serverTypeId) {
+    return serverTypeId.equals(myServerTypeId);
   }
 
   /**
