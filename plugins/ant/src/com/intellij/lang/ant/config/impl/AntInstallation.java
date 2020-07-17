@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.util.Comparator;
 import java.util.Properties;
 
@@ -98,7 +97,7 @@ public class AntInstallation {
     return HOME_DIR.get(myProperties);
   }
 
-  public AbstractProperty.AbstractPropertyContainer getProperties() {
+  public AbstractProperty.AbstractPropertyContainer<?> getProperties() {
     return myProperties;
   }
 
@@ -122,23 +121,17 @@ public class AntInstallation {
     if (antJar.isDirectory()) {
       throw new ConfigurationException(AntBundle.message("ant.jar.is.directory.error.message", antJar.getAbsolutePath()));
     }
-    try {
-      Properties properties = loadProperties(antJar);
-      AntInstallation antInstallation = new AntInstallation();
-      HOME_DIR.set(antInstallation.getProperties(), antHome.getAbsolutePath());
-      final String versionProp = properties.getProperty(PROPERTY_VERSION);
-      NAME.set(antInstallation.getProperties(), AntBundle.message("apache.ant.with.version.string.presentation", versionProp));
-      VERSION.set(antInstallation.getProperties(), versionProp);
-      antInstallation.addClasspathEntry(new AllJarsUnderDirEntry(lib));
-      return antInstallation;
-    }
-    catch (MalformedURLException e) {
-      LOG.error(e);
-      return null;
-    }
+    Properties properties = loadProperties(antJar);
+    AntInstallation antInstallation = new AntInstallation();
+    HOME_DIR.set(antInstallation.getProperties(), antHome.getAbsolutePath());
+    final String versionProp = properties.getProperty(PROPERTY_VERSION);
+    NAME.set(antInstallation.getProperties(), AntBundle.message("apache.ant.with.version.string.presentation", versionProp));
+    VERSION.set(antInstallation.getProperties(), versionProp);
+    antInstallation.addClasspathEntry(new AllJarsUnderDirEntry(lib));
+    return antInstallation;
   }
 
-  private static Properties loadProperties(File antJar) throws MalformedURLException, ConfigurationException {
+  private static Properties loadProperties(File antJar) throws ConfigurationException {
     Properties properties = JarUtil.loadProperties(antJar, VERSION_RESOURCE);
     if (properties == null) {
       throw new ConfigurationException(AntBundle.message("cant.read.from.ant.jar.error.message", antJar.getAbsolutePath()));
@@ -161,9 +154,9 @@ public class AntInstallation {
   }
 
   private static void registerProperties(ExternalizablePropertyContainer container) {
-    container.registerProperty((StringProperty)NAME, Externalizer.STRING);
+    container.registerProperty(NAME, Externalizer.STRING);
     container.registerProperty(HOME_DIR, Externalizer.STRING);
     container.registerProperty(CLASS_PATH, "classpathItem", AntClasspathEntry.EXTERNALIZER);
-    container.registerProperty((StringProperty)VERSION, Externalizer.STRING);
+    container.registerProperty(VERSION, Externalizer.STRING);
   }
 }
