@@ -378,9 +378,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
     }
 
-    // Asset Studio
-    buildContext.ant.copy(todir: "$androidPluginLib/../resources/images") {
-      fileset(dir: "$root/tools/adt/idea/android/resources/images")
+    // Asset Studio images.
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources/images/asset_studio") {
+      fileset(dir: "$root/tools/adt/idea/android/resources/images/asset_studio")
     }
 
     // Native debugger.
