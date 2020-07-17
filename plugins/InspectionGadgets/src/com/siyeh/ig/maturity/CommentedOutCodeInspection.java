@@ -18,6 +18,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -183,7 +185,19 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
     final Project project = context.getProject();
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final PsiElement fragment;
-    final PsiElement parent = context.getParent();
+    PsiElement parent = context.getParent();
+    if (parent instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)parent;
+      if (!MethodUtils.isInsideMethodBody(context, method)) {
+        parent = method.getParent();
+      }
+    }
+    else if (parent instanceof PsiClass) {
+      final PsiClass aClass = (PsiClass)parent;
+      if (!ClassUtils.isInsideClassBody(context, aClass)) {
+        parent = aClass.getParent();
+      }
+    }
     if (parent instanceof PsiJavaFile) {
       fragment = PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", JavaFileType.INSTANCE, text);
     }

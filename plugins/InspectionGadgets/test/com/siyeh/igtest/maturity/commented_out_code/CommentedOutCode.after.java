@@ -9,6 +9,9 @@ class CommentedOutCode /* extends Object */ {
   private String s;
 
   int x(int i) {
+    new Object() {
+
+    };
       return i + 1 /*+ 2*/;
     // https://youtrack.jetbrains.com/issue/CPP-3936 Move members dialog choses arbitrary file by name, if there are several in project
     // https://youtrack.jetbrains.com/issue/CPP-3935 Move members dialog doesn't recognize case insensitive file names
@@ -17,7 +20,17 @@ class CommentedOutCode /* extends Object */ {
 
   //TODO highlight parameters in macro substitution (in macro definition)
 
-    void k() {
+    /*
+      List<String> tmp = map.get(s.length());
+      if(tmp == null) {
+          tmp = new ArrayList<>();
+          map.put(s.length(), tmp);
+      }
+      tmp.add(s);
+     */
+  void x(String s, String... ss) {}
+
+  void k() {
     //noinspection unchecked
     l(new ArrayList());
     // TODO:
@@ -57,4 +70,8 @@ class CommentedOutCode /* extends Object */ {
 
   // fixme we've got a race here. RailsFacet is not yet updated configs, bug tree already updated RUBY-22574
 
+}
+enum E {
+  A {
+  }
 }
