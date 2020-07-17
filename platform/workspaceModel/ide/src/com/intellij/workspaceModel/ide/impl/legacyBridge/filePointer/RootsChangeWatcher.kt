@@ -31,9 +31,12 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.bracket
+import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChanged
 import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -50,6 +53,10 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
   private val rootsValidityChangedListener
     get() = ProjectRootManagerImpl.getInstanceImpl(project).rootsValidityChangedListener
 
+  private val roots = Object2IntOpenHashMap<String>()
+  private val jarDirectories = Object2IntOpenHashMap<String>()
+  private val recursiveJarDirectories = Object2IntOpenHashMap<String>()
+
   private val moduleManager = ModuleManager.getInstance(project)
   private val rootFilePointers = LegacyModelRootsFilePointers(project)
 
@@ -63,40 +70,26 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
       override fun changed(event: VersionedStorageChanged) = LOG.bracket("LibraryRootsWatcher.EntityStoreChange") {
         // TODO It's also possible to calculate it on diffs
 
-        val roots = mutableSetOf<VirtualFileUrl>()
-        val jarDirectories = mutableSetOf<VirtualFileUrl>()
-        val recursiveJarDirectories = mutableSetOf<VirtualFileUrl>()
-
-        val s = event.storageAfter
-
-        s.entities(SourceRootEntity::class.java).forEach { roots.add(it.url) }
-        s.entities(ContentRootEntity::class.java).forEach {
-          roots.add(it.url)
-          roots.addAll(it.excludedUrls)
-        }
-        s.entities(LibraryEntity::class.java).forEach {
-          roots.addAll(it.excludedRoots)
-          for (root in it.roots) {
-            when (root.inclusionOptions) {
-              LibraryRoot.InclusionOptions.ROOT_ITSELF -> roots.add(root.url)
-              LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT -> jarDirectories.add(root.url)
-              LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY -> recursiveJarDirectories.add(root.url)
-            }.let { } // exhaustive when
+        event.getAllChanges().forEach { change ->
+          when (change) {
+            is EntityChange.Added -> updateVirtualFileUrlCollections(change.entity)
+            is EntityChange.Removed -> updateVirtualFileUrlCollections(change.entity, true)
+            is EntityChange.Replaced -> {
+              updateVirtualFileUrlCollections(change.oldEntity, true)
+              updateVirtualFileUrlCollections(change.newEntity)
+            }
           }
         }
-        s.entities(SdkEntity::class.java).forEach { roots.add(it.homeUrl) }
-        s.entities(JavaModuleSettingsEntity::class.java).forEach { javaSettings -> javaSettings.compilerOutput?.let { roots.add(it) } }
-        s.entities(JavaModuleSettingsEntity::class.java).forEach { javaSettings -> javaSettings.compilerOutputForTests?.let { roots.add(it) } }
 
-        rootFilePointers.onModelChange(s)
+        rootFilePointers.onModelChange(event.storageAfter)
 
         myCollectWatchRootsFuture.cancel(false)
         myCollectWatchRootsFuture = myExecutor.submit {
           ReadAction.run<Throwable> {
             newSync(
-              newRoots = roots,
-              newJarDirectories = jarDirectories,
-              newRecursiveJarDirectories = recursiveJarDirectories
+              newRoots = roots.keys,
+              newJarDirectories = jarDirectories.keys,
+              newRecursiveJarDirectories = recursiveJarDirectories.keys
             )
           }
         }
@@ -113,6 +106,9 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
         if (event is VFilePropertyChangeEvent) propertyChanged(event)
 
         val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
+        updateCollection(roots, oldUrl, newUrl)
+        updateCollection(jarDirectories, oldUrl, newUrl)
+        updateCollection(recursiveJarDirectories, oldUrl, newUrl)
         updateModuleName(oldUrl, newUrl)
       }
 
@@ -173,24 +169,70 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
 
   private var disposable = Disposer.newDisposable()
 
-  private fun newSync(newRoots: Set<VirtualFileUrl>,
-                      newJarDirectories: Set<VirtualFileUrl>,
-                      newRecursiveJarDirectories: Set<VirtualFileUrl>) {
+  private fun updateVirtualFileUrlCollections(entity: WorkspaceEntity, removeAction: Boolean = false) {
+    when (entity) {
+      is SourceRootEntity -> updateCollection(roots, entity.url, removeAction)
+      is ContentRootEntity -> {
+        updateCollection(roots, entity.url, removeAction)
+        entity.excludedUrls.forEach { updateCollection(roots, it, removeAction) }
+      }
+      is LibraryEntity -> {
+        entity.excludedRoots.forEach { updateCollection(roots, it, removeAction) }
+        for (root in entity.roots) {
+          when (root.inclusionOptions) {
+            LibraryRoot.InclusionOptions.ROOT_ITSELF -> updateCollection(roots, root.url, removeAction)
+            LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT -> updateCollection(jarDirectories, root.url, removeAction)
+            LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY -> updateCollection(recursiveJarDirectories, root.url,
+                                                                                             removeAction)
+          }
+        }
+      }
+      is SdkEntity -> updateCollection(roots, entity.homeUrl, removeAction)
+      is JavaModuleSettingsEntity -> {
+        entity.compilerOutput?.let { updateCollection(roots, it, removeAction) }
+        entity.compilerOutputForTests?.let { updateCollection(roots, it, removeAction) }
+      }
+    }
+  }
+
+  private fun updateCollection(collection: Object2IntOpenHashMap<String>, fileUrl: VirtualFileUrl, removeAction: Boolean) {
+    collection.compute(fileUrl.url) { _, usagesCount ->
+      if (removeAction) {
+        if (usagesCount == null || usagesCount - 1 <= 0) return@compute null else return@compute usagesCount - 1
+      } else {
+        if (usagesCount == null) return@compute 1 else return@compute usagesCount + 1
+      }
+    }
+  }
+
+  private fun updateCollection(collection: Object2IntOpenHashMap<String>, oldUrl: String, newUrl: String) {
+    if (!collection.containsKey(oldUrl))  return
+    val valueByOldUrl = collection.removeInt(oldUrl)
+    val currentValueByNewUrl = collection.getInt(newUrl)
+    collection[newUrl] = currentValueByNewUrl + valueByOldUrl
+  }
+
+  private fun newSync(newRoots: Set<String>,
+                      newJarDirectories: Set<String>,
+                      newRecursiveJarDirectories: Set<String>) {
     val oldDisposable = disposable
     val newDisposable = Disposer.newDisposable()
     // creating a container with these URLs with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
     val container = VirtualFilePointerManager.getInstance().createContainer(newDisposable, rootsValidityChangedListener)
 
     container as VirtualFilePointerContainerImpl
-    container.addAll(newRoots.map { it.url })
-    container.addAllJarDirectories(newJarDirectories.map { it.url }, false)
-    container.addAllJarDirectories(newRecursiveJarDirectories.map { it.url }, true)
+    container.addAll(newRoots)
+    container.addAllJarDirectories(newJarDirectories, false)
+    container.addAllJarDirectories(newRecursiveJarDirectories, true)
 
     disposable = newDisposable
     Disposer.dispose(oldDisposable)
   }
 
   private fun clear() {
+    roots.clear()
+    jarDirectories.clear()
+    recursiveJarDirectories.clear()
     rootFilePointers.clear()
   }
 
