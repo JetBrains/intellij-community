@@ -165,7 +165,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         type = computation.compute();
       }
       else {
-        type = TypeInferenceHelper.doInference(state.getBindings(), computation);
+        type = TypeInferenceHelper.doInference(state.getBindings(), true, computation);
       }
     }
 
@@ -258,7 +258,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     else {
       // todo: IDEA-242437
-      TypeInferenceHelper.doInference(Collections.emptyMap(), action);
+      TypeInferenceHelper.doInference(Collections.emptyMap(), false, action);
     }
   }
 }

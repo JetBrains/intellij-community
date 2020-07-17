@@ -98,9 +98,14 @@ class InferenceCache {
         myTooComplexInstructions.addAll(flowInfo.getInterestingInstructions());
       }
       else {
-        Set<Instruction> stored = flowInfo.getInterestingInstructions();
-        stored.add(instruction);
-        cacheDfaResult(dfaResult, stored);
+        if (TypeInferenceHelper.getCurrentContext().isInferenceResultsCachingAllowed()) {
+          Set<Instruction> stored = flowInfo.getInterestingInstructions();
+          stored.add(instruction);
+          cacheDfaResult(dfaResult, stored);
+        } else {
+          DFAType dfaType = dfaResult.get(instruction.num()).getVariableType(descriptor);
+          return dfaType == null ? null : dfaType.getResultType(myScope.getManager());
+        }
       }
     }
     DFAType dfaType = getCachedInferredType(descriptor, instruction);
