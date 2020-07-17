@@ -77,7 +77,7 @@ public final class DFAType {
    * <p>
    * Actual type of the variable is a LUB of primary and flushing type.
    */
-  private final @Nullable PsiType flushingType;
+  private final @NotNull PsiType flushingType;
 
   private final List<Mixin> mixins = new ArrayList<>();
 
@@ -88,7 +88,7 @@ public final class DFAType {
 
   private DFAType(@Nullable PsiType primary, @Nullable PsiType flushingType) {
     this.primary = primary;
-    this.flushingType = flushingType;
+    this.flushingType = flushingType == null ? PsiType.NULL : flushingType;
   }
 
   public void addMixin(@Nullable PsiType mixin, @Nullable ConditionInstruction instruction) {
@@ -106,7 +106,7 @@ public final class DFAType {
     return newDFAType;
   }
 
-  public @Nullable PsiType getFlushingType() {
+  public @NotNull PsiType getFlushingType() {
     return flushingType;
   }
 
@@ -158,7 +158,7 @@ public final class DFAType {
 
   @Nullable
   public PsiType getResultType(@NotNull PsiManager manager) {
-    PsiType flushedPrimary = GenericsUtil.getLeastUpperBound(primary, flushingType, manager);
+    PsiType flushedPrimary = PsiType.NULL.equals(flushingType) ? primary : GenericsUtil.getLeastUpperBound(primary, flushingType, manager);
     if (mixins.isEmpty()) return flushedPrimary;
 
     List<PsiType> types = new ArrayList<>();
