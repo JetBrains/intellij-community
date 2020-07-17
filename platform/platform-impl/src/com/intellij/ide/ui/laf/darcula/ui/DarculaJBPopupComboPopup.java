@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.DataManager;
@@ -132,9 +132,11 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     return myPopup != null && myPopup.isVisible();
   }
 
+  // in JDK 11 ComboPopup.getList returns JList<Object>, not raw JList
+  @SuppressWarnings("unchecked")
   @Override
-  public JList<T> getList() {
-    return myProxyList;
+  public JList<Object> getList() {
+    return (JList<Object>)myProxyList;
   }
 
   @Override

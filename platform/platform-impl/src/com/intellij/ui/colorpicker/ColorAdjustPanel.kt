@@ -19,15 +19,12 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.JBUI
-import sun.security.util.SecurityConstants
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import java.awt.*
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 import javax.swing.plaf.basic.BasicButtonUI
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private val PANEL_PREFERRED_SIZE = JBUI.size(PICKER_PREFERRED_WIDTH, 80)
 private val PANEL_BORDER = JBUI.Borders.empty(4, HORIZONTAL_MARGIN_TO_PICKER_BORDER, 0, HORIZONTAL_MARGIN_TO_PICKER_BORDER)
@@ -41,9 +38,9 @@ private val HUE_SLIDER_BORDER = JBUI.Borders.empty(0, 16, 8, 16)
 
 private val ALPHA_SLIDER_BORDER = JBUI.Borders.empty(8, 16, 0, 16)
 
-class ColorAdjustPanel(private val model: ColorPickerModel,
-                       private val pipetteProvider: ColorPipetteProvider,
-                       showAlpha: Boolean = false)
+internal class ColorAdjustPanel(private val model: ColorPickerModel,
+                                private val pipetteProvider: ColorPipetteProvider,
+                                showAlpha: Boolean = false)
   : JPanel(GridBagLayout()), ColorListener {
 
   private val pipetteButton by lazy {
@@ -125,7 +122,8 @@ class ColorAdjustPanel(private val model: ColorPickerModel,
       sliderPanel.layout = BoxLayout(sliderPanel, BoxLayout.Y_AXIS)
       sliderPanel.add(hueSlider)
       sliderPanel.add(alphaSlider)
-    } else {
+    }
+    else {
       sliderPanel.border = JBUI.Borders.empty(9, 0)
       sliderPanel.layout = BorderLayout()
       sliderPanel.add(hueSlider)
@@ -141,7 +139,7 @@ class ColorAdjustPanel(private val model: ColorPickerModel,
     }
 
     val hue = Color.RGBtoHSB(color.red, color.green, color.blue, null)[0]
-    val hueDegree = Math.round(hue * 360)
+    val hueDegree = (hue * 360).roundToInt()
     // Don't change hueSlider.value when (hueSlider.value, hueDegree) is (0, 360) or (360, 0).
     if (abs(hueSlider.value - hueDegree) != 360) {
       hueSlider.value = hueDegree
@@ -163,7 +161,7 @@ private fun canPickupColorFromDisplay(): Boolean {
   }
 
   return try {
-    System.getSecurityManager()?.checkPermission(SecurityConstants.AWT.READ_DISPLAY_PIXELS_PERMISSION)
+    System.getSecurityManager()?.checkPermission(AWTPermission("readDisplayPixels"))
     true
   }
   catch (e: SecurityException) {
