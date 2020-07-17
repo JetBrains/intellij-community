@@ -43,7 +43,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
 
       if (isEmpty) {
         VcsBalloonProblemNotifier.showOverChangesView(project,
-                                                      VcsBundle.message("move.to.another.changelist.nothing.selected.notification.title"),
+                                                      VcsBundle.message("move.to.another.changelist.nothing.selected.notification"),
                                                       MessageType.INFO)
         return
       }
