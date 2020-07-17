@@ -36,16 +36,10 @@ import java.util.stream.Stream;
 
 public final class ClassUtils {
 
-  /**
-   */
   private static final Set<String> immutableTypes = new HashSet<>(19);
 
-  /**
-   */
   private static final Set<PsiType> primitiveNumericTypes = new HashSet<>(7);
 
-  /**
-   */
   private static final Set<PsiType> integralTypes = new HashSet<>(5);
 
   static {
@@ -171,6 +165,12 @@ public final class ClassUtils {
       (PsiClassOwner)containingFile2;
     final String packageName2 = containingJavaFile2.getPackageName();
     return packageName1.equals(packageName2);
+  }
+
+  @Contract("_, null -> false")
+  public static boolean isInsideClassBody(@NotNull PsiElement element, @Nullable PsiClass outerClass) {
+    final PsiElement brace = outerClass != null ? outerClass.getLBrace() : null;
+    return brace != null && brace.getTextOffset() < element.getTextOffset();
   }
 
   public static boolean isFieldVisible(@NotNull PsiField field, PsiClass fromClass) {
