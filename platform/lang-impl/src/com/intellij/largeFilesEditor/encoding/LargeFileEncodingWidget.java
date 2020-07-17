@@ -111,7 +111,7 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
     myUpdateAlarm.addRequest(() -> update(), 200, ModalityState.any());
   }
 
-  private void update() {
+  protected void update() {
     if (isDisposed()) return;
 
     LargeFileEditorAccess largeFileEditorAccess = LargeFileEditorAccessor.getAccess(myStatusBar);

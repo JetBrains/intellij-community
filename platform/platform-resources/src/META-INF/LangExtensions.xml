@@ -1242,6 +1242,9 @@
     <fileEditorProvider implementation="com.intellij.largeFilesEditor.editor.LargeFileEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.largeFilesEditor.editor.LargeFileNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.largeFilesEditor.editor.LargeFileRegexSearchNotificationProvider"/>
+    <statusBarWidgetFactory id="light.edit.large.file.encoding.widget"
+                            implementation="com.intellij.largeFilesEditor.encoding.LightEditLargeFileEncodingWidgetFactory"
+                            order="after lineSeparatorWidget"/>
     <experimentalFeature id="new.large.text.file.viewer" percentOfUsers="100">
       <description>A special viewer for large files. Opens automatically for text files with size more than 20Mb (default).
       </description>
