@@ -490,7 +490,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
           // pass off firing the Action to a utility method
           BasicLookAndFeel lf=(BasicLookAndFeel)UIManager.getLookAndFeel();
           // It's a hack. The method BasicLookAndFeel.playSound has protected access, so
-          // it's imposible to mormally invoke it.
+          // it's impossible to normally invoke it.
           try {
             Method playSoundMethod=BasicLookAndFeel.class.getDeclaredMethod(PLAY_SOUND_METHOD, Action.class);
             playSoundMethod.setAccessible(true);
@@ -508,7 +508,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     if (action != null && ActionPlaces.MAIN_MENU.equals(item.getPlace()) && ApplicationManager.getApplication() != null) {
       MainMenuCollector.getInstance().record(action);
     }
-    if(!action.getTemplatePresentation().isMultipleChoice()) {
+    if (action == null || !action.getTemplatePresentation().isMultipleChoice()) {
       msm.clearSelectedPath();
     }
     item.fireActionPerformed(
@@ -520,6 +520,14 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         e.getModifiers()
       )
     );
+    if (action != null && action.getTemplatePresentation().isMultipleChoice()) {
+      Container parent = item.getParent();
+      if (parent instanceof JComponent) {
+        //Fake event to trigger update in ActionPopupMenuImpl.MyMenu
+        //noinspection HardCodedStringLiteral
+        ((JComponent)parent).putClientProperty("updateChildren", System.currentTimeMillis());
+      }
+    }
   }
 
   @Override

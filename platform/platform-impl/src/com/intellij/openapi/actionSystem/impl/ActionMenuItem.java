@@ -139,6 +139,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   private void init() {
+    AnAction action = myAction.getAction();
+    updateIcon(action);
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
     setMnemonic(myEnableMnemonics ? myPresentation.getMnemonic() : 0);
@@ -149,8 +151,6 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       setDisplayedMnemonicIndex(mnemonicIndex);
     }
 
-    AnAction action = myAction.getAction();
-    updateIcon(action);
     String id = ActionManager.getInstance().getId(action);
     if (id != null) {
       setAcceleratorFromShortcuts(getActiveKeymapShortcuts(id).getShortcuts());

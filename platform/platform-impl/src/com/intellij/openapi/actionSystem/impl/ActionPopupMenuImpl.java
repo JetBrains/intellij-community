@@ -26,6 +26,8 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author Anton Katilin
@@ -96,7 +98,16 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       myGroup = group;
       myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();
       addPopupMenuListener(new MyPopupMenuListener());
-
+      // This fake event might be sent from BegMenuItemUI
+      // to update items in case of multiple choice when there are dependencies between items like:
+      // 1. Selected A means unselected B and vise versa
+      // 2. Selected/unselected A means enabled/disabled B
+      addPropertyChangeListener("updateChildren", new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          updateChildren();
+        }
+      });
       UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup, myPlace));
     }
 
@@ -142,6 +153,12 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       if (!b) ReflectionUtil.resetField(this, "invoker");
     }
 
+    private void updateChildren() {
+      removeAll();
+      Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(), myPresentationFactory, myContext, myPlace, false,
+                     LaterInvocator.isInModalContext(), false);
+    }
+
     private class MyPopupMenuListener implements PopupMenuListener {
       @Override
       public void popupMenuCanceled(PopupMenuEvent e) {
@@ -163,9 +180,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        removeAll();
-        Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().getDisableMnemonics(), myPresentationFactory, myContext, myPlace, false,
-                       LaterInvocator.isInModalContext(), false);
+        updateChildren();
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
     }
