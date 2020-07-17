@@ -24,6 +24,7 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -256,10 +257,10 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   protected static class TargetDirectoryListItem {
     private final TargetDirectory myTargetDirectory;
     private final Icon myIcon;
-    private final String myPresentablePath;
+    private final @Nls String myPresentablePath;
 
     public TargetDirectoryListItem(@NotNull TargetDirectory targetDirectory,
-                                   Icon icon, @NotNull String presentablePath) {
+                                   Icon icon, @NotNull @Nls String presentablePath) {
       myTargetDirectory = targetDirectory;
       myIcon = icon;
       myPresentablePath = presentablePath;
@@ -269,7 +270,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
       return myIcon;
     }
 
-    private String getPresentablePath() {
+    private @Nls String getPresentablePath() {
       return myPresentablePath;
     }
 

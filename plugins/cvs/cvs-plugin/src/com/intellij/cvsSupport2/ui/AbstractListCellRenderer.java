@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.ui;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,7 +25,7 @@ import java.awt.*;
  * author: lesya
  */
 public abstract class AbstractListCellRenderer extends DefaultListCellRenderer {
-  protected abstract String getPresentableString(Object value);
+  protected abstract @Nls String getPresentableString(Object value);
   @Nullable
   protected Icon getPresentableIcon(Object value){
     return null;

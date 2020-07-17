@@ -12,8 +12,8 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,8 +33,8 @@ public abstract class AbstractFieldPanel extends JPanel {
   protected ArrayList<JButton> myButtons = new ArrayList<>(1);
   protected JLabel myLabel;
   private ActionListener myBrowseButtonActionListener;
-  private final String myViewerDialogTitle;
-  private String myLabelText;
+  private final @NlsContexts.DialogTitle String myViewerDialogTitle;
+  private @NlsContexts.Label String myLabelText;
   private TextFieldWithBrowseButton.MyDoClickAction myDoClickAction;
 
   public AbstractFieldPanel(JComponent component) {
@@ -42,7 +42,7 @@ public abstract class AbstractFieldPanel extends JPanel {
   }
 
   public AbstractFieldPanel(JComponent component,
-                            String labelText,
+                            @NlsContexts.Label String labelText,
                             @NlsContexts.DialogTitle String viewerDialogTitle,
                             ActionListener browseButtonActionListener,
                             Runnable changeListener) {
@@ -175,7 +175,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     myBrowseButtonActionListener = browseButtonActionListener;
   }
 
-  public void setLabelText(String labelText) {
+  public void setLabelText(@NlsContexts.Label String labelText) {
     myLabelText = labelText;
   }
 

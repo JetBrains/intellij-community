@@ -899,7 +899,7 @@ public final class UIUtil {
     return -1;
   }
 
-  public static String replaceMnemonicAmpersand(final String value) {
+  public static @Nls String replaceMnemonicAmpersand(@Nls String value) {
     return BundleBase.replaceMnemonicAmpersand(value);
   }
 

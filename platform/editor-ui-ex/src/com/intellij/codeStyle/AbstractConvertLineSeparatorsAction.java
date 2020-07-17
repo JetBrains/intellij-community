@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -38,11 +39,11 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction imple
   @NotNull
   private final String mySeparator;
 
-  protected AbstractConvertLineSeparatorsAction(@NotNull Supplier<String> text, @NotNull LineSeparator separator) {
+  protected AbstractConvertLineSeparatorsAction(@NotNull Supplier<@NlsActions.ActionText String> text, @NotNull LineSeparator separator) {
     this(separator + " - " + text.get(), separator.getSeparatorString());
   }
 
-  protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull String separator) {
+  protected AbstractConvertLineSeparatorsAction(@Nullable @NlsActions.ActionText String text, @NotNull String separator) {
     super(text);
     mySeparator = separator;
   }

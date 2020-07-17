@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.ConsoleExecuteAction;
@@ -124,7 +125,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return null;
   }
 
-  protected String constructConsoleTitle(final @NotNull String consoleTitle) {
+  protected @BuildEventsNls.Title String constructConsoleTitle(final @NotNull String consoleTitle) {
     return new ConsoleTitleGen(myProject, consoleTitle, shouldAddNumberToTitle()).makeTitle();
   }
 

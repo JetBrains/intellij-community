@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -128,7 +129,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     return false;
   }
 
-  private static String getProjectNodeText() {
+  private static @NlsContexts.Label String getProjectNodeText() {
     return "Project";
   }
 
@@ -158,7 +159,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  public boolean clearSubdirectoriesOnDemandOrCancel(final VirtualFile parent, final String message, final String title) {
+  public boolean clearSubdirectoriesOnDemandOrCancel(final VirtualFile parent, final @NlsContexts.DialogMessage String message, final @NlsContexts.DialogTitle String title) {
     Map<VirtualFile, T> mappings = myModel.myCurrentMapping;
     Map<VirtualFile, T> subdirectoryMappings = new THashMap<>();
     for (VirtualFile file : mappings.keySet()) {

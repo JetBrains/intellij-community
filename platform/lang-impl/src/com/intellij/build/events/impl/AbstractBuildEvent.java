@@ -11,17 +11,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AbstractBuildEvent implements BuildEvent {
 
-  @NotNull
-  private final Object myEventId;
-  @Nullable
-  private Object myParentId;
+  private final @NotNull Object myEventId;
+  private @Nullable Object myParentId;
   private final long myEventTime;
-  @NotNull
-  private final String myMessage;
-  @Nullable
-  private String myHint;
-  @Nullable
-  private String myDescription;
+  private final @NotNull @BuildEventsNls.Message String myMessage;
+  private @Nullable @BuildEventsNls.Hint String myHint;
+  private @Nullable @BuildEventsNls.Description String myDescription;
 
   public AbstractBuildEvent(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull @BuildEventsNls.Message String message) {
     myEventId = eventId;
@@ -30,15 +25,13 @@ public abstract class AbstractBuildEvent implements BuildEvent {
     myMessage = message;
   }
 
-  @NotNull
   @Override
-  public Object getId() {
+  public @NotNull Object getId() {
     return myEventId;
   }
 
-  @Nullable
   @Override
-  public Object getParentId() {
+  public @Nullable Object getParentId() {
     return myParentId;
   }
 
@@ -51,27 +44,22 @@ public abstract class AbstractBuildEvent implements BuildEvent {
     return myEventTime;
   }
 
-  @NotNull
   @Override
-  @BuildEventsNls.Message
-  public String getMessage() {
+  public @NotNull @BuildEventsNls.Message String getMessage() {
     return myMessage;
   }
 
   @Override
-  @Nullable
-  public String getHint() {
+  public @Nullable String getHint() {
     return myHint;
   }
 
-  public void setHint(@Nullable String hint) {
+  public void setHint(@Nullable @BuildEventsNls.Hint String hint) {
     myHint = hint;
   }
 
-  @Nullable
   @Override
-  @BuildEventsNls.Description
-  public String getDescription() {
+  public @Nullable @BuildEventsNls.Description String getDescription() {
     return myDescription;
   }
 

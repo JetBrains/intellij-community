@@ -221,7 +221,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
                                         boolean inStack,
                                         boolean modalContext,
                                         Component @NotNull [] focusOwners,
-                                        @Nullable String adText,
+                                        @Nullable @NlsContexts.PopupAdvertisement String adText,
                                         int adTextAlignment,
                                         boolean headerAlwaysFocusable,
                                         @NotNull List<? extends Pair<ActionListener, KeyStroke>> keyboardActions,
@@ -1847,7 +1847,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (doRevalidate) myContent.revalidate();
   }
 
-  public void setWarning(@NotNull String text) {
+  public void setWarning(@NotNull @NlsContexts.Label String text) {
     JBLabel label = new JBLabel(text, UIUtil.getBalloonWarningIcon(), SwingConstants.CENTER);
     label.setOpaque(true);
     Color color = HintUtil.getInformationColor();

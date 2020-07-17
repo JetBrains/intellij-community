@@ -106,7 +106,7 @@ public abstract class InplaceRefactoring {
 
 
   protected Balloon myBalloon;
-  protected String myTitle;
+  protected @NlsContexts.Command String myTitle;
   protected RelativePoint myTarget;
 
   public InplaceRefactoring(@NotNull Editor editor,

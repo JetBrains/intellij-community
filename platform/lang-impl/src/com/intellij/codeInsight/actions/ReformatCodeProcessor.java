@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -175,7 +176,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return CodeInsightBundle.message("reformat.progress.common.text");
   }
 
-  public static String getCommandName() {
+  public static @NlsContexts.Command String getCommandName() {
     return CodeInsightBundle.message("process.reformat.code");
   }
 }

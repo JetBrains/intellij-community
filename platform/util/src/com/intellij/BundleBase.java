@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.text.OrdinalFormat;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,14 +31,14 @@ public abstract class BundleBase {
   }
 
   @NotNull
-  public static String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return messageOrDefault(bundle, key, null, params);
   }
 
-  public static String messageOrDefault(@Nullable ResourceBundle bundle,
-                                        @NotNull String key,
-                                        @Nullable String defaultValue,
-                                        Object @NotNull ... params) {
+  public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
+                                             @NotNull String key,
+                                             @Nullable String defaultValue,
+                                             Object @NotNull ... params) {
     if (bundle == null) return defaultValue;
 
     boolean resourceFound = true;
@@ -82,7 +83,7 @@ public abstract class BundleBase {
   }
 
   @NotNull
-  static String postprocessValue(@NotNull ResourceBundle bundle, @NotNull String value, Object @NotNull ... params) {
+  static @Nls String postprocessValue(@NotNull ResourceBundle bundle, @NotNull String value, Object @NotNull ... params) {
     value = replaceMnemonicAmpersand(value);
 
     if (params.length > 0 && value.indexOf('{') >= 0) {
@@ -106,7 +107,7 @@ public abstract class BundleBase {
   }
 
   @Contract("null -> null; !null -> !null")
-  public static String replaceMnemonicAmpersand(@Nullable String value) {
+  public static @Nls String replaceMnemonicAmpersand(@Nullable @Nls String value) {
     if (value == null || value.indexOf('&') < 0) {
       return value;
     }

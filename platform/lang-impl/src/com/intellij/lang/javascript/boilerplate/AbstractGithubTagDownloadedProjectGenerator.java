@@ -42,7 +42,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   }
 
   @NotNull
-  protected abstract String getDisplayName();
+  protected abstract @Nls String getDisplayName();
 
   @NotNull
   public abstract String getGithubUserName();

@@ -61,10 +61,10 @@ public abstract class AbstractBundle {
   }
 
   @Contract("null, _, _, _ -> param3")
-  public static String messageOrDefault(@Nullable ResourceBundle bundle,
-                                        @NotNull String key,
-                                        @Nullable String defaultValue,
-                                        Object @NotNull ... params) {
+  public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
+                                             @NotNull String key,
+                                             @Nullable String defaultValue,
+                                             Object @NotNull ... params) {
     if (bundle == null) {
       return defaultValue;
     }

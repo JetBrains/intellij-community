@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractNumberConversionIntention implements IntentionAction {
   private static final String TITLE = "Convert number to...";
-  private String myText;
+  private @IntentionName String myText;
 
   @IntentionName
   @NotNull
@@ -79,7 +79,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
     return context;
   }
 
-  public String getActionName(NumberConverter converter, String convertedText) {
+  public @IntentionName String getActionName(NumberConverter converter, String convertedText) {
     return String.format("Convert number to %s (%s)", converter, convertedText);
   }
 

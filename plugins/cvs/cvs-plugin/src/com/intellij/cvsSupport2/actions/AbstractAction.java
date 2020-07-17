@@ -21,8 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ui.Refreshable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,7 +42,7 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
     myStartLvcsAction = startLvcsAction;
   }
 
-  public AbstractAction(boolean startLvcsAction, String name, Icon icon) {
+  public AbstractAction(boolean startLvcsAction, @NlsActions.ActionText String name, Icon icon) {
     super(name, null, icon);
     myStartLvcsAction = startLvcsAction;
   }
@@ -57,7 +59,7 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
     actionPerformed(CvsContextWrapper.createCachedInstance(e));
   }
 
-  protected abstract String getTitle(VcsContext context);
+  protected abstract @Nls String getTitle(VcsContext context);
 
   protected abstract CvsHandler getCvsHandler(CvsContext context);
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -35,12 +36,12 @@ public abstract class AbstractFileProcessor {
   private final Module myModule;
   private final PsiFile file;
   private final PsiFile[] files;
-  private final String message;
-  private final String title;
+  private final @NlsContexts.ProgressText String message;
+  private final @NlsContexts.ProgressTitle String title;
 
   protected abstract Runnable preprocessFile(PsiFile file, boolean allowReplacement) throws IncorrectOperationException;
 
-  protected AbstractFileProcessor(@NotNull Project project, @NotNull PsiFile file, @NotNull String title, @NotNull String message) {
+  protected AbstractFileProcessor(@NotNull Project project, @NotNull PsiFile file, @NotNull String title, @NotNull @NlsContexts.ProgressText String message) {
     myProject = project;
     myModule = null;
     this.file = file;
@@ -49,7 +50,7 @@ public abstract class AbstractFileProcessor {
     this.title = title;
   }
 
-  protected AbstractFileProcessor(@NotNull Project project, PsiFile @NotNull [] files, @NotNull String title, @NotNull String message) {
+  protected AbstractFileProcessor(@NotNull Project project, PsiFile @NotNull [] files, @NotNull String title, @NotNull @NlsContexts.ProgressText String message) {
     myProject = project;
     myModule = null;
     file = null;

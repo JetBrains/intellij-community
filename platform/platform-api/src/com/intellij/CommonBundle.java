@@ -39,7 +39,7 @@ public final class CommonBundle extends DynamicBundle {
    */
   @Deprecated
   @Contract("null, _, _, _ -> param3")
-  public static String messageOrDefault(@Nullable ResourceBundle bundle,
+  public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
                                         @NotNull String key,
                                         @Nullable String defaultValue,
                                         Object @NotNull ... params) {
@@ -50,9 +50,8 @@ public final class CommonBundle extends DynamicBundle {
    * @deprecated use {@link AbstractBundle#message(ResourceBundle, String, Object...)} instead
    */
   @Deprecated
-  @Nls
   @NotNull
-  public static String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return AbstractBundle.message(bundle, key, params);
   }
 
@@ -61,20 +60,20 @@ public final class CommonBundle extends DynamicBundle {
    */
   @Deprecated
   @Nullable
-  public static String messageOfNull(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+  public static @Nls String messageOfNull(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return AbstractBundle.messageOrNull(bundle, key, params);
   }
 
   @NotNull
-  public static String getCancelButtonText() {
+  public static @Nls String getCancelButtonText() {
     return message("button.cancel");
   }
 
-  public static String getHelpButtonText() {
+  public static @Nls String getHelpButtonText() {
     return message("button.help");
   }
 
-  public static String getErrorTitle() {
+  public static @Nls String getErrorTitle() {
     return message("title.error");
   }
 
@@ -82,64 +81,64 @@ public final class CommonBundle extends DynamicBundle {
    * @deprecated Use more informative title instead
    */
   @Deprecated
-  public static String getWarningTitle() {
+  public static @Nls String getWarningTitle() {
     return message("title.warning");
   }
 
-  public static String getLoadingTreeNodeText() {
+  public static @Nls String getLoadingTreeNodeText() {
     return message("tree.node.loading");
   }
 
-  public static String getOkButtonText() {
+  public static @Nls String getOkButtonText() {
     return message("button.ok");
   }
 
-  public static String getYesButtonText() {
+  public static @Nls String getYesButtonText() {
     return message("button.yes");
   }
 
-  public static String getNoButtonText() {
+  public static @Nls String getNoButtonText() {
     return message("button.no");
   }
 
-  public static String getContinueButtonText() {
+  public static @Nls String getContinueButtonText() {
     return message("button.continue");
   }
 
-  public static String getYesForAllButtonText() {
+  public static @Nls String getYesForAllButtonText() {
     return message("button.yes.for.all");
   }
 
-  public static String getCloseButtonText() {
+  public static @Nls String getCloseButtonText() {
     return message("button.close");
   }
 
   @Deprecated
-  public static String getNoForAllButtonText() {
+  public static @Nls String getNoForAllButtonText() {
     return message("button.no.for.all");
   }
 
-  public static String getApplyButtonText() {
+  public static @Nls String getApplyButtonText() {
     return message("button.apply");
   }
 
-  public static String getAddButtonText() {
+  public static @Nls String getAddButtonText() {
     return message("button.add.a");
   }
 
-  public static String settingsTitle() {
+  public static @Nls String settingsTitle() {
     return SystemInfo.isMac ? message("title.settings.mac") : message("title.settings");
   }
 
-  public static String settingsAction() {
+  public static @Nls String settingsAction() {
     return SystemInfo.isMac ? message("action.settings.mac") : message("action.settings");
   }
 
-  public static String settingsActionDescription() {
+  public static @Nls String settingsActionDescription() {
     return SystemInfo.isMac ? message("action.settings.description.mac") : message("action.settings.description");
   }
 
-  public static String settingsActionPath() {
+  public static @Nls String settingsActionPath() {
     return SystemInfo.isMac ? message("action.settings.path.mac") : message("action.settings.path");
   }
 }
