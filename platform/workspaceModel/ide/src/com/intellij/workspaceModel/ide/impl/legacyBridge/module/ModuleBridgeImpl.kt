@@ -12,8 +12,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -27,7 +25,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.picocontainer.MutablePicoContainer
-import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -39,7 +36,7 @@ internal class ModuleBridgeImpl(
   override var entityStorage: VersionedEntityStorage,
   override var diff: WorkspaceEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, filePath?.toString()), ModuleBridge {
-  private val directoryPath: Path? = filePath?.parent
+  internal val originalDirectoryPath: Path? = filePath?.parent
 
   init {
     // default project doesn't have modules
@@ -133,6 +130,4 @@ internal class ModuleBridgeImpl(
   }
 
   override fun getOptionsModificationCount(): Long = 0
-
-  override fun getModuleNioFile(): Path = directoryPath?.resolve("$name${ModuleFileType.DOT_DEFAULT_EXTENSION}") ?: Paths.get("")
 }

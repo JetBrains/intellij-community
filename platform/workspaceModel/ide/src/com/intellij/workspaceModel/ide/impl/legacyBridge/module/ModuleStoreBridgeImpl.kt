@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 import com.intellij.configurationStore.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 
 internal class ModuleStoreBridgeImpl(module: Module) : ModuleStoreBase() {
@@ -10,7 +11,8 @@ internal class ModuleStoreBridgeImpl(module: Module) : ModuleStoreBase() {
 
   init {
     val moduleManager = ModuleManagerComponentBridge.getInstance(module.project)
-    enabled = JpsProjectModelSynchronizer.enabled && !module.moduleFilePath.startsWith(moduleManager.outOfTreeModulesPath)
+    enabled = JpsProjectModelSynchronizer.enabled && module is ModuleBridgeImpl
+              && module.originalDirectoryPath?.systemIndependentPath != moduleManager.outOfTreeModulesPath
   }
 
   private val pathMacroManager = PathMacroManager.getInstance(module)

@@ -35,6 +35,7 @@ import com.intellij.workspaceModel.ide.impl.bracket
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.RootsChangeWatcher
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
@@ -115,7 +116,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       })
 
       val rootsChangeListener = ProjectRootsChangeListener(project)
-      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object: WorkspaceModelChangeListener {
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChanged) = LOG.bracket("ModuleManagerComponent.BeforeEntityStoreChange") {
           for (change in event.getChanges(FacetEntity::class.java)) {
             FacetEntityChangeListener.getInstance(project).processBeforeChange(change)
@@ -129,7 +130,11 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               }
             }
           }
-          rootsChangeListener.beforeChanged(event)
+
+          if (!RootsChangeWatcher.getInstance(project).rootFilePointers.isInsideFilePointersUpdate) {
+            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
+            rootsChangeListener.beforeChanged(event)
+          }
         }
 
         override fun changed(event: VersionedStorageChanged) = LOG.bracket("ModuleManagerComponent.EntityStoreChange") {
@@ -179,7 +184,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           }
 
           // Roots changed should be sent after syncing with legacy bridge
-          rootsChangeListener.changed(event)
+          if (!RootsChangeWatcher.getInstance(project).rootFilePointers.isInsideFilePointersUpdate) {
+            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
+            rootsChangeListener.changed(event)
+          }
         }
       })
       LibraryTablesRegistrar.getInstance().getLibraryTable(project)

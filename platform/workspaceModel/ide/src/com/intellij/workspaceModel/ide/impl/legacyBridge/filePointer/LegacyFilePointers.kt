@@ -17,6 +17,9 @@ import kotlin.reflect.KClass
  */
 class LegacyModelRootsFilePointers(val project: Project) {
   private val virtualFileManager = VirtualFileUrlManager.getInstance(project)
+  internal var isInsideFilePointersUpdate = false
+    private set
+
   private val pointers = listOf(
     // Library roots
     TypedEntityFileWatcher(
@@ -78,10 +81,14 @@ class LegacyModelRootsFilePointers(val project: Project) {
   )
 
   fun onVfsChange(oldUrl: String, newUrl: String) {
-    // Here the workspace model updates its state without notification to the message bus
-    //   because in the original implementation moving of roots doesn't fire any events.
-    WorkspaceModel.getInstance(project).updateProjectModelSilent { diff ->
-      pointers.forEach { it.onVfsChange(oldUrl, newUrl, diff) }
+    try {
+      isInsideFilePointersUpdate = true
+      WorkspaceModel.getInstance(project).updateProjectModel { diff ->
+        pointers.forEach { it.onVfsChange(oldUrl, newUrl, diff) }
+      }
+    }
+    finally {
+      isInsideFilePointersUpdate = false
     }
   }
 
