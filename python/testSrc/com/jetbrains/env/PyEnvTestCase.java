@@ -57,12 +57,6 @@ public abstract class PyEnvTestCase {
   @Rule
   public LoggingRule myLoggingRule = new LoggingRule();
 
-
-  /**
-   * Logger to be used with {@link #startMessagesCapture()}
-   */
-  private PyTestMessagesLogger myLogger;
-
   /**
    * Tags that should exist between all tags, available on all interpreters for test to run.
    * See {@link #PyEnvTestCase(String...)}
@@ -153,7 +147,7 @@ public abstract class PyEnvTestCase {
   @NotNull
   private static Collection<String> getAvailableTags() {
     final Collection<String> allAvailableTags = new HashSet<>();
-    for(List<String> tags : envTags.values()) {
+    for (List<String> tags : envTags.values()) {
       allAvailableTags.addAll(tags);
     }
     return allAvailableTags;
@@ -310,35 +304,6 @@ public abstract class PyEnvTestCase {
     return envTags;
   }
 
-  /**
-   * Capture all messages and error logs and store them to be obtained with {@link #getCapturesMessages()}
-   * and stopped with {@link #stopMessageCapture()}
-   */
-  protected final void startMessagesCapture() {
-    myLogger = new PyTestMessagesLogger();
-    LoggedErrorProcessor.setNewInstance(myLogger);
-    Messages.setTestDialog(myLogger);
-  }
-
-  /**
-   * @return captures messages (first start with {@link #startMessagesCapture()}).
-   * Logged exceptions -- list of messages to be displayed (never null)
-   */
-  @NotNull
-  protected final Pair<List<Throwable>, List<String>> getCapturesMessages() {
-    assert myLogger != null : "Capturing not enabled";
-    return Pair.create(Collections.unmodifiableList(myLogger.myExceptions), Collections.unmodifiableList(myLogger.myMessages));
-  }
-
-  /**
-   * Stop message capturing started with {@link #startMessagesCapture()}
-   */
-  protected final void stopMessageCapture() {
-    LoggedErrorProcessor.restoreDefaultProcessor();
-    Messages.setTestDialog(TestDialog.DEFAULT);
-    myLogger = null;
-  }
-
   private final Disposable myDisposable = Disposer.newDisposable();
 
   public Disposable getTestRootDisposable() {
@@ -350,41 +315,7 @@ public abstract class PyEnvTestCase {
    */
   @After
   public void after() {
-    // We can stop message capturing even if it was not started as cleanup process.
-    stopMessageCapture();
     Disposer.dispose(myDisposable);
-  }
-
-  /**
-   * Logger to be used with {@link #startMessagesCapture()}
-   */
-  private static final class PyTestMessagesLogger extends LoggedErrorProcessor implements TestDialog {
-
-    private final List<String> myMessages = new ArrayList<>();
-    private final List<Throwable> myExceptions = new ArrayList<>();
-
-    @Override
-    public int show(@NotNull final String message) {
-      myMessages.add(message);
-      return 0;
-    }
-
-    @Override
-    public void processWarn(final String message, final Throwable t, @NotNull final org.apache.log4j.Logger logger) {
-      if (t != null) {
-        myExceptions.add(t);
-      }
-    }
-
-    @Override
-    public void processError(final String message,
-                             final Throwable t,
-                             final String[] details,
-                             @NotNull final org.apache.log4j.Logger logger) {
-      if (t != null) {
-        myExceptions.add(t);
-      }
-    }
   }
 }
 

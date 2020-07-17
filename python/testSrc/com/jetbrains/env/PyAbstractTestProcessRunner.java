@@ -203,35 +203,6 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
   }
 
   /**
-   * Rerun current tests. Make sure there is at least one failed test.
-   * <strong>Run in AWT thread only!</strong>
-   */
-  public void rerunFailedTests() {
-    assert getFailedTestsCount() > 0 : "No failed tests. What you want to rerun?";
-    assert myLastProcessDescriptor != null : "No last run descriptor. First run tests at least one time";
-    final List<ProgramRunner<?>> run = getAvailableRunnersForLastRun();
-    Assert.assertFalse("No runners to rerun", run.isEmpty());
-    final ProgramRunner<?> runner = run.get(0);
-
-    ExecutionEnvironment restartAction = RerunFailedActionsTestTools.findRestartAction(myLastProcessDescriptor);
-    Assert.assertNotNull("No restart action", restartAction);
-
-    final Ref<ProcessHandler> handlerRef = new Ref<>();
-    try {
-      restartAction.setCallback(descriptor -> handlerRef.set(descriptor.getProcessHandler()));
-      runner.execute(restartAction);
-    }
-    catch (final ExecutionException e) {
-      throw new AssertionError("ExecutionException can't be thrown in tests. Probably, API changed. Got: " + e);
-    }
-    final ProcessHandler handler = handlerRef.get();
-    if (handler == null) {
-      return;
-    }
-    handler.waitFor();
-  }
-
-  /**
    * Ensures all test locations are resolved (i.e. user may click on test and navigate to it)
    * All tests are checked but [root] (it never resolves).
    */
