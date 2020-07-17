@@ -110,7 +110,8 @@ public final class CommonJavaFragments {
                                        setter.accept(s, false);
                                      }
                                    },
-                                   s -> s.getDefaultModule() != s.getConfigurationModule().getModule());
+                                   s -> s.getDefaultModule() != s.getConfigurationModule().getModule() &&
+                                        s.getConfigurationModule().getModule() != null);
     fragment.setHint(ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.hint"));
     return fragment;
   }
