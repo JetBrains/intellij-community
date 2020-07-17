@@ -21,6 +21,7 @@ class UnwrapSuggester : FeatureSuggester {
         when (lastAction) {
             is BeforeEditorBackspaceAction -> {
                 with(lastAction) {
+                    val psiFile = psiFileRef.get() ?: return NoSuggestion
                     if (selection != null) {
                         if (!selection.text.matches(firstSelectionRegex)) return NoSuggestion
                         val countStartDelimiters = selection.text.indexOfFirst { it != ' ' && it != '\n' }

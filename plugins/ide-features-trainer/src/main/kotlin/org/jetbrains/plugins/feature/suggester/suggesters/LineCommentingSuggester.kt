@@ -1,78 +1,122 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiErrorElement
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.changes.EditorTextInsertedAction
+import org.jetbrains.plugins.feature.suggester.changes.UserAnAction
+import org.jetbrains.plugins.feature.suggester.history.ChangesHistory
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
-import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildRemovedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
-import org.jetbrains.plugins.feature.suggester.changes.UserAction
+import java.lang.ref.WeakReference
+import kotlin.math.abs
 
 class LineCommentingSuggester : FeatureSuggester {
 
     companion object {
         const val POPUP_MESSAGE = "Try the Comment Line feature to do it faster (Ctrl + /)"
-        const val UNCOMMENTING_POPUP_MESSAGE = "Why not use the Uncomment Line feature? (Ctrl + /)"
         const val DESCRIPTOR_ID = "codeassists.comment.line"
+        const val NUMBER_OF_COMMENTS_TO_GET_SUGGESTION = 3
+        const val MAX_TIME_MILLIS_INTERVAL_BETWEEN_COMMENTS = 5000
     }
 
-    private var uncommentingActionStart: UserAction? = null
+    private data class DocumentLine(val startOffset: Int, val endOffset: Int, val text: String)
+    private data class CommentData(val lineNumber: Int, val documentRef: WeakReference<Document>, val timeMillis: Long)
+
+    private val commentsHistory = ChangesHistory<CommentData>(NUMBER_OF_COMMENTS_TO_GET_SUGGESTION)
+    private lateinit var alreadyHandledAction: UserAnAction
+    private var firstSlashAddedAction: EditorTextInsertedAction? = null
 
     override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
         val name = CommandProcessor.getInstance().currentCommandName
         if (name != null) {
             return NoSuggestion
         }
+        val curAction = anActions.lastOrNull() ?: return NoSuggestion
+        if (this::alreadyHandledAction.isInitialized && curAction === alreadyHandledAction) return NoSuggestion
+        if (curAction is EditorTextInsertedAction) {
+            val psiFile = curAction.psiFileRef.get() ?: return NoSuggestion
+            if (psiFile.language != JavaLanguage.INSTANCE) return NoSuggestion
+            if (isFirstSlashAdded(curAction)) {
+                firstSlashAddedAction = curAction
+            } else if (firstSlashAddedAction != null
+                && isSecondSlashAdded(curAction, firstSlashAddedAction!!)
+            ) {
+                val document = curAction.documentRef.get() ?: return NoSuggestion
+                val commentData = CommentData(
+                    lineNumber = document.getLineNumber(curAction.offset),
+                    documentRef = curAction.documentRef,
+                    timeMillis = curAction.timeMillis
+                )
+                commentsHistory.add(commentData)
+                firstSlashAddedAction = null
+                println("Added CommentData: $commentData")
 
-        when (val lastAction = actions.lastOrNull()) {
-            is ChildAddedAction -> {
-                val child = lastAction.newChild
-                if (child != null && child.isOneLineComment()
-                    && isCommentAddedToLineStart(child.containingFile, child.textRange.startOffset)
+                if (commentsHistory.size == NUMBER_OF_COMMENTS_TO_GET_SUGGESTION
+                    && commentsHistory.isLinesCommentedInARow()
                 ) {
+                    commentsHistory.clear()
                     return createSuggestion(DESCRIPTOR_ID, POPUP_MESSAGE)
                 }
             }
-            is ChildReplacedAction -> {
-                val newChild = lastAction.newChild ?: return NoSuggestion
-                val oldChild = lastAction.oldChild ?: return NoSuggestion
-
-                if (newChild.isOneLineComment()
-                    && oldChild !is PsiComment
-                    && isCommentAddedToLineStart(newChild.containingFile, newChild.textRange.startOffset)
-                ) {
-                    return createSuggestion(DESCRIPTOR_ID, POPUP_MESSAGE)
-                } else if (oldChild.isOneLineComment()
-                    && newChild !is PsiComment
-                    && isCommentAddedToLineStart(newChild.containingFile, newChild.textRange.startOffset)
-                ) {
-                    val suggestion = createSuggestion(DESCRIPTOR_ID, UNCOMMENTING_POPUP_MESSAGE)
-                    if (suggestion is PopupSuggestion) {
-                        uncommentingActionStart = lastAction
-                    }
-                    return suggestion
-                }
-            }
-            is ChildRemovedAction -> {
-                val child = lastAction.child
-                if (child is PsiErrorElement
-                    && child.text == "/"
-                    && uncommentingActionStart != null
-                    && actions.contains(uncommentingActionStart!!)
-                ) {
-                    uncommentingActionStart = null
-                    return createSuggestion(DESCRIPTOR_ID, UNCOMMENTING_POPUP_MESSAGE)
-                }
-            }
-            else -> return NoSuggestion
         }
+
+        alreadyHandledAction = curAction
         return NoSuggestion
+    }
+
+    private fun isFirstSlashAdded(action: EditorTextInsertedAction): Boolean {
+        with(action) {
+            val psiFile = psiFileRef.get() ?: return false
+            val document = documentRef.get() ?: return false
+            if (text != "/") return false
+            val psiElement = psiFile.findElementAt(offset) ?: return false
+            if (psiElement is PsiComment || psiElement.nextSibling is PsiComment) return false
+            val line = document.getLineByOffset(offset)
+            val lineBeforeSlash = line.text.substring(0, offset - line.startOffset)
+            return lineBeforeSlash.isBlank() && line.text.trim() != "/"
+        }
+    }
+
+    private fun isSecondSlashAdded(curAction: EditorTextInsertedAction, prevAction: EditorTextInsertedAction): Boolean {
+        val curPsiFile = curAction.psiFileRef.get() ?: return false
+        val curDocument = curAction.documentRef.get() ?: return false
+        val prevPsiFile = prevAction.psiFileRef.get() ?: return false
+        val prevDocument = curAction.documentRef.get() ?: return false
+        if (curPsiFile !== prevPsiFile || curDocument !== prevDocument) return false
+        return curAction.text == "/"
+                && abs(curAction.offset - prevAction.offset) == 1
+                && curDocument.getLineNumber(curAction.offset) == prevDocument.getLineNumber(prevAction.offset)
+    }
+
+    private fun ChangesHistory<CommentData>.isLinesCommentedInARow(): Boolean {
+        val comments = asIterable()
+        return !(comments.map(CommentData::lineNumber)
+            .sorted()
+            .zipWithNext { first, second -> second - first }
+            .any { it != 1 }
+                || comments.map { it.documentRef.get() }
+            .zipWithNext { first, second -> first != null && first === second }
+            .any { !it }
+                || comments.map(CommentData::timeMillis)
+            .zipWithNext { first, second -> second - first }
+            .any { it > MAX_TIME_MILLIS_INTERVAL_BETWEEN_COMMENTS })
+    }
+
+    private fun Document.getLineByOffset(offset: Int): DocumentLine {
+        val lineNumber = getLineNumber(offset)
+        val startOffset = getLineStartOffset(lineNumber)
+        val endOffset = getLineEndOffset(lineNumber)
+        return DocumentLine(
+            startOffset = startOffset,
+            endOffset = endOffset,
+            text = getText(TextRange(startOffset, endOffset))
+        )
     }
 
     override fun getId(): String = "Commenting suggester"

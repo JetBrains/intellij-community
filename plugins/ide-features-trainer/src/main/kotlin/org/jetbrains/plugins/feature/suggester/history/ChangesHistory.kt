@@ -35,6 +35,10 @@ open class ChangesHistory<EventType>(val maxHistorySize: Int) {
         return history.asIterable()
     }
 
+    fun clear() {
+        history.clear()
+    }
+
     private fun checkOverflow() {
         if (history.size > maxHistorySize) {
             history.removeAt(0)

@@ -12,15 +12,20 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actions.BackspaceAction
 import com.intellij.openapi.editor.actions.CopyAction
 import com.intellij.openapi.editor.actions.PasteAction
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener
+import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
@@ -31,13 +36,14 @@ import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
 import org.jetbrains.plugins.feature.suggester.suggesters.asString
 import java.awt.Point
+import java.lang.ref.WeakReference
 
 class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener {
     private val MAX_ACTIONS_NUMBER: Int = 100
     private val actionsHistory = UserActionsHistory(MAX_ACTIONS_NUMBER)
     private val anActionsHistory = UserAnActionsHistory(MAX_ACTIONS_NUMBER)
 
-    private var psiListenersIsSet: Boolean = false
+    private var listenersIsSet: Boolean = false
 
     fun actionPerformed(action: UserAction) {
         actionsHistory.add(action)
@@ -90,7 +96,7 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
         source: FileEditorManager,
         file: VirtualFile
     ) {
-        if (project != source.project || psiListenersIsSet)
+        if (project != source.project || listenersIsSet)
             return
 
         PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
@@ -141,7 +147,7 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
             override fun childMoved(event: PsiTreeChangeEvent) {
                 actionPerformed(ChildMovedAction(event.parent, event.child, event.oldParent))
             }
-        })
+        }, project)
 
         ApplicationManager.getApplication().messageBus.connect()
             .subscribe(AnActionListener.TOPIC, object : AnActionListener {
@@ -165,7 +171,7 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
                                 EditorBackspaceAction(
                                     editor.getSelection(),
                                     editor.getCaretOffset(),
-                                    psiFile,
+                                    WeakReference(psiFile),
                                     System.currentTimeMillis()
                                 )
                             )
@@ -197,7 +203,7 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
                                 BeforeEditorBackspaceAction(
                                     editor.getSelection(),
                                     editor.getCaretOffset(),
-                                    psiFile,
+                                    WeakReference(psiFile),
                                     System.currentTimeMillis()
                                 )
                             )
@@ -224,7 +230,63 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
                 }
             })
 
-        psiListenersIsSet = true
+        EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : BulkAwareDocumentListener {
+            val psiDocumentManager = PsiDocumentManager.getInstance(project)
+
+            override fun beforeDocumentChangeNonBulk(event: DocumentEvent) {
+                val document = event.source as? Document ?: return
+                val psiFile = psiDocumentManager.getPsiFile(document) ?: return
+                if (event.newFragment != "" && event.oldFragment == "") {
+                    anActionPerformed(
+                        BeforeEditorTextInsertedAction(
+                            text = event.newFragment.toString(),
+                            offset = event.offset,
+                            psiFileRef = WeakReference(psiFile),
+                            documentRef = WeakReference(document),
+                            timeMillis = System.currentTimeMillis()
+                        )
+                    )
+                } else if (event.oldFragment != "" && event.newFragment == "") {
+                    anActionPerformed(
+                        BeforeEditorTextRemovedAction(
+                            text = event.oldFragment.toString(),
+                            offset = event.offset,
+                            psiFileRef = WeakReference(psiFile),
+                            documentRef = WeakReference(document),
+                            timeMillis = System.currentTimeMillis()
+                        )
+                    )
+                }
+            }
+
+            override fun documentChangedNonBulk(event: DocumentEvent) {
+                val document = event.source as? Document ?: return
+                val psiFile = psiDocumentManager.getPsiFile(document) ?: return
+                if (event.newFragment != "" && event.oldFragment == "") {
+                    anActionPerformed(
+                        EditorTextInsertedAction(
+                            text = event.newFragment.toString(),
+                            offset = event.offset,
+                            psiFileRef = WeakReference(psiFile),
+                            documentRef = WeakReference(document),
+                            timeMillis = System.currentTimeMillis()
+                        )
+                    )
+                } else if (event.oldFragment != "" && event.newFragment == "") {
+                    anActionPerformed(
+                        EditorTextRemovedAction(
+                            text = event.oldFragment.toString(),
+                            offset = event.offset,
+                            psiFileRef = WeakReference(psiFile),
+                            documentRef = WeakReference(document),
+                            timeMillis = System.currentTimeMillis()
+                        )
+                    )
+                }
+            }
+        }, project)
+
+        listenersIsSet = true
     }
 
     private fun FeatureSuggester.isEnabled(): Boolean {
