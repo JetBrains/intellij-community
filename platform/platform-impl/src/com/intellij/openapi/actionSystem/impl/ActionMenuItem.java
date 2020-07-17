@@ -203,7 +203,6 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       myToggled = Toggleable.isSelected(myEvent.getPresentation());
       if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
         setState(myToggled);
-        setIcon(wrapNullIcon(getIcon()));
       }
       else {
         if (myToggled) {
@@ -232,18 +231,11 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         if (selected == null)
           selected = icon;
 
-        setIcon(wrapNullIcon(myPresentation.isEnabled() ? icon : disabled));
-        setSelectedIcon(wrapNullIcon(selected != null ? selected : icon));
-        setDisabledIcon(wrapNullIcon(disabled));
+        setIcon(myPresentation.isEnabled() ? icon : disabled);
+        setSelectedIcon(selected != null ? selected : icon);
+        setDisabledIcon(disabled);
       }
     }
-  }
-
-  private Icon wrapNullIcon(Icon icon) {
-    if (icon == null && SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
-      return EmptyIcon.ICON_16;
-    }
-    return icon;
   }
 
   @Override

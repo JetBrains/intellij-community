@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -180,33 +179,6 @@ public final class Utils {
         }
       });
     }
-    if (SystemInfo.isMacSystemMenu) {
-      Icon icon = hasIcons(children) ? EmptyIcon.ICON_16 : null;
-      children.forEach(child -> replaceIconIn(child, icon));
-    }
-  }
-
-  private static void replaceIconIn(Component menuItem, Icon icon) {
-    Icon from = icon == null ? EmptyIcon.ICON_16 : null;
-
-    if (menuItem instanceof ActionMenuItem && ((ActionMenuItem)menuItem).getIcon() == from) {
-        ((ActionMenuItem)menuItem).setIcon(icon);
-    } else if (menuItem instanceof ActionMenu && ((ActionMenu)menuItem).getIcon() == from) {
-        ((ActionMenu)menuItem).setIcon(icon);
-    }
-  }
-
-  private static boolean hasIcons(List<Component> components) {
-    boolean hasIcon = false;
-    for (Component comp : components) {
-      if (comp instanceof ActionMenuItem) {
-        Icon icon = ((ActionMenuItem)comp).getIcon();
-        if (icon != null && icon != EmptyIcon.ICON_16) {
-          hasIcon = true;
-        }
-      }
-    }
-    return hasIcon;
   }
 
   public interface ActionGroupVisitor {
