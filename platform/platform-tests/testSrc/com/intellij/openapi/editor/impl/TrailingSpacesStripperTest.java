@@ -196,6 +196,36 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     );
   }
 
+  public void testTrimEmptyLinesAtEOFNoNewLine() {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setTrimBlankLinesAtEOF(true);
+    settings.setEnsureNewLineAtEOF(false);
+    configureFromFileText(
+      "x.txt",
+      "xxx\nyyy\n\n\n\n\n\n\n<caret>\n"
+    );
+    type(' ');
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText(
+      "xxx\nyyy<caret>"
+    );
+  }
+
+  public void testTrimEmptyLinesAtEOFNewLine() {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setTrimBlankLinesAtEOF(true);
+    settings.setEnsureNewLineAtEOF(true);
+    configureFromFileText(
+      "x.txt",
+      "xxx\nyyy\n\n\n\n\n\n\n<caret>\n"
+    );
+    type(' ');
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText(
+      "xxx\nyyy<caret>\n"
+    );
+  }
+
   @NotNull
   private Editor createHeavyEditor(@NotNull String name, @NotNull String text) {
     VirtualFile myVFile = WriteAction.compute(() -> {

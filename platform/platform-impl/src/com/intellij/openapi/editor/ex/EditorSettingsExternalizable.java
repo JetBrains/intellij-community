@@ -46,6 +46,7 @@ public final class EditorSettingsExternalizable implements PersistentStateCompon
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
+    public boolean TRIM_BLANK_LINES_AT_EOF = false;
     public boolean SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = true;
     public boolean SHOW_INSPECTION_WIDGET = true;
     public int TOOLTIPS_DELAY_MS = TOOLTIPS_DELAY_RANGE.initial;
@@ -461,6 +462,14 @@ public final class EditorSettingsExternalizable implements PersistentStateCompon
 
   public void setEnsureNewLineAtEOF(boolean ensure) {
     myOptions.IS_ENSURE_NEWLINE_AT_EOF = ensure;
+  }
+
+  public boolean isTrimBlankLinesAtEOF() {
+    return myOptions.TRIM_BLANK_LINES_AT_EOF;
+  }
+
+  public void setTrimBlankLinesAtEOF(boolean trim) {
+    myOptions.TRIM_BLANK_LINES_AT_EOF = trim;
   }
 
   @StripTrailingSpaces
