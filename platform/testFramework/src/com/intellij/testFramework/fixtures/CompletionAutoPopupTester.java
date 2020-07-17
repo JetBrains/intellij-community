@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDocumentManager;
@@ -38,7 +39,10 @@ public class CompletionAutoPopupTester {
     }
     finally {
       TestModeFlags.reset(CompletionAutoPopupHandler.ourTestingAutopopup);
-      ((DocumentEx)myFixture.getEditor().getDocument()).setModificationStamp(0);// to force possible autopopup handler's invokeLater cancel itself
+      Editor editor = myFixture.getEditor();
+      if (editor != null) {
+        ((DocumentEx)editor.getDocument()).setModificationStamp(0);// to force possible autopopup handler's invokeLater cancel itself
+      }
     }
   }
 
