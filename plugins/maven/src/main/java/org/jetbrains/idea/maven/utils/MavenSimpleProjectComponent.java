@@ -31,4 +31,8 @@ public abstract class MavenSimpleProjectComponent {
   protected boolean isDefault() {
     return myProject.isDefault();
   }
+
+  public Project getProject() {
+    return myProject;
+  }
 }

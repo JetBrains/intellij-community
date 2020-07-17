@@ -236,8 +236,16 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     private PsiFile resolveInProjects(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
-      MavenProject project = projectsManager.findProject(id);
+      MavenProject project = resolveMavenProject(id, projectsManager);
       return project == null ? null : psiManager.findFile(project.getFile());
+    }
+
+    private MavenProject resolveMavenProject(MavenId id, MavenProjectsManager projectsManager) {
+      if (MavenArtifactCoordinatesVersionConverter.isComsumerPomResolutionApplicable(projectsManager.getProject())) {
+        return projectsManager.findSingleProjectInReactor(id);
+      }  else {
+        return projectsManager.findProject(id);
+      }
     }
 
     private PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {

@@ -658,6 +658,13 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree.findProject(f);
   }
 
+
+  public MavenProject findSingleProjectInReactor(@NotNull MavenId id) {
+    if (!isInitialized()) return null;
+    return myProjectsTree.findSingleProjectInReactor(id);
+  }
+
+
   @Nullable
   public MavenProject findProject(@NotNull MavenId id) {
     if (!isInitialized()) return null;

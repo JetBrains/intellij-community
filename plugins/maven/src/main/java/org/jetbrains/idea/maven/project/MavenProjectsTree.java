@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ArrayListSet;
@@ -36,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 
@@ -1054,6 +1056,20 @@ public class MavenProjectsTree {
   @Nullable
   public MavenProject findProject(MavenArtifact artifact) {
     return findProject(artifact.getMavenId());
+  }
+
+  public MavenProject findSingleProjectInReactor(MavenId id) {
+    readLock();
+    try {
+      List<MavenProject> list = myMavenIdToProjectMapping.values().stream().filter(
+        it -> StringUtil.equals(it.getMavenId().getArtifactId(), id.getArtifactId()) &&
+              StringUtil.equals(it.getMavenId().getGroupId(), id.getGroupId())
+      ).collect(Collectors.toList());
+      return list.size() == 1 ? list.get(0) : null;
+    }
+    finally {
+      readUnlock();
+    }
   }
 
   MavenWorkspaceMap getWorkspaceMap() {
