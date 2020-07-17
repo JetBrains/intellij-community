@@ -76,7 +76,7 @@ internal class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBrid
 
   override fun dispose() {
     for (library in libraryIterator) {
-      Disposer.dispose(library)
+      if (!Disposer.isDisposed(library)) Disposer.dispose(library)
     }
   }
 
