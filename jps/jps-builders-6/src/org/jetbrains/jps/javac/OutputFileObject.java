@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
+import javax.tools.JavaFileManager;
 import java.io.*;
 import java.net.URI;
 
@@ -54,7 +54,7 @@ public final class OutputFileObject extends JpsFileObject {
     myRelativePath = relativePath;
     myFile = file;
     myClassName = className != null? className.replace('/', '.') : null;
-    mySourceFile = srcUri != null ? new File(srcUri) : null;
+    mySourceFile = srcUri != null && "file".equalsIgnoreCase(srcUri.getScheme())? new File(srcUri) : null;
     myEncodingName = encodingName;
   }
 
