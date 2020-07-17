@@ -19,6 +19,7 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
@@ -79,22 +80,26 @@ class ModuleStoreTest {
   }
 
   @Test
-  fun `must be empty if classpath storage`() = runBlocking<Unit> {
-    // we must not use VFS here, file must not be created
-    val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
-    projectRule.createModule(moduleFile).useAndDispose {
-      ModuleRootModificationUtil.addContentRoot(this, moduleFile.parent.systemIndependentPath)
-      project.stateStore.save()
-      assertThat(moduleFile).isRegularFile
-      assertThat(moduleFile.readText()).startsWith("""
-      <?xml version="1.0" encoding="UTF-8"?>
-      <module type="JAVA_MODULE" version="4">""".trimIndent())
+  fun `must be empty if classpath storage`() {
+    //todo saving in eclipse format isn't supported in workspace model (WM-T-46)
+    ProjectModelRule.ignoreTestUnderWorkspaceModel()
+    runBlocking<Unit> {
+      // we must not use VFS here, file must not be created
+      val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
+      projectRule.createModule(moduleFile).useAndDispose {
+        ModuleRootModificationUtil.addContentRoot(this, moduleFile.parent.systemIndependentPath)
+        project.stateStore.save()
+        assertThat(moduleFile).isRegularFile
+        assertThat(moduleFile.readText()).startsWith("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <module type="JAVA_MODULE" version="4">""".trimIndent())
 
-      ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
-      project.stateStore.save()
-      assertThat(moduleFile).isEqualTo("""
-      <?xml version="1.0" encoding="UTF-8"?>
-      <module classpath="eclipse" classpath-dir="$ESCAPED_MODULE_DIR" type="JAVA_MODULE" version="4" />""")
+        ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
+        project.stateStore.save()
+        assertThat(moduleFile).isEqualTo("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <module classpath="eclipse" classpath-dir="$ESCAPED_MODULE_DIR" type="JAVA_MODULE" version="4" />""")
+      }
     }
   }
 
