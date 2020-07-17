@@ -5,18 +5,19 @@ import com.intellij.debugger.streams.lib.LibrarySupportProvider;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Helps {@link TraceStreamAction} understand if there is a suitable chain under the debugger position or not.
@@ -25,6 +26,8 @@ class ChainResolver {
   private static final Logger LOG = Logger.getInstance(ChainResolver.class);
 
   private ChainsSearchResult mySearchResult = new ChainsSearchResult(0, -1, null);
+  private final ExecutorService myExecutor =
+    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Stream debugger chains detector");
 
   @NotNull ChainStatus tryFindChain(@NotNull PsiElement elementAtDebugger) {
     if (mySearchResult.isSuitableFor(elementAtDebugger)) {
@@ -32,28 +35,27 @@ class ChainResolver {
     }
 
     mySearchResult = ChainsSearchResult.of(elementAtDebugger);
-    checkChainsExistenceInBackground(elementAtDebugger, mySearchResult);
+    checkChainsExistenceInBackground(elementAtDebugger, mySearchResult, myExecutor);
     return mySearchResult.chainsStatus;
   }
 
   private static void checkChainsExistenceInBackground(@NotNull PsiElement elementAtDebugger,
-                                                       @NotNull ChainsSearchResult searchResult) {
+                                                       @NotNull ChainsSearchResult searchResult,
+                                                       @NotNull ExecutorService executor) {
     List<LibrarySupportProvider> extensions = forLanguage(elementAtDebugger.getLanguage());
     if (extensions.isEmpty()) {
       searchResult.markUnsupportedLanguage();
     }
     else {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        DumbService.getInstance(elementAtDebugger.getProject()).runReadActionInSmartMode(() -> {
-          LibrarySupportProvider provider = ExtensionProcessingHelper
-            .findFirstSafe(p -> p.getChainBuilder().isChainExists(elementAtDebugger), extensions);
-          boolean found = provider != null;
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Chains found:" + found);
-          }
-          searchResult.updateStatus(found);
-        });
-      });
+      ReadAction.nonBlocking(() -> {
+        LibrarySupportProvider provider = ExtensionProcessingHelper
+          .findFirstSafe(p -> p.getChainBuilder().isChainExists(elementAtDebugger), extensions);
+        boolean found = provider != null;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Chains found:" + found);
+        }
+        searchResult.updateStatus(found);
+      }).inSmartMode(elementAtDebugger.getProject()).submit(executor);
     }
   }
 

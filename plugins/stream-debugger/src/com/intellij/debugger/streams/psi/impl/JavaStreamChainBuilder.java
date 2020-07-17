@@ -18,8 +18,6 @@ import java.util.*;
  * @author Vitaliy.Bibaev
  */
 public class JavaStreamChainBuilder implements StreamChainBuilder {
-  private final MyStreamChainExistenceChecker myExistenceChecker = new MyStreamChainExistenceChecker();
-
   private final ChainTransformer.Java myChainTransformer;
   private final ChainDetector myDetector;
 
@@ -31,10 +29,10 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
   @Override
   public boolean isChainExists(@NotNull PsiElement startElement) {
     PsiElement current = getLatestElementInCurrentScope(PsiUtil.ignoreWhiteSpaces(startElement));
+    MyStreamChainExistenceChecker existenceChecker = new MyStreamChainExistenceChecker();
     while (current != null) {
-      myExistenceChecker.reset();
-      current.accept(myExistenceChecker);
-      if (myExistenceChecker.found()) {
+      current.accept(existenceChecker);
+      if (existenceChecker.found()) {
         return true;
       }
       current = toUpperLevel(current);
@@ -100,10 +98,6 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
       if (!myFound && myDetector.isTerminationCall(expression)) {
         myFound = true;
       }
-    }
-
-    void reset() {
-      myFound = false;
     }
 
     boolean found() {
