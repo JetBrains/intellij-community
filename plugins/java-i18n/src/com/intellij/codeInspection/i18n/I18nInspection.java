@@ -4,6 +4,7 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -35,8 +36,10 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -63,6 +66,9 @@ import java.util.regex.Pattern;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public class I18nInspection extends AbstractBaseUastLocalInspectionTool implements CustomSuppressableInspectionTool {
+  private static final Set<String> IGNORED = ContainerUtil.immutableSet("<html>", "</html>", "<b>", "</b>");
+  private static final CallMatcher IGNORED_METHODS = CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "substring", "trim");
+  
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
   @NonNls
@@ -72,6 +78,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   public boolean ignoreForPropertyKeyReferences = true;
   public boolean ignoreForNonAlpha = true;
   private boolean ignoreForAllButNls = false;
+  public boolean reportUnannotatedReferences = false;
   public boolean ignoreAssignedToConstants;
   public boolean ignoreToString;
   @NonNls public String nonNlsCommentPattern = "NON-NLS";
@@ -250,6 +257,13 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         ignoreForAllButNls = ignoreAllButNls.isSelected();
       }
     });
+    final JCheckBox reportRefs = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.report.unannotated.refs"), reportUnannotatedReferences);
+    reportRefs.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(@NotNull ChangeEvent e) {
+        reportUnannotatedReferences = reportRefs.isSelected();
+      }
+    });
 
     final GridBagConstraints gc = new GridBagConstraints();
     gc.fill = GridBagConstraints.HORIZONTAL;
@@ -260,6 +274,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     gc.weightx = 1;
     gc.weighty = 0;
     panel.add(ignoreAllButNls, gc);
+
+    gc.gridy ++;
+    panel.add(reportRefs, gc);
 
     gc.gridy ++;
     panel.add(assertStatementsCheckbox, gc);
@@ -425,7 +442,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     List<ProblemDescriptor> result = new ArrayList<>();
 
     for (UMethod method : aClass.getMethods()) {
-      if (method.getSourcePsi() == aClass.getSourcePsi()) { // primary constructor that will not be proccsed other way
+      if (method.getSourcePsi() == aClass.getSourcePsi()) { // primary constructor that will not be processed other way
         checkMethodBody(method, manager, isOnTheFly, result);
       }
     }
@@ -532,12 +549,23 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         return;
       }
 
+      Class[] wantedClasses = ignoreForAllButNls && reportUnannotatedReferences ?
+                              new Class[]{UInjectionHost.class, UAnnotation.class, UCallExpression.class, UReferenceExpression.class} :
+                              new Class[]{UInjectionHost.class, UAnnotation.class};
       UElement uElement =
-        UastContextKt.toUElementOfExpectedTypes(element, UInjectionHost.class, UAnnotation.class);
+        UastContextKt.toUElementOfExpectedTypes(element, wantedClasses);
 
       if (uElement instanceof UInjectionHost) {
         visitLiteralExpression(element, (UInjectionHost)uElement);
         return;
+      }
+      
+      if (uElement instanceof UCallExpression) {
+        visitCallExpression(element, (UCallExpression)uElement);
+      }
+      
+      if (uElement instanceof UReferenceExpression) {
+        visitReferenceExpression(element, (UReferenceExpression)uElement);
       }
 
       if (uElement instanceof UAnnotation) {
@@ -550,8 +578,42 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       element.acceptChildren(this);
     }
 
-    private void visitLiteralExpression(@NotNull PsiElement sourcePsi,
-                                        @NotNull UInjectionHost expression) {
+    private void visitCallExpression(@NotNull PsiElement sourcePsi, @NotNull UCallExpression ref) {
+      PsiMethod target = ref.resolve();
+      if (target == null) return;
+      if (IGNORED_METHODS.methodMatches(target)) return;
+      UExpression expr = ref;
+      if (ref.getUastParent() instanceof UQualifiedReferenceExpression) {
+        expr = (UQualifiedReferenceExpression)ref.getUastParent();
+      }
+      processReferenceToNonLocalized(sourcePsi, expr, target);
+    }
+
+    private void visitReferenceExpression(@NotNull PsiElement sourcePsi, @NotNull UReferenceExpression ref) {
+      PsiVariable target = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+      if (target == null || target instanceof PsiLocalVariable) return;
+      processReferenceToNonLocalized(sourcePsi, ref, target);
+    }
+
+    private void processReferenceToNonLocalized(@NotNull PsiElement sourcePsi, @NotNull UExpression ref, PsiModifierListOwner target) {
+      PsiType type = ref.getExpressionType();
+      if (!TypeUtils.isJavaLangString(type)) return;
+      if (NlsInfo.forModifierListOwner(target) instanceof NlsInfo.Localized) return;
+      if (NlsInfo.forType(type) instanceof NlsInfo.Localized) return;
+      
+      String value = target instanceof PsiVariable ? ObjectUtils.tryCast(((PsiVariable)target).computeConstantValue(), String.class) : null;
+
+      NlsInfo targetInfo = getExpectedNlsInfo(myManager.getProject(), ref, value, new THashSet<>());
+      if (targetInfo instanceof NlsInfo.Localized) {
+        AddAnnotationFix fix = new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
+        String description = JavaI18nBundle.message("inspection.i18n.message.non.localized.passed.to.localized");
+        final ProblemDescriptor problem = myManager.createProblemDescriptor(
+          sourcePsi, description, myOnTheFly, new LocalQuickFix[] {fix}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        myProblems.add(problem);
+      }
+    }
+
+    private void visitLiteralExpression(@NotNull PsiElement sourcePsi, @NotNull UInjectionHost expression) {
       String stringValue = getStringValueOfKnownPart(expression);
       if (StringUtil.isEmptyOrSpaces(stringValue)) {
         return;
@@ -667,10 +729,13 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   }
 
   private NlsInfo getExpectedNlsInfo(@NotNull Project project,
-                                     @NotNull UInjectionHost expression,
-                                     @NotNull String value,
+                                     @NotNull UExpression expression,
+                                     @Nullable String value,
                                      @NotNull Set<? super PsiModifierListOwner> nonNlsTargets) {
-    if (ignoreForNonAlpha && !StringUtil.containsAlphaCharacters(value)) {
+    if (ignoreForNonAlpha && value != null && !StringUtil.containsAlphaCharacters(value)) {
+      return NlsInfo.nonLocalized();
+    }
+    if (value != null && IGNORED.contains(value.toLowerCase(Locale.ROOT))) {
       return NlsInfo.nonLocalized();
     }
 
@@ -708,7 +773,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return NlsInfo.nonLocalized();
   }
 
-  private boolean isSuppressedByComment(@NotNull Project project, @NotNull UInjectionHost expression) {
+  private boolean isSuppressedByComment(@NotNull Project project, @NotNull UExpression expression) {
     Pattern pattern = myCachedNonNlsPattern;
     if (pattern != null) {
       PsiElement sourcePsi = expression.getSourcePsi();
@@ -734,7 +799,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   }
 
   private boolean shouldIgnoreUsage(@NotNull Project project,
-                                    @NotNull String value,
+                                    @Nullable String value,
                                     @NotNull Set<? super PsiModifierListOwner> nonNlsTargets,
                                     @NotNull UExpression usage) {
     if (isInNonNlsCall(usage, nonNlsTargets)) {
@@ -764,10 +829,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (ignoreForJUnitAsserts && isArgOfJUnitAssertion(usage)) {
       return true;
     }
-    if (ignoreForClassReferences && isClassRef(usage, value)) {
+    if (ignoreForClassReferences && value != null && isClassRef(usage, value)) {
       return true;
     }
-    if (ignoreForPropertyKeyReferences && !PropertiesImplUtil.findPropertiesByKey(project, value).isEmpty()) {
+    if (ignoreForPropertyKeyReferences && value != null && !PropertiesImplUtil.findPropertiesByKey(project, value).isEmpty()) {
       return true;
     }
     if (ignoreToString && isToString(usage)) {
