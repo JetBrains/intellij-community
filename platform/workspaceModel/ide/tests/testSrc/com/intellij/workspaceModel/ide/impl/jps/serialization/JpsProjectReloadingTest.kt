@@ -50,16 +50,15 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
   }
 
   fun `test add all libraries for directory based project`() {
-    val checkAction = { (storage, projectDirUrl): ReloadedProjectData ->
-      val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
-      assertEquals(1, libraries.size)
-      val junitLibrary = libraries[0]
-      assertEquals("junit2", junitLibrary.name)
-      val root = assertOneElement(junitLibrary.roots.toList())
-      assertEquals("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/", root.url.url)
-    }
-    val dirBasedData = reload(File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/imlUnderDotIdea"), "directoryBased/addLibrary")
-    checkAction(dirBasedData)
+    val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/imlUnderDotIdea")
+    val (storage, projectDirUrl) = reload(projectDir, "directoryBased/addLibrary")
+
+    val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
+    assertEquals(1, libraries.size)
+    val junitLibrary = libraries[0]
+    assertEquals("junit2", junitLibrary.name)
+    val root = assertOneElement(junitLibrary.roots.toList())
+    assertEquals("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/", root.url.url)
   }
 
   fun `test add module`() {
@@ -146,7 +145,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
 
     dir.walkBottomUp().forEach { file ->
       if (file.isFile && contentFilter(file.readText().trim())) {
-        res += toRelativeUrl(baseUrl, dir, file)
+        res += replaceBaseUrl(baseUrl, dir, file)
       }
       else if (file.isDirectory) {
         // If all removed files relate to the one directory, the directory event is sent
@@ -155,11 +154,11 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
         if (!relativeFileUrl.endsWith(".idea/libraries") && !relativeFileUrl.endsWith(".idea/artifacts")) return@forEach
 
         // Existing files + files that will be copied
-        val children = (JpsPathUtil.urlToFile(toRelativeUrl(baseUrl, dir, file)).listFiles()?.map { JpsPathUtil.pathToUrl(it.absolutePath) } ?: emptyList()) +
-                       (file.listFiles()?.map { toRelativeUrl(baseUrl, dir, it) } ?: emptyList())
+        val children = (JpsPathUtil.urlToFile(replaceBaseUrl(baseUrl, dir, file)).listFiles()?.map { JpsPathUtil.pathToUrl(it.absolutePath) } ?: emptyList()) +
+                       (file.listFiles()?.map { replaceBaseUrl(baseUrl, dir, it) } ?: emptyList())
         if (children.all { it in res }) {
           if (replaceByParent) children.forEach { res.remove(it) }
-          res += toRelativeUrl(baseUrl, dir, file)
+          res += replaceBaseUrl(baseUrl, dir, file)
         }
       }
     }
@@ -167,8 +166,8 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     return res
   }
 
-  private fun toRelativeUrl(baseUrl: String, dir: File, file: File): String {
-    return "$baseUrl/${FileUtil.toSystemIndependentName(FileUtil.getRelativePath(dir, file)!!)}"
+  private fun replaceBaseUrl(newBaseUrl: String, oldBaseUrl: File, file: File): String {
+    return "$newBaseUrl/${FileUtil.toSystemIndependentName(FileUtil.getRelativePath(oldBaseUrl, file)!!)}"
   }
 
   private data class ReloadedProjectData(val storage: WorkspaceEntityStorageBuilder, val projectDirUrl: String)
