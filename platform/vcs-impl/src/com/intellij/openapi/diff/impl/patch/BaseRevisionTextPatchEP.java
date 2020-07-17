@@ -9,9 +9,12 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.project.ProjectKt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,12 +25,6 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
   public static final Key<Map<String, String>> ourStoredTexts = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourStoredTexts");
   private final static Logger LOG = Logger.getInstance(BaseRevisionTextPatchEP.class);
 
-  private final String myBaseDir;
-
-  public BaseRevisionTextPatchEP(final Project project) {
-    myBaseDir = project.getBasePath();
-  }
-
   @NotNull
   @Override
   public String getName() {
@@ -35,46 +32,50 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
   }
 
   @Override
-  public CharSequence provideContent(@NotNull String path, CommitContext commitContext) {
-    if (commitContext == null) return null;
+  public CharSequence provideContent(@NotNull Project project, @NotNull String path, @Nullable CommitContext commitContext) {
+    if (commitContext == null) {
+      return null;
+    }
+
     if (Boolean.TRUE.equals(commitContext.getUserData(ourPutBaseRevisionTextKey))) {
-      File file = new File(myBaseDir, path);
-      FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+      Path file = ProjectKt.getStateStore(project).getProjectBasePath().resolve(path);
+      FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePath(file, Files.isDirectory(file));
       Map<FilePath, ContentRevision> baseRevisions = commitContext.getUserData(ourBaseRevisions);
-      if (baseRevisions == null) return null;
-      ContentRevision baseRevision = baseRevisions.get(filePath);
-      if (baseRevision == null) return null;
+      ContentRevision baseRevision = baseRevisions == null ? null : baseRevisions.get(filePath);
+      if (baseRevision == null) {
+        return null;
+      }
+
       try {
         return baseRevision.getContent();
       }
       catch (VcsException e) {
         LOG.info(e);
       }
-    } else {
-      final Map<String, String> map = commitContext.getUserData(ourStoredTexts);
+    }
+    else {
+      Map<String, String> map = commitContext.getUserData(ourStoredTexts);
       if (map != null) {
-        final File file = new File(myBaseDir, path);
-        return map.get(file.getPath());
+        return map.get(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString());
       }
     }
     return null;
   }
 
   @Override
-  public void consumeContent(@NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
-  }
-
-  @Override
-  public void consumeContentBeforePatchApplied(@NotNull String path,
+  public void consumeContentBeforePatchApplied(@NotNull Project project,
+                                               @NotNull String path,
                                                @NotNull CharSequence content,
-                                               CommitContext commitContext) {
-    if (commitContext == null) return;
+                                               @Nullable CommitContext commitContext) {
+    if (commitContext == null) {
+      return;
+    }
+
     Map<String, String> map = commitContext.getUserData(ourStoredTexts);
     if (map == null) {
       map = new HashMap<>();
       commitContext.putUserData(ourStoredTexts, map);
     }
-    final File file = new File(myBaseDir, path);
-    map.put(file.getPath(), content.toString());
+    map.put(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString(), content.toString());
   }
 }

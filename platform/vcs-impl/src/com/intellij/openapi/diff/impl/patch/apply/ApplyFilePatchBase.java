@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,18 +28,19 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
   }
 
   @Override
-  public Result apply(final VirtualFile fileToPatch,
-                      final ApplyPatchContext context,
-                      final Project project,
+  public Result apply(VirtualFile fileToPatch,
+                      ApplyPatchContext context,
+                      @NotNull Project project,
                       FilePath pathBeforeRename,
                       Getter<? extends CharSequence> baseContents,
-                      CommitContext commitContext) throws IOException {
+                      @Nullable CommitContext commitContext) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("apply patch called for : " + fileToPatch.getPath());
     }
     if (myPatch.isNewFile()) {
       applyCreate(project, fileToPatch, commitContext);
-    } else if (myPatch.isDeletedFile()) {
+    }
+    else if (myPatch.isDeletedFile()) {
       FileEditorManager.getInstance(project).closeFile(fileToPatch);
       fileToPatch.delete(this);
     }
@@ -49,7 +50,7 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     return SUCCESS;
   }
 
-  protected abstract void applyCreate(Project project, VirtualFile newFile, CommitContext commitContext) throws IOException;
+  protected abstract void applyCreate(Project project, VirtualFile newFile, @Nullable CommitContext commitContext) throws IOException;
 
   protected abstract Result applyChange(Project project, VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<? extends CharSequence> baseContents) throws IOException;
 

@@ -42,10 +42,12 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
                     @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
-                    @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
-    final CommitContext commitContext = new CommitContext();
-    applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
-    final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
+                    @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+    CommitContext commitContext = new CommitContext();
+    if (additionalInfo != null) {
+      applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
+    }
+    Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
     new Task.Backgroundable(myProject, VcsBundle.getString("patch.apply.progress.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -69,10 +71,10 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
 
 
   public static void applyAdditionalInfoBefore(@NotNull Project project,
-                                               @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, ? extends PatchSyntaxException> additionalInfo,
+                                               @NotNull ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                                @Nullable CommitContext commitContext) {
-    final List<PatchEP> extensions = PatchEP.EP_NAME.getExtensions(project);
-    if (extensions.isEmpty() || additionalInfo == null) {
+    List<PatchEP> extensions = PatchEP.EP_NAME.getExtensionList();
+    if (extensions.isEmpty()) {
       return;
     }
 
@@ -80,9 +82,9 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
       Map<String, Map<String, CharSequence>> additionalInfoMap = additionalInfo.compute();
       for (Map.Entry<String, Map<String, CharSequence>> entry : additionalInfoMap.entrySet()) {
         for (PatchEP extension : extensions) {
-          final CharSequence charSequence = entry.getValue().get(extension.getName());
+          CharSequence charSequence = entry.getValue().get(extension.getName());
           if (charSequence != null) {
-            extension.consumeContentBeforePatchApplied(entry.getKey(), charSequence, commitContext);
+            extension.consumeContentBeforePatchApplied(project, entry.getKey(), charSequence, commitContext);
           }
         }
       }

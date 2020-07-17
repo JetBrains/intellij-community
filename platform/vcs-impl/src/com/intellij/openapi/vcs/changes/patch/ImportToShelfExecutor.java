@@ -35,10 +35,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
+public final class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
   private static final Logger LOG = Logger.getInstance(ImportToShelfExecutor.class);
 
-  private static final String IMPORT_TO_SHELF = VcsBundle.message("action.import.to.shelf");
   private final Project myProject;
 
   public ImportToShelfExecutor(Project project) {
@@ -47,14 +46,16 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
 
   @Override
   public String getName() {
-    return IMPORT_TO_SHELF;
+    return VcsBundle.message("action.import.to.shelf");
   }
 
   @Override
-  public void apply(@NotNull List<? extends FilePatch> remaining, @NotNull final MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
+  public void apply(@NotNull List<? extends FilePatch> remaining,
+                    @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
-                    @Nullable final String fileName,
-                    @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                    @Nullable String fileName,
+                    @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>,
+                    PatchSyntaxException> additionalInfo) {
     if (fileName == null) {
       LOG.error("Patch file name shouldn't be null");
       return;
@@ -101,8 +102,8 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
             }
           }
           try {
-            final ShelvedChangeList shelvedChangeList = ShelveChangesManager.getInstance(myProject).
-              importFilePatches(fileName, allPatches, patchTransitExtensions);
+            ShelvedChangeList shelvedChangeList = ShelveChangesManager.getInstance(myProject)
+              .importFilePatches(fileName, allPatches, patchTransitExtensions);
             ShelvedChangesViewManager.getInstance(myProject).activateView(shelvedChangeList);
           }
           catch (IOException e) {
@@ -114,7 +115,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
     ProgressManager.getInstance().runProcessWithProgressSynchronously(vcsCatchingRunnable,
                                                                       VcsBundle.message("patch.import.to.shelf.progress.title"), true, myProject);
     if (! vcsCatchingRunnable.get().isEmpty()) {
-      AbstractVcsHelper.getInstance(myProject).showErrors(vcsCatchingRunnable.get(), IMPORT_TO_SHELF);
+      AbstractVcsHelper.getInstance(myProject).showErrors(vcsCatchingRunnable.get(), VcsBundle.message("action.import.to.shelf"));
     }
   }
 
@@ -134,17 +135,15 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
     }
 
     @Override
-    public CharSequence provideContent(@NotNull String path, CommitContext commitContext) {
+    public CharSequence provideContent(@NotNull Project project,
+                                       @NotNull String path,
+                                       CommitContext commitContext) {
       return myMap.get(path);
     }
 
     @Override
-    public void consumeContent(@NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void consumeContentBeforePatchApplied(@NotNull String path,
+    public void consumeContentBeforePatchApplied(@NotNull Project project,
+                                                 @NotNull String path,
                                                  @NotNull CharSequence content,
                                                  CommitContext commitContext) {
       throw new UnsupportedOperationException();

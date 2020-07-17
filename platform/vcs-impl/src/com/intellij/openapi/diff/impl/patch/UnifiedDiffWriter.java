@@ -30,28 +30,21 @@ public final class UnifiedDiffWriter {
   private UnifiedDiffWriter() {
   }
 
-  public static void write(@Nullable Project project, Collection<? extends FilePatch> patches, Writer writer, final String lineSeparator,
-                           @Nullable final CommitContext commitContext) throws IOException {
-    write(project, patches, writer, lineSeparator, getPatchExtensions(project), commitContext);
-  }
-
-  @NotNull
-  public static List<PatchEP> getPatchExtensions(@Nullable Project project) {
-    return project == null ? Collections.emptyList() : PatchEP.EP_NAME.getExtensions(project);
-  }
-
-  public static void write(@Nullable Project project, Collection<? extends FilePatch> patches, Writer writer, final String lineSeparator,
-                           List<? extends PatchEP> extensions, CommitContext commitContext) throws IOException {
-    write(project, project == null ? null : ProjectKt.getStateStore(project).getProjectBasePath(), patches, writer, lineSeparator, extensions, commitContext);
+  public static void write(@Nullable Project project,
+                           Collection<? extends FilePatch> patches,
+                           Writer writer,
+                           String lineSeparator,
+                           @Nullable CommitContext commitContext) throws IOException {
+    write(project, project == null ? null : ProjectKt.getStateStore(project).getProjectBasePath(), patches, writer, lineSeparator, commitContext, null);
   }
 
   public static void write(@Nullable Project project,
                            @Nullable Path basePath,
-                           Collection<? extends FilePatch> patches,
+                           @NotNull Collection<? extends FilePatch> patches,
                            Writer writer,
-                           final String lineSeparator,
-                           @NotNull final List<? extends PatchEP> extensions,
-                           final CommitContext commitContext) throws IOException {
+                           String lineSeparator,
+                           @Nullable CommitContext commitContext,
+                           @Nullable List<PatchEP> patchEpExtensions) throws IOException {
     //write the patch files without content modifications strictly after the files with content modifications,
     // because GitPatchReader is not ready for mixed style patches
     List<FilePatch> noContentPatches = new ArrayList<>();
@@ -64,13 +57,14 @@ public final class UnifiedDiffWriter {
       }
       @Nullable String t = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
       String path = Objects.requireNonNull(t);
-      String pathRelatedToProjectDir =
-        project == null ? path : getPathRelatedToDir(Objects.requireNonNull(project.getBasePath()), basePath == null ? null : basePath.toString(), path);
-      final Map<String, CharSequence> additionalMap = new HashMap<>();
-      for (PatchEP extension : extensions) {
-        final CharSequence charSequence = extension.provideContent(pathRelatedToProjectDir, commitContext);
-        if (! StringUtil.isEmpty(charSequence)) {
-          additionalMap.put(extension.getName(), charSequence);
+      String pathRelatedToProjectDir = project == null ? path : getPathRelatedToDir(Objects.requireNonNull(project.getBasePath()), basePath == null ? null : basePath.toString(), path);
+      Map<String, CharSequence> additionalMap = new HashMap<>();
+      if (project != null) {
+        for (PatchEP extension : (patchEpExtensions == null ? PatchEP.EP_NAME.getExtensionList() : patchEpExtensions)) {
+          CharSequence charSequence = extension.provideContent(project, pathRelatedToProjectDir, commitContext);
+          if (!StringUtil.isEmpty(charSequence)) {
+            additionalMap.put(extension.getName(), charSequence);
+          }
         }
       }
       String fileContentLineSeparator = ObjectUtils.coalesce(patch.getLineSeparator(), lineSeparator, "\n");

@@ -7,57 +7,48 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
 public final class CharsetEP implements PatchEP {
   private final static Key<Map<String, String>> ourName = Key.create("Charset");
 
-  private final String myBaseDir;
-
-  public CharsetEP(Project project) {
-    myBaseDir = project.getBasePath();
-  }
-
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "com.intellij.openapi.diff.impl.patch.CharsetEP";
   }
 
   @Override
-  public CharSequence provideContent(@NotNull String path, CommitContext commitContext) {
-    final File file = new File(myBaseDir, path);
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    if (vf == null) return null;
-    CharSequence charsetName = vf.getCharset().name();
-    return charsetName;
+  public CharSequence provideContent(@NotNull Project project, @NotNull String path, @Nullable CommitContext commitContext) {
+    VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path));
+    return vf == null ? null : vf.getCharset().name();
   }
 
   @Override
-  public void consumeContent(@NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
-  }
-
-  @Override
-  public void consumeContentBeforePatchApplied(@NotNull String path,
+  public void consumeContentBeforePatchApplied(@NotNull Project project,
+                                               @NotNull String path,
                                                @NotNull CharSequence content,
-                                               CommitContext commitContext) {
-    if (commitContext == null) return;
+                                               @Nullable CommitContext commitContext) {
+    if (commitContext == null) {
+      return;
+    }
+
     Map<String, String> map = commitContext.getUserData(ourName);
     if (map == null) {
       map = new HashMap<>();
       commitContext.putUserData(ourName, map);
     }
-    final File file = new File(myBaseDir, path);
-    map.put(FilePathsHelper.convertPath(file.getPath()), content.toString());
+    Path file = ProjectKt.getStateStore(project).getProjectBasePath().resolve(path);
+    map.put(FilePathsHelper.convertPath(file.toString()), content.toString());
   }
 
-  public static String getCharset(final String path, final CommitContext commitContext) {
-    if (commitContext == null) return null;
-    final Map<String, String> userData = commitContext.getUserData(ourName);
+  public static @Nullable String getCharset(String path, @NotNull CommitContext commitContext) {
+    Map<String, String> userData = commitContext.getUserData(ourName);
     return userData == null ? null : userData.get(FilePathsHelper.convertPath(path));
   }
 }

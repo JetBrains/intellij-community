@@ -37,18 +37,18 @@ public final class PathsVerifier {
   private final VirtualFile myBaseDirectory;
   private final List<? extends FilePatch> myPatches;
   // temp
-  private final Map<VirtualFile, MovedFileData> myMovedFiles;
-  private final List<FilePath> myBeforePaths;
-  private final List<VirtualFile> myCreatedDirectories;
+  private final Map<VirtualFile, MovedFileData> myMovedFiles = new HashMap<>();
+  private final List<FilePath> myBeforePaths = new ArrayList<>();
+  private final List<VirtualFile> myCreatedDirectories = new ArrayList<>();
   // out
-  private final List<PatchAndFile> myTextPatches;
-  private final List<PatchAndFile> myBinaryPatches;
-  @NotNull private final List<VirtualFile> myWritableFiles;
+  private final List<PatchAndFile> myTextPatches = new ArrayList<>();
+  private final List<PatchAndFile> myBinaryPatches = new ArrayList<>();
+  @NotNull private final List<VirtualFile> myWritableFiles = new ArrayList<>();
   private final ProjectLevelVcsManager myVcsManager;
-  private final List<FilePatch> mySkipped;
+  private final List<FilePatch> mySkipped = new ArrayList<>();
   private DelayedPrecheckContext myDelayedPrecheckContext;
-  private final List<FilePath> myAddedPaths;
-  private final List<FilePath> myDeletedPaths;
+  private final List<FilePath> myAddedPaths = new ArrayList<>();
+  private final List<FilePath> myDeletedPaths = new ArrayList<>();
   private boolean myIgnoreContentRootsCheck;
 
   public PathsVerifier(@NotNull Project project,
@@ -57,18 +57,7 @@ public final class PathsVerifier {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
-
-    myMovedFiles = new HashMap<>();
-    myBeforePaths = new ArrayList<>();
-    myCreatedDirectories = new ArrayList<>();
-    myTextPatches = new ArrayList<>();
-    myBinaryPatches = new ArrayList<>();
-    myWritableFiles = new ArrayList<>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    mySkipped = new ArrayList<>();
-
-    myAddedPaths = new ArrayList<>();
-    myDeletedPaths = new ArrayList<>();
   }
 
   // those to be moved to CL: target + created dirs
@@ -316,7 +305,8 @@ public final class PathsVerifier {
     protected boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile, final DelayedPrecheckContext context) {
       if (beforeFile == null) {
         setErrorMessage(fileNotFoundMessage(myBeforeName));
-      } else if (afterFile != null) {
+      }
+      else if (afterFile != null) {
         setErrorMessage(fileAlreadyExists(afterFile.getPath()));
       }
       return beforeFile != null && afterFile == null;
@@ -502,11 +492,11 @@ public final class PathsVerifier {
     return child;
   }
 
-  public List<PatchAndFile> getTextPatches() {
+  public @NotNull List<PatchAndFile> getTextPatches() {
     return myTextPatches;
   }
 
-  public List<PatchAndFile> getBinaryPatches() {
+  public @NotNull List<PatchAndFile> getBinaryPatches() {
     return myBinaryPatches;
   }
 
@@ -646,7 +636,7 @@ public final class PathsVerifier {
     myIgnoreContentRootsCheck = ignoreContentRootsCheck;
   }
 
-  public static class PatchAndFile {
+  public static final class PatchAndFile {
     private final VirtualFile myFile;
     private final ApplyFilePatchBase<?> myPatch;
 

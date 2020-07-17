@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -55,7 +54,7 @@ public final class PatchWriter {
                             @NotNull List<? extends FilePatch> patches,
                             @Nullable CommitContext commitContext, boolean includeBinaries) throws IOException {
     String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
-    UnifiedDiffWriter.write(project, basePath, patches, writer, lineSeparator, PatchEP.EP_NAME.getExtensions(project), commitContext);
+    UnifiedDiffWriter.write(project, basePath, patches, writer, lineSeparator, commitContext, null);
     if (includeBinaries) {
       BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer);
     }

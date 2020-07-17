@@ -25,5 +25,5 @@ public interface ApplyPatchExecutor<T extends AbstractFilePatchInProgress<?>> {
              @NotNull MultiMap<VirtualFile, T> patchGroupsToApply,
              @Nullable LocalChangeList localList,
              @Nullable String fileName,
-             @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo);
+             @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo);
 }

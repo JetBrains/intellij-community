@@ -48,7 +48,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.UIUtil;
@@ -161,14 +160,12 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   private final Project myProject;
-  private final MessageBus myBus;
 
   public static final Topic<ChangeListener> SHELF_TOPIC = new Topic<>("shelf updates", ChangeListener.class);
 
-  public ShelveChangesManager(final Project project, final MessageBus bus) {
+  public ShelveChangesManager(@NotNull Project project) {
     myPathMacroSubstitutor = PathMacroManager.getInstance(project);
     myProject = project;
-    myBus = bus;
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
     mySchemeManager =
       createShelveSchemeManager(project, vcsConfiguration.USE_CUSTOM_SHELF_PATH ? vcsConfiguration.CUSTOM_SHELF_PATH : null);
@@ -457,7 +454,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                                      boolean honorExcludedFromCommit) throws VcsException, IOException {
     List<FilePatch> patches = new ArrayList<>();
     if (textChanges.isEmpty()) {
-      ShelfFileProcessorUtil.savePatchFile(myProject, patchFile, patches, null, new CommitContext());
+      savePatchFile(myProject, patchFile, patches, null, new CommitContext());
       return patches;
     }
 
@@ -491,7 +488,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         iterSw.report(LOG);
 
         iterSw = StopWatch.start("Saving patch file" + inbatch);
-        ShelfFileProcessorUtil.savePatchFile(myProject, patchFile, patches, null, commitContext);
+        savePatchFile(myProject, patchFile, patches, null, commitContext);
         iterSw.report(LOG);
       }
       finally {
@@ -587,15 +584,15 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       anyMatch(vcs -> VcsType.distributed.equals(vcs.getType()));
   }
 
-  public ShelvedChangeList importFilePatches(final String fileName,
-                                             final List<? extends FilePatch> patches,
-                                             final List<PatchEP> patchTransitExtensions)
+  public @NotNull ShelvedChangeList importFilePatches(String fileName,
+                                                      List<? extends FilePatch> patches,
+                                                      List<PatchEP> patchTransitExtensions)
     throws IOException {
     try {
       Path schemePatchDir = generateUniqueSchemePatchDir(fileName, true);
       Path patchFile = getPatchFileInConfigDir(schemePatchDir);
-      ShelfFileProcessorUtil.savePatchFile(myProject, patchFile, patches, patchTransitExtensions, new CommitContext());
-      final ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), fileName.replace('\n', ' '), new SmartList<>(),
+      savePatchFile(myProject, patchFile, patches, patchTransitExtensions, new CommitContext());
+      ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), fileName.replace('\n', ' '), new SmartList<>(),
                                                                  createShelvedChangesFromFilePatches(myProject, patchFile.toString(),
                                                                                                      patches));
       changeList.setName(schemePatchDir.getFileName().toString());
@@ -682,7 +679,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   private void notifyStateChanged() {
     if (!myProject.isDisposed()) {
-      myBus.syncPublisher(SHELF_TOPIC).stateChanged(new ChangeEvent(this));
+      myProject.getMessageBus().syncPublisher(SHELF_TOPIC).stateChanged(new ChangeEvent(this));
     }
   }
 
@@ -857,11 +854,11 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
 
-  static List<TextFilePatch> loadTextPatches(@NotNull Project project,
-                                             ShelvedChangeList changeList,
-                                             List<? extends ShelvedChange> changes,
-                                             List<? super FilePatch> remainingPatches,
-                                             CommitContext commitContext)
+  private static List<TextFilePatch> loadTextPatches(@NotNull Project project,
+                                                     ShelvedChangeList changeList,
+                                                     List<? extends ShelvedChange> changes,
+                                                     List<? super FilePatch> remainingPatches,
+                                                     CommitContext commitContext)
     throws IOException, PatchSyntaxException {
     final List<TextFilePatch> textFilePatches = loadPatches(project, changeList.PATH, commitContext);
 
@@ -1391,4 +1388,14 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       getInstance(project).projectOpened();
     }
   }
+
+  private static void savePatchFile(@NotNull Project project,
+                                    @NotNull Path patchFile,
+                                    @NotNull List<? extends FilePatch> patches,
+                                    @Nullable List<PatchEP> extensions,
+                                    @NotNull CommitContext context) throws IOException {
+    try (Writer writer = Files.newBufferedWriter(patchFile)) {
+      UnifiedDiffWriter.write(project, ProjectKt.getStateStore(project).getProjectBasePath(), patches, writer, "\n", context, extensions);
+      }
+    }
 }

@@ -12,6 +12,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -40,7 +41,6 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.ListSelection;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
@@ -415,8 +415,8 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         }
         else {
           String path = chooseNotNull(patch.getAfterName(), patch.getBeforeName());
-          CharSequence baseContents = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class, myProject)
-            .provideContent(path, myCommitContext);
+          CharSequence baseContents = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class)
+            .provideContent(myProject, path, myCommitContext);
 
           ApplyPatchForBaseRevisionTexts texts =
             ApplyPatchForBaseRevisionTexts.create(myProject, myFile, myPatchContext.getPathBeforeRename(myFile), patch, baseContents);

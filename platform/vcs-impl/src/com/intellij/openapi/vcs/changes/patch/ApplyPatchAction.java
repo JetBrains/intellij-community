@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffManager;
@@ -36,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +47,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchFileType.isPatchFile;
 
-public class ApplyPatchAction extends DumbAwareAction {
+public final class ApplyPatchAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(ApplyPatchAction.class);
 
   @Override
@@ -96,7 +94,7 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   // used by TeamCity plugin
-  public static void showApplyPatch(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public static void showApplyPatch(@NotNull Project project, @NotNull VirtualFile file) {
     final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(
       project, new ApplyPatchDefaultExecutor(project),
       Collections.singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, file);
@@ -104,7 +102,7 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   @CalledInAwt
-  public static Boolean showAndGetApplyPatch(@NotNull final Project project, @NotNull final File file) {
+  public static Boolean showAndGetApplyPatch(@NotNull Project project, @NotNull File file) {
     VirtualFile vFile = VfsUtil.findFileByIoFile(file, true);
     String patchPath = file.getPath();
     if (vFile == null) {
@@ -142,33 +140,36 @@ public class ApplyPatchAction extends DumbAwareAction {
     return sb.toString();
   }
 
-  @NotNull
-  public static ApplyPatchStatus applyContent(@Nullable final Project project,
-                                              @NotNull final ApplyFilePatchBase patch,
-                                              @Nullable final ApplyPatchContext context,
-                                              @NotNull final VirtualFile file,
-                                              @Nullable final CommitContext commitContext,
-                                              boolean reverse,
-                                              @Nullable String leftPanelTitle,
-                                              @Nullable String rightPanelTitle) {
-    final ApplyFilePatch.Result result = tryApplyPatch(project, patch, context, file, commitContext);
+  public static @NotNull ApplyPatchStatus applyContent(@NotNull Project project,
+                                                       @NotNull ApplyFilePatchBase<?> patch,
+                                                       @Nullable ApplyPatchContext context,
+                                                       @NotNull VirtualFile file,
+                                                       @Nullable CommitContext commitContext,
+                                                       boolean reverse,
+                                                       @Nullable String leftPanelTitle,
+                                                       @Nullable String rightPanelTitle) {
+    ApplyFilePatch.Result result = tryApplyPatch(project, patch, context, file, commitContext);
 
-    final ApplyPatchStatus status = result.getStatus();
+    ApplyPatchStatus status = result.getStatus();
     if (ApplyPatchStatus.ALREADY_APPLIED.equals(status) || ApplyPatchStatus.SUCCESS.equals(status)) {
       return status;
     }
 
-    final ApplyPatchForBaseRevisionTexts mergeData = result.getMergeData();
-    if (mergeData == null) return status;
+    ApplyPatchForBaseRevisionTexts mergeData = result.getMergeData();
+    if (mergeData == null) {
+      return status;
+    }
 
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) return ApplyPatchStatus.FAILURE;
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) {
+      return ApplyPatchStatus.FAILURE;
+    }
 
     String baseContent = convertLineSeparators(mergeData.getBase());
     String localContent = convertLineSeparators(mergeData.getLocal());
     String patchedContent = mergeData.getPatched();
 
-    final Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<>();
+    Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<>();
     Consumer<MergeResult> callback = result13 -> {
       FileDocumentManager.getInstance().saveDocument(document);
       applyPatchStatusReference.setIfNull(result13 != MergeResult.CANCEL ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE);
@@ -194,7 +195,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       }
       else {
         TextFilePatch textPatch = (TextFilePatch)patch.getPatch();
-        final GenericPatchApplier applier = new GenericPatchApplier(localContent, textPatch.getHunks());
+        GenericPatchApplier applier = new GenericPatchApplier(localContent, textPatch.getHunks());
         applier.execute();
 
         final AppliedTextPatch appliedTextPatch = AppliedTextPatch.create(applier.getAppliedInfo());
@@ -234,20 +235,18 @@ public class ApplyPatchAction extends DumbAwareAction {
     }
   }
 
-  @NotNull
-  private static ApplyFilePatch.Result tryApplyPatch(@Nullable final Project project,
-                                                     @NotNull final ApplyFilePatchBase patch,
-                                                     @Nullable final ApplyPatchContext context,
-                                                     @NotNull final VirtualFile file,
-                                                     @Nullable final CommitContext commitContext) {
-    final FilePatch patchBase = patch.getPatch();
+  private static @NotNull ApplyFilePatch.Result tryApplyPatch(@NotNull Project project,
+                                                              @NotNull ApplyFilePatchBase<?> patch,
+                                                              @Nullable ApplyPatchContext context,
+                                                              @NotNull VirtualFile file,
+                                                              @Nullable CommitContext commitContext) {
+    FilePatch patchBase = patch.getPatch();
     return WriteAction.compute(() -> {
       try {
         return patch.apply(file, context, project, VcsUtil.getFilePath(file), () -> {
-          assert project != null;
-          final BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class, project);
-          final String path = ObjectUtils.chooseNotNull(patchBase.getBeforeName(), patchBase.getAfterName());
-          return baseRevisionTextPatchEP.provideContent(path, commitContext);
+          BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class);
+          String path = ObjectUtils.chooseNotNull(patchBase.getBeforeName(), patchBase.getAfterName());
+          return baseRevisionTextPatchEP.provideContent(project, path, commitContext);
         }, commitContext);
       }
       catch (IOException e) {

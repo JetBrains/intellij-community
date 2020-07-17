@@ -44,9 +44,11 @@ public final class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecuto
                     @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
-                    @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                    @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     CommitContext commitContext = new CommitContext();
-    applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
+    if (additionalInfo != null) {
+      applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
+    }
     Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
     new Task.Backgroundable(myProject, VcsBundle.getString("unshelve.changes.progress.title")) {
       ApplyPatchStatus myApplyPatchStatus;

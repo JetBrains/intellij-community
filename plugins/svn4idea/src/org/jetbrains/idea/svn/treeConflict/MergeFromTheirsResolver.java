@@ -178,7 +178,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
                       @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                       @Nullable LocalChangeList localList,
                       @Nullable String fileName,
-                      @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                      @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
       new Task.Backgroundable(myVcs.getProject(), VcsBundle.getString("patch.apply.progress.title")) {
         VcsException myException = null;
 
