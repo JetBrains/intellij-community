@@ -8,11 +8,11 @@ import com.intellij.find.findUsages.FindUsagesHandlerFactory;
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -159,7 +159,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
     PsiClass aClass = myJavaFacade.findClass("com.Foo", GlobalSearchScope.allScope(myProject));
     doTest(aClass, new String[]{"Test.xml"}, new int[]{32}, new int[]{35});
 
-    final PsiFile nonCodeUsage = PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", StdFileTypes.XML, "<root action='com.Foo'/>", 0, true);
+    final PsiFile nonCodeUsage = PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", XmlFileType.INSTANCE, "<root action='com.Foo'/>", 0, true);
     assertTrue(new UsageInfo(nonCodeUsage, 14, 21, true).getNavigationOffset() > 0);
   }
 

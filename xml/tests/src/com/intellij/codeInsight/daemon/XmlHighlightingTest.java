@@ -13,7 +13,9 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.*;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.highlighter.DTDFileType;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlHighlighterFactory;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
@@ -32,7 +34,6 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
@@ -1343,7 +1344,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     //             0123456789012
     String text = "<html></html>";
     EditorHighlighter xhtmlHighlighter = HighlighterFactory
-      .createHighlighter(StdFileTypes.XHTML, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
+      .createHighlighter(XHtmlFileType.INSTANCE, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
     xhtmlHighlighter.setText(text);
     HighlighterIterator iterator = xhtmlHighlighter.createIterator(1);
     assertSame("Xml tag name", XmlTokenType.XML_TAG_NAME, iterator.getTokenType());
@@ -1366,7 +1367,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     //                       10        20
     //             012345678901234567890 123456 789
     String text = "<!ENTITY % Charsets \"CDATA\">";
-    EditorHighlighter dtdHighlighter = HighlighterFactory.createHighlighter(StdFileTypes.DTD,EditorColorsManager.getInstance().getGlobalScheme(),myProject);
+    EditorHighlighter dtdHighlighter = HighlighterFactory.createHighlighter(DTDFileType.INSTANCE, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
     dtdHighlighter.setText(text);
     HighlighterIterator iterator = dtdHighlighter.createIterator(3);
 

@@ -2,8 +2,8 @@
 package com.intellij.html;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
@@ -40,7 +40,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
   }
 
   private void configureAndComplete(String text) {
-    myFixture.configureByText(StdFileTypes.HTML, text);
+    myFixture.configureByText(HtmlFileType.INSTANCE, text);
     myFixture.complete(CompletionType.BASIC);
   }
 

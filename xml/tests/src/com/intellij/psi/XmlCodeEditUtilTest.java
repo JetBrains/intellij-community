@@ -2,12 +2,13 @@
 package com.intellij.psi;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
@@ -22,7 +23,7 @@ import com.intellij.util.LocalTimeCounter;
 public class XmlCodeEditUtilTest extends LightJavaCodeInsightTestCase {
   public void testXHTML() {
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject())
-      .createFileFromText("a.xhtml", StdFileTypes.XHTML,
+      .createFileFromText("a.xhtml", XHtmlFileType.INSTANCE,
                           "<a>\n" + "    <b/>\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "</a>");
 
     XmlTag rootTag = file.getDocument().getRootTag();
@@ -44,7 +45,7 @@ public class XmlCodeEditUtilTest extends LightJavaCodeInsightTestCase {
                  file.getText());
 
     file = (XmlFile)PsiFileFactory.getInstance(getProject())
-      .createFileFromText("a.xhtml", StdFileTypes.XHTML, "<html><body><div>text</div></body></html>");
+      .createFileFromText("a.xhtml", XHtmlFileType.INSTANCE, "<html><body><div>text</div></body></html>");
     rootTag = file.getDocument().getRootTag();
     XmlTag finalRootTag1 = rootTag;
     WriteCommandAction.runWriteCommandAction(null, () -> {
@@ -70,7 +71,7 @@ public class XmlCodeEditUtilTest extends LightJavaCodeInsightTestCase {
     Project ideaProject = getProject();
     PsiManager psiManager = PsiManager.getInstance(ideaProject);
     XmlFile fileFromText = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject())
-      .createFileFromText("sample.xhtml", StdFileTypes.XHTML, "<html><body><p/></body></html>", LocalTimeCounter.currentTime(), true);
+      .createFileFromText("sample.xhtml", XHtmlFileType.INSTANCE, "<html><body><p/></body></html>", LocalTimeCounter.currentTime(), true);
     XmlTag htmlTag = fileFromText.getDocument().getRootTag();
     XmlTag bodyTag = htmlTag.getSubTags()[0];
     XmlTag tagP = bodyTag.getSubTags()[0];
@@ -110,7 +111,7 @@ public class XmlCodeEditUtilTest extends LightJavaCodeInsightTestCase {
 
   public void testSCR1542() {
     String html = "<html><head /><body><hr /></body>\n</html>";
-    XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.html", StdFileTypes.HTML, html);
+    XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.html", HtmlFileType.INSTANCE, html);
     XmlTag body = file.getDocument().getRootTag().findFirstSubTag("body");
     XmlTag hr = body.getSubTags()[0];
 
@@ -121,7 +122,7 @@ public class XmlCodeEditUtilTest extends LightJavaCodeInsightTestCase {
 
   public void testDeleteTable() {
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.xhtml",
-                                                                                        StdFileTypes.XHTML,
+                                                                                        XHtmlFileType.INSTANCE,
                                                                                         "<html>\n" +
                                                                                         "<body xmlns:fabrique=\"https://www.jetbrains.com/schemas/fabrique/page-template\"><p>\n" +
                                                                                         " ujhgjhgjhg<table style=\"width: 82px; height: 84px\"><tr><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td></tr></table>\n" +
@@ -154,7 +155,7 @@ public class XmlCodeEditUtilTest extends LightJavaCodeInsightTestCase {
                   "</body>\n" +
                   "</html>";
 
-    XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.xhtml", StdFileTypes.XHTML, html);
+    XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.xhtml", XHtmlFileType.INSTANCE, html);
     XmlTag body = file.getDocument().getRootTag().findFirstSubTag("body");
     XmlTag span = body.findFirstSubTag("div").findFirstSubTag("p").findFirstSubTag("span").findFirstSubTag("span");
 

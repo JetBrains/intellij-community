@@ -16,6 +16,7 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -29,7 +30,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
@@ -53,7 +53,7 @@ import java.util.function.Function;
 
 public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInjectedAnnotator() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(StdFileTypes.XML.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyAnnotator()}, () -> {
+    DaemonRespondToChangesTest.useAnnotatorsIn(XmlFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyAnnotator()}, () -> {
       doTest(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".xml",true,false);
     });
   }
