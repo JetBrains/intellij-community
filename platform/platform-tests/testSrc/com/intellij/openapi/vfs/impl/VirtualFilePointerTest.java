@@ -1055,7 +1055,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.getFile().isValid());
 
     PlatformTestUtil.startPerformanceTest("get()", 3000, () -> {
-      for (int i=0; i<800_000_000; i++) {
+      for (int i=0; i<200_000_000; i++) {
         assertNotNull(pointer.getFile());
       }
     }).assertTiming();
