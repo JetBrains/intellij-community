@@ -68,8 +68,16 @@ public final class Foundation {
     return new ID(myObjcMsgSend.invokeLong(prepInvoke(id, selector, args)));
   }
 
+  public static ID invokeVarArg(final ID id, final Pointer selector, Object... args) {
+    return myFoundationLibrary.objc_msgSend(id, selector, args);
+  }
+
   public static ID invoke(final String cls, final String selector, Object... args) {
     return invoke(getObjcClass(cls), createSelector(selector), args);
+  }
+
+  public static ID invokeVarArg(final String cls, final String selector, Object... args) {
+    return invokeVarArg(getObjcClass(cls), createSelector(selector), args);
   }
 
   public static ID safeInvoke(final String stringCls, final String stringSelector, Object... args) {
@@ -580,8 +588,8 @@ public final class Foundation {
   }
 
   public static ID createDict(final String @NotNull [] keys, final Object @NotNull [] values) {
-    final ID nsKeys = invoke("NSArray", "arrayWithObjects:", convertTypes(keys));
-    final ID nsData = invoke("NSArray", "arrayWithObjects:", convertTypes(values));
+    final ID nsKeys = invokeVarArg("NSArray", "arrayWithObjects:", convertTypes(keys));
+    final ID nsData = invokeVarArg("NSArray", "arrayWithObjects:", convertTypes(values));
     return invoke("NSDictionary", "dictionaryWithObjects:forKeys:", nsData, nsKeys);
   }
 
