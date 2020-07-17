@@ -24,9 +24,12 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 class RefreshSessionImpl extends RefreshSession {
   private static final Logger LOG = Logger.getInstance(RefreshSession.class);
+
+  private static final long REFRESH_SESSION_DURATION_REPORT_THRESHOLD = 10000L;
 
   private static final AtomicLong ID_COUNTER = new AtomicLong(0);
 
@@ -119,10 +122,12 @@ class RefreshSessionImpl extends RefreshSession {
         ((LocalFileSystemImpl)fs).markSuspiciousFilesDirty(workQueue);
       }
 
-      long t = 0;
+      long t = System.currentTimeMillis();
+      String refreshSessionInfo = String.format("work queue size: %s , file types: %s", workQueue.size(),
+                                                workQueue.stream().collect(
+                                                  Collectors.groupingBy(file -> file.getFileType().getName(), Collectors.counting())));
       if (LOG.isTraceEnabled()) {
         LOG.trace("scanning " + workQueue);
-        t = System.currentTimeMillis();
       }
 
       int count = 0;
@@ -151,9 +156,13 @@ class RefreshSessionImpl extends RefreshSession {
       }
       while (!myCancelled && myIsRecursive && count < 3 && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
 
-      if (t != 0) {
-        t = System.currentTimeMillis() - t;
-        LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, events " + myEvents);
+      t = System.currentTimeMillis() - t;
+      if (LOG.isTraceEnabled()) {
+        LOG.trace((myCancelled ?  "cancelled, " : "done, ") + t + " ms, events " + myEvents);
+      } else if (t > REFRESH_SESSION_DURATION_REPORT_THRESHOLD){
+        LOG.info(String.format(
+          "Refresh session took longer than %d seconds. Session info -> %s; result: %s, duration: %d ms, generated events count: %d",
+          REFRESH_SESSION_DURATION_REPORT_THRESHOLD / 1000, refreshSessionInfo, myCancelled ? "cancelled" : "done", t, myEvents.size()));
       }
     }
 
