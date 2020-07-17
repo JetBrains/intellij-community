@@ -33,8 +33,12 @@ open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
     val roots = dataContext.getRoots().take(2).toList()
     if (roots.isEmpty()) return checkinActionName
 
-    val messageKey = if (roots[0].isDirectory) "action.name.checkin.directory" else "action.name.checkin.file"
-    return message(pluralize(messageKey, roots.size), checkinActionName)
+    if (roots[0].isDirectory) {
+      return message("action.name.checkin.directory", checkinActionName, roots.size)
+    }
+    else {
+      return message("action.name.checkin.file", checkinActionName, roots.size)
+    }
   }
 
   override fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList {
