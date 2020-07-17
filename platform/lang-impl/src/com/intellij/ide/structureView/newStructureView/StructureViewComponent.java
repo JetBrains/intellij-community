@@ -66,8 +66,6 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
@@ -286,21 +284,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private void addTreeKeyListener() {
     EditSourceOnEnterKeyHandler.install(getTree());
-    getTree().addKeyListener(
-      new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-          if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
-            if (e.isConsumed()) return;
-            PsiCopyPasteManager copyPasteManager = PsiCopyPasteManager.getInstance();
-            boolean[] isCopied = new boolean[1];
-            if (copyPasteManager.getElements(isCopied) != null && !isCopied[0]) {
-              copyPasteManager.clear();
-              e.consume();
-            }
-          }
-        }
-      });
+    getTree().addKeyListener(new PsiCopyPasteManager.EscapeHandler());
   }
 
   @Override
