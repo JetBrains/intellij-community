@@ -34,7 +34,12 @@ public abstract class FileAttributesReadingTest {
     @BeforeClass
     public static void setUpClass() {
       FileSystemUtil.resetMediator();
-      assertEquals(SystemInfo.isWindows ? "IdeaWin32" : "JnaUnix", FileSystemUtil.getMediatorName());
+      assertEquals(SystemInfo.isMac && SystemInfo.isArm64
+                   ? "Nio2" // macOS arm64 only supports NIO2 mediator
+                   : SystemInfo.isWindows
+                     ? "IdeaWin32"
+                     : "JnaUnix",
+                   FileSystemUtil.getMediatorName());
     }
   }
 
