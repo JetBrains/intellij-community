@@ -492,7 +492,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             }
           }
         }
-        if (myMethod.isValid() && myMethod.isWritable() && myDeleteTheDeclaration) myMethod.delete();
+        if (myMethod.isValid() && myMethod.isWritable() && myDeleteTheDeclaration) {
+          CommentTracker tracker = new CommentTracker();
+          tracker.markUnchanged(myMethod.getBody());
+          tracker.markUnchanged(myMethod.getDocComment());
+          tracker.deleteAndRestoreComments(myMethod);
+        }
       }
       removeAddedBracesWhenPossible();
     }

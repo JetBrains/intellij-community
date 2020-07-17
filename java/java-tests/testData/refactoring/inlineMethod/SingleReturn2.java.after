@@ -3,6 +3,8 @@ class Tester {
 
     native void doB();
 
+    // IDEA-158665
+
     void useInlinedMethod() {
         if (!a) {
             doB();
