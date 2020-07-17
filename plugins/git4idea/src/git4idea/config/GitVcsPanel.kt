@@ -239,7 +239,7 @@ internal class GitVcsPanel(private val project: Project) :
     branchUpdateInfoRow = row {
       supportedBranchUpLabel = JBLabel(message("settings.supported.for.2.9"))
       cell {
-        label(message("settings.explicitly.check"))
+        label(message("settings.explicitly.check") + " ")
         comboBox(
           EnumComboBoxModel(GitIncomingCheckStrategy::class.java),
           {
@@ -353,7 +353,7 @@ internal class GitVcsPanel(private val project: Project) :
           }
         }.initUi()
 
-        label(message("settings.filter.update.info"))
+        label(message("settings.filter.update.info") + " ")
 
         component()
           .onIsModified {

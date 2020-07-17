@@ -112,7 +112,7 @@ public final class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     });
 
     JPanel repoSelectorPanel = new JPanel(new BorderLayout());
-    JBLabel label = new JBLabel(GitBundle.message("branch.not.fully.merged.dialog.repository.label"));
+    JBLabel label = new JBLabel(GitBundle.message("branch.not.fully.merged.dialog.repository.label") + " ");
     label.setLabelFor(repoSelectorPanel);
     repoSelectorPanel.add(label, BorderLayout.WEST);
     repoSelectorPanel.add(repositorySelector);
