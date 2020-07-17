@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -16,7 +17,7 @@ public final class UIBundle extends DynamicBundle {
   }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (!INSTANCE.containsKey(key)) {
       return UtilUiBundle.message(key, params);
     }
@@ -24,7 +25,7 @@ public final class UIBundle extends DynamicBundle {
   }
 
   @NotNull
-  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (!INSTANCE.containsKey(key)) {
       return () -> UtilUiBundle.message(key, params);
     }

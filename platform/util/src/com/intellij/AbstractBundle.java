@@ -9,7 +9,10 @@ import org.jetbrains.annotations.*;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
 /**
@@ -38,23 +41,20 @@ public abstract class AbstractBundle {
     myPathToBundle = pathToBundle;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public String getMessage(@NotNull String key, Object @NotNull ... params) {
+  public @NotNull @Nls String getMessage(@NotNull String key, Object @NotNull ... params) {
     return message(getResourceBundle(), key, params);
   }
 
-  @NotNull
-  public Supplier<String> getLazyMessage(@NotNull String key, Object @NotNull ... params) {
+  public @NotNull Supplier<@Nls String> getLazyMessage(@NotNull String key, Object @NotNull ... params) {
     return () -> getMessage(key, params);
   }
 
-  @Nullable
-  public String messageOfNull(@NotNull String key, Object @NotNull ... params) {
+  public @Nullable @Nls String messageOfNull(@NotNull String key, Object @NotNull ... params) {
     return messageOrNull(getResourceBundle(), key, params);
   }
 
-  public String messageOrDefault(@NotNull String key,
+  public @Nls String messageOrDefault(@NotNull String key,
                                  @Nullable String defaultValue,
                                  Object @NotNull ... params) {
     return messageOrDefault(getResourceBundle(), key, defaultValue, params);
@@ -74,14 +74,11 @@ public abstract class AbstractBundle {
     return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
   }
 
-  @Nls
-  @NotNull
-  public static String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+  public static @Nls @NotNull String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return BundleBase.message(bundle, key, params);
   }
 
-  @Nullable
-  public static String messageOrNull(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+  public static @Nullable @Nls String messageOrNull(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     String value = messageOrDefault(bundle, key, key, params);
     if (key.equals(value)) return null;
     return value;
@@ -96,8 +93,7 @@ public abstract class AbstractBundle {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  protected ResourceBundle getResourceBundle(@Nullable ClassLoader classLoader) {
+  protected @NotNull ResourceBundle getResourceBundle(@Nullable ClassLoader classLoader) {
     ResourceBundle bundle;
     if (DefaultBundleService.isDefaultBundle()) {
       bundle = getBundle(classLoader, myDefaultBundle);
@@ -123,8 +119,7 @@ public abstract class AbstractBundle {
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache =
     ConcurrentFactoryMap.createWeakMap(k -> ContainerUtil.createConcurrentSoftValueMap());
 
-  @NotNull
-  public ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+  public @NotNull ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
     return DefaultBundleService.isDefaultBundle()
            ? getResourceBundle(pathToBundle, loader, ourDefaultCache.get(loader))
            : getResourceBundle(pathToBundle, loader, ourCache.get(loader));

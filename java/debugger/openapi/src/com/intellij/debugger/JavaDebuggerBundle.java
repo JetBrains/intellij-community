@@ -4,6 +4,7 @@ package com.intellij.debugger;
 import com.intellij.DynamicBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -17,12 +18,12 @@ public final class JavaDebuggerBundle extends DynamicBundle {
   private JavaDebuggerBundle() { super(BUNDLE); }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
   @NotNull
-  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 

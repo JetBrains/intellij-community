@@ -2,6 +2,7 @@
 package com.intellij.idea;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -17,12 +18,12 @@ public final class ActionsBundle extends DynamicBundle {
     super(IDEA_ACTIONS_BUNDLE);
   }
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
   }
 
   @NotNull
-  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getLazyMessage(key, params);
   }
 

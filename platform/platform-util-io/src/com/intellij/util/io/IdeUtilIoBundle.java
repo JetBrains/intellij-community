@@ -2,10 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
@@ -19,12 +16,12 @@ public final class IdeUtilIoBundle extends DynamicBundle {
   }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
   @NotNull
-  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }
