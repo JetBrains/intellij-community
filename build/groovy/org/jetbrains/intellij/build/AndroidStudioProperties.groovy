@@ -454,10 +454,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
           return
         }
 
-        context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
-          fileset(dir: "$root/prebuilts/tools/windows-x86_64/offline-sdk")
-        }
-
         def androidRoot = "$root/tools/adt/idea"
         context.ant.copy(file: "$androidRoot/native/installer/win/builds/uninstall.exe", tofile: "$targetDirectory/uninstall.exe")
         context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/win/webp_jni.dll", tofile: "$targetDirectory/plugins/android/lib/webp_jni.dll")
@@ -533,10 +529,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
         if (context.options.studioSdk) {
           return
-        }
-
-        context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
-          fileset(dir: "$root/prebuilts/tools/linux-x86_64/offline-sdk")
         }
 
         def androidRoot = "$root/tools/adt/idea"
@@ -630,10 +622,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       if (context.options.studioSdk) {
         return
-      }
-
-      context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
-        fileset(dir: "$root/prebuilts/tools/darwin-x86_64/offline-sdk")
       }
 
       def androidRoot = "$root/tools/adt/idea"
