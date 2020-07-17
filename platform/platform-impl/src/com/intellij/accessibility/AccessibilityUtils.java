@@ -3,6 +3,7 @@ package com.intellij.accessibility;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -18,8 +19,10 @@ public final class AccessibilityUtils {
     }
 
     if (isScreenReaderDetected()) {
-      int answer = Messages.showYesNoDialog(ApplicationBundle.message("confirmation.screen.reader.enable"),
+      String appName = ApplicationInfoImpl.getShadowInstance().getVersionName();
+      int answer = Messages.showYesNoDialog(ApplicationBundle.message("confirmation.screen.reader.enable", appName),
                                             ApplicationBundle.message("title.screen.reader.support"),
+                                            ApplicationBundle.message("button.enable"), Messages.getCancelButton(),
                                             Messages.getQuestionIcon());
       if (answer == Messages.YES) {
         System.setProperty(GeneralSettings.SCREEN_READERS_DETECTED_PROPERTY, "true");
