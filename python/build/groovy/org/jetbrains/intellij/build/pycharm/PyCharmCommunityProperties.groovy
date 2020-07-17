@@ -30,7 +30,6 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
         directoryName = "pythonIDE"
         mainJarName = "python-ide.jar"
         withModule("intellij.pycharm.community.customization.impl", mainJarName)
-        withProjectLibraryUnpackedIntoJar("tips-pycharm-community", mainJarName)
       }
     ]
     productLayout.pluginModulesToPublish = ["intellij.python.community.plugin"]
