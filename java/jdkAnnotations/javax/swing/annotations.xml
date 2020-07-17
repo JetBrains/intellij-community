@@ -3,6 +3,9 @@
   <item name="javax.swing">
     <annotation name="org.jetbrains.annotations.Nls" />
   </item>
+  <item name='javax.swing.AbstractAction void putValue(java.lang.String, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="javax.swing.ActionMap javax.swing.Action get(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
