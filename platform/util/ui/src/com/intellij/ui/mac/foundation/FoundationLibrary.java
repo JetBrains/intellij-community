@@ -43,9 +43,9 @@ public interface FoundationLibrary extends Library {
   ID objc_getMetaClass(String name);
 
   /**
-   * Note: vararg version should be used only for vararg selectors
-    */
-  ID objc_msgSend(ID receiver, Pointer selector, Object... args);
+   * Note: Vararg version. Should only be used only for selectors with a single fixed argument followed by varargs.
+   */
+  ID objc_msgSend(ID receiver, Pointer selector, Object firstArg, Object... args);
   double objc_msgSend_fpret(ID receiver, Pointer selector, Object... args); // the same as objc_msgSend but returns double (32-bit only)
 
   boolean class_respondsToSelector(ID cls, Pointer selName);

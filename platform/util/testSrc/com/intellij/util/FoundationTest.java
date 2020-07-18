@@ -13,6 +13,9 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import static com.intellij.ui.mac.foundation.Foundation.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
@@ -126,6 +129,26 @@ public class FoundationTest {
                                          autorelease(invoke("NSNumber", "numberWithInt:", 4)),
                                          autorelease(invoke("NSNumber", "numberWithInt:", 5))));
     assertEquals("(\n    1,\n    2,\n    3,\n    4,\n    5\n)", toStringViaUTF8(invoke(number, "description")));
+  }
+
+  @Test
+  public void testObjcMsgSend_vararg_dict() {
+    ID number = autorelease(createDict(new String[]{"a", "b", "c"}, new Object[]{"x", "y", "z"}));
+    assertEquals("{\n    a = x;\n    b = y;\n    c = z;\n}", toStringViaUTF8(invoke(number, "description")));
+  }
+
+  @Test
+  public void testObjcMsgSend_vararg_singleString() {
+    ID number = autorelease(invokeVarArg("NSArray", "arrayWithObjects:", nsString("Hello")));
+    assertEquals("(\n    Hello\n)", toStringViaUTF8(invoke(number, "description")));
+  }
+
+  @Test
+  public void testObjcMsgSend_vararg_manyStrings() {
+    Object[] strings = IntStream.rangeClosed(1, 100).mapToObj(i -> nsString(Integer.toString(i))).toArray();
+    ID number = autorelease(invokeVarArg("NSArray", "arrayWithObjects:", strings));
+    assertEquals("(" + IntStream.rangeClosed(1, 100).mapToObj(i -> "\n    " + i).collect(Collectors.joining(",")) + "\n)",
+                 toStringViaUTF8(invoke(number, "description")));
   }
 
   @Test

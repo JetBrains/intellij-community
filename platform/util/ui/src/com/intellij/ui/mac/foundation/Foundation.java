@@ -68,8 +68,13 @@ public final class Foundation {
     return new ID(myObjcMsgSend.invokeLong(prepInvoke(id, selector, args)));
   }
 
+  /**
+   * Invokes the given vararg selector.
+   * Expects `NSArray arrayWithObjects:(id), ...` like signature, i.e. exactly one fixed argument, followed by varargs.
+   */
   public static ID invokeVarArg(final ID id, final Pointer selector, Object... args) {
-    return myFoundationLibrary.objc_msgSend(id, selector, args);
+    // c functions and objc methods have at least 1 fixed argument, we therefore need to separate out the first argument
+    return myFoundationLibrary.objc_msgSend(id, selector, args[0], Arrays.copyOfRange(args, 1, args.length));
   }
 
   public static ID invoke(final String cls, final String selector, Object... args) {
