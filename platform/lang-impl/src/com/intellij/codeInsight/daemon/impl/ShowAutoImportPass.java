@@ -218,6 +218,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   private static boolean hasUnresolvedReferences(@NotNull PsiFile file) {
+    if (file instanceof PsiCompiledElement) return false;
     Ref<Boolean> result = new Ref<>(false);
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
