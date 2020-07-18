@@ -118,6 +118,17 @@ public class FoundationTest {
   }
 
   @Test
+  public void testObjcMsgSend_vararg() {
+    ID number = autorelease(invokeVarArg("NSArray", "arrayWithObjects:",
+                                         autorelease(invoke("NSNumber", "numberWithInt:", 1)),
+                                         autorelease(invoke("NSNumber", "numberWithInt:", 2)),
+                                         autorelease(invoke("NSNumber", "numberWithInt:", 3)),
+                                         autorelease(invoke("NSNumber", "numberWithInt:", 4)),
+                                         autorelease(invoke("NSNumber", "numberWithInt:", 5))));
+    assertEquals("(\n    1,\n    2,\n    3,\n    4,\n    5\n)", toStringViaUTF8(invoke(number, "description")));
+  }
+
+  @Test
   public void testSelector() {
     Pointer sel = createSelector("respondsToSelector:");
     assertEquals("respondsToSelector:", stringFromSelector(sel));
