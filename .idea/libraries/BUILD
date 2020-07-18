@@ -106,16 +106,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "jsr305",
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = ["//tools/idea/lib:jsr305"],
-    # do not sort: must match IML order
-    runtime_deps = ["//tools/idea/lib:jsr305"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "JUnit3",
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/junit/junit/3.8.1:jar"],
