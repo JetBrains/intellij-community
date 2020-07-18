@@ -8,6 +8,8 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.JavaApplicationRunConfigurationImporter;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.jar.JarApplicationRunConfigurationImporter;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -285,6 +287,43 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     assertEquals("my/app2.jar", jarApp2Settings.get("jarPath"));
     assertEquals("-DvmKey=vmVal", jarApp1Settings.get("jvmArgs"));
     assertNull(jarApp2Settings.get("jvmArgs"));
+  }
+
+  @Test
+  public void testJarApplicationBeforeRunGradleTaskImport() throws Exception {
+    RunConfigurationImporter jarAppConfigImporter = new JarApplicationRunConfigurationImporter();
+    maskRunImporter(jarAppConfigImporter);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
+        "idea.project.settings {\n" +
+        "  runConfigurations {\n" +
+        "    'jarApp'(JarApplication) {\n" +
+        "      beforeRun {\n" +
+        "        'gradleTask'(GradleTask) {\n" +
+        "          task = tasks['projects']\n" +
+        "        }\n" +
+        "      }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}"
+      )
+    );
+
+    RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    RunConfiguration jarApp = runManager.findConfigurationByName("jarApp").getConfiguration();
+    assertNotNull(jarApp);
+
+    List<BeforeRunTask> tasks = runManager.getBeforeRunTasks(jarApp);
+    assertSize(1, tasks);
+    BeforeRunTask gradleBeforeRunTask = tasks.get(0);
+    assertInstanceOf(gradleBeforeRunTask, ExternalSystemBeforeRunTask.class);
+    ExternalSystemTaskExecutionSettings settings = ((ExternalSystemBeforeRunTask)gradleBeforeRunTask).getTaskExecutionSettings();
+    assertContain(settings.getTaskNames(), "projects");
+    assertEquals(FileUtil.toSystemIndependentName(getProjectPath()),
+                 FileUtil.toSystemIndependentName(settings.getExternalProjectPath()));
   }
 
   @Test

@@ -53,7 +53,7 @@ internal class RunConfigurationHandler : ConfigurationHandler {
         }
 
         (cfg["beforeRun"] as? List<*>)?.let {
-          var tasksList = runnerAndConfigurationSettings.configuration.getBeforeRunTasks()
+          var tasksList = runnerAndConfigurationSettings.configuration.getBeforeRunTasks().toMutableList()
           for (beforeRunConfig in it.filterIsInstance(Map::class.java)) {
             val typeName = beforeRunConfig["type"] as? String ?: continue
             importerForType(typeName)?.let { importer ->
