@@ -85,7 +85,7 @@ class InferenceCache {
     if (myTooComplexInstructions.contains(instruction)) return null;
 
     final List<DefinitionMap> definitionMaps = myDefinitionMaps.getValue();
-    if (definitionMaps == null) {
+    if (definitionMaps == null || !isDescriptorAvailable(descriptor)) {
       return null;
     }
 
@@ -234,5 +234,12 @@ class InferenceCache {
       }
     }
     return newTypes;
+  }
+
+  private boolean isDescriptorAvailable(@NotNull VariableDescriptor descriptor) {
+    if (myVarIndexes.getValue().containsKey(descriptor)) {
+      return true;
+    }
+    return ControlFlowUtils.getForeignVariableDescriptors(myScope).contains(descriptor);
   }
 }

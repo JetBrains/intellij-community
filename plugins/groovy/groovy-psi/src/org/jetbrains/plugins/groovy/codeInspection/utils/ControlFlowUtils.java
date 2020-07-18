@@ -767,6 +767,14 @@ public final class ControlFlowUtils {
   }
 
   public static @NotNull @Unmodifiable Set<@NotNull ResolvedVariableDescriptor>
+  getForeignVariableDescriptors(@NotNull GrControlFlowOwner owner) {
+    return CachedValuesManager.getCachedValue(owner, () -> {
+      Set<ResolvedVariableDescriptor> foreignDescriptors = getForeignVariableDescriptors(owner, __ -> true);
+      return CachedValueProvider.Result.create(foreignDescriptors, owner);
+    });
+  }
+
+  public static @NotNull @Unmodifiable Set<@NotNull ResolvedVariableDescriptor>
   getForeignVariableDescriptors(@NotNull GrControlFlowOwner owner,
                                 @NotNull Predicate<? super ReadWriteVariableInstruction> instructionFilter) {
     Set<ResolvedVariableDescriptor> usedDescriptors = new LinkedHashSet<>();
@@ -783,7 +791,8 @@ public final class ControlFlowUtils {
       }
     }
     Set<ResolvedVariableDescriptor> foreignDescriptors = usedDescriptors.stream()
-      .filter(descriptor -> descriptor.getVariable().getContext() != owner)
+      .filter(descriptor -> descriptor.getVariable().getContext() != owner &&
+                            PsiTreeUtil.getParentOfType(descriptor.getVariable(), GrControlFlowOwner.class) != owner)
       .collect(Collectors.toSet());
     return Collections.unmodifiableSet(foreignDescriptors);
   }
