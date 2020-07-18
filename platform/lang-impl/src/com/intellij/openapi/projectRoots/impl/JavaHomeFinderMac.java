@@ -51,12 +51,14 @@ final class JavaHomeFinderMac extends JavaHomeFinderBasic {
     List<Path> result = new ArrayList<>();
     result.add(file);
 
-    if (file.getFileName().toString().equalsIgnoreCase("Home")) {
+    Path home = file.getFileName();
+    if (home != null && home.toString().equalsIgnoreCase("Home")) {
       Path parentFile = file.getParent();
       if (parentFile != null) {
         result.add(parentFile);
 
-        if (parentFile.getFileName().toString().equalsIgnoreCase("Contents")) {
+        Path contents = parentFile.getFileName();
+        if (contents != null && contents.toString().equalsIgnoreCase("Contents")) {
           Path parentParentFile = parentFile.getParent();
           if (parentParentFile != null) {
             result.add(parentParentFile);
