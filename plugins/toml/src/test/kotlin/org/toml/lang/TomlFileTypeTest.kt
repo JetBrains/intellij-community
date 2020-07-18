@@ -7,10 +7,10 @@ package org.toml.lang
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.toml.TomlTestBase
 import org.toml.lang.psi.TomlFileType
 
-class TomlFileTypeTest : BasePlatformTestCase() {
+class TomlFileTypeTest : TomlTestBase() {
 
     fun `test toml file by extension`() = doTest("example.toml")
     fun `test Cargo lock`() = doTest("Cargo.lock")

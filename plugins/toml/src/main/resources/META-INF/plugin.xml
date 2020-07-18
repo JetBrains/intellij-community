@@ -34,6 +34,13 @@
         <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
         <lang.elementManipulator forClass="org.toml.lang.psi.TomlLiteral"
                                  implementationClass="org.toml.lang.psi.TomlStringLiteralManipulator"/>
+
+        <!-- Formatting -->
+        <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
+        <codeStyleSettingsProvider implementation="org.toml.ide.formatter.settings.TomlCodeStyleSettingsProvider"/>
+        <langCodeStyleSettingsProvider
+            implementation="org.toml.ide.formatter.settings.TomlLanguageCodeStyleSettingsProvider"/>
+
         <colorSettingsPage implementation="org.toml.ide.colors.TomlColorSettingsPage"/>
         <indexPatternBuilder implementation="org.toml.ide.todo.TomlTodoIndexPatternBuilder"/>
         <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>

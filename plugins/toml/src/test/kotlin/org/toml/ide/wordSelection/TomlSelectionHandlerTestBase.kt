@@ -7,13 +7,14 @@ package org.toml.ide.wordSelection
 
 import com.intellij.codeInsight.editorActions.SelectWordHandler
 import com.intellij.ide.DataManager
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.lang.annotations.Language
+import org.toml.TomlTestBase
 
-abstract class TomlSelectionHandlerTestBase : BasePlatformTestCase() {
+abstract class TomlSelectionHandlerTestBase : TomlTestBase() {
 
     protected fun doTest(@Language("TOML") before: String, @Language("TOML") vararg after: String) {
-        myFixture.configureByText("example.toml", before)
+        InlineFile(before)
+
         val action = SelectWordHandler(null)
         val dataContext = DataManager.getInstance().getDataContext(myFixture.editor.component)
         for (text in after) {

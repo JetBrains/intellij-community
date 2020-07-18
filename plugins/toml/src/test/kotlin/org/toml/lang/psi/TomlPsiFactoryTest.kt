@@ -5,9 +5,9 @@
 
 package org.toml.lang.psi
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.toml.TomlTestBase
 
-class TomlPsiFactoryTest : BasePlatformTestCase() {
+class TomlPsiFactoryTest : TomlTestBase() {
     private val factory: TomlPsiFactory get() = TomlPsiFactory(project)
 
     fun `test create literal`() {

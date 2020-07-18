@@ -6,10 +6,10 @@
 package org.toml.ide.annotator
 
 import com.intellij.openapiext.Testmark
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.lang.annotations.Language
+import org.toml.TomlTestBase
 
-abstract class TomlAnnotationTestBase() : BasePlatformTestCase() {
+abstract class TomlAnnotationTestBase : TomlTestBase() {
 
     protected lateinit var annotationFixture: TomlAnnotationTestFixture
 
