@@ -13,6 +13,7 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileChooser.FileElement
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.module.Module
@@ -111,7 +112,8 @@ private object PyWelcome {
 
     return baseDir.children.filterNot {
       ProjectCoreUtil.isProjectOrWorkspaceFile(it) ||
-      (innerSdk && it.isDirectory && VfsUtil.isAncestor(it, sdkBinary!!, true))
+      innerSdk && it.isDirectory && VfsUtil.isAncestor(it, sdkBinary!!, true) ||
+      FileElement.isFileHidden(it)
     }.firstOrNull()
   }
 
@@ -120,7 +122,7 @@ private object PyWelcome {
       .onWriteThread()
       .expireWith(project)
       .submit(
-        Callable<PsiFile?> {
+        Callable {
           WriteAction.compute<PsiFile?, Exception> {
             prepareFile(project, baseDir)?.also {
               AppUIExecutor.onUiThread().expireWith(project).execute { it.navigate(true) }
