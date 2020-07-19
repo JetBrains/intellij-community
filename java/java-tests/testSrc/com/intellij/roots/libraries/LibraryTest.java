@@ -9,6 +9,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTableImpl;
 import com.intellij.openapi.roots.libraries.Library;
@@ -165,7 +166,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
   }
 
-  public void testJarDirectoriesSerialization() {
+  public void testJarDirectoriesSerialization() throws Exception {
     LibraryTable table = getProjectLibraryTable();
     Library library = WriteAction.compute(() -> table.createLibrary("jarDirs"));
     Library.ModifiableModel model = library.getModifiableModel();
@@ -174,21 +175,31 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     model.addJarDirectory("file://jar-dir-src", false, OrderRootType.SOURCES);
     commit(model);
 
-    assertThat(serializeLibraries(myProject)).isEqualTo(
-      "<library name=\"jarDirs\">\n" +
-      "  <CLASSES>\n" +
-      "    <root url=\"file://jar-dir\" />\n" +
-      "    <root url=\"file://jar-dir-rec\" />\n" +
-      "  </CLASSES>\n" +
-      "  <JAVADOC />\n" +
-      "  <SOURCES>\n" +
-      "    <root url=\"file://jar-dir-src\" />\n" +
-      "  </SOURCES>\n" +
-      "  <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
-      "  <jarDirectory url=\"file://jar-dir-rec\" recursive=\"true\" />\n" +
-      "  <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +
-      "</library>"
-    );
+    String expected = "<library name=\"jarDirs\">\n" +
+                      "  <CLASSES>\n" +
+                      "    <root url=\"file://jar-dir\" />\n" +
+                      "    <root url=\"file://jar-dir-rec\" />\n" +
+                      //"    <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
+                      //"    <jarDirectory url=\"file://jar-dir-rec\" recursive=\"true\" />\n" +
+                      "  </CLASSES>\n" +
+                      "  <JAVADOC />\n" +
+                      "  <SOURCES>\n" +
+                      "    <root url=\"file://jar-dir-src\" />\n" +
+                      //"    <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" />\n" +
+                      "  </SOURCES>\n" +
+                      "  <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
+                      "  <jarDirectory url=\"file://jar-dir-rec\" recursive=\"true\" />\n" +
+                      "  <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +
+                      "</library>";
+    assertEquals(expected, serializeLibraries(myProject));
+
+    LibraryImpl library2 = (LibraryImpl)WriteAction.compute(() -> table.createLibrary("jarDirs2"));
+
+    Element root = JDOMUtil.load(expected);
+    library2.readExternal(root);
+    assertTrue(library2.isJarDirectory("file://jar-dir"));
+    assertTrue(library2.isJarDirectory("file://jar-dir-rec"));
+    assertTrue(library2.isJarDirectory("file://jar-dir-src", OrderRootType.SOURCES));
   }
 
   static String serializeLibraries(Project project) {
