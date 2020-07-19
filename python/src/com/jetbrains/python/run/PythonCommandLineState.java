@@ -13,6 +13,7 @@ import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmen
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.filters.UrlFilter;
+import com.intellij.execution.impl.ProcessStreamsSynchronizer;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -459,6 +460,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
     buildCommandLineParameters(commandLine);
 
     customizeEnvironmentVars(commandLine.getEnvironment(), myConfig.isPassParentEnvs());
+
+    ProcessStreamsSynchronizer.redirectErrorStreamIfNeeded(commandLine);
 
     return commandLine;
   }
