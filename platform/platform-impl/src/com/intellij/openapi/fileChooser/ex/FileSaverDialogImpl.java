@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
@@ -6,13 +6,12 @@ import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,15 +78,14 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     return null;
   }
 
-  @Nullable
-  protected File getFile() {
-    final VirtualFile selected = myFileSystemTree.getSelectedFile();
+  protected @Nullable File getFile() {
+    VirtualFile selected = myFileSystemTree.getSelectedFile();
     if (selected != null && !selected.isDirectory()) {
       return new File(selected.getPath());
     }
 
     String path = (selected == null) ? myPathTextField.getTextFieldText() : selected.getPath();
-    final File dir = new File(path);
+    File dir = new File(path);
     if (!dir.exists()) {
       return null;
     }
@@ -102,8 +100,9 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     }
 
     if (!correctExt) {
-      final String selectedExtension = ObjectUtils.doIfNotNull(myExtensions.getSelectedItem(), item -> item.toString());
-      if (!StringUtil.isEmpty(selectedExtension)) {
+      Object obj = myExtensions.getSelectedItem();
+      String selectedExtension = obj == null ? null : obj.toString();
+      if (!Strings.isEmpty(selectedExtension)) {
         path += "." + selectedExtension;
       }
     }
@@ -115,7 +114,8 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     for (VirtualFile file : selection) {
       if (file.isDirectory()) {
         myPathTextField.getField().setText(VfsUtil.getReadableUrl(file));
-      } else {
+      }
+      else {
         myFileName.setText(file.getName());
         final VirtualFile parent = file.getParent();
         if (parent != null) {

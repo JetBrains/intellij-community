@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.ide.IdeBundle;
@@ -36,7 +35,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Objects;
 
-public class CreatePatchConfigurationPanel {
+public final class CreatePatchConfigurationPanel {
   private static final int TEXT_FIELD_WIDTH = 70;
 
   private JPanel myMainPanel;
@@ -50,18 +49,17 @@ public class CreatePatchConfigurationPanel {
   private JBRadioButton myToClipboardButton;
   private JBRadioButton myToFileButton;
 
-  public CreatePatchConfigurationPanel(@NotNull final Project project) {
+  public CreatePatchConfigurationPanel(@NotNull Project project) {
     myProject = project;
     initMainPanel();
 
     myFileNameField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final FileSaverDialog dialog =
-          FileChooserFactory.getInstance().createSaveFileDialog(
-            new FileSaverDescriptor(VcsBundle.message("patch.creation.save.to.title"), ""), myMainPanel);
-        final String path = FileUtil.toSystemIndependentName(getFileName());
-        final int idx = path.lastIndexOf("/");
+        FileSaverDialog dialog = FileChooserFactory.getInstance()
+          .createSaveFileDialog(new FileSaverDescriptor(VcsBundle.message("patch.creation.save.to.title"), ""), myMainPanel);
+        String path = FileUtil.toSystemIndependentName(getFileName());
+        int idx = path.lastIndexOf("/");
         VirtualFile baseDir = idx == -1 ? project.getBaseDir() :
                               (LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path.substring(0, idx))));
         baseDir = baseDir == null ? project.getBaseDir() : baseDir;
@@ -87,7 +85,7 @@ public class CreatePatchConfigurationPanel {
   }
 
   private void initEncodingCombo() {
-    final DefaultComboBoxModel<Charset> encodingsModel = new DefaultComboBoxModel<>(CharsetToolkit.getAvailableCharsets());
+    ComboBoxModel<Charset> encodingsModel = new DefaultComboBoxModel<>(CharsetToolkit.getAvailableCharsets());
     myEncoding.setModel(encodingsModel);
     Charset projectCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
     myEncoding.setSelectedItem(projectCharset);

@@ -42,12 +42,8 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.doIfNotNull;
-import static com.intellij.util.ObjectUtils.notNull;
-
 @ApiStatus.Experimental
 public abstract class XmlTagDelegate {
-
   private static final Logger LOG = Logger.getInstance(XmlTagDelegate.class);
   @NonNls private static final String XML_NS_PREFIX = "xml";
   private static final Key<CachedValue<ResultWithLog<XmlTag[]>>> SUBTAGS_WITH_INCLUDES_KEY = Key.create("subtags with includes");
@@ -336,7 +332,7 @@ public abstract class XmlTagDelegate {
       XmlExtension extension = XmlExtension.getExtensionByElement(tag);
       if (extension != null) {
         String prefix = tag.getPrefixByNamespace(namespace);
-        descriptor = extension.wrapNSDescriptor(tag, notNull(prefix, ""), descriptor);
+        descriptor = extension.wrapNSDescriptor(tag, ObjectUtils.notNull(prefix, ""), descriptor);
       }
       return descriptor;
     }));
@@ -357,11 +353,12 @@ public abstract class XmlTagDelegate {
     if (currentFile == null) {
       final XmlDocument document = XmlUtil.getContainingFile(tag).getDocument();
       if (document != null) {
-        final String uri = XmlUtil.getDtdUri(document);
+        String uri = XmlUtil.getDtdUri(document);
         if (uri != null) {
-          final XmlFile containingFile = XmlUtil.getContainingFile(document);
-          final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, uri);
-          descriptor = xmlFile == null ? null : (XmlNSDescriptor)doIfNotNull(xmlFile.getDocument(), XmlDocument::getMetaData);
+          XmlFile containingFile = XmlUtil.getContainingFile(document);
+          XmlFile xmlFile = XmlUtil.findNamespace(containingFile, uri);
+          XmlDocument xmlDocument = xmlFile == null ? null : xmlFile.getDocument();
+          descriptor = (XmlNSDescriptor)(xmlDocument == null ? null : xmlDocument.getMetaData());
         }
 
         // We want to get fixed xmlns attr from dtd and check its default with requested namespace

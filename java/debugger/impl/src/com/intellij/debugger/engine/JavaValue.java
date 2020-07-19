@@ -26,9 +26,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -93,7 +91,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Nullable
   @Override
   public String getTypeName() {
-    return ObjectUtils.doIfNotNull(myValueDescriptor.getType(), Type::name);
+    Type type = myValueDescriptor.getType();
+    return type == null ? null : type.name();
   }
 
   @Override

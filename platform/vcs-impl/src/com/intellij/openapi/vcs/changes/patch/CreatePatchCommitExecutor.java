@@ -40,8 +40,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
-
 public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
   private static final String VCS_PATCH_PATH_KEY = "vcs.patch.path"; //NON-NLS
@@ -335,7 +333,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
                                            @NotNull PatchBuilder patchBuilder,
                                            @NotNull CommitContext commitContext) throws VcsException, IOException {
     List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, honorExcludedFromCommit);
-    writeAsPatchToClipboard(project, patches, baseDir, commitContext);
+    PatchWriter.writeAsPatchToClipboard(project, patches, baseDir, commitContext);
     VcsNotifier.getInstance(project).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
   }
 
@@ -345,8 +343,9 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
                                                                       @Nullable Collection<String> selectedPaths) {
     try {
       List<TextFilePatch> textFilePatches = ShelveChangesManager.loadPatches(project, shelvedList.PATH, null);
-      List<TextFilePatch> result =
-        !ContainerUtil.isEmpty(selectedPaths) ? ContainerUtil.filter(textFilePatches, patch -> selectedPaths.contains(patch.getAfterName())) : textFilePatches;
+      List<TextFilePatch> result = !ContainerUtil.isEmpty(selectedPaths) ? ContainerUtil.filter(textFilePatches, patch -> {
+        return selectedPaths.contains(patch.getAfterName());
+      }) : textFilePatches;
       mapPatchesToNewBase(Objects.requireNonNull(project.getBasePath()), basePath, result);
       return result;
     }

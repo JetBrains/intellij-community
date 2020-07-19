@@ -214,8 +214,7 @@ public final class LightEditServiceImpl implements LightEditService,
   @Override
   public LightEditorInfo createNewDocument(@Nullable Path preferredSavePath) {
     showEditorWindow();
-    String preferredName = ObjectUtils.doIfNotNull(preferredSavePath,
-                                                   path -> path.getFileName().toString());
+    String preferredName = preferredSavePath == null ? null : preferredSavePath.getFileName().toString();
     LightEditorInfo newEditorInfo = myEditorManager.createEmptyEditor(preferredName);
     newEditorInfo.setPreferredSavePath(preferredSavePath);
     addEditorTab(newEditorInfo);
