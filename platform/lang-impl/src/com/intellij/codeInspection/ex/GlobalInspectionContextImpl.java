@@ -274,7 +274,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       ProgressManager.checkCanceled();
       Boolean readActionSuccess = DumbService.getInstance(getProject()).tryRunReadActionInSmartMode(() -> {
         long start = myProfile == null ? 0 : System.currentTimeMillis();
-        PsiFile file = psiManager.findFile(virtualFile);
+        PsiFile file = virtualFile.isValid() ? psiManager.findFile(virtualFile) : null;
         if (file == null) {
           return true;
         }
