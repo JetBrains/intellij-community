@@ -11,15 +11,12 @@ import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.AWTEventListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 
 public class TagButton extends JBLayeredPane implements Disposable {
   protected final JButton myButton;
   private final InplaceButton myCloseButton;
-  private final AWTEventListener myEventListener;
 
   public TagButton(String text, Runnable action) {
     myButton = new JButton(text) {
@@ -39,38 +36,24 @@ public class TagButton extends JBLayeredPane implements Disposable {
       }
     });
     add(myButton, JLayeredPane.DEFAULT_LAYER);
-    myCloseButton = new InplaceButton(new IconButton(OptionsBundle.message("tag.button.tooltip"), AllIcons.Actions.DeleteTag, AllIcons.Actions.DeleteTagHover),
+    myCloseButton = new InplaceButton(new IconButton(OptionsBundle.message("tag.button.tooltip"), AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey),
                                       a -> remove(action));
-    myCloseButton.setVisible(false);
     myCloseButton.setOpaque(false);
     add(myCloseButton, JLayeredPane.POPUP_LAYER);
 
     layoutButtons();
-
-    myEventListener = new AWTEventListener() {
-      @Override
-      public void eventDispatched(AWTEvent event) {
-        MouseEvent me = (MouseEvent)event;
-        Component component = me.getComponent();
-        if (component == myButton || component == myCloseButton || component == TagButton.this) {
-          if ((MouseEvent.MOUSE_ENTERED == me.getID() || MouseEvent.MOUSE_MOVED == me.getID())) {
-            myCloseButton.setVisible(true);
-          }
-        }
-        else if (MouseEvent.MOUSE_MOVED == me.getID()) {
-          myCloseButton.setVisible(false);
-        }
-      }
-    };
-    Toolkit.getDefaultToolkit().addAWTEventListener(myEventListener, AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
   }
 
   protected void layoutButtons() {
+    myButton.setMargin(JBUI.emptyInsets());
     Dimension size = myButton.getPreferredSize();
-    Insets insets = myButton.getBorder().getBorderInsets(myButton);
-    setPreferredSize(new Dimension(size.width + 8 - insets.right, size.height + 8 - insets.top));
-    myButton.setBounds(0, 8 - insets.top, size.width, size.height);
-    myCloseButton.setBounds(size.width - 8 - insets.right, 0, 16, 16);
+    int iconWidth = myCloseButton.getIcon().getIconWidth();
+    int iconHeight = myCloseButton.getIcon().getIconHeight();
+    Dimension tagSize = new Dimension(size.width + iconWidth - myButton.getInsets().right, size.height);
+    setPreferredSize(tagSize);
+    myButton.setBounds(new Rectangle(tagSize));
+    myButton.setMargin(JBUI.insetsRight(iconWidth));
+    myCloseButton.setBounds(tagSize.width - iconWidth - JBUI.scale(10), (tagSize.height - iconHeight) / 2 + JBUI.scale(1), iconWidth, iconHeight);
   }
 
   protected void updateButton(String text, Icon icon) {
@@ -90,6 +73,5 @@ public class TagButton extends JBLayeredPane implements Disposable {
 
   @Override
   public void dispose() {
-    Toolkit.getDefaultToolkit().removeAWTEventListener(myEventListener);
   }
 }
