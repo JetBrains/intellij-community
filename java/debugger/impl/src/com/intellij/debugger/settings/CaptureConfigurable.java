@@ -58,6 +58,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -250,7 +251,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       public void actionPerformed(@NotNull final AnActionEvent e) {
         VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
           .createSaveFileDialog(new FileSaverDescriptor(JavaDebuggerBundle.message("export.selected.capture.points.to.file"), "", "xml"), e.getProject())
-          .save(null, null);
+          .save((Path)null, null);
         if (wrapper == null) return;
 
         Element rootElement = new Element("capture-points");
