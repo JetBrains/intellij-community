@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
-import com.intellij.openapi.diff.impl.patch.TextPatchBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -23,6 +22,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
+import com.intellij.project.ProjectKt;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.WaitForProgressToShow;
@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import javax.swing.*;
 import java.io.File;
@@ -38,7 +39,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
@@ -337,16 +341,16 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     VcsNotifier.getInstance(project).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
   }
 
-  private static List<? extends FilePatch> createFilePatchesFromShelf(@NotNull Project project,
-                                                                      Path basePath,
-                                                                      @NotNull ShelvedChangeList shelvedList,
-                                                                      @Nullable Collection<String> selectedPaths) {
+  private static @NotNull List<? extends FilePatch> createFilePatchesFromShelf(@NotNull Project project,
+                                                                               @NotNull Path basePath,
+                                                                               @NotNull ShelvedChangeList shelvedList,
+                                                                               @Nullable Collection<String> selectedPaths) {
     try {
-      List<TextFilePatch> textFilePatches = ShelveChangesManager.loadPatches(project, shelvedList.PATH, null);
-      List<TextFilePatch> result = !ContainerUtil.isEmpty(selectedPaths) ? ContainerUtil.filter(textFilePatches, patch -> {
+      List<TextFilePatch> textFilePatches = ShelveChangesManager.loadPatches(project, shelvedList.path, null);
+      List<TextFilePatch> result = ContainerUtil.isEmpty(selectedPaths) ? textFilePatches : ContainerUtil.filter(textFilePatches, patch -> {
         return selectedPaths.contains(patch.getAfterName());
-      }) : textFilePatches;
-      mapPatchesToNewBase(Objects.requireNonNull(project.getBasePath()), basePath, result);
+      });
+      mapPatchesToNewBase(ProjectKt.getStateStore(project).getProjectBasePath(), basePath, result);
       return result;
     }
     catch (Exception exception) {
@@ -355,14 +359,23 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     }
   }
 
-  private static void mapPatchesToNewBase(@NotNull String oldBase, @NotNull Path newBase, @NotNull List<? extends FilePatch> patches) {
+  private static void mapPatchesToNewBase(@NotNull Path oldBase, @NotNull Path newBase, @NotNull List<? extends FilePatch> patches) {
+    if (oldBase.equals(newBase)) {
+      return;
+    }
+
     for (FilePatch patch : patches) {
       patch.setBeforeName(patch.getBeforeName() == null
                           ? null
-                          : TextPatchBuilder.getRelativePath(newBase.toString(), new File(oldBase, patch.getBeforeName()).getPath()));
+                          : getRelativePath(oldBase, newBase, patch.getBeforeName()));
       patch.setAfterName((patch.getAfterFileName() == null
                           ? null
-                          : TextPatchBuilder.getRelativePath(newBase.toString(), new File(oldBase, patch.getAfterName()).getPath())));
+                          : getRelativePath(oldBase, newBase, patch.getAfterName())));
     }
+  }
+
+  @SystemIndependent
+  private static @NotNull String getRelativePath(@NotNull Path oldBase, @NotNull Path newBase, @NotNull String name) {
+    return newBase.relativize(oldBase.resolve(name)).toString().replace(File.separatorChar, '/');
   }
 }

@@ -16,6 +16,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -51,7 +52,6 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
-import com.intellij.openapi.ListSelection;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.text.DateFormatUtil;
@@ -198,15 +198,15 @@ public class ShelvedChangesViewManager implements Disposable {
       super(project, grouping);
     }
 
-    public void setShelvedLists(@NotNull List<? extends ShelvedChangeList> shelvedLists) {
+    public void setShelvedLists(@NotNull List<ShelvedChangeList> shelvedLists) {
       createShelvedListsWithChangesNode(shelvedLists, myRoot);
     }
 
-    public void setDeletedShelvedLists(@NotNull List<? extends ShelvedChangeList> shelvedLists) {
+    public void setDeletedShelvedLists(@NotNull List<ShelvedChangeList> shelvedLists) {
       createShelvedListsWithChangesNode(shelvedLists, createTagNode(VcsBundle.message("shelve.recently.deleted.node")));
     }
 
-    private void createShelvedListsWithChangesNode(@NotNull List<? extends ShelvedChangeList> shelvedLists, @NotNull ChangesBrowserNode<?> parentNode) {
+    private void createShelvedListsWithChangesNode(@NotNull List<ShelvedChangeList> shelvedLists, @NotNull ChangesBrowserNode<?> parentNode) {
       shelvedLists.forEach(changeList -> {
         List<ShelvedWrapper> shelvedChanges = new ArrayList<>();
         requireNonNull(changeList.getChanges()).stream().map(ShelvedWrapper::new).forEach(shelvedChanges::add);
@@ -535,7 +535,7 @@ public class ShelvedChangesViewManager implements Disposable {
       }
     }
 
-    private void showUndoDeleteNotification(@NotNull List<? extends ShelvedChangeList> shelvedListsToDelete,
+    private void showUndoDeleteNotification(@NotNull List<ShelvedChangeList> shelvedListsToDelete,
                                             int fileListSize,
                                             @NotNull Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate) {
       String message = constructDeleteSuccessfullyMessage(fileListSize, shelvedListsToDelete.size(), getFirstItem(shelvedListsToDelete));
@@ -568,8 +568,8 @@ public class ShelvedChangesViewManager implements Disposable {
       }
     }
 
-    private static List<ShelvedBinaryFile> getBinariesNotInLists(@NotNull List<? extends ShelvedChangeList> listsToDelete,
-                                                                 @NotNull List<? extends ShelvedBinaryFile> binaryFiles) {
+    private static List<ShelvedBinaryFile> getBinariesNotInLists(@NotNull List<ShelvedChangeList> listsToDelete,
+                                                                 @NotNull List<ShelvedBinaryFile> binaryFiles) {
       List<ShelvedBinaryFile> result = new ArrayList<>(binaryFiles);
       for (ShelvedChangeList list : listsToDelete) {
         result.removeAll(list.getBinaryFiles());
@@ -578,8 +578,8 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @NotNull
-    private static List<ShelvedChange> getChangesNotInLists(@NotNull List<? extends ShelvedChangeList> listsToDelete,
-                                                            @NotNull List<? extends ShelvedChange> shelvedChanges) {
+    private static List<ShelvedChange> getChangesNotInLists(@NotNull List<ShelvedChangeList> listsToDelete,
+                                                            @NotNull List<ShelvedChange> shelvedChanges) {
       List<ShelvedChange> result = new ArrayList<>(shelvedChanges);
       // all changes should be loaded because action performed from loaded shelf tab
       listsToDelete.stream().map(list -> requireNonNull(list.getChanges())).forEach(result::removeAll);

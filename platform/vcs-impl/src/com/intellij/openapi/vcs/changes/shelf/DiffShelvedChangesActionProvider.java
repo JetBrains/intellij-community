@@ -49,6 +49,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -60,7 +62,7 @@ import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.cre
 import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createDiffRequest;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
-public class DiffShelvedChangesActionProvider implements AnActionExtensionProvider {
+public final class DiffShelvedChangesActionProvider implements AnActionExtensionProvider {
   private static final Logger LOG = getInstance(DiffShelvedChangesActionProvider.class);
 
   @Override
@@ -171,19 +173,18 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     return AppliedTextPatch.create(applier.getAppliedInfo());
   }
 
-  static class PatchesPreloader {
+  final static class PatchesPreloader {
     private final Project myProject;
-    private final SoftHardCacheMap<String, PatchInfo> myFilePatchesMap = new SoftHardCacheMap<>(5, 5);
+    private final SoftHardCacheMap<Path, PatchInfo> myFilePatchesMap = new SoftHardCacheMap<>(5, 5);
     private final ReadWriteLock myLock = new ReentrantReadWriteLock(true);
 
     PatchesPreloader(final Project project) {
       myProject = project;
     }
 
-    @NotNull
     @CalledInBackground
-    public TextFilePatch getPatch(final ShelvedChange shelvedChange, @Nullable CommitContext commitContext) throws VcsException {
-      String patchPath = shelvedChange.getPatchPath();
+    public @NotNull TextFilePatch getPatch(@NotNull ShelvedChange shelvedChange, @Nullable CommitContext commitContext) throws VcsException {
+      Path patchPath = shelvedChange.getPatchPath();
       if (getInfoFromCache(patchPath) == null || isPatchFileChanged(patchPath)) {
         readFilePatchAndUpdateCaches(patchPath, commitContext);
       }
@@ -198,7 +199,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       throw new VcsException("Can not find patch for " + shelvedChange.getBeforePath() + " in patch file.");
     }
 
-    private PatchInfo getInfoFromCache(@NotNull String patchPath) {
+    private PatchInfo getInfoFromCache(@NotNull Path patchPath) {
       try {
         myLock.readLock().lock();
         return myFilePatchesMap.get(patchPath);
@@ -208,11 +209,11 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       }
     }
 
-    private void readFilePatchAndUpdateCaches(@NotNull String patchPath, @Nullable CommitContext commitContext) throws VcsException {
+    private void readFilePatchAndUpdateCaches(@NotNull Path patchPath, @Nullable CommitContext commitContext) throws VcsException {
       try {
         myLock.writeLock().lock();
         myFilePatchesMap.put(patchPath, new PatchInfo(ShelveChangesManager.loadPatches(myProject, patchPath, commitContext),
-                                                      new File(patchPath).lastModified()));
+                                                      Files.getLastModifiedTime(patchPath).toMillis()));
       }
       catch (IOException | PatchSyntaxException e) {
         throw new VcsException(e);
@@ -222,14 +223,21 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       }
     }
 
-    public boolean isPatchFileChanged(@NotNull String patchPath) {
+    public boolean isPatchFileChanged(@NotNull Path patchPath) {
       PatchInfo patchInfo = getInfoFromCache(patchPath);
-      long lastModified = new File(patchPath).lastModified();
-      return patchInfo != null && lastModified != patchInfo.myLoadedTimeStamp;
+      if (patchInfo == null) {
+        return false;
+      }
+
+      try {
+        return Files.getLastModifiedTime(patchPath).toMillis() != patchInfo.myLoadedTimeStamp;
+      }
+      catch (IOException e) {
+        return false;
+      }
     }
 
-    private static class PatchInfo {
-
+    private static final class PatchInfo {
       private final long myLoadedTimeStamp;
       @NotNull private final List<TextFilePatch> myTextFilePatches;
 

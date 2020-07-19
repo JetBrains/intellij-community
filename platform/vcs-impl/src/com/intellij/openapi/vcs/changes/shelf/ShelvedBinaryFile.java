@@ -29,7 +29,7 @@ import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 /**
  * @author yole
  */
-public class ShelvedBinaryFile implements JDOMExternalizable {
+public final class ShelvedBinaryFile implements JDOMExternalizable {
   public String BEFORE_PATH;
   public String AFTER_PATH;
   @Nullable public String SHELVED_PATH;         // null if binary file was deleted

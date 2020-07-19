@@ -31,7 +31,7 @@ public final class UnifiedDiffWriter {
   }
 
   public static void write(@Nullable Project project,
-                           Collection<? extends FilePatch> patches,
+                           @NotNull Collection<? extends FilePatch> patches,
                            Writer writer,
                            String lineSeparator,
                            @Nullable CommitContext commitContext) throws IOException {
