@@ -1108,7 +1108,7 @@ public final class LambdaUtil {
         psiType = origTypeElement.getType();
       } else {
         psiType = substitutor.substitute(parameters[i].getType());
-        if (psiType == null || !PsiTypesUtil.isDenotableType(psiType, lambdaExpression)) return null;
+        if (!PsiTypesUtil.isDenotableType(psiType, lambdaExpression)) return null;
       }
 
       PsiAnnotation[] annotations = lambdaParameter.getAnnotations();
