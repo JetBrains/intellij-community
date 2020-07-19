@@ -60,6 +60,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
         if (oldOrder != null && !oldOrder.isEmpty()) {
           List<String> oldIdOrder = ContainerUtil.map(oldOrder, it -> VcsLogColumn.fromOrdinal(it).getId());
           myState.COLUMN_ID_ORDER = oldIdOrder;
+          myState.COLUMN_ORDER = new ArrayList<>();
           return oldIdOrder;
         }
         return ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.COMMIT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE),

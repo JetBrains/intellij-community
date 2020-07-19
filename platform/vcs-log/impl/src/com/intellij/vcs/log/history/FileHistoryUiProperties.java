@@ -48,7 +48,10 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   public <T> T get(@NotNull VcsLogUiProperty<T> property) {
     if (property instanceof TableColumnProperty) {
       TableColumnProperty tableColumnProperty = (TableColumnProperty)property;
-      tableColumnProperty.moveOldSettings(myState.COLUMN_WIDTH, myState.COLUMN_ID_WIDTH);
+      if (!myState.COLUMN_WIDTH.isEmpty()) {
+        tableColumnProperty.moveOldSettings(myState.COLUMN_WIDTH, myState.COLUMN_ID_WIDTH);
+        myState.COLUMN_WIDTH = new HashMap<>();
+      }
       Integer savedWidth = myState.COLUMN_ID_WIDTH.get(property.getName());
       if (savedWidth == null) {
         return (T)Integer.valueOf(-1);
@@ -70,6 +73,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
         if (oldOrder != null && !oldOrder.isEmpty()) {
           List<String> oldIdOrder = ContainerUtil.map(oldOrder, it -> VcsLogColumn.fromOrdinal(it).getId());
           myState.COLUMN_ID_ORDER = oldIdOrder;
+          myState.COLUMN_ORDER = new ArrayList<>();
           return oldIdOrder;
         }
         return ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.COMMIT),

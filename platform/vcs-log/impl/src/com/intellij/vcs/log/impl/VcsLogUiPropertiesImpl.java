@@ -64,7 +64,10 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     }
     if (property instanceof TableColumnProperty) {
       TableColumnProperty tableColumnProperty = (TableColumnProperty)property;
-      tableColumnProperty.moveOldSettings(state.COLUMN_WIDTH, state.COLUMN_ID_WIDTH);
+      if (!state.COLUMN_WIDTH.isEmpty()) {
+        tableColumnProperty.moveOldSettings(state.COLUMN_WIDTH, state.COLUMN_ID_WIDTH);
+        state.COLUMN_WIDTH = new HashMap<>();
+      }
       Integer savedWidth = state.COLUMN_ID_WIDTH.get(property.getName());
       if (savedWidth == null) {
         return (T)Integer.valueOf(-1);
