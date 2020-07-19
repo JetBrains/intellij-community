@@ -107,7 +107,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       myPanel.setToClipboard(PropertiesComponent.getInstance(myProject).getBoolean(VCS_PATCH_TO_CLIPBOARD, false));
       File commonAncestor = ChangesUtil.findCommonAncestor(changes);
       myPanel.setCommonParentPath(commonAncestor);
-      myPanel.selectBasePath(PatchWriter.calculateBaseForWritingPatch(myProject, changes));
+      myPanel.selectBasePath(PatchWriter.calculateBaseDirForWritingPatch(myProject, changes).toString());
       myPanel.setReversePatch(false);
       myPanel.setReverseEnabledAndVisible(myPatchBuilder.isReverseSupported());
 

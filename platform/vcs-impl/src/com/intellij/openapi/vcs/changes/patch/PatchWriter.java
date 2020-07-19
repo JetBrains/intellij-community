@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
-
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public final class PatchWriter {
   public static void writePatches(@NotNull Project project,
@@ -69,11 +68,28 @@ public final class PatchWriter {
     CopyPasteManager.getInstance().setContents(new StringSelection(writer.toString()));
   }
 
+  /**
+   * @deprecated Use {@link #calculateBaseDirForWritingPatch}
+   */
+  @Deprecated
   public static @NotNull VirtualFile calculateBaseForWritingPatch(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     File commonAncestor = ChangesUtil.findCommonAncestor(changes);
-    boolean multiVcs = ChangesUtil.getAffectedVcses(changes, project).size() != 1;
-    if (multiVcs || commonAncestor == null) return project.getBaseDir();
+    if (commonAncestor == null || ChangesUtil.getAffectedVcses(changes, project).size() != 1) {
+      return project.getBaseDir();
+    }
     VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, VcsUtil.getFilePath(commonAncestor));
-    return chooseNotNull(vcsRoot, project.getBaseDir());
+    return vcsRoot == null ? project.getBaseDir() : vcsRoot;
+  }
+
+  public static @NotNull Path calculateBaseDirForWritingPatch(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
+    File commonAncestor = ChangesUtil.findCommonAncestor(changes);
+    VirtualFile vcsRoot;
+    if (commonAncestor == null || ChangesUtil.getAffectedVcses(changes, project).size() != 1) {
+      vcsRoot = null;
+    }
+    else {
+      vcsRoot = VcsUtil.getVcsRootFor(project, VcsUtil.getFilePath(commonAncestor));
+    }
+    return vcsRoot == null ? ProjectKt.getStateStore(project).getProjectBasePath() : vcsRoot.toNioPath();
   }
 }

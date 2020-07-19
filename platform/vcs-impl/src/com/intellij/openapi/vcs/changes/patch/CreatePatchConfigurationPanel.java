@@ -15,10 +15,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.project.ProjectKt;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ui.FormBuilder;
@@ -33,7 +32,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.Objects;
+import java.nio.file.Paths;
 
 public final class CreatePatchConfigurationPanel {
   private static final int TEXT_FIELD_WIDTH = 70;
@@ -59,12 +58,10 @@ public final class CreatePatchConfigurationPanel {
         FileSaverDialog dialog = FileChooserFactory.getInstance()
           .createSaveFileDialog(new FileSaverDescriptor(VcsBundle.message("patch.creation.save.to.title"), ""), myMainPanel);
         String path = FileUtil.toSystemIndependentName(getFileName());
-        int idx = path.lastIndexOf("/");
-        VirtualFile baseDir = idx == -1 ? project.getBaseDir() :
-                              (LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path.substring(0, idx))));
-        baseDir = baseDir == null ? project.getBaseDir() : baseDir;
-        final String name = idx == -1 ? path : path.substring(idx + 1);
-        final VirtualFileWrapper fileWrapper = dialog.save(baseDir, name);
+        int index = path.lastIndexOf("/");
+        Path baseDir = index == -1 ? ProjectKt.getStateStore(project).getProjectBasePath() : Paths.get(path.substring(0, index));
+        String name = index == -1 ? path : path.substring(index + 1);
+        VirtualFileWrapper fileWrapper = dialog.save(baseDir, name);
         if (fileWrapper != null) {
           myFileNameField.setText(fileWrapper.getFile().getPath());
         }
@@ -76,12 +73,12 @@ public final class CreatePatchConfigurationPanel {
     myBasePathField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
     myBasePathField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
     myWarningLabel.setForeground(JBColor.RED);
-    selectBasePath(Objects.requireNonNull(myProject.getBaseDir()));
+    selectBasePath(ProjectKt.getStateStore(project).getProjectBasePath().toString());
     initEncodingCombo();
   }
 
-  public void selectBasePath(@NotNull VirtualFile baseDir) {
-    myBasePathField.setText(baseDir.getPresentableUrl());
+  public void selectBasePath(@NotNull String baseDir) {
+    myBasePathField.setText(baseDir);
   }
 
   private void initEncodingCombo() {
