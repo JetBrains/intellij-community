@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class SimpleActionGroup extends ActionGroup {
   private final ArrayList<AnAction> myChildren = new ArrayList<>();
@@ -47,6 +48,16 @@ public class SimpleActionGroup extends ActionGroup {
 
   public void removeAll() {
     myChildren.clear();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof SimpleActionGroup && myChildren.equals(((SimpleActionGroup)obj).myChildren);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myChildren);
   }
 }
 
