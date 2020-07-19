@@ -52,6 +52,7 @@ public class SimpleActionGroup extends ActionGroup {
 
   @Override
   public boolean equals(Object obj) {
+    if (myChildren.isEmpty()) return super.equals(obj);
     return obj instanceof SimpleActionGroup && myChildren.equals(((SimpleActionGroup)obj).myChildren);
   }
 
