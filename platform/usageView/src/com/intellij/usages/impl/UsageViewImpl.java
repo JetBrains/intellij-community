@@ -1403,7 +1403,7 @@ public class UsageViewImpl implements UsageViewEx {
       Class<? extends PsiReference> referenceClass = elementUsage.getReferenceClass();
       PsiElement element = elementUsage.getElement();
       if (referenceClass != null || element != null) {
-        Pair<Class<? extends PsiReference>, Language> pair = new Pair<>(referenceClass, element != null ? element.getLanguage() : null);
+        Pair<Class<? extends PsiReference>, Language> pair = Pair.create(referenceClass, element != null ? element.getLanguage() : null);
         if (myReportedReferenceClasses.add(pair)) {
           UsageViewStatisticsCollector.logUsageShown(myProject, pair.first, pair.second);
         }
