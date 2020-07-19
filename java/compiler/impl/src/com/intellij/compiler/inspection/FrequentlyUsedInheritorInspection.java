@@ -111,18 +111,21 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
     }
   }
 
-  @NotNull
-  private static List<ClassAndInheritorCount> getTopInheritorsUsingCompilerIndices(@NotNull PsiClass aClass,
-                                                                                   @NotNull GlobalSearchScope searchScope,
-                                                                                   @NotNull PsiElement place) {
+  private static @NotNull List<ClassAndInheritorCount> getTopInheritorsUsingCompilerIndices(@NotNull PsiClass aClass,
+                                                                                            @NotNull GlobalSearchScope searchScope,
+                                                                                            @NotNull PsiElement place) {
     String qName = aClass.getQualifiedName();
-    if (qName == null) return Collections.emptyList();
+    if (qName == null) {
+      return Collections.emptyList();
+    }
 
-    final Project project = aClass.getProject();
-    CompilerReferenceServiceEx compilerRefService = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(project);
+    Project project = aClass.getProject();
+    CompilerReferenceServiceEx compilerRefService = (CompilerReferenceServiceEx)CompilerReferenceService.getInstanceIfEnabled(project);
     try {
-      int id = compilerRefService.getNameId(qName);
-      if (id == 0) return Collections.emptyList();
+      int id = compilerRefService == null ? 0 : compilerRefService.getNameId(qName);
+      if (id == 0) {
+        return Collections.emptyList();
+      }
       return findInheritors(aClass, new CompilerRef.JavaCompilerClassRef(id), searchScope, place, -1, project, compilerRefService);
     }
     catch (ReferenceIndexUnavailableException e) {
@@ -131,7 +134,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
   }
 
   private static List<ClassAndInheritorCount> findInheritors(@NotNull PsiClass aClass,
-                                                             @NotNull CompilerRef.JavaCompilerClassRef classAsCompilerRef,
+                                                             @NotNull CompilerRef.CompilerClassHierarchyElementDef classAsCompilerRef,
                                                              @NotNull GlobalSearchScope searchScope,
                                                              @NotNull PsiElement place,
                                                              int hierarchyCardinality,
@@ -194,7 +197,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
                                                                     CompilerReferenceServiceEx compilerRefService) {
     if (classAndInheritorCount.psi.isInterface()) {
       return findInheritors(classAndInheritorCount.psi,
-                            (CompilerRef.JavaCompilerClassRef)classAndInheritorCount.descriptor,
+                            classAndInheritorCount.descriptor,
                             searchScope,
                             place,
                             hierarchyCardinality,
