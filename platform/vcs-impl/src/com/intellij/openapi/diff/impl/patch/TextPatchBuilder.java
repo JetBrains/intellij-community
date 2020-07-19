@@ -7,8 +7,6 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.DumbProgressIndicator;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -19,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -331,14 +330,6 @@ public final class TextPatchBuilder {
     return hunk;
   }
 
-  public static @NotNull String getRelativePath(@NotNull String basePath, @NotNull String secondPath) {
-    String baseModified = FileUtil.toSystemIndependentName(basePath);
-    String secondModified = FileUtil.toSystemIndependentName(secondPath);
-
-    String relPath = FileUtil.getRelativePath(baseModified, secondModified, '/', SystemInfo.isFileSystemCaseSensitive);
-    return relPath == null ? secondModified : relPath;
-  }
-
   @NotNull
   private TextFilePatch buildPatchHeading(@NotNull AirContentRevision beforeRevision,
                                           @NotNull AirContentRevision afterRevision) {
@@ -350,10 +341,10 @@ public final class TextPatchBuilder {
   private void setPatchHeading(@NotNull FilePatch result,
                                @NotNull AirContentRevision beforeRevision,
                                @NotNull AirContentRevision afterRevision) {
-    result.setBeforeName(getRelativePath(myBasePath.toString(), beforeRevision.getPath().getPath()));
+    result.setBeforeName(myBasePath.relativize(beforeRevision.getPath().getPath()).toString().replace(File.separatorChar, '/'));
     result.setBeforeVersionId(getRevisionName(beforeRevision));
 
-    result.setAfterName(getRelativePath(myBasePath.toString(), afterRevision.getPath().getPath()));
+    result.setAfterName(myBasePath.relativize(afterRevision.getPath().getPath()).toString().replace(File.separatorChar, '/'));
     result.setAfterVersionId(getRevisionName(afterRevision));
   }
 

@@ -98,10 +98,12 @@ public final class IdeaTextPatchBuilder {
 
   @Nullable
   private static AirContentRevision convertRevision(@Nullable ContentRevision cr, @Nullable String actualTextContent) {
-    if (cr == null) return null;
-    final FilePath fp = cr.getFile();
-    final StaticPathDescription description = new StaticPathDescription(fp.isDirectory(), fp.getIOFile().lastModified(), fp.getPath());
+    if (cr == null) {
+      return null;
+    }
 
+    FilePath filePath = cr.getFile();
+    StaticPathDescription description = new StaticPathDescription(filePath.isDirectory(), filePath.getIOFile().toPath());
     if (actualTextContent != null) {
       return new PartialTextAirContentRevision(actualTextContent, cr, description, null);
     }

@@ -3,20 +3,32 @@ package com.intellij.openapi.diff.impl.patch;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 final class StaticPathDescription implements PathDescription {
-  private final String myPath;
+  private final Path myPath;
   private final boolean myIsDirectory;
   private final long myLastModified;
 
-  StaticPathDescription(boolean isDirectory, long lastModified, String path) {
+  StaticPathDescription(boolean isDirectory, @NotNull Path path) {
     myIsDirectory = isDirectory;
+
+    long lastModified;
+    try {
+      lastModified = Files.getLastModifiedTime(path).toMillis();
+    }
+    catch (IOException e) {
+      lastModified = 0;
+    }
     myLastModified = lastModified;
+
     myPath = path;
   }
 
   @Override
-  @NotNull
-  public String getPath() {
+  public @NotNull Path getPath() {
     return myPath;
   }
 
