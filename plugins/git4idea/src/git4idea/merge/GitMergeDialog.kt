@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import git4idea.GitUtil
+import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -53,7 +54,6 @@ import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
-import kotlin.collections.HashMap
 
 class GitMergeDialog(private val project: Project,
                      private val defaultRoot: VirtualFile,
@@ -219,7 +219,7 @@ class GitMergeDialog(private val project: Project,
     }
 
     val items = (branchField.model as CollectionComboBoxModel).items
-    if (value !in items) {
+    if (items.none { equalBranches(it, value) }) {
       return ValidationInfo(GitBundle.message("merge.no.matching.branch.error"), branchField)
     }
 
