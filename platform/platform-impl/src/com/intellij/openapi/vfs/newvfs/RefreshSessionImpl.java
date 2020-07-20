@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -34,7 +36,7 @@ final class RefreshSessionImpl extends RefreshSession {
   private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
   private static final int REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS =
-    SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", 10);
+    SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", 30);
 
   private static final AtomicLong ID_COUNTER = new AtomicLong(0);
 
@@ -128,15 +130,10 @@ final class RefreshSessionImpl extends RefreshSession {
       }
 
       long t = System.currentTimeMillis();
-      String refreshSessionInfo = String.format("work queue size: %s , file types: %s", workQueue.size(),
-                                                workQueue.stream().collect(
-                                                  Collectors.groupingBy(file ->
-                                                                          file.getExtension() != null ?
-                                                                          file.getExtension() : (file.isDirectory() ? "folder" : "NA"),
-                                                                        Collectors.counting())));
       if (LOG.isTraceEnabled()) {
         LOG.trace("scanning " + workQueue);
       }
+      PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
 
       int count = 0;
       refresh: do {
@@ -168,9 +165,11 @@ final class RefreshSessionImpl extends RefreshSession {
       if (LOG.isTraceEnabled()) {
         LOG.trace((myCancelled ?  "cancelled, " : "done, ") + t + " ms, events " + myEvents);
       } else if (t > REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS * 1000L){
-        LOG.info(String.format(
-          "Refresh session took longer than %d seconds. Session info -> %s; result: %s, duration: %d ms, generated events count: %d",
-          REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS, refreshSessionInfo, myCancelled ? "cancelled" : "done", t, myEvents.size()));
+        String refreshSessionInfo = String.format("work queue size: %s , file types: %s", workQueue.size(), workQueue.stream().collect(
+          Collectors.groupingBy(file -> Objects.toString(file.getExtension()), Collectors.counting())));
+        snapshot.logResponsivenessSinceCreation(String.format(
+          "Refresh session took longer than %d seconds. Session info -> %s; result: %s, generated events count: %d",
+          REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS, refreshSessionInfo, myCancelled ? "cancelled" : "done",  myEvents.size()));
       }
     }
 
