@@ -951,6 +951,13 @@
       <replaceConfiguration name="incorrect DumbAware check" created="1522680840725" text="$target$ instanceof DumbAware" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.project.DumbService.isDumbAware($target$)">
         <constraint name="target" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="non-static JamAnnotationMeta" created="1523014327447" text="class $Class$ {&#10;  $Type$ $Variable$ = $Init$;&#10;}" recursive="false" caseInsensitive="true" type="JAVA">
+        <constraint name="Class" within="" contains="" />
+        <constraint name="Type" regexp="JamAnnotationMeta" within="" contains="" />
+        <constraint name="Variable" script="&quot;!__context__.hasModifierProperty(&quot;static&quot;)&quot;" maxCount="2147483647" target="true" within="" contains="" />
+        <constraint name="Init" within="" contains="" />
+        <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="findAnnotation(name) != null -&gt; hasAnnotation(name)" created="1523461479091" text="$Instance$.findAnnotation($Parameter$) != null" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.hasAnnotation($Parameter$)">
         <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" expressionTypes="com.intellij.psi.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
@@ -960,6 +967,11 @@
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="simplify to ContainerUtil.filter()" text="$l$.stream().filter($f$).collect(Collectors.toList())" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$, $f$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="l" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="simplify to ContainerUtil.find()" text="$l$.stream().filter($f$).findFirst().orElse(null)" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
@@ -1010,6 +1022,35 @@
         <constraint name="Type" within="" contains="" />
         <constraint name="elements" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="invalid use of ArrayUtil.contains: always returns false" text="com.intellij.util.ArrayUtil.contains($t$, $e$)" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="$e$.contains($t$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="t" within="" contains="" />
+        <constraint name="e" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="can shorten to ContainerUtil.set()" text="new HashSet&lt;&gt;(Arrays.asList($list$))" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.set($list$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="list" maxCount="32000" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="DataKey.getData()" text="$Var2$.getData($Var3$.getDataContext())" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var3$.getData($Var2$)">
+        <constraint name="__context__" target="true" within="" contains="" />
+        <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
+        <constraint name="Var3" nameOfExprType="AnActionEvent" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Presentation setEnabledAndVisible" text="$Var1$.setEnabled($Var2$);&#10;$Var1$.setVisible($Var2$);&#10;" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var1$.setEnabledAndVisible($Var2$);">
+        <constraint name="__context__" target="true" within="" contains="" />
+        <constraint name="Var2" within="" contains="" />
+        <constraint name="Var1" nameOfExprType="Presentation" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Presentation setEnabledAndVisible 2" text="$Var1$.setVisible($Var2$);&#10;$Var1$.setEnabled($Var2$);&#10;" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var1$.setEnabledAndVisible($Var2$);">
+        <constraint name="__context__" target="true" within="" contains="" />
+        <constraint name="Var2" within="" contains="" />
+        <constraint name="Var1" nameOfExprType="Presentation" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="super.update() in AnAction subclass" text="$super$.update($e$);" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="">
+        <constraint name="__context__" target="true" within="" contains="" />
+        <constraint name="super" regexp="super" nameOfExprType="AnAction" within="" contains="" />
+        <constraint name="e" nameOfExprType="AnActionEvent" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="SwingWorker generates too many threads; use Application.execute*() instead" text="javax.swing.SwingWorker" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
@@ -1022,6 +1063,10 @@
         <constraint name="e" nameOfExprType="java\.util\.concurrent\.ExecutorService" expressionTypes="java.util.concurrent.ExecutorService" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="d" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="@HardwareAgentRequired should be applied only for performance tests" text="@com.intellij.idea.HardwareAgentRequired&#10;class $class$ {&#10;  &#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="class" regexp=".*Performance.*" negateName="true" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents in tests" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$;&#10;} else {&#10;  $APP2$.$INV$($ARGS$);&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="APP" within="" contains="" />
@@ -1046,11 +1091,61 @@
         <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def project = __context__.getProject();&#10;def cClass = JavaPsiFacade.getInstance(project).findClass(c.getValue().substring(1), GlobalSearchScope.allScope(project));&#10;def cVirtualFile = c==null?null:PsiUtil.getVirtualFile(cClass);&#10;&#10;cVirtualFile != null &amp;&amp;  &#10;__context__.getContainingFile().getResolveScope().contains(cVirtualFile)&#10;&quot;" target="true" within="" contains="" />
         <constraint name="c" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Storing localized strings in static fields prevents dynamic loading of language bundles" text="static final String $string$ = $bundle$.message(&quot;$s$&quot;);" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="member">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="s" within="" contains="" />
+        <constraint name="string" within="" contains="" />
+        <constraint name="bundle" regexp="AbstractBundle" withinHierarchy="true" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="nullability for array elements specified, probably nullability for the array itself was intended" text="@$Anno$ $Type$ $x$;" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="x" within="" contains="" />
+        <constraint name="Anno" regexp="Nullable|NotNull" target="true" within="" contains="" />
+        <constraint name="Type" script="&quot;def parent = Type.parent;&#10;com.intellij.psi.util.PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp; &#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
+      </searchConfiguration>
+      <replaceConfiguration name="Replace explicit RExpression#getType with RTypeUtil#getType" text="((RExpression)$foo$).getType()" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RTypeUtil.getType($foo$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="foo" within="" contains="" />
+      </replaceConfiguration>
+      <searchConfiguration name="nullability for array elements specified, probably nullability for the array itself was intended" order="1" text="@$Anno$ $Type$ $x$($T$ $param$);" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="member">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="x" within="" contains="" />
+        <constraint name="Anno" regexp="Nullable|NotNull" target="true" within="" contains="" />
+        <constraint name="Type" script="&quot;def parent = Type.parent;&#10;com.intellij.psi.util.PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp; &#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
+        <constraint name="T" within="" contains="" />
+        <constraint name="param" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <replaceConfiguration name="toStringArray00" text="$collection$.toArray(ArrayUtil.EMPTY_STRING_ARRAY)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ArrayUtil.toStringArray($collection$)">
+        <constraint name="collection" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="toStringArray0" text="$collection$.toArray(new String[0])" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ArrayUtil.toStringArray($collection$)">
+        <constraint name="collection" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="toStringArray" text="$collection$.toArray(new String[$collection$.size()])" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ArrayUtil.toStringArray($collection$)">
+        <constraint name="collection" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" description="a type can be a type alias or a single-item tuple of a desired type. And you most likely want to support them as well" suppressId="explicit.cast.to.swift.type" problemDescriptor="Please use `SwiftTypeUtil.as&lt;type&gt;` method instead" text="$ref$ instanceof $SwiftType$" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift.+Type" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="Manual TextRange.substring implementation" description="Reports code pattern like str.substring(range.getStartOffset(), range.getEndOffset()). This code could be replaced with range.substring(str)" problemDescriptor="TextRange.substring() could be used" text="$str$.substring($range$.getStartOffset(), $range$.getEndOffset())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$range$.substring($str$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="str" nameOfExprType="java\.lang\.String" within="" contains="" />
         <constraint name="range" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Method reference can slow down startup" description="Method references in class initializers cause qualifier class to be loaded as well, even if that reference would never be invoked" text="$C$::new" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.util.PsiTreeUtil &#10;&#10;def member = PsiTreeUtil.getParentOfType(__context__, PsiMember)&#10;if ((member instanceof PsiClassInitializer || member instanceof PsiField) &amp;&amp; member.hasModifierProperty(PsiModifier.STATIC)) {&#10;  def clazz = member.parent&#10;  def target = C.resolve()&#10;  def targetName = target?.qualifiedName&#10;  target != null &amp;&amp; clazz != target &amp;&amp; !target.qualifiedName.startsWith(&quot;java.&quot;)&#10;}&#10;else false&quot;" within="" contains="" />
+        <constraint name="C" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Comparing Swift Types without context" description="Whether two types are equal depends on the context" suppressId="swift.type.equals" problemDescriptor="Use equalsInContext" text="$ref1$.equals($ref2$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref2" nameOfExprType="com\.jetbrains\.swift\.psi\.types\.SwiftType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="ref1" nameOfExprType="com\.jetbrains\.swift\.psi\.types\.SwiftType" exprTypeWithinHierarchy="true" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="Over-dependence on fastutil Collections" uuid="8c028576-2d38-32d6-a013-7c3ce0e29f09" order="2" text="new ObjectOpenHashSet&lt;&gt;($a$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet($a$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="a" minCount="0" maxCount="2147483647" within="" contains="" />
