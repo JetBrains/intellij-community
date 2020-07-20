@@ -19,6 +19,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilBase;
@@ -105,7 +106,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   @NotNull
   private TemplateState initTemplateState(@NotNull Editor editor) {
-    Editor topLevelEditor = TemplateManagerUtilBase.getTopLevelEditor(editor);
+    Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     TemplateState prevState = clearTemplateState(topLevelEditor);
     if (prevState != null) Disposer.dispose(prevState);
     TemplateState state = new TemplateState(myProject, topLevelEditor);
