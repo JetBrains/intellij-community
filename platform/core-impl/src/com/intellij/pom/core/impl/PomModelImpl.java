@@ -2,16 +2,19 @@
 package com.intellij.pom.core.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomTransaction;
@@ -233,7 +236,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
 
-    boolean isFromCommit = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).isCommitInProgress();
+    boolean isFromCommit = manager.isCommitInProgress();
     boolean isPhysicalPsiChange = !isFromCommit && !synchronizer.isIgnorePsiEvents();
     if (isPhysicalPsiChange) {
       reparseParallelTrees(containingFileByTree, synchronizer);
@@ -298,21 +301,19 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @Nullable
   @Contract("_,null -> null")
-  private Document startTransaction(@NotNull PomTransaction transaction, @Nullable PsiFile containingFileByTree) {
+  private Document startTransaction(@NotNull PomTransaction transaction, @Nullable PsiFile psiFile) {
     final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
 
-    if (containingFileByTree != null && !(containingFileByTree instanceof DummyHolder) && !manager.isCommitInProgress()) {
-      PsiUtilCore.ensureValid(containingFileByTree);
+    if (psiFile != null && !(psiFile instanceof DummyHolder) && !manager.isCommitInProgress()) {
+      PsiUtilCore.ensureValid(psiFile);
     }
 
     boolean physical = changeScope.isPhysical();
     if (synchronizer.toProcessPsiEvent()) {
       // fail-fast to prevent any psi modifications that would cause psi/document text mismatch
-      // PsiToDocumentSynchronizer assertions happen inside event processing and are logged by PsiManagerImpl.fireEvent instead of being rethrown
-      // so it's important to throw something outside event processing
-      if (isDocumentUncommitted(containingFileByTree)) {
+      if (isDocumentUncommitted(psiFile)) {
         throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
       }
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
@@ -321,19 +322,20 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       }
     }
 
-    if (containingFileByTree != null) {
-      ((SmartPointerManagerImpl) SmartPointerManager.getInstance(myProject)).fastenBelts(containingFileByTree.getViewProvider().getVirtualFile());
-      if (containingFileByTree instanceof PsiFileImpl) {
-        ((PsiFileImpl)containingFileByTree).beforeAstChange();
+    VirtualFile vFile = psiFile == null ? null : psiFile.getViewProvider().getVirtualFile();
+    if (psiFile != null) {
+      ((SmartPointerManagerImpl) SmartPointerManager.getInstance(myProject)).fastenBelts(vFile);
+      if (psiFile instanceof PsiFileImpl) {
+        ((PsiFileImpl)psiFile).beforeAstChange();
       }
     }
 
     BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);
-    Document document = containingFileByTree == null ? null :
-                        physical ? manager.getDocument(containingFileByTree) :
-                        manager.getCachedDocument(containingFileByTree);
+    Document document = psiFile == null || psiFile instanceof DummyHolder ? null :
+                        physical || ModelBranch.getPsiBranch(psiFile) != null ? FileDocumentManager.getInstance().getDocument(vFile) :
+                        FileDocumentManager.getInstance().getCachedDocument(vFile);
     if (document != null) {
-      synchronizer.startTransaction(myProject, document, changeScope);
+      synchronizer.startTransaction(myProject, document, psiFile);
     }
     return document;
   }

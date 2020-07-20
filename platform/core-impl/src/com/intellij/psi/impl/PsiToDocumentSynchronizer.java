@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -86,7 +87,7 @@ public class PsiToDocumentSynchronizer {
   }
 
   private DocumentEx getCachedDocument(PsiFile psiFile, boolean force) {
-    final DocumentEx document = (DocumentEx)myPsiDocumentManager.getCachedDocument(psiFile);
+    DocumentEx document = (DocumentEx)FileDocumentManager.getInstance().getCachedDocument(psiFile.getViewProvider().getVirtualFile());
     if (document == null || document instanceof DocumentWindow || !force && getTransaction(document) == null) {
       return null;
     }
@@ -155,14 +156,16 @@ public class PsiToDocumentSynchronizer {
     }
   }
 
-  public void startTransaction(@NotNull Project project, @NotNull Document doc, @NotNull PsiElement scope) {
+  public void startTransaction(@NotNull Project project, @NotNull Document doc, @NotNull PsiFile scope) {
     LOG.assertTrue(!project.isDisposed());
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     Pair<DocumentChangeTransaction, Integer> prev = pair;
     if (pair == null) {
       final PsiFile psiFile = scope.getContainingFile();
       pair = new Pair<>(new DocumentChangeTransaction(doc, psiFile), 0);
-      myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionStarted(doc, psiFile);
+      if (scope.isPhysical()) {
+        myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionStarted(doc, psiFile);
+      }
     }
     else {
       pair = new Pair<>(pair.getFirst(), pair.getSecond().intValue() + 1);
@@ -171,7 +174,6 @@ public class PsiToDocumentSynchronizer {
   }
 
   public boolean commitTransaction(@NotNull Document document){
-    ApplicationManager.getApplication().assertIsWriteThread();
     final DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
     if(documentChangeTransaction == null) return false;
     final PsiFile changeScope = documentChangeTransaction.myChangeScope;
@@ -183,7 +185,9 @@ public class PsiToDocumentSynchronizer {
       fakeEvent.setFile(changeScope);
       checkPsiModificationAllowed(fakeEvent);
       doSync(fakeEvent, (document1, event) -> doCommitTransaction(document1, documentChangeTransaction));
-      myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, changeScope);
+      if (changeScope.isPhysical()) {
+        myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, changeScope);
+      }
     }
     catch (Throwable e) {
       myPsiDocumentManager.forceReload(changeScope.getViewProvider().getVirtualFile(), changeScope.getViewProvider());
