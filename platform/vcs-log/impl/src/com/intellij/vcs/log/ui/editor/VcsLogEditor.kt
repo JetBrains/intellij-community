@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.vcs.log.VcsLogBundle
@@ -39,9 +38,7 @@ class VcsLogFileType : FileType {
   }
 }
 
-val VCS_LOG_FILE_DISPLAY_NAME_GENERATOR = Key.create<(List<VcsLogUiEx>) -> String>("VCS_LOG_FILE_GENERATE_DISPLAY_NAME")
-
-class VcsLogFile(component: JComponent, uis: List<VcsLogUiEx>, name: String) :
+class VcsLogFile(component: JComponent, uis: List<VcsLogUiEx>, name: String, private val getDisplayName: (List<VcsLogUiEx>) -> String) :
   LightVirtualFile(name, VcsLogFileType.INSTANCE, "") {
 
   private val _logUis = uis.toMutableList()
@@ -62,6 +59,11 @@ class VcsLogFile(component: JComponent, uis: List<VcsLogUiEx>, name: String) :
   }
 
   override fun isValid(): Boolean = _logUis.isNotEmpty()
+
+  fun getDisplayName(): String? {
+    if (_logUis.isEmpty()) return null
+    return getDisplayName(_logUis)
+  }
 }
 
 class VcsLogIconProvider : FileIconProvider {
@@ -104,8 +106,6 @@ class VcsLogEditorTabTitleProvider : EditorTabTitleProvider {
 
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
     if (file !is VcsLogFile) return null
-    return file.getUserData(VCS_LOG_FILE_DISPLAY_NAME_GENERATOR)
-             ?.let { displayNameGenerator -> (file as? VcsLogFile)?.logUis?.run(displayNameGenerator) }
-           ?: file.name
+    return file.getDisplayName() ?: file.name
   }
 }

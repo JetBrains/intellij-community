@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.vcs.log.ui.VcsLogUiEx
-import com.intellij.vcs.log.ui.editor.VCS_LOG_FILE_DISPLAY_NAME_GENERATOR
 import com.intellij.vcs.log.ui.editor.VcsLogFile
 import javax.swing.JComponent
 
@@ -55,9 +54,7 @@ fun <U : VcsLogUiEx> createAndOpenLogFile(project: Project,
                                           name: String,
                                           generateDisplayName: (List<VcsLogUiEx>) -> String,
                                           focus: Boolean) {
-  val file = VcsLogFile(rootComponent, logUis, name).apply {
-    putUserData(VCS_LOG_FILE_DISPLAY_NAME_GENERATOR, generateDisplayName)
-  }
+  val file = VcsLogFile(rootComponent, logUis, name, generateDisplayName)
   invokeLater(ModalityState.NON_MODAL) { FileEditorManager.getInstance(project).openFile(file, focus) }
 
   logManager.scheduleInitialization()
