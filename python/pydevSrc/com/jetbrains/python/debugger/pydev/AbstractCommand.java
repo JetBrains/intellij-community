@@ -1,11 +1,8 @@
 package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.invoke.MethodHandles;
 
 
 public abstract class AbstractCommand<T> {
@@ -87,7 +84,6 @@ public abstract class AbstractCommand<T> {
 
   private final ResponseProcessor<T> myResponseProcessor;
 
-  public static final Logger LOG = Logger.getInstance(MethodHandles.lookup().lookupClass());
 
   protected AbstractCommand(@NotNull final RemoteDebugger debugger, final int commandCode) {
     myDebugger = debugger;
@@ -146,18 +142,15 @@ public abstract class AbstractCommand<T> {
     if (processor == null && !isResponseExpected()) return;
 
     if (!frameSent) {
-      LOG.error("Couldn't send frame " + myCommandCode);
-      return;
+      throw new PyDebuggerException("Couldn't send frame " + myCommandCode);
     }
 
     frame = myDebugger.waitForResponse(sequence, getResponseTimeout());
     if (frame == null) {
-      String errorMessage = "Timeout waiting for response on " + myCommandCode;
       if (!myDebugger.isConnected()) {
-        errorMessage = "No connection (command:  " + myCommandCode + " )";
+        throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
       }
-      LOG.error(errorMessage);
-      return;
+      throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
     }
     if (processor != null) {
       processor.processResponse(frame);
