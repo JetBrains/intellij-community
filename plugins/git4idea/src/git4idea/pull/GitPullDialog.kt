@@ -29,6 +29,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import git4idea.GitUtil
 import git4idea.GitVcs
+import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.fetch.GitFetchSupport
@@ -130,7 +131,8 @@ class GitPullDialog(private val project: Project,
     if (value.isNullOrEmpty()) {
       return ValidationInfo(GitBundle.message("pull.branch.not.selected.error"), branchField)
     }
-    if (value !in (branchField.model as CollectionComboBoxModel).items) {
+    val items = (branchField.model as CollectionComboBoxModel).items
+    if (items.none { equalBranches(it, value) }) {
       return ValidationInfo(GitBundle.message("pull.branch.no.matching.error"), branchField)
     }
     return null
