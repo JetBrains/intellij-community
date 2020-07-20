@@ -16,13 +16,16 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 
 public class LocalFilePath implements FilePath {
-  @NotNull private final String myPath;
+  @NotNull
+  @SystemIndependent
+  private final String myPath;
   private final boolean myIsDirectory;
   private VirtualFile myCachedFile;
 
@@ -32,8 +35,7 @@ public class LocalFilePath implements FilePath {
   }
 
   public LocalFilePath(@NotNull Path path, boolean isDirectory) {
-    myPath = path.toAbsolutePath().normalize().toString();
-    myIsDirectory = isDirectory;
+    this(path.toAbsolutePath().toString(), isDirectory);
   }
 
   private LocalFilePath(@NotNull String path, boolean isDirectory,
