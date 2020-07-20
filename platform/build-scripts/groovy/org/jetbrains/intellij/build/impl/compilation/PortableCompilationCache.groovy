@@ -15,37 +15,70 @@ import org.jetbrains.jps.incremental.storage.ProjectStamps
 @CompileStatic
 class PortableCompilationCache {
   private final CompilationContext context
+  /**
+   * Read-only JPS remote cache url
+   */
   private static final String REMOTE_CACHE_URL_PROPERTY = 'intellij.jps.remote.cache.url'
-  private static final String GIT_REPOSITORY_URL_PROPERTY = 'intellij.remote.url'
-  private static final String AVAILABLE_FOR_HEAD_PROPERTY = 'intellij.jps.cache.availableForHeadCommit'
-  private static final String FORCE_DOWNLOAD_PROPERTY = 'intellij.jps.cache.download.force'
-  private static final String UPLOAD_COMPILATION_OUTPUTS_PROPERTY = 'intellij.jps.remote.cache.compilationOutputsOnly'
+  /**
+   * Read/Write JPS remote cache url
+   */
   private static final String CACHE_UPLOAD_URL_PROPERTY = 'intellij.jps.remote.cache.upload.url'
+  /**
+   * IntelliJ repository git remote url
+   */
+  private static final String GIT_REPOSITORY_URL_PROPERTY = 'intellij.remote.url'
+  /**
+   * If true then JPS caches for head commit are expected to exist and search in
+   * {@link org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory#JSON_FILE} is skipped.
+   * Required for temporary branch caches which are uploaded but not published in
+   * {@link org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory#JSON_FILE}.
+   */
+  private static final String AVAILABLE_FOR_HEAD_PROPERTY = 'intellij.jps.cache.availableForHeadCommit'
+  /**
+   * Download JPS remote caches even if there are caches available locally
+   */
+  private static final String FORCE_DOWNLOAD_PROPERTY = 'intellij.jps.cache.download.force'
+  /**
+   * JPS caches archive upload may be skipped if only hot compile outputs are required
+   * without any incremental compilation (for tests execution as an example)
+   */
+  private static final String UPLOAD_COMPILATION_OUTPUTS_PROPERTY = 'intellij.jps.remote.cache.compilationOutputsOnly'
+  /**
+   * If true then JPS caches and compilation outputs will be rebuilt from scratch
+   */
   private static final String FORCE_REBUILD_PROPERTY = 'intellij.jps.cache.rebuild.force'
+  /**
+   * Folder to store JPS caches and compilation outputs for later upload to AWS S3 bucket.
+   * Upload performed in a separate process on CI.
+   */
   private static final String AWS_SYNC_FOLDER_PROPERTY = 'jps.caches.aws.sync.folder'
+  /**
+   * Commit hash for which JPS caches are to be built/downloaded
+   */
   private static final String COMMIT_HASH_PROPERTY = 'build.vcs.number'
+  /**
+   * System properties to be passed to child JVM process (like tests process) to enable JPS caches there
+   */
   static final List<String> PROPERTIES = [
-    REMOTE_CACHE_URL_PROPERTY, GIT_REPOSITORY_URL_PROPERTY,
+    COMMIT_HASH_PROPERTY, REMOTE_CACHE_URL_PROPERTY, GIT_REPOSITORY_URL_PROPERTY,
     AVAILABLE_FOR_HEAD_PROPERTY, FORCE_DOWNLOAD_PROPERTY,
     JavaBackwardReferenceIndexWriter.PROP_KEY,
     ProjectStamps.PORTABLE_CACHES_PROPERTY
   ]
-  /**
-   * Download JPS remote caches even if there are caches available locally
-   */
   private boolean forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
-  private boolean cleanupRemoteCache = bool('intellij.jps.cache.cleanup', false)
   private File cacheDir = context.compilationData.dataStorageRoot
   private boolean forceRebuild = bool(FORCE_REBUILD_PROPERTY, false)
+  /**
+   * If true then JPS remote cache is configured to be used
+   */
   boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && !StringUtil.isEmptyOrSpaces(System.getProperty(REMOTE_CACHE_URL_PROPERTY))
   @Lazy
   private String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }()
 
   @Lazy
   private String remoteGitUrl = {
-    require(GIT_REPOSITORY_URL_PROPERTY, "Repository url").with {
+    require(GIT_REPOSITORY_URL_PROPERTY, "Repository url").tap {
       context.messages.info("Git remote url $it")
-      it
     }
   }()
   @Lazy
@@ -69,54 +102,17 @@ class PortableCompilationCache {
     this.context = context
   }
 
-  private String require(String systemProperty, String description) {
-    def value = System.getProperty(systemProperty)
-    if (StringUtil.isEmptyOrSpaces(value)) {
-      context.messages.error("$description is not defined. Please set '$systemProperty' system property.")
-    }
-    return value
-  }
-
-  private static boolean bool(String systemProperty, boolean defaultValue) {
-    System.getProperty(systemProperty, "$defaultValue").toBoolean()
-  }
-
-  private def clearJpsOutputs() {
-    [cacheDir, new File(context.paths.buildOutputRoot, 'classes')].each {
-      context.messages.info("Cleaning $it")
-      FileUtil.delete(it)
-    }
-  }
-
-  private def compileProject() {
-    CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
-    def jps = new JpsCompilationRunner(context)
-    try {
-      jps.buildAll()
-    }
-    catch (Exception e) {
-      if (context.options.incrementalCompilation && !forceDownload) {
-        context.messages.warning('Incremental compilation using locally available caches failed. ' +
-                                 'Re-trying using JPS remote caches.')
-        downloadCachesAndOutput()
-        jps.buildAll()
-      }
-      else {
-        throw e
-      }
-    }
-  }
-
   /**
    * Download latest available compilation cache from remote cache and perform compilation if necessary
    */
-  def warmUp() {
+  def downloadCacheAndCompileProject() {
     if (forceRebuild) {
       clearJpsOutputs()
     }
     else if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
       downloadCachesAndOutput()
     }
+    // ensure that all Maven dependencies are resolved before compilation
     CompilationTasks.create(context).resolveProjectDependencies()
     if (forceRebuild || !downloader.availableForHeadCommit || downloader.anyLocalChanges() || !forceDownload) {
       // When force rebuilding incrementalCompilation has to be set to false otherwise backward-refs won't be created.
@@ -128,15 +124,6 @@ class PortableCompilationCache {
     }
     context.options.incrementalCompilation = false
     context.options.useCompiledClassesFromProjectOutput = true
-  }
-
-  private def downloadCachesAndOutput() {
-    try {
-      downloader.downloadCachesAndOutput()
-    }
-    finally {
-      downloader.close()
-    }
   }
 
   /**
@@ -167,11 +154,58 @@ class PortableCompilationCache {
    * Used in force rebuild and cleanup.
    */
   def overrideCommitHistory(Set<String> forceRebuiltCommits) {
-    def staleCommitHistory = uploader.remoteCommitHistory()
     def newCommitHistory = new CommitsHistory([(remoteGitUrl): forceRebuiltCommits])
     uploader.updateCommitHistory(newCommitHistory, true)
-    if (cleanupRemoteCache) {
-      uploader.delete(staleCommitHistory - newCommitHistory)
+  }
+
+  private def clearJpsOutputs() {
+    [cacheDir, new File(context.paths.buildOutputRoot, 'classes')].each {
+      context.messages.info("Cleaning $it")
+      FileUtil.delete(it)
     }
+  }
+
+  private def compileProject() {
+    // ensure that JBR and Kotlin plugin are downloaded before compilation
+    CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
+    def jps = new JpsCompilationRunner(context)
+    try {
+      jps.buildAll()
+    }
+    catch (Exception e) {
+      if (context.options.incrementalCompilation && !forceDownload) {
+        // JPS caches are rebuilt from scratch on CI and re-published every night to avoid possible incremental compilation issues.
+        // If JPS cache download isn't forced then locally available cache will be used which may suffer from those issues.
+        // Hence compilation failure. Replacing local cache with remote one may help.
+        context.messages.warning('Incremental compilation using locally available caches failed. ' +
+                                 'Re-trying using JPS remote caches.')
+        downloadCachesAndOutput()
+        jps.buildAll()
+      }
+      else {
+        throw e
+      }
+    }
+  }
+
+  private def downloadCachesAndOutput() {
+    try {
+      downloader.downloadCachesAndOutput()
+    }
+    finally {
+      downloader.close()
+    }
+  }
+
+  private String require(String systemProperty, String description) {
+    def value = System.getProperty(systemProperty)
+    if (StringUtil.isEmptyOrSpaces(value)) {
+      context.messages.error("$description is not defined. Please set '$systemProperty' system property.")
+    }
+    return value
+  }
+
+  private static boolean bool(String systemProperty, boolean defaultValue) {
+    System.getProperty(systemProperty, "$defaultValue").toBoolean()
   }
 }
