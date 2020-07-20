@@ -3,16 +3,12 @@ package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
-import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.vcs.log.ui.VcsLogUiEx
-import com.intellij.vcs.log.ui.editor.VcsLogFile
-import javax.swing.JComponent
 
 internal fun getLogIds(editor: FileEditor): Set<String> =
   VcsLogContentUtil.getLogUis(editor.component).mapTo(mutableSetOf(), VcsLogUiEx::getId)
@@ -29,34 +25,6 @@ internal fun updateTabName(project: Project, ui: VcsLogUiEx) {
   val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
   val file = fileEditorManager.allEditors.first { getLogIds(it).contains(ui.id) }?.file
   file?.let { fileEditorManager.updateFilePresentation(it) }
-}
-
-internal fun <U : VcsLogUiEx> openLogTab(project: Project, logManager: VcsLogManager, name: String,
-                                         factory: VcsLogManager.VcsLogUiFactory<U>, focus: Boolean): U =
-  openLogTab(project, logManager, name, VcsLogTabsManager::generateDisplayName, factory, focus)
-
-internal fun <U : VcsLogUiEx> openLogTab(project: Project,
-                                         logManager: VcsLogManager,
-                                         name: String,
-                                         generateDisplayName: (U) -> String,
-                                         factory: VcsLogManager.VcsLogUiFactory<U>,
-                                         focus: Boolean): U {
-  val logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR)
-
-  createAndOpenLogFile(project, logManager, VcsLogPanel(logManager, logUi), name, { uis -> generateDisplayName(uis.single() as U) }, focus)
-  return logUi
-}
-
-fun createAndOpenLogFile(project: Project,
-                         logManager: VcsLogManager,
-                         rootComponent: JComponent,
-                         name: String,
-                         generateDisplayName: (List<VcsLogUiEx>) -> String,
-                         focus: Boolean) {
-  val file = VcsLogFile(rootComponent, name, generateDisplayName)
-  invokeLater(ModalityState.NON_MODAL) { FileEditorManager.getInstance(project).openFile(file, focus) }
-
-  logManager.scheduleInitialization()
 }
 
 internal fun closeLogTabs(project: Project, editorTabIds: List<String>): Boolean {

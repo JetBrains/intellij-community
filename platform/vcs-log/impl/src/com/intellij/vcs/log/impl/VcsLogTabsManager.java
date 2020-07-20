@@ -2,9 +2,13 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -13,13 +17,18 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogPanel;
+import com.intellij.vcs.log.ui.editor.VcsLogFile;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
+
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class VcsLogTabsManager {
   @NotNull private final Project myProject;
@@ -74,7 +83,7 @@ public class VcsLogTabsManager {
 
     MainVcsLogUi ui;
     if (kind == VcsLogManager.LogWindowKind.EDITOR) {
-      ui = VcsLogEditorUtilKt.openLogTab(myProject, manager, getFullName(tabId), factory, focus);
+      ui = openLogEditorTab(myProject, manager, getFullName(tabId), factory, focus);
       ui.addFilterListener(() -> {
         VcsLogEditorUtilKt.updateTabName(myProject, ui);
       });
@@ -88,6 +97,20 @@ public class VcsLogTabsManager {
     else {
       throw new UnsupportedOperationException("Only log in editor or tool window is supported");
     }
+    return ui;
+  }
+
+  @NotNull
+  private static MainVcsLogUi openLogEditorTab(@NotNull Project project, @NotNull VcsLogManager manager,
+                                               @NotNull String name,
+                                               @NotNull VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory,
+                                               boolean focus) {
+    MainVcsLogUi ui = manager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR);
+    VirtualFile file = new VcsLogFile(new VcsLogPanel(manager, ui), name, uis -> {
+      return generateDisplayName(Objects.requireNonNull(getFirstItem(uis)));
+    });
+    ApplicationManager.getApplication().invokeLater(() -> FileEditorManager.getInstance(project).openFile(file, focus), ModalityState.NON_MODAL);
+    manager.scheduleInitialization();
     return ui;
   }
 

@@ -2,7 +2,10 @@
 package git4idea.branch
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.OnePixelSplitter
@@ -17,11 +20,11 @@ import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.impl.createAndOpenLogFile
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcs.log.ui.editor.VcsLogFile
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
@@ -77,7 +80,9 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
       firstComponent = VcsLogPanel(logManager, topLogUi)
       secondComponent = VcsLogPanel(logManager, bottomLogUi)
     }
-    createAndOpenLogFile(project, logManager, mainSplitter, tabName, { tabName }, true)
+    val file = VcsLogFile(mainSplitter, tabName) { tabName }
+    invokeLater(ModalityState.NON_MODAL) { FileEditorManager.getInstance(project).openFile(file, true) }
+    logManager.scheduleInitialization()
   }
 
   private fun getEditorTabName(branch1Name: String, branch2Name: String) =
