@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
@@ -194,12 +195,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (!FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
       return;
     }
-    if (instruction.num() > lastInterestingInstructionIndex) {
-      return;
-    }
-    if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
-      return;
-    }
     GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
     if (PsiUtil.isCompileStatic(block)) {
       return;
@@ -208,6 +203,14 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (blockFlowOwner == null) {
       return;
     }
+    if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
+      ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(state::removeBinding);
+      return;
+    }
+    if (instruction.num() > lastInterestingInstructionIndex) {
+      return;
+    }
+    ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(state::restoreBinding);
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
     Map<VariableDescriptor, DFAType> initialTypes = new LinkedHashMap<>(myFlowInfo.getInitialTypes());
     initialTypes.putAll(state.getVarTypes());
@@ -254,7 +257,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     runWithCycleCheck(instruction, () -> {
       for (VariableDescriptor outerDescriptor : myFlowInfo.getInterestingDescriptors()) {
         PsiType descriptorType = blockCache.getInferredType(outerDescriptor, lastBlockInstruction, false, initialTypes);
-        typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
+        if (descriptorType != null) {
+          typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
+        }
       }
       return null;
     });
