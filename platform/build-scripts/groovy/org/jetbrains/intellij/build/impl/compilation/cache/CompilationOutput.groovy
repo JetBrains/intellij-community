@@ -7,11 +7,11 @@ import groovy.transform.CompileStatic
 class CompilationOutput {
   final String hash
   final String path
-  final String sourcePath
+  final String remotePath
 
   CompilationOutput(String name, String type, String hash, String path) {
     this.hash = hash
     this.path = path
-    this.sourcePath = "$type/$name/$hash"
+    this.remotePath = "$type/$name/$hash"
   }
 }

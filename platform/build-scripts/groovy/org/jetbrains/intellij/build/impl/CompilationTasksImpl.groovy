@@ -34,7 +34,7 @@ class CompilationTasksImpl extends CompilationTasks {
   void compileModules(List<String> moduleNames, List<String> includingTestsInModules) {
     if (jpsCache.canBeUsed) {
       context.messages.info("JPS remote cache will be used")
-      jpsCache.warmUp()
+      jpsCache.downloadCacheAndCompileProject()
     }
     else if (context.options.useCompiledClassesFromProjectOutput) {
       context.messages.info("Compilation skipped, the compiled classes from the project output will be used")

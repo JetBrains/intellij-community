@@ -168,7 +168,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
     def outputArchive = new File(compilationOutput.path, 'tmp-output.zip')
     FileUtil.createParentDirs(outputArchive)
 
-    getClient.doGet("$remoteCacheUrl/${compilationOutput.sourcePath}", outputArchive)
+    getClient.doGet("$remoteCacheUrl/${compilationOutput.remotePath}", outputArchive)
 
     return outputArchive
   }
