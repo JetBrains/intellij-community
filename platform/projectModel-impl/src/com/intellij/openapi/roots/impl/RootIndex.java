@@ -611,8 +611,11 @@ class RootIndex {
 
     if (file instanceof VirtualFileWithId) {
       for (VirtualFile each = file; each != null; each = each.getParent()) {
-        DirectoryInfo info = getOwnInfo(((VirtualFileWithId)each).getId(), each);
-        if (info != null) return info;
+        int id = ((VirtualFileWithId)each).getId();
+        if (!myNonInterestingIds.get(id)) {
+          DirectoryInfo info = handleInterestingId(id, each);
+          if (info != null) return info;
+        }
       }
     } else {
       for (VirtualFile each = file; each != null; each = each.getParent()) {
