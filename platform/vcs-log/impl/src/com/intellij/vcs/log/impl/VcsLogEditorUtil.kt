@@ -9,9 +9,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.ui.VcsLogPanel
+import com.intellij.openapi.util.Disposer
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.editor.VCS_LOG_FILE_DISPLAY_NAME_GENERATOR
-import com.intellij.vcs.log.ui.editor.VcsLogEditor
 import com.intellij.vcs.log.ui.editor.VcsLogFile
 import javax.swing.JComponent
 
@@ -74,10 +74,18 @@ internal fun closeLogTabs(project: Project, editorTabIds: List<String>): Boolean
   }.filterValues { logIds -> logIds.isNotEmpty() }
 
   for ((logEditor, ids) in editorsToIdsMap) {
-    (logEditor as? VcsLogEditor)?.disposeLogUis()
+    logEditor.disposeLogUis()
     ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logEditor.file!!) }, ModalityState.NON_MODAL,
                                                     { project.isDisposed })
     tabsToClose.removeAll(ids)
   }
   return tabsToClose.isEmpty()
+}
+
+internal fun FileEditor.disposeLogUis() {
+  val logUis = VcsLogContentUtil.getLogUis(component)
+  if (logUis.isNotEmpty()) {
+    component.removeAll()
+    logUis.forEach(Disposer::dispose)
+  }
 }

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.impl.disposeLogUis
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import java.awt.BorderLayout
 import javax.swing.Icon
@@ -69,8 +70,6 @@ class VcsLogIconProvider : FileIconProvider {
 
 class VcsLogEditor(private val vcsLogFile: VcsLogFile) : FileEditorBase() {
 
-  fun disposeLogUis() = vcsLogFile.disposeLogUis()
-
   override fun getComponent(): JComponent = vcsLogFile.rootComponent
   override fun getPreferredFocusedComponent(): JComponent? = vcsLogFile.logUis.firstOrNull()?.mainComponent
   override fun getName(): String = "Vcs Log Editor"
@@ -89,7 +88,7 @@ class VcsLogEditorProvider : FileEditorProvider, DumbAware {
 
   override fun disposeEditor(editor: FileEditor) {
     if (editor.file?.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != true) {
-      (editor as VcsLogEditor).disposeLogUis()
+      editor.disposeLogUis()
     }
 
     super.disposeEditor(editor)
