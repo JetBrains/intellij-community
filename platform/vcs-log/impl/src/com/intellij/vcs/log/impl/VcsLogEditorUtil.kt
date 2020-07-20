@@ -43,7 +43,7 @@ internal fun <U : VcsLogUiEx> openLogTab(project: Project,
                                          focus: Boolean): U {
   val logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR)
 
-  createAndOpenLogFile(project, logManager, VcsLogPanel(logManager, logUi), listOf(logUi), name, { generateDisplayName(logUi) }, focus)
+  createAndOpenLogFile(project, logManager, VcsLogPanel(logManager, logUi), listOf(logUi), name, { uis -> generateDisplayName(uis.single() as U) }, focus)
   return logUi
 }
 
