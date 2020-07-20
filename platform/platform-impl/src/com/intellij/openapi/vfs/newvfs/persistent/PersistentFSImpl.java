@@ -1081,7 +1081,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         childrenNamesDeleted.add(file.getNameSequence());
         childrenIdsDeleted.add(id);
         FSRecords.deleteRecordRecursively(id);
-        invalidateSubtree(file);
+        invalidateSubtree(file, "Bulk file deletions", event);
         deleted.add(new ChildInfoImpl(id, ChildInfoImpl.UNKNOWN_ID_YET, null, null, null));
       }
       deleted.sort(ChildInfo.BY_ID);
@@ -1313,7 +1313,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
       else if (event instanceof VFileDeleteEvent) {
         final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
-        executeDelete(deleteEvent.getFile());
+        executeDelete(deleteEvent);
       }
       else if (event instanceof VFileContentChangeEvent) {
         final VFileContentChangeEvent contentUpdateEvent = (VFileContentChangeEvent)event;
@@ -1432,7 +1432,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return attributes == null ? null : pair(attributes, symlinkTarget);
   }
 
-  private void executeDelete(@NotNull VirtualFile file) {
+  private void executeDelete(@NotNull VFileDeleteEvent event) {
+    VirtualFile file = event.getFile();
     if (!file.exists()) {
       LOG.error("Deleting a file which does not exist: " +((VirtualFileWithId)file).getId()+ " "+file.getPath());
       return;
@@ -1461,11 +1462,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     FSRecords.deleteRecordRecursively(id);
 
-    invalidateSubtree(file);
+    invalidateSubtree(file, "File deleted", event);
     incStructuralModificationCount();
   }
 
-  private static void invalidateSubtree(@NotNull VirtualFile file) {
+  private static void invalidateSubtree(@NotNull VirtualFile file, @NotNull Object source, @NotNull Object reason) {
     VirtualFileSystemEntry impl = (VirtualFileSystemEntry)file;
     if (file.is(VFileProperty.SYMLINK)) {
       VirtualFileSystem fs = file.getFileSystem();
@@ -1473,9 +1474,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         ((LocalFileSystemImpl)fs).symlinkRemoved(impl.getId());
       }
     }
-    impl.invalidate();
+    impl.invalidate(source, reason);
     for (VirtualFile child : impl.getCachedChildren()) {
-      invalidateSubtree(child);
+      invalidateSubtree(child, source, reason);
     }
   }
 

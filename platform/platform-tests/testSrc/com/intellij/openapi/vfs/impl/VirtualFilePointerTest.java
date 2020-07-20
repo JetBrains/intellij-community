@@ -708,7 +708,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         try {
           ready.countDown();
           while (run.get()) {
-            bb.myNode.update(((VirtualFilePointerImpl)fileToCreatePointer).myNode, fakeRoot);
+            bb.myNode.update(((VirtualFilePointerImpl)fileToCreatePointer).myNode, fakeRoot, "test", null);
           }
         }
         catch (Throwable e) {

@@ -251,7 +251,7 @@ class FilePartNode {
   }
 
   // update myFileOrUrl to a VirtualFile and replace UrlPartNode with FilePartNode if the file exists, including all subnodes
-  void update(@NotNull FilePartNode parent, @NotNull FilePartNodeRoot root) {
+  void update(@NotNull FilePartNode parent, @NotNull FilePartNodeRoot root, @NotNull String debugSource, @Nullable Object debugInvalidationReason) {
     Object fileOrUrl = myFileOrUrl;
     VirtualFile file = myFile(fileOrUrl);
     boolean changed = false;
@@ -308,6 +308,10 @@ class FilePartNode {
     changed |= !Objects.equals(fileOrUrl, result);
     FilePartNode thisNode = this;
     if (changed) {
+      VirtualFile oldFile = myFile(fileOrUrl);
+      if (oldFile != null && file == null && debugInvalidationReason != null) {
+        ((VirtualFileSystemEntry)oldFile).appendInvalidationReason(debugSource, debugInvalidationReason);
+      }
       myFileOrUrl = result;
       if (file != null && (this instanceof UrlPartNode || nameChanged)) {
         // replace with FPPN if the actual file's appeared on disk to save memory with nameIds
@@ -335,7 +339,7 @@ class FilePartNode {
 
     if (changed) {
       for (FilePartNode child : thisNode.children) {
-        child.update(thisNode, root);
+        child.update(thisNode, root, debugSource, debugInvalidationReason);
       }
     }
   }

@@ -4,8 +4,10 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -17,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -341,7 +344,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public String toString() {
-    return getUrl();
+    if (isValid()) {
+      return getUrl();
+    }
+    String reason = getUserData(DebugInvalidation.INVALIDATION_REASON);
+    return getUrl() + " (invalid" + (reason == null ? "" : ", reason: "+reason) + ")";
   }
 
   public void setNewName(@NotNull String newName) {
@@ -374,8 +381,24 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return getFileSystem() instanceof LocalFileSystem;
   }
 
-  public void invalidate() {
+  private static class DebugInvalidation {
+    private static final boolean DEBUG = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
+    private static final Key<String> INVALIDATION_REASON = Key.create("INVALIDATION_REASON");
+  }
+
+  @ApiStatus.Internal
+  public void invalidate(@NotNull Object source, @NotNull Object reason) {
     getVfsData().invalidateFile(myId);
+    appendInvalidationReason(source, reason);
+  }
+
+  @ApiStatus.Internal
+  public void appendInvalidationReason(@NotNull Object source, @NotNull Object reason) {
+    if (DebugInvalidation.DEBUG && !ApplicationInfoImpl.isInStressTest()) {
+      String oldReason = getUserData(DebugInvalidation.INVALIDATION_REASON);
+      String newReason = source + ": " + reason;
+      putUserData(DebugInvalidation.INVALIDATION_REASON, oldReason == null ? newReason : oldReason + "; " + newReason);
+    }
   }
 
   @NotNull

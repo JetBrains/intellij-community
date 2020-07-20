@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -65,10 +66,12 @@ final class FilePartNodeRoot extends FilePartNode {
                                @NotNull MultiMap<? super VirtualFilePointerListener, ? super VirtualFilePointerImpl> toFirePointers,
                                @NotNull List<? super NodeToUpdate> toUpdateNodes,
                                boolean addSubdirectoryPointers,
-                               @NotNull NewVirtualFileSystem fs) {
+                               @NotNull NewVirtualFileSystem fs,
+                               @NotNull VFileEvent event) {
     if (childNameId <= 0) throw new IllegalArgumentException("invalid argument childNameId: "+childNameId);
     NodeToUpdate toUpdate = matchById(parent, file, childNameId, toFirePointers, false, fs);
     if (toUpdate != null) {
+      toUpdate.myEvent = event;
       toUpdateNodes.add(toUpdate);
       toUpdate.node.processPointers(pointer -> toFirePointers.putValue(pointer.myListener, pointer));
       if (addSubdirectoryPointers) {
