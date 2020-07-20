@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -167,10 +168,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
   protected PyPackageManagerImpl(@NotNull final Sdk sdk) {
     mySdk = sdk;
     subscribeToLocalChanges();
+    Disposer.register(PyPackageManagers.getInstance(), this);
   }
 
   protected void subscribeToLocalChanges() {
-    PyPackageUtil.runOnChangeUnderInterpreterPaths(getSdk(), () -> PythonSdkType.getInstance().setupSdkPaths(getSdk()));
+    PyPackageUtil.runOnChangeUnderInterpreterPaths(getSdk(), this, () -> PythonSdkType.getInstance().setupSdkPaths(getSdk()));
   }
 
   @NotNull
@@ -351,7 +353,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
         tmpSdk.setHomePath(path);
         // Don't save such one-shot SDK with empty name in the cache of PyPackageManagers
         final PyPackageManager manager = new PyPackageManagerImpl(tmpSdk);
-        manager.installManagement();
+        try {
+          manager.installManagement();
+        }
+        finally {
+          Disposer.dispose(manager);
+        }
       }
     }
     return path;

@@ -13,10 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,6 +41,7 @@ import com.jetbrains.python.sdk.CredentialsTypeExChecker;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -502,14 +500,28 @@ public final class PyPackageUtil {
   }
 
   /**
+   * @deprecated Use {@link #runOnChangeUnderInterpreterPaths(Sdk, Disposable, Runnable)} passing a package manager as
+   * the parent disposable.
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated
+  public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk, @NotNull Runnable runnable) {
+    Application app = ApplicationManager.getApplication();
+    Disposable parentDisposable = sdk instanceof Disposable ? (Disposable)sdk : app;
+    runOnChangeUnderInterpreterPaths(sdk, parentDisposable, runnable);
+  }
+
+  /**
    * Execute the given executable on a pooled thread whenever there is a VFS event happening under some of the roots of the SDK.
    *
-   * @param sdk      SDK those roots need to be watched
-   * @param runnable executable that's going to be executed
+   * @param sdk              SDK those roots need to be watched
+   * @param parentDisposable disposable for the registered event listeners
+   * @param runnable         executable that's going to be executed
    */
-  public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk, @NotNull Runnable runnable) {
+  public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk,
+                                                      @NotNull Disposable parentDisposable,
+                                                      @NotNull Runnable runnable) {
     final Application app = ApplicationManager.getApplication();
-    final Disposable disposable = sdk instanceof Disposable ? (Disposable)sdk : app;
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Nullable
       @Override
@@ -538,7 +550,7 @@ public final class PyPackageUtil {
         // No continuation in write action is needed
         return null;
       }
-    }, disposable);
+    }, parentDisposable);
   }
 
   @NotNull

@@ -14,6 +14,7 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -28,7 +29,7 @@ import java.util.Set;
 /**
  * @author yole
  */
-public abstract class PyPackageManager {
+public abstract class PyPackageManager implements Disposable {
   public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
 
   public static final String USE_USER_SITE = "--user";
@@ -101,5 +102,9 @@ public abstract class PyPackageManager {
 
   public interface Listener {
     void packagesRefreshed(@NotNull Sdk sdk);
+  }
+
+  @Override
+  public void dispose() {
   }
 }
