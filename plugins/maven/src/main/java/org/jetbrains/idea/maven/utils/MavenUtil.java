@@ -199,7 +199,15 @@ public class MavenUtil {
   }
 
   public static void invokeAndWaitWriteAction(@NotNull Project p, @NotNull Runnable r) {
-    invokeAndWait(p, () -> ApplicationManager.getApplication().runWriteAction(r));
+    if(ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      r.run();
+    } else if( ApplicationManager.getApplication().isDispatchThread()){
+      ApplicationManager.getApplication().runWriteAction(r);
+    } else {
+      ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(
+        ()->ApplicationManager.getApplication().runWriteAction(r), p),
+                                                        ModalityState.defaultModalityState());
+    }
   }
 
   public static void runDumbAware(@NotNull Project project, @NotNull Runnable r) {

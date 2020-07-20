@@ -1281,7 +1281,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       fm.asyncRefresh(null);
     }
     else {
-      fm.syncRefresh();
+      ApplicationManager.getApplication().invokeAndWait(()->fm.syncRefresh());
     }
 
     if (postTasks.get() != null /*may be null if importing is cancelled*/) {
