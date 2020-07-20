@@ -2,8 +2,6 @@
 package git4idea.branch
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -81,7 +79,7 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
     }
     val tabName = getEditorTabName()
     val file = VcsLogFile(mainSplitter, tabName) { tabName }
-    invokeLater(ModalityState.NON_MODAL) { FileEditorManager.getInstance(project).openFile(file, true) }
+    FileEditorManager.getInstance(project).openFile(file, true)
     logManager.scheduleInitialization()
   }
 
