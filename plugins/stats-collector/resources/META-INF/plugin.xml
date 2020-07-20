@@ -53,8 +53,7 @@
 
     <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentStatus"
                         serviceImplementation="com.intellij.stats.experiment.ClientExperimentStatus"
-                        testServiceImplementation="com.intellij.mocks.TestExperimentStatus"
-                        preload="true"/>
+                        testServiceImplementation="com.intellij.mocks.TestExperimentStatus"/>
 
     <applicationService serviceInterface="com.intellij.stats.network.service.RequestService"
                         serviceImplementation="com.intellij.stats.network.service.SimpleRequestService"
