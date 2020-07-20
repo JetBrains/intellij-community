@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Condition
 import junit.framework.TestCase
-import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.async
@@ -107,7 +106,6 @@ private class TestApplication : MockApplication({}) {
     }
 
     override fun assertIsNonDispatchThread() {
-        assertFalse(Thread.currentThread().name.startsWith(TEST_UI_DISPATCHER_NAME))
     }
 
     override fun invokeLater(runnable: Runnable) {

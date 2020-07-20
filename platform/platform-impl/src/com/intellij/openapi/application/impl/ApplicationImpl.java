@@ -1046,6 +1046,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public void assertIsNonDispatchThread() {
+    if (isUnitTestMode() || isHeadlessEnvironment()) return;
     if (!isDispatchThread()) return;
     if (ShutDownTracker.isShutdownHookRunning()) return;
     throwThreadAccessException("Access from event dispatch thread is not allowed.");
