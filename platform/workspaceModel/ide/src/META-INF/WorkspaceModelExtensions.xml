@@ -7,7 +7,7 @@
     <registryKey key="ide.new.project.model.strict.mode" defaultValue="false" restartRequired="true"
                  description="Enable required registration for kryo serialization"/>
     <registryKey key="ide.new.project.model.indicator" defaultValue="false" restartRequired="true"
-                 description="Shows status bar workspacemodel indicator"/>
+                 description="Show an icon in the status bar indicating whether the workspace model is enabled or not"/>
 
     <registryKey key="ide.workspace.model.jps.enabled" defaultValue="true" restartRequired="false"
                  description="Enable .iml reading/writing including settings (temporary key)"/>

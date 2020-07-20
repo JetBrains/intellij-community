@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.icons.AllIcons
-import com.intellij.icons.AllIcons.Debugger.Db_set_breakpoint
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.StatusBar
@@ -42,7 +41,8 @@ class WorkspaceModelIndicator : StatusBarWidgetFactory {
       }
 
       override fun getIcon(): Icon? {
-        return if (LegacyBridgeProjectLifecycleListener.enabled(project)) Db_set_breakpoint else AllIcons.Debugger.MuteBreakpoints
+        return if (LegacyBridgeProjectLifecycleListener.enabled(project)) AllIcons.RunConfigurations.TestPassed
+        else AllIcons.RunConfigurations.TestIgnored
       }
 
       override fun getClickConsumer(): Consumer<MouseEvent>? {
