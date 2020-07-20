@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -294,7 +295,7 @@ class ToggleInlineHintsAction : AnAction() {
 
 
 private fun hasEditorParameterHintAtOffset(editor: Editor, file: PsiFile): Boolean {
-  if (editor is EditorWindow) return false
+  if (editor is EditorWindow || editor is ImaginaryEditor) return false
   
   val offset = editor.caretModel.offset
   val element = file.findElementAt(offset)
