@@ -156,7 +156,7 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  public String getToolTip() {
+  public @Tooltip String getToolTip() {
     String toolTip = this.toolTip;
     String description = this.description;
     if (toolTip == null || description == null || !toolTip.contains(DESCRIPTION_PLACEHOLDER)) return toolTip;
@@ -188,7 +188,7 @@ public class HighlightInfo implements Segment {
     return XmlStringUtil.stripHtml(encoded);
   }
 
-  public String getDescription() {
+  public @DetailedDescription String getDescription() {
     return description;
   }
 
