@@ -179,6 +179,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     processArrayAccess(arrayExpression, alwaysOutOfBounds);
     if (alwaysOutOfBounds) {
+      DfaControlTransferValue transfer = instruction.getOutOfBoundsExceptionTransfer();
+      if (transfer != null) {
+        List<DfaInstructionState> states = transfer.dispatch(memState, runner);
+        for (DfaInstructionState state : states) {
+          state.getMemoryState().markEphemeral();
+        }
+        return states.toArray(DfaInstructionState.EMPTY_ARRAY);
+      }
       return DfaInstructionState.EMPTY_ARRAY;
     }
 

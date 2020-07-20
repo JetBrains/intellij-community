@@ -1235,7 +1235,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (toPush == null) {
       toPush = myFactory.getObjectType(expression.getType(), Nullability.UNKNOWN);
     }
-    addInstruction(new ArrayAccessInstruction(toPush, expression));
+    DfaControlTransferValue transfer =
+      shouldHandleException() ? myFactory.controlTransfer(myExceptionCache.get("java.lang.ArrayIndexOutOfBoundsException"), myTrapStack) : null;
+    addInstruction(new ArrayAccessInstruction(toPush, expression, transfer));
     addNullCheck(expression);
     finishElement(expression);
   }
