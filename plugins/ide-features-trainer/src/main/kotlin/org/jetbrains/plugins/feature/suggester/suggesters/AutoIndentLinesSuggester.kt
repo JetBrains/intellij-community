@@ -5,9 +5,8 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
-import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
 
 class AutoIndentLinesSuggester : FeatureSuggester {
 
@@ -15,7 +14,7 @@ class AutoIndentLinesSuggester : FeatureSuggester {
         const val POPUP_MESSAGE = "Why not use the Auto-Indent feature? (Ctrl + Shift + I)"
     }
 
-    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         val command = CommandProcessor.getInstance().currentCommand
         if (command != null) return NoSuggestion
         val lastAction = actions.lastOrNull()
@@ -28,7 +27,8 @@ class AutoIndentLinesSuggester : FeatureSuggester {
                 if (newChildText.contains('\n')
                     && newChildText.count { it == '\n' } == oldChildText.count { it == '\n' }
                     && newChildText.takeLastWhile { it != '\n' }.length != oldChildText.takeLastWhile { it != '\n' }.length
-                    && newChild.nextSibling != null && newChild.nextSibling !is PsiWhiteSpace) {
+                    && newChild.nextSibling != null && newChild.nextSibling !is PsiWhiteSpace
+                ) {
                     return createSuggestion(null, POPUP_MESSAGE)
                 }
             }

@@ -6,11 +6,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildRemovedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
+import org.jetbrains.plugins.feature.suggester.actions.PsiAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
-import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildRemovedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
 import java.awt.datatransfer.DataFlavor
 
 /**
@@ -28,8 +28,9 @@ class IntroduceVariableSuggester : FeatureSuggester {
         const val DESCRIPTOR_ID = "refactoring.introduceVariable"
     }
 
-    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         val lastAction = actions.lastOrNull() ?: return NoSuggestion
+        if (lastAction !is PsiAction) return NoSuggestion
         val parent = lastAction.parent
         when (lastAction) {
             is ChildAddedAction -> {

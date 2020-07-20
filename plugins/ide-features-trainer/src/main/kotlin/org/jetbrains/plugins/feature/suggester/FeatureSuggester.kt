@@ -2,7 +2,6 @@ package org.jetbrains.plugins.feature.suggester
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
 
 interface FeatureSuggester {
 
@@ -16,7 +15,7 @@ interface FeatureSuggester {
     val needToClearLookup: Boolean
         get() = false
 
-    fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion
+    fun getSuggestion(actions: UserActionsHistory): Suggestion
 
     fun getId(): String
 }

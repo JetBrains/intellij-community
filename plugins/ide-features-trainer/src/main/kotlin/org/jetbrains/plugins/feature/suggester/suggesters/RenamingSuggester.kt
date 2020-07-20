@@ -8,10 +8,9 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.changes.BeforeChildReplacedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
 
 class RenamingSuggester : FeatureSuggester {
     companion object {
@@ -42,7 +41,7 @@ class RenamingSuggester : FeatureSuggester {
 
     private var renamedIdentifiersData = RenamedIdentifiersData("", emptyList())
 
-    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         val name = CommandProcessor.getInstance().currentCommandName
         if (name != null && name != "Paste") {
             return NoSuggestion

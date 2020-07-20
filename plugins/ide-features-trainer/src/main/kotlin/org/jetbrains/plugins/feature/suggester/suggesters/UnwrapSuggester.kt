@@ -4,9 +4,8 @@ import com.intellij.psi.*
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.changes.BeforeEditorBackspaceAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorBackspaceAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
 
 class UnwrapSuggester : FeatureSuggester {
     companion object {
@@ -16,8 +15,8 @@ class UnwrapSuggester : FeatureSuggester {
     private var unwrappingStatements: List<PsiElement>? = null
     private val firstSelectionRegex = Regex("""[ \n]*(if|for|while)[ \n]*\(.*\)[ \n]*\{[ \n]*""")
 
-    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
-        val lastAction = anActions.lastOrNull() ?: return NoSuggestion
+    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
+        val lastAction = actions.lastOrNull() ?: return NoSuggestion
         when (lastAction) {
             is BeforeEditorBackspaceAction -> {
                 with(lastAction) {
@@ -25,7 +24,8 @@ class UnwrapSuggester : FeatureSuggester {
                     if (selection != null) {
                         if (!selection.text.matches(firstSelectionRegex)) return NoSuggestion
                         val countStartDelimiters = selection.text.indexOfFirst { it != ' ' && it != '\n' }
-                        val curElement = psiFile.findElementAt(selection.startOffset + countStartDelimiters) ?: return NoSuggestion
+                        val curElement =
+                            psiFile.findElementAt(selection.startOffset + countStartDelimiters) ?: return NoSuggestion
                         val parent = curElement.parent ?: return NoSuggestion
                         if (parent.isSurroundingStatement()) {
                             unwrappingStatements =

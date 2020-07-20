@@ -1,17 +1,14 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.changes.EditorTextInsertedAction
-import org.jetbrains.plugins.feature.suggester.changes.UserAnAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
 import org.jetbrains.plugins.feature.suggester.history.ChangesHistory
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
 import java.lang.ref.WeakReference
 import kotlin.math.abs
 
@@ -28,16 +25,10 @@ class LineCommentingSuggester : FeatureSuggester {
     private data class CommentData(val lineNumber: Int, val documentRef: WeakReference<Document>, val timeMillis: Long)
 
     private val commentsHistory = ChangesHistory<CommentData>(NUMBER_OF_COMMENTS_TO_GET_SUGGESTION)
-    private lateinit var alreadyHandledAction: UserAnAction
     private var firstSlashAddedAction: EditorTextInsertedAction? = null
 
-    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
-        val name = CommandProcessor.getInstance().currentCommandName
-        if (name != null) {
-            return NoSuggestion
-        }
-        val curAction = anActions.lastOrNull() ?: return NoSuggestion
-        if (this::alreadyHandledAction.isInitialized && curAction === alreadyHandledAction) return NoSuggestion
+    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
+        val curAction = actions.lastOrNull() ?: return NoSuggestion
         if (curAction is EditorTextInsertedAction) {
             if (isCommentSymbolAdded(curAction, '/')) {
                 firstSlashAddedAction = curAction
@@ -62,7 +53,6 @@ class LineCommentingSuggester : FeatureSuggester {
             }
         }
 
-        alreadyHandledAction = curAction
         return NoSuggestion
     }
 

@@ -9,9 +9,8 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.ChildRemovedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
-import org.jetbrains.plugins.feature.suggester.changes.ChildRemovedAction
 
 class SafeDeleteSuggester : FeatureSuggester {
     companion object {
@@ -25,7 +24,7 @@ class SafeDeleteSuggester : FeatureSuggester {
      * Returns PopupSuggestion when user removing variable/field/method/class declaration
      * (CHANGED FROM LAST VERSION)
      */
-    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         val name = CommandProcessor.getInstance().currentCommandName
         if (name != null) {
             //it's not user typing action, so let's do nothing

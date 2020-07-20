@@ -7,9 +7,8 @@ import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.*
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
-import org.jetbrains.plugins.feature.suggester.changes.*
 
 class ExclamationCompletionSuggester : FeatureSuggester {
     companion object {
@@ -20,9 +19,9 @@ class ExclamationCompletionSuggester : FeatureSuggester {
     private var exclaimingExpression: PossibleExclaimingExpression? = null
     private var lastCompletionCall = 0L
 
-    private class PossibleExclaimingExpression(val action: UserAction, val exprText: String, val startOffset: Int)
+    private class PossibleExclaimingExpression(val action: PsiAction, val exprText: String, val startOffset: Int)
 
-    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         updateCompletionStatus()
         when (val lastAction = actions.lastOrNull()) {
             is ChildAddedAction -> {
@@ -112,7 +111,7 @@ class ExclamationCompletionSuggester : FeatureSuggester {
         }
     }
 
-    private fun updateExclaimingExpression(expr: PsiExpression, action: UserAction) {
+    private fun updateExclaimingExpression(expr: PsiExpression, action: PsiAction) {
         if (expr is PsiPrefixExpression) return
         val exprType = expr.type
         if (exprType != PsiType.BOOLEAN) return

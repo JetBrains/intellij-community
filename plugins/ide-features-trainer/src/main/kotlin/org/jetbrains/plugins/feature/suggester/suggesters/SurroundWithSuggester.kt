@@ -4,11 +4,10 @@ import com.intellij.psi.*
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.changes.BeforeChildReplacedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
 
 class SurroundWithSuggester : FeatureSuggester {
     companion object {
@@ -31,7 +30,7 @@ class SurroundWithSuggester : FeatureSuggester {
 
     private var surroundingStatementData: SurroundingStatementData? = null
 
-    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         val lastAction = actions.lastOrNull() ?: return NoSuggestion
         when (lastAction) {
             is ChildReplacedAction -> {

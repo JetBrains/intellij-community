@@ -6,10 +6,9 @@ import com.intellij.psi.PsiIdentifier
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.history.UserAnActionsHistory
-import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
-import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
 
 class SuppressWarningSuggester : FeatureSuggester {
 
@@ -17,7 +16,7 @@ class SuppressWarningSuggester : FeatureSuggester {
         const val POPUP_MESSAGE = "Why not use quickfix for inspection to suppress it? (Alt + Enter)"
     }
 
-    override fun getSuggestion(actions: UserActionsHistory, anActions: UserAnActionsHistory): Suggestion {
+    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         when (val lastAction = actions.lastOrNull()) {
             is ChildAddedAction -> {
                 val child = lastAction.newChild
