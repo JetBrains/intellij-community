@@ -251,6 +251,7 @@ public final class HighlightClassUtil {
     if (virtualFile == null || virtualFile.getNameWithoutExtension().equals(aClass.getName())) {
       return null;
     }
+    if (isJavaHashBangScript(file)) return null;
     String message = JavaErrorBundle.message("public.class.should.be.named.after.file", aClass.getName());
     TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).
@@ -271,6 +272,13 @@ public final class HighlightClassUtil {
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameFileFix(aClass.getName() + JavaFileType.DOT_DEFAULT_EXTENSION));
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameElementFix(aClass));
     return errorResult;
+  }
+
+  /**
+   * @return true if file correspond to the shebang script
+   */
+  public static boolean isJavaHashBangScript(PsiJavaFile containingFile) {
+    return containingFile.getText().startsWith("#!");
   }
 
   static HighlightInfo checkClassRestrictedKeyword(@NotNull LanguageLevel level, @NotNull PsiIdentifier identifier) {

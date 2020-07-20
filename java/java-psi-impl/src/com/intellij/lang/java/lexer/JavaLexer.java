@@ -148,7 +148,16 @@ public class JavaLexer extends LexerBase {
           }
         }
         break;
-
+      
+      case '#' : 
+        if (myBufferIndex == 0 && myBufferIndex + 1 < myBufferEndOffset && charAt(myBufferIndex + 1) == '!') {
+          myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
+          myTokenEndOffset = getLineTerminator(myBufferIndex + 2);
+        }
+        else {
+          flexLocateToken();
+        }
+        break;
       case '\'':
         myTokenType = JavaTokenType.CHARACTER_LITERAL;
         myTokenEndOffset = getClosingQuote(myBufferIndex + 1, c);
