@@ -50,7 +50,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   @Override
   public void fun(@NotNull final TypeDfaState state, @NotNull final Instruction instruction) {
-    if (instruction instanceof ReadWriteVariableInstruction) {
+    if (instruction.num() == 0) {
+      handleFirstInstruction(state);
+    } else if (instruction instanceof ReadWriteVariableInstruction) {
       handleReadWriteVariable(state, (ReadWriteVariableInstruction)instruction);
     }
     else if (instruction instanceof MixinTypeInstruction) {
@@ -64,6 +66,12 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     else if (instruction.getElement() instanceof GrFunctionalExpression) {
       handleFunctionalExpression(state, instruction);
+    }
+  }
+
+  private void handleFirstInstruction(TypeDfaState state) {
+    for (Map.Entry<VariableDescriptor, DFAType> entry : myFlowInfo.getInitialTypes().entrySet()) {
+      state.putType(entry.getKey(), entry.getValue());
     }
   }
 
