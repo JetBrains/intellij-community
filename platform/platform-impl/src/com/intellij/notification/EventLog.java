@@ -548,7 +548,15 @@ public final class EventLog {
     }
 
     private boolean isClearAvailable() {
-      return !myProjectModel.getNotifications().isEmpty();
+      if (!myProjectModel.getNotifications().isEmpty()) {
+        return true;
+      }
+      for (EventLogConsole console : myCategoryMap.values()) {
+        if (console.getConsoleEditor().getDocument().getTextLength() > 0) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private void doClear() {
