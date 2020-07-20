@@ -15,22 +15,29 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiArrayAccessExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public class ArrayAccessInstruction extends ExpressionPushingInstruction<PsiArrayAccessExpression> {
   private final @NotNull DfaValue myValue;
+  private final @Nullable DfaControlTransferValue myTransferValue;
 
-  public ArrayAccessInstruction(@NotNull DfaValue value, @NotNull PsiArrayAccessExpression expression) {
+  public ArrayAccessInstruction(@NotNull DfaValue value,
+                                @NotNull PsiArrayAccessExpression expression,
+                                @Nullable DfaControlTransferValue transferValue) {
     super(expression);
     myValue = value;
+    myTransferValue = transferValue;
+  }
+
+  @Nullable
+  public DfaControlTransferValue getOutOfBoundsExceptionTransfer() {
+    return myTransferValue;
   }
 
   @NotNull
