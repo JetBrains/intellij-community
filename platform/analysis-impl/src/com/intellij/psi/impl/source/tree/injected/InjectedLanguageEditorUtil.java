@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class InjectedLanguageEditorUtil {
 
+  @NotNull
   public static Editor getTopLevelEditor(@NotNull Editor editor) {
     return editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
   }
