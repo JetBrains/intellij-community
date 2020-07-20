@@ -25,10 +25,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.ui.MainVcsLogUi
-import com.intellij.vcs.log.ui.VcsLogPanel
-import com.intellij.vcs.log.ui.VcsLogUiEx
-import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcs.log.ui.*
 import com.intellij.vcs.log.util.containsAll
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VisiblePack
@@ -111,9 +108,9 @@ class GitUpdateInfoAsLog(private val project: Project,
     if (!notificationShown && areRangesInDataPack(projectLog, dataPack)) {
       notificationShown = true
       projectLog.dataManager?.removeDataPackChangeListener(listener)
-      val logUiFactory = object : MyLogUiFactory(logManager, createRangeFilter()) {
-        override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
-          val logUi = super.createLogUi(project, logData)
+      val logUiFactory = object : MyLogUiFactory(createRangeFilter()) {
+        override fun createLogUi(project: Project, colorManager: VcsLogColorManager, logData: VcsLogData): MainVcsLogUi {
+          val logUi = super.createLogUi(project, colorManager, logData)
           logUi.refresher.addVisiblePackChangeListener(MyVisiblePackChangeListener(logUi, rangeFilter, commitsAndFiles, dataSupplier))
           return logUi
         }
@@ -143,7 +140,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
     val logManager = projectLog.logManager
     if (logManager != null) {
-      createLogUi(logManager, MyLogUiFactory(logManager, rangeFilter), select)
+      createLogUi(logManager, MyLogUiFactory(rangeFilter), select)
     }
     else if (select) {
       VcsLogContentUtil.showLogIsNotAvailableMessage(project)
@@ -177,10 +174,9 @@ class GitUpdateInfoAsLog(private val project: Project,
   private fun generateUpdateTabId() = updateTabPrefix + UUID.randomUUID()
   private fun isUpdateTabId(id: String): Boolean = id.startsWith(updateTabPrefix)
 
-  private open inner class MyLogUiFactory(val logManager: VcsLogManager, val rangeFilter: VcsLogRangeFilter)
-    : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
+  private open inner class MyLogUiFactory(val rangeFilter: VcsLogRangeFilter) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
 
-    override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
+    override fun createLogUi(project: Project, colorManager: VcsLogColorManager, logData: VcsLogData): MainVcsLogUi {
       val logId = generateUpdateTabId()
       val properties = MyPropertiesForRange(rangeFilter, project.service<GitUpdateProjectInfoLogProperties>())
 
@@ -191,7 +187,7 @@ class GitUpdateInfoAsLog(private val project: Project,
                                                vcsLogFilterer, logId)
 
       // null for initial filters means that filters will be loaded from properties: saved filters + the range filter which we've just set
-      return VcsLogUiImpl(logId, logData, logManager.colorManager, properties, refresher, null)
+      return VcsLogUiImpl(logId, logData, colorManager, properties, refresher, null)
     }
   }
 

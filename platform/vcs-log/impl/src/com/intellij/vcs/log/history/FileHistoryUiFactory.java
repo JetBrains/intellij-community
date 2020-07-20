@@ -10,6 +10,7 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
   }
 
   @Override
-  public FileHistoryUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
+  public FileHistoryUi createLogUi(@NotNull Project project, @NotNull VcsLogColorManager colorManager, @NotNull VcsLogData logData) {
     FileHistoryUiProperties properties = ServiceManager.getService(project, FileHistoryUiProperties.class);
 
     VcsLogFilterCollection filters =
