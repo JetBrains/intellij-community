@@ -269,8 +269,8 @@ public final class PluginDownloader {
         return myMarketplaceRequests.download(myPluginUrl, myOldFile, indicator);
       }
       catch (Exception e) {
-        System.out.println(e);
-        return myMarketplaceRequests.download(myPluginUrl, indicator);
+        e.printStackTrace();
+        return null;
         //return myMarketplaceRequests.download(myPluginUrl, indicator);
       }
     }

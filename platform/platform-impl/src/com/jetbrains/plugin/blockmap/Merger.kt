@@ -1,76 +1,97 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.plugin.blockmap
 
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.util.io.HttpRequests
+import com.intellij.openapi.progress.ProgressIndicator
 import java.io.*
 
 
-data class ChunkData(val hash : String, val data : ByteArray)
+interface ChunkDataSource{
+  fun get(chunk : FastCDC.Chunk) : ByteArray?
+}
 
 open class Merger(
   private val oldFile : File,
   private val oldBlockMap : BlockMap = BlockMap(oldFile.inputStream()),
-  private val newBlockMap: BlockMap
+  private val newBlockMap: BlockMap,
+  private val bufferSize : Int = 64*1024
 ){
+  private val buffer = ByteArray(bufferSize)
+  val baos = ByteArrayOutputStream()
 
+  open fun merge(output : OutputStream, newChunkDataSource : ChunkDataSource) {
+    RandomAccessFile(oldFile, "r").use { prevFileRAF ->
+      val bufferedOutput = output.buffered()
+      val oldMap = oldBlockMap.chunks.associateBy { it.hash }
 
-  fun merge(output : OutputStream, newChunkDataIterator : Iterator<ChunkData>){
-    val prevFileRAF = RandomAccessFile(oldFile, "r")
-    val bufferedOutput = output.buffered()
-    val oldMap = oldBlockMap.chunks.associateBy { it.hash }
-    val rangeBytes = StringBuilder()
-    var rangeCnt = 0
-    var curChunk = 0
-    val buffer = ByteArray(64 * 1024)
-    var summaryDownloadedBytes = 0
-    for (newChunk in newBlockMap.chunks) {
-      if (!oldMap.containsKey(newChunk.hash)) {
-        rangeBytes.append("${newChunk.offset}-${newChunk.offset + newChunk.length - 1},")
-        rangeCnt++
-        summaryDownloadedBytes+=newChunk.length
+      for (newChunk in newBlockMap.chunks) {
+        val oldChunk = oldMap[newChunk.hash]
+        if (oldChunk != null) downloadChunkFromOldData(oldChunk, prevFileRAF, bufferedOutput)
+        else downloadChunkFromNewData(newChunk, newChunkDataSource, bufferedOutput)
       }
-      while(curChunk < newBlockMap.chunks.size) {
-        val chunk = newBlockMap.chunks[curChunk]
-        val oldChunk = oldMap[chunk.hash]
-        if (oldChunk != null) {
-          downloadChunkFromOldData(oldChunk, prevFileRAF, buffer, bufferedOutput)
-        }
-        else {
-          downloadChunkFromNewData(newChunk, newChunkDataIterator, bufferedOutput)
-        }
-        curChunk++
-      }
-
-
-
-      rangeCnt = 0
-      rangeBytes.clear()
-
-
+      FileOutputStream("D:\\plugins\\plugin.zip").use { out -> out.write(baos.toByteArray()) }
     }
   }
-
 
   open fun downloadChunkFromOldData(oldChunk : FastCDC.Chunk, prevFileRAF : RandomAccessFile,
-                                    buffer : ByteArray, output : OutputStream){
+                                     output : OutputStream){
     prevFileRAF.seek(oldChunk.offset.toLong())
-    prevFileRAF.read(buffer, 0, oldChunk.length)
-    for (i in 0 until oldChunk.length) {
-      output.write(buffer[i].toInt())
+    var remainingBytes = oldChunk.length
+    while (remainingBytes != 0){
+      val length = if(remainingBytes >= bufferSize) bufferSize else remainingBytes
+      prevFileRAF.read(buffer, 0, length)
+      for (i in 0 until length) {
+        output.write(buffer[i].toInt())
+        baos.write(buffer[i].toInt())
+      }
+      remainingBytes-=length
     }
   }
 
-  open fun downloadChunkFromNewData(newChunk : FastCDC.Chunk, newChunkDataIterator: Iterator<ChunkData>,
+  open fun downloadChunkFromNewData(newChunk : FastCDC.Chunk, newChunkDataSource: ChunkDataSource,
                                     output : OutputStream){
-    if(newChunkDataIterator.hasNext()){
-      val chunkData = newChunkDataIterator.next()
-      if(chunkData.hash == newChunk.hash && chunkData.data.size == newChunk.length){
-        output.write(chunkData.data)
+      val chunkData = newChunkDataSource.get(newChunk)
+      if(chunkData == null) throw Exception()
+      if(chunkData.size == newChunk.length){
+        output.write(chunkData)
+        baos.write(chunkData)
       }else throw Exception()
-    }else throw Exception()
+  }
+}
+
+class IdeaMerger(
+  private val oldFile : File,
+  private val oldBlockMap : BlockMap = BlockMap(oldFile.inputStream()),
+  private val newBlockMap: BlockMap,
+  private val bufferSize : Int = 64*1024,
+  private val indicator : ProgressIndicator
+) : Merger(oldFile, oldBlockMap, newBlockMap, bufferSize) {
+  private val newFileSize : Int = newBlockMap.chunks.stream().mapToInt { e -> e.length }.sum()
+  private var wroteBytes : Int = 0
+
+  override fun merge(output: OutputStream, newChunkDataSource: ChunkDataSource) {
+    indicator.checkCanceled()
+    indicator.isIndeterminate = newFileSize <= 0
+    super.merge(output, newChunkDataSource)
   }
 
+  override fun downloadChunkFromNewData(newChunk: FastCDC.Chunk, newChunkDataSource: ChunkDataSource,
+                                        output: OutputStream) {
+    super.downloadChunkFromNewData(newChunk, newChunkDataSource, output)
+    wroteBytes+=newChunk.length
+    if(baos.size() != wroteBytes) throw Exception("${baos.size()}    $wroteBytes")
+    setIndicatorFraction()
+  }
 
+  override fun downloadChunkFromOldData(oldChunk: FastCDC.Chunk, prevFileRAF: RandomAccessFile,
+                                         output: OutputStream) {
+    super.downloadChunkFromOldData(oldChunk, prevFileRAF, output)
+    wroteBytes+=oldChunk.length
+    if(baos.size() != wroteBytes) throw Exception("${baos.size()}    $wroteBytes")
+    setIndicatorFraction()
+  }
 
+  private fun setIndicatorFraction(){
+    indicator.checkCanceled()
+    indicator.fraction = wroteBytes.toDouble() / newFileSize.toDouble()
+  }
 }
