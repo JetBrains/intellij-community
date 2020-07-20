@@ -38,35 +38,34 @@ import git4idea.repo.GitRepository
 import java.util.*
 
 internal class GitCompareBranchesUi @JvmOverloads constructor(private val project: Project,
-                                                              private val repositories: List<GitRepository>,
-                                                              private val branchName: String,
-                                                              private val otherBranchName: String = "") {
+                                                              repositories: List<GitRepository>,
+                                                              branchName: String,
+                                                              otherBranchName: String = "") {
+  private val rangeFilter: VcsLogRangeFilter
+  private val rootFilter: VcsLogRootFilter?
 
+  init {
+    val oneRepo = repositories.size == 1
+    val firstRepo = repositories[0]
+    val currentBranchName = firstRepo.currentBranchName
+    val secondRef = when {
+      otherBranchName.isNotBlank() -> otherBranchName
+      oneRepo && !currentBranchName.isNullOrBlank() -> currentBranchName
+      else -> "HEAD"
+    }
+    rangeFilter = fromRange(secondRef, branchName)
+    rootFilter = if (oneRepo) fromRoot(firstRepo.root) else null
+  }
 
   fun create() {
     VcsProjectLog.runWhenLogIsReady(project) { _, logManager ->
-      val oneRepo = repositories.size == 1
-      val firstRepo = repositories[0]
-      val currentBranchName = firstRepo.currentBranchName
-      val secondRef = when {
-        otherBranchName.isNotBlank() -> otherBranchName
-        oneRepo && !currentBranchName.isNullOrBlank() -> currentBranchName
-        else -> "HEAD"
-      }
-
-      val rangeFilter = fromRange(secondRef, branchName)
-      val rootFilter = if (oneRepo) fromRoot(firstRepo.root) else null
-
-      createCompareBranchesUi(logManager, rangeFilter, rootFilter, secondRef)
+      createCompareBranchesUi(logManager, rangeFilter, rootFilter)
     }
   }
 
   private fun createCompareBranchesUi(logManager: VcsLogManager,
                                       rangeFilter: VcsLogRangeFilter,
-                                      rootFilter: VcsLogRootFilter?,
-                                      secondRef: String) {
-    val tabName = getEditorTabName(branchName, secondRef)
-
+                                      rootFilter: VcsLogRootFilter?) {
     val topLogUiFactory = MyLogUiFactory("git-compare-branches-top-" + UUID.randomUUID(),
                                          MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesTopLogProperties>()),
                                          logManager.colorManager, rangeFilter, rootFilter)
@@ -80,15 +79,16 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
       firstComponent = VcsLogPanel(logManager, topLogUi)
       secondComponent = VcsLogPanel(logManager, bottomLogUi)
     }
+    val tabName = getEditorTabName()
     val file = VcsLogFile(mainSplitter, tabName) { tabName }
     invokeLater(ModalityState.NON_MODAL) { FileEditorManager.getInstance(project).openFile(file, true) }
     logManager.scheduleInitialization()
   }
 
-  private fun getEditorTabName(branch1Name: String, branch2Name: String) =
-    ContentUtilEx.getFullName(GitBundle.message("git.compare.branches.tab.name"),
-                              StringUtil.shortenTextWithEllipsis(
-                                GitBundle.message("git.compare.branches.tab.suffix", branch1Name, branch2Name), 150, 20))
+  private fun getEditorTabName(): String {
+    val (start, end) = rangeFilter.getRange()
+    return getEditorTabName(end, start)
+  }
 
   private class MyLogUiFactory(val logId: String,
                                val properties: MainVcsLogUiProperties,
@@ -176,6 +176,11 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
     }
   }
 }
+
+private fun getEditorTabName(branch1Name: String, branch2Name: String) =
+  ContentUtilEx.getFullName(GitBundle.message("git.compare.branches.tab.name"),
+                            StringUtil.shortenTextWithEllipsis(
+                              GitBundle.message("git.compare.branches.tab.suffix", branch1Name, branch2Name), 150, 20))
 
 private fun VcsLogRangeFilter?.getRange(): VcsLogRangeFilter.RefRange {
   check(this != null && ranges.size == 1) {
