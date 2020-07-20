@@ -9,7 +9,6 @@ import com.intellij.ide.plugins.PluginUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.TransactionGuardImpl
@@ -21,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
@@ -41,11 +40,10 @@ class StoreUtil private constructor() {
     @JvmStatic
     @CalledInAny
     fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
-      if (componentManager is Application) {
-        SaveAndSyncHandler.getInstance().cancelScheduledSave()
-      }
-      runBlocking {
-        com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
+      runInAutoSaveDisabledMode {
+        runBlocking {
+          com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
+        }
       }
     }
 
@@ -69,11 +67,11 @@ class StoreUtil private constructor() {
     @CalledInAwt
     @JvmStatic
     fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
-      SaveAndSyncHandler.getInstance().cancelScheduledSave()
-
-      FileDocumentManager.getInstance().saveAllDocuments()
-      runBlocking {
-        saveProjectsAndApp(forceSavingAllSettings)
+      runInAutoSaveDisabledMode {
+        FileDocumentManager.getInstance().saveAllDocuments()
+        runBlocking {
+          saveProjectsAndApp(forceSavingAllSettings)
+        }
       }
     }
   }
@@ -101,7 +99,7 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
     }
 
     val messagePostfix = IdeBundle.message("notification.content.please.restart.0", ApplicationNamesInfo.getInstance().fullProductName,
-                                           (if (ApplicationManager.getApplication().isInternal) "<p>" + StringUtil.getThrowableText(e) + "</p>" else ""))
+                                           (if (ApplicationManager.getApplication().isInternal) "<p>" + ExceptionUtil.getThrowableText(e) + "</p>" else ""))
 
     val pluginId = PluginUtil.getInstance().findPluginId(e)
     val groupId = NotificationGroup.createIdWithTitle("Settings Error", IdeBundle.message("notification.group.settings.error"))
