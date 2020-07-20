@@ -233,12 +233,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return myLayout;
   }
 
-  static class MyFileEditorState implements FileEditorState {
+  public static class MyFileEditorState implements FileEditorState {
     private final Layout mySplitLayout;
     private final FileEditorState myFirstState;
     private final FileEditorState mySecondState;
 
-    MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
+    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
       mySplitLayout = layout;
       myFirstState = firstState;
       mySecondState = secondState;
