@@ -7,9 +7,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.Consumer
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.ui.StatusText
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.VcsLogRootFilter
@@ -34,6 +37,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRoot
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import java.util.*
+import javax.swing.JComponent
 
 internal class GitCompareBranchesUi @JvmOverloads constructor(private val project: Project,
                                                               repositories: List<GitRepository>,
@@ -55,15 +59,13 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
     rootFilter = if (oneRepo) fromRoot(firstRepo.root) else null
   }
 
-  fun create() {
-    VcsProjectLog.runWhenLogIsReady(project) { _, logManager ->
-      createCompareBranchesUi(logManager, rangeFilter, rootFilter)
+  fun open() {
+    VcsProjectLog.runWhenLogIsReady(project) { _, _ ->
+      FileEditorManager.getInstance(project).openFile(GitCompareBranchesFile(this), true)
     }
   }
 
-  private fun createCompareBranchesUi(logManager: VcsLogManager,
-                                      rangeFilter: VcsLogRangeFilter,
-                                      rootFilter: VcsLogRootFilter?) {
+  internal fun create(logManager: VcsLogManager): JComponent {
     val topLogUiFactory = MyLogUiFactory("git-compare-branches-top-" + UUID.randomUUID(),
                                          MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesTopLogProperties>()),
                                          logManager.colorManager, rangeFilter, rootFilter)
@@ -72,18 +74,13 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
                                             logManager.colorManager, rangeFilter.asReversed(), rootFilter)
     val topLogUi = logManager.createLogUi(topLogUiFactory, VcsLogManager.LogWindowKind.EDITOR)
     val bottomLogUi = logManager.createLogUi(bottomLogUiFactory, VcsLogManager.LogWindowKind.EDITOR)
-
-    val mainSplitter = OnePixelSplitter(true).apply {
+    return OnePixelSplitter(true).apply {
       firstComponent = VcsLogPanel(logManager, topLogUi)
       secondComponent = VcsLogPanel(logManager, bottomLogUi)
     }
-    val tabName = getEditorTabName()
-    val file = VcsLogFile(mainSplitter, tabName) { tabName }
-    FileEditorManager.getInstance(project).openFile(file, true)
-    logManager.scheduleInitialization()
   }
 
-  private fun getEditorTabName(): String {
+  internal fun getEditorTabName(): String {
     val (start, end) = rangeFilter.getRange()
     return getEditorTabName(end, start)
   }
@@ -172,6 +169,19 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
         filters.remove(filterName)
       }
     }
+  }
+}
+
+private class GitCompareBranchesFile(private val compareBranchesUi: GitCompareBranchesUi): VcsLogFile(compareBranchesUi.getEditorTabName()) {
+  override fun createMainComponent(project: Project): JComponent {
+    val logManager = VcsProjectLog.getInstance(project).logManager
+    if (logManager == null) {
+      return JBPanelWithEmptyText().withEmptyText(VcsLogBundle.message("vcs.log.is.not.available"))
+    }
+
+    val component = compareBranchesUi.create(logManager)
+    logManager.scheduleInitialization()
+    return component
   }
 }
 

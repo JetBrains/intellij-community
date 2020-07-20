@@ -4,22 +4,18 @@ package com.intellij.vcs.log.ui.editor
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.icons.AllIcons
 import com.intellij.ide.FileIconProvider
-import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
-import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.disposeLogUis
 import com.intellij.vcs.log.impl.VcsLogContentUtil
-import com.intellij.vcs.log.ui.VcsLogUiEx
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -39,31 +35,20 @@ class VcsLogFileType : FileType {
   }
 }
 
-class VcsLogFile(component: JComponent, name: String, private val getDisplayName: (List<VcsLogUiEx>) -> String) :
-  LightVirtualFile(name, VcsLogFileType.INSTANCE, "") {
-
-  internal val rootComponent: JComponent = JPanel(BorderLayout()).also {
-    it.add(component, BorderLayout.CENTER)
-  }
-
-  init {
-    putUserData(SplitAction.FORBID_TAB_SPLIT, true)
-  }
-
-  fun getDisplayName(): String? {
-    val logUis = VcsLogContentUtil.getLogUis(rootComponent)
-    if (logUis.isEmpty()) return null
-    return getDisplayName(logUis)
-  }
+abstract class VcsLogFile(name: String) : LightVirtualFile(name, VcsLogFileType.INSTANCE, "") {
+  abstract fun createMainComponent(project: Project): JComponent
 }
 
 class VcsLogIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? = (file as? VcsLogFile)?.fileType?.icon
 }
 
-class VcsLogEditor(private val vcsLogFile: VcsLogFile) : FileEditorBase() {
+class VcsLogEditor(private val project: Project, private val vcsLogFile: VcsLogFile) : FileEditorBase() {
+  internal val rootComponent: JComponent = JPanel(BorderLayout()).also {
+    it.add(vcsLogFile.createMainComponent(project), BorderLayout.CENTER)
+  }
 
-  override fun getComponent(): JComponent = vcsLogFile.rootComponent
+  override fun getComponent(): JComponent = rootComponent
   override fun getPreferredFocusedComponent(): JComponent? = VcsLogContentUtil.getLogUis(component).firstOrNull()?.mainComponent
   override fun getName(): String = "Vcs Log Editor"
   override fun getFile() = vcsLogFile
@@ -73,7 +58,7 @@ class VcsLogEditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean = file is VcsLogFile
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return VcsLogEditor(file as VcsLogFile)
+    return VcsLogEditor(project, file as VcsLogFile)
   }
 
   override fun getEditorTypeId(): String = "VcsLogEditor"
@@ -85,18 +70,5 @@ class VcsLogEditorProvider : FileEditorProvider, DumbAware {
     }
 
     super.disposeEditor(editor)
-  }
-}
-
-class VcsLogEditorTabTitleProvider : EditorTabTitleProvider {
-
-  override fun getEditorTabTooltipText(project: Project, file: VirtualFile): String? {
-    if (file !is VcsLogFile) return null
-    return getEditorTabTitle(project, file)
-  }
-
-  override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
-    if (file !is VcsLogFile) return null
-    return file.getDisplayName() ?: file.name
   }
 }

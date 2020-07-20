@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -18,17 +17,14 @@ import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
-import com.intellij.vcs.log.ui.editor.VcsLogFile;
+import com.intellij.vcs.log.ui.editor.DefaultVcsLogFile;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class VcsLogTabsManager {
   @NotNull private final Project myProject;
@@ -105,10 +101,8 @@ public class VcsLogTabsManager {
                                                @NotNull String name,
                                                @NotNull VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory,
                                                boolean focus) {
-    MainVcsLogUi ui = manager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR);
-    VirtualFile file = new VcsLogFile(new VcsLogPanel(manager, ui), name, uis -> {
-      return generateDisplayName(Objects.requireNonNull(getFirstItem(uis)));
-    });
+    MainVcsLogUi ui = manager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR, true);
+    DefaultVcsLogFile file = new DefaultVcsLogFile(name, new VcsLogPanel(manager, ui));
     ApplicationManager.getApplication().invokeLater(() -> FileEditorManager.getInstance(project).openFile(file, focus), ModalityState.NON_MODAL);
     manager.scheduleInitialization();
     return ui;
