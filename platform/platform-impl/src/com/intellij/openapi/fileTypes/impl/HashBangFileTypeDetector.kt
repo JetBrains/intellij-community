@@ -9,6 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile
 
 /**
  * @author yole
+ * 
+ * Consider using <code>hashBangs</code> attribute of <code>fileType</code>
  */
 open class HashBangFileTypeDetector constructor(
   val fileType: FileType,
