@@ -45,6 +45,14 @@ fun <T> List<T>.headTail(): Pair<T, List<T>> = Pair(first(), tail())
  */
 fun <T> List<T>.headTailOrNull(): Pair<T, List<T>>? = if (isEmpty()) null else headTail()
 
+/**
+ * @return all the elements of a non-empty list except the last one
+ */
+fun <T> List<T>.init(): List<T> {
+  require(isNotEmpty())
+  return subList(0, size - 1)
+}
+
 fun <T> List<T>?.nullize(): List<T>? = if (isNullOrEmpty()) null else this
 
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
