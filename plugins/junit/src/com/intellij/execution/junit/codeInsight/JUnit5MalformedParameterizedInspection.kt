@@ -130,6 +130,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
           "bytes" to PsiType.BYTE,
           "floats" to PsiType.FLOAT,
           "chars" to PsiType.CHAR,
+          "booleans" to PsiType.BOOLEAN,
           "classes" to PsiType.getJavaLangClass(method.manager, method.resolveScope))
 
         for (valueKey in possibleValues.keys) {
