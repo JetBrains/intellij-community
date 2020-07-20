@@ -1,19 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.settings;
 
+import com.intellij.completion.ranker.ExperimentModelProvider;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.stats.sender.SenderPreloadingActivityKt;
-import com.jetbrains.completion.ranker.WeakModelProvider;
 import org.jetbrains.annotations.NotNull;
-
 import java.util.*;
 
 @State(name = "CompletionMLRankingSettings", storages = @Storage(value = "completionMLRanking.xml", roamingType = RoamingType.DISABLED))
 public final class CompletionMLRankingSettings implements PersistentStateComponent<CompletionMLRankingSettings.State> {
   private static final Logger LOG = Logger.getInstance(CompletionMLRankingSettings.class);
 
-  private final Collection<String> enabledByDefault = WeakModelProvider.enabledByDefault();
+  private final Collection<String> enabledByDefault = ExperimentModelProvider.enabledByDefault();
   private final State myState;
 
   public CompletionMLRankingSettings() {

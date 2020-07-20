@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.settings
 
+import com.intellij.completion.ranker.ExperimentModelProvider
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
-import com.jetbrains.completion.ranker.WeakModelProvider
 
 object MLCompletionSettingsCollector {
   private val COUNTER_GROUP = EventLogGroup("ml.completion", 1)
@@ -44,7 +44,7 @@ object MLCompletionSettingsCollector {
     override fun acceptRuleId(ruleId: String?): Boolean = ruleId == "ml_completion_ranker_id"
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {
-      if (WeakModelProvider.availableProviders().any { it.id == data }) {
+      if (ExperimentModelProvider.availableProviders().any { it.id == data }) {
         return ValidationResultType.ACCEPTED
       }
 

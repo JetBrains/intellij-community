@@ -16,7 +16,9 @@ import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.castSafelyTo
-import com.jetbrains.completion.ranker.WeakModelProvider
+import com.intellij.completion.ranker.ExperimentModelProvider
+import com.intellij.mocks.TestExperimentStatus
+import com.intellij.stats.experiment.ExperimentStatus
 import junit.framework.TestCase
 import java.beans.PropertyChangeListener
 
@@ -33,12 +35,17 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
     }
 
     RankingSupport.enableInTests(testRootDisposable)
+    val experimentStatus = ExperimentStatus.getInstance() as TestExperimentStatus
+    experimentStatus.updateExperimentSettings(inExperiment = true,
+                                              shouldRank = true,
+                                              shouldShowArrows = true,
+                                              shouldCalculateFeatures = false)
     Disposer.register(testRootDisposable, Disposable { settingsStateBefore.restore(CompletionMLRankingSettings.getInstance()) })
     LookupManager.getInstance(project)
       .addPropertyChangeListener(
         PropertyChangeListener { evt -> evt.newValue?.castSafelyTo<LookupImpl>()?.addPresentationCustomizer(arrowChecker) },
         testRootDisposable)
-    WeakModelProvider.registerProvider(TestInverseRankingModelProvider(), testRootDisposable)
+    ExperimentModelProvider.registerProvider(TestInverseRankingModelProvider(), testRootDisposable)
   }
 
   fun testArrowsAreShowingAndUpdated() {
@@ -73,10 +80,8 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
     }
   }
 
-  private class TestInverseRankingModelProvider : WeakModelProvider {
-    override fun canBeUsed(): Boolean = true
-
-    override fun shouldReplace(): Boolean = true
+  private class TestInverseRankingModelProvider : ExperimentModelProvider {
+    override fun experimentGroupNumber(): Int = TestExperimentStatus.VERSION
 
     override fun getModel(): DecisionFunction {
       return object : DecisionFunction {

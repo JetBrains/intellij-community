@@ -27,7 +27,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="fluent-hc" level="project" />
-    <orderEntry type="module" module-name="intellij.statsCollector.completionRanker" />
     <orderEntry type="module-library" exported="">
       <library name="ngram-slp" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:ngram-slp:0.0.2" />

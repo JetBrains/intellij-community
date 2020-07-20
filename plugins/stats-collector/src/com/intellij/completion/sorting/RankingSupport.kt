@@ -3,6 +3,8 @@ package com.intellij.completion.sorting
 
 import com.intellij.application.options.CodeCompletionOptions
 import com.intellij.completion.StatsCollectorBundle
+import com.intellij.completion.ranker.ExperimentModelProvider
+import com.intellij.completion.ranker.ExperimentModelProvider.Companion.match
 import com.intellij.completion.settings.CompletionMLRankingSettings
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
@@ -17,7 +19,6 @@ import com.intellij.stats.sender.isCompletionLogsSendAllowed
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.stats.experiment.ExperimentInfo
 import com.intellij.stats.experiment.ExperimentStatus
-import com.jetbrains.completion.ranker.WeakModelProvider
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
@@ -32,17 +33,19 @@ object RankingSupport {
 
   fun availableRankers(): List<RankingModelProvider> {
     val registeredLanguages = Language.getRegisteredLanguages()
-    return WeakModelProvider.availableProviders()
+    val experimentStatus = ExperimentStatus.getInstance()
+    return ExperimentModelProvider.availableProviders()
       .filter { provider ->
         registeredLanguages.any {
-          provider.isLanguageSupported(it)
+          provider.match(it, experimentStatus.forLanguage(it).version)
         }
       }.toList()
   }
 
   private fun findProviderSafe(language: Language): RankingModelProvider? {
+    val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
     try {
-      return WeakModelProvider.findProvider(language)
+      return ExperimentModelProvider.findProvider(language, experimentInfo.version)
     }
     catch (e: IllegalStateException) {
       LOG.error(e)

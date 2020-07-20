@@ -1,0 +1,14 @@
+<idea-plugin>
+  <id>com.intellij.ml.completion.models</id>
+  <name>Machine Learning Code Completion Models</name>
+  <vendor>JetBrains</vendor>
+  <category>Other Tools</category>
+
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.ml.model implementation="com.jetbrains.completion.ranker.ExperimentKotlinMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ranker.ExperimentScalaMLRankingProvider"/>
+  </extensions>
+</idea-plugin>
