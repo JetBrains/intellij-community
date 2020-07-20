@@ -69,12 +69,12 @@ internal fun closeLogTabs(project: Project, editorTabIds: List<String>): Boolean
 
   val editorManager = FileEditorManager.getInstance(project)
 
-  val editorsToIdsMap = editorManager.allEditors.asIterable().associateWith {
-    getLogIds(it).intersect(tabsToClose)
-  }.filterValues { logIds -> logIds.isNotEmpty() }
+  val editorsToIdsMap = editorManager.allEditors.asIterable().filter {
+    getLogIds(it).intersect(tabsToClose).isNotEmpty()
+  }
 
-  for ((logEditor, ids) in editorsToIdsMap) {
-    logEditor.disposeLogUis()
+  for (logEditor in editorsToIdsMap) {
+    val ids = logEditor.disposeLogUis()
     ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logEditor.file!!) }, ModalityState.NON_MODAL,
                                                     { project.isDisposed })
     tabsToClose.removeAll(ids)
@@ -82,10 +82,12 @@ internal fun closeLogTabs(project: Project, editorTabIds: List<String>): Boolean
   return tabsToClose.isEmpty()
 }
 
-internal fun FileEditor.disposeLogUis() {
+internal fun FileEditor.disposeLogUis(): List<String> {
   val logUis = VcsLogContentUtil.getLogUis(component)
+  val disposedIds = logUis.map { it.id }
   if (logUis.isNotEmpty()) {
     component.removeAll()
     logUis.forEach(Disposer::dispose)
   }
+  return disposedIds
 }
