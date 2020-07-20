@@ -72,6 +72,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private void handleFirstInstruction(TypeDfaState state) {
     for (Map.Entry<VariableDescriptor, DFAType> entry : myFlowInfo.getInitialTypes().entrySet()) {
+      // todo: move entire logic from InitialTypeProvider here
       state.putType(entry.getKey(), entry.getValue());
     }
   }
@@ -270,7 +271,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       action.get();
     }
     else {
-      // todo: IDEA-242437
       TypeInferenceHelper.doInference(Collections.emptyMap(), false, action);
     }
   }
