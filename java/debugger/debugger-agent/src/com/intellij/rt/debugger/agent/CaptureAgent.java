@@ -592,6 +592,9 @@ public final class CaptureAgent {
 
     addCapture("java/util/concurrent/CompletableFuture$UniRun", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("java/util/concurrent/CompletableFuture$UniRun", "tryFire", THIS_KEY_PROVIDER);
+    
+    addCapture("java/util/concurrent/ForkJoinTask", "fork", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/ForkJoinTask", "doExec", THIS_KEY_PROVIDER);
 
     // netty
     addCapture("io/netty/util/concurrent/SingleThreadEventExecutor", "addTask", FIRST_PARAM);
