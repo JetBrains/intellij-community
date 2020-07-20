@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -203,7 +204,9 @@ public final class PluginInstaller {
     }
     else {
       target = new File(targetPath, rootEntryName(sourceFile));
-      FileUtil.delete(target);
+      System.out.println(target.toPath());
+      if(!UpdateSettings.getInstance().isKeepArchives()) FileUtil.delete(target);
+      else FileUtil.rename(target, target);
       new Decompressor.Zip(sourceFile).extract(new File(targetPath));
     }
     return target;

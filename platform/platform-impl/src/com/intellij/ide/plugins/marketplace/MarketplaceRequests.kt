@@ -19,16 +19,20 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
+import com.intellij.util.io.exists
 import org.jetbrains.annotations.ApiStatus
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
-import java.io.File
-import java.io.IOException
-import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URLConnection
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
+import com.jetbrains.plugin.blockmap.BlockMap
+import java.io.*
+import java.nio.charset.Charset
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.*
 
 @ApiStatus.Internal
 open class MarketplaceRequests {
@@ -43,6 +47,8 @@ open class MarketplaceRequests {
     private const val FILENAME = "filename="
 
     private val INSTANCE = MarketplaceRequests()
+
+    private const val MAX_HTTP_HEADER_LENGTH = 1000
 
     @JvmStatic
     fun getInstance(): MarketplaceRequests {
@@ -386,6 +392,204 @@ open class MarketplaceRequests {
         FileUtil.rename(file, newFile)
         newFile
       })
+  }
+
+  @Throws(IOException::class)
+  open fun download(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator): File {
+    val start = System.currentTimeMillis()
+
+    val prevPluginArchive = getPrevPluginArchive(prevPlugin)
+    if(!prevPluginArchive.exists()) throw FileNotFoundException()
+
+    val pluginsTemp = File(PathManager.getPluginTempPath())
+    if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
+      throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
+    }
+    val file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false)
+    println(file.toString())
+
+    val oldBlockMap = FileInputStream(prevPluginArchive.toFile()).use { input -> BlockMap(input) }
+    println("prevBlockMap chunks=${oldBlockMap.chunks.size}")
+
+    /*println(pluginUrl)
+    var blockMapUrl = pluginUrl.replace("/pluginManager", "/pluginManager/blockmap")
+    println(blockMapUrl)
+
+    val newBlockMap = HttpRequests.request(blockMapUrl).connect { request ->
+      ObjectInputStream(request.inputStream).readObject() as BlockMap
+    }*/
+    val newBlockMap = ObjectInputStream(FileInputStream("C:\\Users\\Ivan\\JetBrains\\Internship\\intellij\\system\\idea\\plugins\\blockmap.bin")).use { input -> input.readObject() as BlockMap }
+    println("newBlockMap chunks=${newBlockMap.chunks.size}")
+
+    val blockMapDiff = oldBlockMap.compare(newBlockMap)
+    println("blockMapDiff chunks=${blockMapDiff.size}")
+
+    val curPluginUrl = if(pluginUrl.contains("localhost:8080")) pluginUrl.replace("localhost:8080","plugins.jetbrains.com") else pluginUrl
+
+
+    val output = FileOutputStream(file).buffered()
+    val prevPluginRAF = RandomAccessFile(prevPluginArchive.toFile(), "r")
+    val buffer = ByteArray(64 * 1024)
+
+    val oldMap = oldBlockMap.chunks.associateBy { it.hash }
+    val rangeBytes = StringBuilder()
+    var rangeCnt = 0
+    var curChunk = 0
+    var summaryDownloadedBytes = 0
+    for (newChunk in newBlockMap.chunks) {
+      if (!oldMap.containsKey(newChunk.hash)) {
+        rangeBytes.append("${newChunk.offset}-${newChunk.offset + newChunk.length - 1},")
+        rangeCnt++
+        summaryDownloadedBytes+=newChunk.length
+      }
+      if(rangeBytes.length >= MAX_HTTP_HEADER_LENGTH){
+        HttpRequests.requestWithRange(curPluginUrl, rangeBytes.removeSuffix(",").toString()).productNameAsUserAgent().connect { request ->
+          val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
+          request.inputStream.buffered().use { input ->
+            while(curChunk < newBlockMap.chunks.size) {
+              val chunk = newBlockMap.chunks[curChunk]
+              val oldChunk = oldMap[chunk.hash]
+              if (oldChunk != null) {
+                prevPluginRAF.seek(oldChunk.offset.toLong())
+                prevPluginRAF.read(buffer, 0, oldChunk.length)
+                for (i in 0 until oldChunk.length) {
+                  output.write(buffer[i].toInt())
+                }
+              }
+              else {
+                try {
+                  do {
+                    val line = nextLine(input)
+                  } while(!line.contains(boundary))
+                  nextLine(input)
+                  nextLine(input)
+                  nextLine(input)
+                  for(i in 0 until chunk.length) output.write(input.read())
+                  rangeCnt--
+                }catch (e : Exception){
+                  println(e)
+                }
+              }
+              curChunk++
+              if (rangeCnt == 0) break
+            }
+          }
+        }
+        rangeCnt = 0
+        rangeBytes.clear()
+      }
+    }
+    if(rangeCnt != 0){
+      HttpRequests.requestWithRange(curPluginUrl, rangeBytes.removeSuffix(",").toString()).productNameAsUserAgent().connect { request ->
+        val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
+        request.inputStream.buffered().use { input ->
+          while(curChunk < newBlockMap.chunks.size) {
+            val chunk = newBlockMap.chunks[curChunk]
+            val oldChunk = oldMap[chunk.hash]
+            if (oldChunk != null) {
+              prevPluginRAF.seek(oldChunk.offset.toLong())
+              prevPluginRAF.read(buffer, 0, oldChunk.length)
+              for (i in 0 until oldChunk.length) {
+                output.write(buffer[i].toInt())
+              }
+            }
+            else {
+              try {
+                do {
+                  val line = nextLine(input)
+                } while(!line.contains(boundary))
+                nextLine(input)
+                nextLine(input)
+                nextLine(input)
+                for(i in 0 until chunk.length) output.write(input.read())
+                rangeCnt--
+              }catch (e : Exception){
+                println(e)
+              }
+            }
+            curChunk++
+            if (rangeCnt == 0) break
+          }
+        }
+      }
+    }
+    output.close()
+    prevPluginRAF.close()
+
+
+
+
+     /* FileOutputStream(file).buffered().use { output ->
+        val randomAccessFile = RandomAccessFile(prevPluginArchive.toFile(), "r")
+        val buffer = ByteArray(64 * 1024)
+        for (newChunk in newBlockMap.chunks) {
+          val oldChunk = oldMap[newChunk.hash]
+          if (oldChunk != null) {
+            randomAccessFile.seek(oldChunk.offset.toLong())
+            randomAccessFile.read(buffer, 0, oldChunk.length)
+            for (i in 0 until oldChunk.length) {
+              output.write(buffer[i].toInt())
+            }
+          }
+          else {
+            try{
+              while(!input.readLine().contains(boundary)){}
+              input.readLine()
+              input.readLine()
+              input.readLine()
+              for (i in 0 until newChunk.length) output.write(input.read())
+              curRangeCnt--
+              println(curRangeCnt)
+              if(curRangeCnt == 0){
+                curRange++
+                if(curRange < rangeBytesStrings.size){
+                  curRangeCnt = rangeBytesStrings[curRange].first
+                  curRangeString = rangeBytesStrings[curRange].second
+                  input.close()
+                  input = HttpRequests.requestWithRange(curPluginUrl, curRangeString).productNameAsUserAgent().connect { request ->
+                    boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
+                    InputStreamReader(request.inputStream).buffered()
+                  }
+                }else if(curRange == rangeBytesStrings.size) input.close()
+              }
+            }catch (e : Exception){
+              println(e)
+            }
+
+          }
+        }
+      }*/
+
+
+    println("summary downloaded bytes=$summaryDownloadedBytes")
+    /*println("time=${System.currentTimeMillis() - start}")
+    val newFileBytes = FileInputStream("D:\\plugins\\IntelliJ IDEA Help\\IntelliJIDEAHelp.zip").use { input -> input.readBytes() }
+
+    val mergeFileBytes = FileInputStream(file).use { input -> input.readBytes() }
+    println("new bytes=${newFileBytes.size}, merge bytes=${mergeFileBytes.size}")
+    var s = 0
+    for(i in newFileBytes.indices) if(newFileBytes[i] != mergeFileBytes[i]) s++
+    println(s)
+    println(newFileBytes.contentEquals(mergeFileBytes))*/
+    throw Exception("")
+    return File("")
+  }
+
+  private fun nextLine(input : BufferedInputStream) : String{
+    ByteArrayOutputStream().use { baos ->
+      do{
+        val byte = input.read()
+        baos.write(byte)
+      }while(byte.toChar() != '\n')
+      return String(baos.toByteArray(), Charset.defaultCharset())
+    }
+  }
+
+
+  private fun getPrevPluginArchive(prevPlugin: Path): Path {
+    val suffix = if(prevPlugin.endsWith(".jar")) "" else ".zip"
+    println("${PathManager.getPluginTempPath()}\\${prevPlugin.fileName}$suffix")
+    return Paths.get("${PathManager.getPluginTempPath()}\\${prevPlugin.fileName}$suffix")
   }
 
   @Throws(IOException::class)

@@ -55,6 +55,14 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     myState.setCheckNeeded(value);
   }
 
+  public boolean isKeepArchives() {
+    return myState.isKeepArchives();
+  }
+
+  public void setKeepArchives(boolean value) {
+    myState.setKeepArchives(value);
+  }
+
   public List<String> getEnabledExternalUpdateSources() {
     return myState.getEnabledExternalComponentSources();
   }

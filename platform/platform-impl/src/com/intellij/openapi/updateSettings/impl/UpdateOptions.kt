@@ -26,6 +26,9 @@ class UpdateOptions : BaseState() {
   @get:OptionTag("CHECK_NEEDED")
   var isCheckNeeded by property(true)
 
+  @get:OptionTag("KEEP_ARCHIVES")
+  var isKeepArchives by property(true)
+
   @get:OptionTag("LAST_TIME_CHECKED")
   var lastTimeChecked by property(0L)
 

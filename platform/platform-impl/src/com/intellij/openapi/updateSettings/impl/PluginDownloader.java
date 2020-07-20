@@ -137,7 +137,8 @@ public final class PluginDownloader {
   }
 
   @Nullable
-  public IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator, boolean showMessageOnError) throws IOException {
+  public IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator, boolean showMessageOnError)
+    throws IOException {
     myShownErrors = false;
 
     if (myFile != null) {
@@ -224,7 +225,7 @@ public final class PluginDownloader {
       throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
     }
 
-    PluginInstaller.installAfterRestart(myFile, true, myOldFile, myDescriptor);
+    PluginInstaller.installAfterRestart(myFile, UpdateSettings.getInstance().isKeepArchives(), myOldFile, myDescriptor);
 
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {
@@ -244,9 +245,11 @@ public final class PluginDownloader {
       if (installedPlugin == null) {
         return false;
       }
-      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginDescriptorLoader.tryLoadFullDescriptor((IdeaPluginDescriptorImpl)installedPlugin);
+      IdeaPluginDescriptorImpl installedPluginDescriptor =
+        PluginDescriptorLoader.tryLoadFullDescriptor((IdeaPluginDescriptorImpl)installedPlugin);
       if (installedPluginDescriptor == null || !DynamicPlugins.unloadPlugin(installedPluginDescriptor,
-                                                                            new DynamicPlugins.UnloadPluginOptions().withUpdate(true).withWaitForClassloaderUnload(true))) {
+                                                                            new DynamicPlugins.UnloadPluginOptions().withUpdate(true)
+                                                                              .withWaitForClassloaderUnload(true))) {
         return false;
       }
     }
@@ -257,8 +260,20 @@ public final class PluginDownloader {
   private @NotNull File downloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
-
-    return myMarketplaceRequests.download(myPluginUrl, indicator);
+    //if(myOldFile == null || myPluginUrl.contains("localhost")){
+    if (myOldFile == null) {
+      return myMarketplaceRequests.download(myPluginUrl, indicator);
+    }
+    else {
+      try {
+        return myMarketplaceRequests.download(myPluginUrl, myOldFile, indicator);
+      }
+      catch (Exception e) {
+        System.out.println(e);
+        return myMarketplaceRequests.download(myPluginUrl, indicator);
+        //return myMarketplaceRequests.download(myPluginUrl, indicator);
+      }
+    }
   }
 
   // creators-converters

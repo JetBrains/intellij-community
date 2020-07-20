@@ -68,6 +68,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
   public void apply() throws ConfigurationException {
     boolean wasEnabled = mySettings.isCheckNeeded();
     mySettings.setCheckNeeded(myPanel.myCheckForUpdates.isSelected());
+    mySettings.setCheckNeeded(myPanel.myCheckForKeepArchives.isSelected());
     if (wasEnabled != mySettings.isCheckNeeded()) {
       UpdateCheckerComponent checker = UpdateCheckerComponent.getInstance();
       if (checker != null) {
@@ -86,6 +87,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
   @Override
   public void reset() {
     myPanel.myCheckForUpdates.setSelected(mySettings.isCheckNeeded());
+    myPanel.myCheckForKeepArchives.setSelected(mySettings.isKeepArchives());
     myPanel.updateLastCheckedLabel();
     myPanel.setSelectedChannelType(mySettings.getSelectedActiveChannel());
   }
@@ -94,6 +96,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
   public boolean isModified() {
     return myPanel != null &&
            (myPanel.myCheckForUpdates.isSelected() != mySettings.isCheckNeeded() ||
+            myPanel.myCheckForKeepArchives.isSelected() != mySettings.isKeepArchives() ||
             myPanel.myUpdateChannels.getSelectedItem() != mySettings.getSelectedActiveChannel());
   }
 
@@ -106,6 +109,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     private final UpdateSettings mySettings;
     private JPanel myPanel;
     private JCheckBox myCheckForUpdates;
+    private JCheckBox myCheckForKeepArchives;
     private JComboBox<ChannelStatus> myUpdateChannels;
     private JButton myCheckNow;
     private JBLabel myChannelWarning;
@@ -123,6 +127,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
       ExternalUpdateManager manager = ExternalUpdateManager.ACTUAL;
       if (manager != null) {
         myCheckForUpdates.setText(IdeBundle.message("updates.settings.checkbox.external"));
+        myCheckForKeepArchives.setText(IdeBundle.message("updates.settings.keep.archives"));
         myUpdateChannels.setVisible(false);
         myChannelWarning.setText(IdeBundle.message("updates.settings.external", manager.toolName));
         myChannelWarning.setForeground(JBColor.GRAY);
