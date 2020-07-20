@@ -19,12 +19,28 @@ class PortableCompilationCache {
   private static final String GIT_REPOSITORY_URL_PROPERTY = 'intellij.remote.url'
   private static final String AVAILABLE_FOR_HEAD_PROPERTY = 'intellij.jps.cache.availableForHeadCommit'
   private static final String FORCE_DOWNLOAD_PROPERTY = 'intellij.jps.cache.download.force'
+  private static final String UPLOAD_COMPILATION_OUTPUTS_PROPERTY = 'intellij.jps.remote.cache.compilationOutputsOnly'
+  private static final String CACHE_UPLOAD_URL_PROPERTY = 'intellij.jps.remote.cache.upload.url'
+  private static final String FORCE_REBUILD_PROPERTY = 'intellij.jps.cache.rebuild.force'
+  private static final String AWS_SYNC_FOLDER_PROPERTY = 'jps.caches.aws.sync.folder'
+  private static final String COMMIT_HASH_PROPERTY = 'build.vcs.number'
   static final List<String> PROPERTIES = [
     REMOTE_CACHE_URL_PROPERTY, GIT_REPOSITORY_URL_PROPERTY,
     AVAILABLE_FOR_HEAD_PROPERTY, FORCE_DOWNLOAD_PROPERTY,
     JavaBackwardReferenceIndexWriter.PROP_KEY,
     ProjectStamps.PORTABLE_CACHES_PROPERTY
   ]
+  /**
+   * Download JPS remote caches even if there are caches available locally
+   */
+  private boolean forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
+  private boolean cleanupRemoteCache = bool('intellij.jps.cache.cleanup', false)
+  private File cacheDir = context.compilationData.dataStorageRoot
+  private boolean forceRebuild = bool(FORCE_REBUILD_PROPERTY, false)
+  boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && !StringUtil.isEmptyOrSpaces(System.getProperty(REMOTE_CACHE_URL_PROPERTY))
+  @Lazy
+  private String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }()
+
   @Lazy
   private String remoteGitUrl = {
     require(GIT_REPOSITORY_URL_PROPERTY, "Repository url").with {
@@ -33,31 +49,21 @@ class PortableCompilationCache {
     }
   }()
   @Lazy
-  private String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }()
-  /**
-   * Download JPS remote caches even if there are caches available locally
-   */
-  private boolean forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
-  private boolean cleanupRemoteCache = bool('intellij.jps.cache.cleanup', false)
-  @Lazy
   private CompilationOutputsDownloader downloader = {
     def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
     new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
   }()
   @Lazy
   private CompilationOutputsUploader uploader = {
-    def remoteCacheUploadUrl = require('intellij.jps.remote.cache.upload.url', "JPS remote cache upload url")
-    def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
-    def uploadCompilationOutputsOnly = bool('intellij.jps.remote.cache.compilationOutputsOnly', false)
-    def commitHash = require("build.vcs.number", "Repository commit")
+    def remoteCacheUploadUrl = require(CACHE_UPLOAD_URL_PROPERTY, "JPS remote cache upload url")
+    def syncFolder = require(AWS_SYNC_FOLDER_PROPERTY, "AWS sync folder")
+    def uploadCompilationOutputsOnly = bool(UPLOAD_COMPILATION_OUTPUTS_PROPERTY, false)
+    def commitHash = require(COMMIT_HASH_PROPERTY, "Repository commit")
     context.messages.buildStatus(commitHash)
     new CompilationOutputsUploader(
       context, remoteCacheUploadUrl, remoteGitUrl, commitHash, syncFolder, uploadCompilationOutputsOnly
     )
   }()
-  private File cacheDir = context.compilationData.dataStorageRoot
-  private boolean forceRebuild = bool('intellij.jps.cache.rebuild.force', false)
-  boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && !StringUtil.isEmptyOrSpaces(System.getProperty(REMOTE_CACHE_URL_PROPERTY))
 
   PortableCompilationCache(CompilationContext context) {
     this.context = context
