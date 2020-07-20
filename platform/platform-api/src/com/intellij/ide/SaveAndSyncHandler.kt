@@ -72,11 +72,7 @@ abstract class SaveAndSyncHandler {
   open fun maybeRefresh(modalityState: ModalityState) {
   }
 
-  @ApiStatus.Experimental
-  open fun cancelScheduledSave() {
-  }
-
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   abstract fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean
 
   /**

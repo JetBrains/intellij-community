@@ -93,7 +93,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       }
     }
 
-    val frameAllocator = if (app.isHeadlessEnvironment) ProjectFrameAllocator() else ProjectUiFrameAllocator(options, projectStoreBaseDir)
+    val frameAllocator = if (app.isHeadlessEnvironment) ProjectFrameAllocator(options) else ProjectUiFrameAllocator(options, projectStoreBaseDir)
     val result = runInAutoSaveDisabledMode {
       frameAllocator.run {
         activity.end()
