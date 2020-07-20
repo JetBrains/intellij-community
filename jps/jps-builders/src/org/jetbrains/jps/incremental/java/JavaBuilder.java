@@ -54,7 +54,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -92,17 +93,17 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   private static final List<String> COMPILABLE_EXTENSIONS = Collections.singletonList(JAVA_EXTENSION);
 
   private static final Set<String> FILTERED_OPTIONS = ContainerUtil.newHashSet(
-    "-target", "--release",
-    "--boot-class-path", "-bootclasspath",
-    "--class-path", "-classpath", "-cp",
-    "-processorpath", "-sourcepath",
-    "-d",
-    "--module-path", "-p", "--module-source-path"
+    "-target", "--release", "-d"
   );
   private static final Set<String> FILTERED_SINGLE_OPTIONS = ContainerUtil.newHashSet(
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   );
-
+  private static final Set<String> POSSIBLY_CONFLICTING_OPTIONS = ContainerUtil.newHashSet(
+    "--boot-class-path", "-bootclasspath",
+    "--class-path", "-classpath", "-cp",
+    "-processorpath", "-sourcepath",
+    "--module-path", "-p", "--module-source-path"
+  );
 
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
   private static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
@@ -825,6 +826,9 @@ public final class JavaBuilder extends ModuleLevelBuilder {
         }
         else {
           if (!FILTERED_SINGLE_OPTIONS.contains(userOption)) {
+            if (POSSIBLY_CONFLICTING_OPTIONS.contains(userOption)) {
+              notifyOptionPossibleConflicts(context, userOption, chunk);
+            }
             if (userOption.startsWith("-J-")) {
               vmOptions.add(userOption.substring("-J".length()));
             }
@@ -848,6 +852,12 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     return pair(vmOptions, compilationOptions);
   }
 
+  private static void notifyOptionPossibleConflicts(CompileContext context, String option, ModuleChunk chunk) {
+    context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.JPS_INFO,
+      "User-specified option \"" + option + "\" for \"" + chunk.getPresentableShortName() + "\" may conflict with the corresponding option calculated automatically according to project settings."
+    ));
+  }
+  
   private static void notifyOptionIgnored(CompileContext context, String option, ModuleChunk chunk) {
     context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.JPS_INFO,
       "User-specified option \"" + option + "\" is ignored for \"" + chunk.getPresentableShortName() + "\". This compilation parameter is set automatically according to project settings."
