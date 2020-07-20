@@ -1,5 +1,7 @@
 package com.siyeh.igtest.bugs.suspicious_indent_after_control_statement;
 
+import java.util.*;
+
 public class SuspiciousIndentAfterControlStatement {
 
     public static String suspicousIndent(int i, int j) {
@@ -39,5 +41,48 @@ public class SuspiciousIndentAfterControlStatement {
         if (true)
             System.out.println();
             <warning descr="'class' statement has suspicious indentation">class</warning><error descr="Identifier expected"> </error> ;
+    }
+
+    class Lol {
+        public void someMethod(String a, String b, Boolean c)
+        {
+            List<Integer> list = new ArrayList<>();
+            if(a != null) {
+                list.add(5);
+            }
+            else
+            if (b != null) {
+                list.add(4);
+                if (c) {
+                    list.add(3);
+                }
+            }
+            else {
+                list.add(2);
+            }
+            list.add(1);
+            if (list != null) {
+                list.add(0);
+            }
+        }
+    }
+
+    public String test(int test) {
+        int random = new Random().nextInt();
+        switch (test) {
+            case 0:
+                return "0";
+            case 1:
+                if (random < 0) {
+                    return "-1";
+                } else if (random > 0) {
+                    return "+1";
+                } else {
+                    return null;
+                }
+            case 2:  // <--- inspection error on this line
+            default:
+                return "";
+        }
     }
 }
