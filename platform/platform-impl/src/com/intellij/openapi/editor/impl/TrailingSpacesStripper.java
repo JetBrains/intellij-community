@@ -21,7 +21,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,9 +72,10 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
         performUndoableWrite(new DocumentRunnable(document, null) {
           @Override
           public void run() {
-            if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && options.isStripTrailingSpaces() &&
-                !(options.isKeepTrailingSpacesOnCaretLine() && hasCaretIn(start, end))) {
-              document.deleteString(start, end);
+            if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end))) {
+              if (options.isStripTrailingSpaces() && !(options.isKeepTrailingSpacesOnCaretLine() && hasCaretIn(start, end))) {
+                document.deleteString(start, end);
+              }
             }
             else {
               document.insertString(end, "\n");
