@@ -62,7 +62,9 @@ public final class StubElementTypeHolderEP extends AbstractExtensionPointBean {
         Class<?> aClass = Class.forName(holderClass, false, getLoaderForClass());
         assert aClass.isInterface();
         for (Field field : aClass.getDeclaredFields()) {
-          result.add(new StubFieldAccessor(externalIdPrefix + field.getName(), field));
+          if (!field.isSynthetic()) {
+            result.add(new StubFieldAccessor(externalIdPrefix + field.getName(), field));
+          }
         }
         return result;
       }
