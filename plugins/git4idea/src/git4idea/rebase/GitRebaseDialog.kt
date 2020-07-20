@@ -3,7 +3,6 @@ package git4idea.rebase
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -24,13 +23,10 @@ import com.intellij.util.ui.JBUI
 import git4idea.*
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
-import git4idea.config.GitConfigUtil
 import git4idea.config.GitRebaseSettings
 import git4idea.i18n.GitBundle
-import git4idea.log.GitRefManager.ORIGIN_MASTER_REF
 import git4idea.merge.dialog.*
 import git4idea.repo.GitRepositoryManager
-import git4idea.util.GitUIUtil
 import git4idea.util.GitUIUtil.getTextField
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -41,7 +37,7 @@ import java.awt.Container
 import java.awt.Insets
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import java.awt.event.ItemEvent
+import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.plaf.basic.BasicComboBoxEditor
@@ -258,7 +254,7 @@ class GitRebaseDialog(private val project: Project,
     tags.clear()
 
     val root = gitRoot()
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root)
+    val repository = repositoryManager.getRepositoryForRootQuick(root)
     check(repository != null) { "Repository is null for root $root" }
 
     currentBranch = repository.currentBranch
@@ -282,68 +278,9 @@ class GitRebaseDialog(private val project: Project,
     for (b in localBranches) {
       branchField.addItem(b.name)
     }
-    if (currentBranch != null) {
-      branchField.selectedItem = currentBranch!!.name
-    }
-    else {
-      branchField.selectedItem = null
-    }
+    branchField.item = currentBranch?.name.orEmpty()
+
     updateBaseFields()
-    updateTrackedBranch()
-  }
-
-  private fun loadBranchConfig(root: VirtualFile): Pair<String?, String?> {
-    val task = ThrowableComputable<Pair<String?, String?>, VcsException> {
-      val remote = GitConfigUtil.getValue(project, root, "branch.$currentBranch.remote")
-      val mergeBranch = GitConfigUtil.getValue(project, root, "branch.$currentBranch.merge")
-
-      remote to mergeBranch
-    }
-
-    return ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(task, GitBundle.message("rebase.dialog.progress.loading.branch.info"), true, project)
-  }
-
-  private fun updateTrackedBranch() {
-    try {
-      val root = gitRoot()
-      val currentBranch = branchField.item
-      var trackedBranch: GitBranch? = null
-
-      if (currentBranch != null) {
-        var (remote, mergeBranch) = loadBranchConfig(root)
-
-        val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root)
-        check(repository != null) { GitBundle.message("repository.not.found.error", root.presentableUrl) }
-
-        if (remote == null || mergeBranch == null) {
-          trackedBranch = repository.branches.findBranchByName("master")
-        }
-        else {
-          mergeBranch = GitBranchUtil.stripRefsPrefix(mergeBranch)
-          if (remote == ".") {
-            trackedBranch = GitSvnRemoteBranch(mergeBranch)
-          }
-          else {
-            val r = GitUtil.findRemoteByName(repository, remote)
-            if (r != null) {
-              trackedBranch = GitStandardRemoteBranch(r, mergeBranch)
-            }
-          }
-        }
-      }
-
-      val newBaseField = if (RebaseOption.ONTO in selectedOptions) ontoField else upstreamField
-      if (trackedBranch != null) {
-        newBaseField.setSelectedItem(trackedBranch)
-      }
-      else {
-        getTextField(newBaseField).text = ""
-      }
-    }
-    catch (e: VcsException) {
-      GitUIUtil.showOperationError(project, e, "git config")
-    }
   }
 
   private fun updateBaseFields() {
@@ -357,7 +294,7 @@ class GitRebaseDialog(private val project: Project,
     addRefsToOntoAndFrom(remoteBranches)
     addRefsToOntoAndFrom(tags)
 
-    upstreamField.item = remoteBranches.find { branch -> branch.fullName == ORIGIN_MASTER_REF } ?: upstream
+    upstreamField.item = upstream
     ontoField.item = onto
   }
 
@@ -477,12 +414,6 @@ class GitRebaseDialog(private val project: Project,
     ui = FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), 0),
       popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
-
-    addItemListener { e ->
-      if (e.stateChange == ItemEvent.SELECTED) {
-        updateTrackedBranch()
-      }
-    }
   }
 
   private fun createPanel() = JPanel().apply {
@@ -683,9 +614,5 @@ class GitRebaseDialog(private val project: Project,
       null
     else
       ValidationInfo(GitBundle.message("rebase.dialog.error.branch.or.tag.not.exist"), field)
-  }
-
-  companion object {
-    val LOG = Logger.getInstance(GitRebaseDialog::class.java)
   }
 }
