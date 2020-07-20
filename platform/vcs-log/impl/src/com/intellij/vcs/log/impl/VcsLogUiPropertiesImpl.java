@@ -31,20 +31,6 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     myAppSettings = appSettings;
   }
 
-  public static class State {
-    public boolean SHOW_DETAILS_IN_CHANGES = true;
-    public boolean LONG_EDGES_VISIBLE = false;
-    public int BEK_SORT_TYPE = 0;
-    public boolean SHOW_ROOT_NAMES = false;
-    public boolean SHOW_ONLY_AFFECTED_CHANGES = false;
-    public Map<String, Boolean> HIGHLIGHTERS = new TreeMap<>();
-    public Map<String, List<String>> FILTERS = new TreeMap<>();
-    public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
-    @Deprecated
-    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
-    public Map<String, Integer> COLUMN_ID_WIDTH = new HashMap<>();
-  }
-
   @NotNull
   @Override
   public abstract S getState();
@@ -177,6 +163,20 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
   public void removeChangeListener(@NotNull PropertiesChangeListener listener) {
     myListeners.remove(listener);
     myAppSettings.removeChangeListener(listener);
+  }
+
+  public static class State {
+    public boolean SHOW_DETAILS_IN_CHANGES = true;
+    public boolean LONG_EDGES_VISIBLE = false;
+    public int BEK_SORT_TYPE = 0;
+    public boolean SHOW_ROOT_NAMES = false;
+    public boolean SHOW_ONLY_AFFECTED_CHANGES = false;
+    public Map<String, Boolean> HIGHLIGHTERS = new TreeMap<>();
+    public Map<String, List<String>> FILTERS = new TreeMap<>();
+    public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
+    @Deprecated
+    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
+    public Map<String, Integer> COLUMN_ID_WIDTH = new HashMap<>();
   }
 
   public static class TextFilterSettings {

@@ -29,19 +29,6 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
 
   private State myState = new State();
 
-  public static class State {
-    public boolean SHOW_DETAILS = false;
-    public boolean SHOW_OTHER_BRANCHES = false;
-    @Deprecated
-    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
-    public Map<String, Integer> COLUMN_ID_WIDTH = new HashMap<>();
-    @Deprecated
-    public List<Integer> COLUMN_ORDER = new ArrayList<>();
-    public List<String> COLUMN_ID_ORDER = new ArrayList<>();
-    public boolean SHOW_DIFF_PREVIEW = true;
-    public boolean SHOW_ROOT_NAMES = false;
-  }
-
   @SuppressWarnings("unchecked")
   @NotNull
   @Override
@@ -156,5 +143,18 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     if (myListeners.isEmpty()) {
       myAppSettings.removeChangeListener(myApplicationSettingsListener);
     }
+  }
+
+  public static class State {
+    public boolean SHOW_DETAILS = false;
+    public boolean SHOW_OTHER_BRANCHES = false;
+    @Deprecated
+    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
+    public Map<String, Integer> COLUMN_ID_WIDTH = new HashMap<>();
+    @Deprecated
+    public List<Integer> COLUMN_ORDER = new ArrayList<>();
+    public List<String> COLUMN_ID_ORDER = new ArrayList<>();
+    public boolean SHOW_DIFF_PREVIEW = true;
+    public boolean SHOW_ROOT_NAMES = false;
   }
 }
