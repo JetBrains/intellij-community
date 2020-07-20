@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Contract;
@@ -12,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 /**
  * @author ven
@@ -74,11 +77,24 @@ class TypeDfaState {
     if (another.myVarTypes.isEmpty()) {
       return this;
     }
+    checkDfaStatesConsistency(this, another);
     TypeDfaState state = new TypeDfaState(this);
     Map<VariableDescriptor, DFAType> retainedDescriptors =
       filter(another.myVarTypes, descriptor -> !another.myEvictedDescriptors.contains(descriptor));
     state.myVarTypes.putAll(retainedDescriptors);
     return state;
+  }
+
+  private static void checkDfaStatesConsistency(TypeDfaState state, TypeDfaState another) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
+      Map<VariableDescriptor, DFAType> anotherTypes =
+        filter(another.myVarTypes, descriptor -> !another.myEvictedDescriptors.contains(descriptor));
+      Collection<VariableDescriptor> commonDescriptors = intersection(state.myVarTypes.keySet(), anotherTypes.keySet());
+      Map<VariableDescriptor, Couple<DFAType>> differingEntries = filter(diff(state.myVarTypes, anotherTypes), commonDescriptors::contains);
+      if (!differingEntries.isEmpty()) {
+        throw new IllegalStateException("Attempt to cache different types: " + differingEntries.toString());
+      }
+    }
   }
 
   void joinState(TypeDfaState another, PsiManager manager) {
@@ -93,7 +109,8 @@ class TypeDfaState {
         else {
           myVarTypes.put(descriptor, null);
         }
-      } else if (t1 != null && t1.getFlushingType() != null && !t1.getFlushingType().equals(PsiType.NULL)) {
+      }
+      else if (t1 != null && !t1.getFlushingType().equals(PsiType.NULL)) {
         DFAType dfaType = DFAType.create(null);
         myVarTypes.put(descriptor, dfaType.addFlushingType(t1.getFlushingType(), manager));
       }

@@ -1921,4 +1921,44 @@ private void checkResult(String expected) {
 }
 ''', JAVA_LANG_INTEGER
   }
+
+  void 'test cache consistency for closures in cycle'() {
+    doTest '''
+private void foo(String expected) {
+  def b = [1, 2, 3]
+  for (a in b) {
+    1.with {
+      b = a
+    }
+  } 
+  <caret>b
+}
+''', JAVA_LANG_OBJECT
+  }
+
+  void 'test cache consistency for closures in cycle 2'() {
+    allowNestedContext(4, testRootDisposable)
+    doTest '''
+interface J {}
+interface R extends J {}
+interface I extends J {}
+class A implements I {}
+class B implements I {
+  Iterator<R> iterator() {}
+}
+
+def foo() {
+  def b = new B()
+  for (a in b) {
+    1.with {
+      if (true) {
+        b = new A()
+      }
+    }
+    <caret>b
+    b = a
+  }
+}
+''', "J"
+  }
 }
