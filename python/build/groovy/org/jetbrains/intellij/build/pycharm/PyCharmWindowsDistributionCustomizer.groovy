@@ -19,6 +19,6 @@ class PyCharmWindowsDistributionCustomizer extends WindowsDistributionCustomizer
 
   @Override
   String getUninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
-    "https://www.jetbrains.com/pycharm/uninstall/"
+    "https://www.jetbrains.com/pycharm/uninstall/?version=${applicationInfo.productCode}-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
   }
 }
