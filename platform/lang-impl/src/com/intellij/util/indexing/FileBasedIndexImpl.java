@@ -37,10 +37,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
@@ -998,17 +995,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @SuppressWarnings({"unchecked", "rawtypes"})
   @NotNull
   private <K, V> Map<K, V> getInMemoryData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project) {
-    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-    if (document != null && psiFile != null) {
-      boolean psiDependent = myRegisteredIndexes.isPsiDependentIndex(id);
-      UserDataHolder holder = psiDependent ? psiFile : document;
-      Map<ID, Map> indexValues = CachedValuesManager.getManager(project).getCachedValue(holder, () -> {
-        CharSequence text = psiDependent ? psiFile.getViewProvider().getContents() : document.getImmutableCharSequence();
-        FileContentImpl fc = new FileContentImpl(virtualFile, text, 0);
-        initFileContent(fc, project, psiFile);
-        Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));
-        return CachedValueProvider.Result.createSingleDependency(result, holder);
+    if (psiFile != null) {
+      Map<ID, Map> indexValues = CachedValuesManager.getCachedValue(psiFile, () -> {
+        try {
+          FileContentImpl fc = psiFile instanceof PsiBinaryFile ? FileContentImpl.createByFile(virtualFile, null)
+                                                                : new FileContentImpl(virtualFile, psiFile.getViewProvider().getContents(), 0);
+          initFileContent(fc, project, psiFile);
+          Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));
+          return CachedValueProvider.Result.createSingleDependency(result, psiFile);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       });
       return indexValues.get(id);
     }
