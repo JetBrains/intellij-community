@@ -43,7 +43,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     get() = getOrCreateProjectBaseDir()
 
   protected val projectPath: String
-    get() = projectNioRoot.toString()
+    get() = FileUtil.toSystemIndependentName(projectNioRoot.toString())
 
   protected val projectNioRoot: Path
     get() = project.stateStore.getProjectBasePath()
