@@ -201,6 +201,9 @@ class InferenceCache {
       if (closureInstruction.first.num() > latestDefinition) break;
       if (closureInstruction.second.contains(descriptor)) {
         pairs.add(Pair.create(closureInstruction.first, descriptor));
+        if (closureInstruction.first instanceof ReadWriteVariableInstruction) {
+          pairs.add(Pair.create(closureInstruction.first, ((ReadWriteVariableInstruction)closureInstruction.first).getDescriptor()));
+        }
       }
     }
 
