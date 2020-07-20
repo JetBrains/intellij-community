@@ -14,7 +14,7 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   I18nInspection myTool = new I18nInspection();
   
   private void doTest() {
-    myTool.reportUnannotatedReferences = true;
+    myTool.setReportUnannotatedReferences(true);
     myFixture.enableInspections(myTool);
     myFixture.testHighlighting("i18n/" + getTestName(false) + ".java");
   }

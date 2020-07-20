@@ -78,7 +78,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   public boolean ignoreForPropertyKeyReferences = true;
   public boolean ignoreForNonAlpha = true;
   private boolean ignoreForAllButNls = false;
-  public boolean reportUnannotatedReferences = false;
+  private boolean reportUnannotatedReferences = false;
   public boolean ignoreAssignedToConstants;
   public boolean ignoreToString;
   @NonNls public String nonNlsCommentPattern = "NON-NLS";
@@ -108,6 +108,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
   private static final String SKIP_FOR_ENUM = "ignoreForEnumConstant";
   private static final String IGNORE_ALL_BUT_NLS = "ignoreAllButNls";
+  private static final String REPORT_UNANNOTATED_REFERENCES = "reportUnannotatedReferences";
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
@@ -115,6 +116,11 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       node.addContent(new Element("option")
                         .setAttribute("name", SKIP_FOR_ENUM)
                         .setAttribute("value", Boolean.toString(ignoreForEnumConstants)));
+    }
+    if (reportUnannotatedReferences) {
+      node.addContent(new Element("option")
+                        .setAttribute("name", REPORT_UNANNOTATED_REFERENCES)
+                        .setAttribute("value", Boolean.toString(reportUnannotatedReferences)));
     }
     if (ignoreForAllButNls) {
       node.addContent(new Element("option")
@@ -139,6 +145,11 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
           ignoreForAllButNls = Boolean.parseBoolean(valueAttr);
         }
       }
+      else if (Comparing.strEqual(nameAttr, REPORT_UNANNOTATED_REFERENCES)) {
+        if (valueAttr != null) {
+          reportUnannotatedReferences = Boolean.parseBoolean(valueAttr);
+        }
+      }
     }
     cacheNonNlsCommentPattern();
   }
@@ -159,6 +170,13 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   public boolean setIgnoreForEnumConstants(boolean ignoreForEnumConstants) {
     boolean old = this.ignoreForEnumConstants;
     this.ignoreForEnumConstants = ignoreForEnumConstants;
+    return old;
+  }
+
+  @TestOnly
+  public boolean setReportUnannotatedReferences(boolean reportUnannotatedReferences) {
+    boolean old = this.reportUnannotatedReferences;
+    this.reportUnannotatedReferences = reportUnannotatedReferences;
     return old;
   }
 
