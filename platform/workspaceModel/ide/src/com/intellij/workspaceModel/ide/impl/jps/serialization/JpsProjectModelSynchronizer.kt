@@ -11,6 +11,8 @@ import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.impl.AutomaticModuleUnloader
 import com.intellij.openapi.module.impl.UnloadedModuleDescriptionImpl
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
@@ -46,6 +48,9 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashSet
 
+/**
+ * Manages serialization and deserialization from JPS format (*.iml and *.ipr files, .idea directory) for workspace model in IDE.
+ */
 internal class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private val incomingChanges = Collections.synchronizedList(ArrayList<JpsConfigurationFilesChange>())
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
@@ -78,19 +83,34 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   internal fun reloadProjectEntities() {
     if (!enabled) return
 
-    if (StoreReloadManager.getInstance().isReloadBlocked()) return
-    val serializers = serializers.get() ?: return
-    val changes = getAndResetIncomingChanges() ?: return
+    if (StoreReloadManager.getInstance().isReloadBlocked()) {
+      LOG.debug("Skip reloading because it's blocked")
+      return
+    }
 
-    val (changedEntities, builder) = serializers.reloadFromChangedFiles(changes, fileContentReader)
-    if (changedEntities.isEmpty() && builder.isEmpty()) return
+    val serializers = serializers.get()
+    if (serializers == null) {
+      LOG.debug("Skip reloading because initial loading wasn't performed yet")
+      return
+    }
+
+    val changes = getAndResetIncomingChanges()
+    if (changes == null) {
+      LOG.debug("Skip reloading because there are no changed files")
+      return
+    }
+
+    LOG.debug { "Reload entities from changed files:\n$changes" }
+    val (changedSources, builder) = serializers.reloadFromChangedFiles(changes, fileContentReader)
+    LOG.debugValues("Changed entity sources", changedSources)
+    if (changedSources.isEmpty() && builder.isEmpty()) return
 
     ApplicationManager.getApplication().invokeAndWait(Runnable {
       runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-          updater.replaceBySource({ it in changedEntities }, builder.toStorage())
+          updater.replaceBySource({ it in changedSources }, builder.toStorage())
         }
-        sourcesToSave.removeAll(changedEntities)
+        sourcesToSave.removeAll(changedSources)
       }
     })
   }
@@ -114,6 +134,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     })
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChanged) {
+        LOG.debug("Marking changed entities for save")
         event.getAllChanges().forEach {
           when (it) {
             is EntityChange.Added -> sourcesToSave.add(it.entity.entitySource)
@@ -129,6 +150,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   }
 
   internal fun loadInitialProject(configLocation: JpsProjectConfigLocation) {
+    LOG.debug { "Initial loading of project located at $configLocation" }
     moduleLoadingActivity = StartUpMeasurer.startMainActivity("module loading")
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
     var childActivity = activity.startChild("(wm) Prepare serializers")
@@ -194,14 +216,19 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
   internal fun saveChangedProjectEntities(writer: JpsFileContentWriter) {
     if (!enabled) return
-
-    val data = serializers.get() ?: return
+    LOG.debug("Saving project entities")
+    val data = serializers.get()
+    if (data == null) {
+      LOG.debug("Skipping save because initial loading wasn't performed")
+      return
+    }
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
     val affectedSources = synchronized(sourcesToSave) {
       val copy = HashSet(sourcesToSave)
       sourcesToSave.clear()
       copy
     }
+    LOG.debugValues("Saving affected entities", affectedSources)
     data.saveEntities(storage, affectedSources, writer)
   }
 
@@ -343,3 +370,5 @@ internal class StoreReloadManagerBridge : StoreReloadManagerImpl() {
     JpsProjectModelSynchronizer.getInstance(project)?.reloadProjectEntities()
   }
 }
+
+private val LOG = logger<JpsProjectModelSynchronizer>()

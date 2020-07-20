@@ -30,7 +30,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.bracket
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChanged
 import com.intellij.workspaceModel.storage.VirtualFileUrl
@@ -70,31 +69,33 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
       override fun changed(event: VersionedStorageChanged) {
         //VirtualFilePointers are automatically updated when files are moved or renamed; if we try to create new instances inside that process,
         //this may leave them in incorrect state
-        if (rootFilePointers.isInsideFilePointersUpdate) return
+        if (rootFilePointers.isInsideFilePointersUpdate) {
+          LOG.debug("Skipping update of the storage happened inside VirtualFilePointers updated")
+          return
+        }
 
-        LOG.bracket("LibraryRootsWatcher.EntityStoreChange") {
-          event.getAllChanges().forEach { change ->
-            when (change) {
-              is EntityChange.Added -> updateVirtualFileUrlCollections(change.entity)
-              is EntityChange.Removed -> updateVirtualFileUrlCollections(change.entity, true)
-              is EntityChange.Replaced -> {
-                updateVirtualFileUrlCollections(change.oldEntity, true)
-                updateVirtualFileUrlCollections(change.newEntity)
-              }
+        LOG.debug("Process file pointers after storage change")
+        event.getAllChanges().forEach { change ->
+          when (change) {
+            is EntityChange.Added -> updateVirtualFileUrlCollections(change.entity)
+            is EntityChange.Removed -> updateVirtualFileUrlCollections(change.entity, true)
+            is EntityChange.Replaced -> {
+              updateVirtualFileUrlCollections(change.oldEntity, true)
+              updateVirtualFileUrlCollections(change.newEntity)
             }
           }
+        }
 
-          rootFilePointers.onModelChange(event.storageAfter)
+        rootFilePointers.onModelChange(event.storageAfter)
 
-          myCollectWatchRootsFuture.cancel(false)
-          myCollectWatchRootsFuture = myExecutor.submit {
-            ReadAction.run<Throwable> {
-              newSync(
-                newRoots = synchronized(roots) { roots.keys.toHashSet() },
-                newJarDirectories = synchronized(jarDirectories) { jarDirectories.keys.toHashSet() },
-                newRecursiveJarDirectories = synchronized(recursiveJarDirectories) { recursiveJarDirectories.keys.toHashSet() }
-              )
-            }
+        myCollectWatchRootsFuture.cancel(false)
+        myCollectWatchRootsFuture = myExecutor.submit {
+          ReadAction.run<Throwable> {
+            newSync(
+              newRoots = synchronized(roots) { roots.keys.toHashSet() },
+              newJarDirectories = synchronized(jarDirectories) { jarDirectories.keys.toHashSet() },
+              newRecursiveJarDirectories = synchronized(recursiveJarDirectories) { recursiveJarDirectories.keys.toHashSet() }
+            )
           }
         }
       }

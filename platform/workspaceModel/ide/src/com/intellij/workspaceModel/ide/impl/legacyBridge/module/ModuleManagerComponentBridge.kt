@@ -12,6 +12,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.*
@@ -31,9 +32,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.bracket
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.RootsChangeWatcher
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
@@ -117,14 +116,16 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
       val rootsChangeListener = ProjectRootsChangeListener(project)
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChanged) = LOG.bracket("ModuleManagerComponent.BeforeEntityStoreChange") {
+        override fun beforeChanged(event: VersionedStorageChanged) {
           for (change in event.getChanges(FacetEntity::class.java)) {
+            LOG.debug { "Fire 'before' events for facet change $change" }
             FacetEntityChangeListener.getInstance(project).processBeforeChange(change)
           }
           val moduleMap = event.storageBefore.moduleMap
           for (change in event.getChanges(ModuleEntity::class.java)) {
             if (change is EntityChange.Removed) {
               val module = moduleMap.getDataByEntity(change.entity)
+              LOG.debug { "Fire 'beforeModuleRemoved' event for module ${change.entity.name}, module = $module" }
               if (module != null) {
                 fireBeforeModuleRemoved(module)
               }
@@ -137,13 +138,13 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           }
         }
 
-        override fun changed(event: VersionedStorageChanged) = LOG.bracket("ModuleManagerComponent.EntityStoreChange") {
-
+        override fun changed(event: VersionedStorageChanged) {
           val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
           val changes = event.getChanges(ModuleEntity::class.java)
           val facetChanges = event.getChanges(FacetEntity::class.java)
           if (changes.isNotEmpty() || moduleLibraryChanges.isNotEmpty() || facetChanges.isNotEmpty()) {
             executeOrQueueOnDispatchThread {
+              LOG.debug("Process changed modules and facets")
               incModificationCount()
 
               val unloadedModulesSetOriginal = unloadedModules.keys.toList()
@@ -345,6 +346,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   private val entityStore by lazy { WorkspaceModel.getInstance(project).entityStorage }
 
   private fun loadModules(entities: List<ModuleEntity>) {
+    LOG.debug { "Loading modules for ${entities.size} entities" }
     val fileSystem = LocalFileSystem.getInstance()
     entities.forEach { module -> fileSystem.refreshAndFindFileByNioFile(getModuleFilePath(module)) }
 

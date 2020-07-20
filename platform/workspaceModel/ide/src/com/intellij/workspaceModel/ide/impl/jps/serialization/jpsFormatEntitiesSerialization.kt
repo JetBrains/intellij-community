@@ -109,4 +109,18 @@ interface JpsProjectSerializers {
   fun getAllModulePaths(): List<ModulePath>
 }
 
-data class JpsConfigurationFilesChange(val addedFileUrls: Collection<String>, val removedFileUrls: Collection<String>, val changedFileUrls: Collection<String>)
+data class JpsConfigurationFilesChange(val addedFileUrls: Collection<String>,
+                                       val removedFileUrls: Collection<String>,
+                                       val changedFileUrls: Collection<String>) {
+  override fun toString(): String {
+    val description = StringBuilder()
+    description.append("JpsConfigurationFilesChange:\n")
+    description.append(" added (").append(addedFileUrls.size).append(")\n")
+    addedFileUrls.forEach { description.append("  ").append(it).append("\n") }
+    description.append(" removed (").append(removedFileUrls.size).append(")\n")
+    removedFileUrls.forEach { description.append("  ").append(it).append("\n") }
+    description.append(" changed (").append(changedFileUrls.size).append(")\n")
+    changedFileUrls.forEach { description.append("  ").append(it).append("\n") }
+    return description.toString()
+  }
+}

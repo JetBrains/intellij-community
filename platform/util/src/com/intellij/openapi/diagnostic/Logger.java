@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
+import java.util.Collection;
 import java.util.function.Function;
 
 /**
@@ -102,6 +103,21 @@ public abstract class Logger {
         sb.append(detail);
       }
       debug(sb.toString());
+    }
+  }
+
+  public void debugValues(@NonNls @NotNull String header, @NotNull Collection<?> values) {
+    if (isDebugEnabled()) {
+      StringBuilder text = new StringBuilder();
+      text.append(header).append(" (").append(values.size()).append(")");
+      if (!values.isEmpty()) {
+        text.append(":");
+        for (Object value : values) {
+          text.append("\n");
+          text.append(value);
+        }
+      }
+      debug(text.toString());
     }
   }
 

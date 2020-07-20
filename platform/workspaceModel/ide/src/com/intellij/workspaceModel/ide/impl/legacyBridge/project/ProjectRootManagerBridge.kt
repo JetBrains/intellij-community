@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -20,7 +21,6 @@ import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChanged
-import com.intellij.workspaceModel.ide.impl.bracket
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -42,17 +42,16 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(bus, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChanged) {
         if (myProject.isDisposed || Disposer.isDisposing(myProject)) return
-        LOG.bracket("ProjectRootManager.EntityStoreChange") {
-          // Roots changed even should be fired for the global libraries linked with module
-          val moduleChanges = event.getChanges(ModuleEntity::class.java)
-          for (change in moduleChanges) {
-            when (change) {
-              is EntityChange.Added -> addTrackedLibraryFromEntity(change.entity)
-              is EntityChange.Removed -> unTrackLibraryFromEntity(change.entity)
-              is EntityChange.Replaced -> {
-                unTrackLibraryFromEntity(change.oldEntity)
-                addTrackedLibraryFromEntity(change.newEntity)
-              }
+
+        // Roots changed event should be fired for the global libraries linked with module
+        val moduleChanges = event.getChanges(ModuleEntity::class.java)
+        for (change in moduleChanges) {
+          when (change) {
+            is EntityChange.Added -> addTrackedLibraryFromEntity(change.entity)
+            is EntityChange.Removed -> unTrackLibraryFromEntity(change.entity)
+            is EntityChange.Replaced -> {
+              unTrackLibraryFromEntity(change.oldEntity)
+              addTrackedLibraryFromEntity(change.newEntity)
             }
           }
         }
@@ -135,6 +134,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   }
 
   private fun addTrackedLibraryFromEntity(moduleEntity: ModuleEntity) {
+    LOG.debug { "Add tracked global libraries from ${moduleEntity.name}" }
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     moduleEntity.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
       .filter { it.library.tableId is LibraryTableId.GlobalLibraryTableId }
@@ -148,6 +148,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   }
 
   private fun unTrackLibraryFromEntity(moduleEntity: ModuleEntity) {
+    LOG.debug { "Removed tracked global libraries from ${moduleEntity.name}" }
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     moduleEntity.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
       .filter { it.library.tableId is LibraryTableId.GlobalLibraryTableId }
