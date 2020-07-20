@@ -211,7 +211,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   @Override
   public synchronized void dispose() {
     if (myLookupListener != null) {
-      final LookupImpl lookup = getEditor() != null ? (LookupImpl)LookupManager.getActiveLookup(getEditor()) : null;
+      final Lookup lookup = getEditor() != null ? LookupManager.getActiveLookup(getEditor()) : null;
       if (lookup != null) {
         lookup.removeLookupListener(myLookupListener);
       }
@@ -234,7 +234,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       return false;
     }
     if (ourLookupShown) {
-      final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(getEditor());
+      final Lookup lookup = LookupManager.getActiveLookup(getEditor());
       if (lookup != null && !lookup.isFocused()) {
         return true;
       }
