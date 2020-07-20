@@ -9,8 +9,9 @@ interface InlayHintsSink {
   /**
    * Adds inline element to underlying editor.
    * @see [com.intellij.openapi.editor.InlayModel.addInlineElement]
+   * @param placeAtTheEndOfLine being placed at the end of a line hint doesn't allow to place a caret behind it
    */
-  fun addInlineElement(offset: Int, relatesToPrecedingText: Boolean, presentation: InlayPresentation)
+  fun addInlineElement(offset: Int, relatesToPrecedingText: Boolean, presentation: InlayPresentation, placeAtTheEndOfLine: Boolean = false)
 
   /**
    * Adds block element to underlying editor.
