@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.disposeLogUis
+import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import java.awt.BorderLayout
 import javax.swing.Icon
@@ -38,11 +39,8 @@ class VcsLogFileType : FileType {
   }
 }
 
-class VcsLogFile(component: JComponent, uis: List<VcsLogUiEx>, name: String, private val getDisplayName: (List<VcsLogUiEx>) -> String) :
+class VcsLogFile(component: JComponent, name: String, private val getDisplayName: (List<VcsLogUiEx>) -> String) :
   LightVirtualFile(name, VcsLogFileType.INSTANCE, "") {
-
-  private val _logUis = uis.toMutableList()
-  internal val logUis: List<VcsLogUiEx> get() = _logUis
 
   internal val rootComponent: JComponent = JPanel(BorderLayout()).also {
     it.add(component, BorderLayout.CENTER)
@@ -52,17 +50,10 @@ class VcsLogFile(component: JComponent, uis: List<VcsLogUiEx>, name: String, pri
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
   }
 
-  internal fun disposeLogUis() {
-    rootComponent.removeAll()
-    _logUis.forEach(Disposer::dispose)
-    _logUis.clear()
-  }
-
-  override fun isValid(): Boolean = _logUis.isNotEmpty()
-
   fun getDisplayName(): String? {
-    if (_logUis.isEmpty()) return null
-    return getDisplayName(_logUis)
+    val logUis = VcsLogContentUtil.getLogUis(rootComponent)
+    if (logUis.isEmpty()) return null
+    return getDisplayName(logUis)
   }
 }
 
@@ -73,7 +64,7 @@ class VcsLogIconProvider : FileIconProvider {
 class VcsLogEditor(private val vcsLogFile: VcsLogFile) : FileEditorBase() {
 
   override fun getComponent(): JComponent = vcsLogFile.rootComponent
-  override fun getPreferredFocusedComponent(): JComponent? = vcsLogFile.logUis.firstOrNull()?.mainComponent
+  override fun getPreferredFocusedComponent(): JComponent? = VcsLogContentUtil.getLogUis(component).firstOrNull()?.mainComponent
   override fun getName(): String = "Vcs Log Editor"
   override fun getFile() = vcsLogFile
 }

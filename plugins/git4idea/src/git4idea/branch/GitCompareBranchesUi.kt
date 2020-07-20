@@ -77,7 +77,7 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
       firstComponent = VcsLogPanel(logManager, topLogUi)
       secondComponent = VcsLogPanel(logManager, bottomLogUi)
     }
-    createAndOpenLogFile(project, logManager, mainSplitter, listOf(topLogUi, bottomLogUi), tabName, { tabName }, true)
+    createAndOpenLogFile(project, logManager, mainSplitter, tabName, { tabName }, true)
   }
 
   private fun getEditorTabName(branch1Name: String, branch2Name: String) =

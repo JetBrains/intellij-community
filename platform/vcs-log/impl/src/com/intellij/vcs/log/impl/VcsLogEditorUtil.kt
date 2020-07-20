@@ -43,18 +43,17 @@ internal fun <U : VcsLogUiEx> openLogTab(project: Project,
                                          focus: Boolean): U {
   val logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR)
 
-  createAndOpenLogFile(project, logManager, VcsLogPanel(logManager, logUi), listOf(logUi), name, { uis -> generateDisplayName(uis.single() as U) }, focus)
+  createAndOpenLogFile(project, logManager, VcsLogPanel(logManager, logUi), name, { uis -> generateDisplayName(uis.single() as U) }, focus)
   return logUi
 }
 
-fun <U : VcsLogUiEx> createAndOpenLogFile(project: Project,
-                                          logManager: VcsLogManager,
-                                          rootComponent: JComponent,
-                                          logUis: List<U>,
-                                          name: String,
-                                          generateDisplayName: (List<VcsLogUiEx>) -> String,
-                                          focus: Boolean) {
-  val file = VcsLogFile(rootComponent, logUis, name, generateDisplayName)
+fun createAndOpenLogFile(project: Project,
+                         logManager: VcsLogManager,
+                         rootComponent: JComponent,
+                         name: String,
+                         generateDisplayName: (List<VcsLogUiEx>) -> String,
+                         focus: Boolean) {
+  val file = VcsLogFile(rootComponent, name, generateDisplayName)
   invokeLater(ModalityState.NON_MODAL) { FileEditorManager.getInstance(project).openFile(file, focus) }
 
   logManager.scheduleInitialization()
