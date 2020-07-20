@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,8 @@ import java.util.stream.Collectors;
 class RefreshSessionImpl extends RefreshSession {
   private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
-  private static final long REFRESH_SESSION_DURATION_REPORT_THRESHOLD = 10000L;
+  private static final int REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS =
+    SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", 10);
 
   private static final AtomicLong ID_COUNTER = new AtomicLong(0);
 
@@ -125,7 +127,10 @@ class RefreshSessionImpl extends RefreshSession {
       long t = System.currentTimeMillis();
       String refreshSessionInfo = String.format("work queue size: %s , file types: %s", workQueue.size(),
                                                 workQueue.stream().collect(
-                                                  Collectors.groupingBy(file -> file.getFileType().getName(), Collectors.counting())));
+                                                  Collectors.groupingBy(file ->
+                                                                          file.getExtension() != null ?
+                                                                          file.getExtension() : (file.isDirectory() ? "folder" : "NA"),
+                                                                        Collectors.counting())));
       if (LOG.isTraceEnabled()) {
         LOG.trace("scanning " + workQueue);
       }
@@ -159,10 +164,10 @@ class RefreshSessionImpl extends RefreshSession {
       t = System.currentTimeMillis() - t;
       if (LOG.isTraceEnabled()) {
         LOG.trace((myCancelled ?  "cancelled, " : "done, ") + t + " ms, events " + myEvents);
-      } else if (t > REFRESH_SESSION_DURATION_REPORT_THRESHOLD){
+      } else if (t > REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS * 1000L){
         LOG.info(String.format(
           "Refresh session took longer than %d seconds. Session info -> %s; result: %s, duration: %d ms, generated events count: %d",
-          REFRESH_SESSION_DURATION_REPORT_THRESHOLD / 1000, refreshSessionInfo, myCancelled ? "cancelled" : "done", t, myEvents.size()));
+          REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS, refreshSessionInfo, myCancelled ? "cancelled" : "done", t, myEvents.size()));
       }
     }
 
