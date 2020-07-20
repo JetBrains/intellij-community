@@ -1,4 +1,4 @@
-// "Surround with try/catch" "true"
+// "Surround with try/catch" "false"
 class C {
     static class E1 extends Exception { }
 
