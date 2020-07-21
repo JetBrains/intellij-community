@@ -36,6 +36,10 @@ class VcsLogFileType : FileType {
 }
 
 abstract class VcsLogFile(name: String) : LightVirtualFile(name, VcsLogFileType.INSTANCE, "") {
+  init {
+    isWritable = false
+  }
+
   abstract fun createMainComponent(project: Project): JComponent
 }
 
