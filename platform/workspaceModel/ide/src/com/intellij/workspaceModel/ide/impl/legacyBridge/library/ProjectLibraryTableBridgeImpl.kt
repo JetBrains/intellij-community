@@ -22,6 +22,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
 
 internal class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project

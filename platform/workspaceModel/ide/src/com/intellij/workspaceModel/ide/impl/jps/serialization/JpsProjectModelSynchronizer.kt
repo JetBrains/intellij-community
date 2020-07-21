@@ -41,6 +41,7 @@ import com.intellij.workspaceModel.ide.impl.moduleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*

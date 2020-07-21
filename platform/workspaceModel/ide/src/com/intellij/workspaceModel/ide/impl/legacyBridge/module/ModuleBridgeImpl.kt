@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.facet.FacetFromExternalSourcesStorage
 import com.intellij.facet.FacetManager
-import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -24,9 +23,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRoot
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
+import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
 import org.picocontainer.MutablePicoContainer
 import java.nio.file.Path
-import java.nio.file.Paths
 
 internal class ModuleBridgeImpl(
   override var moduleEntityId: ModuleId,

@@ -11,7 +11,7 @@ import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.impl.moduleLoadingActivity
-import com.intellij.workspaceModel.storage.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
 import java.util.*
 
 interface WorkspaceModelChangeListener : EventListener {

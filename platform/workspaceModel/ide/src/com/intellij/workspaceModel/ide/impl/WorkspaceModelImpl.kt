@@ -10,6 +10,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
 
 class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
 

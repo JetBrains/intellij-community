@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class ProjectRootsChangeListener(private val project: Project) {
