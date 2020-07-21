@@ -976,10 +976,14 @@ public final class IdeEventQueue extends EventQueue {
           int modifiers = ke.getModifiersEx();
           FeatureUsageData data = null;
           if (modifiers == InputEvent.ALT_DOWN_MASK) {
-            data = new FeatureUsageData().addData("type", SystemInfo.isMac ? "mac: alt-based" : "regular");
+            if (IdeKeyEventDispatcher.hasMnemonicInWindow(ke.getComponent(), ke)) {
+              data = new FeatureUsageData().addData("type", SystemInfo.isMac ? "mac.alt.based" : "regular");
+            }
           }
           else if (SystemInfo.isMac && modifiers == (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
-            data = new FeatureUsageData().addData("type", "mac: regular");
+            if (IdeKeyEventDispatcher.hasMnemonicInWindow(ke.getComponent(), ke)) {
+              data = new FeatureUsageData().addData("type", "mac.regular");
+            }
           }
           if (data != null) {
             FUCounterUsageLogger.getInstance().logEvent("ui.mnemonic", "mnemonic.used", data.addData("code", code));
