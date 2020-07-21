@@ -59,16 +59,24 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
    */
   public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
     List<Configurable> list = new ArrayList<>();
-    collect(list, ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings).getConfigurables());
+    if (!withIdeSettings && project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+
+    for (Configurable configurable : ConfigurableExtensionPointUtil.getConfigurables(project, withIdeSettings)) {
+      list.add(configurable);
+      if (configurable instanceof Configurable.Composite) {
+        collect(list, ((Configurable.Composite)configurable).getConfigurables());
+      }
+    }
     return list;
   }
 
-  private static void collect(List<? super Configurable> list, Configurable... configurables) {
+  private static void collect(@NotNull List<Configurable> list, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
       list.add(configurable);
       if (configurable instanceof Configurable.Composite) {
-        Configurable.Composite composite = (Configurable.Composite)configurable;
-        collect(list, composite.getConfigurables());
+        collect(list, ((Configurable.Composite)configurable).getConfigurables());
       }
     }
   }
