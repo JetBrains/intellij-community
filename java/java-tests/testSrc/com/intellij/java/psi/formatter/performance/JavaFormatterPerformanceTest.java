@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.performance;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormatterImpl;
+import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.psi.formatter.java.JavaFormatterTestCase;
@@ -45,7 +46,8 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
     CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
 
     PlatformTestUtil.startPerformanceTest("Java Formatting [1]", 5000, () -> {
-      FormattingModel model = LanguageFormatting.INSTANCE.forContext(file).createModel(file, settings);
+      FormattingModel model =
+        LanguageFormatting.INSTANCE.forContext(file).createModel(FormattingContext.create(file, settings));
       formatter.formatWithoutModifications(model.getDocumentModel(), model.getRootBlock(), settings, options, file.getTextRange());
     }).assertTiming();
   }

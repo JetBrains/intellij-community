@@ -16,18 +16,17 @@
 
 package org.intellij.plugins.relaxNG.compact.formatting;
 
+import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.FormattingModelProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 public class RncFormattingModelBuilder implements FormattingModelBuilder {
   @Override
-  @NotNull
-  public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
-    return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), new RncBlock(element.getNode()), settings);
+  public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
+    return FormattingModelProvider.createFormattingModelForPsiFile(
+      formattingContext.getContainingFile(), new RncBlock(formattingContext.getNode()), formattingContext.getCodeStyleSettings());
   }
 
 }
