@@ -6,9 +6,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 
 abstract class BranchedVirtualFile extends LightVirtualFile {
@@ -34,11 +32,6 @@ abstract class BranchedVirtualFile extends LightVirtualFile {
   @Override
   public boolean isDirectory() {
     return original.isDirectory();
-  }
-
-  @Override
-  public InputStream getInputStream() throws IOException {
-    return new ByteArrayInputStream(contentsToByteArray());
   }
 
   @Override
