@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
 import static com.intellij.openapi.util.text.StringUtil.trimLeading;
@@ -293,7 +294,7 @@ public abstract class GitImplBase implements Git {
         myOutputCollector.outputLineReceived(line);
       }
       else if (outputType == ProcessOutputTypes.STDERR &&
-               !suppressStderrLine(line)) {
+               !looksLikeProgress(line)) {
         myOutputCollector.errorLineReceived(line);
       }
     }
@@ -396,31 +397,43 @@ public abstract class GitImplBase implements Git {
     };
   }
 
-  private static boolean suppressStderrLine(@NotNull String line) {
-    return ContainerUtil.exists(SUPPRESSED_PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(line, indicator));
-  }
-
   public static boolean looksLikeProgress(@NotNull String line) {
-    return ContainerUtil.exists(SUPPRESSED_PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(line, indicator)) ||
-           ContainerUtil.exists(PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(line, indicator));
+    if (PROGRESS_PATTERN.matcher(line).matches()) return true;
+    return ContainerUtil.exists(SUPPRESSED_PROGRESS_INDICATORS, prefix -> {
+      if (StringUtil.startsWith(line, prefix)) return true;
+      if (StringUtil.startsWith(line, REMOTE_PROGRESS_PREFIX)) {
+        return StringUtil.startsWith(line, REMOTE_PROGRESS_PREFIX.length(), prefix);
+      }
+      return false;
+    });
   }
 
+  /**
+   * Pattern that matches most git progress messages.
+   * <p>
+   * 'remote: Finding sources:   1% (575/57489)   '
+   * 'Receiving objects: 100% (57489/57489), 50.03 MiB | 2.83 MiB/s, done.'
+   */
+  private static final Pattern PROGRESS_PATTERN = Pattern.compile(".*:\\s*\\d{1,3}% \\(\\d+/\\d+\\).*");
+
+  private static final String REMOTE_PROGRESS_PREFIX = "remote: ";
+
+  /**
+   * 'remote: Counting objects: 198285, done'
+   * 'Expanding reachable commits in commit graph: 95907'
+   */
   private static final String[] SUPPRESSED_PROGRESS_INDICATORS = {
-    "remote: Counting objects: ",
-    "remote: Enumerating objects: ",
-    "remote: Compressing objects: ",
-    "remote: Writing objects: ",
-    "remote: Receiving objects: ",
-    "remote: Resolving deltas: ",
-    "remote: Finding sources: ",
+    "Counting objects: ",
+    "Enumerating objects: ",
+    "Compressing objects: ",
+    "Writing objects: ",
     "Receiving objects: ",
     "Resolving deltas: ",
+    "Finding sources: ",
     "Updating files: ",
-    "Checking out files: "
-  };
-
-  private static final String[] PROGRESS_INDICATORS = {
-    "remote: Total "
+    "Checking out files: ",
+    "Expanding reachable commits in commit graph: ",
+    "Delta compression using up to "
   };
 
   private static boolean looksLikeError(@NotNull final String text) {
