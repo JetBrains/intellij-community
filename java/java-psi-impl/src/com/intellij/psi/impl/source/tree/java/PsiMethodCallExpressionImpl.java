@@ -19,10 +19,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,6 +179,8 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) return null;
 
+      PsiUtilCore.ensureValid(method);
+
       boolean is15OrHigher = languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
       final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(call, methodExpression, method,
                                                                                     type -> type != JavaElementType.CLASS && 
@@ -195,6 +194,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
       PsiType ret = method.getReturnType();
       if (ret == null) return null;
+      PsiUtil.ensureValidType(ret);
       if (ret instanceof PsiClassType) {
         ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
       }
@@ -228,6 +228,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
                                            JavaResolveResult result,
                                            LanguageLevel languageLevel) {
     PsiSubstitutor substitutor = result.getSubstitutor();
+    substitutor.ensureValid();
     PsiType substitutedReturnType = substitutor.substitute(ret);
     if (substitutedReturnType == null) {
       return TypeConversionUtil.erasure(ret);
