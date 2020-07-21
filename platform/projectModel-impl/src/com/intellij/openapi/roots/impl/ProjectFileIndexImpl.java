@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.model.ModelBranch;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -128,7 +129,13 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Nullable
   public static VirtualFile getClassRootForFile(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
-    return info.isInProject(file) ? info.getLibraryClassRoot() : null;
+    return info.isInProject(file) ? fixBranch(file, info.getLibraryClassRoot()) : null;
+  }
+
+  @Nullable
+  private static VirtualFile fixBranch(@NotNull VirtualFile file, VirtualFile root) {
+    ModelBranch branch = ModelBranch.getFileBranch(file);
+    return root == null ? null : branch != null ? branch.findFileCopy(root) : root;
   }
 
   @Override
@@ -138,7 +145,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Nullable
   public static VirtualFile getSourceRootForFile(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
-    return info.isInProject(file) ? info.getSourceRoot() : null;
+    return info.isInProject(file) ? fixBranch(file, info.getSourceRoot()) : null;
   }
 
   @Override
@@ -154,7 +161,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Nullable
   public static VirtualFile getContentRootForFile(@NotNull DirectoryInfo info, @NotNull VirtualFile file, boolean honorExclusion) {
     if (info.isInProject(file) || !honorExclusion && info.isExcluded(file)) {
-      return info.getContentRoot();
+      return fixBranch(file, info.getContentRoot());
     }
     return null;
   }

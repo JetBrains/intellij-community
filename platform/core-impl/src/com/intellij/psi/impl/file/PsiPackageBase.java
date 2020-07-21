@@ -2,11 +2,13 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -71,9 +73,18 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     final boolean includeLibrarySources = scope.isForceSearchingInLibrarySources();
     final Collection<PsiDirectory> directories = getAllDirectories(includeLibrarySources);
     for (final PsiDirectory directory : directories) {
-      if (scope.contains(directory.getVirtualFile())) {
+      VirtualFile vFile = directory.getVirtualFile();
+      if (scope.contains(vFile)) {
         if (result == null) result = new ArrayList<>();
         result.add(directory);
+      }
+      // for now, assume that model branches don't change package structure in important ways
+      for (ModelBranch branch : scope.getModelBranchesAffectingScope()) {
+        VirtualFile copy = branch.findFileCopy(vFile);
+        if (scope.contains(copy)) {
+          if (result == null) result = new ArrayList<>();
+          result.add(branch.obtainPsiCopy(directory));
+        }
       }
     }
     return result == null ? PsiDirectory.EMPTY_ARRAY : result.toArray(PsiDirectory.EMPTY_ARRAY);
