@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -126,10 +125,8 @@ class RefreshSessionImpl extends RefreshSession {
         ((LocalFileSystemImpl)fs).markSuspiciousFilesDirty(workQueue);
       }
 
+      if (LOG.isTraceEnabled()) LOG.trace("scanning " + workQueue);
       long t = System.currentTimeMillis();
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("scanning " + workQueue);
-      }
       PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
 
       int count = 0;
@@ -160,14 +157,16 @@ class RefreshSessionImpl extends RefreshSession {
 
       t = System.currentTimeMillis() - t;
       if (LOG.isTraceEnabled()) {
-        LOG.trace((myCancelled ?  "cancelled, " : "done, ") + t + " ms, events " + myEvents);
-      } else if (REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS > 0 &&
-                 t > REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS * 1000L){
-        String refreshSessionInfo = String.format("work queue size: %s , file types: %s", workQueue.size(), workQueue.stream().collect(
-          Collectors.groupingBy(file -> Objects.toString(file.getExtension()), Collectors.counting())));
+        LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, tries " + count + ", events " + myEvents);
+      }
+      else if (REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS > 0 && t > REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS * 1000L) {
         snapshot.logResponsivenessSinceCreation(String.format(
-          "Refresh session took longer than %d seconds. Session info -> %s; result: %s, generated events count: %d",
-          REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS, refreshSessionInfo, myCancelled ? "cancelled" : "done",  myEvents.size()));
+          "Refresh session (queue size: %s, file types: %s, result: %s, tries: %s, events: %d)",
+          workQueue.size(),
+          workQueue.stream().collect(Collectors.groupingBy(f -> f.isDirectory() ? "dir" : String.valueOf(f.getExtension()), Collectors.counting())),
+          myCancelled ? "cancelled" : "done",
+          count,
+          myEvents.size()));
       }
     }
 
