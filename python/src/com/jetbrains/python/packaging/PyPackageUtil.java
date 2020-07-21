@@ -527,6 +527,7 @@ public final class PyPackageUtil {
       @Override
       public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
         final Set<VirtualFile> roots = getPackagingAwareSdkRoots(sdk);
+        if (roots.isEmpty()) return null;
         allEvents:
         for (VFileEvent event : events) {
           if (event instanceof VFileContentChangeEvent || event instanceof VFilePropertyChangeEvent) continue;
