@@ -248,7 +248,7 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
     VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
     dirty(projectRoot)
 
-    if (SystemInfo.isWindows) {
+    if (!SystemInfo.isFileSystemCaseSensitive) {
       assertProviderChangesIn(listOf("rename.txt", "RENAME.txt"),
                               listOf(null, MODIFIED))
 
