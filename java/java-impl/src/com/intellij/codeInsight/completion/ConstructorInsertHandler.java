@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -381,7 +382,7 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
     });
   }
 
-  private static String getCommandName() {
+  private static @NlsContexts.Command String getCommandName() {
     return JavaBundle.message("completion.smart.type.generate.anonymous.body");
   }
 }

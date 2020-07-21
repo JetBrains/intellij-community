@@ -8,6 +8,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -56,7 +57,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     myAnnotationPlace = choosePlace(modifierListOwner);
   }
 
-  public static String calcText(PsiModifierListOwner modifierListOwner, @Nullable String annotation) {
+  public static @IntentionName String calcText(PsiModifierListOwner modifierListOwner, @Nullable String annotation) {
     final String shortName = annotation == null ? null : annotation.substring(annotation.lastIndexOf('.') + 1);
     if (modifierListOwner instanceof PsiNamedElement) {
       final String name = ((PsiNamedElement)modifierListOwner).getName();

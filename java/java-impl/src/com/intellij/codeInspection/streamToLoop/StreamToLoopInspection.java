@@ -4,6 +4,8 @@ package com.intellij.codeInspection.streamToLoop;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +23,6 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +79,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
         }
       }
 
-      private void register(PsiMethodCallExpression call, PsiElement nameElement, String message) {
+      private void register(PsiMethodCallExpression call, PsiElement nameElement, @InspectionMessage String message) {
         TextRange range;
         if (isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), call)) {
           range = new TextRange(0, call.getTextLength());
@@ -241,20 +242,18 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   static class ReplaceStreamWithLoopFix implements LocalQuickFix {
-    private final String myMessage;
+    private final @IntentionName String myMessage;
 
-    ReplaceStreamWithLoopFix(String message) {
+    ReplaceStreamWithLoopFix(@IntentionName String message) {
       myMessage = message;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getName() {
       return myMessage;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getFamilyName() {

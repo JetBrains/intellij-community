@@ -136,8 +136,8 @@ public final class SpecialAnnotationsUtil {
     return panel;
   }
 
-  public static IntentionAction createAddToSpecialAnnotationsListIntentionAction(final String text,
-                                                                                 final String family,
+  public static IntentionAction createAddToSpecialAnnotationsListIntentionAction(final @IntentionName String text,
+                                                                                 final @IntentionFamilyName String family,
                                                                                  final List<String> targetList,
                                                                                  final String qualifiedName) {
     return new IntentionAction() {

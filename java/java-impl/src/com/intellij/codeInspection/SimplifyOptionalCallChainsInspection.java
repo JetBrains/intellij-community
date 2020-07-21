@@ -5,8 +5,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.util.LambdaGenerationUtil;
-import com.intellij.codeInspection.util.OptionalRefactoringUtil;
+import com.intellij.codeInspection.util.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -22,7 +21,7 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -251,9 +250,11 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
 
     @NotNull
+    @IntentionName
     String getName(@NotNull C context);
 
     @NotNull
+    @InspectionMessage
     String getDescription(@NotNull C context);
 
     /**
@@ -367,17 +368,18 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
 
   static class OptionalSimplificationFix implements LocalQuickFix {
     @SafeFieldForPreview
-    private final ChainSimplificationCase<?> myInspection;
-    private final String myName;
-    private final String myDescription;
+    private final @NotNull ChainSimplificationCase<?> myInspection;
+    private final @IntentionFamilyName String myName;
+    private final @InspectionMessage String myDescription;
 
-    OptionalSimplificationFix(ChainSimplificationCase<?> inspection, String name, String description) {
+    OptionalSimplificationFix(@NotNull ChainSimplificationCase<?> inspection,
+                              @IntentionFamilyName String name,
+                              @InspectionMessage String description) {
       myInspection = inspection;
-      this.myName = name;
+      myName = name;
       myDescription = description;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
@@ -391,7 +393,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       handleSimplification(myInspection, project, call);
     }
 
-    String getDescription() {
+    @InspectionMessage String getDescription() {
       return myDescription;
     }
   }
@@ -420,11 +422,11 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
 
     protected static class StringReplacement {
-      private final String myReplacement;
-      private final String myMessage;
-      private final String myDescription;
+      private final @NonNls String myReplacement;
+      private final @IntentionName String myMessage;
+      private final @InspectionMessage String myDescription;
 
-      StringReplacement(String replacement, String message, String description) {
+      StringReplacement(@NonNls String replacement, @IntentionName String message, @InspectionMessage String description) {
         myReplacement = replacement;
         myMessage = message;
         myDescription = description;
@@ -885,9 +887,9 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       PsiMethodCallExpression mapBefore = context.myMapBefore;
       CommentTracker ct = new CommentTracker();
       StringBuilder sb = new StringBuilder();
-      PsiExpression qualifer = call.getMethodExpression().getQualifierExpression();
-      assert qualifer != null;
-      sb.append(ct.text(qualifer)).append(".");
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      assert qualifier != null;
+      sb.append(ct.text(qualifier)).append(".");
       if (mapBefore != null) {
         PsiExpression mapArgument = mapBefore.getArgumentList().getExpressions()[0];
         sb.append("flatMap(").append(ct.text(mapArgument)).append(").");

@@ -8,6 +8,8 @@ import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -246,12 +248,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   }
 
   interface CallChainFix {
-    String getName();
+    @IntentionName String getName();
     void applyFix(@NotNull Project project, PsiElement element);
   }
 
   interface CallChainSimplification extends CallChainFix {
-    String getMessage();
+    @InspectionMessage String getMessage();
 
     default boolean keepsStream() {
       return true;
@@ -275,14 +277,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       myFix = fix;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getName() {
       return myFix.getName();
     }
 
-    @Nls
     @NotNull
     @Override
     public String getFamilyName() {
@@ -582,7 +582,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     }
 
     @NotNull
-    public String getMessage() {
+    public @InspectionMessage String getMessage() {
       return "The 'collect(" + myCollector +
              "())' call can be replaced with '" + myStreamSequenceStripped + "'" +
              (myChangeSemantics ? " (may change semantics when result is null)" : "");
@@ -629,7 +629,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     }
 
     @NotNull
-    public String getMessage() {
+    public @InspectionMessage String getMessage() {
       return "The 'filter()." + myFindMethodName + "().isPresent()' chain can be replaced with 'anyMatch()'";
     }
   }

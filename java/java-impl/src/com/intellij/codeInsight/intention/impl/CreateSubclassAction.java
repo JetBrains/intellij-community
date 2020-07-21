@@ -44,6 +44,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -127,7 +128,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     return aClass.getLanguage() == JavaLanguage.INSTANCE;
   }
 
-  protected static String getTitle(PsiClass psiClass) {
+  protected static @NlsContexts.Command String getTitle(PsiClass psiClass) {
     return psiClass.isInterface()
              ? CodeInsightBundle.message("intention.implement.abstract.class.interface.text")
              : psiClass.hasModifierProperty(PsiModifier.ABSTRACT)

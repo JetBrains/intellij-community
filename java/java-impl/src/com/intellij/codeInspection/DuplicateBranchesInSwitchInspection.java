@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -129,7 +130,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       registerProblem(branch, branch.getDefaultBranchMessage(), branch.newDeleteCaseFix(), branch.newMergeWithDefaultFix());
     }
 
-    private void registerProblem(@NotNull BranchBase duplicate, @NotNull String message, LocalQuickFix @NotNull ... fixes) {
+    private void registerProblem(@NotNull BranchBase duplicate, @NotNull @InspectionMessage String message, LocalQuickFix @NotNull ... fixes) {
       ProblemDescriptor descriptor = InspectionManager.getInstance(myHolder.getProject())
         .createProblemDescriptor(duplicate.myStatements[0], duplicate.myStatements[duplicate.myStatements.length - 1],
                                  message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -525,11 +526,11 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       return myFinder;
     }
 
-    String getCaseBranchMessage() {
+    @InspectionMessage String getCaseBranchMessage() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.message");
     }
 
-    String getDefaultBranchMessage() {
+    @InspectionMessage String getDefaultBranchMessage() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.default.message");
     }
 

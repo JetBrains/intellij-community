@@ -13,6 +13,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
@@ -26,6 +27,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +102,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
   }
 
   @NotNull
-  static JCheckBox createSetting(@NotNull String cbText, final boolean option, @NotNull Pass<? super JCheckBox> pass) {
+  static JCheckBox createSetting(@NotNull @Nls String cbText, final boolean option, @NotNull Pass<? super JCheckBox> pass) {
     final JCheckBox uncheckedCb = new JCheckBox(cbText, option);
     uncheckedCb.addActionListener(e -> pass.pass(uncheckedCb));
     return uncheckedCb;
@@ -173,7 +175,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
 
     return new UncheckedWarningsVisitor(isOnTheFly, languageLevel){
       @Override
-      protected void registerProblem(@NotNull String message,
+      protected void registerProblem(@NotNull @InspectionMessage String message,
                                      @Nullable PsiElement callExpression,
                                      @NotNull PsiElement psiElement,
                                      LocalQuickFix @NotNull [] quickFixes) {

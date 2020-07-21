@@ -12,6 +12,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -225,7 +226,7 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
     return false;
   }
 
-  private static String getErrorTitle() {
+  private static @NlsContexts.DialogTitle String getErrorTitle() {
     return JavaBundle.message("intention.make.sealed.class.hint.title");
   }
 }

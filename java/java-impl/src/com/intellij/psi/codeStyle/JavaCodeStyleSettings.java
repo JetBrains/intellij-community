@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean GENERATE_FINAL_LOCALS;
   public boolean GENERATE_FINAL_PARAMETERS;
 
+  @PsiModifier.ModifierConstant
   public String VISIBILITY = "public";
 
   public boolean USE_EXTERNAL_ANNOTATIONS;

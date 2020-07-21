@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -175,7 +176,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       return parents;
     }
 
-    private String getMessage() {
+    private @IntentionName String getMessage() {
       if (myCatches.size() == 1 && myExceptions.size() == 1) {
         PsiClassType exceptionType = myExceptions.get(0);
         PsiCatchSection catchSection = myCatches.get(0);

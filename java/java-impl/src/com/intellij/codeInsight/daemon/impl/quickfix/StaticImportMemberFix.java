@@ -24,6 +24,7 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -55,7 +56,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   }
 
   @NotNull
-  protected abstract String getBaseText();
+  protected abstract @IntentionName String getBaseText();
 
   @NotNull
   protected abstract String getMemberPresentableText(@NotNull T t);

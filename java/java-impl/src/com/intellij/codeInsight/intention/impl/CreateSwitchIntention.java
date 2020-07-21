@@ -17,6 +17,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Batkovich
  */
 public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
-  public static final String TEXT = "Create switch statement";
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
@@ -77,7 +77,7 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction imp
   @NotNull
   @Override
   public String getFamilyName() {
-    return TEXT;
+    return JavaBundle.message("intention.create.switch.statement");
   }
 
   @NotNull

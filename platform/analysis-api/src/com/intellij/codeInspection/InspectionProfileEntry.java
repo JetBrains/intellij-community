@@ -471,7 +471,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
-  public static String getGeneralGroupName() {
+  public static @Nls String getGeneralGroupName() {
     return InspectionsBundle.message("inspection.general.tools.group.name");
   }
 }

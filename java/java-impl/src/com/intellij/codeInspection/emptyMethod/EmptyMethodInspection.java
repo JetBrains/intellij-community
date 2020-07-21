@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.JavaBundle;
@@ -366,7 +367,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private static String getQuickFixName() {
+  private static @IntentionFamilyName String getQuickFixName() {
     return JavaBundle.message("inspection.empty.method.delete.quickfix");
   }
 }

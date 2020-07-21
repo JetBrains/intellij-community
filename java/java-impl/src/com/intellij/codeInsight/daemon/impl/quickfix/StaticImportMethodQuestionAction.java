@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -60,7 +61,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
   }
 
   @NotNull
-  protected String getPopupTitle() {
+  protected @NlsContexts.PopupTitle String getPopupTitle() {
     return QuickFixBundle.message("method.to.import.chooser.title");
   }
 

@@ -114,7 +114,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
   }
 
   public JComponent createPanel() {
-    final JBList list = new JBList(myElements);
+    final JBList<PipelineElement> list = new JBList<>(myElements);
     list.setCellRenderer(new ColoredListCellRenderer<PipelineElement>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, PipelineElement element, int index, boolean selected, boolean hasFocus) {
@@ -145,7 +145,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
             return;
           }
           myElements.add(newElement);
-          ((DefaultListModel)list.getModel()).addElement(newElement);
+          ((DefaultListModel<PipelineElement>)list.getModel()).addElement(newElement);
         }
       }
     }).setRemoveAction(new AnActionButtonRunnable() {

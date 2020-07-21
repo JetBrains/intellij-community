@@ -39,6 +39,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,7 +205,7 @@ public final class TrackingRunner extends DataFlowRunner {
   }
 
   public abstract static class DfaProblemType {
-    public abstract String toString();
+    public abstract @Nls String toString();
 
     CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
       return new CauseItem[0];
@@ -227,7 +228,7 @@ public final class TrackingRunner extends DataFlowRunner {
       myTarget = target;
     }
 
-    CauseItem(@NotNull String problem, @Nullable PsiElement target) {
+    CauseItem(@NotNull @Nls String problem, @Nullable PsiElement target) {
       this(new CustomDfaProblemType(problem), target);
     }
 
@@ -242,7 +243,7 @@ public final class TrackingRunner extends DataFlowRunner {
       }
     }
 
-    CauseItem(@NotNull String problem, @NotNull MemoryStateChange change) {
+    CauseItem(@NotNull @Nls String problem, @NotNull MemoryStateChange change) {
       this(new CustomDfaProblemType(problem), change);
     }
 
@@ -264,7 +265,7 @@ public final class TrackingRunner extends DataFlowRunner {
              Objects.equals(myTarget, item.myTarget);
     }
 
-    private String getProblemName() {
+    private @Nls String getProblemName() {
       return myProblem.toString();
     }
 
@@ -328,7 +329,7 @@ public final class TrackingRunner extends DataFlowRunner {
     }
 
     @Override
-    public String toString() {
+    public @Nls String toString() {
       return getProblemName().replaceFirst("#ref$", "here");
     }
 
@@ -501,9 +502,9 @@ public final class TrackingRunner extends DataFlowRunner {
   }
 
   static class CustomDfaProblemType extends DfaProblemType {
-    private final String myMessage;
+    private final @Nls String myMessage;
 
-    CustomDfaProblemType(String message) {
+    CustomDfaProblemType(@Nls String message) {
       myMessage = message;
     }
 
@@ -760,7 +761,7 @@ public final class TrackingRunner extends DataFlowRunner {
     return null;
   }
 
-  private static String getElementTitle(PsiElement target) {
+  private static @Nls String getElementTitle(PsiElement target) {
     return JavaElementKind.fromElement(target).subject();
   }
 

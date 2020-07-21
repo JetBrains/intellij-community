@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -253,7 +254,7 @@ public final class GroovyMarkerTypes {
               }
             });
           }
-        }), MarkerType.SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), (JComponent)e.getComponent())) {
+        }), JavaAnalysisBundle.message("searching.for.overriding.methods"), true, method.getProject(), (JComponent)e.getComponent())) {
           return;
         }
 
@@ -309,7 +310,7 @@ public final class GroovyMarkerTypes {
     private final GrMethod myMethod;
 
     OverridingMethodsUpdater(GrMethod method, PsiElementListCellRenderer renderer) {
-      super(method.getProject(), MarkerType.SEARCHING_FOR_OVERRIDING_METHODS, createComparatorWrapper(renderer.getComparator()));
+      super(method.getProject(), JavaAnalysisBundle.message("searching.for.overriding.methods"), createComparatorWrapper(renderer.getComparator()));
       myMethod = method;
     }
 

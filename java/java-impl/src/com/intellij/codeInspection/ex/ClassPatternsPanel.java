@@ -36,6 +36,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -128,7 +129,7 @@ class ClassPatternsPanel extends JPanel {
     return result;
   }
 
-  public String getValidationError(Project project) {
+  public @Nls String getValidationError(Project project) {
     TableUtil.stopEditing(myTable);
     final PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
     final ClassPatternValidator validator = new ClassPatternValidator(nameHelper);
@@ -149,7 +150,6 @@ class ClassPatternsPanel extends JPanel {
   }
 
   private static class ClassPatternValidator implements InputValidatorEx {
-    public static final String ERROR_MESSAGE = "Pattern must be a valid java qualified name, only '*' are accepted as placeholders";
     private final PsiNameHelper myNameHelper;
 
     ClassPatternValidator(PsiNameHelper nameHelper) {
@@ -159,9 +159,10 @@ class ClassPatternsPanel extends JPanel {
     @Nullable
     @Override
     public String getErrorText(String inputString) {
-      if (inputString.startsWith(".")) return ERROR_MESSAGE;
+      String errorMessage = "Pattern must be a valid java qualified name, only '*' are accepted as placeholders";
+      if (inputString.startsWith(".")) return errorMessage;
       final String qName = inputString.replace("*", "").replace(".", "");
-      return !StringUtil.isEmpty(qName) && !myNameHelper.isQualifiedName(qName) ? ERROR_MESSAGE : null;
+      return !StringUtil.isEmpty(qName) && !myNameHelper.isQualifiedName(qName) ? errorMessage : null;
     }
 
     @Override

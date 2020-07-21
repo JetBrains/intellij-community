@@ -70,8 +70,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   private static final CallMatcher IGNORED_METHODS = CallMatcher.anyOf( 
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "substring", "trim"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("int"),
-    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("double")
-    );
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("double"),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getAbsolutePath", "getCanonicalPath")
+  );
   
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
@@ -365,7 +366,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
   private DialogWrapper createIgnoreExceptionsConfigurationDialog(final Project project, final JTextField specifiedExceptions) {
     return new DialogWrapper(true) {
-      private AddDeleteListPanel myPanel;
+      private AddDeleteListPanel<?> myPanel;
       {
         setTitle(JavaI18nBundle.message(
           "inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"));
@@ -571,11 +572,14 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         return;
       }
 
-      Class[] wantedClasses = ignoreForAllButNls && reportUnannotatedReferences ?
-                              new Class[]{UInjectionHost.class, UAnnotation.class, UCallExpression.class, UReferenceExpression.class} :
-                              new Class[]{UInjectionHost.class, UAnnotation.class};
-      UElement uElement =
-        UastContextKt.toUElementOfExpectedTypes(element, wantedClasses);
+      UElement uElement;
+      if (ignoreForAllButNls && reportUnannotatedReferences) {
+        uElement = UastContextKt.toUElementOfExpectedTypes(element, UInjectionHost.class, UAnnotation.class, UCallExpression.class,
+                                                           UReferenceExpression.class);
+      }
+      else {
+        uElement = UastContextKt.toUElementOfExpectedTypes(element, UInjectionHost.class, UAnnotation.class);
+      }
 
       if (uElement instanceof UInjectionHost) {
         visitLiteralExpression(element, (UInjectionHost)uElement);

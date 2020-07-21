@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,7 +42,7 @@ import java.util.List;
 public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(AccessStaticViaInstanceFix.class);
   private final boolean myOnTheFly;
-  private final String myText;
+  private final @IntentionName String myText;
 
   public AccessStaticViaInstanceFix(@NotNull PsiReferenceExpression expression, @NotNull JavaResolveResult result, boolean onTheFly) {
     super(expression);
@@ -56,7 +57,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     return myText;
   }
 
-  private static String calcText(PsiMember member, PsiSubstitutor substitutor) {
+  private static @IntentionName String calcText(PsiMember member, PsiSubstitutor substitutor) {
     PsiClass aClass = member.getContainingClass();
     if (aClass == null) return "";
     return QuickFixBundle.message("access.static.via.class.reference.text",

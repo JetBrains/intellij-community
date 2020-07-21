@@ -2,6 +2,7 @@
 package com.intellij.idea;
 
 import com.intellij.DynamicBundle;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public final class ActionsBundle extends DynamicBundle {
     return ourInstance.getLazyMessage(key, params);
   }
 
-  public static String actionText(@NonNls String actionId) {
+  public static @NlsActions.ActionText String actionText(@NonNls String actionId) {
     return message("action." + actionId + ".text");
   }
 
@@ -35,7 +36,7 @@ public final class ActionsBundle extends DynamicBundle {
     return message("group." + actionId + ".text");
   }
 
-  public static String actionDescription(@NonNls String actionId) {
+  public static @NlsActions.ActionDescription String actionDescription(@NonNls String actionId) {
     return message("action." + actionId + ".description");
   }
 }

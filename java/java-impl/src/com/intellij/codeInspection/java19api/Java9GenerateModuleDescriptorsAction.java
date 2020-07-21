@@ -33,6 +33,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -167,11 +168,11 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
   }
 
-  private static String getTitle() {
+  private static @NlsContexts.DialogTitle String getTitle() {
     return JavaRefactoringBundle.message("generate.module.descriptors.title");
   }
 
-  private static String getCommandTitle() {
+  private static @NlsContexts.Command String getCommandTitle() {
     return JavaRefactoringBundle.message("generate.module.descriptors.command.title");
   }
 
@@ -188,7 +189,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       myPhases = phases;
     }
 
-    void startPhase(String text, int size) {
+    void startPhase(@NlsContexts.ProgressText String text, int size) {
       myIndicator.setText(text);
       myCount = 0;
       mySize = Math.min(size, 1);
@@ -249,7 +250,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       createFilesLater(moduleInfos);
     }
 
-    private void createFilesLater(List<? extends ModuleInfo> moduleInfos) {
+    private void createFilesLater(List<ModuleInfo> moduleInfos) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!myProject.isDisposed()) {
           CommandProcessor.getInstance().executeCommand(myProject, () ->
@@ -352,7 +353,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       return moduleInfo;
     }
 
-    private static void createFiles(Project project, List<? extends ModuleInfo> moduleInfos, ProgressIndicator indicator) {
+    private static void createFiles(Project project, List<ModuleInfo> moduleInfos, ProgressIndicator indicator) {
       indicator.setIndeterminate(false);
       int count = 0;
       double total = moduleInfos.size();

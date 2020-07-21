@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -41,9 +42,9 @@ import java.util.LinkedHashSet;
 
 public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(PullAsAbstractUpFix.class);
-  private final String myName;
+  private final @IntentionName String myName;
 
-  public PullAsAbstractUpFix(PsiMethod psiMethod, final String name) {
+  public PullAsAbstractUpFix(PsiMethod psiMethod, final @IntentionName String name) {
     super(psiMethod);
     myName = name;
   }
@@ -90,8 +91,8 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
     else {
       final LinkedHashSet<PsiClass> classesToPullUp = new LinkedHashSet<>();
-      collectClassesToPullUp(manager, classesToPullUp, containingClass.getExtendsListTypes());
-      collectClassesToPullUp(manager, classesToPullUp, containingClass.getImplementsListTypes());
+      collectClassesToPullUp(classesToPullUp, containingClass.getExtendsListTypes());
+      collectClassesToPullUp(classesToPullUp, containingClass.getImplementsListTypes());
 
       if (classesToPullUp.isEmpty()) {
         //check visibility
@@ -115,7 +116,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
 
-  private static void collectClassesToPullUp(PsiManager manager, LinkedHashSet<? super PsiClass> classesToPullUp, PsiClassType[] extendsListTypes) {
+  private static void collectClassesToPullUp(LinkedHashSet<? super PsiClass> classesToPullUp, PsiClassType[] extendsListTypes) {
     for (PsiClassType extendsListType : extendsListTypes) {
       PsiClass resolve = extendsListType.resolve();
       if (resolve != null && BaseIntentionAction.canModify(resolve)) {
@@ -129,7 +130,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final MemberInfo memberInfo = new MemberInfo(method);
     memberInfo.setChecked(true);
     memberInfo.setToAbstract(true);
-    new PullUpProcessor(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+    new PullUpProcessor(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy<>(DocCommentPolicy.ASIS)).run();
   }
 
   @Override
@@ -140,7 +141,6 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
   public static void registerQuickFix(@NotNull PsiMethod methodWithOverrides, @NotNull QuickFixActionRegistrar registrar) {
     PsiClass containingClass = methodWithOverrides.getContainingClass();
     if (containingClass == null) return;
-    final PsiManager manager = containingClass.getManager();
 
     boolean canBePulledUp = true;
     String name = "Pull method '" + methodWithOverrides.getName() + "' up";
@@ -154,8 +154,8 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
       }
     } else {
       final LinkedHashSet<PsiClass> classesToPullUp = new LinkedHashSet<>();
-      collectClassesToPullUp(manager, classesToPullUp, containingClass.getExtendsListTypes());
-      collectClassesToPullUp(manager, classesToPullUp, containingClass.getImplementsListTypes());
+      collectClassesToPullUp(classesToPullUp, containingClass.getExtendsListTypes());
+      collectClassesToPullUp(classesToPullUp, containingClass.getImplementsListTypes());
       if (classesToPullUp.isEmpty()) {
         name = "Extract method '" + methodWithOverrides.getName() + "' to new interface";
         canBePulledUp = false;

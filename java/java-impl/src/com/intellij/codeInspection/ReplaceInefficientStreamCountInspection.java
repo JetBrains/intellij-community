@@ -2,6 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -145,19 +147,19 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     ANY_MATCH("Replace Stream().filter().count() > 0 with stream.anyMatch()", "Stream().filter().count() > 0 can be replaced with stream.anyMatch()"),
     NONE_MATCH("Replace Stream().filter().count() == 0 with stream.noneMatch()", "Stream().filter().count() == 0 can be replaced with stream.noneMatch()");
 
-    private final String myName;
-    private final String myMessage;
+    private final @IntentionName String myName;
+    private final @InspectionMessage String myMessage;
 
-    public String getName() {
+    public @Nls String getName() {
       return myName;
     }
 
-    SimplificationMode(String name, String message) {
+    SimplificationMode(@IntentionName String name, @InspectionMessage String message) {
       myName = name;
       myMessage = message;
     }
 
-    public String getMessage() {
+    public @InspectionMessage String getMessage() {
       return myMessage;
     }
   }
@@ -278,7 +280,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       }
     }
 
-    public String getMessage() {
+    public @InspectionMessage String getMessage() {
       return mySimplificationMode.getMessage();
     }
   }

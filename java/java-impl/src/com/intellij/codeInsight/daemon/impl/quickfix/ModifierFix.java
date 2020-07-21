@@ -5,6 +5,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -33,7 +34,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   @PsiModifier.ModifierConstant private final String myModifier;
   private final boolean myShouldHave;
   private final boolean myShowContainingClass;
-  private volatile String myName;
+  private volatile @IntentionName String myName;
   private final boolean myStartInWriteAction;
 
   public ModifierFix(PsiModifierList modifierList,
@@ -61,7 +62,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     myStartInWriteAction = !(owner instanceof PsiMethod) || AccessModifier.fromPsiModifier(modifier) == null;
   }
 
-  private String format(PsiVariable variable, PsiModifierList modifierList, boolean showContainingClass) {
+  private @IntentionName String format(PsiVariable variable, PsiModifierList modifierList, boolean showContainingClass) {
     String name = null;
     PsiElement parent = variable != null ? variable : modifierList != null ? modifierList.getParent() : null;
     if (parent instanceof PsiClass) {

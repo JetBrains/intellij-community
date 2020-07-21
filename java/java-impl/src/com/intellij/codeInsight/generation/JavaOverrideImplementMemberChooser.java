@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
@@ -34,7 +35,6 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
  * @author Dmitry Batkovich
  */
 public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodMember> {
-  private static final String SORT_METHODS_BY_PERCENT_DESCRIPTION = "Sort by Percent of Classes which Overrides a Method";
 
   @NonNls public static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
   @NonNls public static final String PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT = "OverrideImplement.overriding.sorted";
@@ -167,7 +167,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     group.add(myMergeAction);
   }
 
-  private static String getChooserTitle(final boolean toImplement, final boolean merge) {
+  private static @NlsContexts.DialogTitle String getChooserTitle(final boolean toImplement, final boolean merge) {
     return toImplement
            ? JavaBundle.message("methods.to.implement.chooser.title")
            : merge
@@ -186,7 +186,8 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
 
   private class MySortByOverridingAction extends ToggleAction {
     MySortByOverridingAction() {
-      super(SORT_METHODS_BY_PERCENT_DESCRIPTION, SORT_METHODS_BY_PERCENT_DESCRIPTION, AllIcons.ObjectBrowser.SortedByUsage);
+      super("Sort by Percent of Classes which Overrides a Method", 
+            "Sort by Percent of Classes which Overrides a Method", AllIcons.ObjectBrowser.SortedByUsage);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_MASK)), myTree);
     }
 

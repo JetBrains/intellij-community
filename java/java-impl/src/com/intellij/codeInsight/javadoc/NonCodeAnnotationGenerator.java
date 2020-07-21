@@ -8,6 +8,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class NonCodeAnnotationGenerator {
   }
 
   @NotNull
-  public static String getNonCodeHeader(Collection<? extends AnnotationDocGenerator> values) {
+  public static @Nls String getNonCodeHeader(Collection<? extends AnnotationDocGenerator> values) {
     boolean hasExternal = values.stream().anyMatch(AnnotationDocGenerator::isExternal);
     boolean hasInferred = values.stream().anyMatch(AnnotationDocGenerator::isInferred);
 

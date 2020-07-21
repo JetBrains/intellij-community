@@ -22,6 +22,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -74,14 +75,14 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     return chooseMembers(allMembers, false, false, project, editor);
   }
 
-  protected static JComponent getHeaderPanel(final Project project, final TemplatesManager templatesManager, final String templatesTitle) {
+  protected static JComponent getHeaderPanel(final Project project, final TemplatesManager templatesManager, final @Nls String templatesTitle) {
     final JPanel panel = new JPanel(new BorderLayout());
     final JLabel templateChooserLabel = new JLabel(templatesTitle);
     panel.add(templateChooserLabel, BorderLayout.WEST);
     final ComboBox<TemplateResource> comboBox = new ComboBox<>();
     templateChooserLabel.setLabelFor(comboBox);
     comboBox.setRenderer(SimpleListCellRenderer.create("", TemplateResource::getName));
-    final ComponentWithBrowseButton<ComboBox> comboBoxWithBrowseButton =
+    final ComponentWithBrowseButton<ComboBox<?>> comboBoxWithBrowseButton =
       new ComponentWithBrowseButton<>(comboBox, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -117,15 +118,15 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     return panel;
   }
 
-  private static void setComboboxModel(TemplatesManager templatesManager, ComboBox comboBox) {
+  private static void setComboboxModel(TemplatesManager templatesManager, ComboBox<TemplateResource> comboBox) {
     final Collection<TemplateResource> templates = templatesManager.getAllTemplates();
-    comboBox.setModel(new DefaultComboBoxModel(templates.toArray(new TemplateResource[0])));
+    comboBox.setModel(new DefaultComboBoxModel<>(templates.toArray(new TemplateResource[0])));
     comboBox.setSelectedItem(templatesManager.getDefaultTemplate());
   }
 
   @Override
-  protected abstract String getNothingFoundMessage();
-  protected abstract String getNothingAcceptedMessage();
+  protected abstract @NlsContexts.HintText String getNothingFoundMessage();
+  protected abstract @NlsContexts.HintText String getNothingAcceptedMessage();
 
   public boolean canBeAppliedTo(PsiClass targetClass) {
     final ClassMember[] allMembers = getAllOriginalMembers(targetClass);

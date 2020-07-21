@@ -27,6 +27,7 @@ import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.*;
 import com.intellij.util.graph.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -44,7 +45,7 @@ public class CyclicDependenciesBuilder{
   private int myFileCount;
   private final ForwardDependenciesBuilder myForwardBuilder;
 
-  private String myRootNodeNameInUsageView;
+  private @Nls String myRootNodeNameInUsageView;
 
   public CyclicDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
     myProject = project;
@@ -63,11 +64,11 @@ public class CyclicDependenciesBuilder{
   }
 
   @NotNull
-  private String getRootNodeNameInUsageView() {
+  private @Nls String getRootNodeNameInUsageView() {
     return myRootNodeNameInUsageView;
   }
 
-  public void setRootNodeNameInUsageView(@NotNull String rootNodeNameInUsageView) {
+  public void setRootNodeNameInUsageView(@NotNull @Nls String rootNodeNameInUsageView) {
     myRootNodeNameInUsageView = rootNodeNameInUsageView;
   }
 

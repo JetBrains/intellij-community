@@ -14,6 +14,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -97,7 +98,7 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
     }
   }
 
-  private static String getPresentableText(String modifier) {
+  private static @Nls String getPresentableText(String modifier) {
     return StringUtil.capitalize(VisibilityUtil.toPresentableText(modifier));
   }
 

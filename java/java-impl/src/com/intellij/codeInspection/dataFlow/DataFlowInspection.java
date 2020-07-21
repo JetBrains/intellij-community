@@ -20,7 +20,11 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -205,7 +209,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new NullableStuffInspection.NavigateToNullLiteralArguments(parameter);
   }
 
-  private static JCheckBox createCheckBoxWithHTML(String text, boolean selected, Consumer<? super JCheckBox> consumer) {
+  private static JCheckBox createCheckBoxWithHTML(@Nls String text, boolean selected, Consumer<? super JCheckBox> consumer) {
     JCheckBox box = new JCheckBox(wrapInHtml(text));
     box.setVerticalTextPosition(TOP);
     box.setSelected(selected);

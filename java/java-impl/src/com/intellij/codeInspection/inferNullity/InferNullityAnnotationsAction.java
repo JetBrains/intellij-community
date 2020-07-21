@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -144,7 +145,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   public static boolean addAnnotationsDependency(@NotNull final Project project,
                                                  @NotNull final Set<? extends Module> modulesWithoutAnnotations,
-                                                 @NotNull String annoFQN, final String title) {
+                                                 @NotNull String annoFQN, final @NlsContexts.DialogTitle String title) {
     final Library annotationsLib = LibraryUtil.findLibraryByClass(annoFQN, project);
     if (annotationsLib != null) {
       String message = "Module" + (modulesWithoutAnnotations.size() == 1 ? " " : "s ");
