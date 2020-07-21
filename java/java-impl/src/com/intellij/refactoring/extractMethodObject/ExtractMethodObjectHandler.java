@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -66,7 +67,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
     if (elements.length == 0) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, ExtractMethodObjectProcessor.REFACTORING_NAME, HelpID.EXTRACT_METHOD_OBJECT);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, JavaRefactoringBundle.message("extract.method.object"), HelpID.EXTRACT_METHOD_OBJECT);
       return;
     }
 
@@ -74,7 +75,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
       extractMethodObject(project, editor, new ExtractMethodObjectProcessor(project, editor, elements, ""));
     }
     catch (PrepareFailedException e) {
-      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), ExtractMethodObjectProcessor.REFACTORING_NAME, HelpID.EXTRACT_METHOD_OBJECT);
+      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), JavaRefactoringBundle.message("extract.method.object"), HelpID.EXTRACT_METHOD_OBJECT);
       ExtractMethodHandler.highlightPrepareError(e, file, editor, project);
     }
   }
@@ -101,8 +102,8 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
     }
     CommandProcessor.getInstance().executeCommand(project,
                                                   () -> doRefactoring(project, editor, processor, extractProcessor),
-                                                  ExtractMethodObjectProcessor.REFACTORING_NAME,
-                                                  ExtractMethodObjectProcessor.REFACTORING_NAME);
+                                                  JavaRefactoringBundle.message("extract.method.object"),
+                                                  JavaRefactoringBundle.message("extract.method.object"));
     if (editor != null) {
       editor.getCaretModel().moveToOffset(marker.getStartOffset());
       marker.dispose();

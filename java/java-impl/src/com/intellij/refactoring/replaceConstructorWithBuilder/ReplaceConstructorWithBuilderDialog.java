@@ -80,7 +80,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       ParameterData.createFromConstructor(constructor, mySetterPrefix, myParametersMap);
     }
     init();
-    setTitle(ReplaceConstructorWithBuilderProcessor.REFACTORING_NAME);
+    setTitle(JavaRefactoringBundle.message("replace.constructor.with.builder"));
   }
 
   @Override

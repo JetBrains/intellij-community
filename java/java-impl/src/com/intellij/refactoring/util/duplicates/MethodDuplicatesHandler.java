@@ -37,6 +37,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -301,7 +302,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     return JavaRefactoringBundle.message("method.duplicates.found.message", duplicatesNo);
   }
 
-  private static void showErrorMessage(String message, Project project, Editor editor) {
+  private static void showErrorMessage(@NlsContexts.DialogMessage String message, Project project, Editor editor) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.METHOD_DUPLICATES);
   }
 
@@ -310,7 +311,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     throw new UnsupportedOperationException();
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.ProgressTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("replace.method.code.duplicates.title");
   }
 }

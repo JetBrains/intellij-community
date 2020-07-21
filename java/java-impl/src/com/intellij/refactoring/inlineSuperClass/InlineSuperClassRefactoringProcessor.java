@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.inlineSuperClass;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -445,6 +446,6 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   @Override
   @NotNull
   protected String getCommandName() {
-    return InlineSuperClassRefactoringHandler.REFACTORING_NAME;
+    return JavaRefactoringBundle.message("inline.super.class");
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameHelper;
@@ -307,7 +308,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     return HelpID.INTRODUCE_VARIABLE;
   }
 
-  private static String getRefactoringName() {
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("introduce.variable.title");
   }
 }

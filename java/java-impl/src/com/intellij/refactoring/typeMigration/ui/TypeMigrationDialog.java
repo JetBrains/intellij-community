@@ -50,8 +50,6 @@ import java.util.List;
 public abstract class TypeMigrationDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance(TypeMigrationDialog.class);
 
-  public static final String REFACTORING_NAME = "Type Migration";
-
   protected final PsiElement[] myRoots;
   private TypeMigrationRules myRules;
   private final ScopeChooserCombo myScopeChooserCombo;
@@ -71,7 +69,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         validateButtons();
       }
     });
-    setTitle(REFACTORING_NAME);
+    setTitle("Type Migration");
   }
 
   @Override

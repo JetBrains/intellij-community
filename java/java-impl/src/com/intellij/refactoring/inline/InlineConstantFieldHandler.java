@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -178,7 +179,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     return getRefactoringName() + "...";
   }
 
-  private static String getRefactoringName() {
+  private static @NlsActions.ActionText String getRefactoringName() {
     return JavaRefactoringBundle.message("inline.field.title");
   }
 }

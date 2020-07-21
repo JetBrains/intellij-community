@@ -18,6 +18,7 @@ package com.intellij.refactoring.memberPushDown;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -178,7 +179,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
 
   @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NlsContexts.DialogTitle String getCommandName() {
     return RefactoringBundle.message("push.members.down.title");
   }
 

@@ -44,7 +44,7 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
     myDocPanel = new DocCommentPanel("JavaDoc for inlined members");
     myDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
     init();
-    setTitle(InlineSuperClassRefactoringHandler.REFACTORING_NAME);
+    setTitle(JavaRefactoringBundle.message("inline.super.class"));
   }
 
   @Override

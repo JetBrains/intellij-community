@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -33,7 +34,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton {
-  private static final String LEAVE_IN_SAME_SOURCE_ROOT = "Leave in same source root";
   private static final DirectoryChooser.ItemWrapper NULL_WRAPPER = new DirectoryChooser.ItemWrapper(null, null);
   private PsiDirectory myInitialTargetDirectory;
   private List<VirtualFile> mySourceRoots;
@@ -64,13 +64,14 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
 
   public void setData(final Project project,
                       final PsiDirectory initialTargetDirectory,
-                      final Pass<String> errorMessageUpdater, final EditorComboBox editorComboBox) {
+                      final Pass<@NlsContexts.DialogMessage String> errorMessageUpdater, final EditorComboBox editorComboBox) {
     myInitialTargetDirectory = initialTargetDirectory;
     mySourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
+    String leaveInSameSourceRoot = "Leave in same source root";
     new ComboboxSpeedSearch(getComboBox()) {
       @Override
       protected String getElementText(Object element) {
-        if (element == NULL_WRAPPER) return LEAVE_IN_SAME_SOURCE_ROOT;
+        if (element == NULL_WRAPPER) return leaveInSameSourceRoot;
         if (element instanceof DirectoryChooser.ItemWrapper) {
           final VirtualFile virtualFile = ((DirectoryChooser.ItemWrapper)element).getDirectory().getVirtualFile();
           final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
@@ -90,7 +91,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         label.setText(itemWrapper.getRelativeToProjectPath());
       }
       else {
-        label.setText(LEAVE_IN_SAME_SOURCE_ROOT);
+        label.setText(leaveInSameSourceRoot);
       }
     }));
     final VirtualFile initialSourceRoot =
@@ -161,7 +162,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     return new AutocreatingSingleSourceRootMoveDestination(targetPackage, selectedDestination);
   }
 
-  private void updateErrorMessage(Pass<String> updateErrorMessage, ProjectFileIndex fileIndex, Object selectedItem) {
+  private void updateErrorMessage(Pass<@NlsContexts.DialogMessage String> updateErrorMessage, ProjectFileIndex fileIndex, Object selectedItem) {
     updateErrorMessage.pass(null);
     if (myInitialTargetDirectory != null && selectedItem instanceof DirectoryChooser.ItemWrapper && selectedItem != NULL_WRAPPER) {
       final PsiDirectory directory = ((DirectoryChooser.ItemWrapper)selectedItem).getDirectory();

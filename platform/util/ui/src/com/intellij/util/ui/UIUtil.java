@@ -876,7 +876,7 @@ public final class UIUtil {
     return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
   }
 
-  public static @NotNull String removeMnemonic(@NotNull String s) {
+  public static @Nls @NotNull String removeMnemonic(@Nls @NotNull String s) {
     if (s.indexOf('&') != -1) {
       s = StringUtil.replace(s, "&", "");
     }

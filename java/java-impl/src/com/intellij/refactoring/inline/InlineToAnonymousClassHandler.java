@@ -39,6 +39,7 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,8 +118,11 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final Ref<String> errorMessage = new Ref<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> errorMessage.set(getCannotInlineMessage((PsiClass)psiClass.getNavigationElement()))), JavaRefactoringBundle.message(
+    final Ref<@Nls String> errorMessage = new Ref<>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ApplicationManager.getApplication().runReadAction(
+        () -> errorMessage.set(getCannotInlineMessage((PsiClass)psiClass.getNavigationElement()))), 
+      JavaRefactoringBundle.message(
       "inline.conflicts.progress"), true, project)) return;
     if (errorMessage.get() != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage.get(), JavaRefactoringBundle.message("inline.to.anonymous.refactoring"), null);
@@ -189,7 +193,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   }
 
   @Nullable
-  public static String getCannotInlineMessage(final PsiClass psiClass) {
+  public static @Nls String getCannotInlineMessage(final PsiClass psiClass) {
     if (psiClass instanceof PsiTypeParameter) {
       return "Type parameters cannot be inlined";
     }
@@ -308,7 +312,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   }
 
   @Nullable
-  private static String getCannotInlineDueToUsagesMessage(final PsiClass aClass) {
+  private static @Nls String getCannotInlineDueToUsagesMessage(final PsiClass aClass) {
     boolean hasUsages = false;
     for(PsiReference reference : ReferencesSearch.search(aClass, GlobalSearchScope.projectScope(aClass.getProject()))) {
       final PsiElement element = reference.getElement();

@@ -5,6 +5,7 @@ package com.intellij.refactoring.move.moveInner;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
@@ -73,7 +74,7 @@ public final class MoveInnerImpl {
     return null;
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("move.inner.to.upper.level.title");
   }
 }

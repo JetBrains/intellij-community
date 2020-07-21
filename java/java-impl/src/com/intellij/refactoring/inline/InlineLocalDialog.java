@@ -2,6 +2,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.HelpID;
@@ -68,7 +69,7 @@ public class InlineLocalDialog extends AbstractInlineLocalDialog {
     return false;
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("inline.variable.title");
   }
 }

@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler {
-  public static final String REFACTORING_NAME = "Inline Super Class";
 
   @Override
   public boolean isEnabledOnElement(PsiElement element) {
@@ -52,7 +51,8 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
   public void inlineElement(final Project project, final Editor editor, final PsiElement element) {
     PsiClass superClass = (PsiClass) element;
     if (!superClass.getManager().isInProject(superClass)) {
-      CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("inline.super.non.project.class.warning.message"), REFACTORING_NAME, null);
+      CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("inline.super.non.project.class.warning.message"),
+                                          JavaRefactoringBundle.message("inline.super.class"), null);
       return;
     }
 
@@ -77,6 +77,6 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return REFACTORING_NAME + "...";
+    return JavaRefactoringBundle.message("inline.super.class") + "...";
   }
 }

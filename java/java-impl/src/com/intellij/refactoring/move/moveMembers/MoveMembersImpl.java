@@ -4,6 +4,7 @@ package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
@@ -107,7 +108,7 @@ public final class MoveMembersImpl {
     dialog.show();
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("move.members.title");
   }
 }

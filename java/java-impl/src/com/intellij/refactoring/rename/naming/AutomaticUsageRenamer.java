@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usages.RenameableUsage;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +99,7 @@ public abstract class AutomaticUsageRenamer<T> {
   }
 
   @Nullable
-  public String getErrorText(T element) {
+  public @NlsContexts.Tooltip String getErrorText(T element) {
     return null;
   }
 
@@ -118,9 +120,9 @@ public abstract class AutomaticUsageRenamer<T> {
 
   protected abstract String getName(T element);
 
-  public abstract String getDialogTitle();
+  public abstract @NlsContexts.DialogTitle String getDialogTitle();
 
-  public abstract String getDialogDescription();
+  public abstract @Nls String getDialogDescription();
 
   public abstract String getEntityName();
 }

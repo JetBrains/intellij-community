@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
@@ -510,7 +511,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     return getRefactoringName(element);
   }
 
-  private static String getRefactoringName(PsiElement variable) {
+  private static @NlsContexts.DialogTitle String getRefactoringName(PsiElement variable) {
     return variable instanceof PsiPatternVariable
                      ? JavaRefactoringBundle.message("inline.pattern.variable.title")
                      : RefactoringBundle.message("inline.variable.title");

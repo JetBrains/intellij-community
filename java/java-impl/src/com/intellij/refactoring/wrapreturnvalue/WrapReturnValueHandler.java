@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
@@ -114,7 +115,7 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
 
   }
 
-  public static String getRefactoringNameText() {
+  public static @NlsContexts.DialogTitle String getRefactoringNameText() {
     return RefactorJBundle.message("wrap.return.value");
   }
 }

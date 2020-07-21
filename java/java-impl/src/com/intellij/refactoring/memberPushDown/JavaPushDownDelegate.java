@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -102,7 +103,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   }
 
   @Override
-  public NewSubClassData preprocessNoInheritorsFound(PsiElement sourceClass, String conflictDialogTitle) {
+  public NewSubClassData preprocessNoInheritorsFound(PsiElement sourceClass, @NlsContexts.DialogTitle String conflictDialogTitle) {
     final PsiClass aClass = (PsiClass)sourceClass;
     final PsiFile containingFile = aClass.getContainingFile();
     final boolean defaultPackage = StringUtil.isEmptyOrSpaces(containingFile instanceof PsiClassOwner ? ((PsiClassOwner)containingFile).getPackageName() : "");

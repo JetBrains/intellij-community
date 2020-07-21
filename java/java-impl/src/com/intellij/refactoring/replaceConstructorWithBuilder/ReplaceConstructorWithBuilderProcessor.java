@@ -17,6 +17,7 @@ package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -54,7 +55,6 @@ import java.util.Map;
  * @author anna
  */
 public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefactoringProcessor {
-  public static final String REFACTORING_NAME = "Replace Constructor with Builder";
   private final PsiMethod[] myConstructors;
   private final Map<String, ParameterData> myParametersMap;
   @NotNull
@@ -327,6 +327,6 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   @Override
   @NotNull
   protected String getCommandName() {
-    return REFACTORING_NAME;
+    return JavaRefactoringBundle.message("replace.constructor.with.builder");
   }
 }

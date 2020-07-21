@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.AutomaticRenamingDialog;
@@ -104,7 +105,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
   }
 
   @Nullable
-  private String getErrorText(T element) {
+  private @NlsContexts.Tooltip String getErrorText(T element) {
     return isChecked(element) ? myRenamer.getErrorText(element) : null;
   }
 

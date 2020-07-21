@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -42,5 +43,5 @@ public interface MatchProvider {
 
   @Nullable String getConfirmDuplicatePrompt(Match match);
 
-  String getReplaceDuplicatesTitle(int idx, int size);
+  @NlsContexts.DialogTitle String getReplaceDuplicatesTitle(int idx, int size);
 }

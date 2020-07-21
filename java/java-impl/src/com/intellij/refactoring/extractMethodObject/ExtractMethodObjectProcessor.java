@@ -55,7 +55,6 @@ import java.util.*;
 
 public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(ExtractMethodObjectProcessor.class);
-  @NonNls public static final String REFACTORING_NAME = "Extract Method Object";
 
   private final PsiElementFactory myElementFactory;
 
@@ -82,7 +81,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, @NotNull String innerClassName) {
     super(project);
     myInnerClassName = innerClassName;
-    myExtractProcessor = new MyExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, innerClassName, HelpID.EXTRACT_METHOD_OBJECT);
+    myExtractProcessor = new MyExtractMethodProcessor(project, editor, elements, null,
+                                                      JavaRefactoringBundle.message("extract.method.object"), innerClassName, HelpID.EXTRACT_METHOD_OBJECT);
     myElementFactory = JavaPsiFacade.getElementFactory(project);
     myStyleSettings = editor != null ? CodeStyle.getSettings(editor) :
                       CodeStyle.getSettings(elements[0].getContainingFile());
@@ -523,7 +523,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected String getCommandName() {
-    return REFACTORING_NAME;
+    return JavaRefactoringBundle.message("extract.method.object");
   }
 
 

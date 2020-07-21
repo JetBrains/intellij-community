@@ -18,6 +18,7 @@ package com.intellij.refactoring.memberPushDown;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -109,7 +110,7 @@ public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>
    *         null to proceed without inheritors (members would be deleted from the source class and not added to the target)
    *         new NewSubClassData(context, name) if new inheritor should be created with {@link #createSubClass(PsiElement, NewSubClassData)} 
    */
-  protected NewSubClassData preprocessNoInheritorsFound(PsiElement sourceClass, String conflictDialogTitle) {
+  protected NewSubClassData preprocessNoInheritorsFound(PsiElement sourceClass, @NlsContexts.DialogTitle String conflictDialogTitle) {
     final String message = RefactoringBundle.message("class.0.does.not.have.inheritors", DescriptiveNameUtil.getDescriptiveName(sourceClass)) + "\n" +
                            RefactoringBundle.message("push.down.will.delete.members");
     final int answer = Messages.showYesNoDialog(message, conflictDialogTitle, Messages.getWarningIcon());

@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -353,7 +354,7 @@ public class MigrationPanel extends JPanel implements Disposable {
   private abstract class ExcludeIncludeActionBase extends AnAction {
     protected abstract void processUsage(TypeMigrationUsageInfo usageInfo);
 
-    ExcludeIncludeActionBase(final String text) {
+    ExcludeIncludeActionBase(final @NlsActions.ActionText String text) {
       super(text);
     }
 

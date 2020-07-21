@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -1150,7 +1151,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static boolean checkAnchorBeforeThisOrSuper(final Project project,
                                                      final Editor editor,
                                                      final PsiElement tempAnchorElement,
-                                                     final String refactoringName,
+                                                     final @NlsContexts.DialogTitle String refactoringName,
                                                      final String helpID) {
     if (tempAnchorElement instanceof PsiExpressionStatement) {
       PsiExpression enclosingExpr = ((PsiExpressionStatement)tempAnchorElement).getExpression();
@@ -1346,7 +1347,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  protected static String getRefactoringName() {
+  protected static @NlsContexts.Command String getRefactoringName() {
     return RefactoringBundle.message("introduce.variable.title");
   }
 }

@@ -116,7 +116,7 @@ final class DfaBasedFilter {
     return null;
   }
 
-  static String getPresentationText(@NotNull DfType type, @Nullable PsiType psiType) {
+  static @Nls String getPresentationText(@NotNull DfType type, @Nullable PsiType psiType) {
     if (type == DfTypes.TOP) {
       return "";
     }

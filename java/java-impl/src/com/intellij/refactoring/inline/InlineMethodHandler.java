@@ -9,6 +9,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -18,7 +19,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.function.Supplier;
@@ -188,13 +189,12 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     return false;
   }
 
-  @Nullable
   @Override
-  public String getActionName(PsiElement element) {
+  public @NotNull String getActionName(PsiElement element) {
     return getRefactoringName() + "...";
   }
 
-  private static String getRefactoringName() {
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("inline.method.title");
   }
 }
