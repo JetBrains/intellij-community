@@ -55,7 +55,7 @@ public abstract class SettingsConnectionService {
   @Nullable
   public EventLogExternalSendSettings loadSettings(@NotNull String configUrl, @NotNull String appVersion) {
     try {
-      return StatsHttpRequests.request(configUrl, myApplicationInfo.getUserAgent()).send(r -> {
+      return StatsHttpRequests.request(configUrl, myApplicationInfo.getConnectionSettings()).send(r -> {
         try {
           InputStream content = r.read();
           if (content != null) {

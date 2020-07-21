@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.whitelist;
 
+import com.intellij.internal.statistic.eventLog.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
@@ -17,14 +18,14 @@ public class EventLogServerWhitelistLoader implements EventLogMetadataLoader {
 
   @Override
   public long getLastModifiedOnServer() {
-    String userAgent = mySettingsService.getApplicationInfo().getUserAgent();
-    return StatisticsWhitelistLoader.lastModifiedWhitelist(mySettingsService.getWhiteListProductUrl(), userAgent);
+    EventLogConnectionSettings settings = mySettingsService.getApplicationInfo().getConnectionSettings();
+    return StatisticsWhitelistLoader.lastModifiedWhitelist(mySettingsService.getWhiteListProductUrl(), settings);
   }
 
   @Override
   @NotNull
   public String loadMetadataFromServer() throws EventLogMetadataLoadException {
-    String userAgent = mySettingsService.getApplicationInfo().getUserAgent();
-    return StatisticsWhitelistLoader.loadWhiteListFromServer(mySettingsService.getWhiteListProductUrl(), userAgent);
+    EventLogConnectionSettings settings = mySettingsService.getApplicationInfo().getConnectionSettings();
+    return StatisticsWhitelistLoader.loadWhiteListFromServer(mySettingsService.getWhiteListProductUrl(), settings);
   }
 }

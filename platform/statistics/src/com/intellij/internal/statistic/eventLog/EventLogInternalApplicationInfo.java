@@ -49,7 +49,12 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
 
   @NotNull
   @Override
-  public String getUserAgent() {
+  public EventLogConnectionSettings getConnectionSettings() {
+    String userAgent = getUserAgentInternal();
+    return new EventLogBasicConnectionSettings(userAgent);
+  }
+
+  private static String getUserAgentInternal() {
     Application app = ApplicationManager.getApplication();
     if (app != null && !app.isDisposed()) {
       String productName = ApplicationNamesInfo.getInstance().getFullProductName();
