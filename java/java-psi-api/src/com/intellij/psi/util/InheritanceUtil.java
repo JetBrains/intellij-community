@@ -54,6 +54,7 @@ public final class InheritanceUtil {
   @Contract("null, _ -> false")
   public static boolean isInheritor(@Nullable PsiType type, @NotNull @NonNls final String baseClassName) {
     if (type instanceof PsiClassType) {
+      PsiUtil.ensureValidType(type);
       return isInheritor(((PsiClassType)type).resolve(), baseClassName);
     }
 
