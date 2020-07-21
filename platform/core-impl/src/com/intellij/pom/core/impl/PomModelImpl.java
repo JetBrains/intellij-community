@@ -247,7 +247,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       final int oldLength = containingFileByTree.getTextLength();
       docSynced = synchronizer.commitTransaction(document);
       if (docSynced) {
-        BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), containingFileByTree, oldLength, true);
+        sendAfterChildrenChangedEvent(containingFileByTree, oldLength);
       }
     }
 
@@ -330,7 +330,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       }
     }
 
-    BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);
+    sendBeforeChildrenChangeEvent(changeScope);
     Document document = psiFile == null || psiFile instanceof DummyHolder ? null :
                         physical || ModelBranch.getPsiBranch(psiFile) != null ? FileDocumentManager.getInstance().getDocument(vFile) :
                         FileDocumentManager.getInstance().getCachedDocument(vFile);
@@ -383,5 +383,40 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   public static boolean isAllowPsiModification() {
     return allowPsiModification;
+  }
+
+  private void sendBeforeChildrenChangeEvent(@NotNull PsiElement scope) {
+    if (!scope.isPhysical()) {
+      getPsiManager().beforeChange(false);
+      return;
+    }
+    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(getPsiManager());
+    event.setParent(scope);
+    event.setFile(scope.getContainingFile());
+    TextRange range = scope.getTextRange();
+    event.setOffset(range == null ? 0 : range.getStartOffset());
+    event.setOldLength(scope.getTextLength());
+    // the "generic" event is being sent on every PSI change. It does not carry any specific info except the fact that "something has changed"
+    event.setGenericChange(true);
+    getPsiManager().beforeChildrenChange(event);
+  }
+
+  private void sendAfterChildrenChangedEvent(@NotNull PsiFile scope, int oldLength) {
+    if (!scope.isPhysical()) {
+      getPsiManager().afterChange(false);
+      return;
+    }
+    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(getPsiManager());
+    event.setParent(scope);
+    event.setFile(scope);
+    event.setOffset(0);
+    event.setOldLength(oldLength);
+    event.setGenericChange(true);
+    getPsiManager().childrenChanged(event);
+  }
+
+  @NotNull
+  private PsiManagerImpl getPsiManager() {
+    return (PsiManagerImpl)PsiManager.getInstance(myProject);
   }
 }

@@ -382,37 +382,4 @@ public class BlockSupportImpl extends BlockSupport {
     }
     return childTooDeep;
   }
-
-  public static void sendBeforeChildrenChangeEvent(@NotNull PsiManagerImpl manager, @NotNull PsiElement scope, boolean isGenericChange) {
-    if (!scope.isPhysical()) {
-      manager.beforeChange(false);
-      return;
-    }
-    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
-    event.setParent(scope);
-    event.setFile(scope.getContainingFile());
-    TextRange range = scope.getTextRange();
-    event.setOffset(range == null ? 0 : range.getStartOffset());
-    event.setOldLength(scope.getTextLength());
-    // the "generic" event is being sent on every PSI change. It does not carry any specific info except the fact that "something has changed"
-    event.setGenericChange(isGenericChange);
-    manager.beforeChildrenChange(event);
-  }
-
-  public static void sendAfterChildrenChangedEvent(@NotNull PsiManagerImpl manager,
-                                                   @NotNull PsiFile scope,
-                                                   int oldLength,
-                                                   boolean isGenericChange) {
-    if (!scope.isPhysical()) {
-      manager.afterChange(false);
-      return;
-    }
-    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
-    event.setParent(scope);
-    event.setFile(scope);
-    event.setOffset(0);
-    event.setOldLength(oldLength);
-    event.setGenericChange(isGenericChange);
-    manager.childrenChanged(event);
-  }
 }
