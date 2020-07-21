@@ -72,7 +72,9 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
   }
 
   public static void updateToolbarsVisibility(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
-    setToolbarVisible(Collections.singletonList(toolWindow.getComponent()), isToolbarVisible(toolWindow, properties));
+      if (toolWindow.getContentManagerIfCreated() != null) {
+        setToolbarVisible(Collections.singletonList(toolWindow.getComponent()), isToolbarVisible(toolWindow, properties));
+      }
   }
 
   public static void setToolbarVisible(@NotNull ToolWindow toolWindow,
