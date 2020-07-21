@@ -14,8 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.Interner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -29,10 +28,11 @@ import java.util.regex.Pattern;
 public final class IntentionManagerSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(IntentionManagerSettings.class);
 
-  private static final class MetaDataKey extends Pair<String, String> {
+  private static final class MetaDataKey extends AbstractMap.SimpleImmutableEntry<String, String> {
     private static final Interner<String> ourInterner = Interner.createWeakInterner();
-    private MetaDataKey(String @NotNull [] categoryNames, @NotNull final String familyName) {
-      super(StringUtil.join(categoryNames, ":"), ourInterner.intern(familyName));
+
+    private MetaDataKey(String @NotNull [] categoryNames, @NotNull String familyName) {
+      super(String.join(":", categoryNames), ourInterner.intern(familyName));
     }
   }
 
@@ -153,7 +153,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
   }
 
   private static String getFamilyName(@NotNull IntentionActionMetaData metaData) {
-    return StringUtil.join(metaData.myCategory, "/") + "/" + metaData.getAction().getFamilyName();
+    return String.join("/", metaData.myCategory) + '/' + metaData.getAction().getFamilyName();
   }
 
   private static String getFamilyName(@NotNull IntentionAction action) {
@@ -184,7 +184,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
 
   private static void processMetaData(@NotNull IntentionActionMetaData metaData, @NotNull SearchableOptionProcessor processor) {
     try {
-      String descriptionText = StringUtil.toLowerCase(metaData.getDescription().getText());
+      String descriptionText = Strings.toLowerCase(metaData.getDescription().getText());
       descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
       String displayName = IntentionSettingsConfigurable.getDisplayNameText();
       String configurableId = IntentionSettingsConfigurable.HELP_ID;

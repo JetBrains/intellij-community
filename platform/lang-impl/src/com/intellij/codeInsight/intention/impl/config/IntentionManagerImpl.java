@@ -144,7 +144,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   @NotNull
   @Override
   public List<IntentionAction> getCleanupIntentionOptions() {
-    ArrayList<IntentionAction> options = new ArrayList<>();
+    List<IntentionAction> options = new ArrayList<>();
     options.add(EditCleanupProfileIntentionAction.INSTANCE);
     options.add(CleanupOnScopeIntention.INSTANCE);
     return options;
