@@ -102,6 +102,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
     LOG.debug { "Reload entities from changed files:\n$changes" }
     val (changedSources, builder) = serializers.reloadFromChangedFiles(changes, fileContentReader)
+    fileContentReader.clearCache()
     LOG.debugValues("Changed entity sources", changedSources)
     if (changedSources.isEmpty() && builder.isEmpty()) return
 
@@ -178,6 +179,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
         }
       }
       sourcesToSave.clear()
+      fileContentReader.clearCache()
       childActivity.end()
     }
     activity.end()
@@ -281,11 +283,18 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
 private class StorageJpsConfigurationReader(private val project: Project,
                                             private val baseDirUrl: String) : JpsFileContentReader {
+  @Volatile
+  private var fileContentCachingReader: CachingJpsFileContentReader? = null
+
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
       //todo fetch data from ModuleStore (https://jetbrains.team/p/wm/issues/51)
-      return CachingJpsFileContentReader(baseDirUrl).loadComponent(fileUrl, componentName, customModuleFilePath)
+      val reader = fileContentCachingReader ?: CachingJpsFileContentReader(baseDirUrl)
+      if (fileContentCachingReader == null) {
+        fileContentCachingReader = reader
+      }
+      return reader.loadComponent(fileUrl, componentName, customModuleFilePath)
     }
     else {
       val storage = getProjectStateStorage(filePath, project.stateStore, project) ?: return null
@@ -303,6 +312,10 @@ private class StorageJpsConfigurationReader(private val project: Project,
         stateMap.getElement(componentName)
       }
     }
+  }
+
+  fun clearCache() {
+    fileContentCachingReader = null
   }
 }
 
