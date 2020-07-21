@@ -31,8 +31,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
 
-import static com.intellij.refactoring.util.CommonRefactoringUtil.capitalize;
-
 /**
  * @author Pavel.Dolgov
  */
@@ -154,9 +152,9 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       myModuleCombo.setModel(new DefaultComboBoxModel<>(modules));
       updateRootDirsCombo(psiRootDirs);
 
-      myKindCombo.addItem(capitalize(CreateClassKind.CLASS.getDescription()), PlatformIcons.CLASS_ICON, CreateClassKind.CLASS.name());
-      myKindCombo.addItem(capitalize(CreateClassKind.INTERFACE.getDescription()), PlatformIcons.INTERFACE_ICON, CreateClassKind.INTERFACE.name());
-      myKindCombo.addItem(capitalize(CreateClassKind.ANNOTATION.getDescription()), PlatformIcons.ANNOTATION_TYPE_ICON, CreateClassKind.ANNOTATION.name());
+      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.CLASS.getDescription()), PlatformIcons.CLASS_ICON, CreateClassKind.CLASS.name());
+      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.INTERFACE.getDescription()), PlatformIcons.INTERFACE_ICON, CreateClassKind.INTERFACE.name());
+      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.ANNOTATION.getDescription()), PlatformIcons.ANNOTATION_TYPE_ICON, CreateClassKind.ANNOTATION.name());
 
       init();
     }

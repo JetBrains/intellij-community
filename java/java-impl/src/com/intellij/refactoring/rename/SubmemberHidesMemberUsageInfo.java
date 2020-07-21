@@ -17,9 +17,9 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageViewUtil;
 
@@ -41,6 +41,6 @@ public class SubmemberHidesMemberUsageInfo extends UnresolvableCollisionUsageInf
                                         RefactoringUIUtil.getDescription(getElement(), true),
                                         UsageViewUtil.getType(getElement()));
     }
-    return CommonRefactoringUtil.capitalize(descr);
+    return StringUtil.capitalize(descr);
   }
 }

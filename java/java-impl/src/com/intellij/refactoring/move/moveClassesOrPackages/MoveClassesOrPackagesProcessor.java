@@ -643,7 +643,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
               if (!myTargetPackage.equalToPackage(aPackage)) {
                 String message = JavaRefactoringBundle.message("0.will.be.inaccessible.from.1", RefactoringUIUtil.getDescription(member, true),
                                                       RefactoringUIUtil.getDescription(container, true));
-                myConflicts.putValue(member, CommonRefactoringUtil.capitalize(message));
+                myConflicts.putValue(member, StringUtil.capitalize(message));
               }
             }
           }

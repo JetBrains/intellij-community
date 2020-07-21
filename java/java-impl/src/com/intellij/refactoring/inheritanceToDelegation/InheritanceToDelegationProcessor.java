@@ -25,6 +25,7 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -254,7 +255,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             if (!reportedContainers.contains(container)) {
               String message = JavaRefactoringBundle.message("0.uses.1.of.an.instance.of.a.2", RefactoringUIUtil.getDescription(container, true),
                                                          RefactoringUIUtil.getDescription(nonDelegatedMember, true), classDescription);
-              conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
+              conflicts.putValue(container, StringUtil.capitalize(message));
               reportedContainers.add(container);
             }
           }
@@ -270,7 +271,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
               String message = JavaRefactoringBundle.message("0.upcasts.an.instance.of.1.to.2",
                                                          RefactoringUIUtil.getDescription(container, true), classDescription,
                                                          RefactoringUIUtil.getDescription(upcastedTo, false));
-              conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
+              conflicts.putValue(container, StringUtil.capitalize(message));
               reportedContainers.add(container);
             }
           }

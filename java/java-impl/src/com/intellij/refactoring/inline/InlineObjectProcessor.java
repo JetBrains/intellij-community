@@ -5,12 +5,12 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -260,7 +260,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
         final String containerDescription = RefactoringUIUtil.getDescription(container, true);
         String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
                                                    referencedDescription, containerDescription);
-        conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
+        conflicts.putValue(container, StringUtil.capitalize(message));
       }
     });
     return showConflicts(conflicts, usagesIn);

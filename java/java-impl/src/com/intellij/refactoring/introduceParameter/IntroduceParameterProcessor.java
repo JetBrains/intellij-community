@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -339,7 +340,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         String descr = JavaRefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
                                                  RefactoringUIUtil.getDescription(variable, true));
 
-        conflict = Pair.create(variable, CommonRefactoringUtil.capitalize(descr));
+        conflict = Pair.create(variable, StringUtil.capitalize(descr));
       }
     }
 

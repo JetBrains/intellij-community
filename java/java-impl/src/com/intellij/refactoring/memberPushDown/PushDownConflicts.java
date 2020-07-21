@@ -119,8 +119,9 @@ public class PushDownConflicts {
             if (unrelatedDefaults.size() > 1) {
               List<PsiClass> supers = new ArrayList<>(unrelatedDefaults);
               supers.sort(Comparator.comparing(PsiClass::getName));
-              myConflicts.putValue(member, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(myClass, false) + " will inherit unrelated defaults from " +
-                                                                            StringUtil.join(supers, aClass -> RefactoringUIUtil.getDescription(aClass, false)," and ")));
+              myConflicts.putValue(member, StringUtil
+                .capitalize(RefactoringUIUtil.getDescription(myClass, false) + " will inherit unrelated defaults from " +
+                            StringUtil.join(supers, aClass -> RefactoringUIUtil.getDescription(aClass, false), " and ")));
               break;
             }
           }
@@ -184,7 +185,7 @@ public class PushDownConflicts {
       final PsiField field = targetClass.findFieldByName(name, false);
       if (field != null) {
         String message = JavaRefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
-        myConflicts.putValue(field, CommonRefactoringUtil.capitalize(message));
+        myConflicts.putValue(field, StringUtil.capitalize(message));
       }
     }
     else if (movedMember instanceof PsiMethod) {
@@ -196,7 +197,7 @@ public class PushDownConflicts {
         if (overrider != null && ReferencesSearch.search(method, new LocalSearchScope(overrider)).findAll().size() != 1) {
           String message = RefactoringBundle.message("0.is.already.overridden.in.1",
                                                      RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));
-          myConflicts.putValue(overrider, CommonRefactoringUtil.capitalize(message));
+          myConflicts.putValue(overrider, StringUtil.capitalize(message));
         }
       }
     }
@@ -249,7 +250,7 @@ public class PushDownConflicts {
       if(myMovedMembers.contains(classMember) && !myAbstractMembers.contains(classMember)) {
         String message = RefactoringBundle.message("0.uses.1.which.is.pushed.down", RefactoringUIUtil.getDescription(mySource, false),
                                               RefactoringUIUtil.getDescription(classMember, false));
-        message = CommonRefactoringUtil.capitalize(message);
+        message = StringUtil.capitalize(message);
         myConflicts.putValue(mySource, message);
       }
     }

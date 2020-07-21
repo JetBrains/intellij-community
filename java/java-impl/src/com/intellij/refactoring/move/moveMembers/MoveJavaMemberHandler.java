@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.LocalSearchScope;
@@ -89,7 +90,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
                                                    RefactoringUIUtil.getDescription(member, false),
                                                    visibility,
                                                    RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
-        conflicts.putValue(member, CommonRefactoringUtil.capitalize(message));
+        conflicts.putValue(member, StringUtil.capitalize(message));
       }
     }
 
@@ -99,7 +100,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         ReadWriteAccessDetector.Access access = accessDetector.getExpressionAccess(element);
         if (access != ReadWriteAccessDetector.Access.Read) {
           String message = RefactoringUIUtil.getDescription(member, true) + " has write access but is moved to an interface";
-          conflicts.putValue(element, CommonRefactoringUtil.capitalize(message));
+          conflicts.putValue(element, StringUtil.capitalize(message));
         }
       }
     } else if (member instanceof PsiField &&
@@ -141,7 +142,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     if (member instanceof PsiMethod && hasMethod(targetClass, (PsiMethod)member) ||
         member instanceof PsiField && hasField(targetClass, (PsiField)member)) {
       String message = RefactoringBundle.message("0.already.exists.in.the.target.class", RefactoringUIUtil.getDescription(member, false));
-      conflicts.putValue(member, CommonRefactoringUtil.capitalize(message));
+      conflicts.putValue(member, StringUtil.capitalize(message));
     }
 
     RefactoringConflictsUtil.checkUsedElements(member, member, membersToMove, null, targetClass, targetClass, conflicts);

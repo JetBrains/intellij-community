@@ -16,12 +16,12 @@
 
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.inline.ReferencedElementsCollector;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.usageView.UsageInfo;
@@ -92,7 +92,9 @@ public class InlineSuperCallUsageInfo extends FixableUsageInfo {
           }
         }, conflicts);
         if (InlineMethodProcessor.checkBadReturns(superConstructor) && !InlineUtil.allUsagesAreTailCalls(superConstructor)) {
-          conflicts.putValue(superConstructor, CommonRefactoringUtil.capitalize(RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", "") + " of super constructor"));
+          conflicts.putValue(superConstructor, StringUtil.capitalize(
+            RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", "") +
+            " of super constructor"));
         }
       }
     }

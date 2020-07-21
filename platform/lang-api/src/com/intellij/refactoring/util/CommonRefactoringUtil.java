@@ -239,6 +239,10 @@ public final class CommonRefactoringUtil {
     });
   }
 
+  /**
+   * @deprecated use {@link StringUtil#capitalize(String)}
+   */
+  @Deprecated
   public static String capitalize(@NotNull String text) {
     return StringUtil.capitalize(text);
   }
