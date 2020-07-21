@@ -100,7 +100,8 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
 
   override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> {
     // py.test reruns tests by itself, so we only need to run same configuration and provide --last-failed
-    return target.generateArgumentsLine(this) + listOf(rawArgumentsSeparator, "--last-failed")
+    return target.generateArgumentsLine(this) + listOf(rawArgumentsSeparator, "--last-failed", additionalArguments)
+      .filter(String::isNotEmpty)
   }
 
   override fun getTestSpec(): List<String> {
