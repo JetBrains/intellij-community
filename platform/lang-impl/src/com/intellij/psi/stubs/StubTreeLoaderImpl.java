@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -145,7 +147,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
     return true;
   }
 
-  private void diagnoseLengthMismatch(VirtualFile vFile,
+  private void diagnoseLengthMismatch(@NotNull VirtualFile vFile,
                                       boolean wasIndexedAlready,
                                       @Nullable Document document,
                                       boolean saved,
@@ -168,7 +170,23 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
       message += "\nprojects with file: " + (LOG.isDebugEnabled() ? projects.toString() : projects.size());
     }
 
+    Path nioPath = vFile.getFileSystem().getNioPath(vFile);
+    if (nioPath != null) {
+      message += getPhysicalFileReport(nioPath);
+    }
+
     processError(vFile, message, new Exception());
+  }
+
+  private static String getPhysicalFileReport(@NotNull Path file) {
+    String message = "\nphysical file " + (Files.exists(file) ? "exists" : "doesn't exist") + "; length = ";
+    try {
+      message += Files.size(file);
+    }
+    catch (IOException e) {
+      message += e.getMessage();
+    }
+    return message;
   }
 
   private static void checkDeserializationCreatesNoPsi(ObjectStubTree<?> tree) {
