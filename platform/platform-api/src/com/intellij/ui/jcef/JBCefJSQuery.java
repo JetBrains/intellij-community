@@ -51,7 +51,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
    */
   public static JBCefJSQuery create(@NotNull JBCefBrowser browser) {
     Function<Void, JBCefJSQuery> create = (v) -> {
-      return new JBCefJSQuery(browser, new JSQueryFunc(browser.getJBCefClient(), browser.getJSQueryCounter(), false));
+      return new JBCefJSQuery(browser, new JSQueryFunc(browser.getJBCefClient()));
     };
     if (!browser.isCefBrowserCreated()) {
       return create.apply(null);
@@ -185,6 +185,10 @@ public final class JBCefJSQuery implements JBCefDisposable {
   static class JSQueryFunc {
     final CefMessageRouter myRouter;
     final String myFuncName;
+
+    JSQueryFunc(@NotNull JBCefClient client) {
+      this(client, client.nextJSQueryIndex(), false);
+    }
 
     JSQueryFunc(@NotNull JBCefClient client, int index, boolean isSlot) {
       String postfix = client.hashCode() + "_" + (isSlot ? "slot_" : "") + index;
