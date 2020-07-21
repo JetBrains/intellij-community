@@ -9,7 +9,6 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -268,10 +267,10 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         if (transaction == null) {
           final PomModel model = PomManager.getModel(file.getProject());
 
-          model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
+          model.runTransaction(new PomTransactionBase(file) {
             @Override
-            public PomModelEvent runInner() {
-              return new TreeAspectEvent(model, performActualPsiChange(file));
+            public @NotNull PomModelEvent runInner() {
+              return new PomModelEvent(model, performActualPsiChange(file));
             }
           });
         }

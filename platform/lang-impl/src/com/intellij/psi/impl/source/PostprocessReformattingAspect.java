@@ -67,8 +67,23 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   static final class LangPomModel extends PomModelImpl {
+    private final PostprocessReformattingAspect myAspect;
+
     LangPomModel(@NotNull Project project) {
-      super(project, new PostprocessReformattingAspect(project));
+      super(project);
+      myAspect = new PostprocessReformattingAspect(project);
+    }
+
+    @Override
+    public <T extends PomModelAspect> T getModelAspect(@NotNull Class<T> aClass) {
+      //noinspection unchecked
+      return myAspect.getClass().equals(aClass) ? (T)myAspect : super.getModelAspect(aClass);
+    }
+
+    @Override
+    protected void updateDependentAspects(PomModelEvent event) {
+      super.updateDependentAspects(event);
+      myAspect.update(event);
     }
   }
 
