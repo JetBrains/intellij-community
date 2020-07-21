@@ -85,4 +85,10 @@ public class SuspiciousIndentAfterControlStatement {
                 return "";
         }
     }
+
+    public void x(int i) {
+        if (i == 3)
+        <warning descr="'System.out.println(\"-->\")' statement has suspicious indentation">System.out.println("-->")</warning>;
+        System.out.println(i);
+    }
 }
