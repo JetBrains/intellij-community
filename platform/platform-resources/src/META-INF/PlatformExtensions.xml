@@ -664,6 +664,8 @@
     <statistics.counterUsagesCollector groupId="light.edit" version="1"/>
     <statistics.counterUsagesCollector groupId="editor.typing" version="1"/>
 
+    <statistics.counterUsagesCollector groupId="ui.mnemonic" version="1"/>
+
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.application.Preloader"/>
