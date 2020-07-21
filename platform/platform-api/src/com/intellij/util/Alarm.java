@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
@@ -18,7 +19,6 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -235,7 +235,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  private void cancelAndRemoveRequestFrom(@NotNull Runnable request, @NotNull List<? extends Request> list) {
+  private void cancelAndRemoveRequestFrom(@NotNull Runnable request, @NotNull List<Request> list) {
     for (int i = list.size()-1; i>=0; i--) {
       Request r = list.get(i);
       if (r.myTask == request) {
@@ -254,7 +254,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  private int cancelAllRequests(@NotNull List<? extends Request> list) {
+  private int cancelAllRequests(@NotNull List<Request> list) {
     int count = list.size();
     for (Request request : list) {
       request.cancel();

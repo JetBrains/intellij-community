@@ -28,12 +28,13 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+// extended externally
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final Logger LOG = Logger.getInstance(ShowSettingsUtilImpl.class);
 
   @NotNull
   private static Project getProject(@Nullable Project project) {
-    return project != null ? project : ProjectManager.getInstance().getDefaultProject();
+    return project == null ? ProjectManager.getInstance().getDefaultProject() : project;
   }
 
   @NotNull
@@ -56,11 +57,9 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return all configurables as a plain list except the root configurable group
    */
-  @NotNull
-  public static List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
-    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings);
+  public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
     List<Configurable> list = new ArrayList<>();
-    collect(list, group.getConfigurables());
+    collect(list, ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings).getConfigurables());
     return list;
   }
 

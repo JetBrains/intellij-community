@@ -8,7 +8,6 @@ import com.intellij.ide.ui.search.SearchableOptionContributor;
 import com.intellij.ide.ui.search.SearchableOptionProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -100,9 +99,8 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
     }
   }
 
-  @NotNull
-  public static IntentionManagerSettings getInstance() {
-    return ServiceManager.getService(IntentionManagerSettings.class);
+  public static @NotNull IntentionManagerSettings getInstance() {
+    return ApplicationManager.getApplication().getService(IntentionManagerSettings.class);
   }
 
   void registerIntentionMetaData(@NotNull IntentionAction intentionAction,

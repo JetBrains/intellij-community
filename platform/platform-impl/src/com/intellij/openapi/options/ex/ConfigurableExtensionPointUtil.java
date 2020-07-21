@@ -13,8 +13,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,16 +31,20 @@ public final class ConfigurableExtensionPointUtil {
     final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<>();
     List<String> idsInEpOrder = new ArrayList<>();
     for (ConfigurableEP<Configurable> ep : extensions) {
-      final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
-      if (isSuppressed(configurable, filter)) continue;
+      Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
+      if (isSuppressed(configurable, filter)) {
+        continue;
+      }
       if (configurable instanceof ConfigurableWrapper) {
-        final ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
         idToConfigurable.put(wrapper.getId(), wrapper);
         idsInEpOrder.add(wrapper.getId());
       }
       else {
-//        dumpConfigurable(configurablesExtensionPoint, ep, configurable);
-        ContainerUtil.addIfNotNull(result, configurable);
+        //dumpConfigurable(configurablesExtensionPoint, ep, configurable);
+        if (configurable != null) {
+          result.add(configurable);
+        }
       }
     }
 
@@ -127,7 +129,7 @@ public final class ConfigurableExtensionPointUtil {
    */
   public static @Nullable ConfigurableGroup getConfigurableGroup(@NotNull List<? extends Configurable> configurables, @Nullable Project project) {
     Map<String, List<Configurable>> map = groupConfigurables(configurables);
-    Map<String, Node<SortedConfigurableGroup>> tree = new THashMap<>();
+    Map<String, Node<SortedConfigurableGroup>> tree = new HashMap<>();
     for (Map.Entry<String, List<Configurable>> entry : map.entrySet()) {
       addGroup(tree, project, entry.getKey(), entry.getValue(), null);
     }
@@ -254,7 +256,7 @@ public final class ConfigurableExtensionPointUtil {
    * @return the map of different groups of settings
    */
   public static @NotNull Map<String, List<Configurable>> groupConfigurables(@NotNull List<? extends Configurable> configurables) {
-    Map<String, Node<ConfigurableWrapper>> tree = new THashMap<>();
+    Map<String, Node<ConfigurableWrapper>> tree = new HashMap<>();
     for (Configurable configurable : configurables) {
       if (!(configurable instanceof ConfigurableWrapper)) {
         Node.add(tree, "other", configurable);
@@ -296,7 +298,7 @@ public final class ConfigurableExtensionPointUtil {
       node.myValue = wrapper;
     }
 
-    Map<String, List<Configurable>> map = new THashMap<>();
+    Map<String, List<Configurable>> map = new HashMap<>();
     for (String id : ArrayUtilRt.toStringArray(tree.keySet())) {
       Node<ConfigurableWrapper> node = tree.get(id);
       if (node != null) {
