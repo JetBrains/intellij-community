@@ -1,4 +1,4 @@
-// Copyrioht 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -20,6 +20,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -27,6 +28,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -156,17 +158,17 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       }
 
       /**
-       * The method returns a {@link Stream<PsiDocTag>} of @throws declarations from the javadoc that are related to the throw declaration.
+       * The method returns a {@link Stream<PsiDocTag>} of @throws tags from the javadoc that are related to the throw declaration.
        * This method works like this:
        * <ul>
        *   <li>If the javadoc is null, then return {@link Stream#empty()}</li>
-       *   <li>All the @throws declarations that are subclasses of the current throw declaration are returned except if there is a more specific throw declaration in the throws list that matches exactly the @throws tag.</li>
        *   <li>If there are no other throws declarations in the throws list but the current one then all the @throws declarations are returned.</li>
-       *   <li>If there are duplicates in the throws list and one of the duplicates is being removed then all @throws tag that match the throws list's declaration are returned (either the same class or an inheritor of it).</li>
+       *   <li>All the @throws tags that are subclasses of the current throws declaration are returned except if there are no other throws declarations in the throws list that can be parents of the same @throws tag.</li>
+       *   <li>If there are duplicates in the throws list and one of them is being removed then no related @throws tags is returned.</li>
        * </ul>
-       * @param currentThrowsRef current throws list element to get the {@link Stream<PsiDocTag>} for
+       * @param currentThrowsRef current throws list's element to get the {@link Stream<PsiDocTag>} for
        * @param comment current javadoc
-       * @return
+       * @return a {@link Stream} of {@link PsiDocTag} with related @throws tag from the javadoc
        */
       @NotNull
       static Stream<PsiDocTag> getRelatedJavadocThrows(@NotNull final PsiJavaCodeReferenceElement currentThrowsRef,
@@ -180,27 +182,47 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
         // return all @throws declarations from javadoc if the last throws declaration in the throws list is getting eliminated.
         if (throwsList.getReferenceElements().length == 1) {
-          return Arrays.stream(comment.getTags())
-            .filter(tag -> "throws".equals(tag.getName()));
+          return StreamEx.of(comment.getTags())
+            .filterBy(PsiDocTag::getName, "throws");
         }
 
         final PsiElement maybeClass = currentThrowsRef.resolve();
         if (!(maybeClass instanceof PsiClass)) return Stream.empty();
 
         final PsiClass reference = (PsiClass)maybeClass;
-        if (reference.getQualifiedName() == null) return Stream.empty();
 
-        final Set<String> throwsListWithoutCurrent = getThrowsListWithoutCurrent(throwsList, currentThrowsRef);
+        final List<PsiClassType> throwsListWithoutCurrent = getThrowsListWithoutCurrent(throwsList, currentThrowsRef);
+
+        final PsiClassType referenceType = PsiTypesUtil.getClassType(reference);
+        if (throwsListWithoutCurrent.contains(referenceType)) return Stream.empty();
+
+        final PsiManager manager = reference.getManager();
+
+        final Predicate<PsiDocTag> isTagRelatedToCurrentThrowsRef = tag -> {
+          final PsiClass throwsClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());
+          if (throwsClass == null) return false;
+          // either the tag's class is exactly the current throws reference
+          // or it's a inheritor of the throws declaration and there are no other parents in the throws list
+          return manager.areElementsEquivalent(throwsClass, reference) ||
+                 (throwsClass.isInheritor(reference, true) && !isParentInThrowsListPresent(throwsClass, throwsListWithoutCurrent));
+        };
 
         return StreamEx.of(comment.getTags())
-          .filterBy(tag -> tag.getName(), "throws")
-          .filter(tag -> {
-            final PsiClass throwsClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());
-            if (throwsClass == null) return false;
-            if (throwsClass.getQualifiedName() == null) return false;
-            return throwsClass.getManager().areElementsEquivalent(throwsClass, reference) ||
-                   (!throwsListWithoutCurrent.contains(throwsClass.getQualifiedName()) && throwsClass.isInheritor(reference, true));
-          });
+          .filterBy(PsiDocTag::getName, "throws")
+          .filter(isTagRelatedToCurrentThrowsRef);
+      }
+
+      /**
+       * Checks if there are classes in the throws list that can be parents of the class
+       * @param clazz a class to check if there are parents in the throws list for it
+       * @param throwsList a list of throws list
+       * @return true if there is at least one element in the list that can be a parent of the class, false otherwise
+       */
+      private static boolean isParentInThrowsListPresent(@NotNull final PsiClass clazz,
+                                                         @NotNull final List<PsiClassType> throwsList) {
+        final PsiClassType type = PsiTypesUtil.getClassType(clazz);
+        return throwsList.stream()
+          .anyMatch(e -> e.isAssignableFrom(type));
       }
 
       /**
@@ -210,13 +232,12 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
        * @param currentRef the currently eliminated throws declaration in the throws list
        * @return the set of throws declarations as strings from the throws list excluding the currently eliminated throws declaration
        */
-      private static Set<String> getThrowsListWithoutCurrent(@NotNull final PsiReferenceList throwsList,
-                                                             @NotNull final PsiJavaCodeReferenceElement currentRef) {
+      private static List<PsiClassType> getThrowsListWithoutCurrent(@NotNull final PsiReferenceList throwsList,
+                                                                   @NotNull final PsiJavaCodeReferenceElement currentRef) {
         return StreamEx.zip(throwsList.getReferenceElements(), throwsList.getReferencedTypes(), Pair::create)
           .filter(pair -> pair.getFirst() != currentRef)
           .map(pair -> pair.getSecond())
-          .map(PsiType::getCanonicalText)
-          .toSet();
+          .toList();
       }
     }
   }

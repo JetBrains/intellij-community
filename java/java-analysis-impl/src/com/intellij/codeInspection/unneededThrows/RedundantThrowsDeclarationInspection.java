@@ -4,19 +4,21 @@ package com.intellij.codeInspection.unneededThrows;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection.RedundantThrowsVisitor.RedundantThrowsQuickFix;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection.ThrowRefType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -212,7 +215,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
       final StreamEx<PsiElement> elements = RedundantThrowsDeclarationLocalInspection.getRedundantThrowsCandidates(psiMethod, myIgnoreEntryPoints)
         .filter(throwRefType -> exceptionType.isAssignableFrom(throwRefType.getType()))
         .map(ThrowRefType::getReference)
-        .flatMap(ref -> appendRelatedJavadocThrows(psiMethod, ref));
+        .flatMap(ref -> appendRelatedJavadocThrows(refMethod, psiMethod, ref));
 
       final Stream<PsiElement> tail;
       if (refMethod != null) {
@@ -229,10 +232,69 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
       return elements.append(tail);
     }
 
-    private static StreamEx<PsiElement> appendRelatedJavadocThrows(@NotNull final PsiMethod psiMethod, @NotNull final PsiJavaCodeReferenceElement ref) {
-      final Stream<PsiDocTag> relatedJavadocThrows = RedundantThrowsQuickFix.getRelatedJavadocThrows(ref, psiMethod.getDocComment());
+    /**
+     * The method constructs a {@link StreamEx} or {@link PsiElement} by concatenating
+     * a singleton {@link Stream} that contains the current throws list's element and the related javadoc.
+     * Related javadoc are the ones that can be assigned to any of the redundant throws list elements
+     *
+     * @param refMethod a node in the reference graph corresponding to the Java method.
+     * @param psiMethod an instance of {@link PsiMethod} the current throws list's element is related to
+     * @param ref the current throws list's element to append related @throws tags to
+     * @return a {@link StreamEx} that contains both the current throws list's element and its related javadoc @throws tags
+     */
+    private StreamEx<PsiElement> appendRelatedJavadocThrows(@Nullable final RefMethod refMethod,
+                                                            @NotNull final PsiMethod psiMethod,
+                                                            @NotNull final PsiJavaCodeReferenceElement ref) {
+      final StreamEx<PsiElement> res = StreamEx.of(ref);
+      if (refMethod == null) return res;
 
-      return StreamEx.of((PsiElement)ref).append(relatedJavadocThrows);
+      final PsiDocComment comment = psiMethod.getDocComment();
+      if (comment == null) return res;
+
+      final PsiClass[] unThrown = refMethod.getUnThrownExceptions();
+      if (unThrown == null) return res;
+
+      final Set<PsiClass> unThrownSet = ContainerUtil.set(unThrown);
+
+      final List<PsiClassType> redundantThrows = RedundantThrowsDeclarationLocalInspection.getRedundantThrowsCandidates(psiMethod, myIgnoreEntryPoints)
+        .filter(throwRefType -> unThrownSet.contains(throwRefType.getType().resolve()))
+        .map(ThrowRefType::getType)
+        .toList();
+
+      final StreamEx<PsiDocTag> javadocThrows = StreamEx.of(comment.getTags())
+        .filterBy(PsiDocTag::getName, "throws");
+
+      // if there is only one element in the throws list and there is one redundant throws element,
+      // it must be the same element, so return all the @throws tags that are in the javadoc
+      final PsiJavaCodeReferenceElement[] throwsListElements = psiMethod.getThrowsList().getReferenceElements();
+      if (throwsListElements.length == 1 && redundantThrows.size() == 1) {
+        return res.append(javadocThrows);
+      }
+
+      final StreamEx<PsiDocTag> relatedJavadocThrows = javadocThrows
+        .filter(tag -> isTagRelatedToRedundantThrow(tag, redundantThrows));
+
+      return res.append(relatedJavadocThrows);
+    }
+
+    /**
+     * A @throws tag is considered related to an element of redundant throws declarations
+     * if it can be assigned to the element.
+     * @param tag the @throws tag in the javadoc
+     * @param redundantThrows the list of redundant throws declarations in the throws list of a method
+     * @return true if there is at least one element in the list of redundant throws that can be assigned with the class of the @throws tag,
+     * false otherwise
+     */
+    private static boolean isTagRelatedToRedundantThrow(@NotNull final PsiDocTag tag,
+                                                        @NotNull final List<PsiClassType> redundantThrows) {
+      assert "throws".equals(tag.getName()) : "the tag has to be of the @throws kind";
+
+      final PsiClass throwsClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());
+      if (throwsClass == null) return false;
+      final PsiClassType type = PsiTypesUtil.getClassType(throwsClass);
+
+      return redundantThrows.stream()
+        .anyMatch(e -> e.isAssignableFrom(type));
     }
 
     @Override

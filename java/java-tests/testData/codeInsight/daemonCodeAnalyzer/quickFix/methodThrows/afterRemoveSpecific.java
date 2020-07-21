@@ -9,6 +9,7 @@ class A {
    * @author me
    * @throws Exception first exception
    * @throws Exception second exception
+   * @throws FileNotFoundException file not found
    */
   void f() throws /* 1 */ Exception /* 2 */ /* 3 */ /* 4 */ {}
 }
