@@ -517,7 +517,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   private boolean dispatchMouseEvent(@NotNull MouseEvent e) {
-    if (myRightPanel == null || myCenterPanel == null) {
+    if (myRightPanel == null || myCenterPanel == null || !myRightPanel.isVisible()) {
       return false;
     }
     Component component = e.getComponent();
