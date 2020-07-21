@@ -151,7 +151,10 @@ private object PyWelcome {
         logWelcomeRunConfiguration(project, if (it == null) RunConfigurationResult.NULL else RunConfigurationResult.CREATED)
       }
       ?.let {
-        RunManager.getInstance(project).addConfiguration(it.configurationSettings)
+        val settings = it.configurationSettings
+        val runManager = RunManager.getInstance(project)
+        runManager.addConfiguration(settings)
+        runManager.selectedConfiguration = settings
       }
   }
 
