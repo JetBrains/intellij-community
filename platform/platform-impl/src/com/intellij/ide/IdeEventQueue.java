@@ -10,6 +10,8 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -966,7 +968,26 @@ public final class IdeEventQueue extends EventQueue {
     try {
       maybeReady();
       fixStickyAlt(e);
+      KeyEvent ke = e instanceof KeyEvent ? (KeyEvent)e : null;
+      boolean consumed = ke == null || ke.isConsumed();
       super.dispatchEvent(e);
+      // collect mnemonics statistics only if key event was processed above
+      if (!consumed && ke.isConsumed() && KeyEvent.KEY_PRESSED == ke.getID()) {
+        int code = ke.getKeyCode();
+        if (KeyEvent.VK_0 <= code && code <= KeyEvent.VK_Z) {
+          int modifiers = ke.getModifiersEx();
+          FeatureUsageData data = null;
+          if (modifiers == InputEvent.ALT_DOWN_MASK) {
+            data = new FeatureUsageData().addData("type", SystemInfo.isMac ? "mac: alt-based" : "regular");
+          }
+          else if (SystemInfo.isMac && modifiers == (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
+            data = new FeatureUsageData().addData("type", "mac: regular");
+          }
+          if (data != null) {
+            FUCounterUsageLogger.getInstance().logEvent("ui.mnemonic", "mnemonic.used", data.addData("code", code));
+          }
+        }
+      }
     }
     catch (Throwable t) {
       processException(t);
