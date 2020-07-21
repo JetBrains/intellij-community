@@ -149,10 +149,6 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     return "refactoring.extractField";
   }
 
-  public void setVisibility(String visibility) {
-    myIntroduceFieldPanel.setVisibility(visibility);
-  }
-
 
   @Override
     public boolean isReplaceAllOccurrences() {

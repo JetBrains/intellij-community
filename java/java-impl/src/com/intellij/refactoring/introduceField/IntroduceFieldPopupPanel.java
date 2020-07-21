@@ -207,11 +207,6 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   }
 
   @Override
-  public void setVisibility(String visibility) {
-    myVisibilityCombo.setSelectedItem(visibility);
-  }
-
-  @Override
   protected void updateCbFinal() {
   }
 
