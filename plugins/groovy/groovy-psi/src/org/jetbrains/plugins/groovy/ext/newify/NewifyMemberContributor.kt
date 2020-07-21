@@ -5,6 +5,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parentsWithSelf
+import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -52,12 +53,12 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
         val newifiedClasses = getClassArrayValue(annotation, "value", true)
         newifiedClasses
           .filter { psiClass -> GrStaticChecker.isStaticsOK(psiClass, place, psiClass, false) }
-          .flatMap { buildConstructors(it, it.name) }
+          .flatMap { buildConstructors(it, it.name, true) }
           .forEach { ResolveUtil.processElement(processor, it, state) }
       }
       val createNewMethods = GrAnnotationUtil.inferBooleanAttributeNotNull(annotation, "auto")
       if (type != null && createNewMethods) {
-          buildConstructors(type, "new").forEach {
+          buildConstructors(type, "new", false).forEach {
             ResolveUtil.processElement(processor, it, state)
         }
       }
@@ -77,7 +78,7 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
         continue
       }
       val newState: ResolveState = produceStateWithContext(result, place, referenceName, state)
-      val newifiedConstructors: List<NewifiedConstructor> = buildConstructors(clazz, clazz.name)
+      val newifiedConstructors: List<NewifiedConstructor> = buildConstructors(clazz, clazz.name, true)
       for (newifiedConstructor in newifiedConstructors) {
         if (!ResolveUtil.processElement(processor, newifiedConstructor, newState)) {
           return false
@@ -120,19 +121,19 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     }
   }
 
-  private fun buildConstructors(clazz: PsiClass, newName: String?): List<NewifiedConstructor> {
+  private fun buildConstructors(clazz: PsiClass, newName: String?, isConstructor: Boolean): List<NewifiedConstructor> {
     newName ?: return emptyList()
     val constructors = clazz.constructors
     if (constructors.isNotEmpty()) {
-      return constructors.mapNotNull { buildNewifiedConstructor(it, newName) }
+      return constructors.mapNotNull { buildNewifiedConstructor(it, newName, isConstructor) }
     }
     else {
-      return listOf(buildNewifiedConstructor(clazz, newName))
+      return listOf(buildNewifiedConstructor(clazz, newName, isConstructor))
     }
   }
 
-  private fun buildNewifiedConstructor(myPrototype: PsiMethod, newName: String): NewifiedConstructor? {
-    val builder = NewifiedConstructor(myPrototype.manager, newName)
+  private fun buildNewifiedConstructor(myPrototype: PsiMethod, newName: String, isConstructor: Boolean): NewifiedConstructor? {
+    val builder = NewifiedConstructor(myPrototype.manager, newName, isConstructor)
     val psiClass = myPrototype.containingClass ?: return null
     builder.containingClass = psiClass
     builder.setMethodReturnType(TypesUtil.createType(psiClass))
@@ -149,17 +150,23 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     return builder
   }
 
-  private fun buildNewifiedConstructor(myPrototype: PsiClass, newName: String): NewifiedConstructor {
-    val builder = NewifiedConstructor(myPrototype.manager, newName)
+  private fun buildNewifiedConstructor(myPrototype: PsiClass, newName: String, isConstructor: Boolean): NewifiedConstructor {
+    val builder = NewifiedConstructor(myPrototype.manager, newName, isConstructor)
     builder.containingClass = myPrototype
     builder.setMethodReturnType(TypesUtil.createType(myPrototype))
     builder.navigationElement = myPrototype
     return builder
   }
 
-  class NewifiedConstructor(val myManager: PsiManager, val newName: String) : LightMethodBuilder(myManager, newName) {
+  class NewifiedConstructor(myManager: PsiManager, newName: String, isConstructor: Boolean) :
+    LightMethodBuilder(myManager, GroovyLanguage, newName) {
     init {
-      addModifier(PsiModifier.STATIC)
+      if (isConstructor) {
+        this.isConstructor = isConstructor
+      }
+      else {
+        addModifier(PsiModifier.STATIC)
+      }
       originInfo = newifyOriginInfo
     }
 

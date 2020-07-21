@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.newify
 
+import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
@@ -182,6 +183,17 @@ class B {
       assert contains("name")
       assert contains("age")
     }
+  }
+
+  void testNewifyElementsKind() {
+    testHighlighting """
+@Newify(A)
+class B {
+  def a = <caret>A()
+}
+"""
+    PsiMethod method = fixture.elementAtCaret as PsiMethod
+    assert method.isConstructor()
   }
 
   void testNewifyAutoLookup() {
