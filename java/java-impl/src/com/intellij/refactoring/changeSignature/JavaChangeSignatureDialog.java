@@ -57,6 +57,7 @@ import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.table.JBTableRowRenderer;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,8 +72,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.refactoring.changeSignature.ChangeSignatureHandler.REFACTORING_NAME;
 
 /**
  * @author Konstantin Bulenkov
@@ -509,7 +508,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected void invokeRefactoring(final BaseRefactoringProcessor processor) {
     if (myMethodsToPropagateExceptions != null && !mayPropagateExceptions()) {
-      Messages.showWarningDialog(myProject, JavaRefactoringBundle.message("changeSignature.exceptions.wont.propagate"), REFACTORING_NAME);
+      Messages.showWarningDialog(myProject, JavaRefactoringBundle.message("changeSignature.exceptions.wont.propagate"), 
+                                 RefactoringBundle.message("changeSignature.refactoring.name"));
       myMethodsToPropagateExceptions = null;
     }
     super.invokeRefactoring(processor);
@@ -561,7 +561,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected CallerChooserBase<PsiMethod> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<PsiMethod>> callback) {
+  protected CallerChooserBase<PsiMethod> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<Set<PsiMethod>> callback) {
     return new JavaCallerChooser(getMethod(), myProject, title, treeToReuse, callback);
   }
 

@@ -37,6 +37,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBListTable;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.table.JBTableRowRenderer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +106,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   protected abstract PsiCodeFragment createReturnTypeCodeFragment();
 
   @Nullable
-  protected abstract CallerChooserBase<Method> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<Method>> callback);
+  protected abstract CallerChooserBase<Method> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<Set<Method>> callback);
 
   @Nullable
   protected abstract String validateAndCommitData();
@@ -123,7 +124,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
     setParameterInfos(method.getParameters());
 
-    setTitle(ChangeSignatureHandler.REFACTORING_NAME);
+    setTitle(RefactoringBundle.message("changeSignature.refactoring.name"));
     init();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     doUpdateSignature();
@@ -634,7 +635,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     }
     if (myMethodsToPropagateParameters != null && !mayPropagateParameters()) {
       Messages.showWarningDialog(myProject, RefactoringBundle.message("changeSignature.parameters.wont.propagate"),
-                                 ChangeSignatureHandler.REFACTORING_NAME);
+                                 RefactoringBundle.message("changeSignature.refactoring.name"));
       myMethodsToPropagateParameters = null;
     }
 

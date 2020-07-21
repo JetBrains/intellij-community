@@ -15,6 +15,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Medvedev
  */
 public interface ChangeSignatureHandler extends RefactoringActionHandler {
+  /**
+   * @deprecated inline this field for proper localization
+   */
+  @Deprecated
   String REFACTORING_NAME = RefactoringBundle.message("changeSignature.refactoring.name");
 
   @Nullable

@@ -4,6 +4,7 @@ package com.intellij.ide.util;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -82,7 +83,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @Override
   @NotNull
-  public TreeFileChooser createFileChooser(@NotNull String title,
+  public TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                            final PsiFile initialFile,
                                            FileType fileType,
                                            TreeFileChooser.PsiFileFilter filter) {
@@ -92,7 +93,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
   @Override
   @NotNull
   public
-  TreeFileChooser createFileChooser(@NotNull String title,
+  TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                     @Nullable PsiFile initialFile,
                                     @Nullable FileType fileType,
                                     @Nullable TreeFileChooser.PsiFileFilter filter,
@@ -103,7 +104,9 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @Override
   @NotNull
-  public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType,
+  public TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
+                                           @Nullable PsiFile initialFile,
+                                           @Nullable FileType fileType,
                                            @Nullable TreeFileChooser.PsiFileFilter filter,
                                            boolean disableStructureProviders,
                                            boolean showLibraryContents) {

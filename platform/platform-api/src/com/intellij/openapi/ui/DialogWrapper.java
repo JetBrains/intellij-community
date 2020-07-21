@@ -1269,7 +1269,7 @@ public abstract class DialogWrapper {
    * @return dialog title
    * @see Dialog#getTitle
    */
-  public String getTitle() {
+  public @NlsContexts.DialogTitle String getTitle() {
     return myPeer.getTitle();
   }
 

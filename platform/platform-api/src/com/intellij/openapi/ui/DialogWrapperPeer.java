@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,7 @@ public abstract class DialogWrapperPeer {
   /**
    * @see Dialog#getTitle
    */
-  public abstract String getTitle();
+  public abstract @NlsContexts.DialogTitle String getTitle();
 
   public abstract Dimension getPreferredSize();
 

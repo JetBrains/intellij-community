@@ -33,7 +33,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
-import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.awt.RelativePoint;
@@ -67,15 +66,18 @@ public class InplaceChangeSignature implements DocumentListener {
     myDocumentManager = PsiDocumentManager.getInstance(project);
     myProject = project;
     try {
-      myMarkAction = StartMarkAction.start(editor, project, ChangeSignatureHandler.REFACTORING_NAME);
+      myMarkAction = StartMarkAction.start(editor, project, RefactoringBundle.message("changeSignature.refactoring.name"));
     }
     catch (StartMarkAction.AlreadyStartedException e) {
-      final int exitCode = Messages.showYesNoDialog(myProject, e.getMessage(), ChangeSignatureHandler.REFACTORING_NAME, RefactoringBundle.message("inplace.refactoring.navigate.to.started"), RefactoringBundle.message("inplace.refactoring.cancel.current"), Messages.getErrorIcon());
+      final int exitCode =
+        Messages.showYesNoDialog(myProject, e.getMessage(), RefactoringBundle.message("changeSignature.refactoring.name"),
+                                 RefactoringBundle.message("inplace.refactoring.navigate.to.started"),
+                                 RefactoringBundle.message("inplace.refactoring.cancel.current"), Messages.getErrorIcon());
       if (exitCode == Messages.CANCEL) return;
       PsiElement method = myStableChange.getMethod();
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(method);
       PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, method.getTextOffset())
-                          .navigate(true);
+        .navigate(true);
       return;
     }
 

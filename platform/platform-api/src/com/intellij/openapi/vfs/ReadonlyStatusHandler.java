@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ public abstract class ReadonlyStatusHandler {
     public abstract boolean hasReadonlyFiles();
 
     @NotNull
-    public abstract String getReadonlyFilesMessage();
+    public abstract @NlsContexts.DialogMessage String getReadonlyFilesMessage();
   }
 
   /**

@@ -20,6 +20,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -388,7 +389,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     };
   }
 
-  static String getRefactoringName() {
+  static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("changeClassSignature.refactoring.name");
   }
 }
