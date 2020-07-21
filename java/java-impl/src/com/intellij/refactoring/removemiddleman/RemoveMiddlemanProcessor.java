@@ -18,6 +18,7 @@ package com.intellij.refactoring.removemiddleman;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -128,6 +129,6 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
   @Override
   @NotNull
   protected String getCommandName() {
-    return RefactorJBundle.message("exposed.delegation.command.name", containingClass.getName(), '.', field.getName());
+    return RefactorJBundle.message("exposed.delegation.command.name", StringUtil.getQualifiedName(containingClass.getName(), field.getName()));
   }
 }

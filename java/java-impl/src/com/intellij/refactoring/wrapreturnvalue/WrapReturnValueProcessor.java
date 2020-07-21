@@ -343,7 +343,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   @NotNull
   protected String getCommandName() {
     final PsiClass containingClass = myMethod.getContainingClass();
-    return RefactorJBundle.message("wrapped.return.command.name", myClassName, containingClass.getName(), '.', myMethod.getName());
+    return RefactorJBundle.message("wrapped.return.command.name", myClassName, StringUtil.getQualifiedName(containingClass.getName(), myMethod.getName()));
   }
 
 
