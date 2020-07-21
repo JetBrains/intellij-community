@@ -4,6 +4,7 @@ package com.intellij.model;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,29 +35,13 @@ public interface ModelBranch {
   // ----------------- find copy in the branch
 
   /**
-   * @return the non-physical copy of the given file in this branch, if it has been copied at all.
+   * @return the non-physical copy of the given file in this branch.
    */
-  @Nullable VirtualFile findFileCopy(@NotNull VirtualFile file);
-
-  /**
-   * @return the non-physical copy of the given PSI element in this branch,
-   * if it has been copied at all and the copy file hasn't been modified yet.
-   */
-  <T extends PsiElement> @Nullable T findPsiCopy(@NotNull T original);
-
-  /**
-   * @return the non-physical copy of the given PSI reference in this branch,
-   * if it has been copied at all and the copy file hasn't been modified yet.
-   */
-  <T extends PsiSymbolReference> @Nullable T findReferenceCopy(@NotNull T original);
-
-
-
-  // ----------------- find or create copy
+  @NotNull VirtualFile findFileCopy(@NotNull VirtualFile file);
 
   /**
    * Finds or creates a non-physical copy of the given PSI element in this branch.
-   * This may only be called for PSI inside a file (not packages or directories), and its document should be committed.
+   * This may only be called for {@link PsiDirectory} or a PSI inside a file, and its document should be committed.
    */
   <T extends PsiElement> @NotNull T obtainPsiCopy(@NotNull T original);
 
@@ -91,7 +76,8 @@ public interface ModelBranch {
    * @return a branch that's the given PSI element was copied by, or null if there's no such branch.
    */
   static @Nullable ModelBranch getPsiBranch(@NotNull PsiElement element) {
-    return getFileBranch(element.getContainingFile().getViewProvider().getVirtualFile());
+    return getFileBranch(element instanceof PsiDirectory ? ((PsiDirectory)element).getVirtualFile()
+                                                         : element.getContainingFile().getViewProvider().getVirtualFile());
   }
 
   /**
