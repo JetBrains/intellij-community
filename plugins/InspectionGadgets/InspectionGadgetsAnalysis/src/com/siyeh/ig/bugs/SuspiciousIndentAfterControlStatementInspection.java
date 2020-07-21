@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,6 +27,8 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
   }
 
   private static class SuspiciousIndentAfterControlStatementVisitor extends BaseInspectionVisitor {
+
+    private static final Key<Integer> TAB_SIZE = new Key<>("TAB_SIZE");
 
     @Override
     public void visitWhileStatement(PsiWhileStatement statement) {
@@ -90,7 +94,7 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
       registerStatementError(nextStatement);
     }
 
-    private static boolean isWhitespaceSuspicious(PsiStatement statement, PsiStatement body) {
+    private boolean isWhitespaceSuspicious(PsiStatement statement, PsiStatement body) {
       final boolean lineBreakBeforeBody;
       PsiElement prevSibling = body.getPrevSibling();
       if (!(prevSibling instanceof PsiWhiteSpace)) {
@@ -102,7 +106,7 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
       }
       else {
         final String text = prevSibling.getText();
-        final int lineBreakIndex = getLineBreakIndex(text);
+        final int lineBreakIndex = text.lastIndexOf('\n');
         if (lineBreakIndex < 0) {
           lineBreakBeforeBody = false;
           prevSibling = statement.getPrevSibling();
@@ -119,7 +123,7 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
         return false;
       }
       final String text = prevSibling.getText();
-      final int index = getLineBreakIndex(text);
+      final int index = text.lastIndexOf('\n');
       if (index < 0) {
         return false;
       }
@@ -128,24 +132,35 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
         return false;
       }
       final String nextText = nextSibling.getText();
-      final int nextIndex = getLineBreakIndex(nextText);
+      final int nextIndex = nextText.lastIndexOf('\n');
       if (nextIndex < 0) {
         return false;
       }
-      final String nextIndent = nextText.substring(nextIndex + 1);
-      final String indent = text.substring(index + 1);
+      final int nextIndentValue = getIndent(nextText.substring(nextIndex + 1));
+      final int indentValue = getIndent(text.substring(index + 1));
       if (lineBreakBeforeBody) {
-        return indent.equals(nextIndent);
+        return nextIndentValue == indentValue;
       }
       else {
-        return !indent.equals(nextIndent);
+        return nextIndentValue > indentValue;
       }
     }
 
-    private static int getLineBreakIndex(String text) {
-      final int newLineIndex1 = text.lastIndexOf('\n');
-      final int carriageReturnIndex1 = text.lastIndexOf('\r');
-      return Math.max(newLineIndex1, carriageReturnIndex1);
+    private int getIndent(String indent) {
+      int result = 0;
+      for (int i = 0, length = indent.length(); i < length; i++) {
+        final char c = indent.charAt(i);
+        if (c == ' ') result++;
+        else if (c == '\t') result += getTabSize();
+        else throw new AssertionError();
+      }
+      return result;
+    }
+
+    private int getTabSize() {
+      final PsiFile file = getCurrentFile();
+      final Integer tabSize = file.getUserData(TAB_SIZE);
+      return tabSize != null ? tabSize : CodeStyle.getIndentOptions(file).TAB_SIZE;
     }
   }
 }

@@ -227,6 +227,10 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     this.holder = holder;
   }
 
+  public PsiFile getCurrentFile() {
+    return holder.getFile();
+  }
+
   protected boolean isVisibleHighlight(@NotNull PsiElement element) {
     return !isOnTheFly() || !InspectionProjectProfileManager.isInformationLevel(inspection.getShortName(), element);
   }

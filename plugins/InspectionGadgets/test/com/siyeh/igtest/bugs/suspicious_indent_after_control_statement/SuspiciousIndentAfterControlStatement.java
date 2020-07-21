@@ -67,11 +67,11 @@ public class SuspiciousIndentAfterControlStatement {
         }
     }
 
-    public String test(int test) {
+    public String switchStatement(int test) {
         int random = new Random().nextInt();
         switch (test) {
             case 0:
-                return "0";
+                if (random < 0) return "0";
             case 1:
                 if (random < 0) {
                     return "-1";
