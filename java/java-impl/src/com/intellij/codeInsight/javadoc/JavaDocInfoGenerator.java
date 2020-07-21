@@ -1454,10 +1454,6 @@ public class JavaDocInfoGenerator {
       predictOffset = tagElement.getTextOffset() + tagElement.getText().length();
 
       collectElementText(buffer, tagElement);
-
-      if (j < tagElements.length - 1) {
-        buffer.append(' ');
-      }
     }
     return buffer.toString().trim();
   }
