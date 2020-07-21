@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
 import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.model.ModelBranchImpl;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
@@ -171,7 +170,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return getCachedClassesInDumbMode(name, scope);
     }
 
-    if (ModelBranchImpl.hasBranchedFilesInScope(scope)) {
+    if (!scope.getModelBranchesAffectingScope().isEmpty()) {
       return findAllClasses(name, scope);
     }
 
