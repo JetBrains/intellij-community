@@ -997,6 +997,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.hints.InlayProviderUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFileCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.ui.tabs.FileColorsUsagesCollector"/>
 
     <statistics.counterUsagesCollector groupId="searchEverywhere" version="4"/>
     <statistics.counterUsagesCollector groupId="actions.runAnything" version="1"/>
