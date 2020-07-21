@@ -21,8 +21,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
- * This class has no specific Java test. It's located in intellij.java.tests module because if Java plugin is enabled additional elements
- * are added to iml file (e.g. 'exclude-output' tag) so if this test is located in a platform module it'll give different results dependening
+ * This class actually doesn't depend on Java. It's located in intellij.java.tests module because if Java plugin is enabled additional elements
+ * are added to iml file (e.g. 'exclude-output' tag) so if this test is located in a platform module it'll give different results depending
  * on whether there is Java plugin in runtime classpath or not.
  */
 class SaveProjectTest {
