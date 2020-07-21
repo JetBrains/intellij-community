@@ -1226,8 +1226,11 @@ public final class PsiUtil extends PsiUtilCore {
             ensureValid(psiClass);
           }
         }
-        catch (PsiInvalidElementAccessException e) {
-          throw customMessage == null? e : new RuntimeException(customMessage, e);
+        catch (Exception e) {
+          if (customMessage == null) {
+            throw e;
+          }
+          throw new RuntimeException(customMessage, e);
         }
       }
       throw new AssertionError("Invalid type: " + type + " of class " + type.getClass() + " " + customMessage);
