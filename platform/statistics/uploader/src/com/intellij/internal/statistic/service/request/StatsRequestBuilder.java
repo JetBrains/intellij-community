@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.request;
 
 import com.intellij.internal.statistic.eventLog.EventLogConnectionSettings;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.entity.GzipCompressingEntity;
@@ -13,9 +14,13 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.SocketAddress;
 
 public class StatsRequestBuilder {
   private final String myUserAgent;
+  private final Proxy myProxy;
   private final String myUrl;
   private final String myMethod;
   private StringEntity myBody;
@@ -27,6 +32,7 @@ public class StatsRequestBuilder {
     myMethod = method;
     myUrl = url;
     myUserAgent = settings.getUserAgent();
+    myProxy = settings.selectProxy(myUrl);
   }
 
   @NotNull
@@ -75,8 +81,22 @@ public class StatsRequestBuilder {
     }
   }
 
-  private static CloseableHttpClient newClient(@NotNull String userAgent) {
-    return HttpClientBuilder.create().setUserAgent(userAgent).build();
+  private CloseableHttpClient newClient(@NotNull String userAgent) {
+    HttpClientBuilder builder = HttpClientBuilder.create().setUserAgent(userAgent);
+    if (myProxy != null && myProxy != Proxy.NO_PROXY) {
+      configureProxy(builder, myProxy);
+    }
+    return builder.build();
+  }
+
+  private static void configureProxy(@NotNull HttpClientBuilder builder, @NotNull Proxy proxy) {
+    if (proxy.type() == Proxy.Type.HTTP) {
+      SocketAddress proxyAddress = proxy.address();
+      if (proxyAddress instanceof InetSocketAddress) {
+        InetSocketAddress address = (InetSocketAddress)proxyAddress;
+        builder.setProxy(new HttpHost(address.getHostName(), address.getPort()));
+      }
+    }
   }
 
   @NotNull

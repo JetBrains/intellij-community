@@ -2,10 +2,8 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -50,18 +48,7 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @NotNull
   @Override
   public EventLogConnectionSettings getConnectionSettings() {
-    String userAgent = getUserAgentInternal();
-    return new EventLogBasicConnectionSettings(userAgent);
-  }
-
-  private static String getUserAgentInternal() {
-    Application app = ApplicationManager.getApplication();
-    if (app != null && !app.isDisposed()) {
-      String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-      String version = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
-      return productName + '/' + version;
-    }
-    return "IntelliJ";
+    return new EventLogAppConnectionSettings();
   }
 
   @Override
