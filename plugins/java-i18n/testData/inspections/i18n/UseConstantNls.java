@@ -1,4 +1,7 @@
+package com.intellij.openapi.util;
+
 import org.jetbrains.annotations.Nls;
+import java.lang.annotation.*;
 
 class X {
     static final String CONSTANT = "Value";
@@ -18,6 +21,12 @@ class X {
         use(<warning descr="Reference to non-localized string is used where localized string is expected">this.getNonAnnotated()</warning>);
     }
     
+    void testNlsSafe() {
+        use(getName());
+    }
+    
+    native @NlsSafe String getName();
+    
     void testNested(String s) {
         use(nlsResult(s.trim()));
     }
@@ -33,4 +42,8 @@ class X {
     native static @Nls String nlsResultStatic(String nonNlsParam);
     
     native @Nls String nlsResult(String nonNlsParam);
+}
+
+@Target(ElementType.TYPE_USE)
+@interface NlsSafe {
 }

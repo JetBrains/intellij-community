@@ -67,7 +67,11 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public class I18nInspection extends AbstractBaseUastLocalInspectionTool implements CustomSuppressableInspectionTool {
   private static final Set<String> IGNORED = ContainerUtil.immutableSet("<html>", "</html>", "<b>", "</b>");
-  private static final CallMatcher IGNORED_METHODS = CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "substring", "trim");
+  private static final CallMatcher IGNORED_METHODS = CallMatcher.anyOf( 
+    CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "substring", "trim"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("int"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("double")
+    );
   
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
@@ -616,17 +620,18 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     private void processReferenceToNonLocalized(@NotNull PsiElement sourcePsi, @NotNull UExpression ref, PsiModifierListOwner target) {
       PsiType type = ref.getExpressionType();
       if (!TypeUtils.isJavaLangString(type)) return;
-      if (NlsInfo.forModifierListOwner(target) instanceof NlsInfo.Localized) return;
-      if (NlsInfo.forType(type) instanceof NlsInfo.Localized) return;
+      if (NlsInfo.forModifierListOwner(target).canBeUsedInLocalizedContext()) return;
+      if (NlsInfo.forType(type).canBeUsedInLocalizedContext()) return;
       
       String value = target instanceof PsiVariable ? ObjectUtils.tryCast(((PsiVariable)target).computeConstantValue(), String.class) : null;
 
       NlsInfo targetInfo = getExpectedNlsInfo(myManager.getProject(), ref, value, new THashSet<>());
       if (targetInfo instanceof NlsInfo.Localized) {
         AddAnnotationFix fix = new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
+        AddAnnotationFix fixSafe = new AddAnnotationFix(NlsInfo.NLS_SAFE, target, AnnotationUtil.NON_NLS);
         String description = JavaI18nBundle.message("inspection.i18n.message.non.localized.passed.to.localized");
         final ProblemDescriptor problem = myManager.createProblemDescriptor(
-          sourcePsi, description, myOnTheFly, new LocalQuickFix[] {fix}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          sourcePsi, description, myOnTheFly, new LocalQuickFix[] {fix, fixSafe}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         myProblems.add(problem);
       }
     }

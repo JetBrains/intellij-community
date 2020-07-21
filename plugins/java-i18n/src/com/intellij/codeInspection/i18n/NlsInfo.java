@@ -32,6 +32,7 @@ import java.util.stream.IntStream;
 public abstract class NlsInfo {
   private static final @NotNull Set<String> ANNOTATION_NAMES = ContainerUtil.immutableSet(AnnotationUtil.NLS, AnnotationUtil.NON_NLS);
   private static final @NotNull String NLS_CONTEXT = "com.intellij.openapi.util.NlsContext";
+  static final String NLS_SAFE = "com.intellij.openapi.util.NlsSafe";
 
   /**
    * Describes a string that should be localized
@@ -105,6 +106,16 @@ public abstract class NlsInfo {
   }
 
   /**
+   * Describes a string that should not be localized but it's still safe to be displayed in UI
+   * (e.g. file name).
+   */
+  public static final class NlsSafe extends NlsInfo {
+    private static final NlsSafe INSTANCE = new NlsSafe();
+
+    private NlsSafe() {super(ThreeState.NO);}
+  }
+
+  /**
    * Describes a string that should not be localized
    */
   public static final class NonLocalized extends NlsInfo {
@@ -151,6 +162,13 @@ public abstract class NlsInfo {
     return myNls;
   }
 
+  /**
+   * @return true if the element with given localization status can be used in localized context.
+   */
+  public boolean canBeUsedInLocalizedContext() {
+    return this instanceof Localized || this instanceof NlsSafe;
+  }
+  
   /**
    * @return "localized" info object without specified capitalization, prefix and suffix
    */
@@ -428,6 +446,9 @@ public abstract class NlsInfo {
     if (annotation.hasQualifiedName(AnnotationUtil.NON_NLS) ||
         annotation.hasQualifiedName(AnnotationUtil.PROPERTY_KEY)) {
       return NonLocalized.INSTANCE;
+    }
+    if (annotation.hasQualifiedName(NLS_SAFE)) {
+      return NlsSafe.INSTANCE;
     }
     if (annotation.hasQualifiedName(AnnotationUtil.NLS)) {
       PsiAnnotationMemberValue value = annotation.findAttributeValue("capitalization");
