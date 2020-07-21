@@ -289,6 +289,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
 
       if ((!hasTypeMatchingSuggestions || parameters.getInvocationCount() >= 2) &&
+          parent instanceof PsiJavaCodeReferenceElement &&
           JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position)) {
         SlowerTypeConversions.addChainedSuggestions(parameters, result, expectedInfos, refSuggestions);
       }
