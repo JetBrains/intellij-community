@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -66,7 +67,7 @@ final class SlowerTypeConversions {
         itemType = ((PsiWildcardType)itemType).getExtendsBound();
       }
       if (itemType == null) return;
-      assert itemType.isValid() : baseItem + "; " + baseItem.getClass();
+      PsiUtil.ensureValidType(itemType, baseItem + "; " + baseItem.getClass());
 
       final PsiElement element1 = reference.getElement();
       final PsiElement qualifier =
