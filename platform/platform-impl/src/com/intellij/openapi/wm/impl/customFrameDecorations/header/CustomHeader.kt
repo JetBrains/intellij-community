@@ -63,6 +63,12 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
         }
 
+        fun create(frame: JFrame, ideMenuBar: IdeMenuBar? = null): CustomHeader {
+            return ideMenuBar?.let {
+                createFrameHeader(frame, ideMenuBar)
+            } ?: create(frame as Window)
+        }
+
         fun create(window: Window): CustomHeader {
             return if (window is JFrame) {
                 if(window.rootPane is IdeRootPane) {
@@ -75,7 +81,11 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
         }
 
-        private fun createFrameHeader(frame: JFrame): DefaultFrameHeader = DefaultFrameHeader(frame)
+        private fun createFrameHeader(frame: JFrame, ideMenuBar: IdeMenuBar? = null): FrameHeader {
+            return ideMenuBar?.let {
+                FrameWithMenuHeader(frame, ideMenuBar)
+            } ?: DefaultFrameHeader(frame)
+        }
         @JvmStatic
         fun createMainFrameHeader(frame: JFrame, delegatingMenuBar: IdeMenuBar?): MainFrameHeader = MainFrameHeader(frame, delegatingMenuBar)
 

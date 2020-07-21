@@ -112,15 +112,20 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     glassPane.setVisible(false);
 
     int defaultHeight = DEFAULT_HEIGHT;
+
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      JComponent holder =
-        CustomFrameDialogContent.getCustomContentHolder(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background"));
+      JComponent holder = CustomFrameDialogContent
+        .getCustomContentHolder(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background"),
+                                useTabWelcomeScreen ? new WelcomeFrameMenuBar() : null);
       setContentPane(holder);
 
       if(holder instanceof CustomFrameDialogContent)
       defaultHeight+= ((CustomFrameDialogContent)holder).getHeaderHeight();
     }
     else {
+      if (useTabWelcomeScreen) {
+        rootPane.setJMenuBar(new WelcomeFrameMenuBar());
+      }
       setContentPane(myScreen.getWelcomePanel());
     }
 
@@ -177,9 +182,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     UIUtil.decorateWindowHeader(getRootPane());
     UIUtil.setCustomTitleBar(this, getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
-    if (Registry.is("use.tabbed.welcome.screen")) {
-      rootPane.setJMenuBar(new WelcomeFrameMenuBar());
-    }
   }
 
   @Override

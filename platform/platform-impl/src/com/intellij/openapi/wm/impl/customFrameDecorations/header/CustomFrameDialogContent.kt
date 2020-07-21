@@ -1,20 +1,25 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
-import net.miginfocom.swing.MigLayout
+import com.intellij.openapi.wm.impl.IdeMenuBar
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Container
 import java.awt.Window
 import javax.swing.*
 
-class CustomFrameDialogContent private constructor(val window: Window, content: Container, titleBackgroundColor: Color? = null): JPanel() {
+class CustomFrameDialogContent private constructor(val window: Window, val header: CustomHeader, content: Container): JPanel() {
     companion object {
         @JvmStatic
         fun getCustomContentHolder(window: Window, content: JComponent) = getCustomContentHolder(window, content, null)
+        fun getCustomContentHolder(window: Window, content: JComponent, myIdeMenu: IdeMenuBar) = getCustomContentHolder(window, content,
+                                                                                                                        null, myIdeMenu)
 
         @JvmStatic
-        fun getCustomContentHolder(window: Window, content: JComponent, titleBackgroundColor: Color? = null): JComponent {
+        fun getCustomContentHolder(window: Window,
+                                   content: JComponent,
+                                   titleBackgroundColor: Color? = null,
+                                   myIdeMenu: IdeMenuBar? = null): JComponent {
             if (content is CustomFrameDialogContent) return content
 
             when (window) {
@@ -27,18 +32,17 @@ class CustomFrameDialogContent private constructor(val window: Window, content: 
                 else -> null
             } ?: return content
 
-            return CustomFrameDialogContent(window, content, titleBackgroundColor)
+            val header: CustomHeader = if(window is JFrame && myIdeMenu != null) CustomHeader.create(window, myIdeMenu) else CustomHeader.create(window)
+            titleBackgroundColor?.let {
+                header.background = it
+            }
+
+            return CustomFrameDialogContent(window, header, content)
         }
     }
 
-    private val header: CustomHeader = CustomHeader.create(window)
-
     init {
         layout = BorderLayout()
-        titleBackgroundColor?.let {
-            header.background = it
-        }
-
         add(header, BorderLayout.NORTH)
         add(content, BorderLayout.CENTER)
     }
