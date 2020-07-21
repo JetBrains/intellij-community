@@ -19,9 +19,9 @@ public class JavaBranchRefactoringTest {
   public static Test suite() {
     TestSuite suite = new TestSuite();
     List<Class<? extends TestCase>> testsToWrap = Arrays.asList(
-      //RenameClassTest.class,
-      //RenameCollisionsTest.class,
-      //RenameDirectoryTest.class,
+      RenameClassTest.class,
+      RenameCollisionsTest.class,
+      RenameDirectoryTest.class,
       RenameFieldMultiTest.class,
       RenameFieldTest.class,
       RenameLocalTest.class,
