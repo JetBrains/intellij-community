@@ -40,16 +40,22 @@ internal fun highlightUsages(project: Project, editor: Editor, file: PsiFile): B
 private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFile, symbol: Symbol, clearHighlights: Boolean) {
   val fileToUse = InjectedLanguageManager.getInstance(project).getTopLevelFile((file as? PsiCompiledFile)?.decompiledPsiFile ?: file)
   val editorToUse = (editor as? EditorWindow)?.delegate ?: editor
-  val readUsages = ArrayList<TextRange>()
-  val writeUsages = ArrayList<TextRange>()
-  getUsageRanges(fileToUse, symbol, readUsages, writeUsages)
-  HighlightUsagesHandler.highlightUsages(project, editorToUse, readUsages, writeUsages, clearHighlights)
+  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = getUsageRanges(fileToUse, symbol)
+  HighlightUsagesHandler.highlightUsages(
+    project, editorToUse,
+    readRanges + readDeclarationRanges,
+    writeRanges + writeDeclarationRanges,
+    clearHighlights
+  )
+  HighlightUsagesHandler.setStatusText(project, null, readRanges.size + writeRanges.size, clearHighlights)
 }
 
-internal fun getUsageRanges(file: PsiFile,
-                            symbol: Symbol,
-                            readRanges: MutableCollection<in TextRange>,
-                            writeRanges: MutableCollection<in TextRange>) {
+internal fun getUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges {
+  val readRanges = ArrayList<TextRange>()
+  val writeRanges = ArrayList<TextRange>()
+  val readDeclarationRanges = ArrayList<TextRange>()
+  val writeDeclarationRanges = ArrayList<TextRange>()
+
   val searchScope: SearchScope = LocalSearchScope(file)
   val project: Project = file.project
   val psiTarget: PsiElement? = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
@@ -67,9 +73,11 @@ internal fun getUsageRanges(file: PsiFile,
   val declarationWrite: Boolean = (psiTarget != null) && (detector != null) && detector.isDeclarationWriteAccess(psiTarget)
   for (declaration: PsiSymbolDeclaration in declarations) {
     HighlightUsagesHandler.collectHighlightRanges(
-      declaration.declaringElement, declaration.declarationRange, if (declarationWrite) writeRanges else readRanges
+      declaration.declaringElement, declaration.declarationRange, if (declarationWrite) writeDeclarationRanges else readDeclarationRanges
     )
   }
+
+  return UsageRanges(readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges)
 }
 
 private fun getReferences(project: Project,

@@ -250,7 +250,11 @@ public class IdentifierHighlighterPass {
   private void highlightTargetUsages(@NotNull Symbol target) {
     AstLoadingFilter.disallowTreeLoading(
       () -> {
-        getUsageRanges(myFile, target, myReadAccessRanges, myWriteAccessRanges);
+        UsageRanges ranges = getUsageRanges(myFile, target);
+        myReadAccessRanges.addAll(ranges.getReadRanges());
+        myReadAccessRanges.addAll(ranges.getReadDeclarationRanges());
+        myWriteAccessRanges.addAll(ranges.getWriteRanges());
+        myWriteAccessRanges.addAll(ranges.getWriteDeclarationRanges());
         return null;
       },
       () -> "Currently highlighted file: \n" +

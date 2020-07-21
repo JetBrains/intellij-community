@@ -287,7 +287,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     setupFindModel(project);
     highlightRanges(highlightManager, editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, clearHighlights, readUsages);
     highlightRanges(highlightManager, editor, EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, clearHighlights, writeUsages);
-    setStatusText(project, null, readUsages.size() + writeUsages.size(), clearHighlights);
   }
 
   @Nullable
@@ -481,7 +480,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return new TextRange(start, end);
   }
 
-  private static void setStatusText(@NotNull Project project, @Nullable String elementName, int refCount, boolean clearHighlights) {
+  static void setStatusText(@NotNull Project project, @Nullable String elementName, int refCount, boolean clearHighlights) {
     String message;
     if (clearHighlights) {
       message = "";
