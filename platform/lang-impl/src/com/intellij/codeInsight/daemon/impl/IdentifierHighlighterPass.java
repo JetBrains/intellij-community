@@ -11,10 +11,6 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.model.Symbol;
-import com.intellij.model.psi.PsiSymbolDeclaration;
-import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.model.psi.PsiSymbolService;
-import com.intellij.model.search.SearchService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -34,17 +30,15 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.ELEMENT_UNDER_CARET_STRUCTURAL;
+import static com.intellij.codeInsight.highlighting.HighlightUsagesKt.getUsageRanges;
 import static com.intellij.model.psi.impl.TargetsKt.targetSymbols;
 
 /**
@@ -256,61 +250,13 @@ public class IdentifierHighlighterPass {
   private void highlightTargetUsages(@NotNull Symbol target) {
     AstLoadingFilter.disallowTreeLoading(
       () -> {
-        getUsages(myFile, target, myReadAccessRanges, myWriteAccessRanges);
+        getUsageRanges(myFile, target, myReadAccessRanges, myWriteAccessRanges);
         return null;
       },
       () -> "Currently highlighted file: \n" +
             "psi file: " + myFile + ";\n" +
             "virtual file: " + myFile.getVirtualFile()
     );
-  }
-
-  @ApiStatus.Internal
-  public static void getUsages(@NotNull PsiFile file,
-                               @NotNull Symbol symbol,
-                               @NotNull Collection<? super TextRange> readRanges,
-                               @NotNull Collection<? super TextRange> writeRanges) {
-    SearchScope searchScope = new LocalSearchScope(file);
-
-    Project project = file.getProject();
-    PsiElement psiTarget = PsiSymbolService.getInstance().extractElementFromSymbol(symbol);
-    ReadWriteAccessDetector detector = psiTarget != null ? ReadWriteAccessDetector.findDetector(psiTarget) : null;
-
-    Collection<? extends PsiSymbolReference> refs = getReferences(project, searchScope, symbol, psiTarget);
-    for (PsiSymbolReference ref : refs) {
-      boolean write = detector != null &&
-                      ref instanceof PsiReference &&
-                      detector.getReferenceAccess(psiTarget, (PsiReference)ref) != ReadWriteAccessDetector.Access.Read;
-      HighlightUsagesHandler.collectHighlightRanges(ref, write ? writeRanges : readRanges);
-    }
-
-    Collection<? extends PsiSymbolDeclaration> declarations = SearchService.getInstance()
-      .searchPsiSymbolDeclarations(project, symbol, searchScope)
-      .findAll();
-    boolean declarationWrite = psiTarget != null && detector != null && detector.isDeclarationWriteAccess(psiTarget);
-    for (PsiSymbolDeclaration declaration : declarations) {
-      HighlightUsagesHandler.collectHighlightRanges(
-        declaration.getDeclaringElement(), declaration.getDeclarationRange(), declarationWrite ? writeRanges : readRanges
-      );
-    }
-  }
-
-  @NotNull
-  private static Collection<? extends PsiSymbolReference> getReferences(@NotNull Project project,
-                                                                        @NotNull SearchScope searchScope,
-                                                                        @NotNull Symbol symbol,
-                                                                        @Nullable PsiElement psiTarget) {
-    if (psiTarget != null) {
-      FindUsagesHandler oldHandler = ((FindManagerImpl)FindManager.getInstance(project))
-        .getFindUsagesManager()
-        .getFindUsagesHandler(psiTarget, true);
-      if (oldHandler != null) {
-        return oldHandler.findReferencesToHighlight(psiTarget, searchScope);
-      }
-    }
-    return SearchService.getInstance()
-      .searchPsiSymbolReferences(project, symbol, searchScope)
-      .findAll();
   }
 
   private static volatile int id;
