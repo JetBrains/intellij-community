@@ -9,13 +9,14 @@ import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public class ExceptionInfo {
-  private static final String EXCEPTION_IN_THREAD = "Exception in thread \"";
-  private static final String CAUSED_BY = "Caused by: ";
+  private static final @NonNls String EXCEPTION_IN_THREAD = "Exception in thread \"";
+  private static final @NonNls String CAUSED_BY = "Caused by: ";
   private final int myClassNameOffset;
   private final @NotNull String myExceptionClassName;
   private final @NotNull String myExceptionMessage;

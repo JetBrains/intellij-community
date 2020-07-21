@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -505,7 +507,7 @@ public final class GenericsHighlightUtil {
     return defaultContainingClasses.stream().noneMatch(containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
   }
 
-  private static String hasUnrelatedDefaults(@NotNull List<? extends PsiClass> defaults) {
+  private static @Nls String hasUnrelatedDefaults(@NotNull List<? extends PsiClass> defaults) {
     if (defaults.size() > 1) {
       PsiClass[] defaultClasses = defaults.toArray(PsiClass.EMPTY_ARRAY);
       ArrayList<PsiClass> classes = new ArrayList<>(defaults);
@@ -1490,11 +1492,11 @@ public final class GenericsHighlightUtil {
   }
 
   @Nullable
-  private static String isTypeAccessible(@Nullable PsiType type,
-                                         @NotNull Set<? super PsiClass> classes,
-                                         boolean checkParameters,
-                                         @NotNull GlobalSearchScope resolveScope,
-                                         @NotNull JavaPsiFacade factory) {
+  private static @NlsContexts.DetailedDescription String isTypeAccessible(@Nullable PsiType type,
+                                                                          @NotNull Set<? super PsiClass> classes,
+                                                                          boolean checkParameters,
+                                                                          @NotNull GlobalSearchScope resolveScope,
+                                                                          @NotNull JavaPsiFacade factory) {
     type = PsiClassImplUtil.correctType(type, resolveScope);
 
     final PsiClass aClass = PsiUtil.resolveClassInType(type);

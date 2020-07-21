@@ -25,6 +25,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,7 +180,7 @@ public final class UnusedSymbolUtil {
     return sure;
   }
 
-  private static void log(String s) {
+  private static void log(@NonNls String s) {
     //System.out.println(s);
   }
 

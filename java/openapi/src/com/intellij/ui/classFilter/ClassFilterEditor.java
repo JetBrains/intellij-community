@@ -26,6 +26,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,6 +39,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,11 +138,11 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     return myTable.getEmptyText();
   }
 
-  protected String getAddButtonText() {
+  protected @Nls String getAddButtonText() {
     return JavaBundle.message("button.add.class");
   }
 
-  protected String getAddPatternButtonText() {
+  protected @Nls String getAddPatternButtonText() {
     return JavaBundle.message("button.add.pattern");
   }
 
@@ -232,7 +234,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     }
 
     @Override
-    public String getColumnName(int column) {
+    public @NlsContexts.ColumnName String getColumnName(int column) {
       if (column == FILTER) {
         return "Pattern";
       }

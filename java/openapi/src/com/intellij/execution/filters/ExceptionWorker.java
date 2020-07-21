@@ -321,8 +321,8 @@ public class ExceptionWorker {
   }
 
   private static final class StackFrameMatcher implements ExceptionLineRefiner {
-    private final String myMethodName;
-    private final String myClassName;
+    private final @NonNls String myMethodName;
+    private final @NonNls String myClassName;
     private final boolean myHasDollarInName;
 
     private StackFrameMatcher(@NotNull String line, @NotNull ParsedLine info) {

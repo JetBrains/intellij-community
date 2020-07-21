@@ -16,6 +16,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ public class AnnotationsPanel {
   protected final DefaultTableModel myTableModel;
 
   public AnnotationsPanel(Project project,
-                          String name,
+                          @NonNls String name,
                           String defaultAnnotation,
                           List<String> annotations,
                           List<String> defaultAnnotations,
