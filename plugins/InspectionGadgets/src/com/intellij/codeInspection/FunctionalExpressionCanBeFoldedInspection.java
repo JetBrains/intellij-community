@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -42,7 +43,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
                                Supplier<? extends PsiElement> resolver,
                                PsiExpression qualifierExpression,
                                PsiElement referenceNameElement,
-                               final String errorMessage) {
+                               final @InspectionMessage String errorMessage) {
         if (qualifierExpression != null && referenceNameElement != null && !(qualifierExpression instanceof PsiSuperExpression)) {
           final PsiType qualifierType = qualifierExpression.getType();
           if (qualifierType != null) {

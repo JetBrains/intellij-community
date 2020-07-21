@@ -21,7 +21,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @Override
   @NotNull
-  public TreeClassChooser createWithInnerClassesScopeChooser(String title,
+  public TreeClassChooser createWithInnerClassesScopeChooser(@NlsContexts.DialogTitle String title,
                                                              GlobalSearchScope scope,
                                                              final ClassFilter classFilter,
                                                              PsiClass initialClass) {
@@ -30,7 +30,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @Override
   @NotNull
-  public TreeClassChooser createNoInnerClassesScopeChooser(String title,
+  public TreeClassChooser createNoInnerClassesScopeChooser(@NlsContexts.DialogTitle String title,
                                                            GlobalSearchScope scope,
                                                            ClassFilter classFilter,
                                                            PsiClass initialClass) {
@@ -39,25 +39,25 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @Override
   @NotNull
-  public TreeClassChooser createProjectScopeChooser(String title, PsiClass initialClass) {
+  public TreeClassChooser createProjectScopeChooser(@NlsContexts.DialogTitle String title, PsiClass initialClass) {
     return new TreeJavaClassChooserDialog(title, myProject, initialClass);
   }
 
   @Override
   @NotNull
-  public TreeClassChooser createProjectScopeChooser(String title) {
+  public TreeClassChooser createProjectScopeChooser(@NlsContexts.DialogTitle String title) {
     return new TreeJavaClassChooserDialog(title, myProject);
   }
 
   @Override
   @NotNull
-  public TreeClassChooser createAllProjectScopeChooser(String title) {
+  public TreeClassChooser createAllProjectScopeChooser(@NlsContexts.DialogTitle String title) {
     return new TreeJavaClassChooserDialog(title, myProject, GlobalSearchScope.allScope(myProject), null, null);
   }
 
   @Override
   @NotNull
-  public TreeClassChooser createInheritanceClassChooser(String title,
+  public TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title,
                                                         GlobalSearchScope scope,
                                                         PsiClass base,
                                                         boolean acceptsSelf,
@@ -70,13 +70,13 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @Override
   @NotNull
-  public TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass) {
+  public TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass) {
     return createInheritanceClassChooser(title, scope, base, initialClass, null);
   }
 
   @Override
   @NotNull
-  public TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass,
+  public TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass,
                                                         ClassFilter classFilter) {
     return new TreeJavaClassChooserDialog(title, myProject, scope, classFilter, base, initialClass, false);
   }

@@ -18,6 +18,8 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -109,12 +111,12 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     private final @NotNull PsiElement myElementToHighlight;
     private final boolean myIsWarning;
     private final @NotNull LocalQuickFix myFix;
-    private final @NotNull String myMessage;
+    private final @NotNull @InspectionMessage String myMessage;
 
     IfInspectionResult(@NotNull PsiElement elementToHighlight,
-                              boolean isWarning,
-                              @NotNull LocalQuickFix fix,
-                              @NotNull String message) {
+                       boolean isWarning,
+                       @NotNull LocalQuickFix fix,
+                       @NotNull @InspectionMessage String message) {
       myElementToHighlight = elementToHighlight;
       myIsWarning = isWarning;
       myFix = fix;
@@ -220,14 +222,12 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       myIsOnTheFly = isOnTheFly;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.common.if.parts.family");
     }
 
-    @Nls
     @NotNull
     @Override
     public String getName() {
@@ -533,7 +533,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     private @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) @NotNull final String myBundleDescriptionKey;
 
     @NotNull
-    private String getFixMessage(boolean mayChangeSemantics) {
+    private @IntentionName String getFixMessage(boolean mayChangeSemantics) {
       return InspectionGadgetsBundle.message(myBundleFixKey, getMayChangeSemanticsText(mayChangeSemantics));
     }
 
@@ -543,7 +543,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @NotNull
-    private String getDescriptionMessage(boolean mayChangeSemantics) {
+    private @InspectionMessage String getDescriptionMessage(boolean mayChangeSemantics) {
       return InspectionGadgetsBundle.message(myBundleDescriptionKey, getMayChangeSemanticsText(mayChangeSemantics));
     }
 

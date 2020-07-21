@@ -24,6 +24,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -132,8 +133,8 @@ public final class UiUtils {
   }
 
   public static JPanel createTreeClassChooserList(final Collection<String> collection,
-                                                  String borderTitle,
-                                                  final String chooserTitle,
+                                                  @NlsContexts.BorderTitle String borderTitle,
+                                                  final @NlsContexts.DialogTitle String chooserTitle,
                                                   String... ancestorClasses) {
     final ClassFilter filter;
     if (ancestorClasses.length == 0) {

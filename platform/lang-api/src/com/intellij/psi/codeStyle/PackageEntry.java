@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.Objects;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class PackageEntry {
   private final String myPackageName;
@@ -18,7 +20,7 @@ public class PackageEntry {
     myWithSubpackages = withSubpackages;
   }
 
-  public String getPackageName() {
+  public @NlsSafe String getPackageName() {
     return myPackageName;
   }
 

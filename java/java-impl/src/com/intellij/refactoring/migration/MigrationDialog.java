@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.HelpID;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -51,7 +52,7 @@ public class MigrationDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     class MyTextArea extends JTextArea {
-      MyTextArea(String s, int a, int b) {
+      MyTextArea(@Nls String s, int a, int b) {
         super(s, a, b);
         setFocusable(false);
       }

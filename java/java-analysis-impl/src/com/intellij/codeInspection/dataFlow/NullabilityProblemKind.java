@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -14,14 +14,12 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.java.analysis.JavaAnalysisBundle.BUNDLE;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION;
@@ -37,8 +35,8 @@ public final class NullabilityProblemKind<T extends PsiElement> {
   private static final String RE = JAVA_LANG_RUNTIME_EXCEPTION;
 
   private final String myName;
-  private final String myAlwaysNullMessage;
-  private final String myNormalMessage;
+  private final Supplier<@Nls String> myAlwaysNullMessage;
+  private final Supplier<@Nls String> myNormalMessage;
   private final @Nullable String myException;
 
   private NullabilityProblemKind(@Nullable String exception, @NotNull String name) {
@@ -58,8 +56,8 @@ public final class NullabilityProblemKind<T extends PsiElement> {
                                  @NotNull @PropertyKey(resourceBundle = BUNDLE) String normalMessage) {
     myException = exception;
     myName = name;
-    myAlwaysNullMessage = JavaAnalysisBundle.message(alwaysNullMessage);
-    myNormalMessage = JavaAnalysisBundle.message(normalMessage);
+    myAlwaysNullMessage = JavaAnalysisBundle.messagePointer(alwaysNullMessage);
+    myNormalMessage = JavaAnalysisBundle.messagePointer(normalMessage);
   }
 
   public static final NullabilityProblemKind<PsiMethodCallExpression> callNPE =
@@ -510,17 +508,17 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     }
 
     @NotNull
-    public String getMessage(Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
+    public @InspectionMessage String getMessage(Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
       if (myKind.myAlwaysNullMessage == null || myKind.myNormalMessage == null) {
         throw new IllegalStateException("This problem kind has no message associated: " + myKind);
       }
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown(getDereferencedExpression());
       if (expression != null) {
         if (ExpressionUtils.isNullLiteral(expression) || expressions.get(expression) == DataFlowInspectionBase.ConstantResult.NULL) {
-          return myKind.myAlwaysNullMessage;
+          return myKind.myAlwaysNullMessage.get();
         }
       }
-      return myKind.myNormalMessage;
+      return myKind.myNormalMessage.get();
     }
 
     @NotNull

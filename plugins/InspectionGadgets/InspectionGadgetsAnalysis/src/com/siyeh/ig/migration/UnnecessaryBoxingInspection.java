@@ -18,6 +18,7 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -70,7 +71,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
 
   private static final class UnnecessaryBoxingFix extends InspectionGadgetsFix {
 
-    private final String name;
+    private final @IntentionFamilyName String name;
 
     private UnnecessaryBoxingFix() {
       this.name = InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix");

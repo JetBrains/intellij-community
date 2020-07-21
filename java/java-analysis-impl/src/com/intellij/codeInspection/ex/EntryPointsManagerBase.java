@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -547,7 +548,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   @Tag("pattern")
   public static class ClassPattern {
     @Attribute("value")
-    public String pattern = "";
+    public @NlsSafe String pattern = "";
     @Attribute("hierarchically")
     public boolean hierarchically = false;
 

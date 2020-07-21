@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usages.RenameableUsage;
 import com.intellij.util.IncorrectOperationException;
@@ -118,7 +119,7 @@ public abstract class AutomaticUsageRenamer<T> {
 
   protected abstract String suggestName(T element);
 
-  protected abstract String getName(T element);
+  protected abstract @NlsSafe String getName(T element);
 
   public abstract @NlsContexts.DialogTitle String getDialogTitle();
 

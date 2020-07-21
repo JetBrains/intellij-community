@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.generate.template;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -235,7 +236,7 @@ public final class TemplateResource implements Serializable {
     return fileName != null ? fileName : template;
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return fileName;
   }
 

@@ -18,6 +18,7 @@ package com.intellij.codeInspection.java18StreamApi;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
@@ -179,7 +180,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
       return myHandlerClass;
     }
 
-    public String getMethodName() {
+    public @NlsSafe String getMethodName() {
       return myMethodName;
     }
 

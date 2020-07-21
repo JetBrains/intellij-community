@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -739,12 +740,12 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   public class MyExtractMethodProcessor extends ExtractMethodProcessor {
 
     public MyExtractMethodProcessor(Project project,
-                                        Editor editor,
-                                        PsiElement[] elements,
-                                        PsiType forcedReturnType,
-                                        String refactoringName,
-                                        String initialMethodName,
-                                        String helpId) {
+                                    Editor editor,
+                                    PsiElement[] elements,
+                                    PsiType forcedReturnType,
+                                    @NlsContexts.DialogTitle String refactoringName,
+                                    String initialMethodName,
+                                    String helpId) {
       super(project, editor, elements, forcedReturnType, refactoringName, initialMethodName, helpId);
 
     }

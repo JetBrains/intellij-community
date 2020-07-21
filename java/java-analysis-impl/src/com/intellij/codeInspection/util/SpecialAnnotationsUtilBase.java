@@ -18,8 +18,8 @@ import java.util.Collections;
 import java.util.List;
 
 public final class SpecialAnnotationsUtilBase {
-  public static LocalQuickFix createAddToSpecialAnnotationsListQuickFix(@NotNull final String text,
-                                                                        @NotNull final String family,
+  public static LocalQuickFix createAddToSpecialAnnotationsListQuickFix(@NotNull final @IntentionName String text,
+                                                                        @NotNull final @IntentionFamilyName String family,
                                                                         @NotNull final List<String> targetList,
                                                                         @NotNull final String qualifiedName,
                                                                         final PsiElement context) {

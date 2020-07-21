@@ -25,7 +25,7 @@ public final class IntentionPowerPackBundle extends DynamicBundle {
     return INSTANCE.getLazyMessage(key, params);
   }
 
-  public static String defaultableMessage(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+  public static @Nls String defaultableMessage(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
     return INSTANCE.messageOrDefault(key, "default", true, params);
   }
 }

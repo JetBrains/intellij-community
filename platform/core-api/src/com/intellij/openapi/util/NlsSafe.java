@@ -18,6 +18,6 @@ import java.lang.annotation.*;
 @ApiStatus.Experimental
 @Retention(RetentionPolicy.CLASS)
 @Documented
-@Target(ElementType.TYPE_USE)
+@Target({ElementType.TYPE_USE, ElementType.METHOD})
 public @interface NlsSafe {
 }

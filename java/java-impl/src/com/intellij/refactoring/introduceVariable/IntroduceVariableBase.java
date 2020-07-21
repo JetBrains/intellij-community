@@ -83,7 +83,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     public static final JavaReplaceChoice NO_WRITE = new JavaReplaceChoice(ReplaceChoice.NO_WRITE, null, false);
     public static final JavaReplaceChoice ALL = new JavaReplaceChoice(ReplaceChoice.ALL, null, false);
 
-    private final String myDescription;
+    private final @Nls String myDescription;
     private final boolean myChain;
     private final ReplaceChoice myChoice;
 

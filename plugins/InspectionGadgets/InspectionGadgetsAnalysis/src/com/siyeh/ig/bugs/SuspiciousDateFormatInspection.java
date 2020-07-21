@@ -2,6 +2,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -178,7 +179,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public String toString() {
+    public @InspectionMessage String toString() {
       String key = Character.isUpperCase(token.character) ? "inspection.suspicious.date.format.message.upper"
                                                           : "inspection.suspicious.date.format.message.lower";
       return InspectionGadgetsBundle.message(key, token, usedName, token.fixed(), intendedName);

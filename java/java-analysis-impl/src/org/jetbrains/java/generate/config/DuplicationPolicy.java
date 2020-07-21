@@ -19,19 +19,21 @@
  */
 package org.jetbrains.java.generate.config;
 
+import org.jetbrains.annotations.Nls;
+
 public enum DuplicationPolicy {
     ASK("Ask"),
     REPLACE("Replace existing"),
     DUPLICATE("Generate duplicating method");
 
-    private final String displayName;
+    private final @Nls String displayName;
 
-    DuplicationPolicy(String displayName) {
+    DuplicationPolicy(@Nls String displayName) {
         this.displayName = displayName;
     }
 
     @Override
-    public String toString() {
+    public @Nls String toString() {
         return displayName;
     }
 }

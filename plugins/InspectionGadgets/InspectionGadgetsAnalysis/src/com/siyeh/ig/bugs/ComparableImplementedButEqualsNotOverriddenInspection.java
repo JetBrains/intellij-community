@@ -41,9 +41,9 @@ import java.util.stream.Collectors;
 
 public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseInspection {
   @VisibleForTesting
-  static final String ADD_NOTE_FIX_NAME = "Add 'ordering inconsistent with equals' JavaDoc note";
+  static final @Nls String ADD_NOTE_FIX_NAME = "Add 'ordering inconsistent with equals' JavaDoc note";
   @VisibleForTesting
-  static final String GENERATE_EQUALS_FIX_NAME = "Generate 'equals()' method";
+  static final @Nls String GENERATE_EQUALS_FIX_NAME = "Generate 'equals()' method";
 
   @Override
   @NotNull

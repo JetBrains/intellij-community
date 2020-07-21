@@ -29,6 +29,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -63,7 +64,7 @@ import java.util.List;
 
 public class CreateSubclassAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(CreateSubclassAction.class);
-  private String myText = JavaBundle.message("intention.implement.abstract.class.default.text");
+  private @IntentionName String myText = JavaBundle.message("intention.implement.abstract.class.default.text");
 
   @Override
   @NotNull

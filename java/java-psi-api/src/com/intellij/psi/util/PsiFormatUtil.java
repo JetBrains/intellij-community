@@ -2,6 +2,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.BitUtil;
@@ -29,7 +30,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     SHOW_EXTENDS_IMPLEMENTS, SHOW_REDUNDANT_MODIFIERS, JAVADOC_MODIFIERS_ONLY, SHOW_RAW_TYPE})
   public @interface FormatClassOptions { }
 
-  public static String formatVariable(@NotNull PsiVariable variable, @FormatVariableOptions int options, PsiSubstitutor substitutor) {
+  public static @NlsSafe String formatVariable(@NotNull PsiVariable variable, @FormatVariableOptions int options, PsiSubstitutor substitutor) {
     StringBuilder buffer = new StringBuilder();
     formatVariable(variable, options, substitutor, buffer);
     return buffer.toString();
@@ -101,10 +102,10 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
   }
 
-  public static String formatMethod(@NotNull PsiMethod method,
-                                    @NotNull PsiSubstitutor substitutor,
-                                    @FormatMethodOptions int options,
-                                    @FormatVariableOptions int parameterOptions) {
+  public static @NlsSafe String formatMethod(@NotNull PsiMethod method,
+                                             @NotNull PsiSubstitutor substitutor,
+                                             @FormatMethodOptions int options,
+                                             @FormatVariableOptions int parameterOptions) {
     return formatMethod(method, substitutor, options, parameterOptions, MAX_PARAMS_TO_SHOW);
   }
 

@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -37,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 class MakePublicStaticVoidFix extends InspectionGadgetsFix {
-  private final String myName;
+  private final @IntentionName String myName;
   private final boolean myMakeStatic;
   private final String myNewVisibility;
 

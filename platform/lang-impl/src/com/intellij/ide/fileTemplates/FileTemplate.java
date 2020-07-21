@@ -17,6 +17,7 @@ package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public interface FileTemplate extends Cloneable {
   String ATTRIBUTE_FILE_NAME = "FILE_NAME";
 
   /** Name without extension */
-  @NotNull
+  @NotNull @NlsSafe
   String getName();
 
   void setName(@NotNull String name);

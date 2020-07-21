@@ -5,6 +5,7 @@ import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -207,7 +208,7 @@ public abstract class Language extends UserDataHolderBase {
     return myBaseLanguage;
   }
 
-  public @NotNull String getDisplayName() {
+  public @NotNull @NlsSafe String getDisplayName() {
     return getID();
   }
 

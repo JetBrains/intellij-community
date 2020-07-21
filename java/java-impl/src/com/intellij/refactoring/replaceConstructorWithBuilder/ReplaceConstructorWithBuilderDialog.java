@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
@@ -65,7 +66,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   private final LinkedHashMap<String, ParameterData> myParametersMap;
   private MyTableModel myTableModel;
   private JBTable myTable;
-  private String mySetterPrefix;
+  private @NlsSafe String mySetterPrefix;
 
   private static final String RECENT_KEYS = "ReplaceConstructorWithBuilder.RECENT_KEYS";
   private static final String SETTER_PREFIX_KEY = "ConstructorWithBuilder.SetterPrefix";

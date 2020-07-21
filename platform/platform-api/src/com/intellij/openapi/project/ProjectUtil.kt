@@ -16,6 +16,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -38,7 +39,7 @@ import javax.swing.JComponent
 val Module.rootManager: ModuleRootManager
   get() = ModuleRootManager.getInstance(this)
 
-@JvmOverloads
+@JvmOverloads @NlsSafe
 fun calcRelativeToProjectPath(file: VirtualFile,
                               project: Project?,
                               includeFilePath: Boolean = true,

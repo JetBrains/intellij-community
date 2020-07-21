@@ -40,7 +40,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   final String[] myAnnotationsToRemove;
   @SafeFieldForPreview
   final PsiNameValuePair[] myPairs; // not used when registering local quick fix
-  protected final String myText;
+  protected final @IntentionName String myText;
   private final ExternalAnnotationsManager.AnnotationPlace myAnnotationPlace;
 
   public AddAnnotationPsiFix(@NotNull String fqn,

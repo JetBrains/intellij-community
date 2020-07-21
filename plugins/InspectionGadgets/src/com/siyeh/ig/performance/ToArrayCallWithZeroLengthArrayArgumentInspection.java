@@ -41,11 +41,11 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   public enum PreferEmptyArray {
     ALWAYS("Always"), BY_LEVEL("According to language level"), NEVER("Never (prefer pre-sized array)");
 
-    private final String myMessage;
+    private final @Nls String myMessage;
 
-    PreferEmptyArray(String message) { myMessage = message; }
+    PreferEmptyArray(@Nls String message) { myMessage = message; }
 
-    String getMessage() { return myMessage; }
+    @Nls String getMessage() { return myMessage; }
 
     boolean isEmptyPreferred(PsiExpression expression) {
       switch (this) {

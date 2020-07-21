@@ -13,6 +13,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -402,7 +403,7 @@ public final class AnnotationsHighlightUtil {
 
   @Nullable
   private static HighlightInfo annotationError(@NotNull final PsiAnnotation annotation,
-                                               @NotNull final String message,
+                                               @NotNull final @NlsContexts.DetailedDescription String message,
                                                @NotNull final IntentionAction fix) {
     final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
       .range(annotation)

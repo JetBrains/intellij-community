@@ -11,6 +11,7 @@ import com.intellij.util.ThreeState;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,7 +163,7 @@ public abstract class LongRangeSet {
     }
   }
 
-  public abstract String getPresentationText(PsiType type);
+  public abstract @Nls String getPresentationText(PsiType type);
 
   /**
    * Performs a supported binary operation from token (defined in {@link JavaTokenType}).

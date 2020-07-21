@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -33,5 +34,5 @@ public abstract class PackageChooser extends DialogWrapper {
 
   public abstract List<PsiPackage> getSelectedPackages();
 
-  public abstract void selectPackage(String qualifiedName);
+  public abstract void selectPackage(@NonNls String qualifiedName);
 }

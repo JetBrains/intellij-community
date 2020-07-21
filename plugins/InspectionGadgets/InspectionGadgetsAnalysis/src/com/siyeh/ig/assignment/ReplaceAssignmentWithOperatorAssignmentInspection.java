@@ -18,6 +18,7 @@ package com.siyeh.ig.assignment;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -118,7 +119,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
 
   private static final class ReplaceAssignmentWithOperatorAssignmentFix extends InspectionGadgetsFix {
 
-    private final String m_name;
+    private final @IntentionName String m_name;
 
     private ReplaceAssignmentWithOperatorAssignmentFix(PsiPolyadicExpression expression) {
       final PsiJavaToken sign = expression.getTokenBeforeOperand(expression.getOperands()[1]);

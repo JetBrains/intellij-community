@@ -1101,7 +1101,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         staticCall(JAVA_LANG_MATH, "min").parameterTypes("int", "int"),
         staticCall(JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"));
 
-    private final String myName;
+    private final @IntentionName String myName;
 
     ReplaceWithElementIterationFix(IndexedContainer container, String name) {
       PsiExpression qualifier = container.getQualifier();

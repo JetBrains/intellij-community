@@ -17,6 +17,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -27,7 +28,7 @@ import java.util.Arrays;
 public final class RefactoringUIUtil {
   private RefactoringUIUtil() { }
 
-  public static String getDescription(@NotNull PsiElement element, boolean includeParent) {
+  public static @Nls String getDescription(@NotNull PsiElement element, boolean includeParent) {
     RefactoringDescriptionLocation location = includeParent ? RefactoringDescriptionLocation.WITH_PARENT : RefactoringDescriptionLocation.WITHOUT_PARENT;
     return ElementDescriptionUtil.getElementDescription(element, location);
   }

@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -59,7 +60,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection implements
 
   private static class UnnecessaryEnumModifierFix extends InspectionGadgetsFix {
 
-    private final String m_name;
+    private final @IntentionName String m_name;
 
     UnnecessaryEnumModifierFix(PsiElement modifier) {
       m_name = InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", modifier.getText());

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
@@ -28,9 +29,9 @@ import java.util.*;
 
 public final class CreateDefaultBranchFix extends BaseSwitchFix {
   private static final String PLACEHOLDER_NAME = "$EXPRESSION$";
-  private final String myMessage;
+  private final @IntentionName String myMessage;
 
-  public CreateDefaultBranchFix(@NotNull PsiSwitchBlock block, String message) {
+  public CreateDefaultBranchFix(@NotNull PsiSwitchBlock block, @IntentionName String message) {
     super(block);
     myMessage = message;
   }

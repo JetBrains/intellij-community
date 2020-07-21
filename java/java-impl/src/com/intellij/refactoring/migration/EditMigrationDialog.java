@@ -8,6 +8,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,11 +49,11 @@ public class EditMigrationDialog extends DialogWrapper{
     setOKActionEnabled(isEnabled);
   }
 
-  public String getName() {
+  public @Nls String getName() {
     return myNameField.getText();
   }
 
-  public String getDescription() {
+  public @Nls String getDescription() {
     return myDescriptionTextArea.getText();
   }
 

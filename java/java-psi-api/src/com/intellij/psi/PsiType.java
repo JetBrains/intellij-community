@@ -4,6 +4,7 @@ package com.intellij.psi;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayFactory;
@@ -92,7 +93,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * Same as {@code getPresentableText(false)}.
    */
   @NotNull
-  public abstract String getPresentableText();
+  public abstract @NlsSafe String getPresentableText();
 
   /**
    * Returns canonical representation of the type (all references fully-qualified).

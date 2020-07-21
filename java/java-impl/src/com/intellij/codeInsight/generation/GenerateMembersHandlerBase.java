@@ -53,7 +53,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
   private final @NlsContexts.DialogTitle String myChooserTitle;
   protected boolean myToCopyJavaDoc;
 
-  public GenerateMembersHandlerBase(String chooserTitle) {
+  public GenerateMembersHandlerBase(@NlsContexts.DialogTitle String chooserTitle) {
     myChooserTitle = chooserTitle;
   }
 

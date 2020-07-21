@@ -16,6 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ public class CreateSwitchBranchesUtil {
    * @param names names of individual branches to create (non-empty)
    * @return a name of the action which creates missing switch branches.
    */
-  public static @NotNull String getActionName(Collection<String> names) {
+  public static @NotNull @Nls String getActionName(Collection<String> names) {
     if (names.size() == 1) {
       return "Create missing switch branch '" + names.iterator().next() + "'";
     }

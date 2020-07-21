@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.openapi.util.NlsSafe;
+
 /**
  * Represents a Java keyword. Constants defined in this interface represent all keywords and literals of the Java language.
  */
@@ -36,10 +38,10 @@ public interface PsiKeyword extends PsiJavaToken {
   String LONG = "long";
   String NATIVE = "native";
   String NEW = "new";
-  String PACKAGE = "package";
-  String PRIVATE = "private";
-  String PROTECTED = "protected";
-  String PUBLIC = "public";
+  @NlsSafe String PACKAGE = "package";
+  @NlsSafe String PRIVATE = "private";
+  @NlsSafe String PROTECTED = "protected";
+  @NlsSafe String PUBLIC = "public";
   String RETURN = "return";
   String SHORT = "short";
   String STATIC = "static";

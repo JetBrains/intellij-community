@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.panel.PanelGridBuilder;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,7 +36,7 @@ import java.util.Map;
  * @author Pavel.Dolgov
  */
 public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase {
-  private String myInterfaceName;
+  private @NlsSafe String myInterfaceName;
 
   public CreateServiceInterfaceOrClassFix(PsiJavaCodeReferenceElement referenceElement) {
     referenceElement = findTopmostReference(referenceElement);

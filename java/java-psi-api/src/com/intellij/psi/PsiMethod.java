@@ -4,6 +4,7 @@ package com.intellij.psi;
 import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -177,7 +178,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   @Override
   @NotNull
-  @NonNls
+  @NlsSafe
   String getName();
 
   @Override
