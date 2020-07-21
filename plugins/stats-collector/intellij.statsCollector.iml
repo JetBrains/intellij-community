@@ -14,7 +14,16 @@
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="intellij.statsCollector.logEvents" />
+    <orderEntry type="module-library">
+      <library name="org.jetbrains.intellij.deps.completion:log-events" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:log-events:0.0.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/log-events/0.0.1/log-events-0.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="fluent-hc" level="project" />
     <orderEntry type="module" module-name="intellij.statsCollector.completionRanker" />
     <orderEntry type="module-library" exported="">
