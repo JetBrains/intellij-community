@@ -285,7 +285,7 @@ public final class StubIndexImpl extends StubIndexEx {
     PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) ->
       myStubProcessingHelper.processStubsInFile(project, file, list, processor, scope, requiredClass);
 
-    if (!ModelBranchImpl.processBranchedFilesInScope(scope != null ? scope : new EverythingGlobalScope(project),
+    if (!ModelBranchImpl.processModifiedFilesInScope(scope != null ? scope : new EverythingGlobalScope(project),
                                                      file -> processInMemoryStubs(indexKey, key, project, stubProcessor, file))) {
       return false;
     }
@@ -302,7 +302,12 @@ public final class StubIndexImpl extends StubIndexEx {
           continue;
         }
         VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
-        if (file == null || (scope != null && !scope.contains(file))) {
+        if (file == null) {
+          continue;
+        }
+
+        List<VirtualFile> filesInScope = scope != null ? FileBasedIndexEx.filesInScopeWithBranches(scope, file) : Collections.singletonList(file);
+        if (filesInScope.isEmpty()) {
           continue;
         }
 
@@ -313,8 +318,10 @@ public final class StubIndexImpl extends StubIndexEx {
           LOG.error("StubUpdatingIndex & " + indexKey + " stub index mismatch. No stub index key is present");
           continue;
         }
-        if (!stubProcessor.process(file, list)) {
-          return false;
+        for (VirtualFile eachFile : filesInScope) {
+          if (!stubProcessor.process(eachFile, list)) {
+            return false;
+          }
         }
       }
     }

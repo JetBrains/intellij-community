@@ -289,7 +289,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                               @NotNull ValueProcessor<? super V> processor) {
     Project project = scope.getProject();
     if (project != null &&
-        !ModelBranchImpl.processBranchedFilesInScope(scope, file -> processInMemoryFileData(indexId, dataKey, project, file, processor))) {
+        !ModelBranchImpl.processModifiedFilesInScope(scope, file -> processInMemoryFileData(indexId, dataKey, project, file, processor))) {
       return false;
     }
 
@@ -304,13 +304,15 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
           final int id = inputIdsIterator.next();
           if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) continue;
           VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
-          if (file != null && scope.accept(file)) {
-            if (!processor.process(file, value)) {
-              return false;
-            }
-            if (ensureValueProcessedOnce) {
-              ProgressManager.checkCanceled();
-              break; // continue with the next value
+          if (file != null) {
+            for (VirtualFile eachFile : filesInScopeWithBranches(scope, file)) {
+              if (!processor.process(eachFile, value)) {
+                return false;
+              }
+              if (ensureValueProcessedOnce) {
+                ProgressManager.checkCanceled();
+                break; // continue with the next value
+              }
             }
           }
 
@@ -541,5 +543,20 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     } else {
       return computable.compute();
     }
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public static List<VirtualFile> filesInScopeWithBranches(@NotNull GlobalSearchScope scope, @NotNull VirtualFile file) {
+    List<VirtualFile> filesInScope;
+    filesInScope = new SmartList<>();
+    if (scope.contains(file)) filesInScope.add(file);
+    for (ModelBranch branch : scope.getModelBranchesAffectingScope()) {
+      VirtualFile copy = branch.findFileCopy(file);
+      if (!((ModelBranchImpl)branch).hasModifications(copy) && scope.contains(copy)) {
+        filesInScope.add(copy);
+      }
+    }
+    return filesInScope;
   }
 }
