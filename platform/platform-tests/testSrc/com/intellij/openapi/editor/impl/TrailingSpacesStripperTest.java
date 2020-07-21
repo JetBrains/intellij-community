@@ -75,7 +75,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     type(' ');
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    checkResultByText("xxx\n         <caret>");
+    checkResultByText("xxx\n         <caret>\n");
   }
 
   public void testStrippingWithMultipleCarets() {
@@ -160,7 +160,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
 
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    checkResultByText(" xxx <caret>\nyyy\n\t\t\t");
+    checkResultByText(" xxx <caret>\nyyy\n\t\t\t\n");
   }
 
   public void testModifySameLineInTwoFilesAndSaveAllShouldStripAtLeastOneFile() {
