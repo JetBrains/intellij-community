@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.collect.ImmutableList
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -350,7 +351,13 @@ class JdkListDownloader {
    * Lists all entries suitable for UI download, there can be some unlisted entries that are ignored here by intent
    */
   fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null) : List<JdkItem> {
-    return downloadJdksListWithCache(feedUrl, progress).filter { it.isVisibleOnUI }
+    val list = downloadJdksListWithCache(feedUrl, progress)
+
+    if (ApplicationManager.getApplication().isInternal) {
+      return list
+    }
+
+    return list.filter { it.isVisibleOnUI }
   }
 
   private val jdksListCache = CachedValueWithTTL<List<JdkItem>>(15 to TimeUnit.MINUTES)
