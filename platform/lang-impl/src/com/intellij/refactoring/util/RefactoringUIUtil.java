@@ -8,17 +8,19 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.EditorSettingsProvider;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Arrays;
 
 /**
  * @author yole
@@ -44,11 +46,8 @@ public final class RefactoringUIUtil {
   }
 
   public static @NotNull String calculatePsiElementDescriptionList(@NotNull PsiElement @NotNull [] elements) {
-    return Stream.of(elements)
-      .filter(PsiElement::isValid)
-      .map(e -> UsageViewUtil.getType(e) + ' ' + DescriptiveNameUtil.getDescriptiveName(e))
-      .distinct()
-      .collect(Collectors.joining(", "));
+    Function<PsiElement, String> presentationFun = e -> UsageViewUtil.getType(e) + ' ' + DescriptiveNameUtil.getDescriptiveName(e);
+    return StringUtil.join(ContainerUtil.map2LinkedSet(Arrays.asList(elements), presentationFun), ", ");
   }
 
   public static final EditorSettingsProvider SELECT_ALL_ON_FOCUS = editor -> editor.addFocusListener(new FocusChangeListener() {
