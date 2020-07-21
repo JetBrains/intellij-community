@@ -1,20 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
   <item name="javax.swing">
-    <annotation name="org.jetbrains.annotations.Nls" />
+    <annotation name="org.jetbrains.annotations.Nls"/>
   </item>
   <item name='javax.swing.AbstractAction void putValue(java.lang.String, java.lang.Object) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='javax.swing.Action java.lang.Object getValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.Action void putValue(java.lang.String, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="javax.swing.ActionMap javax.swing.Action get(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name="org.jetbrains.annotations.NonNls"/>
   </item>
   <item name="javax.swing.ActionMap void put(java.lang.Object, javax.swing.Action) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name="org.jetbrains.annotations.NonNls"/>
   </item>
   <item name="javax.swing.BoxLayout BoxLayout(java.awt.Container, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="valuesFromClass" val="javax.swing.BoxLayout.class" />
+      <val name="valuesFromClass" val="javax.swing.BoxLayout.class"/>
     </annotation>
   </item>
   <item name="javax.swing.BoxLayout BoxLayout(java.awt.Container, int, java.io.PrintStream) 1">
