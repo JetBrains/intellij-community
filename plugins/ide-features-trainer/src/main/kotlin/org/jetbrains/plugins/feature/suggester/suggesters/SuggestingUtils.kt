@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.psi.PyFunction
@@ -14,6 +15,18 @@ import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
+
+data class Selection(val startOffset: Int, val endOffset: Int, val text: String)
+
+internal fun Editor.getSelection(): Selection? {
+    with(selectionModel) {
+        return if (selectedText != null) {
+            Selection(selectionStart, selectionEnd, selectedText!!)
+        } else {
+            null
+        }
+    }
+}
 
 internal fun isCommentAddedToLineStart(file: PsiFile, offset: Int): Boolean {
     val fileBeforeCommentText = file.text.substring(0, offset)

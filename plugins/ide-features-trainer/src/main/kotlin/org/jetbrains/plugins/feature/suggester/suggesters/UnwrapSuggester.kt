@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.psi.*
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
+import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorBackspaceAction
@@ -9,7 +10,8 @@ import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 
 class UnwrapSuggester : FeatureSuggester {
     companion object {
-        const val POPUP_MESSAGE = "Why not to use Unwrap action: Ctrl + Shift + Delete?"
+        const val POPUP_MESSAGE = "Why not to use Unwrap action?"
+        const val SUGGESTING_ACTION_ID = "Unwrap"
     }
 
     private var unwrappingStatements: List<PsiElement>? = null
@@ -39,7 +41,10 @@ class UnwrapSuggester : FeatureSuggester {
                         val statements = codeBlock.statements.toList()
                         if (intersectsByText(unwrappingStatements!!, statements)) {
                             unwrappingStatements = null
-                            return createSuggestion(null, POPUP_MESSAGE)
+                            return createSuggestion(
+                                null,
+                                createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+                            )
                         }
                         unwrappingStatements = null
                     } else {

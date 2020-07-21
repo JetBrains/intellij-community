@@ -42,5 +42,13 @@ public class Main {
             if  (true) { i++; }
             return i;
         }
+
+        public String stringFunction(String sss) {
+            StringBuilder builder = new StringBuilder();
+            builder.append("433" + "322" + 'e' + "wrwer");
+            String str = builder.toString() + '2' + "123";
+            return builder.toString() + "322" + "erer" +
+                    "true" + "or false" + str;
+        }
     }
 }

@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.openapi.ide.CopyPasteManager
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
+import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorCopyAction
@@ -11,7 +12,8 @@ import java.awt.datatransfer.Transferable
 
 class CopyPasteSuggester : FeatureSuggester {
     companion object {
-        const val POPUP_MESSAGE = "You may use history of clipboard that can save your time: Ctrl + Shift + V"
+        const val POPUP_MESSAGE = "You may use history of clipboard that can save your time."
+        const val SUGGESTING_ACTION_ID = "PasteMultiple"
         const val MIN_OCCURRENCE_INDEX = 1
         const val MAX_OCCURRENCE_INDEX = 2
         const val MAX_COPY_INTERVAL_TIME_MILLIS = 20000L
@@ -30,7 +32,7 @@ class CopyPasteSuggester : FeatureSuggester {
                         ?: return NoSuggestion
                     val delta = lastAction.timeMillis - prevAction.timeMillis
                     if (delta < MAX_COPY_INTERVAL_TIME_MILLIS) {
-                        return createSuggestion(null, POPUP_MESSAGE)
+                        return createSuggestion(null, createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE))
                     }
                 }
             }

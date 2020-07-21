@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.psi.*
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
+import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
@@ -11,7 +12,8 @@ import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 
 class SurroundWithSuggester : FeatureSuggester {
     companion object {
-        const val POPUP_MESSAGE = "Why not to use Surround With action: Ctrl + Alt + T?"
+        const val POPUP_MESSAGE = "Why not to use Surround With action?"
+        const val SUGGESTING_ACTION_ID = "SurroundWith"
     }
 
     private class SurroundingStatementData(val surroundingStatement: PsiStatement) {
@@ -58,7 +60,10 @@ class SurroundWithSuggester : FeatureSuggester {
                     ) {
                         if (isStatementsSurrounded()) {
                             surroundingStatementData = null
-                            return createSuggestion(null, POPUP_MESSAGE)
+                            return createSuggestion(
+                                null,
+                                createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+                            )
                         }
                         surroundingStatementData = null
                     }

@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
+import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
@@ -15,7 +16,8 @@ import kotlin.math.abs
 class LineCommentingSuggester : FeatureSuggester {
 
     companion object {
-        const val POPUP_MESSAGE = "Try the Comment Line feature to do it faster (Ctrl + /)"
+        const val POPUP_MESSAGE = "Try the Comment Line feature to do it faster."
+        const val SUGGESTING_ACTION_ID = "CommentByLineComment"
         const val DESCRIPTOR_ID = "codeassists.comment.line"
         const val NUMBER_OF_COMMENTS_TO_GET_SUGGESTION = 3
         const val MAX_TIME_MILLIS_INTERVAL_BETWEEN_COMMENTS = 5000
@@ -48,7 +50,10 @@ class LineCommentingSuggester : FeatureSuggester {
                     && commentsHistory.isLinesCommentedInARow()
                 ) {
                     commentsHistory.clear()
-                    return createSuggestion(DESCRIPTOR_ID, POPUP_MESSAGE)
+                    return createSuggestion(
+                        DESCRIPTOR_ID,
+                        createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+                    )
                 }
             }
         }

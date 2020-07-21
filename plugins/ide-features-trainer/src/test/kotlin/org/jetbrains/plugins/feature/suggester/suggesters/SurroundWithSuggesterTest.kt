@@ -2,9 +2,12 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
+import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester.Companion.POPUP_MESSAGE
+import org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester.Companion.SUGGESTING_ACTION_ID
 
 class SurroundWithSuggesterTest : FeatureSuggesterTest() {
 
@@ -119,6 +122,11 @@ class SurroundWithSuggesterTest : FeatureSuggesterTest() {
 
     private fun assertSuggestedCorrectly(suggestion: Suggestion) {
         TestCase.assertTrue(suggestion is PopupSuggestion)
-        TestCase.assertEquals(SurroundWithSuggester.POPUP_MESSAGE, (suggestion as PopupSuggestion).message)
+        TestCase.assertEquals(
+            FeatureSuggester.createMessageWithShortcut(
+                SUGGESTING_ACTION_ID,
+                POPUP_MESSAGE
+            ), (suggestion as PopupSuggestion).message
+        )
     }
 }

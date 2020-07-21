@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.actions
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.feature.suggester.suggesters.Selection
 import java.lang.ref.WeakReference
 
 sealed class Action(open val timeMillis: Long)
@@ -102,6 +103,13 @@ data class EditorCopyAction(
     override val timeMillis: Long
 ) : EditorAction(psiFileRef, documentRef, timeMillis)
 
+data class EditorCutAction(
+    val text: String,
+    override val psiFileRef: WeakReference<PsiFile>,
+    override val documentRef: WeakReference<Document>,
+    override val timeMillis: Long
+) : EditorAction(psiFileRef, documentRef, timeMillis)
+
 data class EditorPasteAction(
     val pastedText: String,
     val caretOffset: Int,
@@ -137,6 +145,13 @@ data class BeforeEditorBackspaceAction(
 
 data class BeforeEditorCopyAction(
     val copiedText: String,
+    override val psiFileRef: WeakReference<PsiFile>,
+    override val documentRef: WeakReference<Document>,
+    override val timeMillis: Long
+) : EditorAction(psiFileRef, documentRef, timeMillis)
+
+data class BeforeEditorCutAction(
+    val selection: Selection?,
     override val psiFileRef: WeakReference<PsiFile>,
     override val documentRef: WeakReference<Document>,
     override val timeMillis: Long
