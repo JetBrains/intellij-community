@@ -167,6 +167,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testJarDirectoriesSerialization() throws Exception {
+    ProjectModelRule.ignoreTestUnderWorkspaceModel();
     LibraryTable table = getProjectLibraryTable();
     Library library = WriteAction.compute(() -> table.createLibrary("jarDirs"));
     Library.ModifiableModel model = library.getModifiableModel();
