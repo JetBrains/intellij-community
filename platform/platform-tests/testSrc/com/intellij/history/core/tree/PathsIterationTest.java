@@ -17,19 +17,27 @@
 package com.intellij.history.core.tree;
 
 import com.intellij.history.core.Paths;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
+import org.junit.Assume;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class PathsIterationTest extends TestCase {
-  public void testPaths() {
+  public void testWindowsPaths() {
+    Assume.assumeTrue(SystemInfo.isWindows);
     testPathSplit("relative/folder/file.txt", "relative", "folder", "file.txt");
     testPathSplit("C:/Users/user/folder/file.txt", "C:", "Users", "user", "folder", "file.txt");
-    testPathSplit("//wsl$/Distro/home/user/folder/file.txt", "//wsl$", "Distro", "home", "user", "folder", "file.txt");
-    testPathSplit("//wsl$/Distro", "//wsl$", "Distro");
-    testPathSplit("//wsl$/", "//wsl$");
+    testPathSplit("//wsl$/Distro/home/user/folder/file.txt", "//wsl$/Distro", "home", "user", "folder", "file.txt");
+    testPathSplit("//wsl$/Distro", "//wsl$/Distro");
+    testPathSplit("//wsl$/", "//wsl$/");
+  }
+
+  public void testUnixPaths() {
+    Assume.assumeTrue(SystemInfo.isUnix);
+    testPathSplit("relative/folder/file.txt", "relative", "folder", "file.txt");
     testPathSplit("/home/user/folder/file.txt", "/", "home", "user", "folder", "file.txt");
     testPathSplit("/", "/");
   }
