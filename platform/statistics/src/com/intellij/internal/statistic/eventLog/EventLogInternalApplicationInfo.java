@@ -16,9 +16,11 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
 
   private final boolean myIsTest;
   private final DataCollectorSystemEventLogger myEventLogger;
+  private final EventLogAppConnectionSettings myConnectionSettings;
 
   public EventLogInternalApplicationInfo(@NotNull String recorderId, boolean isTest) {
     myIsTest = isTest;
+    myConnectionSettings = new EventLogAppConnectionSettings();
     myEventLogger = new DataCollectorSystemEventLogger() {
       @Override
       public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) {
@@ -48,7 +50,7 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @NotNull
   @Override
   public EventLogConnectionSettings getConnectionSettings() {
-    return new EventLogAppConnectionSettings();
+    return myConnectionSettings;
   }
 
   @Override
