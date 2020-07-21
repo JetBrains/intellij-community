@@ -829,6 +829,36 @@ public class FileUtil extends FileUtilRt {
     return false;
   }
 
+  /**
+   * @return <ul>
+   * <li>null for relative or incorrect paths.</li>
+   * <li>'/' on Unix.</li>
+   * <li>'C:' or '//host_name/share_name' on Windows.</li></ul>
+   */
+  @Nullable
+  public static String extractRootPath(@NotNull String normalizedPath) {
+    if (SystemInfo.isWindows) {
+      if (normalizedPath.length() >= 2 && normalizedPath.charAt(1) == ':') {
+        // drive letter
+        return StringUtil.toUpperCase(normalizedPath.substring(0, 2));
+      }
+      if (normalizedPath.startsWith("//")) {
+        // UNC (https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/62e862f4-2a51-452e-8eeb-dc4ff5ee33cc)
+        int p1 = normalizedPath.indexOf('/', 2);
+        if (p1 > 2) {
+          int p2 = normalizedPath.indexOf('/', p1 + 1);
+          if (p2 > p1 + 1) return normalizedPath.substring(0, p2);
+          if (p2 < 0) return normalizedPath;
+        }
+      }
+    }
+    else if (StringUtil.startsWithChar(normalizedPath, '/')) {
+      return "/";
+    }
+
+    return null;
+  }
+
   public static void collectMatchedFiles(@NotNull File root, @NotNull Pattern pattern, @NotNull List<? super File> outFiles) {
     collectMatchedFiles(root, root, pattern, outFiles);
   }
