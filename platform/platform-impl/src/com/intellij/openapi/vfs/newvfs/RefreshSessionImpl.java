@@ -33,7 +33,7 @@ class RefreshSessionImpl extends RefreshSession {
   private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
   private static final int REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS =
-    SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", 30);
+    SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", -1);
 
   private static final AtomicLong ID_COUNTER = new AtomicLong(0);
 
@@ -161,7 +161,8 @@ class RefreshSessionImpl extends RefreshSession {
       t = System.currentTimeMillis() - t;
       if (LOG.isTraceEnabled()) {
         LOG.trace((myCancelled ?  "cancelled, " : "done, ") + t + " ms, events " + myEvents);
-      } else if (t > REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS * 1000L){
+      } else if (REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS > 0 &&
+                 t > REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS * 1000L){
         String refreshSessionInfo = String.format("work queue size: %s , file types: %s", workQueue.size(), workQueue.stream().collect(
           Collectors.groupingBy(file -> Objects.toString(file.getExtension()), Collectors.counting())));
         snapshot.logResponsivenessSinceCreation(String.format(
