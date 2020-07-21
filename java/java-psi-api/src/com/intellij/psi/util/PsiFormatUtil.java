@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.BitUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -45,7 +46,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
     if (BitUtil.isSet(options, SHOW_TYPE) && !BitUtil.isSet(options, TYPE_AFTER)) {
       appendSpaceIfNeeded(buffer);
-      buffer.append(formatType(variable.getType(), options, substitutor));
+      buffer.append(formatTypeSafe(variable, variable.getType(), options, substitutor));
     }
     if (variable instanceof PsiField && BitUtil.isSet(options, SHOW_CONTAINING_CLASS)) {
       PsiClass aClass = ((PsiField)variable).getContainingClass();
@@ -79,7 +80,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       if (BitUtil.isSet(options, SHOW_NAME) && variable.getName() != null) {
         buffer.append(':');
       }
-      buffer.append(formatType(variable.getType(), options, substitutor));
+      buffer.append(formatTypeSafe(variable, variable.getType(), options, substitutor));
     }
     if (BitUtil.isSet(options, SHOW_MODIFIERS) && BitUtil.isSet(options, MODIFIERS_AFTER)) {
       formatModifiers(variable, options,buffer);
@@ -132,7 +133,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       PsiType type = method.getReturnType();
       if (type != null) {
         appendSpaceIfNeeded(buffer);
-        buffer.append(formatType(type, options, substitutor));
+        buffer.append(formatTypeSafe(method, type, options, substitutor));
       }
     }
     if (BitUtil.isSet(options, SHOW_CONTAINING_CLASS)) {
@@ -176,7 +177,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       PsiType type = method.getReturnType();
       if (type != null) {
         if (buffer.length() > 0) buffer.append(':');
-        buffer.append(formatType(type, options, substitutor));
+        buffer.append(formatTypeSafe(method, type, options, substitutor));
       }
     }
     if (BitUtil.isSet(options, SHOW_MODIFIERS) && BitUtil.isSet(options, MODIFIERS_AFTER)) {
@@ -188,6 +189,18 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         appendSpaceIfNeeded(buffer);
         buffer.append("throws ").append(throwsText);
       }
+    }
+  }
+
+  private static String formatTypeSafe(PsiElement parent, PsiType type, int options, PsiSubstitutor substitutor) {
+    try {
+      return formatType(type, options, substitutor);
+    }
+    catch (Throwable e) {
+      if (ExceptionUtil.getRootCause(e) instanceof PsiInvalidElementAccessException) {
+        throw new RuntimeException("Invalid type in " + parent.getClass(), e);
+      }
+      throw e;
     }
   }
 
