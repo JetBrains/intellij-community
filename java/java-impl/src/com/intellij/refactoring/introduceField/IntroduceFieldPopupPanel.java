@@ -138,7 +138,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     if (TestFrameworks.getInstance().isTestClass(myParentClass)) {
       myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
     }
-    initializeInitializerPlace(myInitializerExpression, InplaceIntroduceFieldPopup.ourLastInitializerPlace);
+    initializeInitializerPlace(myInitializerExpression, IntroduceFieldDialog.ourLastInitializerPlace);
     if (myInitialisersPlaceModel.getSize() > 1) {
       final JLabel initLabel = new JLabel(RefactoringBundle.message("initialize.in.border.title") + ":");
       initLabel.setDisplayedMnemonic('i');
