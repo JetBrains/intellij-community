@@ -95,6 +95,7 @@ readonly AS_BUILD_NUMBER="$(sed "s/SNAPSHOT/${BNUM}/" build.txt)"
 declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.output.root=${OUT}"
   "-Dbuild.number=${AS_BUILD_NUMBER}"
+  "-Dintellij.build.skip.build.steps=mac_dmg,mac_sign,windows_exe_installer,cross_platform_dist"
   "${ASWB_PROPERTY}"
   "-Dstudio.sdk=${STUDIO_SDK}"
   "-Dbundle.ui.tests=${UITESTS}"
