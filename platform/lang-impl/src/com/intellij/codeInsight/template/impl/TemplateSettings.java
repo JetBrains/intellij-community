@@ -52,12 +52,12 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   @NonNls private static final String GROUP = "group";
   @NonNls public static final String TEMPLATE = "template";
 
-  public static final char SPACE_CHAR = ' ';
-  public static final char TAB_CHAR = '\t';
-  public static final char ENTER_CHAR = '\n';
+  public static final char SPACE_CHAR = TemplateConstants.SPACE_CHAR;
+  public static final char TAB_CHAR = TemplateConstants.TAB_CHAR;
+  public static final char ENTER_CHAR = TemplateConstants.ENTER_CHAR;
   public static final char DEFAULT_CHAR = TemplateConstants.DEFAULT_CHAR;
-  public static final char CUSTOM_CHAR = 'C';
-  public static final char NONE_CHAR = 'N';
+  public static final char CUSTOM_CHAR = TemplateConstants.CUSTOM_CHAR;
+  public static final char NONE_CHAR = TemplateConstants.NONE_CHAR;
 
   @NonNls private static final String SPACE = "SPACE";
   @NonNls private static final String TAB = "TAB";

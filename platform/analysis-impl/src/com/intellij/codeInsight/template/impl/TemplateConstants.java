@@ -7,7 +7,12 @@ import org.jetbrains.annotations.NonNls;
 @ApiStatus.Internal
 final class TemplateConstants {
 
+  public static final char SPACE_CHAR = ' ';
+  public static final char TAB_CHAR = '\t';
+  public static final char ENTER_CHAR = '\n';
   public static final char DEFAULT_CHAR = 'D';
+  public static final char CUSTOM_CHAR = 'C';
+  public static final char NONE_CHAR = 'N';
 
   @NonNls static final String CONTEXT = "context";
 }
