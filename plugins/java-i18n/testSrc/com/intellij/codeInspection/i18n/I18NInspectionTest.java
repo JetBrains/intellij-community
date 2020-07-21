@@ -34,6 +34,7 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testAnonymousClassConstructorParameter() { doTest(); }
   public void testStringBufferNonNls() { doTest(); }
   public void testEnum() { doTest(); }
+  public void testIgnoredLines() { doTest(); }
 
   public void testVarargNonNlsParameter() { doTest(); }
   public void testInitializerInAnonymousClass() { doTest(); }
@@ -45,8 +46,7 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testSwitchOnNonNlsString() { doTest(); }
   public void testNestedArrayParenthesized() { doTest(); }
   public void testNonNlsComment() {
-    myTool.nonNlsCommentPattern = "MYNON-NLS";
-    myTool.cacheNonNlsCommentPattern();
+    myTool.setNonNlsCommentPattern("MYNON-NLS");
     doTest();
   }
 

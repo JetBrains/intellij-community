@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +42,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
+import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,22 +64,22 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public class I18nInspection extends AbstractBaseUastLocalInspectionTool implements CustomSuppressableInspectionTool {
-  private static final Set<String> IGNORED = ContainerUtil.immutableSet("<html>", "</html>", "<b>", "</b>");
   private static final CallMatcher IGNORED_METHODS = CallMatcher.anyOf( 
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "substring", "trim"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("int"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("double"),
     CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getAbsolutePath", "getCanonicalPath")
   );
-  
+  @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "https?://.+|\\w*[.][\\w.]+|\\w*[$]\\w*|</?(html|b|i|body)>";
+
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
-  @NonNls
-  public String ignoreForSpecifiedExceptionConstructors = "";
+  public @NlsSafe String ignoreForSpecifiedExceptionConstructors = "";
   public boolean ignoreForJUnitAsserts = true;
   public boolean ignoreForClassReferences = true;
   public boolean ignoreForPropertyKeyReferences = true;
@@ -86,21 +88,24 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   private boolean reportUnannotatedReferences = false;
   public boolean ignoreAssignedToConstants;
   public boolean ignoreToString;
-  @NonNls public String nonNlsCommentPattern = "NON-NLS";
+  @NlsSafe private String nonNlsLiteralPattern;
+  @NlsSafe public String nonNlsCommentPattern;
   private boolean ignoreForEnumConstants;
 
-  @Nullable private Pattern myCachedNonNlsPattern;
+  @Nullable private Pattern myCachedCommentPattern;
+  @Nullable private Pattern myCachedLiteralPattern;
   @NonNls private static final String TO_STRING = "toString";
 
   public I18nInspection() {
-    cacheNonNlsCommentPattern();
+    setNonNlsCommentPattern("NON-NLS");
+    setNonNlsLiteralPattern(DEFAULT_NON_NLS_LITERAL_PATTERN);
   }
 
   @Override
   public SuppressIntentionAction @NotNull [] getSuppressActions(PsiElement element) {
     SuppressQuickFix[] suppressActions = getBatchSuppressActions(element);
 
-    if (myCachedNonNlsPattern == null) {
+    if (myCachedCommentPattern == null) {
       return ContainerUtil.map2Array(suppressActions,  SuppressIntentionAction.class, SuppressIntentionActionFromFix::convertBatchToSuppressIntentionAction);
     }
     else {
@@ -114,6 +119,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   private static final String SKIP_FOR_ENUM = "ignoreForEnumConstant";
   private static final String IGNORE_ALL_BUT_NLS = "ignoreAllButNls";
   private static final String REPORT_UNANNOTATED_REFERENCES = "reportUnannotatedReferences";
+  private static final String NON_NLS_LITERAL_PATTERN = "nonNlsLiteralPattern";
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
@@ -131,6 +137,11 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       node.addContent(new Element("option")
                         .setAttribute("name", IGNORE_ALL_BUT_NLS)
                         .setAttribute("value", Boolean.toString(ignoreForAllButNls)));
+    }
+    if (!nonNlsLiteralPattern.equals(DEFAULT_NON_NLS_LITERAL_PATTERN)) {
+      node.addContent(new Element("option")
+                        .setAttribute("name", NON_NLS_LITERAL_PATTERN)
+                        .setAttribute("value", DEFAULT_NON_NLS_LITERAL_PATTERN));
     }
   }
 
@@ -155,8 +166,13 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
           reportUnannotatedReferences = Boolean.parseBoolean(valueAttr);
         }
       }
+      else if (Comparing.strEqual(nameAttr, NON_NLS_LITERAL_PATTERN)) {
+        if (valueAttr != null) {
+          setNonNlsLiteralPattern(valueAttr);
+        }
+      }
     }
-    cacheNonNlsCommentPattern();
+    setNonNlsCommentPattern(nonNlsCommentPattern);
   }
 
   @Override
@@ -273,18 +289,19 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
     });
 
-    final JCheckBox ignoreAllButNls = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.nls"), ignoreForAllButNls);
-    ignoreAllButNls.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForAllButNls = ignoreAllButNls.isSelected();
-      }
-    });
     final JCheckBox reportRefs = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.report.unannotated.refs"), reportUnannotatedReferences);
     reportRefs.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
         reportUnannotatedReferences = reportRefs.isSelected();
+      }
+    });
+    final JCheckBox ignoreAllButNls = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.nls"), ignoreForAllButNls);
+    ignoreAllButNls.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(@NotNull ChangeEvent e) {
+        ignoreForAllButNls = ignoreAllButNls.isSelected();
+        reportRefs.setEnabled(ignoreForAllButNls);
       }
     });
 
@@ -345,14 +362,21 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     gc.gridy ++;
     gc.anchor = GridBagConstraints.NORTHWEST;
     gc.weighty = 1;
-    final JTextField text = new JTextField(nonNlsCommentPattern);
+    final JTextField commentPattern = new JTextField(nonNlsCommentPattern);
     final FieldPanel nonNlsCommentPatternComponent =
-      new FieldPanel(text, JavaI18nBundle.message("inspection.i18n.option.ignore.comment.pattern"),
-                     JavaI18nBundle.message("inspection.i18n.option.ignore.comment.title"), null, () -> {
-                       nonNlsCommentPattern = text.getText();
-                       cacheNonNlsCommentPattern();
-                     });
+      new FieldPanel(commentPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.comment.pattern"),
+                     JavaI18nBundle.message("inspection.i18n.option.ignore.comment.title"), null, 
+                     () -> setNonNlsCommentPattern(commentPattern.getText()));
     panel.add(nonNlsCommentPatternComponent, gc);
+    gc.gridy ++;
+    gc.anchor = GridBagConstraints.NORTHWEST;
+    gc.weighty = 1;
+    final JTextField literalPattern = new JTextField(nonNlsLiteralPattern);
+    final FieldPanel nonNlsStringPatternComponent =
+      new FieldPanel(literalPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.string.pattern"),
+                     JavaI18nBundle.message("inspection.i18n.option.ignore.string.title"), null, 
+                     () -> setNonNlsLiteralPattern(literalPattern.getText()));
+    panel.add(nonNlsStringPatternComponent, gc);
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -762,9 +786,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (ignoreForNonAlpha && value != null && !StringUtil.containsAlphaCharacters(value)) {
       return NlsInfo.nonLocalized();
     }
-    if (value != null && IGNORED.contains(value.toLowerCase(Locale.ROOT))) {
-      return NlsInfo.nonLocalized();
-    }
 
     List<UExpression> usages = findIndirectUsages(expression);
     if (usages.isEmpty()) {
@@ -801,7 +822,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   }
 
   private boolean isSuppressedByComment(@NotNull Project project, @NotNull UExpression expression) {
-    Pattern pattern = myCachedNonNlsPattern;
+    Pattern pattern = myCachedCommentPattern;
     if (pattern != null) {
       PsiElement sourcePsi = expression.getSourcePsi();
       if (sourcePsi == null) return false;
@@ -829,6 +850,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
                                     @Nullable String value,
                                     @NotNull Set<? super PsiModifierListOwner> nonNlsTargets,
                                     @NotNull UExpression usage) {
+    if (value != null && myCachedLiteralPattern != null && myCachedLiteralPattern.matcher(value).matches()) {
+      return true;
+    }
+    
     if (isInNonNlsCall(usage, nonNlsTargets)) {
       return true;
     }
@@ -872,8 +897,26 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return expression.getUastParent() instanceof UEnumConstant;
   }
 
-  public void cacheNonNlsCommentPattern() {
-    myCachedNonNlsPattern = nonNlsCommentPattern.trim().isEmpty() ? null : Pattern.compile(nonNlsCommentPattern);
+  public void setNonNlsCommentPattern(String pattern) {
+    nonNlsCommentPattern = pattern;
+    myCachedCommentPattern = null;
+    if (!pattern.trim().isEmpty()) {
+      try {
+        myCachedCommentPattern = Pattern.compile(pattern);
+      }
+      catch (PatternSyntaxException ignored) { }
+    }
+  }
+
+  public void setNonNlsLiteralPattern(String pattern) {
+    nonNlsLiteralPattern = pattern;
+    myCachedLiteralPattern = null;
+    if (!pattern.trim().isEmpty()) {
+      try {
+        myCachedLiteralPattern = Pattern.compile(pattern);
+      }
+      catch (PatternSyntaxException ignored) { }
+    }
   }
 
   private static boolean isClassRef(final UExpression expression, String value) {

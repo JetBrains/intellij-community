@@ -452,7 +452,8 @@ public abstract class NlsInfo {
         annotation.hasQualifiedName(AnnotationUtil.PROPERTY_KEY)) {
       return NonLocalized.INSTANCE;
     }
-    if (annotation.hasQualifiedName(NLS_SAFE)) {
+    if (annotation.hasQualifiedName(NLS_SAFE) ||
+        annotation.hasQualifiedName("org.intellij.lang.annotations.RegExp")) {
       return NlsSafe.INSTANCE;
     }
     if (annotation.hasQualifiedName(AnnotationUtil.NLS)) {
