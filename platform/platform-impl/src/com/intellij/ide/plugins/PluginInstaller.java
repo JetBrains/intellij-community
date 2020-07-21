@@ -204,9 +204,7 @@ public final class PluginInstaller {
     }
     else {
       target = new File(targetPath, rootEntryName(sourceFile));
-      System.out.println(target.toPath());
-      if(!UpdateSettings.getInstance().isKeepArchives()) FileUtil.delete(target);
-      else FileUtil.rename(target, target);
+      if(!UpdateSettings.getInstance().isKeepPluginsArchive()) FileUtil.delete(target);
       new Decompressor.Zip(sourceFile).extract(new File(targetPath));
     }
     return target;

@@ -378,11 +378,7 @@ open class MarketplaceRequests {
 
   @Throws(IOException::class)
   open fun download(pluginUrl: String, indicator: ProgressIndicator): File {
-    val pluginsTemp = File(PathManager.getPluginTempPath())
-    if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
-      throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
-    }
-    val file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false)
+    val file = getPluginTempFile()
     return HttpRequests.request(pluginUrl).gzip(false).productNameAsUserAgent().connect(
       HttpRequests.RequestProcessor { request: HttpRequests.Request ->
         request.saveToFile(file, indicator)
@@ -399,55 +395,63 @@ open class MarketplaceRequests {
     val prevPluginArchive = getPrevPluginArchive(prevPlugin)
     if(!prevPluginArchive.exists()) throw IOException(IdeBundle.message("error.file.not.found.message", prevPluginArchive.toString()))
 
-    val pluginsTemp = File(PathManager.getPluginTempPath())
-    if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
-      throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
-    }
-    val file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false)
-    println(file.toString())
+    val file = getPluginTempFile()
+    LOG.info(file.toString())
 
     val oldBlockMap = FileInputStream(prevPluginArchive.toFile()).use { input -> BlockMap(input) }
-    println("prevBlockMap chunks=${oldBlockMap.chunks.size}")
+    LOG.info("prevBlockMap chunks=${oldBlockMap.chunks.size}")
 
-    val newBlockMap = ObjectInputStream(FileInputStream("C:\\Users\\Ivan\\JetBrains\\Internship\\intellij\\system\\idea\\plugins\\blockmap.bin")).use { input -> input.readObject() as BlockMap }
-    println("newBlockMap chunks=${newBlockMap.chunks.size}")
+    val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com","plugin-blockmap-patches.dev.marketplace.intellij.net")
+    //val curPluginUrl = pluginUrl
+    LOG.info(curPluginUrl)
+
+    val blockMapUrl = curPluginUrl.replace("pluginManager","pluginManager/blockmap")
+    //val newBlockMap = ObjectInputStream(FileInputStream("C:\\Users\\Ivan\\JetBrains\\Internship\\intellij\\system\\idea\\plugins\\blockmap.bin")).use { input -> input.readObject() as BlockMap }
+    val newBlockMap = HttpRequests.request(blockMapUrl).productNameAsUserAgent().connect { request ->
+      ObjectInputStream(request.inputStream.buffered()).use { input -> input.readObject() as BlockMap }
+    }
+    LOG.info("newBlockMap chunks=${newBlockMap.chunks.size}")
 
     val blockMapDiff = oldBlockMap.compare(newBlockMap)
-    println("blockMapDiff chunks=${blockMapDiff.size}")
+    LOG.info("blockMapDiff chunks=${blockMapDiff.size}")
 
-    val curPluginUrl = if(pluginUrl.contains("localhost:8080")) pluginUrl.replace("localhost:8080","plugins.jetbrains.com") else pluginUrl
 
     val merger = IdeaMerger(prevPluginArchive.toFile(), oldBlockMap, newBlockMap, indicator = indicator)
     FileOutputStream(file).use { output ->  merger.merge(output, IdeaChunkDataSource(oldBlockMap, newBlockMap, curPluginUrl)) }
 
 
-    val newFileBytes = FileInputStream("D:\\plugins\\CodeStream\\8.1.3+74.zip").use { input -> input.readBytes() }
+    //val newFileBytes = FileInputStream("D:\\plugins\\CodeStream\\8.1.3+74.zip").use { input -> input.readBytes() }
+    val newFileBytes = FileInputStream("D:\\plugins\\IntelliJ IDEA Help\\IntelliJIDEAHelp.zip").use { input -> input.readBytes() }
 
-    //val mergeFileBytes = FileInputStream(file).use { input -> input.readBytes() }
-    val mergeFileBytes = FileInputStream("D:\\plugins\\plugin.zip").use { input -> input.readBytes() }
-    println("new bytes=${newFileBytes.size}, merge bytes=${mergeFileBytes.size}")
-    var s = 0
+    val mergeFileBytes = FileInputStream(file).use { input -> input.readBytes() }
+    LOG.info("new bytes=${newFileBytes.size}, merge bytes=${mergeFileBytes.size}")
+    /*var s = 0
     for(i in newFileBytes.indices) if(newFileBytes[i] != mergeFileBytes[i]) s++
-    println(s)
-    println(newFileBytes.contentEquals(mergeFileBytes))
-    return File("")
+    println(s)*/
+    LOG.info(newFileBytes.contentEquals(mergeFileBytes).toString())
+    val connection = HttpRequests.request(curPluginUrl).productNameAsUserAgent().connect { request -> request.connection }
+    val fileName: String = guessFileName(connection, file, pluginUrl)
+    val newFile = File(file.parentFile, fileName)
+    FileUtil.rename(file, newFile)
+    LOG.info(newFile.toString())
+    return newFile
   }
 
   class IdeaChunkDataSource(
     private val oldBlockMap: BlockMap,
     private val newBlockMap: BlockMap,
     private val newPluginUrl : String,
-    private val maxHttpHeaderLength : Int = 10000
+    private val maxHttpHeaderLength : Int = 5000
   ) : ChunkDataSource{
     private val oldMap = oldBlockMap.chunks.associateBy { it.hash }
     private var curChunk = 0
-    private val curRangeChunkLengths = ArrayList<Int>()
+    private var curRangeChunkLengths = ArrayList<Int>()
     private var curChunkData = getRange(nextRange())
     private var pointer = 0
 
     private fun nextRange() : String{
       val range = StringBuilder()
-      curRangeChunkLengths.clear()
+      curRangeChunkLengths = ArrayList()
       var size = 0
       while (curChunk < newBlockMap.chunks.size && range.length <= maxHttpHeaderLength) {
         val newChunk = newBlockMap.chunks[curChunk]
@@ -458,7 +462,6 @@ open class MarketplaceRequests {
         }
         curChunk++
       }
-      println("chunk data source size=$size")
       return range.removeSuffix(",").toString()
     }
 
@@ -468,6 +471,7 @@ open class MarketplaceRequests {
         val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
         request.inputStream.buffered().use { input ->
           for(length in curRangeChunkLengths){
+            // parsing http get range response
             do {
               val line = nextLine(input)
             } while(!line.contains(boundary))
@@ -475,7 +479,8 @@ open class MarketplaceRequests {
             nextLine(input)
             nextLine(input)
             val data = ByteArray(length)
-            input.read(data)
+            // input.read(bytearray) doesn't work properly
+            for(i in 0 until length) data[i] = input.read().toByte()
             result.add(data)
           }
         }
@@ -509,8 +514,16 @@ open class MarketplaceRequests {
 
   private fun getPrevPluginArchive(prevPlugin: Path): Path {
     val suffix = if(prevPlugin.endsWith(".jar")) "" else ".zip"
-    println("${PathManager.getPluginTempPath()}\\${prevPlugin.fileName}$suffix")
     return Paths.get("${PathManager.getPluginTempPath()}\\${prevPlugin.fileName}$suffix")
+  }
+
+  @Throws(IOException::class)
+  private fun getPluginTempFile() : File{
+    val pluginsTemp = File(PathManager.getPluginTempPath())
+    if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
+      throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
+    }
+    return FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false)
   }
 
   @Throws(IOException::class)

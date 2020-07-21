@@ -180,7 +180,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
       else {
         try {
-          PluginInstaller.installAfterRestart(pendingPluginInstall.getFile(), UpdateSettings.getInstance().isKeepArchives(),
+          PluginInstaller.installAfterRestart(pendingPluginInstall.getFile(), !UpdateSettings.getInstance().isKeepPluginsArchive(),
                                               (Path)null, pendingPluginInstall.getPluginDescriptor());
           installsRequiringRestart = true;
         }

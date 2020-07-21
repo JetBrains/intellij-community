@@ -16,19 +16,17 @@ open class Merger(
   private val bufferSize : Int = 64*1024
 ){
   private val buffer = ByteArray(bufferSize)
-  val baos = ByteArrayOutputStream()
 
   open fun merge(output : OutputStream, newChunkDataSource : ChunkDataSource) {
     RandomAccessFile(oldFile, "r").use { prevFileRAF ->
-      val bufferedOutput = output.buffered()
-      val oldMap = oldBlockMap.chunks.associateBy { it.hash }
-
-      for (newChunk in newBlockMap.chunks) {
-        val oldChunk = oldMap[newChunk.hash]
-        if (oldChunk != null) downloadChunkFromOldData(oldChunk, prevFileRAF, bufferedOutput)
-        else downloadChunkFromNewData(newChunk, newChunkDataSource, bufferedOutput)
+      output.buffered().use { bufferedOutput ->
+        val oldMap = oldBlockMap.chunks.associateBy { it.hash }
+        for (newChunk in newBlockMap.chunks) {
+          val oldChunk = oldMap[newChunk.hash]
+          if (oldChunk != null) downloadChunkFromOldData(oldChunk, prevFileRAF, bufferedOutput)
+          else downloadChunkFromNewData(newChunk, newChunkDataSource, bufferedOutput)
+        }
       }
-      FileOutputStream("D:\\plugins\\plugin.zip").use { out -> out.write(baos.toByteArray()) }
     }
   }
 
@@ -41,7 +39,6 @@ open class Merger(
       prevFileRAF.read(buffer, 0, length)
       for (i in 0 until length) {
         output.write(buffer[i].toInt())
-        baos.write(buffer[i].toInt())
       }
       remainingBytes-=length
     }
@@ -53,7 +50,6 @@ open class Merger(
       if(chunkData == null) throw Exception()
       if(chunkData.size == newChunk.length){
         output.write(chunkData)
-        baos.write(chunkData)
       }else throw Exception()
   }
 }
@@ -78,7 +74,6 @@ class IdeaMerger(
                                         output: OutputStream) {
     super.downloadChunkFromNewData(newChunk, newChunkDataSource, output)
     wroteBytes+=newChunk.length
-    if(baos.size() != wroteBytes) throw Exception("${baos.size()}    $wroteBytes")
     setIndicatorFraction()
   }
 
@@ -86,7 +81,6 @@ class IdeaMerger(
                                          output: OutputStream) {
     super.downloadChunkFromOldData(oldChunk, prevFileRAF, output)
     wroteBytes+=oldChunk.length
-    if(baos.size() != wroteBytes) throw Exception("${baos.size()}    $wroteBytes")
     setIndicatorFraction()
   }
 
