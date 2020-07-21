@@ -1001,7 +1001,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   }
 
   private static boolean annotatedAsNonNls(final PsiModifierListOwner parent) {
-    return NlsInfo.forModifierListOwner(parent) instanceof NlsInfo.NonLocalized;
+    return NlsInfo.forModifierListOwner(parent).getNlsStatus() == ThreeState.NO;
   }
 
   private static boolean isInNonNlsEquals(UExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
