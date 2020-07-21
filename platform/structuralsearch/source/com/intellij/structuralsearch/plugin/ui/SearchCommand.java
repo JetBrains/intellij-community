@@ -19,16 +19,18 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class SearchCommand {
+  @NotNull
   protected final SearchContext mySearchContext;
+  @NotNull
   protected final Configuration myConfiguration;
-  private MatchingProcess process;
   private FindUsagesProcessPresentation myProcessPresentation;
 
-  public SearchCommand(Configuration configuration, SearchContext searchContext) {
+  public SearchCommand(@NotNull Configuration configuration, @NotNull SearchContext searchContext) {
     myConfiguration = configuration;
     mySearchContext = searchContext;
   }
 
+  @NotNull
   protected UsageViewContext createUsageViewContext() {
     final Runnable searchStarter = () -> new SearchCommand(myConfiguration, mySearchContext).startSearching();
     return new UsageViewContext(myConfiguration, mySearchContext, searchStarter);
@@ -49,12 +51,7 @@ public class SearchCommand {
     ((FindManagerImpl)FindManager.getInstance(mySearchContext.getProject())).getFindUsagesManager().addToHistory(target);
     UsageViewManager.getInstance(mySearchContext.getProject()).searchAndShowUsages(
       new UsageTarget[]{target},
-      () -> new UsageSearcher() {
-        @Override
-        public void generate(@NotNull final Processor<? super Usage> processor) {
-          findUsages(processor);
-        }
-      },
+      () -> processor -> findUsages(processor),
       myProcessPresentation,
       presentation,
       new UsageViewManager.UsageViewStateListener() {
@@ -70,7 +67,7 @@ public class SearchCommand {
     );
   }
 
-  public void findUsages(final Processor<? super Usage> processor) {
+  public void findUsages(@NotNull Processor<? super Usage> processor) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     progress.setIndeterminate(false);
 
@@ -78,13 +75,12 @@ public class SearchCommand {
       int count;
 
       @Override
-      public void setMatchingProcess(MatchingProcess _process) {
-        process = _process;
+      public void setMatchingProcess(@NotNull MatchingProcess _process) {
         findStarted();
       }
 
       @Override
-      public void processFile(PsiFile element) {
+      public void processFile(@NotNull PsiFile element) {
         final VirtualFile virtualFile = element.getVirtualFile();
         if (virtualFile != null)
           progress.setText(SSRBundle.message("looking.in.progress.message", virtualFile.getPresentableName()));
@@ -103,7 +99,7 @@ public class SearchCommand {
       }
 
       @Override
-      public void newMatch(MatchResult result) {
+      public void newMatch(@NotNull MatchResult result) {
         UsageInfo info;
 
         if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {

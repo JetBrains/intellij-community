@@ -68,11 +68,12 @@ public class MatchOptions implements JDOMExternalizable {
     myPatternContextId = options.myPatternContextId;
   }
 
+  @NotNull
   public MatchOptions copy() {
     return new MatchOptions(this);
   }
 
-  public void initScope(Project project) {
+  public void initScope(@NotNull Project project) {
     if (scope == null && scopeType != null && scopeDescriptor != null) {
       scope = Scopes.createScope(project, scopeDescriptor, scopeType);
     }
@@ -149,7 +150,7 @@ public class MatchOptions implements JDOMExternalizable {
     return pattern;
   }
 
-  public void fillSearchCriteria(String criteria) {
+  public void fillSearchCriteria(@NotNull String criteria) {
     if (!variableConstraints.isEmpty()) variableConstraints.clear();
     StringToConstraintsTransformer.transformCriteria(criteria, this);
   }
@@ -255,7 +256,7 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public int hashCode() {
-    int result = (looseMatching ? 1 : 0);
+    int result = looseMatching ? 1 : 0;
     result = 29 * result + (recursiveSearch ? 1 : 0);
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
     result = 29 * result + pattern.hashCode();
@@ -267,7 +268,7 @@ public class MatchOptions implements JDOMExternalizable {
     return result;
   }
 
-  public void setFileType(LanguageFileType fileType) {
+  public void setFileType(@NotNull LanguageFileType fileType) {
     myFileType = fileType;
   }
 

@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
@@ -16,14 +17,14 @@ import java.util.Set;
  */
 public class HierarchyNodeIterator extends NodeIterator {
   private int index;
-  private final List<PsiElement> remaining;
+  private final List<PsiElement> remaining = new SmartList<>();
   private boolean objectTaken;
   private boolean firstElementTaken;
   private final boolean acceptClasses;
   private final boolean acceptInterfaces;
   private final boolean acceptFirstElement;
 
-  private void build(PsiElement current, Set<PsiElement> visited) {
+  private void build(PsiElement current, @NotNull Set<PsiElement> visited) {
     if (current == null) return;
 
     final String text = current instanceof PsiClass ? ((PsiClass)current).getName() : current.getText();
@@ -66,7 +67,7 @@ public class HierarchyNodeIterator extends NodeIterator {
     }
   }
 
-  private void processClasses(PsiReferenceList referenceList, Set<PsiElement> visited) {
+  private void processClasses(PsiReferenceList referenceList, @NotNull Set<PsiElement> visited) {
     if (referenceList == null) {
       return;
     }
@@ -79,8 +80,7 @@ public class HierarchyNodeIterator extends NodeIterator {
     this(reference, acceptClasses, acceptInterfaces, true);
   }
 
-  public HierarchyNodeIterator(PsiElement reference, boolean acceptClasses, boolean acceptInterfaces, boolean acceptFirstElement) {
-    remaining = new SmartList<>();
+  private HierarchyNodeIterator(PsiElement reference, boolean acceptClasses, boolean acceptInterfaces, boolean acceptFirstElement) {
     this.acceptClasses = acceptClasses;
     this.acceptInterfaces = acceptInterfaces;
     this.acceptFirstElement = acceptFirstElement;

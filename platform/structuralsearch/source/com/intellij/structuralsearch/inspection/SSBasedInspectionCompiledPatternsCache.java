@@ -25,7 +25,6 @@ import java.util.Map;
  * @author Eugene.Kudelevsky
  */
 final class SSBasedInspectionCompiledPatternsCache {
-
   private static final Logger LOG = Logger.getInstance(SSBasedInspectionCompiledPatternsCache.class);
   private static final Key<Map<Configuration, Matcher>> COMPILED_OPTIONS_KEY = Key.create("SSR_INSPECTION_COMPILED_OPTIONS_KEY");
   private final Project myProject;
@@ -43,13 +42,15 @@ final class SSBasedInspectionCompiledPatternsCache {
   }
 
   @NotNull
-  Map<Configuration, Matcher> getCompiledOptions(@NotNull List<Configuration> configurations) {
+  Map<Configuration, Matcher> getCompiledOptions(@NotNull List<? extends Configuration> configurations) {
     final Map<Configuration, Matcher> cache = getCompiledOptions(configurations, myProject.getUserData(COMPILED_OPTIONS_KEY));
     myProject.putUserData(COMPILED_OPTIONS_KEY, cache);
     return cache;
   }
 
-  Map<Configuration, Matcher> getCompiledOptions(@NotNull List<Configuration> configurations, @Nullable Map<Configuration, Matcher> cache) {
+  @NotNull
+  private Map<Configuration, Matcher> getCompiledOptions(@NotNull List<? extends Configuration> configurations,
+                                                         @Nullable Map<Configuration, Matcher> cache) {
     if (areConfigurationsInCache(configurations, cache)) {
       return cache;
     }
@@ -79,7 +80,7 @@ final class SSBasedInspectionCompiledPatternsCache {
   }
 
   @Contract("_, null -> false")
-  private static boolean areConfigurationsInCache(List<Configuration> configurations, @Nullable Map<Configuration, Matcher> cache) {
+  private static boolean areConfigurationsInCache(@NotNull List<? extends Configuration> configurations, @Nullable Map<Configuration, Matcher> cache) {
     return cache != null && configurations.size() == cache.size() && configurations.stream().allMatch(key -> cache.containsKey(key));
   }
 }

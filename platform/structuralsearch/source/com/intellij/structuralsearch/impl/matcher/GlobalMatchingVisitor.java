@@ -64,13 +64,14 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return this.myResult = result;
   }
 
+  @NotNull
   public MatchContext getMatchContext() {
     return matchContext;
   }
 
   @Override
   protected boolean doMatchInAnyOrder(@NotNull NodeIterator elements, @NotNull NodeIterator elements2) {
-    return matchContext.getPattern().getHandler(elements.current()).matchInAnyOrder(
+    return MatchingHandler.matchInAnyOrder(
       elements,
       elements2,
       matchContext
@@ -217,7 +218,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     }
   }
 
-  public void setMatchContext(MatchContext matchContext) {
+  public void setMatchContext(@NotNull MatchContext matchContext) {
     this.matchContext = matchContext;
   }
 

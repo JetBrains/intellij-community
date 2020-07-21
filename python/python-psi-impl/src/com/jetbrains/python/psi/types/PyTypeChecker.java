@@ -229,7 +229,7 @@ public final class PyTypeChecker {
       }
     }
 
-    return StreamEx.of(actual.getMembers()).anyMatch(type -> match(expected, type, context).orElse(false));
+    return ContainerUtil.or(actual.getMembers(), type -> match(expected, type, context).orElse(false));
   }
 
   @NotNull
@@ -244,7 +244,7 @@ public final class PyTypeChecker {
   }
 
   private static boolean match(@NotNull PyUnionType expected, @NotNull PyType actual, @NotNull MatchContext context) {
-    return StreamEx.of(expected.getMembers()).anyMatch(type -> match(type, actual, context).orElse(true));
+    return ContainerUtil.or(expected.getMembers(), type -> match(type, actual, context).orElse(true));
   }
 
   @NotNull
@@ -405,11 +405,7 @@ public final class PyTypeChecker {
     final PyType superElementType = expected.getIteratedItemType();
     final PyType subElementType = actual.getIteratedItemType();
 
-    if (!match(superElementType, subElementType, context).orElse(true)) {
-      return false;
-    }
-
-    return true;
+    return match(superElementType, subElementType, context).orElse(true);
   }
 
   private static boolean match(@NotNull PyStructuralType expected, @NotNull PyType actual, @NotNull TypeEvalContext context) {
@@ -427,9 +423,8 @@ public final class PyTypeChecker {
     }
 
     final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
-    return StreamEx
-      .of(expected.getAttributeNames())
-      .noneMatch(attribute -> ContainerUtil.isEmpty(actual.resolveMember(attribute, null, AccessDirection.READ, resolveContext)));
+    return !ContainerUtil.exists(expected.getAttributeNames(), attribute -> ContainerUtil
+      .isEmpty(actual.resolveMember(attribute, null, AccessDirection.READ, resolveContext)));
   }
 
   private static boolean match(@NotNull PyStructuralType expected, @NotNull PyStructuralType actual) {
@@ -598,8 +593,8 @@ public final class PyTypeChecker {
     return !collected.isEmpty();
   }
 
-  private static void collectGenerics(@Nullable PyType type, @NotNull TypeEvalContext context, @NotNull Set<PyGenericType> collected,
-                                      @NotNull Set<PyType> visited) {
+  private static void collectGenerics(@Nullable PyType type, @NotNull TypeEvalContext context, @NotNull Set<? super PyGenericType> collected,
+                                      @NotNull Set<? super PyType> visited) {
     if (visited.contains(type)) {
       return;
     }
@@ -762,7 +757,7 @@ public final class PyTypeChecker {
     return substitutions;
   }
 
-  private static boolean matchContainer(@Nullable PyCallableParameter container, @NotNull List<PyExpression> arguments,
+  private static boolean matchContainer(@Nullable PyCallableParameter container, @NotNull List<? extends PyExpression> arguments,
                                         @NotNull Map<PyGenericType, PyType> substitutions, @NotNull TypeEvalContext context) {
     if (container == null) {
       return true;

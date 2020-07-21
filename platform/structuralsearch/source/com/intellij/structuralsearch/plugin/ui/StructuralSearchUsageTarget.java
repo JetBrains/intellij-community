@@ -23,7 +23,7 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
   private final Runnable mySearchStarter;
   private final SearchContext mySearchContext;
 
-  StructuralSearchUsageTarget(Configuration configuration, SearchContext searchContext, Runnable searchStarter) {
+  StructuralSearchUsageTarget(@NotNull Configuration configuration, @NotNull SearchContext searchContext, @NotNull Runnable searchStarter) {
     myConfiguration = configuration;
     mySearchStarter = searchStarter;
     mySearchContext = searchContext;

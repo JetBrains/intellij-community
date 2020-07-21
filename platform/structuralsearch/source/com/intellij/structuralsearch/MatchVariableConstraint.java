@@ -91,11 +91,11 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   public MatchVariableConstraint() {}
 
-  public MatchVariableConstraint(String name) {
+  public MatchVariableConstraint(@NotNull String name) {
     setName(name);
   }
 
-  MatchVariableConstraint(MatchVariableConstraint constraint) {
+  private MatchVariableConstraint(@NotNull MatchVariableConstraint constraint) {
     super(constraint);
     regExp = constraint.regExp;
     invertRegExp = constraint.invertRegExp;
@@ -395,7 +395,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MatchVariableConstraint)) return false;
-    if (!(super.equals(o))) return false;
+    if (!super.equals(o)) return false;
 
     final MatchVariableConstraint other = (MatchVariableConstraint)o;
 
@@ -425,8 +425,9 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     if (!contextConstraint.equals(other.contextConstraint)) return false;
     if (additionalConstraints != null) {
        if (!additionalConstraints.equals(other.additionalConstraints)) return false;
-    } else if (other.additionalConstraints != null) {
-      return false;
+    }
+    else {
+      return other.additionalConstraints == null;
     }
     return true;
   }

@@ -40,7 +40,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   private String problemDescriptor;
   private int order;
 
-  private transient String myCurrentVariableName = null;
+  private transient String myCurrentVariableName;
 
   public Configuration() {
     name = "";
@@ -48,13 +48,13 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     created = -1L;
   }
 
-  public Configuration(String name, String category) {
+  public Configuration(@NotNull String name, @NotNull String category) {
     this.name = name;
     this.category = category;
     created = -1L;
   }
 
-  protected Configuration(Configuration configuration) {
+  protected Configuration(@NotNull Configuration configuration) {
     name = configuration.name;
     category = configuration.category;
     created = -1L; // receives timestamp when added to history
@@ -66,6 +66,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     order = configuration.order;
   }
 
+  @NotNull
   public abstract Configuration copy();
 
   @NotNull
@@ -80,6 +81,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     name = value;
   }
 
+  @NotNull
   public String getCategory() {
     return category;
   }
@@ -210,13 +212,13 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.predefined = predefined;
   }
 
+  @NotNull
   public abstract MatchOptions getMatchOptions();
 
-  public ReplaceOptions getReplaceOptions() {
-    return null;
-  }
+  @NotNull
+  public abstract ReplaceOptions getReplaceOptions();
 
-  public abstract NamedScriptableDefinition findVariable(String name);
+  public abstract NamedScriptableDefinition findVariable(@NotNull String name);
 
   public abstract void removeUnusedVariables();
 

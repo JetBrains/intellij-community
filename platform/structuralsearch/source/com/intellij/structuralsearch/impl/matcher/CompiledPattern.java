@@ -42,7 +42,7 @@ public abstract class CompiledPattern {
   public abstract String @NotNull [] getTypedVarPrefixes();
   public abstract boolean isTypedVar(@NotNull String str);
 
-  public void setTargetNode(PsiElement element) {
+  public void setTargetNode(@NotNull PsiElement element) {
     targetNode = element;
   }
 
@@ -113,11 +113,11 @@ public abstract class CompiledPattern {
     return handler;
   }
 
-  public MatchingHandler getHandler(String name) {
+  public MatchingHandler getHandler(@NotNull String name) {
     return handlers.get(name);
   }
 
-  public void setHandler(PsiElement node, MatchingHandler handler) {
+  public void setHandler(@NotNull PsiElement node, @NotNull MatchingHandler handler) {
     last = null;
     handlers.put(node, handler);
   }

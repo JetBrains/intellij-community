@@ -7,14 +7,14 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public final class PatternContext implements Comparable<PatternContext> {
-
+  @NotNull
   public final String myID;
+  @NotNull
   private final String myDisplayName;
 
-  public PatternContext(@NotNull String ID, String displayName) {
+  public PatternContext(@NotNull String ID, @NotNull String displayName) {
     myID = ID;
     myDisplayName = displayName;
-
   }
 
   @Override
@@ -41,7 +41,7 @@ public final class PatternContext implements Comparable<PatternContext> {
     return myID;
   }
 
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return myDisplayName;
   }
 

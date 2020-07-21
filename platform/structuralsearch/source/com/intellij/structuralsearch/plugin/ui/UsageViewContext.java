@@ -18,18 +18,21 @@ import java.awt.event.ActionEvent;
 
 public class UsageViewContext {
 
+  @NotNull
   protected final SearchContext mySearchContext;
+  @NotNull
   protected final Configuration myConfiguration;
+  @NotNull
   private final ConfigurableUsageTarget myTarget;
   protected UsageView myUsageView;
 
-  protected UsageViewContext(Configuration configuration, SearchContext searchContext, Runnable searchStarter) {
+  protected UsageViewContext(@NotNull Configuration configuration, @NotNull SearchContext searchContext, @NotNull Runnable searchStarter) {
     myConfiguration = configuration;
     mySearchContext = searchContext;
     myTarget = new StructuralSearchUsageTarget(configuration, searchContext, searchStarter);
   }
 
-  public void setUsageView(final UsageView usageView) {
+  public void setUsageView(@NotNull UsageView usageView) {
     myUsageView = usageView;
     final MessageBusConnection connection = mySearchContext.getProject().getMessageBus().connect(usageView);
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
@@ -40,7 +43,7 @@ public class UsageViewContext {
     });
   }
 
-  public ConfigurableUsageTarget getTarget() {
+  public @NotNull ConfigurableUsageTarget getTarget() {
     return myTarget;
   }
 

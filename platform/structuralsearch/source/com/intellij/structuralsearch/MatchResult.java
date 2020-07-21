@@ -4,6 +4,7 @@ package com.intellij.structuralsearch;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ public abstract class MatchResult {
 
   public abstract String getName();
 
+  @NotNull
   public abstract List<MatchResult> getChildren();
   public abstract boolean hasChildren();
   public abstract int size();
@@ -27,6 +29,7 @@ public abstract class MatchResult {
   public abstract boolean isScopeMatch();
   public abstract boolean isMultipleMatch();
 
+  @NotNull
   public abstract MatchResult getRoot();
   public abstract boolean isTarget();
 }

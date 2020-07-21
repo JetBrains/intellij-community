@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -18,19 +19,20 @@ public final class InspectionProfileUtil {
 
   private InspectionProfileUtil() {}
 
-  public static SSBasedInspection getStructuralSearchInspection(InspectionProfile profile) {
+  @NotNull
+  public static SSBasedInspection getStructuralSearchInspection(@NotNull InspectionProfile profile) {
     final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, (Project)null);
     assert wrapper != null;
     return (SSBasedInspection)wrapper.getTool();
   }
 
-  public static InspectionProfileModifiableModel getInspectionProfile(Component c) {
+  public static InspectionProfileModifiableModel getInspectionProfile(@NotNull Component c) {
     final SingleInspectionProfilePanel panel = UIUtil.uiParents(c, true).filter(SingleInspectionProfilePanel.class).first();
     if (panel == null) return null;
     return panel.getProfile();
   }
 
-  public static void fireProfileChanged(InspectionProfileImpl profile) {
+  public static void fireProfileChanged(@NotNull InspectionProfileImpl profile) {
     profile.getProfileManager().fireProfileChanged(profile);
   }
 }

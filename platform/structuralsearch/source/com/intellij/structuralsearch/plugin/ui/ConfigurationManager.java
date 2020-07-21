@@ -25,8 +25,8 @@ import java.util.stream.Stream;
 @State(name = "StructuralSearchPlugin", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ConfigurationManager implements PersistentStateComponent<Element> {
   private static final int MAX_RECENT_SIZE = 30;
-  @NonNls static final String SEARCH_TAG_NAME = "searchConfiguration";
-  @NonNls static final String REPLACE_TAG_NAME = "replaceConfiguration";
+  @NonNls private static final String SEARCH_TAG_NAME = "searchConfiguration";
+  @NonNls private static final String REPLACE_TAG_NAME = "replaceConfiguration";
   @NonNls private static final String SAVE_HISTORY_ATTR_NAME = "history";
 
   private final List<Configuration> configurations = new SmartList<>();
@@ -65,9 +65,8 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   }
   /**
    * Stores configurations at the application level. Before the configurations where stored in the workspace file.
-   * @param configurations
    */
-  private void migrate(List<? extends Configuration> configurations) {
+  private void migrate(@NotNull List<? extends Configuration> configurations) {
     if (configurations.isEmpty()) {
       return;
     }
@@ -132,7 +131,8 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     }
   }
 
-  static Element saveConfiguration(@NotNull Element element, @NotNull Configuration config) {
+  @NotNull
+  private static Element saveConfiguration(@NotNull Element element, @NotNull Configuration config) {
     final Element infoElement = new Element(config instanceof SearchConfiguration ? SEARCH_TAG_NAME : REPLACE_TAG_NAME);
     element.addContent(infoElement);
     config.writeExternal(infoElement);
@@ -159,7 +159,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     }
   }
 
-  static Configuration readConfiguration(@NotNull Element element) {
+  private static Configuration readConfiguration(@NotNull Element element) {
     final String name = element.getName();
     final Configuration config;
     if (name.equals(SEARCH_TAG_NAME)) {

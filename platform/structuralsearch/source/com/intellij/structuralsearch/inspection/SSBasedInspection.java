@@ -39,12 +39,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class SSBasedInspection extends LocalInspectionTool implements DynamicGroupTool {
-  static final Object LOCK = new Object(); // hack to avoid race conditions in SSR
+  private static final Object LOCK = ObjectUtils.sentinel("SSRLock"); // hack to avoid race conditions in SSR
 
   @NonNls public static final String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
-  final Set<String> myProblemsReported = new HashSet<>(1);
-  private InspectionProfileImpl mySessionProfile = null;
+  private final Set<String> myProblemsReported = new HashSet<>(1);
+  private InspectionProfileImpl mySessionProfile;
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -154,7 +154,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     };
   }
 
-  public static void register(Configuration configuration) {
+  public static void register(@NotNull Configuration configuration) {
     if (configuration.getOrder() != 0) {
       // not a main configuration containing meta data
       return;
@@ -175,7 +175,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
   }
 
-  private static boolean isMetaDataChanged(Configuration configuration, HighlightDisplayKey key) {
+  private static boolean isMetaDataChanged(@NotNull Configuration configuration, @NotNull HighlightDisplayKey key) {
     if (StringUtil.isEmpty(configuration.getSuppressId())) {
       if (!SHORT_NAME.equals(key.getID())) return true;
     }
@@ -184,14 +184,14 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   @Override
-  public List<LocalInspectionToolWrapper> getChildren() {
+  public @NotNull List<LocalInspectionToolWrapper> getChildren() {
     return getConfigurations().stream()
       .filter(configuration -> configuration.getOrder() == 0)
       .map(configuration -> new StructuralSearchInspectionToolWrapper(getConfigurationsWithUuid(configuration.getUuid())))
       .collect(Collectors.toList());
   }
 
-  static LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {
+  private static LocalQuickFix createQuickFix(@NotNull Project project, @NotNull MatchResult matchResult, @NotNull Configuration configuration) {
     if (!(configuration instanceof ReplaceConfiguration)) return null;
     final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)configuration;
     final Replacer replacer = new Replacer(project, replaceConfiguration.getReplaceOptions());
@@ -221,7 +221,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     };
   }
 
-  private Configuration getMainConfiguration(Configuration configuration) {
+  @NotNull
+  private Configuration getMainConfiguration(@NotNull Configuration configuration) {
     if (configuration.getOrder() == 0) {
       return configuration;
     }
@@ -229,10 +230,12 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return myConfigurations.stream().filter(c -> c.getOrder() == 0 && uuid.equals(c.getUuid())).findFirst().orElse(configuration);
   }
 
+  @NotNull
   public List<Configuration> getConfigurations() {
     return Collections.unmodifiableList(myConfigurations);
   }
 
+  @NotNull
   public List<Configuration> getConfigurationsWithUuid(@NotNull UUID uuid) {
     final List<Configuration> configurations = ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid()));
     configurations.sort(Comparator.comparingInt(Configuration::getOrder));
@@ -267,13 +270,13 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     private final Configuration myConfiguration;
     private PairProcessor<? super MatchResult, ? super Configuration> myProcessor;
 
-    InspectionResultSink(PairProcessor<? super MatchResult, ? super Configuration> processor, Configuration configuration) {
+    InspectionResultSink(@NotNull PairProcessor<? super MatchResult, ? super Configuration> processor, @NotNull Configuration configuration) {
       myProcessor = processor;
       myConfiguration = configuration;
     }
 
     @Override
-    public void newMatch(MatchResult result) {
+    public void newMatch(@NotNull MatchResult result) {
       myProcessor.process(result, myConfiguration);
     }
 
