@@ -4,6 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.jcef.JBCefJSQuery.JSQueryFunc;
 import com.intellij.util.ObjectUtils;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A wrapper over {@link CefClient}.
@@ -58,6 +60,7 @@ public class JBCefClient implements JBCefDisposable {
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
   @NotNull private final Map<String, Object> myProperties = Collections.synchronizedMap(new HashMap<>());
   @Nullable private JSQueryPool myJSQueryPool;
+  @NotNull private final AtomicInteger myJSQueryCounter = new AtomicInteger(0);
 
   private final HandlerSupport<CefContextMenuHandler> myContextMenuHandler = new HandlerSupport<>();
   private final HandlerSupport<CefDialogHandler> myDialogHandler = new HandlerSupport<>();
@@ -132,6 +135,10 @@ public class JBCefClient implements JBCefDisposable {
     if (myJSQueryPool == null) {
       myJSQueryPool = JSQueryPool.create(this);
     }
+  }
+
+  int nextJSQueryIndex() {
+    return myJSQueryCounter.incrementAndGet();
   }
 
   static class JSQueryPool {

@@ -5,10 +5,6 @@ import com.intellij.application.options.RegistryManager;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.util.ui.TestScaleHelper;
 import junit.framework.TestCase;
-import org.cef.browser.CefBrowser;
-import org.cef.browser.CefFrame;
-import org.cef.handler.CefLoadHandlerAdapter;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -16,8 +12,9 @@ import org.junit.Test;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.ui.jcef.JBCefTestHelper.loadAndWait;
 
 /**
  * Tests https://youtrack.jetbrains.com/issue/IDEA-232594
@@ -71,22 +68,5 @@ public class IDEA232594Test {
     }));
 
     TestCase.assertEquals("JS callback has been erroneously called on page reload", 1, CALLBACL_COUNT.get());
-  }
-
-  private static void loadAndWait(@NotNull JBCefBrowser browser, @NotNull Runnable loadAction) {
-    CountDownLatch latch = new CountDownLatch(1);
-
-    browser.getJBCefClient().addLoadHandler(new CefLoadHandlerAdapter() {
-      @Override
-      public void onLoadEnd(CefBrowser cefBrowser, CefFrame frame, int httpStatusCode) {
-        System.out.println("onLoadEnd");
-        latch.countDown();
-        browser.getJBCefClient().removeLoadHandler(this, cefBrowser);
-      }
-    }, browser.getCefBrowser());
-
-    loadAction.run();
-
-    JBCefJSQueryTest.wait(latch);
   }
 }

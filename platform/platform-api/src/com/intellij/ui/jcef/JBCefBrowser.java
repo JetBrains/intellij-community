@@ -51,7 +51,6 @@ public class JBCefBrowser implements JBCefDisposable {
   @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
-  private final AtomicInteger myJSQueryCounter = new AtomicInteger(0);
   private final boolean myIsDefaultClient;
   private volatile boolean myIsCefBrowserCreated;
   @Nullable private volatile LoadDeferrer myLoadDeferrer;
@@ -383,10 +382,6 @@ public class JBCefBrowser implements JBCefDisposable {
 
   boolean isCefBrowserCreated() {
     return myIsCefBrowserCreated;
-  }
-
-  int getJSQueryCounter() {
-    return myJSQueryCounter.incrementAndGet();
   }
 
   /**
