@@ -673,51 +673,52 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
       Set<PsiModifierListOwner> nonNlsTargets = new THashSet<>();
       NlsInfo info = getExpectedNlsInfo(myManager.getProject(), expression, stringValue, nonNlsTargets);
-      if (info instanceof NlsInfo.Localized) {
-        UField parentField =
-          UastUtils.getParentOfType(expression, UField.class); // PsiTreeUtil.getParentOfType(expression, PsiField.class);
-        if (parentField != null) {
-          nonNlsTargets.add((PsiModifierListOwner)parentField.getJavaPsi());
-        }
+      if (!(info instanceof NlsInfo.Localized)) {
+        return;
+      }
+      UField parentField =
+        UastUtils.getParentOfType(expression, UField.class); // PsiTreeUtil.getParentOfType(expression, PsiField.class);
+      if (parentField != null) {
+        nonNlsTargets.add((PsiModifierListOwner)parentField.getJavaPsi());
+      }
 
-        final String description = JavaI18nBundle.message("inspection.i18n.message.general.with.value", "#ref");
+      final String description = JavaI18nBundle.message("inspection.i18n.message.general.with.value", "#ref");
 
-        List<LocalQuickFix> fixes = new ArrayList<>();
+      List<LocalQuickFix> fixes = new ArrayList<>();
 
-        if (myOnTheFly) {
-          if (sourcePsi instanceof PsiLiteralExpression) {
-            if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
-              fixes.add(new I18nizeConcatenationQuickFix((NlsInfo.Localized)info));
-            }
-            fixes.add(new I18nizeQuickFix((NlsInfo.Localized)info));
+      if (myOnTheFly) {
+        if (sourcePsi instanceof PsiLiteralExpression) {
+          if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
+            fixes.add(new I18nizeConcatenationQuickFix((NlsInfo.Localized)info));
+          }
+          fixes.add(new I18nizeQuickFix((NlsInfo.Localized)info));
 
-            if (!isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
-              fixes.add(createIntroduceConstantFix());
-            }
+          if (!isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
+            fixes.add(createIntroduceConstantFix());
+          }
 
-            if (PsiUtil.isLanguageLevel5OrHigher(sourcePsi)) {
-              final JavaPsiFacade facade = JavaPsiFacade.getInstance(myManager.getProject());
-              for (PsiModifierListOwner element : nonNlsTargets) {
-                if (NlsInfo.forModifierListOwner(element).getNlsStatus() == ThreeState.UNSURE) {
-                  if (!element.getManager().isInProject(element) ||
-                      facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
-                    fixes.add(new NonNlsAnnotationProvider().createFix(element));
-                  }
+          if (PsiUtil.isLanguageLevel5OrHigher(sourcePsi)) {
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(myManager.getProject());
+            for (PsiModifierListOwner element : nonNlsTargets) {
+              if (NlsInfo.forModifierListOwner(element).getNlsStatus() == ThreeState.UNSURE) {
+                if (!element.getManager().isInProject(element) ||
+                    facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
+                  fixes.add(new NonNlsAnnotationProvider().createFix(element));
                 }
               }
             }
           }
         }
-        else {
-          fixes.add(new I18nizeBatchQuickFix());
-        }
-
-        LocalQuickFix[] farr = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
-        final ProblemDescriptor problem = myManager.createProblemDescriptor(sourcePsi,
-                                                                            description, myOnTheFly, farr,
-                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-        myProblems.add(problem);
       }
+      else {
+        fixes.add(new I18nizeBatchQuickFix());
+      }
+
+      LocalQuickFix[] farr = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
+      final ProblemDescriptor problem = myManager.createProblemDescriptor(sourcePsi,
+                                                                          description, myOnTheFly, farr,
+                                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      myProblems.add(problem);
     }
 
     private boolean isNotConstantFieldInitializer(final PsiExpression expression) {
