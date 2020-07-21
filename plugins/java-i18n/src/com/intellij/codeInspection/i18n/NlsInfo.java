@@ -263,10 +263,15 @@ public abstract class NlsInfo {
 
   private static @NotNull NlsInfo fromArgument(@NotNull UExpression expression) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
-    if (parent instanceof UPolyadicExpression) {
-      parent = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
+    while (true) {
+      if (parent instanceof UPolyadicExpression && ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.PLUS ||
+          parent instanceof UParenthesizedExpression || parent instanceof UIfExpression) {
+        parent = parent.getUastParent();
+      } else {
+        break;
+      }
     }
-    UCallExpression callExpression = UastUtils.getUCallExpression(parent);
+    UCallExpression callExpression = UastUtils.getUCallExpression(parent, 1);
     if (callExpression == null) return Unspecified.UNKNOWN;
 
     List<UExpression> arguments = callExpression.getValueArguments();

@@ -25,6 +25,10 @@ class X {
         use(getName());
     }
     
+    void testTernary() {
+        use(getNonAnnotated() == null ? getName() : EMPTY);
+    }
+    
     native @NlsSafe String getName();
     
     void testNested(String s) {
