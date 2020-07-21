@@ -11,8 +11,7 @@
     <!-- TODO: create normal change note list -->
     <change-notes><![CDATA[
         <ul>
-            <li>Support of 2020.2 platform.</li>
-            <li>New plugin icon.</li>
+            <li>Initial formatting support.</li>
         </ul>
     ]]>
     </change-notes>
