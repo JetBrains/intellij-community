@@ -67,7 +67,7 @@ private val cdSmoothScrolling                                          get() = C
 private val cdUseSoftWrapsAtEditor                                     get() = CheckboxDescriptor(message("checkbox.use.soft.wraps.at.editor"), PropertyBinding(editorSettings::isUseSoftWraps, editorSettings::setUseSoftWraps))
 private val cdUseCustomSoftWrapIndent                                  get() = CheckboxDescriptor(message("checkbox.use.custom.soft.wraps.indent"), PropertyBinding(editorSettings::isUseCustomSoftWrapIndent, editorSettings::setUseCustomSoftWrapIndent))
 private val cdShowSoftWrapsOnlyOnCaretLine                             get() = CheckboxDescriptor(message("checkbox.show.softwraps.only.for.caret.line"), PropertyBinding({ !editorSettings.isAllSoftWrapsShown }, { editorSettings.setAllSoftwrapsShown(!it) }))
-private val cdTrimBlankLinesAtEOF                                      get() = CheckboxDescriptor(message("editor.options.trim.empty.lines.at.eof"), PropertyBinding(editorSettings::isTrimBlankLinesAtEOF, editorSettings::setTrimBlankLinesAtEOF))
+private val cdTrimBlankLinesAtEOF                                      get() = CheckboxDescriptor(message("editor.options.trim.blank.lines.at.eof"), PropertyBinding(editorSettings::isTrimBlankLinesAtEOF, editorSettings::setTrimBlankLinesAtEOF))
 private val cdEnsureBlankLineBeforeCheckBox                            get() = CheckboxDescriptor(message("editor.options.line.feed"), PropertyBinding(editorSettings::isEnsureNewLineAtEOF, editorSettings::setEnsureNewLineAtEOF))
 private val cdShowQuickDocOnMouseMove                                  get() = CheckboxDescriptor(message("editor.options.quick.doc.on.mouse.hover"), PropertyBinding(editorSettings::isShowQuickDocOnMouseOverElement, editorSettings::setShowQuickDocOnMouseOverElement))
 private val cdKeepTrailingSpacesOnCaretLine                            get() = CheckboxDescriptor(message("editor.settings.delete.trailing.spaces.on.caret.line"), PropertyBinding({ !editorSettings.isKeepTrailingSpacesOnCaretLine }, { editorSettings.isKeepTrailingSpacesOnCaretLine = !it }))
@@ -254,11 +254,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
             largeGapAfter()
           }
         }
-        row {
-          label(message("editor.options.empty.lines.title"))
-          row { checkBox(cdEnsureBlankLineBeforeCheckBox) }
-          row { checkBox(cdTrimBlankLinesAtEOF) }
-        }
+        row { checkBox(cdEnsureBlankLineBeforeCheckBox) }
       }
       for (configurable in configurables) {
         appendDslConfigurableRow(configurable)
