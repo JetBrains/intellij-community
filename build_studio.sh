@@ -92,7 +92,15 @@ echo "## BAZEL_BIN: $BAZEL_BIN"
 
 readonly AS_BUILD_NUMBER="$(sed "s/SNAPSHOT/${BNUM}/" build.txt)"
 
-$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$AS_BUILD_NUMBER" "$ASWB_PROPERTY" "-Dstudio.sdk=$STUDIO_SDK" "-Dbundle.ui.tests=$UITESTS" build
+declare -ar BUILD_PROPERTIES=(
+  "-Dintellij.build.output.root=${OUT}"
+  "-Dbuild.number=${AS_BUILD_NUMBER}"
+  "${ASWB_PROPERTY}"
+  "-Dstudio.sdk=${STUDIO_SDK}"
+  "-Dbundle.ui.tests=${UITESTS}"
+)
+
+$ANT "${BUILD_PROPERTIES[@]}" build
 
 if [[ "${STUDIO_SDK}" == "false" ]]; then
   # TODO fullupdater builds sdk-updater, so for now we don't build it
