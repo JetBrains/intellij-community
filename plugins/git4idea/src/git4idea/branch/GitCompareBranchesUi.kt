@@ -66,10 +66,10 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
 
     val topLogUiFactory = MyLogUiFactory("git-compare-branches-top-" + UUID.randomUUID(),
                                          MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesTopLogProperties>()),
-                                         rangeFilter, rootFilter)
+                                         logManager.colorManager, rangeFilter, rootFilter)
     val bottomLogUiFactory = MyLogUiFactory("git-compare-branches-bottom-" + UUID.randomUUID(),
                                             MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesBottomLogProperties>()),
-                                            rangeFilter.asReversed(), rootFilter)
+                                            logManager.colorManager, rangeFilter.asReversed(), rootFilter)
     val topLogUi = logManager.createLogUi(topLogUiFactory, VcsLogManager.LogWindowKind.EDITOR)
     val bottomLogUi = logManager.createLogUi(bottomLogUiFactory, VcsLogManager.LogWindowKind.EDITOR)
 
@@ -87,9 +87,10 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
 
   private class MyLogUiFactory(val logId: String,
                                val properties: MainVcsLogUiProperties,
+                               val colorManager: VcsLogColorManager,
                                val rangeFilter: VcsLogRangeFilter,
                                val rootFilter: VcsLogRootFilter?) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
-    override fun createLogUi(project: Project, colorManager: VcsLogColorManager, logData: VcsLogData): MainVcsLogUi {
+    override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val vcsLogFilterer = VcsLogFiltererImpl(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
                                               logData.index)
       val initialSortType = properties.get<PermanentGraph.SortType>(MainVcsLogUiProperties.BEK_SORT_TYPE)

@@ -253,7 +253,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 }
 
 internal class BranchesVcsLogUiFactory(logManager: VcsLogManager, logId: String, filters: VcsLogFilterCollection? = null)
-  : BaseVcsLogUiFactory<BranchesVcsLogUi>(logId, filters, logManager.uiProperties) {
+  : BaseVcsLogUiFactory<BranchesVcsLogUi>(logId, filters, logManager.uiProperties, logManager.colorManager) {
   override fun createVcsLogUiImpl(logId: String,
                                   logData: VcsLogData,
                                   properties: MainVcsLogUiProperties,

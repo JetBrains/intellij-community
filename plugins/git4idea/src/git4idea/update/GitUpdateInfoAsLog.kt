@@ -108,9 +108,9 @@ class GitUpdateInfoAsLog(private val project: Project,
     if (!notificationShown && areRangesInDataPack(projectLog, dataPack)) {
       notificationShown = true
       projectLog.dataManager?.removeDataPackChangeListener(listener)
-      val logUiFactory = object : MyLogUiFactory(createRangeFilter()) {
-        override fun createLogUi(project: Project, colorManager: VcsLogColorManager, logData: VcsLogData): MainVcsLogUi {
-          val logUi = super.createLogUi(project, colorManager, logData)
+      val logUiFactory = object : MyLogUiFactory(logManager.colorManager, createRangeFilter()) {
+        override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
+          val logUi = super.createLogUi(project, logData)
           logUi.refresher.addVisiblePackChangeListener(MyVisiblePackChangeListener(logUi, rangeFilter, commitsAndFiles, dataSupplier))
           return logUi
         }
@@ -140,7 +140,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
     val logManager = projectLog.logManager
     if (logManager != null) {
-      createLogUi(logManager, MyLogUiFactory(rangeFilter), select)
+      createLogUi(logManager, MyLogUiFactory(logManager.colorManager, rangeFilter), select)
     }
     else if (select) {
       VcsLogContentUtil.showLogIsNotAvailableMessage(project)
@@ -174,9 +174,10 @@ class GitUpdateInfoAsLog(private val project: Project,
   private fun generateUpdateTabId() = updateTabPrefix + UUID.randomUUID()
   private fun isUpdateTabId(id: String): Boolean = id.startsWith(updateTabPrefix)
 
-  private open inner class MyLogUiFactory(val rangeFilter: VcsLogRangeFilter) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
+  private open inner class MyLogUiFactory(val colorManager: VcsLogColorManager, val rangeFilter: VcsLogRangeFilter)
+    : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
 
-    override fun createLogUi(project: Project, colorManager: VcsLogColorManager, logData: VcsLogData): MainVcsLogUi {
+    override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val logId = generateUpdateTabId()
       val properties = MyPropertiesForRange(rangeFilter, project.service<GitUpdateProjectInfoLogProperties>())
 

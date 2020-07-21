@@ -113,7 +113,7 @@ public class VcsLogManager implements Disposable {
   public VcsLogUiFactory<? extends MainVcsLogUi> getMainLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
     CustomVcsLogUiFactoryProvider factoryProvider = LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.findFirstSafe(myProject, p -> p.isActive(this));
     if (factoryProvider == null) {
-      return new MainVcsLogUiFactory(logId, filters, myUiProperties);
+      return new MainVcsLogUiFactory(logId, filters, myUiProperties, myColorManager);
     }
     return factoryProvider.createLogUiFactory(logId, this, filters);
   }
@@ -140,7 +140,7 @@ public class VcsLogManager implements Disposable {
       throw new ProcessCanceledException();
     }
 
-    U ui = factory.createLogUi(myProject, myColorManager, myLogData);
+    U ui = factory.createLogUi(myProject, myLogData);
     Disposer.register(ui, getTabsWatcher().addTabToWatch(ui.getId(), ui.getRefresher(), kind, isClosedOnDispose));
 
     return ui;
@@ -264,22 +264,25 @@ public class VcsLogManager implements Disposable {
 
   @FunctionalInterface
   public interface VcsLogUiFactory<T extends VcsLogUiEx> {
-    T createLogUi(@NotNull Project project, @NotNull VcsLogColorManager colorManager, @NotNull VcsLogData logData);
+    T createLogUi(@NotNull Project project, @NotNull VcsLogData logData);
   }
 
   public abstract static class BaseVcsLogUiFactory<T extends VcsLogUiImpl> implements VcsLogUiFactory<T> {
     @NotNull private final String myLogId;
     @Nullable private final VcsLogFilterCollection myFilters;
     @NotNull private final VcsLogTabsProperties myUiProperties;
+    @NotNull private final VcsLogColorManager myColorManager;
 
-    public BaseVcsLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters, @NotNull VcsLogTabsProperties uiProperties) {
+    public BaseVcsLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters, @NotNull VcsLogTabsProperties uiProperties,
+                               @NotNull VcsLogColorManager colorManager) {
       myLogId = logId;
       myFilters = filters;
       myUiProperties = uiProperties;
+      myColorManager = colorManager;
     }
 
     @Override
-    public T createLogUi(@NotNull Project project, @NotNull VcsLogColorManager colorManager, @NotNull VcsLogData logData) {
+    public T createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
       VcsLogFiltererImpl vcsLogFilterer = new VcsLogFiltererImpl(logData.getLogProviders(), logData.getStorage(),
                                                                  logData.getTopCommitsCache(),
@@ -288,7 +291,7 @@ public class VcsLogManager implements Disposable {
       VcsLogFilterCollection initialFilters = myFilters == null ? VcsLogFilterObject.collection() : myFilters;
       VisiblePackRefresherImpl refresher = new VisiblePackRefresherImpl(project, logData, initialFilters, initialSortType,
                                                                         vcsLogFilterer, myLogId);
-      return createVcsLogUiImpl(myLogId, logData, properties, colorManager, refresher, myFilters);
+      return createVcsLogUiImpl(myLogId, logData, properties, myColorManager, refresher, myFilters);
     }
 
     @NotNull
@@ -301,8 +304,9 @@ public class VcsLogManager implements Disposable {
   }
 
   private static class MainVcsLogUiFactory extends BaseVcsLogUiFactory<VcsLogUiImpl> {
-    MainVcsLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters, @NotNull VcsLogTabsProperties properties) {
-      super(logId, filters, properties);
+    MainVcsLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters, @NotNull VcsLogTabsProperties properties,
+                        @NotNull VcsLogColorManager colorManager) {
+      super(logId, filters, properties, colorManager);
     }
 
     @Override

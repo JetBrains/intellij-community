@@ -13,7 +13,6 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -132,9 +131,8 @@ public class VcsLogTabsManager {
     }
 
     @Override
-    public MainVcsLogUi createLogUi(@NotNull Project project, @NotNull VcsLogColorManager colorManager,
-                                    @NotNull VcsLogData logData) {
-      MainVcsLogUi ui = myFactory.createLogUi(project, colorManager, logData);
+    public MainVcsLogUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
+      MainVcsLogUi ui = myFactory.createLogUi(project, logData);
       myUiProperties.addTab(ui.getId(), myLogWindowKind);
       Disposer.register(ui, () -> {
         if (Disposer.isDisposing(myProject) || myIsLogDisposing) return; // need to restore the tab after project/log is recreated
