@@ -142,7 +142,7 @@ public class JpsOutputLoaderManager implements Disposable {
     }
 
     if (!allCacheKeys.contains(commitId)) {
-      LOG.warn("Not found any caches for the latest commits in the brunch");
+      LOG.warn("Not found any caches for the latest commits in the branch");
       return null;
     }
     if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {
