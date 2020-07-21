@@ -91,8 +91,8 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   protected StatisticsWhitelistConditions getWhitelistedGroups() {
     final String productUrl = getWhiteListProductUrl();
     if (productUrl == null) return null;
-    String userAgent = myApplicationInfo.getUserAgent();
-    return StatisticsWhitelistLoader.getApprovedGroups(productUrl, userAgent);
+    EventLogConnectionSettings settings = myApplicationInfo.getConnectionSettings();
+    return StatisticsWhitelistLoader.getApprovedGroups(productUrl, settings);
   }
 
   @NonNls

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.request;
 
+import com.intellij.internal.statistic.eventLog.EventLogConnectionSettings;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.entity.GzipCompressingEntity;
@@ -22,10 +23,10 @@ public class StatsRequestBuilder {
   private StatsResponseHandler onSucceed;
   private StatsResponseHandler onFail;
 
-  public StatsRequestBuilder(@NotNull String method, @NotNull String url, @NotNull String userAgent) {
+  public StatsRequestBuilder(@NotNull String method, @NotNull String url, @NotNull EventLogConnectionSettings settings) {
     myMethod = method;
     myUrl = url;
-    myUserAgent = userAgent;
+    myUserAgent = settings.getUserAgent();
   }
 
   @NotNull

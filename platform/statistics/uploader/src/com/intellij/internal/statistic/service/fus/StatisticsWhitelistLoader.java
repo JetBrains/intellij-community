@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus;
 
+import com.intellij.internal.statistic.eventLog.EventLogConnectionSettings;
 import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException.EventLogMetadataLoadErrorType;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroup;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
@@ -43,9 +44,9 @@ public final class StatisticsWhitelistLoader {
    * @return empty whitelist if error happened during groups fetching or parsing
    */
   @NotNull
-  public static StatisticsWhitelistConditions getApprovedGroups(@NotNull String serviceUrl, @NotNull String userAgent) {
+  public static StatisticsWhitelistConditions getApprovedGroups(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
     try {
-      String content = loadWhiteListFromServer(serviceUrl, userAgent);
+      String content = loadWhiteListFromServer(serviceUrl, settings);
       return parseApprovedGroups(content);
     }
     catch (EventLogMetadataParseException | EventLogMetadataLoadException e) {
@@ -54,14 +55,14 @@ public final class StatisticsWhitelistLoader {
   }
 
   @NotNull
-  public static String loadWhiteListFromServer(@Nullable String serviceUrl, @NotNull String userAgent)
+  public static String loadWhiteListFromServer(@Nullable String serviceUrl, @NotNull EventLogConnectionSettings settings)
     throws EventLogMetadataLoadException {
     if (isEmptyOrSpaces(serviceUrl)) {
       throw new EventLogMetadataLoadException(EventLogMetadataLoadErrorType.EMPTY_SERVICE_URL);
     }
 
     try {
-      StatsRequestResult<String> result = StatsHttpRequests.request(serviceUrl, userAgent).send(r -> r.readAsString());
+      StatsRequestResult<String> result = StatsHttpRequests.request(serviceUrl, settings).send(r -> r.readAsString());
       if (result.isSucceed()) {
         return result.getResult();
       }
@@ -72,11 +73,11 @@ public final class StatisticsWhitelistLoader {
     }
   }
 
-  public static long lastModifiedWhitelist(@Nullable String serviceUrl, @NotNull String userAgent) {
+  public static long lastModifiedWhitelist(@Nullable String serviceUrl, @NotNull EventLogConnectionSettings settings) {
     if (isEmptyOrSpaces(serviceUrl)) return 0;
 
     try {
-      StatsRequestResult<Long> result = StatsHttpRequests.head(serviceUrl, userAgent).send(r -> r.lastModified());
+      StatsRequestResult<Long> result = StatsHttpRequests.head(serviceUrl, settings).send(r -> r.lastModified());
       return result.getResult() != null ? result.getResult() : 0L;
     }
     catch (StatsResponseException | IOException e) {
