@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
+import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
@@ -35,6 +36,7 @@ import java.util.*
 class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTool() {
   private object Annotations {
     const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
+    const val PER_CLASS_ATTRIBUTE = "TestInstance.Lifecycle.PER_CLASS"
     val EXTENDS_WITH = listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)
   }
 
@@ -215,7 +217,8 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         val providerName = sourceProvider.name
 
         if (!sourceProvider.hasModifierProperty(PsiModifier.STATIC) &&
-            containingClass != null && !TestUtils.testInstancePerClass(containingClass)) {
+            containingClass != null && !TestUtils.testInstancePerClass(containingClass) &&
+            !implementationsTestInstanceAnnotated(containingClass, sourceProvider)) {
           val annotation: PsiAnnotation = JavaPsiFacade.getElementFactory(containingClass.project).createAnnotationFromText(Annotations.TEST_INSTANCE_PER_CLASS, containingClass)
           val attributes: Array<PsiNameValuePair> = annotation.parameterList.attributes
           holder.registerProblem(attributeValue, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.static", providerName),
@@ -238,6 +241,20 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
             holder.registerProblem(getElementToHighlight(attributeValue, method), JUnitBundle.message("junit5.malformed.parameterized.inspection.description.wrapped.in.arguments"))
           }
         }
+      }
+
+      private fun implementationsTestInstanceAnnotated(containingClass: PsiClass, method: PsiMethod) : Boolean {
+        if (!method.hasModifierProperty(PsiModifier.DEFAULT) || !containingClass.isInterface) return false
+        val implementations = ClassInheritorsSearch.search(containingClass, containingClass.resolveScope, true).findAll()
+        for (entry in implementations) {
+          val annotation: PsiAnnotation? = entry.getAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE)
+          if (annotation != null) {
+            val findAttributeValue: PsiAnnotationMemberValue? = annotation.findAttributeValue("value")
+            val attributeName: String? = (findAttributeValue as? PsiReferenceExpression)?.qualifiedName
+            if (Annotations.PER_CLASS_ATTRIBUTE == attributeName) return true
+          }
+        }
+        return false
       }
 
       private fun processArrayInAnnotationParameter(attributeValue: PsiAnnotationMemberValue?,

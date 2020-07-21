@@ -4,6 +4,7 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestReporter;
 import org.junit.jupiter.api.TestInstance;
 
+import java.util.List;
 import java.util.Iterator;
 import java.util.stream.Stream;
 import java.util.stream.DoubleStream;
@@ -161,7 +162,15 @@ class MethodSourceMalformed {
 }
 
 interface MyInterface {
-    String[] data();
+  String[] data();
+
+  default List<String> methodSample() {
+    return null;
+  }
+
+  @ParameterizedTest
+  @MethodSource("methodSample")
+  default void test(String value) { }
 }
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
