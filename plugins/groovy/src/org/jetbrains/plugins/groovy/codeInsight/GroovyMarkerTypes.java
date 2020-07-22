@@ -72,6 +72,7 @@ public final class GroovyMarkerTypes {
       }
       builder.append(sep);
       sep = "<br>";
+      //noinspection UnresolvedPropertyKey
       composeText(superMethods, DaemonBundle.message(key), builder);
     }
     if (count == 0) return null;
@@ -174,6 +175,7 @@ public final class GroovyMarkerTypes {
                                                                          else{
                                                                            key = sameSignature ? "method.overrides" : "method.overrides.in";
                                                                          }
+                                                                         //noinspection UnresolvedPropertyKey
                                                                          return GutterIconTooltipHelper.composeText(superMethods, "", DaemonBundle.message(key));
                                                                        }, new LineMarkerNavigator(){
       @Override
