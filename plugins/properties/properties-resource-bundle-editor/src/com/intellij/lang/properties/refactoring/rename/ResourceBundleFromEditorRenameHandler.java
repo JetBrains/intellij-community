@@ -49,7 +49,7 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
   public void invoke(final @NotNull Project project, Editor editor, final PsiFile file, DataContext dataContext) {
     final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     assert resourceBundleEditor != null;
-    final ResourceBundleEditorViewElement selectedElement = resourceBundleEditor.getSelectedElementIfOnlyOne();
+    final Object selectedElement = resourceBundleEditor.getSelectedElementIfOnlyOne();
     if (selectedElement != null) {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> {
         if (selectedElement instanceof PropertiesPrefixGroup) {
