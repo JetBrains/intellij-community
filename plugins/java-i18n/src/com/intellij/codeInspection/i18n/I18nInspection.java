@@ -1001,8 +1001,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean annotatedAsNonNls(final PsiModifierListOwner parent) {
-    return NlsInfo.forModifierListOwner(parent).getNlsStatus() == ThreeState.NO;
+  private static boolean annotatedAsNonNls(@Nullable PsiModifierListOwner parent) {
+    return parent != null && NlsInfo.forModifierListOwner(parent).getNlsStatus() == ThreeState.NO;
   }
 
   private static boolean isSafeStringMethod(UExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
