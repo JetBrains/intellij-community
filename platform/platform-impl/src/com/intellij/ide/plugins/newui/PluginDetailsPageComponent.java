@@ -405,10 +405,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
           syncLoading = false;
           startLoading();
           ProcessIOExecutorService.INSTANCE.execute(() -> {
-            PluginNode meta = MarketplaceRequests.getInstance().loadPluginDetails(node);
-            meta.setRating(node.getRating());
-            meta.setDownloads(node.getDownloads());
-            component.myPlugin = meta;
+            component.myPlugin = MarketplaceRequests.getInstance().loadPluginDetails(node);
 
             ApplicationManager.getApplication().invokeLater(() -> {
               if (myShowComponent == component) {
