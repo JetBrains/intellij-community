@@ -8,7 +8,7 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -123,14 +123,10 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
         modifier = PsiModifier.FINAL;
       }
     }
-    runWriteAction(project, () -> {
+    ApplicationManager.getApplication().runWriteAction(() -> {
       PsiModifierList modifierList = Objects.requireNonNull(aClass.getModifierList());
       modifierList.setModifierProperty(modifier, true);
     });
-  }
-
-  private static void runWriteAction(Project project, Runnable runnable) {
-    WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("intention.make.sealed.class.hint.title"), null, runnable);
   }
 
   public static @Nullable String checkInheritor(@NotNull PsiJavaFile parentFile, @Nullable PsiJavaModule module, @NotNull PsiClass inheritor) {
@@ -162,7 +158,7 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
   }
 
   public void setParentModifier(PsiClass aClass) {
-    runWriteAction(aClass.getProject(), () -> {
+    ApplicationManager.getApplication().runWriteAction(() -> {
       PsiModifierList modifierList = Objects.requireNonNull(aClass.getModifierList());
       if (modifierList.hasModifierProperty(PsiModifier.NON_SEALED)) {
         modifierList.setModifierProperty(PsiModifier.NON_SEALED, false);
@@ -195,7 +191,7 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
             modifierList.hasModifierProperty(PsiModifier.FINAL)) {
           return isDone();
         }
-        runWriteAction(project, () -> {
+        ApplicationManager.getApplication().runWriteAction(() -> {
           modifierList.setModifierProperty(PsiModifier.NON_SEALED, true);
         });
         return isDone();
@@ -208,7 +204,7 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
     String permitsClause = StreamEx.of(nonNullNames).sorted().joining(",", "permits ", "");
     PsiReferenceList permitsList = createPermitsClause(project, permitsClause);
     PsiReferenceList implementsList = Objects.requireNonNull(aClass.getImplementsList());
-    runWriteAction(project, () -> {
+    ApplicationManager.getApplication().runWriteAction(() -> {
       aClass.addAfter(permitsList, implementsList);
     });
   }

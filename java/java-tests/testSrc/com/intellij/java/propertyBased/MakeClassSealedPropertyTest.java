@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.SealClassAction;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -75,13 +75,7 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       assertFalse(MadTestingUtil.containsErrorElements(viewProvider));
 
-      JavaGreenIntentionPolicy intentionPolicy = new JavaGreenIntentionPolicy() {
-        @Override
-        protected boolean shouldCheckPreview(@NotNull IntentionAction action) {
-          return false;
-        }
-      };
-      env.executeCommands(IntDistribution.uniform(1, 5), Generator.constant(new InvokeIntention(psiFile, intentionPolicy)));
+      env.executeCommands(IntDistribution.uniform(1, 5), Generator.constant(new InvokeIntention(psiFile, new JavaGreenIntentionPolicy())));
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       assertFalse(MadTestingUtil.containsErrorElements(viewProvider));
     });
@@ -91,7 +85,8 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
                                               @NotNull SealClassAction makeSealedAction,
                                               @NotNull PsiIdentifier classIdentifier) {
     try {
-      makeSealedAction.invoke(classIdentifier.getProject(), editor, classIdentifier);
+      PsiFile containingFile = classIdentifier.getContainingFile();
+      ShowIntentionActionsHandler.chooseActionAndInvoke(containingFile, editor, makeSealedAction, makeSealedAction.getText());
       return true;
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
