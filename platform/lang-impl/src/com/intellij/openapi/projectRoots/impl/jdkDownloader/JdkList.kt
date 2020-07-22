@@ -318,18 +318,22 @@ object JdkListParser {
   }
 }
 
-class JdkListDownloader {
+class JdkListDownloader : JdkListDownloaderBase() {
   companion object {
     @JvmStatic
     fun getInstance() = service<JdkListDownloader>()
   }
 
-  private val feedUrl: String
+  override val feedUrl: String
     get() {
       val registry = runCatching { Registry.get("jdk.downloader.url").asString() }.getOrNull()
       if (!registry.isNullOrBlank()) return registry
       return "https://download.jetbrains.com/jdk/feed/v1/jdks.json.xz"
     }
+}
+
+abstract class JdkListDownloaderBase {
+  protected abstract val feedUrl: String
 
   private fun downloadJdkList(feedUrl: String, progress: ProgressIndicator?) =
     HttpRequests
