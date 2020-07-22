@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
+import com.intellij.analysis.problemsView.Problem
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.vfs.VirtualFile
@@ -17,7 +18,9 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
 
   override fun addProblems(file: VirtualFile, vararg problems: Problem) {
     super.addProblems(file, *problems)
-    if (problems.any { it.severity >= HighlightSeverity.ERROR.myVal }) {
+    if (problems.any {
+        it is HighlightingProblem && it.severity >= HighlightSeverity.ERROR.myVal
+      }) {
       getProjectErrors()?.problemsAppeared(file)
     }
   }

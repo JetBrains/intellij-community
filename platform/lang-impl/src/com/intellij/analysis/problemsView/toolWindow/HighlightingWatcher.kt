@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
+import com.intellij.analysis.problemsView.Problem
+import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.lang.annotation.HighlightSeverity.ERROR
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel.forDocument
@@ -16,7 +17,7 @@ internal class HighlightingWatcher(
   private val root: Root,
   private val file: VirtualFile,
   private val level: Int = ERROR.myVal)
-  : MarkupModelListener, Disposable {
+  : MarkupModelListener, ProblemsProvider {
 
   private val problems = mutableMapOf<RangeHighlighterEx, Problem>()
   private var reference: WeakReference<MarkupModelEx>? = null
@@ -26,7 +27,7 @@ internal class HighlightingWatcher(
     update()
   }
 
-  override fun dispose() = Unit
+  override val project = root.panel.project
 
   override fun afterAdded(highlighter: RangeHighlighterEx) {
     getProblem(highlighter)?.let { root.addProblems(file, it) }
@@ -55,7 +56,7 @@ internal class HighlightingWatcher(
   private fun getProblem(highlighter: RangeHighlighterEx) = when {
     !isValid(highlighter) -> null
     else -> synchronized(problems) {
-      problems.computeIfAbsent(highlighter) { HighlightingProblem(highlighter) }
+      problems.computeIfAbsent(highlighter) { HighlightingProblem(this, file, highlighter) }
     }
   }
 

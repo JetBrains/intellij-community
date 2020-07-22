@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
+import com.intellij.analysis.problemsView.Problem
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -12,7 +13,10 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel.rende
 import com.intellij.util.ui.tree.TreeUtil.promiseExpandAll
 
 internal class ProblemFilter(val state: ProblemsViewState) : (Problem) -> Boolean {
-  override fun invoke(problem: Problem) = !state.hideBySeverity.contains(problem.severity)
+  override fun invoke(problem: Problem): Boolean {
+    val highlighting = problem as? HighlightingProblem ?: return true
+    return !(state.hideBySeverity.contains(highlighting.severity))
+  }
 }
 
 internal class SeverityFiltersActionGroup : DumbAware, ActionGroup() {
