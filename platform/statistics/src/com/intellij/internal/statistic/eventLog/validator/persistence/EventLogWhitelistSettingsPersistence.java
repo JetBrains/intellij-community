@@ -1,7 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.persistence;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -10,13 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-@State(
-  name = "EventLogWhitelist",
-  storages = @Storage(value = EventLogWhitelistSettingsPersistence.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
-)
+@State(name = "EventLogWhitelist", storages = @Storage(StoragePathMacros.CACHE_FILE))
 public class EventLogWhitelistSettingsPersistence implements PersistentStateComponent<Element> {
-  public static final String USAGE_STATISTICS_XML = "usage.statistics.xml";
-
   private final Map<String, Long> myLastModifications = new HashMap<>();
   private final Map<String, WhitelistPathSettings> myRecorderToPathSettings = new HashMap<>();
 
@@ -28,7 +27,7 @@ public class EventLogWhitelistSettingsPersistence implements PersistentStateComp
   private static final String USE_CUSTOM_PATH = "use-custom-path";
 
   public static EventLogWhitelistSettingsPersistence getInstance() {
-    return ServiceManager.getService(EventLogWhitelistSettingsPersistence.class);
+    return ApplicationManager.getApplication().getService(EventLogWhitelistSettingsPersistence.class);
   }
 
   public long getLastModified(@NotNull String recorderId) {
@@ -110,10 +109,5 @@ public class EventLogWhitelistSettingsPersistence implements PersistentStateComp
     }
 
     return element;
-  }
-
-  @Override
-  public void noStateLoaded() {
-
   }
 }

@@ -898,6 +898,10 @@
         <component>IntentionsCollector</component>
         <component>ActionsCollector</component>
         <component>FUSApplicationUsageTrigger</component>
+        <component>EventLogWhitelist</component>
+        <component>PhpLanguageFeatureUsagesStatistics</component>
+        <component>FeatureUsageStatistics</component>
+        <component>UsagesStatistic</component>
       </components>
     </obsoleteStorage>
 
