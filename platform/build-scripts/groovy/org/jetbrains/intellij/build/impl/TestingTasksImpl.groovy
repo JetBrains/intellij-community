@@ -29,7 +29,7 @@ import java.util.jar.Manifest
 @CompileStatic
 class TestingTasksImpl extends TestingTasks {
   protected final CompilationContext context
-  private final TestingOptions options
+  protected final TestingOptions options
 
   TestingTasksImpl(CompilationContext context, TestingOptions options) {
     this.options = options
