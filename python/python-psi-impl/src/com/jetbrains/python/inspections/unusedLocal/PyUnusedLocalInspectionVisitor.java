@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections.unusedLocal;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
@@ -424,7 +425,18 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             continue;
           }
 
-          registerWarning(element, warningMsg, new PyRemoveStatementQuickFix());
+          final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
+          if (assignmentStatement != null && PsiTreeUtil.isAncestor(assignmentStatement.getLeftHandSideExpression(), element, false)) {
+            if (assignmentStatement.getRawTargets().length > 1) {
+              // TODO: consider assignmentStatement.getRawTargets().length > 1 in PY-28782
+              continue;
+            }
+            if (assignmentStatement.getLeftHandSideExpression() != element) {
+              registerWarning(element, warningMsg, new ReplaceWithWildCard());
+              continue;
+            }
+            registerWarning(element, warningMsg, new PyRemoveAssignmentStatementTargetQuickFix(), new PyRemoveStatementQuickFix());
+          }
         }
       }
     }
