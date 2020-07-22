@@ -444,6 +444,11 @@
 
     <!-- Extension resources -->
     <applicationService serviceImplementation="com.intellij.ide.extensionResources.ResourceVersions"/>
+    <obsoleteStorage file="extensionsRootType.xml">
+      <components>
+        <component>ExtensionsRootType</component>
+      </components>
+    </obsoleteStorage>
     <scratch.rootType implementation="com.intellij.ide.extensionResources.ExtensionsRootType"/>
 
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
@@ -1303,10 +1308,8 @@
     <findInProjectSearchEngine implementation="com.intellij.find.impl.IdeaIndexBasedFindInProjectSearchEngine"/>
 
     <registerToolWindowTaskProvider implementation="com.intellij.facet.impl.ui.FacetDependentToolWindowManager"/>
+    <postStartupActivity implementation="com.intellij.ide.script.IdeStartupScripts" order="last"/>
   </extensions>
-  <applicationListeners>
-    <listener class="com.intellij.ide.script.IdeStartupScripts" topic="com.intellij.openapi.project.ProjectManagerListener"/>
-  </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"
               topic="com.intellij.ide.ui.VirtualFileAppearanceListener"/>
