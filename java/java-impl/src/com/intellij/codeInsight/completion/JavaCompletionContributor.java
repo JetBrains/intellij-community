@@ -466,7 +466,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     suggestSmartCast(parameters, session, true, items::add);
 
-    if (parent instanceof PsiReferenceExpression) {
+    if (parent instanceof PsiReferenceExpression && !(parent instanceof PsiMethodReferenceExpression)) {
       final List<ExpectedTypeInfo> expected = Arrays.asList(ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, true));
       StreamConversion.addCollectConversion((PsiReferenceExpression)parent, expected,
                                              lookupElement -> items.add(JavaSmartCompletionContributor.decorate(lookupElement, expected)));
