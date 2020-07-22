@@ -3,7 +3,11 @@ package com.intellij.lang.properties;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -17,17 +21,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-@State(
-  name = "LastSelectedPropertiesFileStore",
-  storages = @Storage(value = "lastSelectedPropertiesFile.xml", roamingType = RoamingType.DISABLED),
-  reportStatistic = false
-)
-public class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
+@State(name = "LastSelectedPropertiesFileStore", storages = @Storage(StoragePathMacros.CACHE_FILE))
+public final class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
   private final Map<String, String> lastSelectedUrls = new LinkedHashMap<>();
   private String lastSelectedFileUrl;
 
   public static LastSelectedPropertiesFileStore getInstance() {
-    return ServiceManager.getService(LastSelectedPropertiesFileStore.class);
+    return ApplicationManager.getApplication().getService(LastSelectedPropertiesFileStore.class);
   }
 
   @Nullable

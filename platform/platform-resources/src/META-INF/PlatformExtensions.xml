@@ -904,6 +904,11 @@
         <component>UsagesStatistic</component>
       </components>
     </obsoleteStorage>
+    <obsoleteStorage file="lastSelectedPropertiesFile.xml">
+      <components>
+        <component>LastSelectedPropertiesFileStore</component>
+      </components>
+    </obsoleteStorage>
 
     <obsoleteStorage file="usage.statistics.xml" isProjectLevel="true">
       <components>
