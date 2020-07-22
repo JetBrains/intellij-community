@@ -2,6 +2,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -195,6 +196,9 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
   private static String formatTypeSafe(PsiElement parent, PsiType type, int options, PsiSubstitutor substitutor) {
     try {
       return formatType(type, options, substitutor);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       if (ExceptionUtil.getRootCause(e) instanceof PsiInvalidElementAccessException) {
