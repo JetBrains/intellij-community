@@ -107,7 +107,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
   }
 
   private Iterable<? extends JavaFileObject> wrapJavaFileObjects(final Iterable<? extends JavaFileObject> originalObjects) {
-    return mySourceTransformers.isEmpty()? originalObjects : convert(originalObjects, new Function<JavaFileObject, JavaFileObject>() {
+    return mySourceTransformers.isEmpty()? originalObjects : Iterators.map(originalObjects, new Function<JavaFileObject, JavaFileObject>() {
       @Override
       public JavaFileObject fun(JavaFileObject fo) {
         return JavaFileObject.Kind.SOURCE.equals(fo.getKind())? new TransformableJavaFileObject(fo, mySourceTransformers) : fo;
@@ -339,7 +339,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
 
   @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(final Iterable<? extends File> files) {
-    return wrapJavaFileObjects(convert(files, myFileToInputFileObjectConverter));
+    return wrapJavaFileObjects(Iterators.map(files, myFileToInputFileObjectConverter));
   }
 
   @Override
@@ -349,7 +349,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
 
   @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(final Iterable<String> names) {
-    return getJavaFileObjectsFromFiles(convert(names, ourPathToFileConverter));
+    return getJavaFileObjectsFromFiles(Iterators.map(names, ourPathToFileConverter));
   }
 
   @Override
@@ -459,10 +459,10 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
                 return kindsFilter.fun(dir) && myFileOperations.isFile(file);
               }
             };
-            result.add(convert(filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter));
+            result.add(Iterators.map(Iterators.filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter));
           }
         }
-        allFiles = merge(result);
+        allFiles = Iterators.flat(result);
       }
       else {
         // locations, not supported by this class should be handled by default javac file manager
@@ -596,168 +596,4 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     }
   }
 
-  public static <T> Iterable<T> merge(final Iterable<? extends T> first, final Iterable<? extends T> second) {
-    return new Iterable<T>() {
-      @Override
-      @NotNull
-      public Iterator<T> iterator() {
-        final Iterator<? extends T> i1 = first.iterator();
-        final Iterator<? extends T> i2 = second.iterator();
-        return new Iterator<T>() {
-          @Override
-          public boolean hasNext() {
-            return i1.hasNext() || i2.hasNext();
-          }
-
-          @Override
-          public T next() {
-            return i1.hasNext()? i1.next() : i2.next();
-          }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-        };
-      }
-    };
-  }
-
-  public static <T> Iterable<T> merge(final Collection<? extends Iterable<T>> parts) {
-    if (parts.isEmpty()) {
-      return Collections.emptyList();
-    }
-    if (parts.size() == 1) {
-      return parts.iterator().next();
-    }
-    return merge((Iterable<Iterable<T>>)parts);
-  }
-
-  public static <T> Iterable<T> merge(final Iterable<? extends Iterable<? extends T>> parts) {
-    return new Iterable<T>() {
-      @NotNull
-      @Override
-      public Iterator<T> iterator() {
-        final Iterator<? extends Iterable<? extends T>> partsIterator = parts.iterator();
-        return new Iterator<T>() {
-          Iterator<? extends T> currentPart;
-          @Override
-          public boolean hasNext() {
-            return getCurrentPart() != null;
-          }
-
-          @Override
-          public T next() {
-            final Iterator<? extends T> part = getCurrentPart();
-            if (part != null) {
-              return part.next();
-            }
-            throw new NoSuchElementException();
-          }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-
-          private Iterator<? extends T> getCurrentPart() {
-            while (currentPart == null || !currentPart.hasNext()) {
-              if (partsIterator.hasNext()) {
-                currentPart = partsIterator.next().iterator();
-              }
-              else {
-                currentPart = null;
-                break;
-              }
-            }
-            return currentPart;
-          }
-        };
-      }
-    };
-  }
-
-  public static <I,O> Iterable<O> convert(final Iterable<? extends I> from, final Function<? super I, ? extends O> converter) {
-    return new Iterable<O>() {
-      @NotNull
-      @Override
-      public Iterator<O> iterator() {
-        final Iterator<? extends I> it = from.iterator();
-        return new Iterator<O>() {
-          @Override
-          public boolean hasNext() {
-            return it.hasNext();
-          }
-
-          @Override
-          public O next() {
-            return converter.fun(it.next());
-          }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-        };
-      }
-    };
-  }
-
-  public static <T> Iterable<T> filter(final Iterable<? extends T> data, final BooleanFunction<? super T> acceptElement) {
-    return new Iterable<T>() {
-      @NotNull
-      @Override
-      public Iterator<T> iterator() {
-        final Iterator<? extends T> it = data.iterator();
-        return new Iterator<T>() {
-          private T current = null;
-          private boolean isPending = false;
-
-          @Override
-          public boolean hasNext() {
-            if (!isPending) {
-              findNext();
-            }
-            return isPending;
-          }
-
-          @Override
-          public T next() {
-            try {
-              if (!isPending) {
-                findNext();
-                if (!isPending) {
-                  throw new NoSuchElementException();
-                }
-              }
-              return current;
-            }
-            finally {
-              current = null;
-              isPending = false;
-            }
-          }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-
-          private void findNext() {
-            isPending = false;
-            current = null;
-            while (it.hasNext()) {
-              final T next = it.next();
-              if (acceptElement.fun(next)) {
-                isPending = true;
-
-                current = next;
-                break;
-              }
-            }
-          }
-        };
-      }
-    };
-  }
 }

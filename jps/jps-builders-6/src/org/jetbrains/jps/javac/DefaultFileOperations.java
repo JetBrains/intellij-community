@@ -211,9 +211,9 @@ class DefaultFileOperations implements FileOperations {
             }
           }
         }
-        return JpsJavacFileManager.convert(JpsJavacFileManager.filter(JpsJavacFileManager.merge(allChildren), ourEntryFilter.getFor(kinds)), myToFileObjectConverter);
+        return Iterators.map(Iterators.filter(Iterators.flat(allChildren), ourEntryFilter.getFor(kinds)), myToFileObjectConverter);
       }
-      return JpsJavacFileManager.convert(JpsJavacFileManager.filter(entries, ourEntryFilter.getFor(kinds)), myToFileObjectConverter);
+      return Iterators.map(Iterators.filter(entries, ourEntryFilter.getFor(kinds)), myToFileObjectConverter);
     }
 
     @Override
