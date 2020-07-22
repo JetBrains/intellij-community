@@ -5,8 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -31,7 +29,6 @@ import static com.intellij.psi.CommonClassNames.*;
  * @author peter
  */
 final class StreamConversion {
-  private static final Logger LOG = Logger.getInstance(StreamConversion.class);
 
   static List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
     PsiExpression qualifier = ref.getQualifierExpression();
@@ -74,7 +71,6 @@ final class StreamConversion {
     String refText = changedQualifier + ".x";
     PsiExpression expr = PsiElementFactory.getInstance(qualifier.getProject()).createExpressionFromText(refText, qualifier);
     if (!(expr instanceof PsiReferenceExpression)) {
-      LOG.error("Not a reference", new Attachment("reference.text", refText));
       return Collections.emptyList();
     }
 
