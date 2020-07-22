@@ -485,4 +485,6 @@ class Test88 {
     myFixture.assertPreferredCompletionItems 0, 'aDouble -> ', 'doubleValue'
   }
 
+  void testNoStreamSuggestionsOnBrokenCode() { doAntiTest() }
+
 }
