@@ -74,7 +74,7 @@ class PlainEnvironmentController(private val envs: MutableMap<String, String>) :
 
   override fun appendTargetPathToPathsValue(name: String, localPath: String) {
     envs.merge(name, localPath) { originalValue, additionalPath ->
-      listOf(originalValue, additionalPath).joinToString { File.pathSeparator }
+      listOf(originalValue, additionalPath).joinToString(separator = File.pathSeparator)
     }
   }
 
