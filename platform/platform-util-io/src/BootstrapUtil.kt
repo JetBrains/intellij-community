@@ -14,7 +14,7 @@ object BootstrapUtil {
       throw e
     }
 
-    val registrationFuture = bootstrap.group().register(channel)
+    val registrationFuture = bootstrap.config().group().register(channel)
     if (registrationFuture.cause() != null) {
       if (channel.isRegistered) {
         channel.close()
