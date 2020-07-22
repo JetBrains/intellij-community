@@ -72,6 +72,7 @@ private fun changeIgnoreFile(project: Project,
   val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, determinedVcs) ?: return
   ApplicationManager.getApplication().invokeAndWait {
     runUndoTransparentWriteAction {
+      if (project.isDisposed) return@runUndoTransparentWriteAction
       if (PsiManager.getInstance(project).findFile(ignoreFile)?.language !is IgnoreLanguage) return@runUndoTransparentWriteAction
       action(ignoredFileContentProvider)
       ignoreFile.save()
