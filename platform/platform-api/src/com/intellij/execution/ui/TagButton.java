@@ -47,13 +47,14 @@ public class TagButton extends JBLayeredPane implements Disposable {
   protected void layoutButtons() {
     myButton.setMargin(JBUI.emptyInsets());
     Dimension size = myButton.getPreferredSize();
-    int iconWidth = myCloseButton.getIcon().getIconWidth();
-    int iconHeight = myCloseButton.getIcon().getIconHeight();
-    Dimension tagSize = new Dimension(size.width + iconWidth - myButton.getInsets().right, size.height);
+    Dimension iconSize = myCloseButton.getPreferredSize();
+    Dimension tagSize = new Dimension(size.width + iconSize.width, size.height);
     setPreferredSize(tagSize);
     myButton.setBounds(new Rectangle(tagSize));
-    myButton.setMargin(JBUI.insetsRight(iconWidth));
-    myCloseButton.setBounds(tagSize.width - iconWidth - JBUI.scale(10), (tagSize.height - iconHeight) / 2 + JBUI.scale(1), iconWidth, iconHeight);
+    myButton.setMargin(JBUI.insetsRight(iconSize.width));
+    Point p = new Point(tagSize.width - iconSize.width - JBUI.scale(10),
+                        (tagSize.height - iconSize.height) / 2 + JBUI.scale(1));
+    myCloseButton.setBounds(new Rectangle(p, iconSize));
   }
 
   protected void updateButton(String text, Icon icon) {

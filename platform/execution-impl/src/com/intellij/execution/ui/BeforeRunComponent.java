@@ -49,16 +49,16 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
   private RunConfiguration myConfiguration;
 
   public BeforeRunComponent(@NotNull Disposable parentDisposable) {
-    super(new WrapLayout(FlowLayout.LEADING, 0, 0));
-    add(Box.createVerticalStrut(35));
+    super(new WrapLayout(FlowLayout.LEADING, 0, FragmentedSettingsBuilder.TAG_VGAP));
+    add(Box.createVerticalStrut(30));
 
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-    myDropFirst.setBorder(JBUI.Borders.emptyTop(5));
+    myDropFirst.setBorder(JBUI.Borders.empty());
     panel.add(myDropFirst);
     panel.setPreferredSize(myDropFirst.getPreferredSize());
     add(panel);
     myDropFirst.setVisible(false);
-    JBEmptyBorder border = JBUI.Borders.empty(5, 0, 0, 5);
+    JBEmptyBorder border = JBUI.Borders.empty(0, 0, 0, 5);
     myAddButton = new InplaceButton(ExecutionBundle.message("run.configuration.before.run.add.task"), AllIcons.General.Add, e -> showPopup());
     myAddPanel = new JPanel();
     myAddPanel.setBorder(border);
@@ -302,7 +302,9 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
       if (myDropPlace == null) return;
       Rectangle bounds = myButton.getBounds();
       Dimension size = myDropPlace.getPreferredSize();
-      myDropPlace.setBounds(bounds.x + bounds.width + 2, bounds.y + (bounds.height - size.height)/2, size.width, size.height);
+      int gap = JBUI.scale(2);
+      setPreferredSize(new Dimension(bounds.width + size.width + 2 * gap, bounds.height));
+      myDropPlace.setBounds((int)(bounds.getMaxX() + gap), bounds.y + (bounds.height - size.height) / 2, size.width, size.height);
     }
 
     private void setTask(@Nullable BeforeRunTask<?> task) {

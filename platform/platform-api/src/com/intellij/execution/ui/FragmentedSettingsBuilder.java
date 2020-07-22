@@ -29,6 +29,9 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
   static final int TOP_INSET = 5;
   static final int GROUP_INSET = 20;
+  public static final int TAG_VGAP = JBUI.scale(6);
+  public static final int TAG_HGAP = JBUI.scale(2);
+
   private final JPanel myPanel = new JPanel(new GridBagLayout()) {
     @Override
     public void addNotify() {
@@ -71,7 +74,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     }
     buildCommandLinePanel(fragments);
 
-    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, 0, 0));
+    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, TAG_HGAP, TAG_VGAP));
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       JComponent component = fragment.getComponent();
       if (fragment.isTag()) {
@@ -84,7 +87,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
         }
       }
     }
-    addLine(tagsPanel, GROUP_INSET - TOP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)), 0);
+    addLine(tagsPanel, GROUP_INSET - TOP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)) - TAG_HGAP, 0);
 
     for (SettingsEditorFragment<Settings, ?> group : subGroups) {
       addLine(group.getComponent());
