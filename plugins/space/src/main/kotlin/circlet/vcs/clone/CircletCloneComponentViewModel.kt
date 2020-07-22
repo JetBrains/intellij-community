@@ -40,7 +40,7 @@ internal class CircletCloneComponentViewModel(
 
     val me: MutableProperty<TD_MemberProfile> = workspace.me
 
-    val repos = xTransformedPagedListOnFlux<Ref<PR_Project>, CircletCloneListItem?>(
+    val repos = xTransformedPagedListOnFlux<Ref<PR_Project>, List<CircletCloneListItem>>(
         client = workspace.client,
         batchSize = 10,
         keyFn = { it.id },
@@ -50,7 +50,7 @@ internal class CircletCloneComponentViewModel(
             }
             val starredProjectIds = starService.starredProjects().mapToSet(Ref<PR_Project>::id)
 
-            val items = allProjectsWithRepos
+            val listsOfProjectRepos = allProjectsWithRepos
                 .asSequence()
                 .map { (projectRef, reposRef) ->
                     object {
@@ -59,31 +59,23 @@ internal class CircletCloneComponentViewModel(
                         val isStarred = projectRef.id in starredProjectIds
                     }
                 }
-                .flatMap {
-                    it.repos
-                        .asSequence()
-                        .map { repo ->
-                            val detailsProperty = mutableProperty<RepoDetails?>(null)
-                            val item = CircletCloneListItem(it.project, it.isStarred, repo, detailsProperty)
-                            item.visible.forEach(lifetime) { visible ->
-                                launch(lifetime, Ui) {
-                                    if (visible) {
-                                        detailsProperty.value = repositoryService.repositoryDetails(it.project.key, repo.name)
-                                    }
-                                }
-                            }
-                            item
-                        }
+                .map {
+                    it.repos.asSequence()
+                      .map { repo ->
+                          val detailsProperty = mutableProperty<RepoDetails?>(null)
+                          val item = CircletCloneListItem(it.project, it.isStarred, repo, detailsProperty)
+                          item.visible.forEach(lifetime) { visible ->
+                              launch(lifetime, Ui) {
+                                  if (visible) {
+                                      detailsProperty.value = repositoryService.repositoryDetails(it.project.key, repo.name)
+                                  }
+                              }
+                          }
+                          item
+                      }.toList()
                 }
 
-            mutableListOf<CircletCloneListItem?>().apply {
-                addAll(items)
-
-                // hack to avoid a limitation of `xTransformedPagedListOnFlux`
-                while (size < allProjectRefs.size) {
-                    add(null)
-                }
-            }
+                listsOfProjectRepos.toList()
         }
     ) { batch ->
         projectService.projectsBatch(batch, "", "")
