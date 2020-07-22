@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -40,6 +42,12 @@ public abstract class PersistentFS extends ManagingFS {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static PersistentFS getInstance() {
     return (PersistentFS)ManagingFS.getInstance();
+  }
+
+  @Override
+  @NotNull
+  protected <P, R> Function<P, R> accessDiskWithCheckCanceled(Function<? super P, ? extends R> function) {
+    return new DiskQueryRelay<>(function)::accessDiskWithCheckCanceled;
   }
 
   public abstract void clearIdCache();

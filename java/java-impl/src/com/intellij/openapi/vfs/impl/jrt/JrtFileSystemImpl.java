@@ -31,21 +31,6 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     Collections.synchronizedMap(new THashMap<>(FileUtil.PATH_HASHING_STRATEGY));
   private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
 
-  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(super::getAttributes);
-
-  @Nullable
-  @Override
-  public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    return myAttrGetter.accessDiskWithCheckCanceled(file);
-  }
-
-  private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(super::list);
-
-  @Override
-  public String @NotNull [] list(@NotNull VirtualFile file) {
-    return myChildrenGetter.accessDiskWithCheckCanceled(file);
-  }
-
   @NotNull
   @Override
   public String getProtocol() {

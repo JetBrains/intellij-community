@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.function.Function;
 
 /**
  * Common interface of archive-based file systems (jar://, phar:// etc).
@@ -133,15 +134,21 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return StringUtil.trimLeading(relativePath, '/');
   }
 
+  private final Function<VirtualFile, FileAttributes> myAttrGetter = ManagingFS.getInstance().accessDiskWithCheckCanceled(
+    file -> getHandler(file).getAttributes(getRelativePath(file)));
+
   @Nullable
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    return getHandler(file).getAttributes(getRelativePath(file));
+    return myAttrGetter.apply(file);
   }
+
+  private final Function<VirtualFile, String[]> myChildrenGetter = ManagingFS.getInstance().accessDiskWithCheckCanceled(
+    file -> getHandler(file).list(getRelativePath(file)));
 
   @Override
   public String @NotNull [] list(@NotNull VirtualFile file) {
-    return getHandler(file).list(getRelativePath(file));
+    return myChildrenGetter.apply(file);
   }
 
   @Override
@@ -190,9 +197,30 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return ArchiveHandler.DEFAULT_LENGTH;
   }
 
+  private final Function<VirtualFile, byte[]> myContentGetter = ManagingFS.getInstance().accessDiskWithCheckCanceled(
+    file -> {
+      try {
+        return getHandler(file).contentsToByteArray(getRelativePath(file));
+      }
+      catch (IOException e) {
+        throw new IOExceptionWrapper(e);
+      }
+    });
+
+  private static class IOExceptionWrapper extends RuntimeException {
+    IOExceptionWrapper(IOException cause) {
+      super(cause);
+    }
+  }
+
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    return getHandler(file).contentsToByteArray(getRelativePath(file));
+    try {
+      return myContentGetter.apply(file);
+    }
+    catch (IOExceptionWrapper e) {
+      throw (IOException)e.getCause();
+    }
   }
 
   @NotNull
