@@ -258,24 +258,30 @@ open class MarketplaceRequests {
       .tuner { connection -> connection.setUpETag(eTag) }
       .productNameAsUserAgent()
       .connect { request ->
-        indicator?.checkCanceled()
-        val connection = request.connection
-        if (file != null && connection.isNotModified(file)) {
-          return@connect file.bufferedReader().use(parser)
-        }
-        if (indicator != null) {
-          indicator.checkCanceled()
-          indicator.text2 = indicatorMessage
-        }
-        if (file != null) {
-          synchronized(INSTANCE) {
-            request.saveToFile(file, indicator)
-            connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
+        try {
+          indicator?.checkCanceled()
+          val connection = request.connection
+          if (file != null && connection.isNotModified(file)) {
+            return@connect file.bufferedReader().use(parser)
           }
-          return@connect file.bufferedReader().use(parser)
-        }
-        else {
-          return@connect request.reader.use(parser)
+          if (indicator != null) {
+            indicator.checkCanceled()
+            indicator.text2 = indicatorMessage
+          }
+          if (file != null) {
+            synchronized(INSTANCE) {
+              request.saveToFile(file, indicator)
+              connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
+            }
+            return@connect file.bufferedReader().use(parser)
+          }
+          else {
+            return@connect request.reader.use(parser)
+          }
+        } catch (e: Exception) {
+          val fileText = file?.readText()
+          LOG.error("Error reading Marketplace file: url=$url file=${file?.name}. File content:\n$fileText")
+          throw e
         }
       }
   }
