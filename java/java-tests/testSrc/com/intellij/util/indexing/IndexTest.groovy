@@ -44,7 +44,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.PsiDocumentManagerImpl
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.cache.impl.id.IdIndex
@@ -878,24 +877,24 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def fileName = "test.txt"
     final VirtualFile testFile = myFixture.addFileToProject(fileName, "test").getVirtualFile()
 
-    assertEquals("file: $fileName\n" +
+    assertEquals("file: $fileName; " +
                  "operation: UPDATE-REMOVE UPDATE ADD", listener.indexingOperation(testFile))
 
     FileContentUtilCore.reparseFiles(Collections.singletonList(testFile))
 
-    assertEquals("file: $fileName\n" +
+    assertEquals("file: $fileName; " +
                  "operation: REMOVE ADD", listener.indexingOperation(testFile))
 
     VfsUtil.saveText(testFile, "foo")
     VfsUtil.saveText(testFile, "bar")
 
-    assertEquals("file: $fileName\n" +
+    assertEquals("file: $fileName; " +
                  "operation: UPDATE-REMOVE UPDATE", listener.indexingOperation(testFile))
 
     VfsUtil.saveText(testFile, "baz")
     testFile.delete(null)
 
-    assertEquals("file: $fileName\n" +
+    assertEquals("file: $fileName; " +
                  "operation: REMOVE", listener.indexingOperation(testFile))
   }
 

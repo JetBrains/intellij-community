@@ -9,6 +9,7 @@ import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -17,6 +18,10 @@ import java.time.format.DateTimeParseException
 import kotlin.streams.asSequence
 
 object IndexDiagnosticDumper {
+  val indexingDiagnosticDir: Path by lazy {
+    val logPath = PathManager.getLogPath()
+    Paths.get(logPath).resolve("indexing-diagnostic")
+  }
 
   private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
@@ -28,9 +33,8 @@ object IndexDiagnosticDumper {
 
   @Synchronized
   fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistory) {
-    val logPath = PathManager.getLogPath()
     try {
-      val indexDiagnosticDirectory = Paths.get(logPath).resolve("indexing-time-diagnostic")
+      val indexDiagnosticDirectory = indexingDiagnosticDir
       indexDiagnosticDirectory.createDirectories()
 
       val fileNamePrefix = "diagnostic-"
