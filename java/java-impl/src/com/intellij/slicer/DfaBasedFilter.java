@@ -53,9 +53,10 @@ final class DfaBasedFilter {
 
   private boolean allowed(@NotNull PsiElement element, boolean assertionsDisabled) {
     if (myDfType instanceof DfConstantType && element instanceof PsiLiteralValue) {
-      Object constValue = ((DfConstantType<?>)myDfType).getValue();
+      DfConstantType<?> dfConstantType = (DfConstantType<?>)myDfType;
+      Object constValue = dfConstantType.getValue();
       if (!(constValue instanceof PsiElement)) {
-        Object value = ((PsiLiteralValue)element).getValue();
+        Object value = TypeConversionUtil.computeCastTo(((PsiLiteralValue)element).getValue(), dfConstantType.getPsiType());
         return Objects.equals(value, constValue);
       }
     }
@@ -87,7 +88,12 @@ final class DfaBasedFilter {
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
     if (result == null) return DfTypes.TOP;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    return assertionsDisabled ? result.getDfTypeNoAssertions(expression) : result.getDfType(expression);
+    DfType type = assertionsDisabled ? result.getDfTypeNoAssertions(expression) : result.getDfType(expression);
+    if (myDfType instanceof DfLongType && type instanceof DfIntType) {
+      // Implicit widening conversion
+      return DfTypes.longRange(((DfIntType)type).getRange());
+    }
+    return type;
   }
 
   @Override
