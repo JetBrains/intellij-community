@@ -9,4 +9,6 @@ class IgnoredContent {
     String s6 = <warning descr="Hardcoded string literal: \"See URL: https://www.example.com/\"">"See URL: https://www.example.com/"</warning>;
     String s7 = "foo.bar.baz";
     String s8 = "access$";
+    String s9 = "<html>" + s8 + "</html>";
+    String s10 = "&lt;";
 }

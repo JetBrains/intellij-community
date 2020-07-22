@@ -72,7 +72,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("double"),
     CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getAbsolutePath", "getCanonicalPath")
   );
-  @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "https?://.+|\\w*[.][\\w.]+|\\w*[$]\\w*|</?(html|b|i|body)>";
+  @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "(?i)https?://.+|\\w*[.][\\w.]+|\\w*[$]\\w*|</?(html|b|i|body)>|&\\w+;";
   private static final CallMatcher STRING_LENGTH =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "length").parameterCount(0);
   private static final CallMatcher STRING_EQUALS =
