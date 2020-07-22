@@ -247,7 +247,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.smali")
     },
     plugin("intellij.statsCollector") {
-      withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
     },
     plugin("intellij.jps.cache"),

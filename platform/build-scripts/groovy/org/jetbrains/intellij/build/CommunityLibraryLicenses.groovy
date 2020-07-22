@@ -654,6 +654,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlinx-coroutines-jdk8"),
     jetbrainsLibrary("kotlinx-coroutines-slf4j"),
+    jetbrainsLibrary("log-events"),
     jetbrainsLibrary("ml-completion-prev-exprs-models"),
     jetbrainsLibrary("precompiled_jshell-frontend"),
     jetbrainsLibrary("rd-core"),
