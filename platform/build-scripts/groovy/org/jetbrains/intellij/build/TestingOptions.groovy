@@ -31,6 +31,11 @@ class TestingOptions {
   String platformPrefix = System.getProperty("intellij.build.test.platform.prefix", OLD_PLATFORM_PREFIX)
 
   /**
+   * Enables debug for testing process
+   */
+  boolean debugEnabled = SystemProperties.getBooleanProperty("intellij.build.test.debug.enabled", true)
+
+  /**
    * Specifies port on which the testing process will listen for connections, by default a random port will be used.
    */
   int debugPort = SystemProperties.getIntProperty("intellij.build.test.debug.port", OLD_DEBUG_PORT)
@@ -84,6 +89,8 @@ class TestingOptions {
    */
   String testDiscoveryExcludePatterns = System.getProperty("intellij.build.test.discovery.exclude.class.patterns")
 
+  boolean performanceTestsOnly = SystemProperties.getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
+
   public static final String ALL_EXCLUDE_DEFINED_GROUP = "ALL_EXCLUDE_DEFINED"
   private static final String OLD_TEST_GROUP = System.getProperty("idea.test.group", ALL_EXCLUDE_DEFINED_GROUP)
   private static final String OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
@@ -94,4 +101,5 @@ class TestingOptions {
   private static final String OLD_MAIN_MODULE = System.getProperty("module.to.make")
 
   public static final String BOOTSTRAP_SUITE_DEFAULT = "com.intellij.tests.BootstrapTests"
+  public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests"
 }

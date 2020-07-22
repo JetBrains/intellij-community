@@ -38,7 +38,7 @@ class TestingTasksImpl extends TestingTasks {
 
   @Override
   void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
-    if (options.testDiscoveryEnabled && isPerformanceRun()) {
+    if (options.testDiscoveryEnabled && options.performanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
       return
     }
@@ -79,10 +79,6 @@ class TestingTasksImpl extends TestingTasks {
       }
       publishTestDiscovery()
     }
-  }
-
-  private static boolean isPerformanceRun() {
-    System.getProperty("idea.performance.tests") == "true"
   }
 
   private void checkOptions() {
@@ -266,12 +262,12 @@ class TestingTasksImpl extends TestingTasks {
 
     def allSystemProperties = new HashMap<String, String>(systemProperties)
     [
-      "classpath.file"                         : classpathFile.absolutePath,
-      "intellij.build.test.patterns"           : testPatterns,
-      "intellij.build.test.groups"             : testGroups,
-      "intellij.build.test.sorter"             : System.getProperty("intellij.build.test.sorter"),
-      "bootstrap.testcases"                    : "com.intellij.AllTests",
-      "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
+      "classpath.file"                            : classpathFile.absolutePath,
+      "intellij.build.test.patterns"              : testPatterns,
+      "intellij.build.test.groups"                : testGroups,
+      "intellij.build.test.sorter"                : System.getProperty("intellij.build.test.sorter"),
+      "bootstrap.testcases"                       : "com.intellij.AllTests",
+      (TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG)  : options.performanceTestsOnly.toString(),
     ].each { k, v -> allSystemProperties.putIfAbsent(k, v) }
 
     def allJvmArgs = new ArrayList<String>(jvmArgs)
@@ -369,7 +365,7 @@ class TestingTasksImpl extends TestingTasks {
     PortableCompilationCache.PROPERTIES.each { systemProperties.putIfAbsent(it, System.getProperty(it)) }
 
     boolean suspendDebugProcess = options.suspendDebugProcess
-    if (isPerformanceRun()) {
+    if (options.performanceTestsOnly) {
       context.messages.info("Debugging disabled for performance tests")
       suspendDebugProcess = false
     }
@@ -380,7 +376,7 @@ class TestingTasksImpl extends TestingTasks {
         suspendDebugProcess = false
       }
     }
-    else {
+    else if (options.debugEnabled) {
       String debuggerParameter = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendDebugProcess ? "y" : "n"},address=localhost:$options.debugPort"
       jvmArgs.add(debuggerParameter)
     }
