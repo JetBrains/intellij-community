@@ -456,7 +456,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
             final BooleanFunction<File> filter = recurse || !acceptUnknownFiles? kindsFilter : new BooleanFunction<File>() {
               @Override
               public boolean fun(File file) {
-                return kindsFilter.fun(dir) && myFileOperations.isFile(file);
+                return kindsFilter.fun(file) && myFileOperations.isFile(file);
               }
             };
             result.add(Iterators.map(Iterators.filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter));
