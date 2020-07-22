@@ -32,7 +32,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
   private JBCefJSQuery(@NotNull JBCefBrowser browser, @NotNull JBCefJSQuery.JSQueryFunc func) {
     myFunc = func;
     myCefClient = browser.getJBCefClient().getCefClient();
-    Disposer.register(browser, this);
+    Disposer.register(browser.getJBCefClient(), this);
   }
 
   /**
