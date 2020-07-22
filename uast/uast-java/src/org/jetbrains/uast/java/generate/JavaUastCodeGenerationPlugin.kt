@@ -388,6 +388,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
 
     val operatorSymbol = when (operator) {
       UastBinaryOperator.LOGICAL_AND -> "&&"
+      UastBinaryOperator.PLUS -> "+"
       else -> return null
     }
     val psiBinaryExpression = psiFactory.createExpressionFromText("a $operatorSymbol b", null) as? PsiBinaryExpression

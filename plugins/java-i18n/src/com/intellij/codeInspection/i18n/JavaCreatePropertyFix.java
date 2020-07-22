@@ -28,6 +28,8 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.List;
 
@@ -80,7 +82,7 @@ public class JavaCreatePropertyFix extends CreatePropertyFix {
     final I18nizeQuickFixDialog dialog = new JavaI18nizeQuickFixDialog(
       project,
       file,
-      literalExpression,
+      UastContextKt.toUElement(literalExpression, UInjectionHost.class),
       propertyValue,
       createDefaultCustomization(suggestedKey, propertiesFiles),
       false,

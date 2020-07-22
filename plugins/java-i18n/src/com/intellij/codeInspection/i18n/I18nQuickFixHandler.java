@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.Collection;
 
@@ -35,7 +36,7 @@ public interface I18nQuickFixHandler {
                           final Editor editor) throws IncorrectOperationException;
   void performI18nization(final PsiFile psiFile,
                           final Editor editor,
-                          PsiLiteralExpression literalExpression,
+                          UInjectionHost literalExpression,
                           Collection<PropertiesFile> propertiesFiles,
                           String key,
                           String value,

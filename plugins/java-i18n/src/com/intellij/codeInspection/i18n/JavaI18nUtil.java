@@ -290,7 +290,7 @@ public final class JavaI18nUtil extends I18nUtil {
     }
   }
 
-  public static Set<String> suggestExpressionOfType(final PsiClassType type, final PsiLiteralExpression context) {
+  public static Set<String> suggestExpressionOfType(final PsiClassType type, final PsiElement context) {
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(context, "");
     Set<String> result = new LinkedHashSet<>();
     for (PsiVariable var : variables) {
@@ -312,7 +312,7 @@ public final class JavaI18nUtil extends I18nUtil {
   }
 
   private static void addAvailableMethodsOfType(final PsiClassType type,
-                                                final PsiLiteralExpression context,
+                                                final PsiElement context,
                                                 final Collection<? super String> result) {
     PsiScopesUtil.treeWalkUp((element, state) -> {
       if (element instanceof PsiMethod) {

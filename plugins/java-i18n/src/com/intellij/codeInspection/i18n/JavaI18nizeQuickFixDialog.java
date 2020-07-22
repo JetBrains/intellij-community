@@ -30,6 +30,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -41,7 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
-  private final PsiLiteralExpression myLiteralExpression;
+  private final UInjectionHost myLiteralExpression;
 
   private final JLabel myPreviewLabel;
   private final JPanel myHyperLinkPanel;
@@ -60,12 +61,12 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
   @NonNls public static final String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
 
   public JavaI18nizeQuickFixDialog(@NotNull Project project,
-                               @NotNull final PsiFile context,
-                               @Nullable final PsiLiteralExpression literalExpression,
-                               @NotNull String defaultPropertyValue,
-                               DialogCustomization customization,
-                               final boolean showJavaCodeInfo,
-                               final boolean showPreview) {
+                                   @NotNull final PsiFile context,
+                                   @Nullable final UInjectionHost literalExpression,
+                                   @NotNull String defaultPropertyValue,
+                                   DialogCustomization customization,
+                                   final boolean showJavaCodeInfo,
+                                   final boolean showPreview) {
     super(project, context, defaultPropertyValue, customization, true);
 
     ResourceBundleManager resourceBundleManager = null;
@@ -102,7 +103,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       @NonNls String defaultVarName = "resourceBundle";
       final JavaCodeFragmentFactory codeFragmentFactory = JavaCodeFragmentFactory.getInstance(project);
       PsiExpressionCodeFragment expressionCodeFragment =
-        codeFragmentFactory.createExpressionCodeFragment(defaultVarName, myLiteralExpression, myResourceBundleType, true);
+        codeFragmentFactory.createExpressionCodeFragment(defaultVarName, myLiteralExpression.getSourcePsi(), myResourceBundleType, true);
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(expressionCodeFragment);
       myRBEditorTextField = new EditorComboBox(document, myProject, JavaFileType.INSTANCE);
       myResourceBundleSuggester.add(UI.PanelFactory.panel(myRBEditorTextField)
@@ -188,7 +189,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     if (myShowJavaCodeInfo) {
       myJavaCodeInfoPanel.setVisible(showResourceBundleTextField(templateName, myProject));
     }
-    Set<String> result = JavaI18nUtil.suggestExpressionOfType(myResourceBundleType, myLiteralExpression);
+    Set<String> result = JavaI18nUtil.suggestExpressionOfType(myResourceBundleType, myLiteralExpression.getSourcePsi());
     if (result.isEmpty()) {
       result.add(getResourceBundleText());
     }
@@ -229,7 +230,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     String propertyKey = StringUtil.escapeStringCharacters(getKey());
     I18nizedTextGenerator textGenerator = myResourceBundleManager.getI18nizedTextGenerator();
     if (textGenerator != null) {
-      return generateText(textGenerator, propertyKey, getPropertiesFile(), myLiteralExpression);
+      return generateText(textGenerator, propertyKey, getPropertiesFile(), myLiteralExpression.getSourcePsi());
     }
 
     String templateName = getTemplateName();
@@ -252,8 +253,8 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
   protected String generateText(final I18nizedTextGenerator textGenerator,
                                 @NotNull String propertyKey,
                                 final PropertiesFile propertiesFile,
-                                final PsiLiteralExpression literalExpression) {
-    return textGenerator.getI18nizedText(propertyKey, propertiesFile, literalExpression);
+                                final PsiElement context) {
+    return textGenerator.getI18nizedText(propertyKey, propertiesFile, context);
   }
 
   protected void addAdditionalAttributes(final Map<String, String> attributes) {
@@ -263,7 +264,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     return myShowJavaCodeInfo ? myRBEditorTextField.getText() : null;
   }
 
-  public PsiLiteralExpression getLiteralExpression() {
+  public UInjectionHost getLiteralExpression() {
     return myLiteralExpression;
   }
 

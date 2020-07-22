@@ -29,6 +29,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.Collection;
 
@@ -67,7 +68,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
     @Override
     public void performI18nization(final PsiFile psiFile,
                                    final Editor editor,
-                                   PsiLiteralExpression literalExpression,
+                                   UInjectionHost literalExpression,
                                    Collection<PropertiesFile> propertiesFiles,
                                    String key, String value, String i18nizedText,
                                    PsiExpression[] parameters,

@@ -19,6 +19,7 @@
 package org.jetbrains.uast
 
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -240,3 +241,6 @@ fun UNamedExpression.getAnnotationMethod(): PsiMethod? {
   }
   return null
 }
+
+val UElement.textRange: TextRange?
+  get() = sourcePsi?.textRange

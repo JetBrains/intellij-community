@@ -24,15 +24,17 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.io.File;
 import java.util.Collections;
 
-
+/**
+ * Analogical Kotlin tests: {@link org.jetbrains.idea.devkit.kotlin.quickfix.KtI18nizeTest}
+ */
 public class I18nizeTest extends LightJavaCodeInsightTestCase {
   @NonNls
   private static String getBasePath() {
@@ -59,11 +61,19 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     assertEquals(afterFileExists, event.getPresentation().isEnabled());
 
     if (afterFileExists) {
-      PsiLiteralExpression literalExpression = I18nizeAction.getEnclosingStringLiteral(getFile(), getEditor());
+      UInjectionHost literalExpression = I18nizeAction.getEnclosingStringLiteral(getFile(), getEditor());
       assertNotNull(handler);
-      ApplicationManager.getApplication().runWriteAction(() -> handler.performI18nization(getFile(), getEditor(), literalExpression, Collections.emptyList(), "key1", "value1",
-                                                                                          "i18nizedExpr",
-                                                                                          PsiExpression.EMPTY_ARRAY, JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER));
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        handler.performI18nization(getFile(),
+                                   getEditor(),
+                                   literalExpression,
+                                   Collections.emptyList(),
+                                   "key1",
+                                   "value1",
+                                   "i18nizedExpr",
+                                   PsiExpression.EMPTY_ARRAY,
+                                   JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER);
+      });
 
       checkResultByFile(afterFile);
     }

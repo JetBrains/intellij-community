@@ -14,6 +14,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +42,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     assert concatenation != null;
-    PsiLiteralExpression literalExpression = getContainingLiteral(concatenation);
+    UInjectionHost literalExpression = UastContextKt.toUElement(getContainingLiteral(concatenation), UInjectionHost.class);
     if (literalExpression == null) return null;
     return createDialog(project, psiFile, literalExpression);
   }
@@ -52,10 +54,10 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   }
 
   @Override
-  protected PsiElement doReplacementInJava(@NotNull final PsiFile psiFile,
-                                           @NotNull final Editor editor,
-                                           @Nullable PsiLiteralExpression literalExpression,
-                                           String i18nizedText) throws IncorrectOperationException {
+  protected PsiElement doReplacement(@NotNull final PsiFile psiFile,
+                                     @NotNull final Editor editor,
+                                     @Nullable UInjectionHost literalExpression,
+                                     String i18nizedText) throws IncorrectOperationException {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     assert concatenation != null;
     PsiExpression expression = JavaPsiFacade.getInstance(psiFile.getProject()).getElementFactory().createExpressionFromText(i18nizedText, concatenation);
@@ -67,8 +69,8 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   }
 
   @Override
-  protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
-    PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
+  protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final UInjectionHost literalExpression) {
+    PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression.getSourcePsi());
     final List<PsiExpression> args = new ArrayList<>();
     String formatString = getValueString(concatenation, args);
 
@@ -81,8 +83,8 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
 
       @Override
       protected String generateText(final I18nizedTextGenerator textGenerator, final @NotNull String propertyKey, final PropertiesFile propertiesFile,
-                                    final PsiLiteralExpression literalExpression) {
-        return textGenerator.getI18nizedConcatenationText(propertyKey, composeParametersText(args), propertiesFile, literalExpression);
+                                    final PsiElement context) {
+        return textGenerator.getI18nizedConcatenationText(propertyKey, composeParametersText(args), propertiesFile, literalExpression.getSourcePsi());
       }
 
       @Override
