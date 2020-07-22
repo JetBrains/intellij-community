@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UCallExpression;
 
 import java.util.Collections;
 import java.util.Set;
@@ -41,6 +42,9 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
 
   @Contract(value = "null -> false", pure = true)
   boolean methodMatches(@Nullable PsiMethod method);
+
+  @Contract(value = "null -> false", pure = true)
+  boolean uCallMatches(@Nullable UCallExpression call);
 
   /**
    * Returns true if the supplied expression is (possibly parenthesized) method call which matches this matcher
@@ -81,6 +85,16 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       public boolean methodMatches(PsiMethod method) {
         for (CallMatcher m : matchers) {
           if (m.methodMatches(method)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      @Override
+      public boolean uCallMatches(@Nullable UCallExpression call) {
+        for (CallMatcher m : matchers) {
+          if (m.uCallMatches(call)) {
             return true;
           }
         }
@@ -193,6 +207,12 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       public boolean methodMatches(@Nullable PsiMethod method) {
         if (method == null || !filter.test(method)) return false;
         return CallMatcher.this.methodMatches(method);
+      }
+
+      @Override
+      public boolean uCallMatches(@Nullable UCallExpression call) {
+        if (call == null || !filter.test(call.getSourcePsi())) return false;
+        return CallMatcher.this.uCallMatches(call);
       }
 
       @Override
@@ -317,6 +337,14 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       if (aClass == null) return false;
       return myCallType.matches(aClass, myClassName, method.hasModifierProperty(PsiModifier.STATIC)) &&
              parametersMatch(method.getParameterList());
+    }
+
+    @Override
+    public boolean uCallMatches(@Nullable UCallExpression call) {
+      if (call == null) return false;
+      String name = call.getMethodName();
+      if (!myNames.contains(name)) return false;
+      return methodMatches(call.resolve());
     }
 
     @Override

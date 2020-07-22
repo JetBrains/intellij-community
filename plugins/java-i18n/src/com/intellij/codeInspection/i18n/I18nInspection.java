@@ -35,10 +35,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.RegExp;
@@ -75,6 +73,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getAbsolutePath", "getCanonicalPath")
   );
   @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "https?://.+|\\w*[.][\\w.]+|\\w*[$]\\w*|</?(html|b|i|body)>";
+  private static final CallMatcher STRING_LENGTH =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "length").parameterCount(0);
+  private static final CallMatcher STRING_EQUALS =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "equals", "equalsIgnoreCase").parameterCount(1);
 
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
@@ -857,7 +859,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return true;
     }
 
-    if (isInNonNlsEquals(usage, nonNlsTargets)) {
+    if (isSafeStringMethod(usage, nonNlsTargets)) {
       return true;
     }
 
@@ -1003,27 +1005,24 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return NlsInfo.forModifierListOwner(parent).getNlsStatus() == ThreeState.NO;
   }
 
-  private static boolean isInNonNlsEquals(UExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
+  private static boolean isSafeStringMethod(UExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
     if (!(parent instanceof UQualifiedReferenceExpression)) return false;
     UExpression selector = ((UQualifiedReferenceExpression)parent).getSelector();
     if (!(selector instanceof UCallExpression)) return false;
     UCallExpression call = (UCallExpression)selector;
-    if (!HardcodedMethodConstants.EQUALS.equals(call.getMethodName()) ||
-        !MethodUtils.isEquals(call.resolve())) return false;
-    final List<UExpression> expressions = call.getValueArguments();
-    if (expressions.size() != 1) return false;
-    final UExpression arg = UastUtils.skipParenthesizedExprDown(expressions.get(0));
-    UResolvable ref = ObjectUtils.tryCast(arg, UResolvable.class);
-    if (ref != null) {
-      final PsiElement resolvedEntity = ref.resolve();
-      if (resolvedEntity instanceof PsiModifierListOwner) {
-        PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolvedEntity;
-        if (annotatedAsNonNls(modifierListOwner)) {
-          return true;
-        }
-        nonNlsTargets.add(modifierListOwner);
+    if (STRING_EQUALS.uCallMatches(call)) {
+      final List<UExpression> expressions = call.getValueArguments();
+      if (expressions.size() != 1) return false;
+      final UExpression arg = UastUtils.skipParenthesizedExprDown(expressions.get(0));
+      UReferenceExpression ref = ObjectUtils.tryCast(arg, UReferenceExpression.class);
+      if (ref != null) {
+        return isNonNlsCall(ref, nonNlsTargets);
       }
+      return false;
+    }
+    if (STRING_LENGTH.uCallMatches(call)) {
+      return true;
     }
     return false;
   }
@@ -1065,6 +1064,15 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         return true;
       }
       nonNlsTargets.add(modifierListOwner);
+    }
+    ULocalVariable uVar = UastContextKt.toUElement(resolved, ULocalVariable.class);
+    if (uVar != null) {
+      UExpression initializer = uVar.getUastInitializer();
+      if (initializer instanceof UCallExpression) {
+        PsiMethod method = ((UCallExpression)initializer).resolve();
+        if (annotatedAsNonNls(method)) return true;
+        nonNlsTargets.add(method);
+      }
     }
     if (qualifier instanceof UQualifiedReferenceExpression) {
       UExpression receiver = UastUtils.skipParenthesizedExprDown(((UQualifiedReferenceExpression)qualifier).getReceiver());

@@ -35,6 +35,7 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testStringBufferNonNls() { doTest(); }
   public void testEnum() { doTest(); }
   public void testIgnoredLines() { doTest(); }
+  public void testStringMethods() { doTest(); }
 
   public void testVarargNonNlsParameter() { doTest(); }
   public void testInitializerInAnonymousClass() { doTest(); }
