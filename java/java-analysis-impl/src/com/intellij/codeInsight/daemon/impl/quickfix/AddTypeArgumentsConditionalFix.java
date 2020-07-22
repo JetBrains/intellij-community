@@ -83,7 +83,7 @@ public class AddTypeArgumentsConditionalFix implements IntentionAction {
         withTypeArgsText = aClass.getQualifiedName();
       }
       else {
-        withTypeArgsText = "this";
+        withTypeArgsText = PsiKeyword.THIS;
       }
     }
     withTypeArgsText += "." + typeArguments + myExpression.getMethodExpression().getReferenceName();

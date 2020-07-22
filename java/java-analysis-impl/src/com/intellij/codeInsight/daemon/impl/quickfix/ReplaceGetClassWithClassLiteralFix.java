@@ -46,7 +46,7 @@ public class ReplaceGetClassWithClassLiteralFix extends LocalQuickFixAndIntentio
     if (aClass == null) return false;
     String className = aClass.getName();
     if (className == null) return false;
-    myText = "Replace with " + className + ".class";
+    myText = "Replace with " + className + "." + PsiKeyword.CLASS;
     return super.isAvailable(project, file, startElement, endElement);
   }
 

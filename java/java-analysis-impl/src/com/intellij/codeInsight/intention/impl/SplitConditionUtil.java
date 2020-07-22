@@ -170,7 +170,7 @@ public final class SplitConditionUtil {
       }
     }
     else {
-      thenString = "{" + createIfString(leave, thenBranch, String.join("\nelse ", elseChain), tracker) + "\n}";
+      thenString = "{" + createIfString(leave, thenBranch, String.join("\n" + PsiKeyword.ELSE + " ", elseChain), tracker) + "\n}";
     }
     String ifString = createIfString(extract, thenString, elseBranch, tracker);
     return (PsiIfStatement)factory.createStatementFromText(ifString, thenBranch);
@@ -222,8 +222,8 @@ public final class SplitConditionUtil {
   private static String createIfString(@NotNull String condition,
                                        @NotNull String thenBranch,
                                        @Nullable String elseBranch) {
-    final String elsePart = elseBranch != null ? "\n else " + elseBranch : "";
-    return "if (" + condition + ")\n" + thenBranch + elsePart;
+    final String elsePart = elseBranch != null ? "\n " + PsiKeyword.ELSE + " " + elseBranch : "";
+    return PsiKeyword.IF + " (" + condition + ")\n" + thenBranch + elsePart;
   }
 
   @NotNull

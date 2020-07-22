@@ -283,7 +283,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
           int index = ArrayUtil.indexOf(parameters, parameter);
           PsiParameterList newList;
           if (PsiUtil.isLanguageLevel11OrHigher(list)) {
-            String newListText = StreamEx.of(parameters).map(p -> "var " + p.getName()).joining(",", "(", ")");
+            String newListText = StreamEx.of(parameters).map(p -> PsiKeyword.VAR + " " + p.getName()).joining(",", "(", ")");
             newList = ((PsiLambdaExpression)JavaPsiFacade.getElementFactory(list.getProject())
               .createExpressionFromText(newListText+" -> {}", null)).getParameterList();
             newList = (PsiParameterList)new CommentTracker().replaceAndRestoreComments(list, newList);
