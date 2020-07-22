@@ -117,12 +117,13 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
                             val isInterface: Boolean,
                             val isAnnotationType: Boolean,
                             val extendsList: Set<String>,
-                            val implementsList: Set<String>) : Member(name, modifiers) {
+                            val implementsList: Set<String>,
+                            val permitsList: Set<String>) : Member(name, modifiers) {
 
     override fun hasChanged(other: Member): Boolean {
       return other !is Class || super.hasChanged(other) ||
              isEnum != other.isEnum || isInterface != other.isInterface || isAnnotationType != other.isAnnotationType ||
-             extendsList != other.extendsList || implementsList != other.implementsList
+             extendsList != other.extendsList || implementsList != other.implementsList || permitsList != other.permitsList
     }
 
     override fun copy(modifiers: MutableSet<String>): Member = copy(name = name, modifiers = modifiers, isEnum = isEnum,
@@ -138,7 +139,8 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
         val isAnnotationType = psiClass.isAnnotationType
         val extendsList: Set<String> = getParentClasses(psiClass.extendsList)
         val implementsList: Set<String> = getParentClasses(psiClass.implementsList)
-        return Class(name, modifiers, isEnum, isInterface, isAnnotationType, extendsList, implementsList)
+        val permitsList: Set<String> = getParentClasses(psiClass.permitsList)
+        return Class(name, modifiers, isEnum, isInterface, isAnnotationType, extendsList, implementsList, permitsList)
       }
     }
   }

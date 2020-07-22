@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTestCase() {
@@ -15,6 +16,10 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
     assertEmpty(getProblems())
 
     testBody()
+  }
+
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_15
   }
 
   protected fun getProblems() = ProjectProblemUtils.getReportedProblems(myFixture.editor).flatMap { it.value }.map { it.reportedElement }
