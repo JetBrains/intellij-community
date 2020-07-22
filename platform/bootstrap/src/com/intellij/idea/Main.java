@@ -76,10 +76,6 @@ public final class Main {
       System.exit(NO_GRAPHICS);
     }
 
-    if (isStudio() && !isHeadless()) {
-      StudioCrashDetection.start();
-    }
-
     try {
       bootstrap(args, startupTimings);
     }
@@ -92,6 +88,11 @@ public final class Main {
   private static void bootstrap(String[] args, LinkedHashMap<String, Long> startupTimings) throws Exception {
     startupTimings.put("properties loading", System.nanoTime());
     PathManager.loadProperties();
+
+    /* Android Studio: start crash detection after properly initializing PathManager */
+    if (isStudio() && !isHeadless()) {
+      StudioCrashDetection.start();
+    }
 
     // this check must be performed before system directories are locked
     String configPath = PathManager.getConfigPath();
