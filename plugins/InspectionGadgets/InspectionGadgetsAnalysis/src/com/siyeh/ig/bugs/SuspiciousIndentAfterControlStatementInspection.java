@@ -69,33 +69,33 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
         return;
       }
       final boolean lineBreakBeforeBody;
-      PsiElement prevSibling = body.getPrevSibling();
-      if (!(prevSibling instanceof PsiWhiteSpace)) {
+      PsiElement bodyWhiteSpace = body.getPrevSibling();
+      if (!(bodyWhiteSpace instanceof PsiWhiteSpace)) {
         lineBreakBeforeBody = false;
-        prevSibling = statement.getPrevSibling();
-        if (!(prevSibling instanceof PsiWhiteSpace)) {
+        bodyWhiteSpace = statement.getPrevSibling();
+        if (!(bodyWhiteSpace instanceof PsiWhiteSpace)) {
           return;
         }
       }
       else {
-        final String text = prevSibling.getText();
-        final int lineBreakIndex = text.lastIndexOf('\n');
-        if (lineBreakIndex < 0) {
+        final String text = bodyWhiteSpace.getText();
+        final int bodyLineBreak = text.lastIndexOf('\n');
+        if (bodyLineBreak < 0) {
           lineBreakBeforeBody = false;
-          prevSibling = statement.getPrevSibling();
-          if (!(prevSibling instanceof PsiWhiteSpace)) {
+          bodyWhiteSpace = statement.getPrevSibling();
+          if (!(bodyWhiteSpace instanceof PsiWhiteSpace)) {
             return;
           }
         }
         else {
           lineBreakBeforeBody = true;
-          final PsiElement sibling = statement.getPrevSibling();
-          if (sibling instanceof PsiWhiteSpace) {
-            final String siblingText = sibling.getText();
-            final int index = siblingText.lastIndexOf('\n');
-            if (index >= 0) {
-              final int statementIndent = getIndent(siblingText.substring(index + 1));
-              final int bodyIndent = getIndent(text.substring(lineBreakIndex + 1));
+          final PsiElement statementWhiteSpace = statement.getPrevSibling();
+          if (statementWhiteSpace instanceof PsiWhiteSpace) {
+            final String siblingText = statementWhiteSpace.getText();
+            final int statementLineBreak = siblingText.lastIndexOf('\n');
+            if (statementLineBreak >= 0) {
+              final int statementIndent = getIndent(siblingText.substring(statementLineBreak + 1));
+              final int bodyIndent = getIndent(text.substring(bodyLineBreak + 1));
               if (statementIndent == bodyIndent) {
                 registerStatementError(body);
                 return;
@@ -108,28 +108,28 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
       if (nextStatement == null) {
         return;
       }
-      final String text = prevSibling.getText();
-      final int index = text.lastIndexOf('\n');
-      if (index < 0) {
+      final String text = bodyWhiteSpace.getText();
+      final int bodyLineBreak = text.lastIndexOf('\n');
+      if (bodyLineBreak < 0) {
         return;
       }
-      final PsiElement nextSibling = nextStatement.getPrevSibling();
-      if (!(nextSibling instanceof PsiWhiteSpace)) {
+      final PsiElement nextWhiteSpace = nextStatement.getPrevSibling();
+      if (!(nextWhiteSpace instanceof PsiWhiteSpace)) {
         return;
       }
-      final String nextText = nextSibling.getText();
-      final int nextIndex = nextText.lastIndexOf('\n');
-      if (nextIndex < 0) {
+      final String nextText = nextWhiteSpace.getText();
+      final int nextLineBreak = nextText.lastIndexOf('\n');
+      if (nextLineBreak < 0) {
         return;
       }
-      final int nextIndentValue = getIndent(nextText.substring(nextIndex + 1));
-      final int indentValue = getIndent(text.substring(index + 1));
+      final int bodyIndent = getIndent(text.substring(bodyLineBreak + 1));
+      final int nextIndent = getIndent(nextText.substring(nextLineBreak + 1));
       if (lineBreakBeforeBody) {
-        if (nextIndentValue == indentValue) {
+        if (nextIndent == bodyIndent) {
           registerStatementError(nextStatement);
         }
       }
-      else if (nextIndentValue > indentValue) {
+      else if (nextIndent > bodyIndent) {
         registerStatementError(nextStatement);
       }
     }
