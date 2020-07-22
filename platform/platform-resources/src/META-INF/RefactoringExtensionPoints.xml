@@ -42,6 +42,10 @@
     <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider" dynamic="true"/>
     <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
     <extensionPoint name="renamerFactory" dynamic="true" interface="com.intellij.refactoring.rename.RenamerFactory"/>
+    <extensionPoint name="rename.symbolRenameTargetFactory" dynamic="true"
+                    interface="com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory"/>
+    <extensionPoint name="rename.referenceRenameUsageFactory" dynamic="true"
+                    interface="com.intellij.refactoring.rename.symbol.ReferenceRenameUsageFactory"/>
 
     <extensionPoint name="rename.inplace.resolveSnapshotProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.rename.ResolveSnapshotProvider"/>
