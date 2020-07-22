@@ -196,9 +196,9 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     );
   }
 
-  public void testTrimEmptyLinesAtEOFNoNewLine() {
+  public void testRemoveTrailingBlankLinesNoNewLine() {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    settings.setTrimBlankLinesAtEOF(true);
+    settings.setRemoveTrailingBlankLines(true);
     settings.setEnsureNewLineAtEOF(false);
     configureFromFileText(
       "x.txt",
@@ -211,9 +211,9 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     );
   }
 
-  public void testTrimEmptyLinesAtEOFNewLine() {
+  public void testRemoveTrailingBlankLinesNewLine() {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    settings.setTrimBlankLinesAtEOF(true);
+    settings.setRemoveTrailingBlankLines(true);
     settings.setEnsureNewLineAtEOF(true);
     configureFromFileText(
       "x.txt",

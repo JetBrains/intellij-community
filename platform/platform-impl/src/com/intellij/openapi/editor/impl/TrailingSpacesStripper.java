@@ -21,7 +21,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,8 +59,8 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
       }
     }
 
-    if (options.isTrimBlankLinesAtEOF()) {
-      trimBlankLinesAtEOF(document, options.isEnsureNewLineAtEOF());
+    if (options.isRemoveTrailingBlankLines()) {
+      removeTrailngBlankLines(document, options.isEnsureNewLineAtEOF());
     }
 
     final int lines = document.getLineCount();
@@ -96,7 +95,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     }
   }
 
-  private static void trimBlankLinesAtEOF(@NotNull Document document, boolean keepLast) {
+  private static void removeTrailngBlankLines(@NotNull Document document, boolean keepLast) {
     if (document.getLineCount() > 0) {
       int endOffset = document.getTextLength() - 1;
       Ref<Integer> deleteToExclusive = Ref.create(endOffset + 1);
@@ -250,7 +249,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
               if (providerOptions != null) {
                 currOptions.setStripTrailingSpaces(providerOptions.getStripTrailingSpaces());
                 currOptions.setEnsureNewLineAtEOF(providerOptions.getEnsureNewLineAtEOF());
-                currOptions.setTrimBlankLinesAtEOF(providerOptions.getTrimBlankLinesAtEOF());
+                currOptions.setRemoveTrailingBlankLines(providerOptions.getRemoveTrailingBlankLines());
                 currOptions.setChangedLinesOnly(providerOptions.getChangedLinesOnly());
                 currOptions.setKeepTrailingSpacesOnCaretLine(providerOptions.getKeepTrailingSpacesOnCaretLine());
               }
@@ -266,7 +265,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
   private static final class MyTrailingSpacesOptions implements TrailingSpacesOptions {
     private @Nullable Boolean myStripTrailingSpaces;
     private @Nullable Boolean myEnsureNewLineAtEOF;
-    private @Nullable Boolean myTrimBlankLinesAtEOF;
+    private @Nullable Boolean myRemoveTrailingBlankLines;
     private @Nullable Boolean myChangedLinesOnly;
     private @Nullable Boolean myKeepTrailingSpacesOnCaretLine;
 
@@ -282,9 +281,9 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
       }
     }
 
-    private void setTrimBlankLinesAtEOF(@Nullable Boolean trimBlankLinesAtEOF) {
-      if (trimBlankLinesAtEOF != null && myTrimBlankLinesAtEOF == null) {
-        myTrimBlankLinesAtEOF = trimBlankLinesAtEOF;
+    private void setRemoveTrailingBlankLines(@Nullable Boolean removeTrailingBlankLines) {
+      if (removeTrailingBlankLines != null && myRemoveTrailingBlankLines == null) {
+        myRemoveTrailingBlankLines = removeTrailingBlankLines;
       }
     }
 
@@ -314,8 +313,8 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     }
 
     @Override
-    public boolean isTrimBlankLinesAtEOF() {
-      return myTrimBlankLinesAtEOF != null ? myTrimBlankLinesAtEOF.booleanValue() : myEditorSettings.isTrimBlankLinesAtEOF();
+    public boolean isRemoveTrailingBlankLines() {
+      return myRemoveTrailingBlankLines != null ? myRemoveTrailingBlankLines.booleanValue() : myEditorSettings.isRemoveTrailingBlankLines();
     }
 
     @Override
