@@ -196,6 +196,17 @@ class B {
     assert method.isConstructor()
   }
 
+  void testNewifyElementsKind2() {
+    testHighlighting """
+@Newify(A)
+class B {
+  def a = A.ne<caret>w()
+}
+"""
+    PsiMethod method = fixture.elementAtCaret as PsiMethod
+    assert method.isConstructor()
+  }
+
   void testNewifyAutoLookup() {
     fixture.configureByText 'a.groovy', """
 @Newify(A)

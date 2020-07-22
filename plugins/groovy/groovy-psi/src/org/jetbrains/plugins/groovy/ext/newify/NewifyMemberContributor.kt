@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 import java.util.regex.PatternSyntaxException
 
 internal const val newifyAnnotationFqn = "groovy.lang.Newify"
-internal const val newifyOriginInfo = "by @Newify"
+const val newifyOriginInfo = "by @Newify"
 
 class NewifyMemberContributor : NonCodeMembersContributor() {
   override fun processDynamicElements(qualifierType: PsiType,
@@ -53,12 +53,12 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
         val newifiedClasses = getClassArrayValue(annotation, "value", true)
         newifiedClasses
           .filter { psiClass -> GrStaticChecker.isStaticsOK(psiClass, place, psiClass, false) }
-          .flatMap { buildConstructors(it, it.name, true) }
+          .flatMap { buildConstructors(it, it.name) }
           .forEach { ResolveUtil.processElement(processor, it, state) }
       }
       val createNewMethods = GrAnnotationUtil.inferBooleanAttributeNotNull(annotation, "auto")
       if (type != null && createNewMethods) {
-          buildConstructors(type, "new", false).forEach {
+          buildConstructors(type, "new").forEach {
             ResolveUtil.processElement(processor, it, state)
         }
       }
@@ -78,7 +78,7 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
         continue
       }
       val newState: ResolveState = produceStateWithContext(result, place, referenceName, state)
-      val newifiedConstructors: List<NewifiedConstructor> = buildConstructors(clazz, clazz.name, true)
+      val newifiedConstructors: List<NewifiedConstructor> = buildConstructors(clazz, clazz.name)
       for (newifiedConstructor in newifiedConstructors) {
         if (!ResolveUtil.processElement(processor, newifiedConstructor, newState)) {
           return false
@@ -121,19 +121,19 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     }
   }
 
-  private fun buildConstructors(clazz: PsiClass, newName: String?, isConstructor: Boolean): List<NewifiedConstructor> {
+  private fun buildConstructors(clazz: PsiClass, newName: String?): List<NewifiedConstructor> {
     newName ?: return emptyList()
     val constructors = clazz.constructors
     if (constructors.isNotEmpty()) {
-      return constructors.mapNotNull { buildNewifiedConstructor(it, newName, isConstructor) }
+      return constructors.mapNotNull { buildNewifiedConstructor(it, newName) }
     }
     else {
-      return listOf(buildNewifiedConstructor(clazz, newName, isConstructor))
+      return listOf(buildNewifiedConstructor(clazz, newName))
     }
   }
 
-  private fun buildNewifiedConstructor(myPrototype: PsiMethod, newName: String, isConstructor: Boolean): NewifiedConstructor? {
-    val builder = NewifiedConstructor(myPrototype.manager, newName, isConstructor)
+  private fun buildNewifiedConstructor(myPrototype: PsiMethod, newName: String): NewifiedConstructor? {
+    val builder = NewifiedConstructor(myPrototype.manager, newName)
     val psiClass = myPrototype.containingClass ?: return null
     builder.containingClass = psiClass
     builder.setMethodReturnType(TypesUtil.createType(psiClass))
@@ -150,23 +150,18 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     return builder
   }
 
-  private fun buildNewifiedConstructor(myPrototype: PsiClass, newName: String, isConstructor: Boolean): NewifiedConstructor {
-    val builder = NewifiedConstructor(myPrototype.manager, newName, isConstructor)
+  private fun buildNewifiedConstructor(myPrototype: PsiClass, newName: String): NewifiedConstructor {
+    val builder = NewifiedConstructor(myPrototype.manager, newName)
     builder.containingClass = myPrototype
     builder.setMethodReturnType(TypesUtil.createType(myPrototype))
     builder.navigationElement = myPrototype
     return builder
   }
 
-  class NewifiedConstructor(myManager: PsiManager, newName: String, isConstructor: Boolean) :
-    LightMethodBuilder(myManager, GroovyLanguage, newName) {
+  class NewifiedConstructor(myManager: PsiManager, newName: String) : LightMethodBuilder(myManager, GroovyLanguage, newName) {
     init {
-      if (isConstructor) {
-        this.isConstructor = isConstructor
-      }
-      else {
-        addModifier(PsiModifier.STATIC)
-      }
+      addModifier(PsiModifier.STATIC)
+      isConstructor = true
       originInfo = newifyOriginInfo
     }
 
