@@ -18,7 +18,9 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("suspicious.indent.after.control.statement.problem.descriptor");
+    final PsiStatement statement = (PsiStatement)infos[0];
+    final PsiElement token = statement.getFirstChild();
+    return InspectionGadgetsBundle.message("suspicious.indent.after.control.statement.problem.descriptor", token.getText());
   }
 
   @Override
@@ -97,7 +99,7 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
               final int statementIndent = getIndent(siblingText.substring(statementLineBreak + 1));
               final int bodyIndent = getIndent(text.substring(bodyLineBreak + 1));
               if (statementIndent == bodyIndent) {
-                registerStatementError(body);
+                registerErrorAtOffset(bodyWhiteSpace, bodyLineBreak + 1, bodyIndent, statement);
                 return;
               }
             }
@@ -125,12 +127,12 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
       final int bodyIndent = getIndent(text.substring(bodyLineBreak + 1));
       final int nextIndent = getIndent(nextText.substring(nextLineBreak + 1));
       if (lineBreakBeforeBody) {
-        if (nextIndent == bodyIndent) {
-          registerStatementError(nextStatement);
+        if (nextIndent >= bodyIndent) {
+          registerErrorAtOffset(nextWhiteSpace, nextLineBreak + 1, nextIndent, statement);
         }
       }
       else if (nextIndent > bodyIndent) {
-        registerStatementError(nextStatement);
+        registerErrorAtOffset(nextWhiteSpace, nextLineBreak + 1, nextIndent, statement);
       }
     }
 

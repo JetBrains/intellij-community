@@ -9,7 +9,7 @@ public class SuspiciousIndentAfterControlStatement {
             case 1:
                 if (j  / 8 == 0)
                     return "x";
-                    <warning descr="'case' statement has suspicious indentation">case</warning> 0:
+<warning descr="Suspicious indentation after 'if' statement">                    </warning>case 0:
                 if (j % 2 == 0)
                     return "even";
                 else
@@ -23,9 +23,9 @@ public class SuspiciousIndentAfterControlStatement {
     void indent(int i) {
         if (i ==9)
             System.out.println("foo");
-            <warning descr="'System.out.println(\"bar\")' statement has suspicious indentation">System.out.println("bar")</warning>;
+<warning descr="Suspicious indentation after 'if' statement">            </warning>System.out.println("bar");
         if (i == 10);
-            <warning descr="'System.out.println(\"great\")' statement has suspicious indentation">System.out.println("great")</warning>;
+<warning descr="Suspicious indentation after 'if' statement">            </warning>System.out.println("great");
 
     }
 
@@ -40,7 +40,7 @@ public class SuspiciousIndentAfterControlStatement {
     void m() {
         if (true)
             System.out.println();
-            <warning descr="'class' statement has suspicious indentation">class</warning><error descr="Identifier expected"> </error> ;
+<warning descr="Suspicious indentation after 'if' statement">            </warning>class<error descr="Identifier expected"> </error> ;
     }
 
     class Lol {
@@ -88,7 +88,13 @@ public class SuspiciousIndentAfterControlStatement {
 
     public void x(int i) {
         if (i == 3)
-        <warning descr="'System.out.println(\"-->\")' statement has suspicious indentation">System.out.println("-->")</warning>;
+<warning descr="Suspicious indentation after 'if' statement">        </warning>System.out.println("-->");
         System.out.println(i);
+    }
+
+    public void y(int i) {
+        if (i == 42)
+            System.out.println("answer");
+<warning descr="Suspicious indentation after 'if' statement">                </warning>System.out.println("question");
     }
 }
