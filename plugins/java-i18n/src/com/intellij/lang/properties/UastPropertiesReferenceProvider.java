@@ -12,6 +12,7 @@ import com.intellij.psi.UastInjectionHostReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.util.UastExpressionUtils;
 
 class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider {
 
@@ -76,7 +77,7 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
         return (psi == thenExprSrc || psi == elseExprSrc) && canBePropertyKeyRef((UExpression)parent);
       }
       else {
-        return parent instanceof UCallExpression || parent instanceof UNamedExpression;
+        return parent instanceof UCallExpression || parent instanceof UNamedExpression || UastExpressionUtils.isAssignment(parent);
       }
     }
     else {
