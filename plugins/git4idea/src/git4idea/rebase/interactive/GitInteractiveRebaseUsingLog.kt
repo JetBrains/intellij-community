@@ -3,7 +3,7 @@ package git4idea.rebase.interactive
 
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -27,7 +27,7 @@ import git4idea.rebase.*
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.repo.GitRepository
 
-private val LOG = logger("Git.Interactive.Rebase.Using.Log")
+private val LOG = Logger.getInstance("Git.Interactive.Rebase.Using.Log")
 
 @VisibleForTesting
 @Throws(CantRebaseUsingLogException::class)

@@ -1,13 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("PythonScripts")
-
 package com.jetbrains.python.run
 
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.target.*
 import com.intellij.execution.target.value.*
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.python.HelperPackage
@@ -15,7 +14,7 @@ import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PythonSdkType
 
-private val LOG = logger("#com.jetbrains.python.run.PythonScripts")
+private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
 fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironment,
                                              sdk: Sdk?,

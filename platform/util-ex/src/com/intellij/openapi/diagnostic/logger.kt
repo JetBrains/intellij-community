@@ -7,6 +7,7 @@ import java.util.concurrent.CancellationException
 
 inline fun <reified T : Any> logger() = Logger.getInstance(T::class.java)
 
+@Deprecated(level = DeprecationLevel.ERROR, message = "Use Logger directly", replaceWith = ReplaceWith("Logger.getInstance(category)"))
 fun logger(category: String) = Logger.getInstance(category)
 
 inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> String) {
