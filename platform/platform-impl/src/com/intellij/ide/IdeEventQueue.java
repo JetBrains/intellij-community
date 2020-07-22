@@ -986,7 +986,7 @@ public final class IdeEventQueue extends EventQueue {
             }
           }
           if (data != null) {
-            FUCounterUsageLogger.getInstance().logEvent("ui.mnemonic", "mnemonic.used", data.addData("code", code));
+            FUCounterUsageLogger.getInstance().logEvent("ui.mnemonic", "mnemonic.used", data);
           }
         }
       }
