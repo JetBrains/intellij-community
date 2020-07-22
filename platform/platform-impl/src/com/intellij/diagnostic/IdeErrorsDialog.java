@@ -122,8 +122,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void loadDevelopersList() {
     ErrorReportConfigurable configurable = ErrorReportConfigurable.getInstance();
-    Developers developers = configurable.getDeveloper();
-    if (developers != null && developers.isUpToDateAt(System.currentTimeMillis())) {
+    DeveloperList developers = configurable.getDeveloperList();
+    if (developers.isUpToDateAt(System.currentTimeMillis())) {
       setDevelopers(developers);
     }
     else {
@@ -131,9 +131,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            Developers updatedDevelopers = new Developers(ITNProxy.fetchDevelopers(indicator), System.currentTimeMillis());
+            DeveloperList updatedDevelopers = new DeveloperList(ITNProxy.fetchDevelopers(indicator));
             UIUtil.invokeLaterIfNeeded(() -> {
-              configurable.setDeveloper(updatedDevelopers);
+              configurable.setDeveloperList(updatedDevelopers);
               if (isShowing()) {
                 setDevelopers(updatedDevelopers);
               }
@@ -153,7 +153,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void setDevelopers(@Nullable Developers developers) {
+  private void setDevelopers(@Nullable DeveloperList developers) {
     if (developers != null) {
       myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers.getDevelopers()));
       myDevelopersTimestamp = developers.getTimestamp();

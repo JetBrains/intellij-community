@@ -914,6 +914,11 @@
         <component>Vcs.Log.Big.Repositories</component>
       </components>
     </obsoleteStorage>
+    <obsoleteStorage file="errorReporting.xml">
+      <components>
+        <component>ErrorReportConfigurable</component>
+      </components>
+    </obsoleteStorage>
 
     <obsoleteStorage file="usage.statistics.xml" isProjectLevel="true">
       <components>
