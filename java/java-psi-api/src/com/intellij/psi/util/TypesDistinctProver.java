@@ -196,10 +196,10 @@ public final class TypesDistinctProver {
     }
     if (boundClass1.isInterface() && boundClass2.isInterface()) return false;
     if (boundClass1.isInterface()) {
-      return !(boundClass2.hasModifierProperty(PsiModifier.FINAL) ? InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true) : true);
+      return boundClass2.hasModifierProperty(PsiModifier.FINAL) && !InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true);
     }
     if (boundClass2.isInterface()) {
-      return !(boundClass1.hasModifierProperty(PsiModifier.FINAL) ? InheritanceUtil.isInheritorOrSelf(boundClass1, boundClass2, true) : true);
+      return boundClass1.hasModifierProperty(PsiModifier.FINAL) && !InheritanceUtil.isInheritorOrSelf(boundClass1, boundClass2, true);
     }
 
     if (boundClass1 instanceof PsiTypeParameter) {
