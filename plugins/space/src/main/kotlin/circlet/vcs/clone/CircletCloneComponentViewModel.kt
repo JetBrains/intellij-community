@@ -48,36 +48,27 @@ internal class CircletCloneComponentViewModel(
         keyFn = { it.id },
         result = { allProjectRefs ->
             val allProjectsWithRepos = workspace.client.arena.resolveRefsOrFetch {
-                allProjectRefs.map { it to  it.extensionRef(ProjectReposRecord::class) }
+                allProjectRefs.map { it to it.extensionRef(ProjectReposRecord::class) }
             }
             val starredProjectIds = starService.starredProjects().mapToSet(Ref<PR_Project>::id)
 
-            val listsOfProjectRepos = allProjectsWithRepos
-                .asSequence()
-                .map { (projectRef, reposRef) ->
-                    object {
-                        val project = projectRef.resolve()
-                        val repos = reposRef.resolve().repos
-                        val isStarred = projectRef.id in starredProjectIds
+            allProjectsWithRepos.map { (projectRef, reposRef) ->
+                val project = projectRef.resolve()
+                val repos = reposRef.resolve().repos
+                val isStarred = projectRef.id in starredProjectIds
+                repos.map { repo ->
+                    val detailsProperty = mutableProperty<RepoDetails?>(null)
+                    val item = CircletCloneListItem(project, isStarred, repo, detailsProperty)
+                    item.visible.forEach(lifetime) { visible ->
+                        launch(lifetime, Ui) {
+                            if (visible) {
+                                detailsProperty.value = repositoryService.repositoryDetails(project.key, repo.name)
+                            }
+                        }
                     }
+                    item
                 }
-                .map {
-                    it.repos.asSequence()
-                      .map { repo ->
-                          val detailsProperty = mutableProperty<RepoDetails?>(null)
-                          val item = CircletCloneListItem(it.project, it.isStarred, repo, detailsProperty)
-                          item.visible.forEach(lifetime) { visible ->
-                              launch(lifetime, Ui) {
-                                  if (visible) {
-                                      detailsProperty.value = repositoryService.repositoryDetails(it.project.key, repo.name)
-                                  }
-                              }
-                          }
-                          item
-                      }.toList()
-                }
-
-                listsOfProjectRepos.toList()
+            }
         }
     ) { batch ->
         projectService.projectsBatch(batch, "", "")
