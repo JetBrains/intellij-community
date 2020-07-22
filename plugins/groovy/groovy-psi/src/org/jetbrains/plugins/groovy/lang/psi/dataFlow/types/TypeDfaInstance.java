@@ -24,7 +24,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -70,10 +73,17 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
   }
 
-  private void handleFirstInstruction(TypeDfaState state) {
-    for (Map.Entry<VariableDescriptor, DFAType> entry : myFlowInfo.getInitialTypes().entrySet()) {
-      // todo: move entire logic from InitialTypeProvider here
-      state.putType(entry.getKey(), entry.getValue());
+  private void handleFirstInstruction(@NotNull TypeDfaState state) {
+    ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(myFlow, true);
+    for (ReadWriteVariableInstruction instruction : reads) {
+      VariableDescriptor descriptor = instruction.getDescriptor();
+      if (!myFlowInfo.getInterestingDescriptors().contains(descriptor)) {
+        continue;
+      }
+      DFAType initialType = myInitialTypeProvider.initialType(descriptor);
+      if (initialType != null) {
+        state.putType(descriptor, initialType);
+      }
     }
   }
 
@@ -110,17 +120,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
           }
         }
       );
-    }
-    else {
-      DFAType type = state.getVariableType(descriptor);
-      if (type == null &&
-          myFlowInfo.getInterestingInstructions().contains(instruction) &&
-          myFlowInfo.getInterestingDescriptors().contains(descriptor)) {
-        PsiType initialType = myInitialTypeProvider.initialType(descriptor);
-        if (initialType != null) {
-          updateVariableType(state, instruction, descriptor, () -> DFAType.create(initialType));
-        }
-      }
     }
   }
 
@@ -213,8 +212,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(state::restoreBinding);
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
-    Map<VariableDescriptor, DFAType> initialTypes = new LinkedHashMap<>(myFlowInfo.getInitialTypes());
-    initialTypes.putAll(state.getVarTypes());
+    Map<VariableDescriptor, DFAType> initialTypes = state.getVarTypes();
     switch (kind) {
       case IN_PLACE_ONCE:
         handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, state::putType);
@@ -222,10 +220,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       case IN_PLACE_UNKNOWN:
         handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, (descriptor, dfaType) -> {
           DFAType existingType = state.getVariableType(descriptor);
-          if (existingType == null) {
-            PsiType initialType = myInitialTypeProvider.initialType(descriptor);
-            if (initialType != null) existingType = DFAType.create(initialType);
-          }
           if (existingType != null) {
             DFAType mergedType = DFAType.create(dfaType, existingType, block.getManager());
             state.putType(descriptor, mergedType);

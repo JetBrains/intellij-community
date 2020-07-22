@@ -1961,4 +1961,23 @@ def foo() {
 }
 ''', "J"
   }
+
+  void 'test initial type influences DFA'() {
+    doTest '''
+interface I {}
+class A implements I {}
+class B implements I {}
+
+class C {
+  def x = new B()
+  
+  def foo() {
+    if (true) {
+      x = new A()
+    }
+    <caret>x
+  }
+}
+''', "[I,groovy.lang.GroovyObject]"
+  }
 }
