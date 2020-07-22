@@ -157,14 +157,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     get() = JavaBundle.message("settings.inlay.java.annotations")
   override val key: SettingsKey<Settings>
     get() = ourKey
-  override val previewText: String?
-    get() = """
-      class Demo {
-        private static int pure(int x, int y) {
-          return x * y + 10;
-        }
-      }
-    """.trimIndent()
+  override val previewText: String? = null
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable {
     return object : ImmediateConfigurable {
