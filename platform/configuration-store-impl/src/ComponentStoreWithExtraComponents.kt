@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -111,12 +112,12 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   }
 
   internal open fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
-    for (bean in OBSOLETE_STORAGE_EP.extensionList) {
+    for (bean in OBSOLETE_STORAGE_EP.iterable) {
       if (bean.isProjectLevel != isProjectLevel) {
         continue
       }
 
-      val storage = (storageManager as StateStorageManagerImpl).getOrCreateStorage(bean.file ?: continue)
+      val storage = (storageManager as StateStorageManagerImpl).getOrCreateStorage(bean.file ?: continue, RoamingType.DISABLED)
       for (componentName in bean.components) {
         session.getProducer(storage)?.setState(null, componentName, null)
       }

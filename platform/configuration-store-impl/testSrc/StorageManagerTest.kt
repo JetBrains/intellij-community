@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.RoamingType
 import com.intellij.testFramework.ProjectRule
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -29,7 +30,7 @@ internal class StorageManagerTest {
 
   @Test
   fun createFileStateStorageMacroSubstituted() {
-    assertThat(storageManager.getOrCreateStorage("$MACRO/test.xml")).isNotNull()
+    assertThat(storageManager.getOrCreateStorage("$MACRO/test.xml", RoamingType.DEFAULT)).isNotNull()
   }
 
   @Test
@@ -41,7 +42,7 @@ internal class StorageManagerTest {
   @Test
   fun `create storage assertion thrown when unknown macro`() {
     try {
-      storageManager.getOrCreateStorage("\$UNKNOWN_MACRO$/test.xml")
+      storageManager.getOrCreateStorage("\$UNKNOWN_MACRO$/test.xml", RoamingType.DEFAULT)
       TestCase.fail("Exception expected")
     }
     catch (e: IllegalStateException) {
@@ -52,6 +53,6 @@ internal class StorageManagerTest {
   @Test
   fun `create file storage macro substituted when expansion has$`() {
     storageManager.setMacros(listOf(Macro("\$DOLLAR_MACRO$", Paths.get("/temp/d$"))))
-    assertThat(storageManager.getOrCreateStorage("\$DOLLAR_MACRO$/test.xml")).isNotNull()
+    assertThat(storageManager.getOrCreateStorage("\$DOLLAR_MACRO$/test.xml", RoamingType.DEFAULT)).isNotNull()
   }
 }

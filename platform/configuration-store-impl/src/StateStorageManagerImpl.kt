@@ -111,7 +111,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   // storageCustomizer - to ensure that other threads will use fully constructed and configured storage (invoked under the same lock as created)
   fun getOrCreateStorage(collapsedPath: String,
-                         roamingType: RoamingType = RoamingType.DEFAULT,
+                         roamingType: RoamingType,
                          storageClass: Class<out StateStorage> = StateStorage::class.java,
                          @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java,
                          exclusive: Boolean = false,
