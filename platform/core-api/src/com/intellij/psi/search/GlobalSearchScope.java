@@ -87,6 +87,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   /**
    * @return a set of model branches whose copied files this scope might contain
    */
+  @ApiStatus.Experimental
   public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
     return Collections.emptySet();
   }
