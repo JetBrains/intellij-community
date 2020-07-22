@@ -3,16 +3,15 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
-import org.jetbrains.plugins.feature.suggester.FeatureUsageSuggestion
-import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.PopupSuggestion
-import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.*
+import org.jetbrains.plugins.feature.suggester.actions.Action
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 
@@ -26,6 +25,11 @@ internal fun Editor.getSelection(): Selection? {
             null
         }
     }
+}
+
+internal fun handleAction(project: Project, action: Action) {
+    project.getService(FeatureSuggestersManager::class.java)
+        ?.actionPerformed(action)
 }
 
 internal fun isCommentAddedToLineStart(file: PsiFile, offset: Int): Boolean {

@@ -4,11 +4,13 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.psi.PsiManager
-import org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager
-import org.jetbrains.plugins.feature.suggester.actions.*
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextInsertedAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorTextRemovedAction
+import org.jetbrains.plugins.feature.suggester.suggesters.handleAction
 import java.lang.ref.WeakReference
 
 object DocumentActionsListener : BulkAwareDocumentListener {
@@ -71,10 +73,5 @@ object DocumentActionsListener : BulkAwareDocumentListener {
                 )
             )
         }
-    }
-
-    private fun handleAction(project: Project, action: Action) {
-        project.getService(FeatureSuggestersManager::class.java)
-            ?.actionPerformed(action)
     }
 }

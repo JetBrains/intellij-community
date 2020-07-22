@@ -11,11 +11,10 @@ import com.intellij.openapi.editor.actions.CopyAction
 import com.intellij.openapi.editor.actions.CutAction
 import com.intellij.openapi.editor.actions.PasteAction
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager
 import org.jetbrains.plugins.feature.suggester.actions.*
 import org.jetbrains.plugins.feature.suggester.suggesters.asString
 import org.jetbrains.plugins.feature.suggester.suggesters.getSelection
+import org.jetbrains.plugins.feature.suggester.suggesters.handleAction
 import java.lang.ref.WeakReference
 
 object EditorActionsListener : AnActionListener {
@@ -136,11 +135,6 @@ object EditorActionsListener : AnActionListener {
                 )
             }
         }
-    }
-
-    private fun handleAction(project: Project, action: Action) {
-        project.getService(FeatureSuggestersManager::class.java)
-            ?.actionPerformed(action)
     }
 
     private fun Editor.getSelectedText(): String? {
