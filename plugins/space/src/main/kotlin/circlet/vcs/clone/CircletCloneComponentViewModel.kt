@@ -1,8 +1,11 @@
 package circlet.vcs.clone
 
-import circlet.client.*
 import circlet.client.api.*
 import circlet.client.api.impl.vcsPasswords
+import circlet.client.pr
+import circlet.client.repoService
+import circlet.client.ssh
+import circlet.client.star
 import circlet.platform.api.Ref
 import circlet.platform.client.resolve
 import circlet.platform.client.resolveRefsOrFetch
@@ -33,7 +36,6 @@ internal class CircletCloneComponentViewModel(
     private val projectService: Projects = workspace.client.pr
     private val repositoryService: RepositoryService = workspace.client.repoService
     private val starService: Star = workspace.client.star
-    private val td: TeamDirectory = workspace.client.td
     private val ssh: SshKeys = workspace.client.ssh
 
     val isLoading: MutableProperty<Boolean> = Property.createMutable(false)
