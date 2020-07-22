@@ -72,16 +72,6 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
       return;
     }
 
-    if (reference != null) {
-      final PsiElement refElement = reference.getElement();
-      if (!isJavaLanguage(refElement.getLanguage())) {
-        String message = JavaRefactoringBundle
-          .message("refactoring.is.not.supported.for.language", "Inline of Java method", refElement.getLanguage().getDisplayName());
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
-        return;
-      }
-    }
-
     if (reference == null && checkRecursive(method)) {
       String message = RefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", getRefactoringName());
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
