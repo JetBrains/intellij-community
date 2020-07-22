@@ -42,9 +42,9 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
-class GitRebaseDialog(private val project: Project,
-                      private val roots: List<VirtualFile>,
-                      private val defaultRoot: VirtualFile?) : DialogWrapper(project) {
+internal class GitRebaseDialog(private val project: Project,
+                               private val roots: List<VirtualFile>,
+                               private val defaultRoot: VirtualFile?) : DialogWrapper(project) {
 
   private val repositoryManager: GitRepositoryManager = GitUtil.getRepositoryManager(project)
 
@@ -167,13 +167,13 @@ class GitRebaseDialog(private val project: Project,
     val newBase = rebaseSettings.newBase
     if (!newBase.isNullOrEmpty() && isValidRevision(newBase)) {
       findRef(newBase)?.let { ref ->
-        upstreamField.item = ref
+        upstreamField.item = PresentableRef(ref)
       }
     }
   }
 
   private fun findRef(refName: String): GitReference? {
-    val predicate: (GitReference) -> Boolean = { ref -> ref.fullName == refName }
+    val predicate: (GitReference) -> Boolean = { ref -> ref.name == refName }
     return localBranches.find(predicate)
            ?: remoteBranches.find(predicate)
            ?: tags.find(predicate)
@@ -298,7 +298,8 @@ class GitRebaseDialog(private val project: Project,
     ontoField.item = onto
   }
 
-  private fun addRefsToOntoAndFrom(refs: Collection<GitReference>) = refs.forEach { ref ->
+  private fun addRefsToOntoAndFrom(refs: Collection<GitReference>) = refs.forEach { gitRef ->
+    val ref = PresentableRef(gitRef)
     upstreamField.addItem(ref)
     ontoField.addItem(ref)
   }
@@ -367,7 +368,7 @@ class GitRebaseDialog(private val project: Project,
     isVisible = false
   }
 
-  private fun createOntoField() = ComboBox<GitReference>(MutableCollectionComboBoxModel()).apply {
+  private fun createOntoField() = ComboBox<PresentableRef>(MutableCollectionComboBoxModel()).apply {
     setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) 220 else 310))
     isEditable = true
     isVisible = false
@@ -379,7 +380,7 @@ class GitRebaseDialog(private val project: Project,
     ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
   }
 
-  private fun createUpstreamField() = ComboBox<GitReference>(MutableCollectionComboBoxModel()).apply {
+  private fun createUpstreamField() = ComboBox<PresentableRef>(MutableCollectionComboBoxModel()).apply {
     setMinimumAndPreferredWidth(JBUI.scale(185))
     isEditable = true
     editor = object : BasicComboBoxEditor() {
@@ -589,7 +590,7 @@ class GitRebaseDialog(private val project: Project,
 
   private fun isAlreadyAdded(component: JComponent, container: Container) = component.parent == container
 
-  internal inner class RevValidator(private val field: ComboBox<GitReference>) {
+  internal inner class RevValidator(private val field: ComboBox<PresentableRef>) {
 
     private var lastValidatedRevision = ""
     private var lastValid = true
@@ -614,5 +615,9 @@ class GitRebaseDialog(private val project: Project,
       null
     else
       ValidationInfo(GitBundle.message("rebase.dialog.error.branch.or.tag.not.exist"), field)
+  }
+
+  data class PresentableRef(private val ref: GitReference) {
+    override fun toString() = ref.name
   }
 }
