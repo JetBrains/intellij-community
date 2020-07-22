@@ -928,7 +928,7 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.NonAsciiCharactersInspection"/>
     <localInspection shortName="ProblematicWhitespace" bundle="messages.LangBundle" key="problematic.whitespace.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" 
+                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ProblematicWhitespaceInspection"/>
     <localInspection shortName="TodoComment" bundle="messages.LangBundle" key="todo.comment.display.name"
