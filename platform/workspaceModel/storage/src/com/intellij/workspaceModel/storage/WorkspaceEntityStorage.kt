@@ -116,6 +116,7 @@ interface WorkspaceEntityStorage {
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
   fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
+  fun findEntitiesWithVirtualFileUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>>
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
 }
 

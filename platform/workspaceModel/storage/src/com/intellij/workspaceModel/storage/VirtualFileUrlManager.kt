@@ -10,6 +10,7 @@ interface VirtualFileUrlManager {
   fun fromUrl(url: String): VirtualFileUrl
   fun fromPath(path: String): VirtualFileUrl
   fun getParentVirtualUrlById(id: Int): VirtualFileUrl?
+  fun getSubtreeVirtualUrlsById(id: Int): List<VirtualFileUrl>
   fun getUrlById(id: Int): String
   fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean
 }

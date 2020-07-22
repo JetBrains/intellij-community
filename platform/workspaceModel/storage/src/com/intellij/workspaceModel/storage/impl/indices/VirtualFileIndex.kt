@@ -1,13 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.indices
 
-import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.containers.copy
-import com.intellij.workspaceModel.storage.impl.containers.putAll
 import org.jetbrains.annotations.TestOnly
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -15,63 +13,108 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 open class VirtualFileIndex private constructor(
-  internal open val index: BidirectionalMultiMap<Pair<VirtualFileUrl, String>, EntityId>
+  internal open val entityId2VirtualFileUrlInfo: HashMap<EntityId, MutableList<VirtualFileUrlInfo>>,
+  internal open val vfu2VirtualFileUrlInfo: HashMap<VirtualFileUrl, MutableList<VirtualFileUrlInfo>>
 ) {
-  constructor() : this(BidirectionalMultiMap<Pair<VirtualFileUrl, String>, EntityId>())
+  constructor() : this(HashMap<EntityId, MutableList<VirtualFileUrlInfo>>(), HashMap<VirtualFileUrl, MutableList<VirtualFileUrlInfo>>())
 
-  internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl>? =
-    index.getKeys(id).asSequence().map { it.first }.toSet()
+  internal fun getVirtualFileUrlInfoByVFU(fileUrl: VirtualFileUrl): Sequence<VirtualFileUrlInfo> =
+    vfu2VirtualFileUrlInfo[fileUrl]?.asSequence() ?: emptySequence()
 
-  internal fun getVirtualFilesPerProperty(id: EntityId): Set<Pair<VirtualFileUrl, String>>? =
-    index.getKeys(id)
+  internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> =
+    entityId2VirtualFileUrlInfo[id]?.asSequence()?.map { it.vfu }?.toSet() ?: emptySet()
+
+  internal fun getVirtualFileUrlInfoByEntityId(id: EntityId): Sequence<VirtualFileUrlInfo> =
+    entityId2VirtualFileUrlInfo[id]?.asSequence() ?: emptySequence()
 
   class MutableVirtualFileIndex private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
-    override var index: BidirectionalMultiMap<Pair<VirtualFileUrl, String>, EntityId>
-  ) : VirtualFileIndex(index) {
+    override var entityId2VirtualFileUrlInfo: HashMap<EntityId, MutableList<VirtualFileUrlInfo>>,
+    override var vfu2VirtualFileUrlInfo: HashMap<VirtualFileUrl, MutableList<VirtualFileUrlInfo>>
+  ) : VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo) {
 
     private var freezed = true
 
     internal fun index(id: EntityId, propertyName: String? = null, virtualFileUrls: List<VirtualFileUrl>? = null) {
       startWrite()
       if (propertyName == null) {
-        index.removeValue(id)
+        val removedVfuInfos = entityId2VirtualFileUrlInfo.remove(id) ?: return
+        removedVfuInfos.forEach {
+          val vfuInfos = vfu2VirtualFileUrlInfo[it.vfu] ?: error("The record for $id <=> ${it.vfu} should be available in both maps")
+          vfuInfos.remove(it)
+          if (vfuInfos.isEmpty()) vfu2VirtualFileUrlInfo.remove(it.vfu)
+        }
         return
       }
-      index.getKeys(id).filter { it.second == propertyName }.forEach { index.remove(it, id) }
+      removeFromIndexes(id, propertyName)
       if (virtualFileUrls == null) return
-      virtualFileUrls.forEach { index.put(it to propertyName, id) }
+      virtualFileUrls.forEach { indexVirtualFileUrl(id, propertyName, it) }
     }
 
     @TestOnly
     internal fun clear() {
       startWrite()
-      index.clear()
+      entityId2VirtualFileUrlInfo.clear()
+      vfu2VirtualFileUrlInfo.clear()
     }
 
     @TestOnly
     internal fun copyFrom(another: VirtualFileIndex) {
       startWrite()
-      index.putAll(another.index)
+      entityId2VirtualFileUrlInfo.putAll(another.entityId2VirtualFileUrlInfo)
+      vfu2VirtualFileUrlInfo.putAll(another.vfu2VirtualFileUrlInfo)
     }
 
     private fun startWrite() {
       if (!freezed) return
       freezed = false
-      index = copyIndex()
+      entityId2VirtualFileUrlInfo = copyMap(entityId2VirtualFileUrlInfo)
+      vfu2VirtualFileUrlInfo = copyMap(vfu2VirtualFileUrlInfo)
     }
-
-    private fun copyIndex(): BidirectionalMultiMap<Pair<VirtualFileUrl, String>, EntityId> = index.copy()
 
     fun toImmutable(): VirtualFileIndex {
       freezed = true
-      return VirtualFileIndex(index)
+      return VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo)
+    }
+
+    private fun indexVirtualFileUrl(id: EntityId, propertyName: String, virtualFileUrl: VirtualFileUrl) {
+      val entityProperty = VirtualFileUrlInfo(virtualFileUrl, id, propertyName)
+      val firstVfuInfos = entityId2VirtualFileUrlInfo.getOrDefault(id, mutableListOf())
+      firstVfuInfos.add(entityProperty)
+      entityId2VirtualFileUrlInfo[id] = firstVfuInfos
+
+      val secondVfuInfos = vfu2VirtualFileUrlInfo.getOrDefault(virtualFileUrl, mutableListOf())
+      secondVfuInfos.add(entityProperty)
+      vfu2VirtualFileUrlInfo[virtualFileUrl] = secondVfuInfos
+    }
+
+    private fun removeFromIndexes(id: EntityId, propertyName: String) {
+      val vfuInfos = entityId2VirtualFileUrlInfo[id] ?: return
+      val filteredVfuInfos = vfuInfos.filter { it.propertyName == propertyName }
+      vfuInfos.removeAll(filteredVfuInfos)
+      if (vfuInfos.isEmpty()) entityId2VirtualFileUrlInfo.remove(id)
+
+      filteredVfuInfos.forEach { vfuInfo ->
+        val vfuInfos = vfu2VirtualFileUrlInfo[vfuInfo.vfu] ?: error("The record for $id <=> ${vfuInfo.vfu} should be available in both maps")
+        val filteredRecords = vfuInfos.find { it.propertyName == propertyName && it.entityId == id }
+        vfuInfos.remove(filteredRecords)
+        if (vfuInfos.isEmpty()) vfu2VirtualFileUrlInfo.remove(vfuInfo.vfu)
+      }
+    }
+
+    private fun <T> copyMap(originMap: HashMap<T, MutableList<VirtualFileUrlInfo>>): HashMap<T, MutableList<VirtualFileUrlInfo>>{
+      val copiedMap = HashMap<T, MutableList<VirtualFileUrlInfo>>()
+      originMap.forEach{ (key, value) -> copiedMap[key] = ArrayList(value) }
+      return copiedMap
     }
 
     companion object {
-      fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.index)
+      fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.entityId2VirtualFileUrlInfo,
+                                                                                           other.vfu2VirtualFileUrlInfo)
     }
   }
+
+  internal data class VirtualFileUrlInfo(val vfu: VirtualFileUrl, val entityId: EntityId, val propertyName: String)
 }
 
 //---------------------------------------------------------------------
@@ -125,5 +168,25 @@ class VirtualFileUrlListProperty<T : ModifiableWorkspaceEntityBase<out Workspace
     field.isAccessible = true
     field.set(thisRef.original, value)
     thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value)
+  }
+}
+
+/**
+ * This delegate was created specifically for the handling VirtualFileUrls from LibraryRoot
+ */
+class VirtualFileUrlLibraryRootProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, List<LibraryRoot>> {
+  override fun getValue(thisRef: T, property: KProperty<*>): List<LibraryRoot> {
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
+      .get(thisRef.original) as List<LibraryRoot>
+  }
+
+  override fun setValue(thisRef: T, property: KProperty<*>, value: List<LibraryRoot>) {
+    if (!thisRef.modifiable.get()) {
+      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
+    }
+    val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    field.isAccessible = true
+    field.set(thisRef.original, value)
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value.map { it.url })
   }
 }

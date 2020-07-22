@@ -31,6 +31,9 @@ class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   }
 
   @Synchronized
+  override fun getSubtreeVirtualUrlsById(id: Int) = id2NodeMapping.get(id).getSubtreeNodes().map { VirtualFileUrl(it.nodeId, this) }
+
+  @Synchronized
   override fun getUrlById(id: Int): String {
     if (id <= 0) return ""
 
@@ -209,6 +212,15 @@ class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
       // If search of child node will be slow, replace SmartList to THashSet
       // For now SmartList reduce 500Kb memory on IDEA project
       return children?.find { it.contentId == nameId }
+    }
+
+    fun getSubtreeNodes(): List<FilePathNode> {
+      val subtreeNodes = mutableListOf<FilePathNode>()
+      children?.forEach {
+        subtreeNodes.add(it)
+        subtreeNodes.addAll(it.getSubtreeNodes())
+      }
+      return subtreeNodes
     }
 
     fun addChild(newNode: FilePathNode) {

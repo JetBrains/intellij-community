@@ -378,13 +378,13 @@ internal class WorkspaceEntityStorageBuilderImpl(
             clonedEntity.id = localNode.id
             this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntity.createPid().clazz)
             val pid = clonedEntity.createPid()
-            val parents = this.refs.getParentRefsOfChild(pid)
-            val children = this.refs.getChildrenRefsOfParentBy(pid)
 
             updatePersistentIdIndexes(clonedEntity.createEntity(this), persistentIdBefore, clonedEntity)
-            replaceWith.indexes.virtualFileIndex.getVirtualFilesPerProperty(oldPid)?.forEach {
-              this.indexes.virtualFileIndex.index(pid, it.second, listOf(it.first))
-            }
+            replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldPid)
+              .groupBy({ it.propertyName }, { it.vfu })
+              .forEach { (property, vfus) ->
+                this.indexes.virtualFileIndex.index(pid, property, vfus)
+              }
             replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(pid, it) }
 
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyList(), emptyList(), emptyMap())) }
@@ -399,9 +399,11 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val newPid = newEntity.createPid()
           replaceMap[newPid] = oldPid
 
-          replaceWith.indexes.virtualFileIndex.getVirtualFilesPerProperty(oldPid)?.forEach {
-            this.indexes.virtualFileIndex.index(newPid, it.second, listOf(it.first))
-          }
+          replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldPid)
+            .groupBy({ it.propertyName }, { it.vfu })
+            .forEach { (property, vfus) ->
+              this.indexes.virtualFileIndex.index(newPid, property, vfus)
+            }
           replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(newPid, it) }
           replaceWith.indexes.persistentIdIndex.getEntryById(oldPid)?.also { this.indexes.persistentIdIndex.index(newPid, it) }
           if (newEntity is SoftLinkable) indexes.updateSoftLinksIndex(newEntity)
@@ -947,6 +949,12 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     index.setTypedEntityStorage(this)
     return index
   }
+
+  override fun findEntitiesWithVirtualFileUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
+    indexes.virtualFileIndex.getVirtualFileUrlInfoByVFU(fileUrl).mapNotNull {
+      val entityData = entityDataById(it.entityId) ?: return@mapNotNull null
+      entityData.createEntity(this) to it.propertyName
+    }
 
   internal fun assertConsistency() {
     entitiesByType.assertConsistency()

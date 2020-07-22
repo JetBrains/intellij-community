@@ -86,8 +86,6 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
           }
         }
 
-        rootFilePointers.onModelChange(event.storageAfter)
-
         myCollectWatchRootsFuture.cancel(false)
         myCollectWatchRootsFuture = myExecutor.submit {
           ReadAction.run<Throwable> {
@@ -242,7 +240,6 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
     roots.clear()
     jarDirectories.clear()
     recursiveJarDirectories.clear()
-    rootFilePointers.clear()
   }
 
   override fun dispose() {

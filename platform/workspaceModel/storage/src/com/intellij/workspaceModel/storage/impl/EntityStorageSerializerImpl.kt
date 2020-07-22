@@ -171,6 +171,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(IntArray::class.java)
     kryo.register(Pair::class.java)
     kryo.register(MultimapStorageIndex::class.java)
+    kryo.register(VirtualFileIndex.VirtualFileUrlInfo::class.java)
 
     registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) {
       Collections.unmodifiableCollection(emptySet())
