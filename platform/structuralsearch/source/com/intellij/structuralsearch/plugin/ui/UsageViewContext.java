@@ -68,7 +68,7 @@ public class UsageViewContext {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        StructuralSearchProfileActionProvider.createNewInspection(myConfiguration, mySearchContext.getProject());
+        StructuralSearchProfileActionProvider.createNewInspection(myConfiguration.copy(), mySearchContext.getProject());
       }
     });
   }
