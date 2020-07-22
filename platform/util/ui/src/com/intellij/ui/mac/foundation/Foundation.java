@@ -611,10 +611,11 @@ public final class Foundation {
   }
 
   private static Object[] convertTypes(Object @NotNull [] v) {
-    final Object[] result = new Object[v.length];
+    final Object[] result = new Object[v.length + 1];
     for (int i = 0; i < v.length; i++) {
       result[i] = convertType(v[i]);
     }
+    result[v.length] = ID.NIL;
     return result;
   }
 
