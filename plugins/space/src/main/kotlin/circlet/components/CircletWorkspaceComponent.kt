@@ -2,6 +2,7 @@ package circlet.components
 
 import circlet.arenas.initCircletArenas
 import circlet.client.api.impl.ApiClassesDeserializer
+import circlet.client.api.impl.tombstones.registerArenaTombstones
 import circlet.common.oauth.IdeaOAuthConfig
 import circlet.permission.FeatureFlagsVmPersistenceKey
 import circlet.platform.api.oauth.OAuthTokenResponse
@@ -86,6 +87,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
         mutableUiDispatch = ApplicationDispatcher(application)
 
         initCircletArenas()
+        registerArenaTombstones(ExtendableSerializationRegistry.global)
 
         ApiClassesDeserializer(ExtendableSerializationRegistry.global).registerDeserializers()
     }
