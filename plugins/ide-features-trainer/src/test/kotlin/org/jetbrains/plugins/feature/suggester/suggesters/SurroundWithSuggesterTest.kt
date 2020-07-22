@@ -2,10 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.PopupSuggestion
-import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester.Companion.POPUP_MESSAGE
 import org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester.Companion.SUGGESTING_ACTION_ID
 
@@ -20,7 +17,7 @@ class SurroundWithSuggesterTest : FeatureSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
         }
     }
 
@@ -31,7 +28,7 @@ class SurroundWithSuggesterTest : FeatureSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
         }
     }
 
@@ -42,7 +39,7 @@ class SurroundWithSuggesterTest : FeatureSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
         }
     }
 
@@ -53,20 +50,18 @@ class SurroundWithSuggesterTest : FeatureSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
         }
     }
 
     fun `testSurround statements with FOR and get suggestion`() {
-        val doc = editor.document
         insertNewLineAt(6)
         type("for (int i = 0; i < 10; i++) {")
         insertNewLineAt(13)
         type("}")
 
         invokeLater {
-            println(doc.text)
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
         }
     }
 
@@ -77,7 +72,7 @@ class SurroundWithSuggesterTest : FeatureSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
         }
     }
 
@@ -110,23 +105,11 @@ class SurroundWithSuggesterTest : FeatureSuggesterTest() {
     }
 
     fun `testSurround 0 statements with IF and don't get suggestion`() {
-        val doc = editor.document
         insertNewLineAt(6)
         type("if (true) {    }")
 
         invokeLater {
-            println(doc.text)
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
-    }
-
-    private fun assertSuggestedCorrectly(suggestion: Suggestion) {
-        TestCase.assertTrue(suggestion is PopupSuggestion)
-        TestCase.assertEquals(
-            FeatureSuggester.createMessageWithShortcut(
-                SUGGESTING_ACTION_ID,
-                POPUP_MESSAGE
-            ), (suggestion as PopupSuggestion).message
-        )
     }
 }

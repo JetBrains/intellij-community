@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
 import junit.framework.TestCase
-import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 
+// TODO edit tests after suggester update
 abstract class RenamingSuggesterTest : FeatureSuggesterTest() {
 
     abstract fun `testAdd one symbol to identifiers of local variable and catch suggestion`()

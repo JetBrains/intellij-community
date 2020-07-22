@@ -2,10 +2,9 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.PopupSuggestion
-import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.suggesters.LineCommentingSuggester.Companion.POPUP_MESSAGE
+import org.jetbrains.plugins.feature.suggester.suggesters.LineCommentingSuggester.Companion.SUGGESTING_ACTION_ID
 
 class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
 
@@ -20,7 +19,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
         type("#")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
         }
     }
 
@@ -33,7 +32,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
         type("#")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
         }
     }
 
@@ -81,15 +80,5 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
         invokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
-    }
-
-    private fun assertSuggestedCorrectly(suggestion: Suggestion) {
-        TestCase.assertTrue(suggestion is PopupSuggestion)
-        TestCase.assertEquals(
-            FeatureSuggester.createMessageWithShortcut(
-                LineCommentingSuggester.SUGGESTING_ACTION_ID,
-                LineCommentingSuggester.POPUP_MESSAGE
-            ), (suggestion as PopupSuggestion).message
-        )
     }
 }
