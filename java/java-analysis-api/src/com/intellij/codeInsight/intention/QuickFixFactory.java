@@ -474,4 +474,6 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createCreateFieldFromParameterFix();
   @NotNull
   public abstract IntentionAction createAssignFieldFromParameterFix();
+
+  public abstract IntentionAction createFillPermitsListFix(PsiIdentifier classIdentifier);
 }

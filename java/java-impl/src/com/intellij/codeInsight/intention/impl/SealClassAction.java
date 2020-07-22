@@ -133,7 +133,7 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
     WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("intention.make.sealed.class.hint.title"), null, runnable);
   }
 
-  static @Nullable String checkInheritor(@NotNull PsiJavaFile parentFile, @Nullable PsiJavaModule module, @NotNull PsiClass inheritor) {
+  public static @Nullable String checkInheritor(@NotNull PsiJavaFile parentFile, @Nullable PsiJavaModule module, @NotNull PsiClass inheritor) {
     if (PsiUtil.isLocalOrAnonymousClass(inheritor)) {
       return "intention.error.make.sealed.class.has.anonymous.or.local.inheritors";
     }

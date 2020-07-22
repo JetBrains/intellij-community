@@ -31,11 +31,11 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1096,15 +1096,31 @@ public final class HighlightClassUtil {
   }
 
   public static HighlightInfo checkSealedNonEnumeratedInheritors(PsiClass psiClass) {
-    if (psiClass.hasModifierProperty(PsiModifier.SEALED) && psiClass.getPermitsListTypes().length == 0) {
+    if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
       PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
       if (nameIdentifier == null) return null;
       if (psiClass.isEnum()) return null;
-      if (!DirectClassInheritorsSearch.search(psiClass, new LocalSearchScope(psiClass.getContainingFile())).anyMatch(c -> !PsiUtil.isLocalOrAnonymousClass(c))) {
+
+      Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(psiClass).findAll();
+      if (inheritors.isEmpty()) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(nameIdentifier)
           .descriptionAndTooltip(JavaErrorBundle.message("sealed.must.have.inheritors"))
           .create();
+      }
+      PsiFile parentFile = psiClass.getContainingFile();
+      boolean hasOutsideClasses = inheritors.stream().anyMatch(inheritor -> inheritor.getContainingFile() != parentFile);
+      if (hasOutsideClasses) {
+        Set<PsiElement> permittedClasses = ContainerUtil.map2Set(psiClass.getPermitsListTypes(), PsiClassType::resolve);
+        boolean hasMissingInheritors = inheritors.stream().anyMatch(inheritor -> !permittedClasses.contains(inheritor));
+        if (hasMissingInheritors) {
+          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(nameIdentifier)
+            .descriptionAndTooltip(JavaErrorBundle.message("permit.list.must.contain.outside.inheritors"))
+            .create();
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createFillPermitsListFix(nameIdentifier));
+          return info;
+        }
       }
     }
     return null;

@@ -930,4 +930,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createAssignFieldFromParameterFix() {
     return new AssignFieldFromParameterAction(true);
   }
+
+  @Override
+  public IntentionAction createFillPermitsListFix(PsiIdentifier classIdentifier) {
+    return new FillPermitsListFix(classIdentifier);
+  }
 }
