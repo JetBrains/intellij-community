@@ -10,7 +10,7 @@ import com.thoughtworks.qdox.model.JavaModuleDescriptor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.JpsJavacFileManager;
+import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.javac.ModulePath;
 
 import java.io.BufferedInputStream;
@@ -94,7 +94,7 @@ public class ModulePathSplitter {
     final ModulePath.Builder mpBuilder = ModulePath.newBuilder();
     final List<File> classpath = new ArrayList<>();
 
-    final Set<String> allRequired = collectRequired(chunkModuleInfo, JpsJavacFileManager.filter(path, file -> !chunkOutputs.contains(file)));
+    final Set<String> allRequired = collectRequired(chunkModuleInfo, Iterators.filter(path, file -> !chunkOutputs.contains(file)));
     for (File file : path) {
       if (chunkOutputs.contains(file)) {
         mpBuilder.add(null, file);
