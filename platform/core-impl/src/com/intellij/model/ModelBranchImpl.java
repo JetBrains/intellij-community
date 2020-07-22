@@ -3,6 +3,7 @@ package com.intellij.model;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.model.psi.PsiSymbolReference;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -42,6 +43,7 @@ public final class ModelBranchImpl implements ModelBranch {
 
   private ModelBranchImpl(@NotNull Project project) {
     myProject = project;
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (PsiDocumentManager.getInstance(project).hasEventSystemEnabledUncommittedDocuments()) {
       throw new IllegalStateException("Model branches may only be created on committed PSI");
     }
