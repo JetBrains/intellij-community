@@ -1211,8 +1211,24 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static void ensureValidType(@NotNull PsiType type) {
-    ensureValidType(type, null);
+    ensureValidType(type, (String)null);
   }
+
+  public static void ensureValidType(@NotNull PsiType type, @Nullable PsiElement sourceOfType) {
+    try {
+      ensureValidType(type);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      if (sourceOfType == null) throw e;
+
+      PsiUtilCore.ensureValid(sourceOfType);
+      throw new RuntimeException("Via " + sourceOfType.getClass() + " #" + sourceOfType.getLanguage(), e);
+    }
+  }
+
   public static void ensureValidType(@NotNull PsiType type, @Nullable String customMessage) {
     if (!type.isValid()) {
       TimeoutUtil.sleep(1); // to see if processing in another thread suddenly makes the type valid again (which is a bug)
