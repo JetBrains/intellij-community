@@ -150,8 +150,10 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   fun getCachedFileStorages(changed: Collection<String>,
                             deleted: Collection<String>,
-                            pathNormalizer: ((String) -> String)? = null): Pair<Collection<FileBasedStorage>, Collection<FileBasedStorage>> = storageLock.read {
-    Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
+                            pathNormalizer: ((String) -> String)? = null): Pair<Collection<FileBasedStorage>, Collection<FileBasedStorage>> {
+    return storageLock.read {
+      Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
+    }
   }
 
   fun updatePath(spec: String, newPath: Path) {
@@ -375,5 +377,3 @@ internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: St
 }
 
 data class Macro(val key: String, var value: Path)
-
-class UnknownMacroException(message: String) : RuntimeException(message)
