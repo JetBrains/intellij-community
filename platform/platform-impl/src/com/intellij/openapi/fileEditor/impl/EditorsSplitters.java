@@ -60,6 +60,7 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
+import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -81,6 +82,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private static final Key<Boolean> OPENED_IN_BULK = Key.create("EditorSplitters.opened.in.bulk");
 
   private EditorWindow myCurrentWindow;
+  private long myLastFocusGainedTime = 0L;
   private final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<>();
 
   private final FileEditorManagerImpl myManager;
@@ -636,6 +638,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return myCurrentWindow;
   }
 
+  public long getLastFocusGainedTime() {
+    return myLastFocusGainedTime;
+  }
+
   @NotNull
   public EditorWindow getOrCreateCurrentWindow(@NotNull VirtualFile file) {
     List<EditorWindow> windows = findWindows(file);
@@ -813,6 +819,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private final class MyFocusWatcher extends FocusWatcher {
     @Override
     protected void focusedComponentChanged(Component component, AWTEvent cause) {
+      if (cause instanceof FocusEvent && cause.getID() == FocusEvent.FOCUS_GAINED){
+        myLastFocusGainedTime = System.currentTimeMillis();
+      }
+
       EditorWindow newWindow = null;
 
       if (component != null) {
