@@ -236,6 +236,8 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     }
 
     public boolean hasIcon() { return myIcon != null; }
+
+    public @Nullable Icon getIcon() { return myIcon; }
   }
 
   public static class ExtraSize extends TextPanel {

@@ -36,6 +36,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
@@ -1291,6 +1292,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       if (myComponent instanceof Container) {
         addLayoutProperties((Container)myComponent);
+      }
+      if (myComponent instanceof TextPanel.WithIconAndArrows) {
+        myProperties.add(new PropertyBean("icon", ((TextPanel.WithIconAndArrows)myComponent).getIcon()));
       }
       if (myComponent.getParent() != null) {
         LayoutManager layout = myComponent.getParent().getLayout();
