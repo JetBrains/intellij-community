@@ -3,20 +3,24 @@ package org.jetbrains.plugins.feature.suggester.actions.listeners
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.openapi.project.guessProjectForFile
+import com.intellij.psi.PsiManager
+import org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager
 import org.jetbrains.plugins.feature.suggester.actions.*
 import java.lang.ref.WeakReference
 
-class DocumentActionsListener(project: Project, val handleAction: (Action) -> Unit) :
-    BulkAwareDocumentListener {
-    private val psiDocumentManager = PsiDocumentManager.getInstance(project)
+object DocumentActionsListener : BulkAwareDocumentListener {
 
     override fun beforeDocumentChangeNonBulk(event: DocumentEvent) {
         val document = event.source as? Document ?: return
-        val psiFile = psiDocumentManager.getPsiFile(document) ?: return
+        val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
+        val project = guessProjectForFile(virtualFile) ?: return
+        val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return
         if (event.newFragment != "" && event.oldFragment == "") {
             handleAction(
+                project,
                 BeforeEditorTextInsertedAction(
                     text = event.newFragment.toString(),
                     offset = event.offset,
@@ -27,6 +31,7 @@ class DocumentActionsListener(project: Project, val handleAction: (Action) -> Un
             )
         } else if (event.oldFragment != "" && event.newFragment == "") {
             handleAction(
+                project,
                 BeforeEditorTextRemovedAction(
                     text = event.oldFragment.toString(),
                     offset = event.offset,
@@ -40,9 +45,12 @@ class DocumentActionsListener(project: Project, val handleAction: (Action) -> Un
 
     override fun documentChangedNonBulk(event: DocumentEvent) {
         val document = event.source as? Document ?: return
-        val psiFile = psiDocumentManager.getPsiFile(document) ?: return
+        val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
+        val project = guessProjectForFile(virtualFile) ?: return
+        val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return
         if (event.newFragment != "" && event.oldFragment == "") {
             handleAction(
+                project,
                 EditorTextInsertedAction(
                     text = event.newFragment.toString(),
                     offset = event.offset,
@@ -53,6 +61,7 @@ class DocumentActionsListener(project: Project, val handleAction: (Action) -> Un
             )
         } else if (event.oldFragment != "" && event.newFragment == "") {
             handleAction(
+                project,
                 EditorTextRemovedAction(
                     text = event.oldFragment.toString(),
                     offset = event.offset,
@@ -62,5 +71,10 @@ class DocumentActionsListener(project: Project, val handleAction: (Action) -> Un
                 )
             )
         }
+    }
+
+    private fun handleAction(project: Project, action: Action) {
+        project.getService(FeatureSuggestersManager::class.java)
+            ?.actionPerformed(action)
     }
 }

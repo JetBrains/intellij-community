@@ -11,22 +11,26 @@ import com.intellij.openapi.editor.actions.CopyAction
 import com.intellij.openapi.editor.actions.CutAction
 import com.intellij.openapi.editor.actions.PasteAction
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager
 import org.jetbrains.plugins.feature.suggester.actions.*
 import org.jetbrains.plugins.feature.suggester.suggesters.asString
 import org.jetbrains.plugins.feature.suggester.suggesters.getSelection
 import java.lang.ref.WeakReference
 
-class EditorActionsListener(val handleAction: (Action) -> Unit) : AnActionListener {
+object EditorActionsListener : AnActionListener {
     private val copyPasteManager = CopyPasteManager.getInstance()
 
     override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
         if (!action.isSupportedAction()) return
         val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
         val psiFile = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return
+        val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
         when (action) {
             is CopyAction -> {
                 val copiedText = copyPasteManager.contents?.asString() ?: return
                 handleAction(
+                    project,
                     EditorCopyAction(
                         copiedText = copiedText,
                         psiFileRef = WeakReference(psiFile),
@@ -38,6 +42,7 @@ class EditorActionsListener(val handleAction: (Action) -> Unit) : AnActionListen
             is CutAction -> {
                 val text = copyPasteManager.contents?.asString() ?: return
                 handleAction(
+                    project,
                     EditorCutAction(
                         text = text,
                         psiFileRef = WeakReference(psiFile),
@@ -50,6 +55,7 @@ class EditorActionsListener(val handleAction: (Action) -> Unit) : AnActionListen
                 val pastedText = copyPasteManager.contents?.asString() ?: return
                 val caretOffset = editor.getCaretOffset()
                 handleAction(
+                    project,
                     EditorPasteAction(
                         pastedText = pastedText,
                         caretOffset = caretOffset,
@@ -61,6 +67,7 @@ class EditorActionsListener(val handleAction: (Action) -> Unit) : AnActionListen
             }
             is BackspaceAction -> {
                 handleAction(
+                    project,
                     EditorBackspaceAction(
                         selection = editor.getSelection(),
                         caretOffset = editor.getCaretOffset(),
@@ -77,10 +84,12 @@ class EditorActionsListener(val handleAction: (Action) -> Unit) : AnActionListen
         if (!action.isSupportedAction()) return
         val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
         val psiFile = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return
+        val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
         when (action) {
             is CopyAction -> {
                 val selectedText = editor.getSelectedText() ?: return
                 handleAction(
+                    project,
                     BeforeEditorCopyAction(
                         copiedText = selectedText,
                         psiFileRef = WeakReference(psiFile),
@@ -91,6 +100,7 @@ class EditorActionsListener(val handleAction: (Action) -> Unit) : AnActionListen
             }
             is CutAction -> {
                 handleAction(
+                    project,
                     BeforeEditorCutAction(
                         selection = editor.getSelection(),
                         psiFileRef = WeakReference(psiFile),
@@ -103,6 +113,7 @@ class EditorActionsListener(val handleAction: (Action) -> Unit) : AnActionListen
                 val pastedText = copyPasteManager.contents?.asString() ?: return
                 val caretOffset = editor.getCaretOffset()
                 handleAction(
+                    project,
                     BeforeEditorPasteAction(
                         pastedText = pastedText,
                         caretOffset = caretOffset,
@@ -114,6 +125,7 @@ class EditorActionsListener(val handleAction: (Action) -> Unit) : AnActionListen
             }
             is BackspaceAction -> {
                 handleAction(
+                    project,
                     BeforeEditorBackspaceAction(
                         selection = editor.getSelection(),
                         caretOffset = editor.getCaretOffset(),
@@ -124,6 +136,11 @@ class EditorActionsListener(val handleAction: (Action) -> Unit) : AnActionListen
                 )
             }
         }
+    }
+
+    private fun handleAction(project: Project, action: Action) {
+        project.getService(FeatureSuggestersManager::class.java)
+            ?.actionPerformed(action)
     }
 
     private fun Editor.getSelectedText(): String? {

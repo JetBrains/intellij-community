@@ -23,16 +23,24 @@
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.RenamingSuggester"/>
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.CopyPasteSuggester"/>
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester"/>
-        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.UnwrapSuggester"/>
+        <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.UnwrapSuggester"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings"/>
+        <applicationService
+                serviceImplementation="org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings"/>
+        <projectService serviceImplementation="org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager"/>
+        <psi.treeChangeListener
+                implementation="org.jetbrains.plugins.feature.suggester.actions.listeners.PsiActionsListener"/>
+        <editorFactoryDocumentListener
+                implementation="org.jetbrains.plugins.feature.suggester.actions.listeners.DocumentActionsListener"/>
     </extensions>
 
-    <projectListeners>
-        <listener class="org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
-    </projectListeners>
+    <applicationListeners>
+        <listener class="org.jetbrains.plugins.feature.suggester.actions.listeners.EditorActionsListener"
+                  topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+    </applicationListeners>
 
     <actions>
     </actions>

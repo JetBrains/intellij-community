@@ -1,10 +1,12 @@
 package org.jetbrains.plugins.feature.suggester.actions.listeners
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
+import org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager
 import org.jetbrains.plugins.feature.suggester.actions.*
 
-class PsiActionsListener(val handleAction: (Action) -> Unit) : PsiTreeChangeAdapter() {
+class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() {
     override fun beforePropertyChange(event: PsiTreeChangeEvent) {
         handleAction(
             BeforePropertyChangedAction(
@@ -113,5 +115,10 @@ class PsiActionsListener(val handleAction: (Action) -> Unit) : PsiTreeChangeAdap
                 timeMillis = System.currentTimeMillis()
             )
         )
+    }
+
+    private fun handleAction(action: Action) {
+        project.getService(FeatureSuggestersManager::class.java)
+            ?.actionPerformed(action)
     }
 }
