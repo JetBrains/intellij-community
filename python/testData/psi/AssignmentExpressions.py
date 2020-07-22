@@ -17,3 +17,6 @@ foo(x := 1, cat='2')
 (px, py, pz := position)  # pz will be position, px and py are references
 
 x = (y := z) = 'spam'  # z is a reference
+
+result_list = [a := 1]
+result_list = [(a := 1)]
