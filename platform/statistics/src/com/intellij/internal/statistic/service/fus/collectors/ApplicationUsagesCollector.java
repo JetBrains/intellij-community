@@ -66,6 +66,11 @@ public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector 
     return Collections.emptySet();
   }
 
+  /**
+   * @deprecated Add {@link FeatureUsageData} directly to {@link MetricEvent} in {@link #getMetrics()}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated
   @Nullable
   public FeatureUsageData getData() {
     return null;
