@@ -8,7 +8,7 @@ import java.io.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 
-public class InputFileObject extends JpsFileObject {
+public final class InputFileObject extends JpsFileObject {
   private final File myFile;
   private final String myEncoding;
   private Reference<File> myAbsFileRef;

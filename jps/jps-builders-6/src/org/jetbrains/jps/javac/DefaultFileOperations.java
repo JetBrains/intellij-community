@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -8,8 +8,7 @@ import gnu.trove.TObjectByteHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.tools.JavaFileManager;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -20,7 +19,7 @@ import java.util.zip.ZipFile;
  * @author Eugene Zhuravlev
  * Date: 20-Oct-18
  */
-class DefaultFileOperations implements FileOperations {
+final class DefaultFileOperations implements FileOperations {
   private static final File[] NULL_FILE_ARRAY = new File[0];
   private static final Archive NULL_ARCHIVE = new Archive() {
     @Override

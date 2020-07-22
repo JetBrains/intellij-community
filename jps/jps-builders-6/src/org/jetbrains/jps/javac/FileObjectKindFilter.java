@@ -1,23 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  * Date: 11-Feb-19
  */
-public class FileObjectKindFilter<T> {
+public final class FileObjectKindFilter<T> {
   private final Function<? super T, String> myToNameConverter;
   private final Map<JavaFileObject.Kind, BooleanFunction<T>> myFilterMap;
 
   public FileObjectKindFilter(Function<? super T, String> toNameConverter) {
     myToNameConverter = toNameConverter;
-    final EnumMap<JavaFileObject.Kind, BooleanFunction<T>> filterMap = new EnumMap<JavaFileObject.Kind, BooleanFunction<T>>(JavaFileObject.Kind.class);
+    final Map<JavaFileObject.Kind, BooleanFunction<T>> filterMap = new EnumMap<JavaFileObject.Kind, BooleanFunction<T>>(JavaFileObject.Kind.class);
     for (final JavaFileObject.Kind kind : JavaFileObject.Kind.values()) {
       if (kind == JavaFileObject.Kind.OTHER) {
         filterMap.put(kind, new BooleanFunction<T>() {

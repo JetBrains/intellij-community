@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -12,7 +12,7 @@ import java.net.URISyntaxException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class ZipFileObject extends JpsFileObject {
+public final class ZipFileObject extends JpsFileObject {
   private final ZipFile myZip;
   private final ZipEntry myEntry;
   private final String myEncoding;
@@ -110,7 +110,7 @@ public class ZipFileObject extends JpsFileObject {
       }
       finally {
         reader.close();
-      }          
+      }
     }
     finally {
       in.close();

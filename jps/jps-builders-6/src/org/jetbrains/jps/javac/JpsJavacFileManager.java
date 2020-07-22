@@ -23,7 +23,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  * Date: 01-Oct-18
  */
-public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> implements StandardJavaFileManager {
+public final class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> implements StandardJavaFileManager {
   private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
   private static final boolean isWindows = _OS_NAME.startsWith("windows");
   private static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
@@ -199,7 +199,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     return new URLClassLoader(urls.toArray(new URL[0]), myContext.getStandardFileManager().getClass().getClassLoader());
   }
 
-  private File getSingleOutputDirectory(final Location loc, final JavaFileObject sourceFile) {
+  private File getSingleOutputDirectory(final Location loc, final FileObject sourceFile) {
     if (loc == StandardLocation.CLASS_OUTPUT) {
       if (myOutputsMap.size() > 1 && sourceFile != null) {
         // multiple outputs case
@@ -265,7 +265,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
   public interface Context {
     @Nullable
     String getExplodedAutomaticModuleName(File pathElement);
-    
+
     boolean isCanceled();
 
     @NotNull
@@ -530,7 +530,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     StandardJavaFileManager.class, "setLocationForModule", Location.class, String.class, Collection.class
   );
   private final DelegateCallHandler<File, Object> myToPathCall = new DelegateCallHandler<File, Object>(File.class, "toPath");
-  
+
   private void initExplodedModuleNames(final Location modulePathLocation, Iterable<? extends File> path) throws IOException {
     if (mySetLocationForModuleCall.isAvailable() && myToPathCall.isAvailable()) {
       for (File pathEntry : path) {
@@ -545,7 +545,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
   }
 
   @SuppressWarnings("unchecked")
-  private static class DelegateCallHandler<T, R> {
+  private static final class DelegateCallHandler<T, R> {
     private final Method myMethod;
     private final String myUnsupportedMessage;
 
