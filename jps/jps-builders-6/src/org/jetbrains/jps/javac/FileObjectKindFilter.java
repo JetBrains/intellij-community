@@ -4,7 +4,7 @@ package org.jetbrains.jps.javac;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.util.*;
 
 /**
@@ -31,12 +31,17 @@ public final class FileObjectKindFilter<T> {
         filterMap.put(kind, new BooleanFunction<T>() {
           @Override
           public boolean fun(T data) {
-            return myToNameConverter.fun(data).endsWith(kind.extension);
+            final String name = myToNameConverter.fun(data);
+            return name.regionMatches(true, name.length() - kind.extension.length(), kind.extension, 0, kind.extension.length());
           }
         });
       }
     }
     myFilterMap = Collections.unmodifiableMap(filterMap);
+  }
+
+  public boolean isOfKind(T data, JavaFileObject.Kind kind) {
+    return myFilterMap.get(kind).fun(data);
   }
 
   public BooleanFunction<T> getFor(final Set<? extends JavaFileObject.Kind> kinds) {
@@ -53,7 +58,7 @@ public final class FileObjectKindFilter<T> {
       @Override
       public boolean fun(T data) {
         for (JavaFileObject.Kind kind : kinds) {
-          if (myFilterMap.get(kind).fun(data)) {
+          if (isOfKind(data, kind)) {
             return true;
           }
         }

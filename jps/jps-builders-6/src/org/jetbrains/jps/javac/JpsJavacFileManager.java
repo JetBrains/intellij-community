@@ -451,12 +451,12 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
           else {
             // is a directory or does not exist
             final File dir = new File(root, packageName.replace('.', '/'));
-            final BooleanFunction<File> kindsFilter = ourKindFilter.getFor(kinds);
+            final BooleanFunction<File> kindsMatcher = ourKindFilter.getFor(kinds);
             final boolean acceptUnknownFiles = kinds.contains(JavaFileObject.Kind.OTHER);
-            final BooleanFunction<File> filter = recurse || !acceptUnknownFiles? kindsFilter : new BooleanFunction<File>() {
+            final BooleanFunction<File> filter = recurse || !acceptUnknownFiles? kindsMatcher : new BooleanFunction<File>() {
               @Override
               public boolean fun(File file) {
-                return kindsFilter.fun(file) && myFileOperations.isFile(file);
+                return kindsMatcher.fun(file) && (!ourKindFilter.isOfKind(file, JavaFileObject.Kind.OTHER) || myFileOperations.isFile(file));
               }
             };
             result.add(Iterators.map(Iterators.filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter));
