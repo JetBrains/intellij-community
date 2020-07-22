@@ -487,4 +487,6 @@ class Test88 {
 
   void testNoStreamSuggestionsOnBrokenCode() { doAntiTest() }
 
+  void testNoStreamSuggestionsInMethodReference() { doAntiTest() }
+
 }
