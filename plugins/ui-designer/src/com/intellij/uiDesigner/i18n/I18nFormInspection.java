@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -99,10 +98,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
   }
 
   private static LocalQuickFix @Nullable [] createBatchFixes() {
-    if (Registry.is("i18n.for.idea.project")) {
-      return new LocalQuickFix[]{new I18nizeFormBatchFix()};
-    }
-    return null;
+    return new LocalQuickFix[]{new I18nizeFormBatchFix()};
   }
 
   interface FixesProvider extends EditorQuickFixProvider, LocalQuickFixProvider {

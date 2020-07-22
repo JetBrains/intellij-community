@@ -121,7 +121,8 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
 
     I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog = new I18nizeMultipleStringsDialog<>(project, dataList, contextFiles,
                                                                                                         I18nizeFormBatchFix::createUsageInfo,
-                                                                                                        UIDesignerIcons.InspectionSuppression);
+                                                                                                        UIDesignerIcons.InspectionSuppression,
+                                                                                                        false);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       PsiManager manager = PsiManager.getInstance(project);

@@ -186,9 +186,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     if (templateName == null) return;
 
     if (myShowJavaCodeInfo) {
-      FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
-      boolean showResourceBundleSuggester = template.getText().contains("${" + RESOURCE_BUNDLE_OPTION_KEY + "}");
-      myJavaCodeInfoPanel.setVisible(showResourceBundleSuggester);
+      myJavaCodeInfoPanel.setVisible(showResourceBundleTextField(templateName, myProject));
     }
     Set<String> result = JavaI18nUtil.suggestExpressionOfType(myResourceBundleType, myLiteralExpression);
     if (result.isEmpty()) {
@@ -197,6 +195,11 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
 
     myRBEditorTextField.setHistory(ArrayUtilRt.toStringArray(result));
     SwingUtilities.invokeLater(() -> myRBEditorTextField.setSelectedIndex(0));
+  }
+
+  public static boolean showResourceBundleTextField(String templateName, Project project) {
+    FileTemplate template = FileTemplateManager.getInstance(project).getCodeTemplate(templateName);
+    return template.getText().contains("${" + RESOURCE_BUNDLE_OPTION_KEY + "}");
   }
 
   @Override

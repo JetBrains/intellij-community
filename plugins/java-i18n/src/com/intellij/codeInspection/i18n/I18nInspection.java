@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -707,7 +706,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
             }
           }
         }
-        else if (Registry.is("i18n.for.idea.project") ) {
+        else {
           fixes.add(new I18nizeBatchQuickFix());
         }
 

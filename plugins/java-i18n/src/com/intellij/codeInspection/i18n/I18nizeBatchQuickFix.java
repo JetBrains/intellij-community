@@ -5,20 +5,21 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.i18n.batch.I18nizeMultipleStringsDialog;
 import com.intellij.codeInspection.i18n.batch.I18nizedPropertyData;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PartiallyKnownString;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
@@ -34,10 +35,6 @@ import org.jetbrains.uast.generate.UastElementFactory;
 
 import java.util.*;
 
-/**
- * WARNING
- * Templates are ignored BundleName.message(key, args) is always used instead
- */
 public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickFix<CommonProblemDescriptor> {
   private static final Logger LOG = Logger.getInstance(I18nizeBatchQuickFix.class);
 
@@ -101,7 +98,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     I18nizeMultipleStringsDialog dialog = new I18nizeMultipleStringsDialog<>(project, replacements, contextFiles, data -> {
       List<PsiElement> elements = data.getPsiElements();
       return ContainerUtil.map(elements, element -> new UsageInfo(element.getParent()));
-    }, null);
+    }, null, true);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       Set<PsiFile> files = new HashSet<>();
@@ -116,13 +113,6 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       files.add(propertiesFile.getContainingFile());
 
       WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
-        String bundleName = propertiesFile.getVirtualFile().getNameWithoutExtension();
-        PsiClass[] classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(bundleName,
-                                                                                            GlobalSearchScope.projectScope(project));
-        if (classesByName.length == 1) {
-          bundleName = classesByName[0].getQualifiedName();
-          LOG.assertTrue(bundleName != null, propertiesFile.getName());
-        }
         for (I18nizedPropertyData<HardcodedStringContextData> data : replacements) {
           JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                         Collections.singletonList(propertiesFile),
@@ -135,6 +125,28 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             PsiElement psiElement = psiElements.get(i);
             UExpression uExpression = uExpressions.get(i);
             Language language = psiElement.getLanguage();
+            String i18NText =
+              dialog.getI18NText(data.getKey(), data.getValue(), StringUtil.join(data.getContextData().getArgs(), e -> e.getSourcePsi().getText(), ", "));
+
+            PsiExpression expression;
+            try {
+              expression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(i18NText, psiElement);
+              if (language == JavaLanguage.INSTANCE) {
+                psiElement.replace(expression);
+                continue;
+              }
+            }
+            catch (IncorrectOperationException ignored) {
+              continue;
+            }
+            
+            @Nullable Couple<@NotNull String> callDescriptor = getCallDescriptor(expression);
+            if (callDescriptor == null) {
+              LOG.debug("Templates are not supported for " + language.getDisplayName());
+              continue;
+            }
+
+
             UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(language);
             if (generationPlugin == null) {
               LOG.debug("No UAST generation plugin exist for " + language.getDisplayName());
@@ -144,9 +156,10 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             List<UExpression> arguments = new ArrayList<>();
             arguments.add(pluginElementFactory.createStringLiteralExpression(data.getKey(), psiElement));
             arguments.addAll(data.getContextData().getArgs());
+            
             UCallExpression callExpression = pluginElementFactory
-              .createCallExpression(pluginElementFactory.createQualifiedReference(bundleName, uExpression),
-                                    "message",
+              .createCallExpression(pluginElementFactory.createQualifiedReference(callDescriptor.first, null),
+                                    callDescriptor.second,
                                     arguments,
                                     null,
                                     UastCallKind.METHOD_CALL,
@@ -163,6 +176,30 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     }
   }
 
+  /**
+   * @return qualifier.methodName couple
+   */
+  private static @Nullable Couple<@NotNull String> getCallDescriptor(PsiExpression expression) {
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+      PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      String qualifiedName = qualifierExpression != null ? qualifierExpression.getText() : null;
+      if (qualifiedName == null) return null;
+      String methodName = methodExpression.getReferenceName();
+      if (methodName == null) return null;
+      
+      PsiExpression[] expressions = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions();
+      if (expressions.length == 0) {
+        return null;
+      }
+      if (!(expressions[0] instanceof PsiLiteralExpression)) {
+        return null;
+      }
+      return Couple.of(qualifiedName, methodName);
+    }
+    return null;
+  }
+  
   private static String buildUnescapedFormatString(UStringConcatenationsFacade cf, List<? super UExpression> formatParameters) {
     StringBuilder result = new StringBuilder();
     int elIndex = 0;
@@ -215,7 +252,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
 
     final UElement returnStmt =
       UastUtils.getParentOfType(parent, UReturnExpression.class, false, UCallExpression.class, ULambdaExpression.class);
-    if (returnStmt instanceof UReturnExpression) {
+    if (returnStmt != null) {
       UMethod uMethod = UastUtils.getParentOfType(expression, UMethod.class);
       if (uMethod != null) {
         UElement uClass = uMethod.getUastParent();

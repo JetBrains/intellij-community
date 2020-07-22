@@ -79,7 +79,6 @@
     <experimentalFeature id="property.value.inplace.editing" percentOfUsers="100">
       <description>Edit property value at usage location, where it's displayed in folding placeholder</description>
     </experimentalFeature>
-    <registryKey key="i18n.for.idea.project" defaultValue="false" description="Batch i18n"/>
   </extensions>
   <actions>
     <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">
