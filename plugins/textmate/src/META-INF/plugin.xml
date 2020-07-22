@@ -15,8 +15,12 @@
                  description="The maximum length of the line to be highlighted by TextMate lexer."/>
 
     <fileType name="textmate" implementationClass="org.jetbrains.plugins.textmate.TextMateFileType" language="textmate" fieldName="INSTANCE"/>
-    <applicationService id="textmateSettings"
-                        serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateSettings"/>
+    <obsoleteStorage file="textmate_os.xml">
+      <components>
+        <component>TextMateSettings</component>
+      </components>
+    </obsoleteStorage>
+
     <applicationService id="textmateService" serviceInterface="org.jetbrains.plugins.textmate.TextMateService"
                         serviceImplementation="org.jetbrains.plugins.textmate.TextMateServiceImpl"/>
     <editorHighlighterProvider filetype="textmate" implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider"/>
