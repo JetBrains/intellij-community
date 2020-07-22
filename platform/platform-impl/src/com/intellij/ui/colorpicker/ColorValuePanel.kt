@@ -126,15 +126,6 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
     val c = GridBagConstraints()
     c.fill = GridBagConstraints.HORIZONTAL
 
-    if (showAlpha) {
-      c.weightx = 0.12
-      c.gridx = 0
-      c.gridy = 0
-      add(alphaButtonPanel, c)
-      c.gridy = 1
-      add(alphaField, c)
-    }
-
     c.weightx = 0.36
     c.gridwidth = 3
     c.gridx = 1
@@ -153,10 +144,19 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
     c.gridy = 1
     add(colorField3, c)
 
+    if (showAlpha) {
+      c.weightx = 0.12
+      c.gridx = 4
+      c.gridy = 0
+      add(alphaButtonPanel, c)
+      c.gridy = 1
+      add(alphaField, c)
+    }
+
     // Hex should be longer
     c.gridheight = 1
     c.weightx = 0.51
-    c.gridx = 4
+    c.gridx = if(showAlpha) 5 else  4
     c.gridy = 0
     add(ColorLabel("Hex"), c)
     c.gridy = 1
@@ -244,9 +244,9 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
       colorField2.setTextIfNeeded((hsb[1] * 100).roundToInt().toString(), source)
       colorField3.setTextIfNeeded((hsb[2] * 100).roundToInt().toString(), source)
     }
-    var hexStr = String.format("%08X", color.rgb)
-    if (!showAlpha) {
-      hexStr = hexStr.substring(2)
+    var hexStr = String.format("%02X", color.red) + String.format("%02X", color.green) + String.format("%02X", color.blue)
+    if (showAlpha) {
+      hexStr += String.format("%02X", color.alpha)
     }
     hexField.setTextIfNeeded(hexStr, source)
     // Cleanup the update requests which triggered by setting text in this function
@@ -569,11 +569,20 @@ private class HexColorDocument(src: JTextField) : ColorDocument(src) {
 private fun convertHexToColor(hex: String): Color {
   val s = if (hex == "") "0" else hex
   val i = s.toLong(16)
-  val a = if (hex.length > 6) i shr 24 and 0xFF else 0xFF
-  val r = i shr 16 and 0xFF
-  val g = i shr 8 and 0xFF
-  val b = i and 0xFF
-  return Color(r.toInt(), g.toInt(), b.toInt(), a.toInt())
+  if (hex.length > 6) {
+    return Color(
+      (i shr 24 and 0xFF).toInt(), //RED
+      (i shr 16 and 0xFF).toInt(), //GREEN
+      (i shr 8 and 0xFF).toInt(),  //BLUE
+      (i and 0xFF).toInt()         //ALPHA
+    )
+  } else {
+    return Color(
+      (i shr 16 and 0xFF).toInt(), //RED
+      (i shr 8 and 0xFF).toInt(),  //GREEN
+      (i and 0xFF).toInt()         //BLUE
+    )
+  }
 }
 
 private const val PROPERTY_PREFIX = "colorValuePanel_"
