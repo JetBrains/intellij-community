@@ -28,7 +28,7 @@ import java.util.jar.Manifest
 
 @CompileStatic
 class TestingTasksImpl extends TestingTasks {
-  private final CompilationContext context
+  protected final CompilationContext context
   private final TestingOptions options
 
   TestingTasksImpl(CompilationContext context, TestingOptions options) {
@@ -487,12 +487,12 @@ class TestingTasksImpl extends TestingTasks {
     return classpath
   }
 
-  private static boolean isUnderTeamCity() {
+  protected static boolean isUnderTeamCity() {
     System.getenv("TEAMCITY_VERSION") != null
   }
 
   static boolean dependenciesInstalled
-  private def setupTestingDependencies() {
+  void setupTestingDependencies() {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
       context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin', 'setupThirdPartyPlugins', 'setupBundledMaven')
@@ -517,7 +517,7 @@ class TestingTasksImpl extends TestingTasks {
     ant.taskdef(name: "junit", classname: "org.apache.tools.ant.taskdefs.optional.junit.JUnitTask", loaderRef: junitTaskLoaderRef)
   }
 
-  private boolean isBootstrapSuiteDefault() {
+  protected boolean isBootstrapSuiteDefault() {
     return options.bootstrapSuite == TestingOptions.BOOTSTRAP_SUITE_DEFAULT
   }
 }
