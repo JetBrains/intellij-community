@@ -909,6 +909,11 @@
         <component>LastSelectedPropertiesFileStore</component>
       </components>
     </obsoleteStorage>
+    <obsoleteStorage file="vcs.log.big.repos.xml">
+      <components>
+        <component>Vcs.Log.Big.Repositories</component>
+      </components>
+    </obsoleteStorage>
 
     <obsoleteStorage file="usage.statistics.xml" isProjectLevel="true">
       <components>
