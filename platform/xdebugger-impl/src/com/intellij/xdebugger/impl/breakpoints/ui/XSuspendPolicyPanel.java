@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -118,7 +118,7 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
     mySuspendThread.setVisible(suspendThreadSupported);
     myMakeDefaultPanel.setVisible(suspendThreadSupported);
     if (!suspendThreadSupported) {
-      mySuspendCheckBox.setText(StringUtil.trimEnd(mySuspendCheckBox.getText(), ':'));
+      mySuspendCheckBox.setText(XDebuggerBundle.message("suspend.policy.panel.suspend.execution"));
     }
   }
 
