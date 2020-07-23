@@ -967,4 +967,7 @@ class Foo {
     myFixture.checkResult 'class Foo { { System.out.println(<caret>); } }'
   }
 
+  void testPreferLocalArrayVariableToItsChains() {
+    checkPreferredItems 0, 'arrayVariable'
+  }
 }
