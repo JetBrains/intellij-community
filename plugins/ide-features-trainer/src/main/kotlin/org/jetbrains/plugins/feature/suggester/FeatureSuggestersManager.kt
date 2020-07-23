@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.listeners.DocumentActionsListener
@@ -36,7 +37,7 @@ class FeatureSuggestersManager(val project: Project) {
                 lookupManager as LookupManagerImpl
                 lookupManager.clearLookup()
             }
-            suggestionPresenter.showSuggestion(project, suggestion.message)
+            suggestionPresenter.showSuggestion(project, suggestion)
 
             // send event for testing
             project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion)
@@ -44,6 +45,8 @@ class FeatureSuggestersManager(val project: Project) {
     }
 
     private fun FeatureSuggester.isEnabled(): Boolean {
-        return FeatureSuggesterSettings.isEnabled(getId())
+        return ApplicationManager.getApplication()
+            .getService(FeatureSuggesterSettings::class.java)
+            ?.isEnabled(getId()) ?: false
     }
 }
