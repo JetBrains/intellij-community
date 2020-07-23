@@ -331,7 +331,6 @@ public final class PatchApplier {
     return myVerifier.getAllAffected();
   }
 
-  @CalledInAwt
   private static void refreshPassedFiles(@NotNull Project project,
                                          @NotNull Collection<? extends FilePath> directlyAffected,
                                          @NotNull Collection<? extends VirtualFile> indirectlyAffected) {
