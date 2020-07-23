@@ -2034,7 +2034,7 @@ public class UsageViewImpl implements UsageViewEx {
       };
     }
 
-    // [tav] todo: a temp workaround for IDEA-192713
+    // this is a temp workaround to fix IDEA-192713. [tav] todo: invent something
     @Override
     protected void processFocusEvent(FocusEvent e) {
       super.processFocusEvent(e);

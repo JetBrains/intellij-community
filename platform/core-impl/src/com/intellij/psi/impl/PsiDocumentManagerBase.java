@@ -235,9 +235,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final Runnable commitAllDocumentsRunnable = () -> {
       Semaphore semaphore = new Semaphore(1);
       AppUIExecutor.onWriteThread().later().submit(() -> {
-        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
-          semaphore.up();
-        });
+        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> semaphore.up());
       });
       while (!semaphore.waitFor(semaphoreTimeoutInMs)) {
         ProgressManager.checkCanceled();
