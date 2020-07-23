@@ -56,7 +56,7 @@ internal class DeveloperList {
   var timestamp: Long
     private set
 
-  fun isUpToDateAt(timestamp: Long) = timestamp != 0L && (developers.isEmpty() || (timestamp - this.timestamp < UPDATE_INTERVAL))
+  fun isUpToDateAt() = timestamp != 0L && (System.currentTimeMillis() - timestamp) < UPDATE_INTERVAL
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

@@ -123,7 +123,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void loadDevelopersList() {
     ErrorReportConfigurable configurable = ErrorReportConfigurable.getInstance();
     DeveloperList developers = configurable.getDeveloperList();
-    if (developers.isUpToDateAt(System.currentTimeMillis())) {
+    if (developers.isUpToDateAt()) {
       setDevelopers(developers);
     }
     else {
