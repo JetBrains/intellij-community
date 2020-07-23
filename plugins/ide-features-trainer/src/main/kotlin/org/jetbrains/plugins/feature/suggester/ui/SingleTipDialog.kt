@@ -17,7 +17,7 @@ class SingleTipDialog(parent: Window, tip: TipAndTrickBean) : DialogWrapper(pare
 
         fun showForProject(project: Project, tip: TipAndTrickBean) {
             ourInstance = createForProject(project, tip)
-            ourInstance!!.show()
+            ourInstance?.show()
         }
 
         private fun createForProject(project: Project, tip: TipAndTrickBean): SingleTipDialog? {
