@@ -1001,8 +1001,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean annotatedAsNonNls(@Nullable PsiModifierListOwner parent) {
-    return parent != null && NlsInfo.forModifierListOwner(parent).getNlsStatus() == ThreeState.NO;
+  private static boolean annotatedAsNonNls(@NotNull PsiModifierListOwner parent) {
+    return NlsInfo.forModifierListOwner(parent).getNlsStatus() == ThreeState.NO;
   }
 
   private static boolean isSafeStringMethod(UExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
@@ -1070,8 +1070,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       UExpression initializer = uVar.getUastInitializer();
       if (initializer instanceof UCallExpression) {
         PsiMethod method = ((UCallExpression)initializer).resolve();
-        if (annotatedAsNonNls(method)) return true;
-        nonNlsTargets.add(method);
+        if (method != null) {
+          if (annotatedAsNonNls(method)) return true;
+          nonNlsTargets.add(method);
+        }
       }
     }
     if (qualifier instanceof UQualifiedReferenceExpression) {

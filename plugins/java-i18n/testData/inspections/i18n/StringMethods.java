@@ -25,6 +25,12 @@ class StringMethods {
         if ("foo".equals(foo)) {}
         if ("foo".equalsIgnoreCase(foo)) {}
     }
+
+    void testUnresolved() {
+        String foo = <error descr="Cannot resolve method 'getUnresolved' in 'StringMethods'">getUnresolved</error>();
+        if (foo.equals(<warning descr="Hardcoded string literal: \"foo\"">"foo"</warning>)) {
+        }
+    }
     
     @NonNls native String getFoo();
 }
