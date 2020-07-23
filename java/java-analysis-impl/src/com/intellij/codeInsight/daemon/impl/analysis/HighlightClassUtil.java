@@ -1026,9 +1026,15 @@ public final class HighlightClassUtil {
       else if (aClass.getContainingFile() == superClass.getContainingFile()) {
         return null;
       }
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+      PsiIdentifier identifier = aClass.getNameIdentifier();
+      if (identifier == null) {
+        return null;
+      }
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .descriptionAndTooltip(JavaErrorBundle.message("not.allowed.in.sealed.hierarchy", aClass.getName()))
         .range(elementToHighlight).create();
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddToPermitsListFix(elementToHighlight, identifier));
+      return info;
     }
     return null;
   }

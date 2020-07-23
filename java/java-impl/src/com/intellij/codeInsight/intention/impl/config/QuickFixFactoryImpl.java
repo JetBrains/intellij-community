@@ -932,7 +932,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public IntentionAction createFillPermitsListFix(PsiIdentifier classIdentifier) {
+  public @NotNull IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier) {
     return new FillPermitsListFix(classIdentifier);
+  }
+
+  @Override
+  public @NotNull IntentionAction createAddToPermitsListFix(@NotNull PsiElement elementToHighlight,
+                                                            @NotNull PsiIdentifier classIdentifier) {
+    return new AddToPermitsListFix(elementToHighlight, classIdentifier);
   }
 }

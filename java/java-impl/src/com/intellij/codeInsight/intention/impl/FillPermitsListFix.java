@@ -85,7 +85,7 @@ public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElem
     return missingInheritors;
   }
 
-  private static void fillPermitsList(@NotNull PsiClass parent, @NotNull Collection<String> missingInheritors) {
+  static void fillPermitsList(@NotNull PsiClass parent, @NotNull Collection<String> missingInheritors) {
     PsiReferenceList permitsList = parent.getPermitsList();
     PsiFileFactory factory = PsiFileFactory.getInstance(parent.getProject());
     if (permitsList == null) {
