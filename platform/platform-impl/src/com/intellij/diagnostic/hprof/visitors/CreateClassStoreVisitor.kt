@@ -25,7 +25,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.LongArrayList
 
-class CreateClassStoreVisitor(private val stringIdMap: Long2ObjectMap<String>) : HProfVisitor() {
+internal class CreateClassStoreVisitor(private val stringIdMap: Long2ObjectMap<String>) : HProfVisitor() {
   private val classIDToNameStringID = Long2LongOpenHashMap()
 
   private val result = Long2ObjectOpenHashMap<ClassDefinition>()

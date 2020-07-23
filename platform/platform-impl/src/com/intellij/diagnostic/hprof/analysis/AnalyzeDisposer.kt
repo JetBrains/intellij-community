@@ -27,8 +27,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.util.*
 
-class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
-
+internal class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
   data class Grouping(val childClass: ClassDefinition,
                       val parentClass: ClassDefinition?,
                       val rootClass: ClassDefinition)

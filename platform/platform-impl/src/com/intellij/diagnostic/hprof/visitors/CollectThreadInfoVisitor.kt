@@ -23,7 +23,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 
 class CollectThreadInfoVisitor(private val threadsMap: Long2ObjectMap<ThreadInfo>,
                                private val stringIdMap: Long2ObjectMap<String>) : HProfVisitor() {
-
   private val stackFrameIdToStringMap = Long2ObjectOpenHashMap<String>()
   private val classSerialNumberToNameMap = Long2ObjectOpenHashMap<String>()
 

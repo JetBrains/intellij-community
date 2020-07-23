@@ -22,7 +22,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.util.function.LongUnaryOperator
 
-abstract class RemapIDsVisitor : HProfVisitor() {
+internal abstract class RemapIDsVisitor : HProfVisitor() {
   private var currentID = 0
 
   override fun preVisit() {

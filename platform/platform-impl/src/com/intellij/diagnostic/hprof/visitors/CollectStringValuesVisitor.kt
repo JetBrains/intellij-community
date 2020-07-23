@@ -19,7 +19,7 @@ import com.intellij.diagnostic.hprof.parser.HProfVisitor
 import com.intellij.diagnostic.hprof.parser.RecordType
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 
-class CollectStringValuesVisitor(val output: Long2ObjectMap<String>) : HProfVisitor() {
+internal class CollectStringValuesVisitor(val output: Long2ObjectMap<String>) : HProfVisitor() {
   override fun preVisit() {
     disableAll()
     enable(RecordType.StringInUTF8)

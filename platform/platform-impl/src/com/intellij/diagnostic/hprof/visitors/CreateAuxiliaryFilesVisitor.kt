@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 
-class CreateAuxiliaryFilesVisitor(
+internal class CreateAuxiliaryFilesVisitor(
   private val auxOffsetsChannel: FileChannel,
   private val auxChannel: FileChannel,
   private val classStore: ClassStore,
