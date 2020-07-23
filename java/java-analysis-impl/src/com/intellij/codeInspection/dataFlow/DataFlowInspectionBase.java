@@ -989,11 +989,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         final String text = exactlyNull
                             ? JavaAnalysisBundle.message("dataflow.message.return.null.from.notnullable", presentableNullable)
                             : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
-        final LocalQuickFix[] fixes =
-          PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression
-          ? LocalQuickFix.EMPTY_ARRAY
-          : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtilRt.toStringArray(manager.getNotNulls()))};
-        reporter.registerProblem(expr, text, fixes);
+        PsiMethod surroundingMethod = PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, true, PsiLambdaExpression.class);
+        final LocalQuickFix fix = surroundingMethod == null ? null :
+                                  new AddAnnotationPsiFix(defaultNullable, surroundingMethod,
+                                                          ArrayUtilRt.toStringArray(manager.getNotNulls()));
+        reporter.registerProblem(expr, text, fix);
       }
     }
   }

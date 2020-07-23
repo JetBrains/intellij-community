@@ -45,6 +45,12 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
 
   public AddAnnotationPsiFix(@NotNull String fqn,
                              @NotNull PsiModifierListOwner modifierListOwner,
+                             String @NotNull ... annotationsToRemove) {
+    this(fqn, modifierListOwner, PsiNameValuePair.EMPTY_ARRAY, annotationsToRemove);
+  }
+  
+  public AddAnnotationPsiFix(@NotNull String fqn,
+                             @NotNull PsiModifierListOwner modifierListOwner,
                              PsiNameValuePair @NotNull [] values,
                              String @NotNull ... annotationsToRemove) {
     super(modifierListOwner);
@@ -349,6 +355,6 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   private static @Nullable AddAnnotationPsiFix createAddNullableNotNullFix(PsiModifierListOwner owner, String annotationToAdd,
                                                                            List<String> annotationsToRemove) {
     if (!isNullabilityAnnotationApplicable(owner)) return null;
-    return new AddAnnotationPsiFix(annotationToAdd, owner, PsiNameValuePair.EMPTY_ARRAY, ArrayUtilRt.toStringArray(annotationsToRemove));
+    return new AddAnnotationPsiFix(annotationToAdd, owner, ArrayUtilRt.toStringArray(annotationsToRemove));
   }
 }

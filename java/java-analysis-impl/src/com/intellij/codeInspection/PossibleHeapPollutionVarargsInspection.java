@@ -82,7 +82,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
           .compute(() -> rec.addBefore(ctor, firstMethod));
       }
       if (owner instanceof PsiMethod) {
-        new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, owner, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
+        new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, owner).applyFix(project, descriptor);
       }
     }
   }
@@ -111,7 +111,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       if (psiElement instanceof PsiIdentifier) {
         final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
         WriteAction.run(() -> psiMethod.getModifierList().setModifierProperty(PsiModifier.FINAL, true));
-        new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
+        new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, psiMethod).applyFix(project, descriptor);
       }
     }
   }

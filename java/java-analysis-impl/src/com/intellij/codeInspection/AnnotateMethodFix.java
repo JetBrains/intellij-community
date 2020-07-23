@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -64,7 +63,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
   @Override
   public boolean startInWriteAction() {
-    return !annotateOverriddenMethods();
+    return false;
   }
 
   @Override
@@ -103,7 +102,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
   }
 
   private void annotateMethod(@NotNull PsiMethod method) {
-    AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, method, PsiNameValuePair.EMPTY_ARRAY, myAnnotationsToRemove);
+    AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, method, myAnnotationsToRemove);
     fix.invoke(method.getProject(), method.getContainingFile(), method, method);
   }
 
