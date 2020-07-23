@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Attribute
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
+import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
@@ -327,6 +328,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val externalSystemOptions = module.externalSystemOptions
     val customImlData = module.customImlData
     saveModuleOptions(externalSystemOptions, module.type, customImlData, writer)
+    if (customImlData?.customModuleOptions?.containsKey(JpsProjectLoader.CLASSPATH_ATTRIBUTE) == true) {
+      return
+    }
+
     saveJavaSettings(module.javaSettings, rootManagerElement)
 
     if (customImlData != null) {
