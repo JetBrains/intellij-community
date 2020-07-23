@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="ide.new.project.model" defaultValue="false" restartRequired="true"
+    <registryKey key="ide.new.project.model" defaultValue="true" restartRequired="true"
                  description="Enable new entities-based project model (workspace model)"/>
     <registryKey key="ide.new.project.model.cache" defaultValue="false" restartRequired="false"
                  description="Enable cache for the workspace model"/>
