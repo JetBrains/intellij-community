@@ -2,15 +2,16 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.util.Iterator;
@@ -84,16 +85,17 @@ public final class MemoryDumpHelper {
   }
 
   public static void captureMemoryDumpZipped(@NotNull String zipPath) throws Exception {
-    captureMemoryDumpZipped(new File(zipPath));
+    captureMemoryDumpZipped(Paths.get(zipPath));
   }
 
-  public static synchronized void captureMemoryDumpZipped(@NotNull File zipFile) throws Exception {
-    File tempFile = FileUtil.createTempFile("heapDump.", ".hprof");
-    FileUtil.delete(tempFile);
-
-    captureMemoryDump(tempFile.getPath());
-
-    ZipUtil.compressFile(tempFile, zipFile);
-    FileUtil.delete(tempFile);
+  public static synchronized void captureMemoryDumpZipped(@NotNull Path zipFile) throws Exception {
+    Path tempFile = Files.createTempFile("heapDump.", ".hprof");
+    try {
+      captureMemoryDump(tempFile.toString());
+      ZipUtil.compressFile(tempFile, zipFile);
+    }
+    finally {
+      Files.deleteIfExists(tempFile);
+    }
   }
 }

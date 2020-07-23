@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -174,6 +176,14 @@ public final class ZipUtil {
         FileUtilRt.copy(is, os);
         os.closeEntry();
       }
+    }
+  }
+
+  public static void compressFile(@NotNull Path srcFile, @NotNull Path zipFile) throws IOException {
+    try (ZipOutputStream os = new ZipOutputStream(Files.newOutputStream(zipFile))) {
+      os.putNextEntry(new ZipEntry(srcFile.getFileName().toString()));
+      Files.copy(srcFile, os);
+      os.closeEntry();
     }
   }
 

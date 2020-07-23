@@ -61,7 +61,7 @@ class EditorHistoryManagerTest {
     GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(virtualFile)).ensureCollected()
     val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile)
     if (document != null) {
-      fail<Any>("Document wasn't collected, see heap dump at ${HeavyPlatformTestCase.publishHeapDump(EditorHistoryManagerTest::class.java.name)}")
+      fail<Any>("Document wasn't collected, see heap dump at ${publishHeapDump(EditorHistoryManagerTest::class.java.name)}")
       System.err.println("Keeping a reference to the document: $document")
       System.err.println(threadDumpBefore)
     }
