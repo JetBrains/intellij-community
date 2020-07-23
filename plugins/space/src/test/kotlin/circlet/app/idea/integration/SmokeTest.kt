@@ -1,19 +1,5 @@
 package circlet.app.idea.integration
 
-import circlet.pipelines.config.api.*
-import circlet.plugins.pipelines.services.*
-import circlet.plugins.pipelines.viewmodel.*
-import circlet.runtime.*
-import com.intellij.openapi.components.*
-import com.intellij.openapi.project.*
-import com.intellij.testFramework.*
-import kotlinx.coroutines.*
-import libraries.coroutines.extra.*
-import libraries.klogging.*
-import runtime.*
-import runtime.reactive.*
-import kotlin.test.*
-
 /*
 class SmokeTest : HeavyPlatformTestCase() {
 

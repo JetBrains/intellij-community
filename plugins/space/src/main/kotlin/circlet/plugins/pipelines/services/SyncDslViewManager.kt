@@ -1,10 +1,10 @@
 package circlet.plugins.pipelines.services
 
-import com.intellij.build.*
-import com.intellij.openapi.project.*
+import com.intellij.build.AbstractViewManager
+import com.intellij.openapi.project.Project
 
 class SyncDslViewManager(project: Project) : AbstractViewManager(project) {
-    public override fun getViewName(): String {
-        return "Space Automation DSL"
-    }
+  public override fun getViewName(): String {
+    return "Space Automation DSL"
+  }
 }

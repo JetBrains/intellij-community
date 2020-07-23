@@ -1,12 +1,12 @@
 package circlet.plugins.pipelines.services.execution
 
-import circlet.pipelines.engine.api.storage.*
+import circlet.pipelines.engine.api.storage.AGraphExecutionContext
 
 class CircletIdeaAGraphExecutionContextEntity(
-    override val branch: String,
-    override val commit: String,
-    override val repoId: String,
-    override val projectKey: String,
-    override val projectId: String,
-    override val executionNumber: Long
-): AGraphExecutionContext
+  override val branch: String,
+  override val commit: String,
+  override val repoId: String,
+  override val projectKey: String,
+  override val projectId: String,
+  override val executionNumber: Long
+) : AGraphExecutionContext

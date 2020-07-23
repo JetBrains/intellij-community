@@ -9,16 +9,16 @@ import icons.SpaceIcons
 import platform.common.ProductName
 
 class CircletRunConfigurationType : SimpleConfigurationType(
-    "CircletRunConfiguration",
-    "$ProductName Task",
-    "Run $ProductName Task",
-    NotNullLazyValue.createValue { SpaceIcons.Main }) {
+  "CircletRunConfiguration",
+  "$ProductName Task",
+  "Run $ProductName Task",
+  NotNullLazyValue.createValue { SpaceIcons.Main }) {
 
-    override fun createTemplateConfiguration(project: Project): RunConfiguration {
-        return CircletRunConfiguration(project, this)
-    }
+  override fun createTemplateConfiguration(project: Project): RunConfiguration {
+    return CircletRunConfiguration(project, this)
+  }
 
-    override fun getOptionsClass(): Class<out BaseState>? {
-        return CircletRunTaskConfigurationOptions::class.java
-    }
+  override fun getOptionsClass(): Class<out BaseState>? {
+    return CircletRunTaskConfigurationOptions::class.java
+  }
 }

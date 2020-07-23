@@ -1,7 +1,6 @@
 package circlet.plugins.pipelines.ui
 
-import com.intellij.execution.impl.*
-import javax.swing.*
+import com.intellij.execution.impl.ConsoleViewImpl
 
 class CircletAutomationOutputView(
-    val runLogView: ConsoleViewImpl)
+  val runLogView: ConsoleViewImpl)

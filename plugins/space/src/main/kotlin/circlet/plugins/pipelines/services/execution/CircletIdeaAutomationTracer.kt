@@ -10,17 +10,17 @@ import com.intellij.execution.process.ProcessOutputTypes
 
 class CircletIdeaAutomationTracer(private val processHandler: TaskProcessHandler) : AutomationTracer {
 
-    override fun traceCommit(commit: CommitHash, message: String, level: TraceLevel) {
-        processHandler.message("Commit $commit [$level]: $message", level)
-    }
+  override fun traceCommit(commit: CommitHash, message: String, level: TraceLevel) {
+    processHandler.message("Commit $commit [$level]: $message", level)
+  }
 
-    override fun traceStep(executionId: StepExecId, message: String, level: TraceLevel) {
-        processHandler.message("Step execution $executionId [$level]: $message", level)
-    }
+  override fun traceStep(executionId: StepExecId, message: String, level: TraceLevel) {
+    processHandler.message("Step execution $executionId [$level]: $message", level)
+  }
 
-    override fun traceGraph(executionId: GraphExecId, message: String, level: TraceLevel) {
-        processHandler.message("Graph execution $executionId [$level]: $message", level)
-    }
+  override fun traceGraph(executionId: GraphExecId, message: String, level: TraceLevel) {
+    processHandler.message("Graph execution $executionId [$level]: $message", level)
+  }
 
 }
 
@@ -28,12 +28,12 @@ private val newLine: String = System.getProperty("line.separator", "\n")
 
 
 fun ProcessHandler.message(text: String, level: TraceLevel) {
-    val key = when (level) {
-        TraceLevel.TRACE -> ProcessOutputTypes.STDOUT
-        TraceLevel.INFO -> ProcessOutputTypes.STDOUT
-        TraceLevel.WARN -> ProcessOutputTypes.STDOUT
-        TraceLevel.ERROR -> ProcessOutputTypes.STDERR
-    }
+  val key = when (level) {
+    TraceLevel.TRACE -> ProcessOutputTypes.STDOUT
+    TraceLevel.INFO -> ProcessOutputTypes.STDOUT
+    TraceLevel.WARN -> ProcessOutputTypes.STDOUT
+    TraceLevel.ERROR -> ProcessOutputTypes.STDERR
+  }
 
-    this.notifyTextAvailable("$text$newLine", key)
+  this.notifyTextAvailable("$text$newLine", key)
 }

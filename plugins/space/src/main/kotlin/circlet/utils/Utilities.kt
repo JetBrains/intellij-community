@@ -17,40 +17,40 @@ import libraries.coroutines.extra.Lifetimed
 import platform.common.ProductName
 
 val application: Application
-    get() = ApplicationManager.getApplication()
+  get() = ApplicationManager.getApplication()
 
 interface LifetimedDisposable : Disposable, Lifetimed
 
 class LifetimedDisposableImpl : Lifetimed, LifetimedDisposable {
 
-    private val lifetimeSource = LifetimeSource()
+  private val lifetimeSource = LifetimeSource()
 
-    override val lifetime: Lifetime get() = lifetimeSource
+  override val lifetime: Lifetime get() = lifetimeSource
 
-    override fun dispose() {
-        lifetimeSource.terminate()
-    }
+  override fun dispose() {
+    lifetimeSource.terminate()
+  }
 }
 
 inline fun <reified T : Any> ComponentManager.getComponent(): T =
-    getComponent(T::class.java) ?: throw Error("Component ${T::class.java} not found in container $this")
+  getComponent(T::class.java) ?: throw Error("Component ${T::class.java} not found in container $this")
 
 inline fun <reified T : Any> Project.getService(): T = service<T>().checkService(this)
 
 inline fun <reified T : Any> T?.checkService(container: Any): T =
-    this ?: throw Error("Service ${T::class.java} not found in container $container")
+  this ?: throw Error("Service ${T::class.java} not found in container $container")
 
 inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.() -> T?): T? =
-    application.runReadAction(Computable {
-        if (isDisposed) null else compute()
-    })
+  application.runReadAction(Computable {
+    if (isDisposed) null else compute()
+  })
 
 fun notify(text: String, handler: (() -> Unit)? = null) {
-    Notification(
-        ProductName,
-        ProductName,
-        XmlStringUtil.wrapInHtml(text),
-        NotificationType.INFORMATION,
-        handler?.let { NotificationListener { _, _ -> it() } }
-    ).notify( null)
+  Notification(
+    ProductName,
+    ProductName,
+    XmlStringUtil.wrapInHtml(text),
+    NotificationType.INFORMATION,
+    handler?.let { NotificationListener { _, _ -> it() } }
+  ).notify(null)
 }

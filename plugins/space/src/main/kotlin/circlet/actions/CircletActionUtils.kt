@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import icons.SpaceIcons
 
 object CircletActionUtils {
-    fun showIconInActionSearch(e: AnActionEvent) {
-        e.presentation.icon = if (e.place == ActionPlaces.ACTION_SEARCH) SpaceIcons.Main else null
-    }
+  fun showIconInActionSearch(e: AnActionEvent) {
+    e.presentation.icon = if (e.place == ActionPlaces.ACTION_SEARCH) SpaceIcons.Main else null
+  }
 }
