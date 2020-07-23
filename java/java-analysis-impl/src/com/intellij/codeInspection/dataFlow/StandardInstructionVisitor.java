@@ -164,19 +164,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiArrayAccessExpression arrayExpression = instruction.getExpression();
     DfaValue index = memState.pop();
     DfaValue array = memState.pop();
-    boolean alwaysOutOfBounds = false;
-    DfaValueFactory factory = runner.getFactory();
-    if (!DfaTypeValue.isUnknown(index)) {
-      DfaCondition indexNonNegative = index.cond(RelationType.GE, factory.getInt(0));
-      if (!memState.applyCondition(indexNonNegative)) {
-        alwaysOutOfBounds = true;
-      }
-      DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(factory, array);
-      DfaCondition indexLessThanLength = index.cond(RelationType.LT, dfaLength);
-      if (!memState.applyCondition(indexLessThanLength)) {
-        alwaysOutOfBounds = true;
-      }
-    }
+    boolean alwaysOutOfBounds = !applyBoundsCheck(memState, array, index);
     processArrayAccess(arrayExpression, alwaysOutOfBounds);
     if (alwaysOutOfBounds) {
       DfaControlTransferValue transfer = instruction.getOutOfBoundsExceptionTransfer();
@@ -205,6 +193,20 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     pushExpressionResult(result, instruction, memState);
     return nextInstruction(instruction, runner, memState);
+  }
+
+  private static boolean applyBoundsCheck(@NotNull DfaMemoryState memState,
+                                          @NotNull DfaValue array,
+                                          @NotNull DfaValue index) {
+    DfaValueFactory factory = index.getFactory();
+    DfaValue length = SpecialField.ARRAY_LENGTH.createValue(factory, array);
+    DfaCondition lengthMoreThanZero = length.cond(RelationType.GT, factory.getInt(0));
+    if (!memState.applyCondition(lengthMoreThanZero)) return false;
+    DfaCondition indexNonNegative = index.cond(RelationType.GE, factory.getInt(0));
+    if (!memState.applyCondition(indexNonNegative)) return false;
+    DfaCondition indexLessThanLength = index.cond(RelationType.LT, length);
+    if (!memState.applyCondition(indexLessThanLength)) return false;
+    return true;
   }
 
   protected void processArrayAccess(PsiArrayAccessExpression expression, boolean alwaysOutOfBounds) {
