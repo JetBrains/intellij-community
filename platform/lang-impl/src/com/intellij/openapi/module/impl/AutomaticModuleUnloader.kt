@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl
 
 import com.intellij.notification.Notification
@@ -19,11 +19,10 @@ import com.intellij.xml.util.XmlStringUtil
  * aren't required for loaded modules.
  */
 @State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
-class AutomaticModuleUnloader(private val project: Project) : PersistentStateComponent<LoadedModulesListStorage> {
-  private val loadedModulesListStorage = LoadedModulesListStorage()
-
+@Service
+class AutomaticModuleUnloader(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()) {
   fun processNewModules(modulesToLoad: Set<ModulePath>, modulesToUnload: List<UnloadedModuleDescriptionImpl>): UnloadedModulesListChange {
-    val oldLoaded = loadedModulesListStorage.modules.toSet()
+    val oldLoaded = state.modules.toSet()
     if (oldLoaded.isEmpty() || modulesToLoad.all { it.moduleName in oldLoaded }) {
       return UnloadedModulesListChange(emptyList(), emptyList(), emptyList())
     }
@@ -41,8 +40,10 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
     val newLoadedNames = oldLoadedWithDependencies.mapTo(LinkedHashSet()) { it.name }
     val toLoad = modulesToLoad.filter { it.moduleName in newLoadedNames && it.moduleName !in oldLoaded}
     val toUnload = modulesToLoad.filter { it.moduleName !in newLoadedNames && it.moduleName in moduleDescriptions}
-    loadedModulesListStorage.modules.clear()
-    modulesToLoad.filter { it.moduleName in newLoadedNames }.mapTo(loadedModulesListStorage.modules) { it.moduleName }
+    state.modules.clear()
+    modulesToLoad.asSequence()
+      .filter { it.moduleName in newLoadedNames }
+      .mapTo(state.modules) { it.moduleName }
     val change = UnloadedModulesListChange(toLoad, toUnload, toUnload.map { moduleDescriptions[it.moduleName]!! })
     fireNotifications(change)
     return change
@@ -63,15 +64,15 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
   private fun fireNotifications(change: UnloadedModulesListChange) {
     if (change.toLoad.isEmpty() && change.toUnload.isEmpty()) return
 
-    val messages = ArrayList<String>()
-    val actions = ArrayList<NotificationAction>()
+    val messages = mutableListOf<String>()
+    val actions = mutableListOf<NotificationAction>()
     populateNotification(change.toUnload, messages, actions, "Load", {"Load $it back"}, change.toLoad.isEmpty(), {"unloaded"}) {
       it.removeAll(change.toUnload.map { it.moduleName })
     }
-    populateNotification(change.toLoad, messages, actions, "Unload", {"Unload $it"}, change.toUnload.isEmpty(), {"loaded because some other modules depend on $it"}) {
-      it.addAll(change.toLoad.map { it.moduleName })
+    populateNotification(change.toLoad, messages, actions, "Unload", {"Unload $it"}, change.toUnload.isEmpty(), {"loaded because some other modules depend on $it"}) { list ->
+      list.addAll(change.toLoad.map { it.moduleName })
     }
-    actions.add(object: NotificationAction("Configure Unloaded Modules") {
+    actions.add(object : NotificationAction("Configure Unloaded Modules") {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
         val ok = ConfigureUnloadedModulesDialog(project, null).showAndGet()
         if (ok) {
@@ -80,17 +81,16 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
       }
     })
 
-    NOTIFICATION_GROUP.createNotification("New Modules are Added", XmlStringUtil.wrapInHtml(messages.joinToString("<br>")),
-                                          NotificationType.INFORMATION, null)
-      .apply {
-        actions.forEach { addAction(it) }
-      }
-      .notify(project)
+    val notification = NOTIFICATION_GROUP.createNotification("New Modules are Added",
+                                                             XmlStringUtil.wrapInHtml(messages.joinToString("<br>")),
+                                                             NotificationType.INFORMATION, null)
+    notification.addActions(actions)
+    notification.notify(project)
   }
 
   private fun populateNotification(modules: List<ModulePath>,
-                                   messages: ArrayList<String>,
-                                   actions: ArrayList<NotificationAction>,
+                                   messages: MutableList<String>,
+                                   actions: MutableList<NotificationAction>,
                                    revertActionName: String,
                                    revertActionShortText: (String) -> String,
                                    useShortActionText: Boolean,
@@ -130,27 +130,22 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
   }
 
   fun setLoadedModules(modules: List<String>) {
-    loadedModulesListStorage.modules.clear()
-    loadedModulesListStorage.modules.addAll(modules)
-  }
-
-  override fun getState(): LoadedModulesListStorage = loadedModulesListStorage
-
-  override fun loadState(state: LoadedModulesListStorage) {
-    setLoadedModules(state.modules)
+    val list = state.modules
+    list.clear()
+    list.addAll(modules)
   }
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): AutomaticModuleUnloader = project.service<AutomaticModuleUnloader>()
+    fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
 
     private val NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Automatic Module Unloading")
   }
 }
 
-class LoadedModulesListStorage {
+class LoadedModulesListStorage : BaseState() {
   @get:XCollection(elementName = "module", valueAttributeName = "name", propertyElementName = "loaded-modules")
-  var modules: MutableList<String> = ArrayList()
+  val modules by list<String>()
 }
 
 class UnloadedModulesListChange(val toLoad: List<ModulePath>, val toUnload: List<ModulePath>, val toUnloadDescriptions: List<UnloadedModuleDescriptionImpl>)
