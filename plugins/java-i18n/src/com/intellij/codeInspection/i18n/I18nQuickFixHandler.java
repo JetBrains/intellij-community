@@ -15,14 +15,13 @@
  */
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiExpression;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.expressions.UInjectionHost;
 

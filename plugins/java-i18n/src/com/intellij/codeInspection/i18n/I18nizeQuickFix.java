@@ -23,10 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
@@ -179,9 +176,10 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
     if (psi == null) {
       return null;
     }
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(psiFile.getProject()).createSmartPsiElementPointer(psi);
     document.replaceString(psi.getTextRange().getStartOffset(), psi.getTextRange().getEndOffset(), i18nizedText);
     PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(document);
-    return psiFile.findElementAt(psi.getTextOffset());
+    return pointer.getElement();
   }
 
   private static void reformatAndCorrectReferences(PsiElement newExpression) throws IncorrectOperationException {
