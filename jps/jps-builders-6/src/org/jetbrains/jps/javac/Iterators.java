@@ -12,6 +12,16 @@ import java.util.NoSuchElementException;
 
 public class Iterators {
 
+  @SuppressWarnings("rawtypes")
+  private static final Iterable<?> EMPTY_ITERABLE = new Iterable() {
+    private final Iterator ITERATOR = Collections.emptyList().iterator();
+    @NotNull
+    @Override
+    public Iterator iterator() {
+      return ITERATOR;
+    }
+  };
+
   public static <T> Iterable<T> flat(final Iterable<? extends T> first, final Iterable<? extends T> second) {
     return new Iterable<T>() {
       @Override
@@ -67,19 +77,19 @@ public class Iterators {
 
       @Override
       public boolean hasNext() {
-        return findNextUnprocessed() != null;
+        return findNext() != null;
       }
 
       @Override
       public T next() {
-        Iterator<T> group = findNextUnprocessed();
+        Iterator<T> group = findNext();
         if (group != null) {
           return group.next();
         }
         throw new NoSuchElementException();
       }
 
-      private Iterator<T> findNextUnprocessed() {
+      private Iterator<T> findNext() {
         if (currentGroup == null || !currentGroup.hasNext()) {
           do {
             currentGroup = groupsIterator.hasNext() ? groupsIterator.next() : null;
@@ -98,6 +108,42 @@ public class Iterators {
         return i;
       }
     });
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> Iterable<T> emptyIterable() {
+    return (Iterable<T>)EMPTY_ITERABLE;
+  }
+
+  public static <T> Iterable<T> asIterable(final T elem) {
+    return new Iterable<T>() {
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        return asIterator(elem);
+      }
+    };
+  }
+
+  public static <T> Iterator<T> asIterator(final T elem) {
+    return new BaseIterator<T>() {
+      T _elem = elem;
+
+      @Override
+      public boolean hasNext() {
+        return _elem != null;
+      }
+
+      @Override
+      public T next() {
+        T element = _elem;
+        if (element != null) {
+          _elem = null;
+          return element;
+        }
+        throw new NoSuchElementException();
+      }
+    };
   }
 
   public static <I,O> Iterable<O> map(final Iterable<? extends I> from, final Function<? super I, ? extends O> mapper) {
