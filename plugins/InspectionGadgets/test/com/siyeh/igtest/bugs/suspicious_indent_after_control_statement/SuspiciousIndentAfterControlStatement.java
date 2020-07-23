@@ -97,4 +97,9 @@ public class SuspiciousIndentAfterControlStatement {
             System.out.println("answer");
 <warning descr="Suspicious indentation after 'if' statement">                </warning>System.out.println("question");
     }
+
+    public void z(int i) {
+if (i == 99)
+<warning descr="Suspicious indentation after 'if' statement">S</warning>ystem.out.println("problems");
+    }
 }

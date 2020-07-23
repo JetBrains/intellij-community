@@ -99,7 +99,12 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
               final int statementIndent = getIndent(siblingText.substring(statementLineBreak + 1));
               final int bodyIndent = getIndent(text.substring(bodyLineBreak + 1));
               if (statementIndent == bodyIndent) {
-                registerErrorAtOffset(bodyWhiteSpace, bodyLineBreak + 1, bodyIndent, statement);
+                if (bodyIndent == 0) {
+                  registerErrorAtOffset(body, 0, 1, statement);
+                }
+                else {
+                  registerErrorAtOffset(bodyWhiteSpace, bodyLineBreak + 1, bodyIndent, statement);
+                }
                 return;
               }
             }
