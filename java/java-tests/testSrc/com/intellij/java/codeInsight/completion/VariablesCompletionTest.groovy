@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.NeedsIndex
@@ -386,7 +387,7 @@ class Super {
 '''
     def items = myFixture.completeBasic()
     assertStringItems('FOO')
-    assert NormalCompletionTest.renderElement(items[0]).tailText == ' ( = "c")'
+    assert LookupElementPresentation.renderElement(items[0]).tailText == ' ( = "c")'
   }
 
 }
