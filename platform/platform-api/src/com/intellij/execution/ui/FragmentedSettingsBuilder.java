@@ -87,7 +87,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
         }
       }
     }
-    addLine(tagsPanel, GROUP_INSET - TOP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)) - TAG_HGAP, 0);
+    addLine(tagsPanel, GROUP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)) - TAG_HGAP, 0);
 
     for (SettingsEditorFragment<Settings, ?> group : subGroups) {
       addLine(group.getComponent());
@@ -192,7 +192,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     for (SettingsEditorFragment<Settings, ?> fragment : list) {
       fragment.addSettingsEditorListener(editor -> panel.rebuildRows());
     }
-    addLine(panel, TOP_INSET, -panel.getLeftInset(), TOP_INSET * 2);
+    addLine(panel, TOP_INSET, -panel.getLeftInset(), TOP_INSET);
   }
 
   static int getLeftInset(JComponent component) {
