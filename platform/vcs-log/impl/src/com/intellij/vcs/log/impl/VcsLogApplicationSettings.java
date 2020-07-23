@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +32,17 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     myState = state;
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
   @Override
   public <T> T get(@NotNull VcsLogUiProperty<T> property) {
+    if (property instanceof CustomBooleanProperty) {
+      Boolean value = myState.CUSTOM_BOOLEAN_PROPERTIES.get(property.getName());
+      if (value == null) {
+        value = ((CustomBooleanProperty)property).defaultValue();
+      }
+      return (T)value;
+    }
     return property.match()
       .ifEq(COMPACT_REFERENCES_VIEW).then(myState.COMPACT_REFERENCES_VIEW)
       .ifEq(SHOW_TAG_NAMES).then(myState.SHOW_TAG_NAMES)
@@ -55,7 +64,10 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
 
   @Override
   public <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value) {
-    if (COMPACT_REFERENCES_VIEW.equals(property)) {
+    if (property instanceof CustomBooleanProperty) {
+      myState.CUSTOM_BOOLEAN_PROPERTIES.put(property.getName(), (Boolean)value);
+    }
+    else if (COMPACT_REFERENCES_VIEW.equals(property)) {
       myState.COMPACT_REFERENCES_VIEW = (Boolean)value;
     }
     else if (SHOW_TAG_NAMES.equals(property)) {
@@ -88,7 +100,8 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
 
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
-    return COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) || LABELS_LEFT_ALIGNED.equals(property) ||
+    return property instanceof CustomBooleanProperty ||
+           COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) || LABELS_LEFT_ALIGNED.equals(property) ||
            SHOW_DIFF_PREVIEW.equals(property) || DIFF_PREVIEW_VERTICAL_SPLIT.equals(property) ||
            SHOW_CHANGES_FROM_PARENTS.equals(property) || COLUMN_ORDER.equals(property) || PREFER_COMMIT_DATE.equals(property);
   }
@@ -112,5 +125,17 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     public boolean DIFF_PREVIEW_VERTICAL_SPLIT = true;
     public boolean PREFER_COMMIT_DATE = false;
     public List<Integer> COLUMN_ORDER = new ArrayList<>();
+    public Map<String, Boolean> CUSTOM_BOOLEAN_PROPERTIES = new HashMap<>();
+  }
+
+  public static class CustomBooleanProperty extends VcsLogUiProperties.VcsLogUiProperty<Boolean> {
+    public CustomBooleanProperty(@NotNull @NonNls String name) {
+      super(name);
+    }
+
+    @NotNull
+    public Boolean defaultValue() {
+      return Boolean.FALSE;
+    }
   }
 }
