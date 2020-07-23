@@ -341,7 +341,7 @@ public class Splitter extends JPanel implements Splittable {
           double mSize2 = isVertical() ? mySecondComponent.getMinimumSize().getHeight() : mySecondComponent.getMinimumSize().getWidth();
           double pSize1 = isVertical() ? myFirstComponent.getPreferredSize().getHeight() : myFirstComponent.getPreferredSize().getWidth();
           double pSize2 = isVertical() ? mySecondComponent.getPreferredSize().getHeight() : mySecondComponent.getPreferredSize().getWidth();
-          if (size1 + size2 > pSize1 + pSize2 && myHonorPreferredSize) {
+          if (myHonorPreferredSize && size1 + size2 > pSize1 + pSize2) {
             mSize1 = pSize1;
             mSize2 = pSize2;
           }
@@ -372,8 +372,8 @@ public class Splitter extends JPanel implements Splittable {
         }
       }
 
-      int iSize1 = (int)Math.round(size1);
-      int iSize2 = total - iSize1 - d;
+      int iSize1 = Math.max(0, (int)Math.round(size1));
+      int iSize2 = Math.max(0, total - iSize1 - d);
 
       if (isVertical()) {
         firstRect.setBounds(0, 0, width, iSize1);
