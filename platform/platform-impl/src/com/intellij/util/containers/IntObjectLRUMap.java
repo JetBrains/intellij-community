@@ -1,13 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public final class IntObjectLinkedMap<T> {
+@ApiStatus.Internal
+public final class IntObjectLRUMap<T> {
   /**
    * The header of the double-linked list, its before = most recently added entry; its after = eldest entry
    */
@@ -16,7 +15,7 @@ public final class IntObjectLinkedMap<T> {
   private final int myCapacity;
   private int mySize;
 
-  public IntObjectLinkedMap(int capacity) {
+  public IntObjectLRUMap(int capacity) {
     myCapacity = capacity;
     //noinspection unchecked
     myArray = new MapEntry[capacity * 8 / 5];
