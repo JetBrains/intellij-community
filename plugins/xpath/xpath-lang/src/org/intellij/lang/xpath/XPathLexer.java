@@ -21,6 +21,7 @@ import com.intellij.lexer.LexerPosition;
 import com.intellij.lexer.LookAheadLexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -50,7 +51,7 @@ public final class XPathLexer extends LookAheadLexer {
   }
 
   @Override
-  protected void lookAhead(Lexer baseLexer) {
+  protected void lookAhead(@NotNull Lexer baseLexer) {
     final IElementType type = baseLexer.getTokenType();
 
     if (type == XPath2TokenTypes.IF) { // "if" / "(" EXPRESSION
