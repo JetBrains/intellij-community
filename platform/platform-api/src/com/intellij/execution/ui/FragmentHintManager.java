@@ -72,7 +72,7 @@ public class FragmentHintManager {
       hint = fragment.getHint();
     }
     else {
-      fragment = ContainerUtil.find(myFragments, f -> f.component().hasFocus());
+      fragment = ContainerUtil.find(myFragments, f -> f.getEditorComponent().hasFocus());
       if (fragment != null) {
         hint = fragment.getHint();
       }

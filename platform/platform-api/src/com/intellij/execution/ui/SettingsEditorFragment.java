@@ -151,6 +151,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myEditorGetter = editorGetter;
   }
 
+  @NotNull
   protected JComponent getEditorComponent() {
     JComponent component = component();
     if (myEditorGetter != null) return myEditorGetter.apply(component());

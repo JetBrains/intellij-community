@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.macro.MacrosDialog;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
@@ -85,6 +86,10 @@ public final class JavaApplicationSettingsEditor extends RunConfigurationFragmen
                                    configuration -> true);
     mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
     mainClassFragment.setRemovable(false);
+    mainClassFragment.setEditorGetter(field -> {
+      Editor editor = field.getEditor();
+      return editor == null ? field : editor.getContentComponent();
+    });
     fragments.add(mainClassFragment);
     fragments.add(moduleClasspath);
 
