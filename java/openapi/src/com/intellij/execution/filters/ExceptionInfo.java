@@ -184,7 +184,7 @@ public class ExceptionInfo {
     }
   }
 
-  public ExceptionInfo consumeStackLine(String line) {
+  public ExceptionInfo consumeStackLine(@NonNls String line) {
     return null;
   }
 }
