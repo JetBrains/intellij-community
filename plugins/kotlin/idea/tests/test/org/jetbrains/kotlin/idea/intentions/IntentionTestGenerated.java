@@ -16309,6 +16309,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testEqualsIgnoreCase() throws Exception {
             runTest("testData/intentions/swapStringEqualsIgnoreCase/equalsIgnoreCase.kt");
         }
+
+        @TestMetadata("nullableReceiver.kt")
+        public void testNullableReceiver() throws Exception {
+            runTest("idea/testData/intentions/swapStringEqualsIgnoreCase/nullableReceiver.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
