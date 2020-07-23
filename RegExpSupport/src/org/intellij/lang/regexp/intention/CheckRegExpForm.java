@@ -42,6 +42,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.regexp.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -284,13 +285,19 @@ public class CheckRegExpForm {
     return myRootPanel;
   }
 
-  private List<RegExpMatch> getMatches(PsiFile regexpFile) {
+  @ApiStatus.Internal
+  public static List<RegExpMatch> getMatches(@NotNull PsiFile regexpFile) {
     return regexpFile.getUserData(LAST_MATCHES);
   }
 
   @TestOnly
   public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
-    return isMatchingText(regexpFile, regexpFile.getText(), sampleText) == RegExpMatchResult.MATCHES;
+    return getMatchResult(regexpFile, sampleText) == RegExpMatchResult.MATCHES;
+  }
+
+  @TestOnly
+  public static RegExpMatchResult getMatchResult(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
+    return isMatchingText(regexpFile, regexpFile.getText(), sampleText);
   }
 
   static RegExpMatchResult isMatchingText(@NotNull final PsiFile regexpFile, String regexpText, @NotNull String sampleText) {
