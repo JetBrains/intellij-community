@@ -2,7 +2,12 @@
 package git4idea.test
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.Executor
@@ -12,10 +17,15 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.test.VcsPlatformTest
@@ -259,5 +269,33 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     GLOBAL;
 
     fun param() = "--${name.toLowerCase()}"
+  }
+
+  protected fun withPartialTracker(file: VirtualFile, newContent: String? = null, task: (Document, PartialLocalLineStatusTracker) -> Unit) {
+    invokeAndWaitIfNeeded {
+      val lstm = LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager
+
+      val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!! }
+
+      if (newContent != null) {
+        runWriteAction {
+          FileDocumentManager.getInstance().getDocument(file)!!.setText(newContent)
+        }
+
+        changeListManager.waitUntilRefreshed()
+        UIUtil.dispatchAllInvocationEvents() // ensure `fileStatusesChanged` events are fired
+      }
+
+      lstm.requestTrackerFor(document, this)
+      try {
+        val tracker = lstm.getLineStatusTracker(file) as PartialLocalLineStatusTracker
+        lstm.waitUntilBaseContentsLoaded()
+
+        task(document, tracker)
+      }
+      finally {
+        lstm.releaseTrackerFor(document, this)
+      }
+    }
   }
 }
