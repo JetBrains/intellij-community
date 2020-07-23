@@ -5,6 +5,8 @@ import java.io.File
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.exitProcess
@@ -13,7 +15,7 @@ fun main(argv: Array<String>) {
   val commitHash = argv[0]
   val baseUrl = argv[1]
   val zip = File(argv[2]).apply { assert(exists()) { "$this doesn't exit" } }
-  val currentHashesFile = File(argv[3])
+  val currentHashesFile = Paths.get(argv[3])
 
   println("commit: $commitHash, zip: $zip(${Measures.toHumanSize(zip.length())}) url $baseUrl")
 
@@ -32,8 +34,8 @@ fun main(argv: Array<String>) {
   println("${currentState.size} files of size ${Measures.toHumanSize(totalSize)}")
 
   // Save current hashes and upload it
-  currentHashesFile.writeText(tools.getJsonByState(currentState))
-  measure("Upload $currentHashesFile (size ${Measures.toHumanSize(currentHashesFile.length())} to $baseUrl") {
+  currentHashesFile.write(tools.getJsonByState(currentState))
+  measure("Upload $currentHashesFile (size ${Measures.toHumanSize(Files.size(currentHashesFile))} to $baseUrl") {
     uploadJson(tools, currentHashesFile, baseUrl, commitHash)
   }
 
@@ -79,11 +81,11 @@ private fun <T> measure(title: String, block: () -> T): T {
 }
 
 private fun uploadJson(tools: JpsCacheTools,
-                       currentState: File,
+                       currentState: Path,
                        baseUrl: String,
                        commitHash: String) {
   val manifestFileZipped = Files.createTempFile("manifest", "json.zip")
-  ZipUtil.compressFile(currentState, manifestFileZipped.toFile())
+  ZipUtil.compressFile(currentState, manifestFileZipped)
   HttpRequests.put(tools.getZippedManifestUrl(baseUrl, commitHash), null).write(manifestFileZipped.readBytes())
   manifestFileZipped.delete()
 }
@@ -98,7 +100,6 @@ enum class Measures {
       val decValue = value.toBigDecimal()
       val measure = values().reversed().find { it.size < decValue } ?: B
       return "${decValue.divide(measure.size, measure.ordinal, RoundingMode.UP)} $measure"
-
     }
   }
 }
