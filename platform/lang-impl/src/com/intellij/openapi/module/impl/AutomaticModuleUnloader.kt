@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl
 
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroup
@@ -133,6 +134,8 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
     val list = state.modules
     list.clear()
     list.addAll(modules)
+    // compiler uses module list from disk, ask to save workspace
+    SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project, saveDocuments = false, forceSavingAllSettings = true))
   }
 
   companion object {
