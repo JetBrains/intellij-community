@@ -146,6 +146,11 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                       .isFunctionalReferenceTo(args[0], CommonClassNames.JAVA_UTIL_OPTIONAL, null, "ofNullable", new PsiType[1])) {
                   register(call, null);
                 }
+              } else {
+                if (FunctionalExpressionUtils
+                      .isFunctionalReferenceTo(args[0], CommonClassNames.JAVA_UTIL_STREAM_STREAM, null, "of", new PsiType[1])) {
+                  register(call, null);
+                }
               }
             }
             break;
