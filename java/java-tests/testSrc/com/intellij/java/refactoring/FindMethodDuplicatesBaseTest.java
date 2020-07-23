@@ -46,8 +46,7 @@ public abstract class FindMethodDuplicatesBaseTest extends LightJavaCodeInsightT
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMember);
     final PsiMember psiMethod = (PsiMember)targetElement;
 
-    TestDialog previousTestDialog = Messages.getTestImplementation();
-    Messages.setTestDialog(TestDialog.DEFAULT);
+    assertSame(TestDialog.DEFAULT, Messages.getTestImplementation());
     try {
       MethodDuplicatesHandler.invokeOnScope(getProject(), psiMethod, new AnalysisScope(getFile()));
       UIUtil.dispatchAllInvocationEvents();
@@ -57,8 +56,6 @@ public abstract class FindMethodDuplicatesBaseTest extends LightJavaCodeInsightT
         fail("duplicates were not found");
       }
       return;
-    } finally {
-      Messages.setTestDialog(previousTestDialog);
     }
     if (shouldSucceed) {
       checkResultByFile(filePath + ".after");
