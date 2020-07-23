@@ -241,7 +241,7 @@ public final class VcsFacadeImpl extends VcsFacade {
       return revision.getContent();
     }
     catch (VcsException e) {
-      LOG.error("Can't get content for: " + change.getVirtualFile(), e);
+      LOG.warn("Can't get content for: " + change.getVirtualFile(), e);
       return null;
     }
   }
