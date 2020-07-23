@@ -646,7 +646,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
     else {
       return CompletableFuture.supplyAsync(() -> createProgressWindow(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText),
-                                           EdtExecutorService.getInstance());
+                                           this::invokeLater);
     }
   }
 
