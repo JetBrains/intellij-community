@@ -192,7 +192,7 @@ public abstract class SearchResultPanel {
     return myPanel instanceof PluginsGroupComponentWithProgress;
   }
 
-  private void removeGroup() {
+  public void removeGroup() {
     if (myGroup.ui != null) {
       myPanel.removeGroup(myGroup);
       fullRepaint();

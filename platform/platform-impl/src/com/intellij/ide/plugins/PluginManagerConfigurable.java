@@ -1110,6 +1110,7 @@ public class PluginManagerConfigurable
 
                   if (group.descriptors.isEmpty()) {
                     myPluginModel.setInvalidFixCallback(null);
+                    myInstalledSearchPanel.removeGroup();
                   }
                 });
               }
@@ -1138,6 +1139,20 @@ public class PluginManagerConfigurable
         return myInstalledSearchPanel;
       }
     };
+
+    myPluginModel.setCancelInstallCallback(descriptor -> {
+      PluginsGroup group = myInstalledSearchPanel.getGroup();
+
+      if (group.ui != null && group.ui.findComponent(descriptor) != null) {
+        myInstalledSearchPanel.getPanel().removeFromGroup(group, descriptor);
+        group.titleWithCount();
+        myInstalledSearchPanel.fullRepaint();
+
+        if (group.descriptors.isEmpty()) {
+          myInstalledSearchPanel.removeGroup();
+        }
+      }
+    });
   }
 
   private static void clearUpdates(@NotNull PluginsGroupComponent panel) {
