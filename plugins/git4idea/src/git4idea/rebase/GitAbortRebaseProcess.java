@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.vcs.log.Hash;
 import git4idea.DialogManager;
 import git4idea.GitUtil;
@@ -161,6 +163,8 @@ class GitAbortRebaseProcess {
   }
 
   private void doAbort(final boolean rollback) {
+    boolean[] success = new boolean[1];
+
     new GitFreezingProcess(myProject, "rebase", () -> {
       try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
         if (myRepositoryToAbort != null) {
@@ -235,13 +239,19 @@ class GitAbortRebaseProcess {
           }
         }
 
-        if (mySaver != null) {
-          mySaver.load();
-        }
-        if (myNotifySuccess) {
-          myNotifier.notifySuccess(GitBundle.getString("rebase.abort.notification.successful.message"));
-        }
+        success[0] = true;
       }
     }).execute();
+
+    if (success[0]) {
+      ((ChangeListManagerEx)ChangeListManager.getInstance(myProject)).waitForUpdate(null);
+
+      if (mySaver != null) {
+        mySaver.load();
+      }
+      if (myNotifySuccess) {
+        myNotifier.notifySuccess(GitBundle.getString("rebase.abort.notification.successful.message"));
+      }
+    }
   }
 }

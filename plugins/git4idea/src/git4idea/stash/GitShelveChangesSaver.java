@@ -4,6 +4,7 @@ package git4idea.stash;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.VcsShelveChangesSaver;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +28,7 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
       protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave) {
         for (VirtualFile root : rootsToSave) {
           GitRollbackEnvironment.resetHardLocal(myProject, root);
+          VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
         }
       }
     };

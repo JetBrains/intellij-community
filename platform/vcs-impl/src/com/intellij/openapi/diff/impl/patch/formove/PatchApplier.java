@@ -145,6 +145,13 @@ public final class PatchApplier {
     return executePatchGroup(group, localChangeList, true, false);
   }
 
+  /**
+   * Pass 'null' {@code targetChangeList} if changelist doesn't matter, changes will be applied as-it into default changelist.
+   * If default changelist is changed before refresh, a race is possible that will put some of applied changes into the new default changelist.
+   * <p>
+   * If {@code targetChangeList} is specified, method will need to synchronously await for CLM refresh.
+   * In this case, current thread MUST NOT be EDT or hold ReadLock, to prevent deadlock with VFS refresh.
+   */
   private static ApplyPatchStatus executePatchGroup(@NotNull Collection<PatchApplier> group,
                                                     @Nullable LocalChangeList targetChangeList,
                                                     boolean showSuccessNotification,
@@ -154,7 +161,7 @@ public final class PatchApplier {
     }
 
     Project project = group.iterator().next().myProject;
-    return PartialChangesUtil.computeUnderChangeList(project, targetChangeList, VcsBundle.getString("patch.apply.progress.title"), () -> {
+    return PartialChangesUtil.computeUnderChangeListSync(project, targetChangeList, () -> {
       ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
       for (PatchApplier patchApplier : group) {
         result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
@@ -199,7 +206,7 @@ public final class PatchApplier {
       AtomicBoolean doRollback = new AtomicBoolean();
       if (result == ApplyPatchStatus.FAILURE) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
-         doRollback.set(askToRollback(project, group));
+          doRollback.set(askToRollback(project, group));
         });
       }
       if (result == ApplyPatchStatus.ABORT || doRollback.get()) {
@@ -220,7 +227,7 @@ public final class PatchApplier {
       refreshPassedFiles(project, directlyAffected, indirectlyAffected);
 
       return result;
-    }, true);
+    });
   }
 
   @CalledInAwt
