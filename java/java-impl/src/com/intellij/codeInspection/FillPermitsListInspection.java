@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.impl.FillPermitsListFix;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ public class FillPermitsListInspection extends AbstractBaseJavaLocalInspectionTo
         if (modifiers == null || !modifiers.hasExplicitModifier(PsiModifier.SEALED)) return;
         Set<PsiClass> permittedClasses = ContainerUtil.map2Set(psiClass.getPermitsListTypes(), PsiClassType::resolve);
         boolean hasMissingInheritors = false;
-        for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass, false)) {
+        for (PsiClass inheritor : DirectClassInheritorsSearch.search(psiClass)) {
           if (PsiUtil.isLocalOrAnonymousClass(inheritor)) return;
           // handled in highlighter
           if (inheritor.getContainingFile() != containingFile) return;

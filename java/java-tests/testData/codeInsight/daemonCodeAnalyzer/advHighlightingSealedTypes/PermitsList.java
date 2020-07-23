@@ -4,7 +4,7 @@ interface I0 <error descr="Invalid permits clause: 'I0' must be sealed">permits<
 sealed interface I extends I0 permits <error descr="Cannot resolve symbol 'Unresolved'">Unresolved</error>, <error descr="Duplicate class: 'p.I1'">I1</error>, <error descr="Duplicate class: 'p.I1'">I1</error>{}
 non-sealed interface I1 extends I {}
 
-sealed interface <error descr="Sealed class permit list must contain all inheritors">A</error> {}
+sealed interface <error descr="Sealed class permits clause must contain all subclasses">A</error> {}
 class Usage {
   {
     class Local implements <error descr="Local classes must not extend sealed classes">A</error> {}

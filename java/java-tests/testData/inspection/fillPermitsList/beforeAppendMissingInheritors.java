@@ -1,4 +1,4 @@
-// "Add missing inheritors to permits list" "true"
+// "Add missing subclasses to the permits clause" "true"
 
 sealed class A<caret> permits C {}
 
