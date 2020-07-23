@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -260,8 +259,8 @@ final class LocalFileSystemRefreshWorker {
     ourTestListener = testListener;
   }
 
-  private static class SequentialRefreshContext extends RefreshContext {
-    private final Queue<Runnable> myRefreshRequests = new Queue<>(100);
+  private static final class SequentialRefreshContext extends RefreshContext {
+    private final Deque<Runnable> myRefreshRequests = new ArrayDeque<>(100);
 
     SequentialRefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistentFS, boolean isFsCaseSensitive) {
       super(fs, persistentFS, isFsCaseSensitive);
@@ -274,8 +273,9 @@ final class LocalFileSystemRefreshWorker {
 
     @Override
     void doWaitForRefreshToFinish() {
-      while (!myRefreshRequests.isEmpty()) {
-        myRefreshRequests.pullFirst().run();
+      Runnable runnable;
+      while ((runnable = myRefreshRequests.pollFirst()) != null) {
+        runnable.run();
       }
     }
   }

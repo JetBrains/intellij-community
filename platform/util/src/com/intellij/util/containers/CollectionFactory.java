@@ -114,6 +114,10 @@ public final class CollectionFactory {
     }
   }
 
+  public static @NotNull Set<String> createFilePathSet(@NotNull Collection<String> paths) {
+    return createFilePathSet(paths, SystemInfoRt.isFileSystemCaseSensitive);
+  }
+
   public static @NotNull <V> Map<String, V> createFilePathMap() {
     if (SystemInfoRt.isFileSystemCaseSensitive) {
       return new HashMap<>();
@@ -201,15 +205,6 @@ public final class CollectionFactory {
         return FileUtil.filesEqual(val1, val2);
       }
     });
-  }
-
-  public static @NotNull Set<String> createFilePathSet(@NotNull Collection<String> paths) {
-    if (SystemInfoRt.isFileSystemCaseSensitive) {
-      return new HashSet<>(paths);
-    }
-    else {
-      return new ObjectOpenCustomHashSet<>(paths, FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
-    }
   }
 
   /**

@@ -27,7 +27,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,9 +43,9 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   protected PsiManager myManager;
   protected PsiSearchHelper mySearchHelper;
   protected HashSet<PsiElement> myMarkedNodes = new HashSet<>();
-  private Queue<PsiExpression> myExpressionsQueue;
-  protected HashMap<PsiElement, Node> myElementToNode = new HashMap<>();
-  protected Map<SmartPsiElementPointer, String> myVariablesRenames = new HashMap<>();
+  private Deque<PsiExpression> myExpressionsQueue;
+  protected Map<PsiElement, Node> myElementToNode = new HashMap<>();
+  protected Map<SmartPsiElementPointer<?>, String> myVariablesRenames = new HashMap<>();
   private final String mySuperClassName;
   private final List<UsageInfo> myVariablesUsages = new ArrayList<>();
 
@@ -93,7 +92,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     try {
       //forget about smart pointers
       Map<PsiElement, String> variableRenames = new HashMap<>();
-      for (Map.Entry<SmartPsiElementPointer, String> entry : myVariablesRenames.entrySet()) {
+      for (Map.Entry<SmartPsiElementPointer<?>, String> entry : myVariablesRenames.entrySet()) {
         variableRenames.put(entry.getKey().getElement(), entry.getValue());
       }
 
@@ -108,8 +107,8 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         }
       }
 
-      for (Map.Entry<SmartPsiElementPointer,String> entry : myVariablesRenames.entrySet()) {
-        final String newName = entry.getValue();
+      for (Map.Entry<SmartPsiElementPointer<?>, String> entry : myVariablesRenames.entrySet()) {
+        String newName = entry.getValue();
         if (newName != null) {
           final PsiVariable variable = (PsiVariable)entry.getKey().getElement();
           variable.setName(newName);
@@ -213,7 +212,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
   private void buildGraph(PsiReference[] refs) {
     myMarkedNodes.clear();
-    myExpressionsQueue = new Queue<>(refs.length);
+    myExpressionsQueue = new ArrayDeque<>(refs.length);
     myElementToNode.clear();
     for (PsiReference ref : refs) {
       processUsage(ref.getElement());
@@ -230,8 +229,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     if (ref instanceof PsiReferenceExpression) {
       final PsiElement parent = ref.getParent();
       if (parent instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression refExpr = (PsiReferenceExpression)parent;
-        final PsiElement refMember = refExpr.resolve();
+        PsiElement refMember = ((PsiReferenceExpression)parent).resolve();
         if (!isInSuper(refMember)) {
           markNode(ref);
         }
@@ -576,8 +574,8 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   }
 
   private void processQueue() {
-    while (!myExpressionsQueue.isEmpty()) {
-      PsiExpression expr = myExpressionsQueue.pullFirst();
+    PsiExpression expr;
+    while ((expr = myExpressionsQueue.pollFirst()) != null) {
       PsiElement parent = expr.getParent();
       if (parent instanceof PsiAssignmentExpression) {
         PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
@@ -753,8 +751,8 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     }
   }
 
-  private static class Node extends NodeImpl {
-    private final HashSet<Node> mySuccessors = new HashSet<>();
+  private static final class Node extends NodeImpl {
+    private final Set<Node> mySuccessors = new HashSet<>();
     private VisitMark myMark;
 
     Node(PsiElement x) {

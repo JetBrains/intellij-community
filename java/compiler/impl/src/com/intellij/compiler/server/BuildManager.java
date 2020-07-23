@@ -55,7 +55,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.CollectionFactory;
@@ -66,7 +69,6 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
-import gnu.trove.THashSet;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -103,9 +105,10 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.function.Function;
+
 import static com.intellij.openapi.util.Pair.pair;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
@@ -1731,18 +1734,17 @@ public final class BuildManager implements Disposable {
     @Override
     public void projectClosed(@NotNull Project project) {
       myProjectDataMap.remove(getProjectPath(project));
-      final MessageBusConnection conn = myConnections.remove(project);
-      if (conn != null) {
-        conn.disconnect();
+      MessageBusConnection connection = myConnections.remove(project);
+      if (connection != null) {
+        connection.disconnect();
       }
     }
   }
 
   private static final class ProjectData {
-    @NotNull
-    final ExecutorService taskQueue;
-    private final Set<InternedPath> myChanged = new THashSet<>();
-    private final Set<InternedPath> myDeleted = new THashSet<>();
+    @NotNull final ExecutorService taskQueue;
+    private final Set<InternedPath> myChanged = new HashSet<>();
+    private final Set<InternedPath> myDeleted = new HashSet<>();
     private long myNextEventOrdinal;
     private boolean myNeedRescan = true;
 
