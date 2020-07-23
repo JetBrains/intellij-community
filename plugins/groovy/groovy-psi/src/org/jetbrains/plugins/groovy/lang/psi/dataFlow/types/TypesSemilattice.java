@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -85,15 +85,18 @@ class TypeDfaState {
     return state;
   }
 
-  private static void checkDfaStatesConsistency(TypeDfaState state, TypeDfaState another) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
-      Map<VariableDescriptor, DFAType> anotherTypes =
-        filter(another.myVarTypes, descriptor -> !another.myEvictedDescriptors.contains(descriptor));
-      Collection<VariableDescriptor> commonDescriptors = intersection(state.myVarTypes.keySet(), anotherTypes.keySet());
-      Map<VariableDescriptor, Couple<DFAType>> differingEntries = filter(diff(state.myVarTypes, anotherTypes), commonDescriptors::contains);
-      if (!differingEntries.isEmpty()) {
-        throw new IllegalStateException("Attempt to cache different types: " + differingEntries.toString());
-      }
+  private static void checkDfaStatesConsistency(@NotNull TypeDfaState state, @NotNull TypeDfaState another) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() ||
+        ApplicationInfoImpl.isInStressTest() ||
+        DfaCacheConsistencyKt.mustSkipConsistencyCheck()) {
+      return;
+    }
+    Map<VariableDescriptor, DFAType> anotherTypes =
+      filter(another.myVarTypes, descriptor -> !another.myEvictedDescriptors.contains(descriptor));
+    Collection<VariableDescriptor> commonDescriptors = intersection(state.myVarTypes.keySet(), anotherTypes.keySet());
+    Map<VariableDescriptor, Couple<DFAType>> differingEntries = filter(diff(state.myVarTypes, anotherTypes), commonDescriptors::contains);
+    if (!differingEntries.isEmpty()) {
+      throw new IllegalStateException("Attempt to cache different types: " + differingEntries.toString());
     }
   }
 
