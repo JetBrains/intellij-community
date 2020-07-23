@@ -5,21 +5,16 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.WrapLayout;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 public class CommandLinePanel extends JPanel {
-
   private final List<JComponent> myComponents;
   private final JLabel myHintLabel;
-  private int myLastWidth;
 
   public CommandLinePanel(Collection<? extends SettingsEditorFragment<?,?>> fragments) {
     super();
@@ -31,45 +26,19 @@ public class CommandLinePanel extends JPanel {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setMinimumSize(new JBDimension(500, 30));
     buildRows();
-    addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        buildRows();
-      }
-    });
-  }
-
-  public void rebuildRows() {
-    myLastWidth = -1;
-    buildRows();
   }
 
   private void buildRows() {
-    int parentWidth = Math.max(getWidth(), getMinimumSize().width);
-    if (myLastWidth == parentWidth) return;
-    myLastWidth = parentWidth;
-    removeAll();
-    JPanel row = new JPanel(new GridBagLayout());
-    int rowWidth = 0;
-    GridBagConstraints c = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0);
+    WrapLayout layout = new WrapLayout(FlowLayout.LEFT, 0, FragmentedSettingsBuilder.TOP_INSET);
+    layout.setFillWidth(true);
+    JPanel mainPanel = new JPanel(layout);
     for (JComponent component : myComponents) {
-      if (!component.isVisible()) continue;
-      int minWidth = component.getMinimumSize().width;
-      if (rowWidth + minWidth > parentWidth) {
-        add(row);
-        add(Box.createVerticalStrut(FragmentedSettingsBuilder.TOP_INSET));
-        row = new JPanel(new GridBagLayout());
-        rowWidth = 0;
-        c.gridx = 0;
-      }
-      row.add(component, c.clone());
-      c.gridx++;
-      rowWidth += minWidth;
+      mainPanel.add(component);
     }
-    add(row);
+    add(mainPanel);
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(myHintLabel, BorderLayout.WEST);
-    JBDimension size = new JBDimension(100, 20);
+    JBDimension size = new JBDimension(100, 15);
     panel.setMinimumSize(size);
     panel.setPreferredSize(size);
     panel.setBorder(JBUI.Borders.emptyLeft(getLeftInset()));
@@ -83,7 +52,7 @@ public class CommandLinePanel extends JPanel {
   }
 
   public static void setMinimumWidth(Component component, int width) {
-    Dimension size = new Dimension(width, component.getMinimumSize().height);
+    Dimension size = new Dimension(width, Math.max(30, component.getMinimumSize().height));
     component.setMinimumSize(size);
     component.setPreferredSize(size);
   }

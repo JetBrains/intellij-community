@@ -189,10 +189,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     if (list.isEmpty()) return;
     fragments.removeAll(list);
     CommandLinePanel panel = new CommandLinePanel(list);
-    for (SettingsEditorFragment<Settings, ?> fragment : list) {
-      fragment.addSettingsEditorListener(editor -> panel.rebuildRows());
-    }
-    addLine(panel, TOP_INSET, -panel.getLeftInset(), TOP_INSET);
+    addLine(panel, 0, -panel.getLeftInset(), TOP_INSET);
   }
 
   static int getLeftInset(JComponent component) {

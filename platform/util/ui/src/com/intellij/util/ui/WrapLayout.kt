@@ -1,16 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
+import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.FlowLayout
+import java.util.*
 import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
 
 /**
  * FlowLayout subclass that fully supports wrapping of components.
  */
-class WrapLayout : FlowLayout {
+open class WrapLayout : FlowLayout {
 
   /**
    * Constructs a new `WrapLayout` with a left
@@ -41,6 +43,8 @@ class WrapLayout : FlowLayout {
    * @param vgap the vertical gap between components
    */
   constructor(align: Int, hgap: Int, vgap: Int) : super(align, hgap, vgap)
+
+  var fillWidth: Boolean = false;
 
   /**
    * Returns the preferred dimensions for this layout given the
@@ -159,5 +163,34 @@ class WrapLayout : FlowLayout {
     }
 
     dim.height += rowHeight
+  }
+
+  override fun layoutContainer(target: Container) {
+    synchronized(target.treeLock) {
+      super.layoutContainer(target)
+      if (!fillWidth) return
+      var y = 0
+      val row: MutableList<Component> = ArrayList()
+      for (component in target.components) {
+        if (component.isVisible) {
+          if (component.y - y >= 20) {
+            layoutRow(row, target)
+          }
+          row.add(component)
+          y = component.y
+        }
+      }
+      layoutRow(row, target)
+    }
+  }
+
+  private fun layoutRow(row: MutableList<Component>, target: Container) {
+    val sum = row.stream().mapToInt { value: Component -> value.minimumSize.width }.sum()
+    val expand = target.width.toDouble() / sum
+    for (component in row) {
+      val x = Math.floor(component.x * expand).toInt()
+      component.setBounds(x, component.y, Math.floor(component.width * expand).toInt(), component.height)
+    }
+    row.clear()
   }
 }
