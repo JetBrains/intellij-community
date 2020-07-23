@@ -65,7 +65,8 @@ class IntroduceVariableSuggester : FeatureSuggester {
                         extractedExprData = null
                         return createSuggestion(
                             DESCRIPTOR_ID,
-                            createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+                            createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
+                            getId()
                         )
                     }
                 }

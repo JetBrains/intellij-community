@@ -62,7 +62,8 @@ class SurroundWithSuggester : FeatureSuggester {
                             surroundingStatementData = null
                             return createSuggestion(
                                 null,
-                                createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+                                createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
+                                getId()
                             )
                         }
                         surroundingStatementData = null

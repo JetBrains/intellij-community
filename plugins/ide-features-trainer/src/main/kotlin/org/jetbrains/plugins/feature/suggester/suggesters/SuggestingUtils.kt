@@ -68,7 +68,12 @@ internal fun Transferable.asString(): String? {
     }
 }
 
-internal fun createSuggestion(descriptorId: String?, popupMessage: String, usageDelta: Long = 1000): Suggestion {
+internal fun createSuggestion(
+    descriptorId: String?,
+    popupMessage: String,
+    suggesterId: String,
+    usageDelta: Long = 1000
+): Suggestion {
     val commandName = CommandProcessor.getInstance().currentCommandName
     if (commandName != null && (commandName.startsWith("Redo") || commandName.startsWith("Undo"))) {
         return NoSuggestion
@@ -82,5 +87,5 @@ internal fun createSuggestion(descriptorId: String?, popupMessage: String, usage
         }
     }
 
-    return PopupSuggestion(popupMessage)
+    return PopupSuggestion(popupMessage, suggesterId)
 }

@@ -52,7 +52,8 @@ class LineCommentingSuggester : FeatureSuggester {
                     commentsHistory.clear()
                     return createSuggestion(
                         DESCRIPTOR_ID,
-                        createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+                        createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
+                        getId()
                     )
                 }
             }

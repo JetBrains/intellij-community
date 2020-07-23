@@ -32,7 +32,11 @@ class CopyPasteSuggester : FeatureSuggester {
                         ?: return NoSuggestion
                     val delta = lastAction.timeMillis - prevAction.timeMillis
                     if (delta < MAX_COPY_INTERVAL_TIME_MILLIS) {
-                        return createSuggestion(null, createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE))
+                        return createSuggestion(
+                            null,
+                            createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
+                            getId()
+                        )
                     }
                 }
             }

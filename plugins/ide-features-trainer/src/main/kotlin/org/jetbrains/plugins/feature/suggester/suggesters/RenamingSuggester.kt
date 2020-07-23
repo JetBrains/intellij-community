@@ -68,7 +68,7 @@ class RenamingSuggester : FeatureSuggester {
                     if (renamedIdentifiersData.references.contains(parent)
                         && renamedIdentifiersData.isAllRenamed()
                     ) {
-                        return createSuggestion(null, POPUP_MESSAGE)
+                        return createSuggestion(null, POPUP_MESSAGE, getId())
                     }
                 }
             }
