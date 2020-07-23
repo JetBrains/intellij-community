@@ -156,7 +156,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
     }
 
     if (response is OAuthTokenResponse.Success) {
-      log.info { "response = ${response.accessToken} ${response.expiresIn} ${response.refreshToken} ${response.scope}" }
+      log.info { "A personal token was received" }
       wss.signInWithToken(response.toTokenInfo())
       settings.serverSettings = CircletServerSettings(true, server)
       manager.value = wss
