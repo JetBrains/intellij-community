@@ -40,10 +40,6 @@ public final class FileObjectKindFilter<T> {
     myFilterMap = Collections.unmodifiableMap(filterMap);
   }
 
-  public boolean isOfKind(T data, JavaFileObject.Kind kind) {
-    return myFilterMap.get(kind).fun(data);
-  }
-
   public BooleanFunction<T> getFor(final Set<? extends JavaFileObject.Kind> kinds) {
     // optimization for a single-element collection
     final Iterator<? extends JavaFileObject.Kind> it = kinds.iterator();
@@ -58,7 +54,7 @@ public final class FileObjectKindFilter<T> {
       @Override
       public boolean fun(T data) {
         for (JavaFileObject.Kind kind : kinds) {
-          if (isOfKind(data, kind)) {
+          if (myFilterMap.get(kind).fun(data)) {
             return true;
           }
         }
