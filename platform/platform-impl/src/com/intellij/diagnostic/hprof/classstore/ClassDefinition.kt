@@ -49,8 +49,8 @@ class ClassDefinition(val name: String,
     get() = computePrettyName(name)
 
   companion object {
-    val OBJECT_PREAMBLE_SIZE = 8
-    val ARRAY_PREAMBLE_SIZE = 12
+    const val OBJECT_PREAMBLE_SIZE = 8
+    const val ARRAY_PREAMBLE_SIZE = 12
 
     fun computePrettyName(name: String): String {
       if (!name.startsWith('['))

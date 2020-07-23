@@ -17,16 +17,15 @@ package com.intellij.diagnostic.hprof.analysis
 
 import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.classstore.ClassStore
-import com.intellij.diagnostic.hprof.classstore.InstanceField
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.STRING_PADDING_FOR_COUNT
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.STRING_PADDING_FOR_SIZE
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsCount
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsSize
 import com.intellij.diagnostic.hprof.util.TruncatingPrintBuffer
-import gnu.trove.TIntArrayList
-import gnu.trove.TIntHashSet
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import java.util.*
 
 class GCRootPathsTree(
@@ -92,8 +91,8 @@ class GCRootPathsTree(
     val sizesMapping = analysisContext.sizesList
     val disposedObjectsIDsSet = analysisContext.disposedObjectsIDs
 
-    val gcPath = TIntArrayList()
-    val fieldsPath = TIntArrayList()
+    val gcPath = IntArrayList()
+    val fieldsPath = IntArrayList()
     var objectIterationId = objectId
     var parentId = parentMapping[objectIterationId]
     var count = 0
@@ -121,22 +120,22 @@ class GCRootPathsTree(
 
     gcPath.add(objectIterationId)
 
-    assert(gcPath.size() == fieldsPath.size())
+    assert(gcPath.size == fieldsPath.size)
 
     val size = objectSizeStrategy.calculateObjectSize(nav, objectId)
 
     var currentNode: Node = topNode
-    for (i in gcPath.size() - 1 downTo 0) {
-      val id = gcPath[i]
+    for (i in gcPath.size - 1 downTo 0) {
+      val id = gcPath.getInt(i)
       var classDefinition = nav.getClassForObjectId(id.toLong())
       var fieldName: String? = null
-      if (fieldsPath[i] != 0) {
+      if (fieldsPath.getInt(i) != 0) {
         if (classDefinition.name == "java.lang.Class") {
           classDefinition = nav.classStore[id.toLong()]
-          fieldName = classDefinition.getClassFieldName(fieldsPath[i] - 1)
+          fieldName = classDefinition.getClassFieldName(fieldsPath.getInt(i) - 1)
         }
         else {
-          fieldName = classDefinition.getRefField(nav.classStore, fieldsPath[i] - 1).name
+          fieldName = classDefinition.getRefField(nav.classStore, fieldsPath.getInt(i) - 1).name
         }
       }
       currentNode = currentNode.addEdge(id, size, sizesMapping[id], classDefinition, fieldName, disposedObjectsIDsSet.contains(id))
@@ -179,7 +178,7 @@ class GCRootPathsTree(
     var pathsCount = 0
     var pathsSize = 0
     var totalSizeInDwords = 0
-    val instances = TIntHashSet(1)
+    val instances = IntOpenHashSet(1)
 
     override fun addEdge(objectId: Int,
                          objectSize: Int,
@@ -231,9 +230,8 @@ class GCRootPathsTree(
   }
 
   class RootNode(private val classStore: ClassStore) : Node {
-
     // In root node each instance has a separate path
-    val edges = TIntObjectHashMap<Pair<RegularNode, Edge>>()
+    val edges = Int2ObjectOpenHashMap<Pair<RegularNode, Edge>>()
 
     override fun addEdge(objectId: Int,
                          objectSize: Int,
@@ -268,9 +266,8 @@ class GCRootPathsTree(
 
     private fun calculateTotalInstanceCount(): Int {
       var result = 0
-      edges.forEachValue { (node, _) ->
-        result += node.pathsCount
-        true
+      for (node in edges.values) {
+        result += node.first.pathsCount
       }
       return result
     }
@@ -322,8 +319,8 @@ class GCRootPathsTree(
       val result = StringBuilder()
       val printFunc = { s: String -> result.appendln(s); Unit }
 
-      edges.forEachEntry { objectId, (node, edge) ->
-        rootList.add(Triple(objectId, node, edge))
+      for (entry in edges.int2ObjectEntrySet().fastIterator()) {
+        rootList.add(Triple(entry.intKey, entry.value.first, entry.value.second))
       }
       val totalInstanceCount = calculateTotalInstanceCount()
 
@@ -380,7 +377,7 @@ class GCRootPathsTree(
                               (100.0 * node.pathsCount / totalInstanceCount).toInt(),
                               node.pathsSize,
                               node.totalSizeInDwords.toLong() * 4,
-                              node.instances.size(),
+                              node.instances.size,
                               node.edges == null,
                               softWeakDescriptor,
                               disposed,
@@ -460,9 +457,8 @@ class GCRootPathsTree(
     }
 
     fun collectDisposedDominatorNodes(result: MutableMap<ClassDefinition, MutableList<RegularNode>>) {
-      edges.forEachValue { (node, _) ->
-        node.collectDisposedDominatorNodes(result)
-        true
+      for (value in edges.values) {
+        value.first.collectDisposedDominatorNodes(result)
       }
     }
   }

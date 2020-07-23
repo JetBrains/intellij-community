@@ -36,7 +36,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
@@ -199,6 +198,6 @@ class ShowReportDialog(reportText: String, heapProperties: HeapReportProperties)
 
 class SystemTempFilenameSupplier : HProfAnalysis.TempFilenameSupplier {
   override fun getTempFilePath(type: String): Path {
-    return FileUtil.createTempFile("studio-analysis-", "-$type.tmp").toPath()
+    return Files.createTempFile("heap-dump-analysis-", "-$type.tmp")
   }
 }

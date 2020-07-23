@@ -21,9 +21,10 @@ import com.intellij.diagnostic.hprof.util.HeapReportUtils.toPaddedShortStringAsS
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsCount
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsSize
 import com.intellij.diagnostic.hprof.util.TruncatingPrintBuffer
-import gnu.trove.TLongArrayList
-import gnu.trove.TLongHashSet
-import gnu.trove.TObjectIntHashMap
+import it.unimi.dsi.fastutil.longs.LongArrayList
+import it.unimi.dsi.fastutil.longs.LongList
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.util.*
 
 class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
@@ -33,12 +34,12 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
                       val rootClass: ClassDefinition)
 
   class InstanceStats {
-    private val parentIds = TLongArrayList()
-    private val rootIds = TLongHashSet()
+    private val parentIds = LongArrayList()
+    private val rootIds = LongOpenHashSet()
 
-    fun parentCount() = TLongHashSet(parentIds.toNativeArray()).size()
-    fun rootCount() = rootIds.size()
-    fun objectCount() = parentIds.size()
+    fun parentCount() = LongOpenHashSet(parentIds).size
+    fun rootCount() = rootIds.size
+    fun objectCount() = parentIds.size
 
     fun registerObject(parentId: Long, rootId: Long) {
       parentIds.add(parentId)
@@ -71,7 +72,9 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
     val maxTreeDepth = 200
     val tooDeepObjectClasses = HashSet<ClassDefinition>()
     nav.getReferencesCopy().forEach {
-      if (it == 0L) return@forEach true
+      if (it == 0L) {
+        return@forEach
+      }
 
       nav.goTo(it)
       val objectNodeParentId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myParent")
@@ -129,12 +132,12 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
       groupingToObjectStats
         .getOrPut(Grouping(objectClass, parentClass, rootClass)) { InstanceStats() }
         .registerObject(parentId, rootId)
-      true
     }
 
     TruncatingPrintBuffer(400, 0, result::appendln).use { buffer ->
       groupingToObjectStats
         .entries
+        .asSequence()
         .sortedByDescending { it.value.objectCount() }
         .groupBy { it.key.rootClass }
         .forEach { (rootClass, entries) ->
@@ -209,30 +212,31 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
 
     nav.getReferencesCopy().forEach {
       if (it == 0L) {
-        return@forEach true
+        return@forEach
       }
       nav.goTo(it, ObjectNavigator.ReferenceResolution.ALL_REFERENCES)
       if (nav.getClass() != weakKeyClass) {
-        return@forEach true
+        return@forEach
       }
       nav.goToInstanceField("com.intellij.util.containers.WeakHashMap\$WeakKey", "referent")
-      if (nav.id == 0L) return@forEach true
+      if (nav.id == 0L) {
+        return@forEach
+      }
 
       val leakId = nav.id.toInt()
       if (parentList[leakId] == 0) {
         // If there is no parent, then the object does not have a strong-reference path to GC root
-        return@forEach true
+        return@forEach
       }
       disposedObjectsIDs.add(leakId)
-      true
     }
   }
 
   fun prepareDisposedObjectsSection(): String {
     val result = StringBuilder()
 
-    val leakedInstancesByClass = HashMap<ClassDefinition, TLongArrayList>()
-    val countByClass = TObjectIntHashMap<ClassDefinition>()
+    val leakedInstancesByClass = HashMap<ClassDefinition, LongList>()
+    val countByClass = Object2IntOpenHashMap<ClassDefinition>()
     var totalCount = 0
 
     val nav = analysisContext.navigator
@@ -245,21 +249,18 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
       val leakClass = nav.getClass()
       val leakId = nav.id
 
-      leakedInstancesByClass.getOrPut(leakClass) { TLongArrayList() }.add(leakId)
+      leakedInstancesByClass.computeIfAbsent(leakClass) { LongArrayList() }.add(leakId)
 
-      countByClass.put(leakClass, countByClass[leakClass] + 1)
+      countByClass.put(leakClass, countByClass.getInt(leakClass) + 1)
       totalCount++
-
-      true
     }
 
     // Convert TObjectIntHashMap to list of entries
     data class TObjectIntMapEntry<T>(val key: T, val value: Int)
 
     val entries = mutableListOf<TObjectIntMapEntry<ClassDefinition>>()
-    countByClass.forEachEntry { key, value ->
-      entries.add(TObjectIntMapEntry(key, value))
-      true
+    countByClass.object2IntEntrySet().fastForEach {
+      entries.add(TObjectIntMapEntry(it.key, it.intValue))
     }
 
     if (disposerOptions.includeDisposedObjectsSummary) {
@@ -278,8 +279,9 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
     }
 
     val disposedTree = GCRootPathsTree(analysisContext, AnalysisConfig.TreeDisplayOptions.all(), null)
-    for (disposedObjectsID in disposedObjectsIDs) {
-      disposedTree.registerObject(disposedObjectsID)
+    val iterator = disposedObjectsIDs.iterator()
+    while (iterator.hasNext()) {
+      disposedTree.registerObject(iterator.nextInt())
     }
 
     val disposedDominatorNodesByClass = disposedTree.getDisposedDominatorNodes()
@@ -290,7 +292,7 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
       var dominatorClassSubgraphSize = 0L
       var dominatorClassInstanceCount = 0L
       nodeList.forEach {
-        dominatorClassInstanceCount += it.instances.size()
+        dominatorClassInstanceCount += it.instances.size
         dominatorClassSubgraphSize += it.totalSizeInDwords.toLong() * 4
       }
       allDominatorsCount += dominatorClassInstanceCount
@@ -323,13 +325,12 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
       TruncatingPrintBuffer(700, 0, result::appendln).use { buffer ->
         instancesListInOrder
           .forEach { instances ->
-            nav.goTo(instances[0])
+            nav.goTo(instances.getLong(0))
             buffer.println(
-              "Disposed but still strong-referenced objects: ${instances.size()} ${nav.getClass().prettyName}, most common paths from GC-roots:")
+              "Disposed but still strong-referenced objects: ${instances.size} ${nav.getClass().prettyName}, most common paths from GC-roots:")
             val gcRootPathsTree = GCRootPathsTree(analysisContext, disposerOptions.disposedObjectsDetailsTreeDisplayOptions, nav.getClass())
             instances.forEach { leakId ->
               gcRootPathsTree.registerObject(leakId.toInt())
-              true
             }
             gcRootPathsTree.printTree().lineSequence().forEach(buffer::println)
           }
@@ -339,9 +340,9 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
   }
 
   private fun getInstancesListInPriorityOrder(
-    classToLeakedIdsList: HashMap<ClassDefinition, TLongArrayList>,
-    disposedDominatorReportEntries: List<DisposedDominatorReportEntry>): List<TLongArrayList> {
-    val result = mutableListOf<TLongArrayList>()
+    classToLeakedIdsList: HashMap<ClassDefinition, LongList>,
+    disposedDominatorReportEntries: List<DisposedDominatorReportEntry>): List<LongList> {
+    val result = mutableListOf<LongList>()
 
     // Make a mutable copy. When a class instances are added to the result list, remove the class entry from the copy.
     val classToLeakedIdsListCopy = HashMap(classToLeakedIdsList)
@@ -362,7 +363,7 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
     val classOrderByInstanceCount = ArrayDeque<ClassDefinition>(
       classToLeakedIdsListCopy
         .entries
-        .sortedByDescending { it.value.size() }
+        .sortedByDescending { it.value.size }
         .map { it.key }
     )
 
