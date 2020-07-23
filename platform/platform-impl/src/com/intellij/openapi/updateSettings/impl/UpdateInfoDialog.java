@@ -139,8 +139,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
 
   @Override
   protected JComponent createCenterPanel() {
-    return UpdateInfoPanelUI.INSTANCE
-      .createPanel(myNewBuild, myPatches, myTestPatch, myWriteProtected, myLicenseInfo, myEnableLink, myUpdatedChannel);
+    return UpdateInfoPanelUI.INSTANCE.createPanel(myNewBuild, myPatches, myTestPatch, myWriteProtected, myLicenseInfo, myEnableLink, myUpdatedChannel);
   }
 
   @NotNull
@@ -245,7 +244,8 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
 
           String title = IdeBundle.message("updates.error.connection.title");
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl());
-          UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER, "ide.patch.download.failed").notify(null);
+          UpdateChecker.getNotificationGroup().createNotification(
+            title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER, "ide.patch.download.failed").notify(null);
 
           return;
         }
@@ -261,12 +261,14 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
           else {
             String title = IdeBundle.message("update.notifications.title");
             String message = IdeBundle.message("update.ready.message");
-            UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, new NotificationListener.Adapter() {
+            NotificationListener.Adapter listener = new NotificationListener.Adapter() {
               @Override
               protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
                 restartLaterAndRunCommand(command);
               }
-            }, "ide.update.suggest.restart").notify(null);
+            };
+            UpdateChecker.getNotificationGroup().createNotification(
+              title, message, NotificationType.INFORMATION, listener, "ide.update.suggest.restart").notify(null);
           }
         }
         else {
@@ -296,8 +298,8 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     String version = ApplicationInfo.getInstance().getFullVersion();
     File file = new File(SystemProperties.getUserHome(), product + "-" + version + "-patch." + (SystemInfo.isWindows ? "cmd" : "sh"));
     try {
-      String text = (SystemInfo.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") +
-                    StringUtil.join(CommandLineUtil.toCommandLine(Arrays.asList(command)), " ");
+      String cmdLine = StringUtil.join(CommandLineUtil.toCommandLine(Arrays.asList(command)), " ");
+      String text = (SystemInfo.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") + cmdLine;
       FileUtil.writeToFile(file, text);
       FileUtil.setExecutable(file);
     }
@@ -307,7 +309,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     }
 
     String title = IdeBundle.message("update.notifications.title"), message = IdeBundle.message("update.apply.manually.message", file);
-    IdeUpdateUsageTriggerCollector.trigger( "dialog.manual.patch.prepared");
+    IdeUpdateUsageTriggerCollector.trigger("dialog.manual.patch.prepared");
     ApplicationManager.getApplication().invokeLater(() -> Messages.showInfoMessage(message, title));
   }
 }
