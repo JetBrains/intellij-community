@@ -46,7 +46,7 @@ interface SdkLookupBuilder {
   fun withProject(project: Project?): SdkLookupBuilder
 
   @Contract(pure = true)
-  fun withProgressMessageTitle(@Nls message: @ProgressTitle String): SdkLookupBuilder
+  fun withProgressMessageTitle(@ProgressTitle message: String): SdkLookupBuilder
 
   /**
    * Use these SDKs to test first, the [withSdkName] option has a higher priority

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 
 /* This file contains weird logic so Symbols will work with PsiElements and UsageTargets. */
 
-internal fun findShowUsages(project: Project, dataContext: DataContext, popupTitle: @PopupTitle String, handler: UsageVariantHandler) {
+internal fun findShowUsages(project: Project, dataContext: DataContext, @PopupTitle popupTitle: String, handler: UsageVariantHandler) {
   val allTargets = allTargets(
     project,
     searchTargets(dataContext),

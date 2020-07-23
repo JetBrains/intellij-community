@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YES
 import com.intellij.openapi.ui.Messages.getQuestionIcon
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.getString
@@ -25,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.isEmpty
 import com.intellij.util.containers.notNullize
 import com.intellij.util.containers.stream
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import java.util.*
@@ -133,7 +133,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
 fun confirmAddFilePaths(project: Project, paths: List<FilePath>,
                         singlePathDialogTitle: (FilePath) -> String,
                         singlePathDialogMessage: (FilePath) -> String,
-                        multiplePathsDialogTitle: @NlsContexts.DialogTitle String): List<FilePath> {
+                        @NlsContexts.DialogTitle multiplePathsDialogTitle: String): List<FilePath> {
   if (paths.isEmpty()) return paths
 
   if (paths.size == 1) {

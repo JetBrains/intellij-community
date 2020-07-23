@@ -124,7 +124,7 @@ fun performStageOperation(project: Project, nodes: List<GitFileStatusNode>, oper
   }
 }
 
-fun <T> runProcess(project: Project, title: @NlsContexts.ProgressTitle String, canBeCancelled: Boolean, process: () -> T): T {
+fun <T> runProcess(project: Project, @NlsContexts.ProgressTitle title: String, canBeCancelled: Boolean, process: () -> T): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(ThrowableComputable { process() },
                                                                                          title, canBeCancelled, project)
 }

@@ -109,7 +109,7 @@ fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, desc
 
 internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, List<ExportableItem>>,
                                               private val isShowFilePath: Boolean,
-                                              title: @NlsContexts.DialogTitle String,
+                                              @NlsContexts.DialogTitle title: String,
                                               private val description: String) : DialogWrapper(false) {
   private val chooser: ElementsChooser<ComponentElementProperties>
   private val pathPanel = FieldPanel(ConfigurationStoreBundle.message("editbox.export.settings.to"), null, { browse() }, null)

@@ -11,7 +11,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkModel
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
@@ -81,7 +83,7 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
   }
 
   private inline fun <T : Any> computeInBackground(project: Project?,
-                                                   @Nls title: @ProgressTitle String,
+                                                   @ProgressTitle title: String,
                                                    crossinline action: (ProgressIndicator) -> T): T =
     ProgressManager.getInstance().run(object : Task.WithResult<T, Exception>(project, title, true) {
       override fun compute(indicator: ProgressIndicator) = action(indicator)
