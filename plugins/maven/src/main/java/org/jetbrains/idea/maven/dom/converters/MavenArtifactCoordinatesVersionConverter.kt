@@ -15,14 +15,11 @@
  */
 package org.jetbrains.idea.maven.dom.converters
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.xml.XmlFile
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.xml.ConvertContext
-import org.jetbrains.idea.maven.dom.MavenDomUtil
-import org.jetbrains.idea.maven.dom.model.MavenDomParent
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
+import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.getParentVersionForConsumerPom
+import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isConsumerPomResolutionApplicable
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
@@ -36,7 +33,7 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
       return super.fromString(s, context)
     }
 
-    if (isComsumerPomResolutionApplicable(context.project)) {
+    if (isConsumerPomResolutionApplicable(context.project)) {
       return getParentVersionForConsumerPom(context)
     }
     return null
@@ -58,6 +55,10 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
       return getParentVersionForConsumerPom(context) != null
     }
 
+    if (id.version!!.isBlank()) {
+      return false
+    }
+
     return if (MAGIC_VERSION_PATTERN.matcher(id.version!!).matches()) true
     else manager.hasVersion(id.groupId, id.artifactId, id.version) // todo handle ranges more sensibly
   }
@@ -70,26 +71,5 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
   companion object {
     private val MAGIC_VERSION_PATTERN = Pattern.compile(
       "\\s*(?:LATEST|RELEASE|[(\\[].*|.*-20\\d{6}\\.[0-2]\\d{5}-\\d+)\\s*")
-
-    @JvmStatic
-    fun isComsumerPomResolutionApplicable(project: Project): Boolean {
-      val mavenVersion = MavenUtil.getMavenVersion(
-        MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.effectiveMavenHome)
-      return VersionComparatorUtil.compare(mavenVersion, "3.6.3") > 0
-    }
-
-    @JvmStatic
-    fun getParentVersionForConsumerPom(context: ConvertContext): String? {
-      val parent = context.invocationElement.parent as? MavenDomParent ?: return null
-      val artifactId = parent.artifactId.value
-      val groupId = parent.groupId.value
-
-      val parentPsi = context.getFile().getParent()?.getParent()?.findFile("pom.xml") as? XmlFile ?: return null
-      val mavenDomModel = MavenDomUtil.getMavenDomModel(parentPsi, MavenDomProjectModel::class.java) ?: return null
-      if (mavenDomModel.artifactId.value == artifactId && mavenDomModel.groupId.value == groupId) {
-        return mavenDomModel.version.value
-      }
-      return null
-    }
   }
 }

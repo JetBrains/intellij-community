@@ -241,7 +241,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     private MavenProject resolveMavenProject(MavenId id, MavenProjectsManager projectsManager) {
-      if (MavenArtifactCoordinatesVersionConverter.isComsumerPomResolutionApplicable(projectsManager.getProject())) {
+      if (MavenConsumerPomUtil.isConsumerPomResolutionApplicable(projectsManager.getProject())) {
         return projectsManager.findSingleProjectInReactor(id);
       }  else {
         return projectsManager.findProject(id);
