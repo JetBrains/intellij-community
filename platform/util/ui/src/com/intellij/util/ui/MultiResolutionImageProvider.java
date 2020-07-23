@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.scale.ScaleContext;
@@ -86,7 +87,7 @@ public final class MultiResolutionImageProvider {
     }
   }
 
-  /**
+  /**JBHiDPIScaledImage
    * A converter from {@link JBHiDPIScaledImage} to {@code MultiResolutionImage}.
    */
   private static final class Converter {
@@ -103,7 +104,6 @@ public final class MultiResolutionImageProvider {
         }
         if (cls != null) {
           try {
-            //noinspection unchecked
             ctor = cls.getConstructor(Image[].class);
             ctor.setAccessible(true);
           }
@@ -124,16 +124,14 @@ public final class MultiResolutionImageProvider {
         Image lowResImage = ImageUtil.toBufferedImage(scaledImage, true);
         Image highResImage = ImageUtil.toBufferedImage(scaledImage);
         variants = new Image[]{lowResImage, highResImage};
+        try {
+          return (Image)BMRI_CLASS_CTOR.newInstance(new Object[]{variants});
+        }
+        catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
+          Logger.getInstance(MultiResolutionImageProvider.class).error("could not create java.awt.image.BaseMultiResolutionImage", ex);
+        }
       }
-      else {
-        variants = new Image[]{jbImage};
-      }
-      try {
-        return (Image)BMRI_CLASS_CTOR.newInstance(new Object[]{variants});
-      }
-      catch (InstantiationException | IllegalAccessException | InvocationTargetException ignore) {
-      }
-      return null;
+      return jbImage;
     }
   }
 
@@ -153,8 +151,7 @@ public final class MultiResolutionImageProvider {
 
   /**
    * Converts the provided {@link JBHiDPIScaledImage} to {@code MultiResolutionImage}.
-   * If the provided image is not {@code JBHiDPIScaledImage} the returned {@code MultiResolutionImage} will
-   * default to the provided image's single resolution variant.
+   * If the provided image is not {@code JBHiDPIScaledImage} the provided image is returned unchanged.
    *
    * <p>
    * This function works correctly since JDK version 9 only,
@@ -173,8 +170,7 @@ public final class MultiResolutionImageProvider {
 
   /**
    * Converts the provided icon with {@link JBHiDPIScaledImage} to an {@link ImageIcon} with {@code MultiResolutionImage}.
-   * If the provided icon's image is not {@code JBHiDPIScaledImage} the returned icon's {@code MultiResolutionImage} will
-   * default to the provided image's single resolution variant.
+   * If the provided icon's image is not {@code JBHiDPIScaledImage} the provided icon is returned unchanged.
    */
   @Contract("null, _ -> null; !null, _ -> !null")
   public static Icon convertFromJBIcon(@Nullable Icon jbIcon, @Nullable ScaleContext ctx) {
@@ -184,16 +180,16 @@ public final class MultiResolutionImageProvider {
     if (image == null) {
       return jbIcon; // not convertable icon (e.g. with zero size)
     }
-    image = convertFromJBImage(image);
-    if (image == null) {
-      return jbIcon; // to fix NPE (IDEA-244323)
+    Image newImage = convertFromJBImage(image);
+    if (newImage == image) {
+      return jbIcon;
     }
     return new ImageIcon(image);
   }
 
   /**
    * Returns the max-size resolution variant image of the provided {@code MultiResolutionImage}.
-   * If the provided image is not {@code MultiResolutionImage} then returns same image.
+   * If the provided image is not {@code MultiResolutionImage} the provided image is returned unchanged.
    */
   @Contract("null -> null; !null -> !null")
   public static Image getMaxSizeResolutionVariant(@Nullable Image mrImage) {
@@ -211,7 +207,7 @@ public final class MultiResolutionImageProvider {
 
   /**
    * Converts from the provided icon with {@code MultiResolutionImage} to an icon with {@link JBHiDPIScaledImage}.
-   * If the provided icon's image is not {@code MultiResolutionImage} then returns same icon.
+   * If the provided icon's image is not {@code MultiResolutionImage} the provided icon is returned unchanged.
    */
   @Contract("null, _ -> null; !null, _ -> !null")
   public static Icon convertFromMRIcon(@Nullable Icon mrIcon, @Nullable ScaleContext ctx) {
