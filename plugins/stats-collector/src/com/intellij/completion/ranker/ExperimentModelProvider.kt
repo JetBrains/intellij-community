@@ -19,17 +19,17 @@ interface ExperimentModelProvider : RankingModelProvider {
 
     @JvmStatic
     fun findProvider(language: Language, groupNumber: Int): RankingModelProvider? {
-      val (weakProviders, strongProviders) = availableProviders()
+      val (experimentProviders, defaultProviders) = availableProviders()
         .filter { it.match(language, groupNumber) }
         .partition { it is ExperimentModelProvider }
 
-      check(strongProviders.size <= 1) { "Too many strong providers: $strongProviders" }
+      check(defaultProviders.size <= 1) { "Too many default providers: $defaultProviders" }
 
-      val strongProvider = strongProviders.singleOrNull()
-      if (weakProviders.isEmpty()) return strongProvider
+      val defaultProvider = defaultProviders.singleOrNull()
+      if (experimentProviders.isEmpty()) return defaultProvider
 
-      check(weakProviders.size == 1) { "Too many weak provider matching language ${language.displayName} and group number $groupNumber: $weakProviders" }
-      return weakProviders.singleOrNull() ?: strongProvider
+      check(experimentProviders.size == 1) { "Too many experiment provider matching language ${language.displayName} and group number $groupNumber: $experimentProviders" }
+      return experimentProviders.singleOrNull() ?: defaultProvider
     }
 
     fun RankingModelProvider.match(language: Language, groupNumber: Int): Boolean =

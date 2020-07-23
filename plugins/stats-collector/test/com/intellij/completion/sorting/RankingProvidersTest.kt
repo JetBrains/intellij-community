@@ -28,20 +28,20 @@ class RankingProvidersTest : LightPlatformTestCase() {
     checkActiveProvider(expectedProvider, 0)
   }
 
-  fun `test experiment provider replace strong`() {
+  fun `test experiment provider replace default`() {
     val expectedProvider = experiment(0)
-    registerProviders(expectedProvider, strong())
+    registerProviders(expectedProvider, default())
     checkActiveProvider(expectedProvider, 0)
   }
 
-  fun `test experiment provider should not replace strong if not matching`() {
-    val expectedProvider = strong()
+  fun `test experiment provider should not replace default if not matching`() {
+    val expectedProvider = default()
     registerProviders(experiment(-1), expectedProvider)
     checkActiveProvider(expectedProvider, 0)
   }
 
-  fun `test strong provider used if there is no experiment`() {
-    val expectedProvider = strong()
+  fun `test default provider used if there is no experiment`() {
+    val expectedProvider = default()
     registerProviders(expectedProvider)
     checkActiveProvider(expectedProvider, 0)
   }
@@ -57,8 +57,8 @@ class RankingProvidersTest : LightPlatformTestCase() {
     assertThrows<IllegalStateException>(IllegalStateException::class.java) { ExperimentModelProvider.findProvider(testLanguage, 0) }
   }
 
-  fun `test too many strong providers`() {
-    registerProviders(strong(), strong())
+  fun `test too many default providers`() {
+    registerProviders(default(), default())
     assertThrows<IllegalStateException>(IllegalStateException::class.java) { ExperimentModelProvider.findProvider(testLanguage, 0) }
   }
 
@@ -89,7 +89,7 @@ class RankingProvidersTest : LightPlatformTestCase() {
 
   private fun experiment(groupNumber: Int): RankingModelProvider = TestExperimentProvider(groupNumber, testLanguage)
 
-  private fun strong(): RankingModelProvider = TestModelProvider(testLanguage)
+  private fun default(): RankingModelProvider = TestModelProvider(testLanguage)
 
   private open class TestModelProvider(private val supportedLanguage: Language) : RankingModelProvider {
     override fun getModel(): DecisionFunction = TestDummyDecisionFunction()

@@ -6,6 +6,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.stats.completion</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <completion.ml.model implementation="com.jetbrains.completion.ranker.ExperimentKotlinMLRankingProvider"/>
