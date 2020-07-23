@@ -25,6 +25,12 @@ class StringMethods {
         if ("foo".equals(foo)) {}
         if ("foo".equalsIgnoreCase(foo)) {}
     }
+    
+    void testBooleanOp() {
+        String foo = getFoo();
+        if (!foo.equals("foo")) {}
+        if (foo.startsWith("foo") && foo.endsWith("foo")) {}
+    }
 
     void testUnresolved() {
         String foo = <error descr="Cannot resolve method 'getUnresolved' in 'StringMethods'">getUnresolved</error>();

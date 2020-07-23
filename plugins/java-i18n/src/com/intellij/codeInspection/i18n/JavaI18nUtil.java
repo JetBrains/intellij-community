@@ -141,6 +141,15 @@ public final class JavaI18nUtil extends I18nUtil {
       }
       expression = parent;
       if (UastExpressionUtils.isAssignment(expression)) break;
+      if (expression instanceof UCallExpression) {
+        UastCallKind kind = ((UCallExpression)expression).getKind();
+        if (kind == UastCallKind.METHOD_CALL) {
+          if (expression.getUastParent() instanceof UQualifiedReferenceExpression) {
+            expression = (UExpression)expression.getUastParent();
+          }
+          break;
+        }
+      }
     }
     return expression;
   }
