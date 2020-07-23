@@ -23,12 +23,7 @@ import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
-/**
- * This class has no specific Java test. It's located in intellij.java.tests module because if Java plugin is enabled additional elements
- * are added to iml file (e.g. 'exclude-output' tag) so if this test is located in a platform module it'll give different results dependening
- * on whether there is Java plugin in runtime classpath or not.
- */
-class ReloadProjectTest {
+class ReloadProjectTest : LoadProjectBase() {
   companion object {
     @JvmField
     @ClassRule
@@ -37,11 +32,17 @@ class ReloadProjectTest {
 
   @JvmField
   @Rule
-  val tempDirectory = TemporaryDirectory()
+  val myTempDirectory = TemporaryDirectory()
+
+  override val tempDirectory: TemporaryDirectory
+    get() = myTempDirectory
+
+  override val testDataRoot
+    get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/reloading")
 
   @Test
   internal fun `reload module with module library`() {
-    loadProject("removeModuleWithModuleLibrary/before") { project ->
+    loadProjectAndCheckResults("removeModuleWithModuleLibrary/before") { project ->
       val base = Paths.get(project.basePath!!)
       FileUtil.copyDir(testDataRoot.resolve("removeModuleWithModuleLibrary/after").toFile(), base.toFile())
       VfsUtil.markDirtyAndRefresh(false, true, true, VfsUtil.findFile(base, true))
@@ -53,7 +54,7 @@ class ReloadProjectTest {
 
   @Test
   fun `change iml`() {
-    loadProject("changeIml/initial") { project ->
+    loadProjectAndCheckResults("changeIml/initial") { project ->
       copyFilesAndReload(project, "changeIml/update")
       val module = ModuleManager.getInstance(project).modules.single()
       val srcUrl = VfsUtilCore.pathToUrl("${project.basePath}/src")
@@ -70,27 +71,5 @@ class ReloadProjectTest {
     FileUtil.copyDir(testDataRoot.resolve(relativePath).toFile(), base.toFile())
     VfsUtil.markDirtyAndRefresh(false, true, true, VfsUtil.findFile(base, true))
     StoreReloadManager.getInstance().reloadChangedStorageFiles()
-  }
-
-  private val testDataRoot
-    get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/reloading")
-
-  private fun loadProject(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
-    return loadProject(testDataRoot.resolve(testDataDirName), checkProject)
-  }
-
-  private fun loadProject(projectPath: Path, checkProject: suspend (Project) -> Unit) {
-    @Suppress("RedundantSuspendModifier")
-    suspend fun copyProjectFiles(dir: VirtualFile): Path {
-      val projectDir = VfsUtil.virtualToIoFile(dir)
-      FileUtil.copyDir(projectPath.toFile(), projectDir)
-      VfsUtil.markDirtyAndRefresh(false, true, true, dir)
-      return projectDir.toPath()
-    }
-    runBlocking {
-      createOrLoadProject(tempDirectory, ::copyProjectFiles, loadComponentState = true, useDefaultProjectSettings = false) {
-        checkProject(it)
-      }
-    }
   }
 }
