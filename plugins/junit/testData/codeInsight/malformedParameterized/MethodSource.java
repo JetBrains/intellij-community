@@ -179,3 +179,35 @@ abstract class MyTestBaseClass implements MyInterface {
     @MethodSource("data")
     void myTest(String param) { }
 }
+
+abstract class FooTwo {
+
+  @ParameterizedTest
+  @MethodSource("method1")
+  void test(String value) {}
+  List<String> method1() {
+    return null;
+  }
+}
+
+class BarTestT extends FooTwo {}
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class BarTestTwo extends FooTwo {}
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class BarTestThree extends FooThree {
+  @Override
+  List<String> method1() {
+    return null;
+  }
+}
+
+abstract class FooThree {
+
+  @ParameterizedTest
+  @MethodSource("method1")
+  void test(String value) {}
+
+  abstract List<String> method1();
+}

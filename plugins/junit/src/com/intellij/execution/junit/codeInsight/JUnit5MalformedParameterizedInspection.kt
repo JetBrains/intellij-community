@@ -36,7 +36,6 @@ import java.util.*
 class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTool() {
   private object Annotations {
     const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
-    const val PER_CLASS_ATTRIBUTE = "TestInstance.Lifecycle.PER_CLASS"
     val EXTENDS_WITH = listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)
   }
 
@@ -218,7 +217,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
 
         if (!sourceProvider.hasModifierProperty(PsiModifier.STATIC) &&
             containingClass != null && !TestUtils.testInstancePerClass(containingClass) &&
-            !implementationsTestInstanceAnnotated(containingClass, sourceProvider)) {
+            !implementationsTestInstanceAnnotated(containingClass)) {
           val annotation: PsiAnnotation = JavaPsiFacade.getElementFactory(containingClass.project).createAnnotationFromText(Annotations.TEST_INSTANCE_PER_CLASS, containingClass)
           val attributes: Array<PsiNameValuePair> = annotation.parameterList.attributes
           holder.registerProblem(attributeValue, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.static", providerName),
@@ -243,18 +242,11 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         }
       }
 
-      private fun implementationsTestInstanceAnnotated(containingClass: PsiClass, method: PsiMethod) : Boolean {
-        if (!method.hasModifierProperty(PsiModifier.DEFAULT) || !containingClass.isInterface) return false
-        val implementations = ClassInheritorsSearch.search(containingClass, containingClass.resolveScope, true).findAll()
-        for (entry in implementations) {
-          val annotation: PsiAnnotation? = entry.getAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE)
-          if (annotation != null) {
-            val findAttributeValue: PsiAnnotationMemberValue? = annotation.findAttributeValue("value")
-            val attributeName: String? = (findAttributeValue as? PsiReferenceExpression)?.qualifiedName
-            if (Annotations.PER_CLASS_ATTRIBUTE == attributeName) return true
-          }
+      private fun implementationsTestInstanceAnnotated(containingClass: PsiClass) : Boolean {
+        val implementations = ClassInheritorsSearch.search(containingClass, containingClass.resolveScope, true).firstOrNull {
+          TestUtils.testInstancePerClass(it)
         }
-        return false
+        return implementations != null
       }
 
       private fun processArrayInAnnotationParameter(attributeValue: PsiAnnotationMemberValue?,
