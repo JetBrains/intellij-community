@@ -9,7 +9,6 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.FList;
-import com.intellij.util.containers.Queue;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -22,10 +21,7 @@ import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 
 public final class DebugReflectionUtil {
@@ -68,7 +64,7 @@ public final class DebugReflectionUtil {
         cached = fields.isEmpty() ? EMPTY_FIELD_ARRAY : fields.toArray(new Field[0]);
       }
       catch (IncompatibleClassChangeError | NoClassDefFoundError | SecurityException e) {
-        //this exception may be thrown because there are two different versions of org.objectweb.asm.tree.ClassNode from different plugins
+        // this exception may be thrown because there are two different versions of org.objectweb.asm.tree.ClassNode from different plugins
         //I don't see any sane way to fix it until we load all the plugins by the same classloader in tests
         cached = EMPTY_FIELD_ARRAY;
       }
@@ -112,25 +108,27 @@ public final class DebugReflectionUtil {
                                     @NotNull Predicate<Object> shouldExamineValue,
                                     @NotNull PairProcessor<Object, ? super BackLink> leakProcessor) {
     IntSet visited = new IntOpenHashSet(100);
-    Queue<BackLink> toVisit = new Queue<>(100);
+    Deque<BackLink> toVisit = new ArrayDeque<>(100);
 
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
       Object startRoot = entry.getKey();
-      final String description = entry.getValue();
-      toVisit.addLast(new BackLink(startRoot, null, null){
-        @NotNull
+      String description = entry.getValue();
+      toVisit.addLast(new BackLink(startRoot, null, null) {
         @Override
-        String print() {
-          return super.print() +" (from "+description+")";
+        void print(@NotNull StringBuilder result) {
+          super.print(result);
+          result.append(" (from ").append(description).append(")");
         }
       });
     }
 
     while (true) {
-      if (toVisit.isEmpty()) {
+      BackLink backLink;
+      backLink = toVisit.pollFirst();
+      if (backLink == null) {
         return true;
       }
-      final BackLink backLink = toVisit.pullFirst();
+
       if (backLink.depth > maxDepth) {
         continue;
       }
@@ -145,14 +143,18 @@ public final class DebugReflectionUtil {
     }
   }
 
-  private static void queueStronglyReferencedValues(@NotNull Queue<? super BackLink> queue,
+  private static void queueStronglyReferencedValues(@NotNull Deque<BackLink> queue,
                                                     @NotNull Object root,
                                                     @NotNull Predicate<Object> shouldExamineValue,
                                                     @NotNull BackLink backLink) {
     Class<?> rootClass = root.getClass();
     for (Field field : getAllFields(rootClass)) {
       String fieldName = field.getName();
-      if (root instanceof Reference && ("referent".equals(fieldName) || "discovered".equals(fieldName))) continue; // do not follow weak/soft refs
+      // do not follow weak/soft refs
+      if (root instanceof Reference && ("referent".equals(fieldName) || "discovered".equals(fieldName))) {
+        continue;
+      }
+
       Object value;
       try {
         value = field.get(root);
@@ -186,14 +188,16 @@ public final class DebugReflectionUtil {
     }
   }
 
-  private static void queue(Object value, Field field, @NotNull BackLink backLink, @NotNull Queue<? super BackLink> queue,
+  private static void queue(Object value,
+                            Field field,
+                            @NotNull BackLink backLink,
+                            @NotNull Deque<BackLink> queue,
                             @NotNull Predicate<Object> shouldExamineValue) {
     if (value == null || isTrivial(value.getClass())) {
       return;
     }
     if (shouldExamineValue.test(value)) {
-      BackLink newBackLink = new BackLink(value, field, backLink);
-      queue.addLast(newBackLink);
+      queue.addLast(new BackLink(value, field, backLink));
     }
   }
 
@@ -219,29 +223,31 @@ public final class DebugReflectionUtil {
       StringBuilder result = new StringBuilder();
       BackLink backLink = this;
       while (backLink != null) {
-        result.append(backLink.print());
+        backLink.print(result);
         backLink = backLink.backLink;
       }
       return result.toString();
     }
 
-    @NotNull
-    String print() {
+    void print(@NotNull StringBuilder result) {
       String valueStr;
       Object value = this.value;
       try {
-        valueStr = value instanceof FList
-                   ? "FList (size=" + ((FList<?>)value).size() + ")" :
-                   value instanceof Collection ? "Collection (size=" + ((Collection<?>)value).size() + ")" :
-                   String.valueOf(value);
+        if (value instanceof FList) {
+          valueStr = "FList (size=" + ((FList<?>)value).size() + ")";
+        }
+        else {
+          valueStr = value instanceof Collection ? "Collection (size=" + ((Collection<?>)value).size() + ")" : String.valueOf(value);
+        }
         valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
       }
       catch (Throwable e) {
         valueStr = "(" + e.getMessage() + " while computing .toString())";
       }
+
       Field field = this.field;
       String fieldName = field == null ? "?" : field.getDeclaringClass().getName() + "." + field.getName();
-      return "via '" + fieldName + "'; Value: '" + valueStr + "' of " + value.getClass() + "\n";
+      result.append("via '").append(fieldName).append("'; Value: '").append(valueStr).append("' of ").append(value.getClass()).append("\n");
     }
   }
 }
