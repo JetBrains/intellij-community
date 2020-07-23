@@ -60,7 +60,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
 
   init {
-    if (!project.isDefault && enabled) {
+    if (!project.isDefault) {
       ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
         override fun projectComponentsInitialized(project: Project) {
           if (project === this@JpsProjectModelSynchronizer.project) {
@@ -72,7 +72,6 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   }
 
   internal fun needToReloadProjectEntities(): Boolean {
-    if (!enabled) return false
     if (StoreReloadManager.getInstance().isReloadBlocked()) return false
     if (serializers.get() == null) return false
 
@@ -82,8 +81,6 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   }
 
   internal fun reloadProjectEntities() {
-    if (!enabled) return
-
     if (StoreReloadManager.getInstance().isReloadBlocked()) {
       LOG.debug("Skip reloading because it's blocked")
       return
@@ -218,7 +215,6 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   }
 
   internal fun saveChangedProjectEntities(writer: JpsFileContentWriter) {
-    if (!enabled) return
     LOG.debug("Saving project entities")
     val data = serializers.get()
     if (data == null) {
@@ -277,8 +273,6 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
   companion object {
     fun getInstance(project: Project): JpsProjectModelSynchronizer? = project.getComponent(JpsProjectModelSynchronizer::class.java)
-
-    var enabled = Registry.`is`("ide.workspace.model.jps.enabled")
   }
 }
 

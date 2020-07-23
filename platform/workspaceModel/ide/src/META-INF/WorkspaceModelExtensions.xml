@@ -9,9 +9,6 @@
     <registryKey key="ide.new.project.model.indicator" defaultValue="false" restartRequired="true"
                  description="Show an icon in the status bar indicating whether the workspace model is enabled or not"/>
 
-    <registryKey key="ide.workspace.model.jps.enabled" defaultValue="true" restartRequired="false"
-                 description="Enable .iml reading/writing including settings (temporary key)"/>
-
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
 
     <projectService serviceInterface="com.intellij.workspaceModel.storage.VirtualFileUrlManager"
