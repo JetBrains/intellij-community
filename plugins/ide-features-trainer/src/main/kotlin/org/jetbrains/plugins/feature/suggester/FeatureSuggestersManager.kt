@@ -10,11 +10,14 @@ import org.jetbrains.plugins.feature.suggester.actions.listeners.EditorActionsLi
 import org.jetbrains.plugins.feature.suggester.actions.listeners.PsiActionsListener
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
+import org.jetbrains.plugins.feature.suggester.ui.NotificationSuggestionPresenter
+import org.jetbrains.plugins.feature.suggester.ui.SuggestionPresenter
 
 class FeatureSuggestersManager(val project: Project) {
     private val MAX_ACTIONS_NUMBER: Int = 100
     private val actionsHistory = UserActionsHistory(MAX_ACTIONS_NUMBER)
-    private val suggestionPresenter: SuggestionPresenter = NotificationSuggestionPresenter()
+    private val suggestionPresenter: SuggestionPresenter =
+        NotificationSuggestionPresenter()
 
     fun actionPerformed(action: Action) {
         actionsHistory.add(action)
