@@ -446,7 +446,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   }
 
   private static final class ExpressionVisitor extends JavaElementVisitor {
-    private static final TokenSet POLYADIC_TOKENS = TokenSet.create(
+    private static final TokenSet SIMPLIFIABLE_POLYADIC_TOKENS = TokenSet.create(
       JavaTokenType.AND, JavaTokenType.ANDAND, JavaTokenType.OR, JavaTokenType.OROR, JavaTokenType.XOR, JavaTokenType.EQEQ,
       JavaTokenType.NE);
     private PsiExpression resultExpression;
@@ -481,7 +481,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       PsiExpression[] operands = expression.getOperands();
       PsiExpression lExpr = operands[0];
       IElementType tokenType = expression.getOperationTokenType();
-      if (!POLYADIC_TOKENS.contains(tokenType)) return;
+      if (!SIMPLIFIABLE_POLYADIC_TOKENS.contains(tokenType)) return;
       if (JavaTokenType.XOR == tokenType) {
 
         boolean negate = false;
