@@ -29,14 +29,10 @@ import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
 import com.intellij.vcs.log.VcsLogBranchLikeFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties
-import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
-import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.MAIN_LOG_ID
-import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManager
-import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
@@ -45,8 +41,8 @@ import com.intellij.vcs.log.util.VcsLogUiUtil.isDiffPreviewInEditor
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
+import com.intellij.vcs.log.visible.filters.with
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
@@ -82,6 +78,11 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     if (!branchesPanelExpandableController.isExpanded()) return@TreeSelectionListener
 
     val ui = logUi
+
+    val properties = ui.properties
+    val changeLogFilterAllowed = properties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]
+    if (!changeLogFilterAllowed) return@TreeSelectionListener
+
     val branchNames = tree.getSelectedBranchNames()
     val oldFilters = ui.filterUi.filters
     val newFilters = if (branchNames.isNotEmpty()) {
@@ -152,7 +153,9 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val commonActionsManager = CommonActionsManager.getInstance()
     val expandAllAction = commonActionsManager.createExpandAllHeaderAction(defaultTreeExpander, tree.component)
     val collapseAllAction = commonActionsManager.createCollapseAllHeaderAction(defaultTreeExpander, tree.component)
-    val hideBranchesAction = ActionManager.getInstance().getAction("Git.Log.Hide.Branches")
+    val actionManager = ActionManager.getInstance()
+    val hideBranchesAction = actionManager.getAction("Git.Log.Hide.Branches")
+    val settings = actionManager.getAction("Git.Log.Branches.Settings")
 
     val group = DefaultActionGroup()
     group.add(hideBranchesAction)
@@ -165,11 +168,12 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     group.add(fetchAction)
     group.add(toggleFavoriteAction)
     group.add(Separator())
+    group.add(settings)
     group.add(groupByDirectoryAction)
     group.add(expandAllAction)
     group.add(collapseAllAction)
 
-    val toolbar = ActionManager.getInstance().createActionToolbar("Git.Log.Branches", group, false)
+    val toolbar = actionManager.createActionToolbar("Git.Log.Branches", group, false)
     toolbar.setTargetComponent(branchesTreePanel)
 
     val branchesButton = ExpandStripeButton(messagePointer("action.Git.Log.Show.Branches.text"), AllIcons.Actions.ArrowExpand)
@@ -298,6 +302,11 @@ internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: V
 internal val SHOW_GIT_BRANCHES_LOG_PROPERTY =
   object : VcsLogProjectTabsProperties.CustomBooleanTabProperty("Show.Git.Branches") {
     override fun defaultValue(logId: String) = logId == MAIN_LOG_ID
+  }
+
+internal val CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY =
+  object : VcsLogApplicationSettings.CustomBooleanProperty("Change.Log.Filter.on.Branch.Selection") {
+    override fun defaultValue() = false
   }
 
 private class BranchViewSplitter(first: JComponent? = null, second: JComponent? = null)
