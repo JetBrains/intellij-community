@@ -255,6 +255,7 @@
 
     <!--<extensionPoint qualifiedName="com.intellij.expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
+    <extensionPoint qualifiedName="com.intellij.refactoring.overrideMethodProcessor" interface="com.intellij.refactoring.OverrideMethodsProcessor" dynamic="true"/> 
     <extensionPoint qualifiedName="com.intellij.library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector" dynamic="true"/>
 
     <!-- See com.intellij.execution.filters.ExceptionFilter -->
@@ -1003,6 +1004,7 @@
     <refactoring.helper implementation="com.intellij.refactoring.OptimizeImportsRefactoringHelper"/>
     <refactoring.changeSignatureUsageProcessor implementation="com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor" id="javaProcessor"/>
     <refactoring.introduceParameterMethodUsagesProcessor implementation="com.intellij.refactoring.introduceParameter.JavaIntroduceParameterMethodUsagesProcessor"/>
+    <refactoring.overrideMethodProcessor implementation="com.intellij.refactoring.JavaOverrideMethodsProcessor"/>
     <safeDelete.importSearcher implementation="com.intellij.refactoring.safeDelete.JavaImportSearcher"/>
     <refactoring.safeDelete.JavaSafeDeleteDelegate implementationClass="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegateImpl" language="JAVA"/>
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor" id="javaProcessor"/>

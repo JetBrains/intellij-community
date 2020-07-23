@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.history.LocalHistory;
@@ -33,6 +32,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.OverrideMethodsProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.listeners.RefactoringEventData;
@@ -148,9 +148,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     OverridingMethodsSearch.search(myMethod, myRefactoringScope, false).forEach(method -> {
-      if (AnnotationUtil.isAnnotated(method, Override.class.getName(), 0)) {
-        usages.add(new UsageInfo(method));
-      }
+      usages.add(new UsageInfo(method));
       return true;
     });
 
@@ -467,9 +465,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               }
             }
             else if (element instanceof PsiMethod) {
-              PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiMethod) element, false, Override.class.getName());
-              if (annotation != null) {
-                annotation.delete();
+              for (OverrideMethodsProcessor processor : OverrideMethodsProcessor.EP_NAME.getExtensionList()) {
+                if (processor.removeOverrideAttribute((PsiMethod)element)) {
+                  break;
+                }
               }
             }
             else if (JavaLanguage.INSTANCE != element.getLanguage()) {
