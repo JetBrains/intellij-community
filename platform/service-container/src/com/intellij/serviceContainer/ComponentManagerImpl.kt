@@ -133,6 +133,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   final override fun getMessageBus(): MessageBus {
     if (containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS) {
+      ProgressManager.checkCanceled()
       throw AlreadyDisposedException("Already disposed: $this")
     }
     return messageBus!!
