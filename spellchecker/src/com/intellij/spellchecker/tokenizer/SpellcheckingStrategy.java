@@ -12,7 +12,10 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
-import com.intellij.spellchecker.quickfixes.*;
+import com.intellij.spellchecker.quickfixes.ChangeTo;
+import com.intellij.spellchecker.quickfixes.RenameTo;
+import com.intellij.spellchecker.quickfixes.SaveTo;
+import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +63,10 @@ public class SpellcheckingStrategy {
     if (element instanceof PsiNameIdentifierOwner) return PsiIdentifierOwnerTokenizer.INSTANCE;
     if (element instanceof PsiComment) {
       if (SuppressionUtil.isSuppressionComment(element)) {
+        return EMPTY_TOKENIZER;
+      }
+      //don't check shebang
+      if (element.getTextOffset() == 0 && element.getText().startsWith("#!")) {
         return EMPTY_TOKENIZER;
       }
       return myCommentTokenizer;
