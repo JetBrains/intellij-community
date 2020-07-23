@@ -916,10 +916,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         return JavaDirectoryService.getInstance().getPackage(directory);
       }
     }
-    final PsiElement element = getDocumentedElementOfKeyword(contextElement);
-    if (element != null) return element;
-
-    return null;
+    return getDocumentedElementOfKeyword(contextElement);
   }
 
   /**
@@ -930,14 +927,15 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
    * @return an instance of {@link PsiJavaDocumentedElement} that has javadoc if the keyword is either on the class or method or field level,
    * null otherwise
    */
+  @Contract(value = "null -> null", pure = true)
   @Nullable
-  private static PsiElement getDocumentedElementOfKeyword(@Nullable final PsiElement contextElement) {
+  private static PsiJavaDocumentedElement getDocumentedElementOfKeyword(@Nullable final PsiElement contextElement) {
     if (!(contextElement instanceof PsiKeyword)) return null;
 
     final PsiElement element = PsiTreeUtil.skipParentsOfType(contextElement, PsiModifierList.class, PsiReferenceList.class, PsiTypeElement.class);
-    if (element instanceof PsiJavaDocumentedElement) return element;
+    if (!(element instanceof PsiJavaDocumentedElement)) return null;
 
-    return null;
+    return (PsiJavaDocumentedElement)element;
   }
 
   public static String fetchExternalJavadoc(PsiElement element, Project project, List<String> docURLs) {
