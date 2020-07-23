@@ -290,6 +290,10 @@ public class CheckRegExpForm {
     return regexpFile.getUserData(LAST_MATCHES);
   }
 
+  public static void setMatches(@NotNull PsiFile regexpFile, @NotNull List<RegExpMatch> matches) {
+    regexpFile.putUserData(LAST_MATCHES, matches);
+  }
+
   @TestOnly
   public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
     return getMatchResult(regexpFile, sampleText) == RegExpMatchResult.MATCHES;
@@ -347,7 +351,7 @@ public class CheckRegExpForm {
           }
           matches.add(match);
         } while (matcher.find());
-        regexpFile.putUserData(LAST_MATCHES, matches);
+        setMatches(regexpFile, matches);
         return RegExpMatchResult.FOUND;
       }
       else {
