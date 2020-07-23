@@ -6,4 +6,8 @@ object NoSuggestion : Suggestion()
 
 object FeatureUsageSuggestion : Suggestion()
 
-class PopupSuggestion(val message: String, val suggesterId: String) : Suggestion()
+class PopupSuggestion(
+    val message: String,
+    val suggesterId: String,
+    val suggestingTipFilename: String
+) : Suggestion()

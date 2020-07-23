@@ -14,6 +14,7 @@ class SurroundWithSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Why not to use Surround With action?"
         const val SUGGESTING_ACTION_ID = "SurroundWith"
+        const val SUGGESTING_TIP_FILENAME = "neue-SurroundWith.html"
     }
 
     private class SurroundingStatementData(val surroundingStatement: PsiStatement) {
@@ -63,7 +64,8 @@ class SurroundWithSuggester : FeatureSuggester {
                             return createSuggestion(
                                 null,
                                 createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                                getId()
+                                getId(),
+                                SUGGESTING_TIP_FILENAME
                             )
                         }
                         surroundingStatementData = null

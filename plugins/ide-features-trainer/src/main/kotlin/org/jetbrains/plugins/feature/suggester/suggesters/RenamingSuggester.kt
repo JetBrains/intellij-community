@@ -15,6 +15,7 @@ import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 class RenamingSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Why not to use safe renaming: Shift + F6?"
+        const val SUGGESTING_TIP_FILENAME = "neue-Rename.html"
         const val NUMBER_OF_RENAMES_TO_GET_SUGGESTION = 3
     }
 
@@ -68,7 +69,7 @@ class RenamingSuggester : FeatureSuggester {
                     if (renamedIdentifiersData.references.contains(parent)
                         && renamedIdentifiersData.isAllRenamed()
                     ) {
-                        return createSuggestion(null, POPUP_MESSAGE, getId())
+                        return createSuggestion(null, POPUP_MESSAGE, getId(), SUGGESTING_TIP_FILENAME)
                     }
                 }
             }

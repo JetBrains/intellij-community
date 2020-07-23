@@ -72,6 +72,7 @@ internal fun createSuggestion(
     descriptorId: String?,
     popupMessage: String,
     suggesterId: String,
+    suggestingTipFilename: String,
     usageDelta: Long = 1000
 ): Suggestion {
     val commandName = CommandProcessor.getInstance().currentCommandName
@@ -87,5 +88,5 @@ internal fun createSuggestion(
         }
     }
 
-    return PopupSuggestion(popupMessage, suggesterId)
+    return PopupSuggestion(popupMessage, suggesterId, suggestingTipFilename)
 }

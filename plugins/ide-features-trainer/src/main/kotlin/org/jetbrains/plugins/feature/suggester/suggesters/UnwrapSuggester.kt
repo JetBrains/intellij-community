@@ -44,7 +44,8 @@ class UnwrapSuggester : FeatureSuggester {
                             return createSuggestion(
                                 null,
                                 createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                                getId()
+                                getId(),
+                                ""
                             )
                         }
                         unwrappingStatements = null
