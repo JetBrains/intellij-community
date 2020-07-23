@@ -244,7 +244,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testNoThisFieldsInDelegatingConstructorCall() {
     configure();
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "delegate.field", "x");
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "x", "delegate.field");
   }
 
   public void testPreferChainFieldSuggestionByExpectedName() {
