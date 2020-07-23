@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
@@ -43,6 +44,7 @@ import java.util.Set;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class ActionMenuItem extends JBCheckBoxMenuItem {
+  static final Icon EMPTY_ICON = EmptyIcon.create(16, 1);
   private final ActionRef<AnAction> myAction;
   private final Presentation myPresentation;
   private final String myPlace;
@@ -203,6 +205,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       myToggled = Toggleable.isSelected(myEvent.getPresentation());
       if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
         setState(myToggled);
+        setIcon(wrapNullIcon(getIcon()));
       }
       else {
         if (myToggled) {
@@ -231,11 +234,24 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         if (selected == null)
           selected = icon;
 
-        setIcon(myPresentation.isEnabled() ? icon : disabled);
-        setSelectedIcon(selected != null ? selected : icon);
-        setDisabledIcon(disabled);
+        setIcon(wrapNullIcon(myPresentation.isEnabled() ? icon : disabled));
+        setSelectedIcon(wrapNullIcon(selected != null ? selected : icon));
+        setDisabledIcon(wrapNullIcon(disabled));
       }
     }
+  }
+
+  private Icon wrapNullIcon(Icon icon) {
+    if (SystemInfo.isMac && Registry.is("ide.macos.main.menu.hide.icons")) {
+      return null;
+    }
+    if (!Registry.is("ide.macos.main.menu.align.menu.items")) {
+      return icon;
+    }
+    if (icon == null && SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      return EMPTY_ICON;
+    }
+    return icon;
   }
 
   @Override

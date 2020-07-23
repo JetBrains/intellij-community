@@ -194,12 +194,17 @@ public final class ActionMenu extends JBMenu {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
         icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
       }
-      setIcon(icon);
-      if (presentation.getDisabledIcon() != null) {
-        setDisabledIcon(presentation.getDisabledIcon());
-      }
-      else {
-        setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
+      if (Registry.is("ide.macos.main.menu.hide.icons")) {
+        setIcon(null);
+        setDisabledIcon(null);
+      } else {
+        setIcon(icon);
+        if (presentation.getDisabledIcon() != null) {
+          setDisabledIcon(presentation.getDisabledIcon());
+        }
+        else {
+          setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
+        }
       }
     }
   }

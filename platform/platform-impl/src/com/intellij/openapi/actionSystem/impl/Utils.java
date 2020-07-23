@@ -179,6 +179,33 @@ public final class Utils {
         }
       });
     }
+    if (SystemInfo.isMacSystemMenu && isWindowMenu) {
+      Icon icon = hasIcons(children) ? ActionMenuItem.EMPTY_ICON : null;
+      children.forEach(child -> replaceIconIn(child, icon));
+    }
+  }
+
+  private static void replaceIconIn(Component menuItem, Icon icon) {
+    Icon from = icon == null ? ActionMenuItem.EMPTY_ICON : null;
+
+    if (menuItem instanceof ActionMenuItem && ((ActionMenuItem)menuItem).getIcon() == from) {
+        ((ActionMenuItem)menuItem).setIcon(icon);
+    } else if (menuItem instanceof ActionMenu && ((ActionMenu)menuItem).getIcon() == from) {
+        ((ActionMenu)menuItem).setIcon(icon);
+    }
+  }
+
+  private static boolean hasIcons(List<Component> components) {
+    boolean hasIcon = false;
+    for (Component comp : components) {
+      if (comp instanceof ActionMenuItem) {
+        Icon icon = ((ActionMenuItem)comp).getIcon();
+        if (icon != null && icon != ActionMenuItem.EMPTY_ICON) {
+          hasIcon = true;
+        }
+      }
+    }
+    return hasIcon;
   }
 
   public interface ActionGroupVisitor {
