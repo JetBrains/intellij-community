@@ -100,6 +100,6 @@ public class SuspiciousIndentAfterControlStatement {
 
     public void z(int i) {
 if (i == 99)
-<warning descr="Suspicious indentation after 'if' statement">S</warning>ystem.out.println("problems");
+<warning descr="Suspicious indentation after 'if' statement"></warning>System.out.println("problems");
     }
 }
