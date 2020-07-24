@@ -96,15 +96,11 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
             final String siblingText = statementWhiteSpace.getText();
             final int statementLineBreak = siblingText.lastIndexOf('\n');
             if (statementLineBreak >= 0) {
-              final int statementIndent = getIndent(siblingText.substring(statementLineBreak + 1));
+              final String indentText = siblingText.substring(statementLineBreak + 1);
+              final int statementIndent = getIndent(indentText);
               final int bodyIndent = getIndent(text.substring(bodyLineBreak + 1));
               if (statementIndent == bodyIndent) {
-                if (bodyIndent == 0) {
-                  registerErrorAtOffset(body, 0, 1, statement);
-                }
-                else {
-                  registerErrorAtOffset(bodyWhiteSpace, bodyLineBreak + 1, bodyIndent, statement);
-                }
+                registerErrorAtOffset(bodyWhiteSpace, bodyLineBreak + 1, indentText.length(), statement);
                 return;
               }
             }
@@ -130,14 +126,15 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
         return;
       }
       final int bodyIndent = getIndent(text.substring(bodyLineBreak + 1));
-      final int nextIndent = getIndent(nextText.substring(nextLineBreak + 1));
+      final String nextIndentText = nextText.substring(nextLineBreak + 1);
+      final int nextIndent = getIndent(nextIndentText);
       if (lineBreakBeforeBody) {
         if (nextIndent >= bodyIndent) {
-          registerErrorAtOffset(nextWhiteSpace, nextLineBreak + 1, nextIndent, statement);
+          registerErrorAtOffset(nextWhiteSpace, nextLineBreak + 1, nextIndentText.length(), statement);
         }
       }
       else if (nextIndent > bodyIndent) {
-        registerErrorAtOffset(nextWhiteSpace, nextLineBreak + 1, nextIndent, statement);
+        registerErrorAtOffset(nextWhiteSpace, nextLineBreak + 1, nextIndentText.length(), statement);
       }
     }
 
