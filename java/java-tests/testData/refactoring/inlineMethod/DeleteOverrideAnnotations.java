@@ -15,3 +15,12 @@ class C extends B {
   @Override
   void foo() {}
 }
+
+class B1 extends A {
+  @Override
+  void foo() {}
+
+  void err() {
+    super.foo();
+  }
+}

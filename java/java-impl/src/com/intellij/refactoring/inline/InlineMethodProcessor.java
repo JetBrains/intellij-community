@@ -147,8 +147,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
-    OverridingMethodsSearch.search(myMethod, myRefactoringScope, false).forEach(method -> {
-      usages.add(new UsageInfo(method));
+    OverridingMethodsSearch.search(myMethod, myRefactoringScope, true).forEach(method -> {
+      for (HierarchicalMethodSignature signature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
+        if (signature.getMethod() == myMethod) {
+          usages.add(new UsageInfo(method));
+          return true;
+        }
+      }
+
       return true;
     });
 
