@@ -67,7 +67,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
                         return createSuggestion(
                             DESCRIPTOR_ID,
                             createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                            getId(),
+                            suggestingActionDisplayName,
                             SUGGESTING_TIP_FILENAME
                         )
                     }
@@ -115,5 +115,5 @@ class IntroduceVariableSuggester : FeatureSuggester {
         return elements[elements.size - 2] as? PsiExpression
     }
 
-    override fun getId(): String = "Introduce variable suggester"
+    override val suggestingActionDisplayName: String = "Introduce variable"
 }

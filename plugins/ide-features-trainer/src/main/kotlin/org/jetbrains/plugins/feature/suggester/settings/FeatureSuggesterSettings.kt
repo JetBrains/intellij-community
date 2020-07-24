@@ -18,19 +18,19 @@ class FeatureSuggesterSettings : SimplePersistentStateComponent<FeatureSuggester
         val disabledSuggesters by list<String>()
     }
 
-    fun isEnabled(id: String): Boolean {
+    fun isEnabled(suggestingActionDisplayName: String): Boolean {
         for (s in state.disabledSuggesters) {
-            if (s == id)
+            if (s == suggestingActionDisplayName)
                 return false
         }
         return true
     }
 
-    fun disableSuggester(id: String) {
-        state.disabledSuggesters.add(id)
+    fun disableSuggester(suggestingActionDisplayName: String) {
+        state.disabledSuggesters.add(suggestingActionDisplayName)
     }
 
-    fun enableSuggester(id: String) {
-        state.disabledSuggesters.remove(id)
+    fun enableSuggester(suggestingActionDisplayName: String) {
+        state.disabledSuggesters.remove(suggestingActionDisplayName)
     }
 }

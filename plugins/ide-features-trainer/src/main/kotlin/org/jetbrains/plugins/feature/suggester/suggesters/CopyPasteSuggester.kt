@@ -35,7 +35,7 @@ class CopyPasteSuggester : FeatureSuggester {
                         return createSuggestion(
                             null,
                             createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                            getId(),
+                            suggestingActionDisplayName,
                             ""
                         )
                     }
@@ -45,5 +45,5 @@ class CopyPasteSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    override fun getId(): String = "Copy Paste suggester"
+    override val suggestingActionDisplayName: String = "Paste from history"
 }

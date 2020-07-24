@@ -64,7 +64,7 @@ class SurroundWithSuggester : FeatureSuggester {
                             return createSuggestion(
                                 null,
                                 createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                                getId(),
+                                suggestingActionDisplayName,
                                 SUGGESTING_TIP_FILENAME
                             )
                         }
@@ -108,5 +108,5 @@ class SurroundWithSuggester : FeatureSuggester {
         return this is PsiIfStatement || this is PsiForStatement || this is PsiWhileStatement
     }
 
-    override fun getId(): String = "Surround with suggester"
+    override val suggestingActionDisplayName: String = "Surround with"
 }

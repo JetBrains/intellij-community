@@ -54,7 +54,7 @@ class LineCommentingSuggester : FeatureSuggester {
                     return createSuggestion(
                         DESCRIPTOR_ID,
                         createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                        getId(),
+                        suggestingActionDisplayName,
                         SUGGESTING_TIP_FILENAME
                     )
                 }
@@ -113,5 +113,5 @@ class LineCommentingSuggester : FeatureSuggester {
         )
     }
 
-    override fun getId(): String = "Commenting suggester"
+    override val suggestingActionDisplayName: String = "Comment with line comment"
 }

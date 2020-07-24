@@ -50,6 +50,6 @@ class FeatureSuggestersManager(val project: Project) {
     private fun FeatureSuggester.isEnabled(): Boolean {
         return ApplicationManager.getApplication()
             .getService(FeatureSuggesterSettings::class.java)
-            ?.isEnabled(getId()) ?: false
+            ?.isEnabled(suggestingActionDisplayName) ?: false
     }
 }

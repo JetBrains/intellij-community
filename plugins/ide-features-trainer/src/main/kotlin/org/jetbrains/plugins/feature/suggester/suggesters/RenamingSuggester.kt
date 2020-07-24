@@ -69,7 +69,12 @@ class RenamingSuggester : FeatureSuggester {
                     if (renamedIdentifiersData.references.contains(parent)
                         && renamedIdentifiersData.isAllRenamed()
                     ) {
-                        return createSuggestion(null, POPUP_MESSAGE, getId(), SUGGESTING_TIP_FILENAME)
+                        return createSuggestion(
+                            null,
+                            POPUP_MESSAGE,
+                            suggestingActionDisplayName,
+                            SUGGESTING_TIP_FILENAME
+                        )
                     }
                 }
             }
@@ -81,5 +86,5 @@ class RenamingSuggester : FeatureSuggester {
         return ReferencesSearch.search(this).map(PsiReference::getElement)
     }
 
-    override fun getId(): String = "Renaming suggester"
+    override val suggestingActionDisplayName: String = "Rename all occurrences"
 }

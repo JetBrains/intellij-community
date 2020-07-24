@@ -12,6 +12,10 @@ interface FeatureSuggester {
 
         val suggesters: List<FeatureSuggester> = EP_NAME.extensionList
 
+        fun getSuggestingActionNames(): List<String> {
+            return suggesters.map(FeatureSuggester::suggestingActionDisplayName)
+        }
+
         fun createMessageWithShortcut(actionId: String, suggestionMessage: String): String {
             val shortcut = KeymapUtil.getShortcutText(actionId)
             return if (shortcut == "<no shortcut>") {
@@ -27,5 +31,5 @@ interface FeatureSuggester {
 
     fun getSuggestion(actions: UserActionsHistory): Suggestion
 
-    fun getId(): String
+    val suggestingActionDisplayName: String
 }
