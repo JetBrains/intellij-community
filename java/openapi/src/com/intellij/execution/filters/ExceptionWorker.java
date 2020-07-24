@@ -480,6 +480,9 @@ public class ExceptionWorker {
       ref.set(balloon);
       RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
       balloon.show(point, Balloon.Position.below);
+      editor.getScrollingModel().addVisibleAreaListener(e -> {
+        Disposer.dispose(balloon);
+      }, balloon);
     }
   }
 
