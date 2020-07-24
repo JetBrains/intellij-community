@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SimpleTextAttributes
@@ -90,7 +91,9 @@ internal class JdkDownloadDialog(
 
       if (it == null) return
       val newVersion = it.item
-      installDirTextField.text = JdkInstaller.getInstance().defaultInstallDir(newVersion).toString()
+      val path = JdkInstaller.getInstance().defaultInstallDir(newVersion).toString()
+      installDirTextField.text = FileUtil.getLocationRelativeToUserHome(path)
+      selectedPath = path
       selectedItem = newVersion
     }
 
@@ -107,7 +110,9 @@ internal class JdkDownloadDialog(
     vendorComboBox.onSelectionChange(::onVendorSelectionChange)
     versionComboBox.onSelectionChange(::onVersionSelectionChange)
 
-    installDirTextField.onTextChange { selectedPath = it }
+    installDirTextField.onTextChange {
+      selectedPath = FileUtil.expandUserHome(it)
+    }
 
     panel = panel {
       row(ProjectBundle.message("dialog.row.jdk.version")) { versionComboBox.invoke().sizeGroup("combo") }
