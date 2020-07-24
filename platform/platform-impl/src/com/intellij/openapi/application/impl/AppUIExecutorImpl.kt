@@ -2,7 +2,6 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -219,8 +218,7 @@ internal class InSmartMode(private val project: Project) : ContextConstraint {
     !DumbService.getInstance(project).isDumb
 
   override fun schedule(runnable: Runnable) {
-    if (!LightEdit.owns(project))
-      DumbService.getInstance(project).runWhenSmart(runnable)
+    DumbService.getInstance(project).runWhenSmart(runnable)
   }
 
   override fun toString() = "inSmartMode"
