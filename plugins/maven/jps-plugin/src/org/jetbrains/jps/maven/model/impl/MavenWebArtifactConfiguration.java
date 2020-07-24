@@ -1,14 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +42,7 @@ public class MavenWebArtifactConfiguration {
   public List<String> warSourceExcludes = new ArrayList<>();
 
   @XCollection(propertyElementName = "non-filtered-file-extensions", elementName = "extension")
-  public Set<String> nonFilteredFileExtensions = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+  public Set<String> nonFilteredFileExtensions = CollectionFactory.createFilePathSet();
 
   @Transient
   private volatile Map<File, ResourceRootConfiguration> myResourceRootsMap;

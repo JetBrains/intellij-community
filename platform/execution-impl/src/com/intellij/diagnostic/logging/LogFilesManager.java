@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.configurations.LogFileOptions;
@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-public class LogFilesManager {
+public final class LogFilesManager {
   private final LogConsoleManager myManager;
   private final List<LogFile> myLogFiles = new ArrayList<>();
   private final SingleAlarm myUpdateAlarm;
@@ -44,7 +43,7 @@ public class LogFilesManager {
           final Set<String> newPaths = logFile.getOptions().getPaths(); // should not be called in UI thread
           logFile.setPaths(newPaths);
 
-          final Set<String> obsoletePaths = new THashSet<>(oldPaths);
+          final Set<String> obsoletePaths = new HashSet<>(oldPaths);
           obsoletePaths.removeAll(newPaths);
 
           try {
@@ -110,8 +109,7 @@ public class LogFilesManager {
     }
   }
 
-  private static class LogFile {
-
+  private static final class LogFile {
     private final LogFileOptions myOptions;
     private final RunConfigurationBase myConfiguration;
     private final ProcessHandler myProcess;

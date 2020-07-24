@@ -48,7 +48,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -60,10 +59,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends BaseRCSettingsConfigurable {
   private static final LayeredIcon GEAR_WITH_DROPDOWN_ICON = new LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown);
@@ -532,7 +528,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   private static Collection<String> getFolderPathsWithinProjectWhereRunConfigurationsStored(@NotNull Project project) {
-    Set<String> result = new THashSet<>();
+    Set<String> result = new HashSet<>();
     for (RunnerAndConfigurationSettings settings : RunManager.getInstance(project).getAllSettings()) {
       String filePath = settings.getPathIfStoredInArbitraryFileInProject();
       // two conditions on the next line are effectively equivalent, this is to make inspections happy

@@ -13,18 +13,18 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class LogConsoleManagerBase implements LogConsoleManager, Disposable {
   private final Project myProject;
-  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new THashMap<>();
+  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<>();
   private final GlobalSearchScope mySearchScope;
 
   protected LogConsoleManagerBase(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
@@ -48,7 +48,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
 
   private void doAddLogConsole(@NotNull final LogConsoleBase log, String id, Icon icon, @Nullable RunProfile runProfile) {
     if (runProfile instanceof RunConfigurationBase) {
-      ((RunConfigurationBase)runProfile).customizeLogConsole(log);
+      ((RunConfigurationBase<?>)runProfile).customizeLogConsole(log);
     }
     log.attachStopLogConsoleTrackingListener(getProcessHandler());
     addAdditionalTabComponent(log, id, icon);
