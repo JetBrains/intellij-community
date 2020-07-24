@@ -30,6 +30,9 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService
                 serviceImplementation="org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings"/>
+        <applicationConfigurable parentId="editor"
+                                 instance="org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterConfigurable"
+                                 id="org.intellij.featureSuggester.FeatureSuggesterConfigurable"/>
         <projectService serviceImplementation="org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager"/>
         <psi.treeChangeListener
                 implementation="org.jetbrains.plugins.feature.suggester.actions.listeners.PsiActionsListener"/>
