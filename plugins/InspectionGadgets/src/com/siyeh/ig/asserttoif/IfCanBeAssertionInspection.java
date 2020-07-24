@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -163,10 +164,20 @@ public class IfCanBeAssertionInspection extends BaseInspection {
         if (!(condition instanceof PsiBinaryExpression)) return null;
         PsiExpression nullComparedExpression = ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition);
         if (nullComparedExpression == null) return null;
+        PsiNewExpression exception = getThrownNewException(ifStatement.getThenBranch());
+        if (exception == null) return null;
+        PsiExpressionList args = exception.getArgumentList();
+        PsiExpression message = null;
+        if (args != null) {
+          PsiExpression arg = ArrayUtil.getFirstElement(args.getExpressions());
+          if (arg != null && TypeUtils.isJavaLangString(arg.getType())) {
+            message = arg;
+          }
+        }
         CommentTracker tracker = new CommentTracker();
         return new Replacer(text -> PsiReplacementUtil.replaceStatementAndShortenClassNames(ifStatement, text + ";", tracker),
                             tracker.markUnchanged(nullComparedExpression),
-                            null);
+                            message);
       } else {
         PsiReferenceExpression ref = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiReferenceExpression.class);
         if (ref == null) return null;
