@@ -185,7 +185,7 @@ public final class VcsLogUtil {
     return branchName;
   }
 
-  public static boolean maybeRegexp(@NotNull String text) {
+  public static boolean isRegexp(@NotNull String text) {
     return StringUtil.containsAnyChar(text, "()[]{}.*?+^$\\|");
   }
 
