@@ -47,9 +47,6 @@ public interface VcsLogFilterUiEx extends VcsLogFilterUi {
 
   /**
    * Customizes the empty text which is shown in the middle of the table, if there are no commits to display.
-   * <p/>
-   * Returns true if the custom empty text has been set by this filter UI, returns false if general rules should be applied.
-   * <p/>
    * NB: In the case of error this method is not called, and the general logic is used to show the error in the empty space.
    */
   default void setCustomEmptyText(@NotNull StatusText text) {
