@@ -25,7 +25,7 @@ public class FilledRoundedBorder extends LineBorder {
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
     g.setColor(lineColor);
-    Area area = new Area(new RoundRectangle2D.Double(x, y, width, height, myArcSize, myArcSize));
+    RoundRectangle2D.Float area = new RoundRectangle2D.Float(x, y, width, height, myArcSize, myArcSize);
     g2d.fill(area);
 
     config.restore();
