@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.ide.TypePresentationService;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,18 +29,16 @@ import java.util.concurrent.ConcurrentMap;
  * @author peter
  */
 public abstract class ElementPresentationManager {
-  private static final ConcurrentMap<Class, Optional<Method>> ourNameValueMethods = ConcurrentFactoryMap.create(
-    key -> ReflectionUtil
+  private static final ConcurrentMap<Class<?>, Optional<Method>> ourNameValueMethods = ConcurrentFactoryMap.create(key -> ReflectionUtil
       .getClassPublicMethods(key)
       .stream()
       .filter(method -> JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null)
-      .findFirst(),
-    ContainerUtil::createConcurrentWeakKeySoftValueMap);
+      .findFirst(), CollectionFactory::createConcurrentWeakKeySoftValueMap);
 
   private final static Function<Object, String> DEFAULT_NAMER = element -> getElementName(element);
 
   public static ElementPresentationManager getInstance() {
-    return ServiceManager.getService(ElementPresentationManager.class);
+    return ApplicationManager.getApplication().getService(ElementPresentationManager.class);
   }
 
   public <T> Object @NotNull [] createVariants(Collection<T> elements) {

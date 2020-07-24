@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolReader;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,11 +14,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, TestDiscoveryProtocolReader.NameEnumeratorReader {
+final class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, TestDiscoveryProtocolReader.NameEnumeratorReader {
   private static final Logger LOG = Logger.getInstance(IdeaTestDiscoveryProtocolReader.class);
 
   @NotNull
-  private final TIntObjectHashMap<String> myTestExecutionNameEnumerator = new TIntObjectHashMap<>();
+  private final Int2ObjectOpenHashMap<String> myTestExecutionNameEnumerator = new Int2ObjectOpenHashMap<>();
   @NotNull
   private final TestDiscoveryIndex myIndex;
   private final String myModuleName;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,19 +11,19 @@ import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
  */
-public class HTMLControls {
+public final class HTMLControls {
   private static final Logger LOG = Logger.getInstance(HTMLControls.class);
   private static Control[] ourControls;
 
@@ -92,7 +92,7 @@ public class HTMLControls {
     @Nullable
     @Override
     public Set<String> fromString(@NotNull String value) {
-      final THashSet<String> result = new THashSet<>();
+      Set<String> result = new HashSet<>();
       for (String closingTag : StringUtil.split(value, ",")) {
         result.add(StringUtil.toLowerCase(closingTag.trim()));
       }

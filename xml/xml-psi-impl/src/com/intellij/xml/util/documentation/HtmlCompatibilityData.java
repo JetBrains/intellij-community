@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
 import com.google.gson.Gson;
@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HtmlCompatibilityData {
+public final class HtmlCompatibilityData {
   private static final Map<String, Object> ourTagsCache = new HashMap<>();
   private static final Ref<Map> ourGlobalAttributesCache = new Ref<>();
   public static final String MATHML = "mathml";

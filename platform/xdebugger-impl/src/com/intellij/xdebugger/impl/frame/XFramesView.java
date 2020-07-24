@@ -25,7 +25,8 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,13 +43,13 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-public class XFramesView extends XDebugView {
+public final class XFramesView extends XDebugView {
   private static final Logger LOG = Logger.getInstance(XFramesView.class);
 
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
   private final ComboBox<XExecutionStack> myThreadComboBox;
-  private final TObjectIntHashMap<XExecutionStack> myExecutionStacksWithSelection = new TObjectIntHashMap<>();
+  private final Object2IntMap<XExecutionStack> myExecutionStacksWithSelection = new Object2IntOpenHashMap<>();
   private XExecutionStack mySelectedStack;
   private int mySelectedFrameIndex;
   private Rectangle myVisibleRect;
@@ -193,7 +194,7 @@ public class XFramesView extends XDebugView {
 
     @Override
     public void addExecutionStack(@NotNull List<? extends XExecutionStack> executionStacks, boolean last) {
-      ArrayList<? extends XExecutionStack> copyStacks = new ArrayList<>(executionStacks); // to capture the current List elements
+      List<? extends XExecutionStack> copyStacks = new ArrayList<>(executionStacks); // to capture the current List elements
       ApplicationManager.getApplication().invokeLater(() -> {
         int initialCount = myThreadComboBox.getItemCount();
         if (last) {
@@ -347,7 +348,7 @@ public class XFramesView extends XDebugView {
       if (addBeforeSelection && executionStack.equals(selectedItem)) {
         addBeforeSelection = false;
       }
-      if (!myExecutionStacksWithSelection.contains(executionStack)) {
+      if (!myExecutionStacksWithSelection.containsKey(executionStack)) {
         if (addBeforeSelection) {
           myThreadComboBox.insertItemAt(executionStack, myThreadComboBox.getSelectedIndex()); // add right before the selected node
         }
@@ -375,7 +376,7 @@ public class XFramesView extends XDebugView {
 
     mySelectedStack = executionStack;
     if (executionStack != null) {
-      mySelectedFrameIndex = myExecutionStacksWithSelection.get(executionStack);
+      mySelectedFrameIndex = myExecutionStacksWithSelection.getInt(executionStack);
       StackFramesListBuilder builder = getOrCreateBuilder(executionStack, session);
       builder.setRefresh(refresh);
       builder.setToSelect(frameToSelect != null ? frameToSelect : mySelectedFrameIndex);

@@ -18,15 +18,11 @@ import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @State(name = "VcsManagerConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
@@ -130,7 +126,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 
   @Transient
-  public Map<String, ChangeBrowserSettings> changeBrowserSettings = new THashMap<>();
+  public Map<String, ChangeBrowserSettings> changeBrowserSettings = new HashMap<>();
 
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;

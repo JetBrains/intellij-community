@@ -37,7 +37,6 @@ import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlPsiUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -312,7 +311,9 @@ public abstract class XmlTagDelegate {
                                                                             @NotNull final Set<String> fileLocations,
                                                                             @Nullable Map<String, NullableLazyValue<XmlNSDescriptor>> map,
                                                                             final boolean nsDecl) {
-    if (map == null) map = new THashMap<>();
+    if (map == null) {
+      map = new HashMap<>();
+    }
 
     // We put cached value in any case to cause its value update on e.g. mapping change
     map.put(namespace, NullableLazyValue.createValue(() -> {
@@ -549,7 +550,7 @@ public abstract class XmlTagDelegate {
   protected String getAttributeValue(String qname) {
     Map<String, String> map = myAttributeValueMap;
     if (map == null) {
-      map = new THashMap<>();
+      map = new HashMap<>();
       for (XmlAttribute attribute : myTag.getAttributes()) {
         cacheOneAttributeValue(attribute.getName(), attribute.getValue(), map);
       }
@@ -854,7 +855,7 @@ public abstract class XmlTagDelegate {
 
   @NotNull
   Map<String, String> getLocalNamespaceDeclarations() {
-    Map<String, String> namespaces = new THashMap<>();
+    Map<String, String> namespaces = new HashMap<>();
     for (final XmlAttribute attribute : myTag.getAttributes()) {
       if (!attribute.isNamespaceDeclaration() || attribute.getValue() == null) continue;
       // xmlns -> "", xmlns:a -> a

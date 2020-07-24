@@ -444,7 +444,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
       myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myEditor.getDocument());
 
       String actualText = StringUtil.convertLineSeparators(myFile.getText());
-
       if (!Objects.equals(expectedText, actualText)) {
         throw new FileComparisonFailure("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
       }

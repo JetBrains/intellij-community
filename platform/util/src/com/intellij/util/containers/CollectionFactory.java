@@ -59,6 +59,11 @@ public final class CollectionFactory {
     return new ConcurrentWeakHashMap<>(initialCapacity, loadFactor, concurrencyLevel, ContainerUtil.canonicalStrategy());
   }
 
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeySoftValueMap() {
+    return ContainerUtil.createConcurrentWeakKeySoftValueMap();
+  }
+
   public static @NotNull <T> Map<CharSequence, T> createCharSequenceMap(boolean caseSensitive, int expectedSize, float loadFactor) {
     return new Object2ObjectOpenCustomHashMap<>(expectedSize, loadFactor, caseSensitive ? FastUtilCharSequenceHashingStrategy.CASE_SENSITIVE : FastUtilCharSequenceHashingStrategy.CASE_INSENSITIVE);
   }

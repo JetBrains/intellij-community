@@ -30,7 +30,6 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlNSDescriptorEx;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -912,7 +911,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
       myTargetNamespace = myTag.getAttributeValue("targetNamespace");
     }
 
-    final THashSet<PsiFile> dependenciesSet = new THashSet<>();
+    Set<PsiFile> dependenciesSet = new HashSet<>();
     collectDependencies(myTag, myFile, dependenciesSet);
     dependencies = ArrayUtil.toObjectArray(dependenciesSet);
   }

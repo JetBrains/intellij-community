@@ -18,7 +18,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -391,7 +390,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     if (qName == null) {
       return myAnyAttributeCache.get(namespace).getValue();
     }
-    return _canContainAttribute(namespace, myTag, qName, new THashSet<>(), null);
+    return _canContainAttribute(namespace, myTag, qName, new HashSet<>(), null);
   }
 
   enum CanContainAttributeType {

@@ -3,33 +3,25 @@ package com.intellij.xml.impl;
 
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReferenceProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.xml.XmlNamedReferenceHost;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.xml.XmlNamedReferenceProviderBean;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Internal
 @Service
-public final class NamedReferenceProviders {
-
-  private static final ExtensionPointName<XmlNamedReferenceProviderBean> EP_NAME = ExtensionPointName.create(
-    "com.intellij.xml.namedReferenceProvider"
-  );
+final class NamedReferenceProviders {
+  private static final ExtensionPointName<XmlNamedReferenceProviderBean> EP_NAME = new ExtensionPointName<>("com.intellij.xml.namedReferenceProvider");
 
   @NotNull
   static NamedReferenceProviders getInstance() {
@@ -42,10 +34,9 @@ public final class NamedReferenceProviders {
   private final Map<Class<?>, Collection<PsiSymbolReferenceProvider>> myByTargetClass = new ConcurrentHashMap<>();
 
   public NamedReferenceProviders() {
-    EP_NAME.addChangeListener(() -> myByHostClass.clear(), ApplicationManager.getApplication());
-    EP_NAME.addChangeListener(() -> myByTargetClass.clear(), ApplicationManager.getApplication());
+    EP_NAME.addChangeListener(() -> myByHostClass.clear(), null);
+    EP_NAME.addChangeListener(() -> myByTargetClass.clear(), null);
   }
-
 
   @NotNull
   Collection<XmlNamedReferenceProviderBean> getNamedReferenceProviderBeans(@NotNull XmlNamedReferenceHost element) {
@@ -78,10 +69,8 @@ public final class NamedReferenceProviders {
     private final Map<String, List<XmlNamedReferenceProviderBean>> myCaseInsensitiveMap;
 
     ByHostClass(@NotNull List<XmlNamedReferenceProviderBean> beans) {
-      Map<String, List<XmlNamedReferenceProviderBean>> caseSensitiveMap = new THashMap<>();
-      Map<String, List<XmlNamedReferenceProviderBean>> caseInsensitiveMap = new THashMap<>(
-        CaseInsensitiveStringHashingStrategy.INSTANCE
-      );
+      Map<String, List<XmlNamedReferenceProviderBean>> caseSensitiveMap = new HashMap<>();
+      Map<String, List<XmlNamedReferenceProviderBean>> caseInsensitiveMap = CollectionFactory.createCaseInsensitiveStringMap();
 
       for (XmlNamedReferenceProviderBean bean : beans) {
         final Map<String, List<XmlNamedReferenceProviderBean>> map = bean.caseSensitive ? caseSensitiveMap

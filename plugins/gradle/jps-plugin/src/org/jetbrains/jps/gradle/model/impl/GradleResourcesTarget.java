@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -25,8 +25,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootDescriptor> {
-
+public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootDescriptor> {
   GradleResourcesTarget(final GradleResourcesTargetType type, @NotNull JpsModule module) {
     super(type, module);
   }
@@ -102,7 +101,7 @@ public class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootD
   public Collection<File> getOutputRoots(CompileContext context) {
     GradleModuleResourceConfiguration configuration =
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
-    final Set<File> result = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> result = CollectionFactory.createFileSet();
     final File moduleOutput = getModuleOutputDir();
     for (ResourceRootConfiguration resConfig : getRootConfigurations(configuration)) {
       final File output = getOutputDir(moduleOutput, resConfig, configuration.outputDirectory);

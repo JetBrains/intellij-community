@@ -28,8 +28,6 @@ import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +50,8 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   private static final String CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES";
   private static final String XSD_1_1 = new Resource("/standardSchemas/XMLSchema-1_1/XMLSchema.xsd", ExternalResourceManagerExImpl.class, null).getResourceUrl();
 
-  private final Map<String, Map<String, String>> myResources = new THashMap<>();
-  private final Set<String> myResourceLocations = new THashSet<>();
+  private final Map<String, Map<String, String>> myResources = new HashMap<>();
+  private final Set<String> myResourceLocations = new HashSet<>();
 
   private final Set<String> myIgnoredResources = Collections.synchronizedSet(new TreeSet<>());
   private final Set<String> myStandardIgnoredResources = Collections.synchronizedSet(new TreeSet<>());
@@ -138,7 +136,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     Map<String, T> map = resources.get(version);
     if (map == null) {
       if (create) {
-        map = new THashMap<>();
+        map = new HashMap<>();
         resources.put(version, map);
       }
       else if (!version.equals(DEFAULT_VERSION)) {
@@ -313,7 +311,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @Override
   public String[] getAvailableUrls() {
-    Set<String> urls = new THashSet<>();
+    Set<String> urls = new HashSet<>();
     for (Map<String, String> map : myResources.values()) {
       urls.addAll(map.keySet());
     }
@@ -431,7 +429,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
       return ArrayUtilRt.toStringArray(myStandardIgnoredResources);
     }
 
-    Set<String> set = new THashSet<>(myIgnoredResources.size() + myStandardIgnoredResources.size());
+    Set<String> set = new HashSet<>(myIgnoredResources.size() + myStandardIgnoredResources.size());
     set.addAll(myIgnoredResources);
     set.addAll(myStandardIgnoredResources);
     return ArrayUtilRt.toStringArray(set);
