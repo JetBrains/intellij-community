@@ -14,7 +14,6 @@ import com.sun.jna.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,9 +45,10 @@ public final class FileSystemUtil {
   }
 
   @NotNull
-  private static Mediator ourMediator = getMediator();
+  private static final Mediator ourMediator = computeMediator();
 
-  private static Mediator getMediator() {
+  @NotNull
+  static Mediator computeMediator() {
     if (!Boolean.getBoolean(FORCE_USE_NIO2_KEY)) {
       try {
         if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
@@ -66,7 +66,8 @@ public final class FileSystemUtil {
     return new Nio2MediatorImpl();
   }
 
-  private static Mediator check(final Mediator mediator) throws Exception {
+  @NotNull
+  private static Mediator check(@NotNull Mediator mediator) throws Exception {
     String quickTestPath = SystemInfo.isWindows ? "C:\\" : "/";
     mediator.getAttributes(quickTestPath);
     return mediator;
@@ -369,15 +370,15 @@ public final class FileSystemUtil {
       return LibC.chmod(target, permissions) == 0;
     }
 
-    private static boolean loadFileStatus(String path, Memory buffer) {
+    private static boolean loadFileStatus(@NotNull String path, @NotNull Memory buffer) {
       return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
     }
 
-    private int getModeFlags(Memory buffer) {
+    private int getModeFlags(@NotNull Memory buffer) {
       return SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE]);
     }
 
-    private boolean ownFile(Memory buffer) {
+    private boolean ownFile(@NotNull Memory buffer) {
       return buffer.getInt(myOffsets[OFF_UID]) == myUid && buffer.getInt(myOffsets[OFF_GID]) == myGid;
     }
   }
@@ -439,7 +440,8 @@ public final class FileSystemUtil {
     public boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) throws IOException {
       if (!SystemInfo.isUnix) return false;
 
-      Path sourcePath = Paths.get(source), targetPath = Paths.get(target);
+      Path sourcePath = Paths.get(source);
+      Path targetPath = Paths.get(target);
       Set<PosixFilePermission> sourcePermissions = Files.readAttributes(sourcePath, PosixFileAttributes.class).permissions();
       Set<PosixFilePermission> targetPermissions = Files.readAttributes(targetPath, PosixFileAttributes.class).permissions();
       Set<PosixFilePermission> newPermissions;
@@ -460,15 +462,5 @@ public final class FileSystemUtil {
       Files.setAttribute(targetPath, "posix:permissions", newPermissions);
       return true;
     }
-  }
-
-  @TestOnly
-  static void resetMediator() {
-    ourMediator = getMediator();
-  }
-
-  @TestOnly
-  static String getMediatorName() {
-    return ourMediator.getClass().getSimpleName().replace("MediatorImpl", "");
   }
 }

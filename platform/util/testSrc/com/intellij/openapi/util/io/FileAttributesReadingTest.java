@@ -9,6 +9,7 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -33,13 +34,12 @@ public abstract class FileAttributesReadingTest {
   public static class MainTest extends FileAttributesReadingTest {
     @BeforeClass
     public static void setUpClass() {
-      FileSystemUtil.resetMediator();
       assertEquals(SystemInfo.isMac && SystemInfo.isArm64
                    ? "Nio2" // macOS arm64 only supports NIO2 mediator
                    : SystemInfo.isWindows
                      ? "IdeaWin32"
                      : "JnaUnix",
-                   FileSystemUtil.getMediatorName());
+                   getMediatorName());
     }
   }
 
@@ -47,15 +47,13 @@ public abstract class FileAttributesReadingTest {
     @BeforeClass
     public static void setUpClass() {
       System.setProperty(FileSystemUtil.FORCE_USE_NIO2_KEY, "true");
-      FileSystemUtil.resetMediator();
-      assertEquals("Nio2", FileSystemUtil.getMediatorName());
+      assertEquals("Nio2", getMediatorName());
     }
   }
 
   @AfterClass
   public static void tearDownClass() {
     System.clearProperty(FileSystemUtil.FORCE_USE_NIO2_KEY);
-    FileSystemUtil.resetMediator();
   }
 
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -606,5 +604,11 @@ public abstract class FileAttributesReadingTest {
     if (list1.length + 2 != list2.length) {
       assertEquals(Arrays.toString(list1), Arrays.toString(list2));
     }
+  }
+
+  @TestOnly
+  private static String getMediatorName() {
+    Object mediator = FileSystemUtil.computeMediator();
+    return mediator.getClass().getSimpleName().replace("MediatorImpl", "");
   }
 }
