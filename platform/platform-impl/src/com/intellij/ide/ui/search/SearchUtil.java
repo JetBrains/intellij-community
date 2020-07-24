@@ -223,7 +223,7 @@ public final class SearchUtil {
       renderer = new DefaultListCellRenderer();
     }
 
-    JList<?> jList = new BasicComboPopup(comboBox).getList();
+    JList<?> jList = new BasicComboPopup((JComboBox<Object>)comboBox).getList();
 
     List<String> result = new ArrayList<>();
 
