@@ -1719,12 +1719,12 @@ public final class BuildManager implements Disposable {
     @Override
     public void projectClosing(@NotNull Project project) {
       String projectPath = Objects.requireNonNull(getProjectPath(project));
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaCompilerBundle.message("progress.title.cancelling.auto.make.builds"), false) {
+      ProgressManager.getInstance().run(new Task.Modal(project, JavaCompilerBundle.message("progress.title.cancelling.auto.make.builds"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           cancelPreloadedBuilds(projectPath);
 
-          for (TaskFuture<?> future : cancelAutoMakeTasks(project)) {
+          for (TaskFuture<?> future : cancelAutoMakeTasks(getProject())) {
             future.waitFor(500, TimeUnit.MILLISECONDS);
           }
         }
