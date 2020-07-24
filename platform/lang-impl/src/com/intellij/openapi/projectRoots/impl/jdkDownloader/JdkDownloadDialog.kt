@@ -14,6 +14,7 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.layout.*
+import com.intellij.util.text.VersionComparatorUtil
 import java.awt.Component
 import java.awt.event.ItemEvent
 import java.io.File
@@ -35,43 +36,46 @@ internal class JdkDownloadDialog(
   private lateinit var selectedItem: JdkItem
   private lateinit var selectedPath: String
 
+  private class JdkVersionItem(val jdkVersion: String, items: List<JdkItem>) : Comparable<JdkVersionItem> {
+    val items = items.map { JdkVersionVendorItem(this, it) }
+
+    //we reuse model to keep selected element in-memory!
+    val model = DefaultComboBoxModel(this.items.toTypedArray()).also {
+      it.selectedItem = it.getElementAt(0)
+    }
+
+    override fun compareTo(other: JdkVersionItem): Int = VersionComparatorUtil.COMPARATOR.compare(other.jdkVersion, this.jdkVersion)
+  }
+
+  private data class JdkVersionVendorItem(val versionItem : JdkVersionItem, val item : JdkItem)
+
   init {
     title = ProjectBundle.message("dialog.title.download.jdk")
     setResizable(false)
+
+    val jdkVersions = items.groupBy { it.jdkVersion }.entries.map { JdkVersionItem(it.key, it.value) }.sorted()
 
     val defaultItem = items.firstOrNull { it.isDefaultItem } /*pick the newest default JDK */
                       ?: items.firstOrNull() /* pick just the newest JDK is no default was set (aka the JSON is broken) */
                       ?: error("There must be at least one JDK to install") /* totally broken JSON */
 
-    val vendorComboBox = ComboBox(items.map { it.product }.distinct().toTypedArray())
-    vendorComboBox.selectedItem = defaultItem.product
-    vendorComboBox.renderer = object: ColoredListCellRenderer<JdkProduct>() {
-      override fun customizeCellRenderer(list: JList<out JdkProduct>, value: JdkProduct?, index: Int, selected: Boolean, hasFocus: Boolean) {
-        value ?: return
-        append(value.packagePresentationText)
-      }
-    }
-    vendorComboBox.isSwingPopup = false
+    val defaultJdkVersionItem = jdkVersions.firstOrNull { it.jdkVersion == defaultItem.jdkVersion }
 
-    val versionModel = DefaultComboBoxModel<JdkItem>()
-    val versionComboBox = ComboBox(versionModel)
-    versionComboBox.renderer = object: ColoredListCellRenderer<JdkItem>() {
-      override fun customizeCellRenderer(list: JList<out JdkItem>, value: JdkItem?, index: Int, selected: Boolean, hasFocus: Boolean) {
-        value ?: return
-        append(value.versionPresentationText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-        append(" ")
-        append(value.downloadSizePresentationText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    val versionComboBox = ComboBox(jdkVersions.toTypedArray())
+    versionComboBox.renderer = object: ColoredListCellRenderer<JdkVersionItem>() {
+      override fun customizeCellRenderer(list: JList<out JdkVersionItem>, value: JdkVersionItem?, index: Int, selected: Boolean, hasFocus: Boolean) {
+        append(value?.jdkVersion ?: "??", SimpleTextAttributes.REGULAR_ATTRIBUTES)
       }
     }
     versionComboBox.isSwingPopup = false
 
-    fun selectVersions(newProduct: JdkProduct) {
-      val newVersions = items.filter { it.product == newProduct }
-      versionModel.removeAllElements()
-      for (version in newVersions) {
-        versionModel.addElement(version)
+    val vendorComboBox = ComboBox(arrayOf<JdkVersionVendorItem>())
+    vendorComboBox.renderer = object: ColoredListCellRenderer<JdkVersionVendorItem>() {
+      override fun customizeCellRenderer(list: JList<out JdkVersionVendorItem>, value: JdkVersionVendorItem?, index: Int, selected: Boolean, hasFocus: Boolean) {
+        append(value?.item?.product?.packagePresentationText ?: "??", SimpleTextAttributes.REGULAR_ATTRIBUTES)
       }
     }
+    vendorComboBox.isSwingPopup = false
 
     installDirTextField = textFieldWithBrowseButton(
       project = project,
@@ -79,27 +83,43 @@ internal class JdkDownloadDialog(
       fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
     )
 
-    fun selectInstallPath(newVersion: JdkItem) {
+    fun onVendorSelectionChange(it: JdkVersionVendorItem?) {
+      // the combobox does not call this event if no actual change was made,
+      // we use it to simplify code below and ensure the update and callback were executed
+      vendorComboBox.selectedItem = it
+
+      if (it == null) return
+      val newVersion = it.item
       installDirTextField.text = JdkInstaller.getInstance().defaultInstallDir(newVersion).toString()
       selectedItem = newVersion
     }
 
-    vendorComboBox.onSelectionChange(::selectVersions)
-    versionComboBox.onSelectionChange(::selectInstallPath)
-    installDirTextField.onTextChange {
-      selectedPath = it
+    fun onVersionSelectionChange(it: JdkVersionItem?) {
+      // the combobox does not call this event if no actual change was made,
+      // we use it to simplify code below and ensure the update and callback were executed
+      versionComboBox.selectedItem = it
+
+      if (it == null) return
+      vendorComboBox.model = it.model
+      onVendorSelectionChange(vendorComboBox.selectedItem as? JdkVersionVendorItem)
     }
 
+    vendorComboBox.onSelectionChange(::onVendorSelectionChange)
+    versionComboBox.onSelectionChange(::onVersionSelectionChange)
+
+    installDirTextField.onTextChange { selectedPath = it }
+
     panel = panel {
-      row(ProjectBundle.message("dialog.row.jdk.vendor")) { vendorComboBox.invoke().sizeGroup("combo").focused() }
       row(ProjectBundle.message("dialog.row.jdk.version")) { versionComboBox.invoke().sizeGroup("combo") }
+      row(ProjectBundle.message("dialog.row.jdk.vendor")) { vendorComboBox.invoke().sizeGroup("combo").focused() }
       row(ProjectBundle.message("dialog.row.jdk.location")) { installDirTextField.invoke() }
     }
 
     myOKAction.putValue(Action.NAME, ProjectBundle.message("dialog.button.download.jdk"))
 
     init()
-    selectVersions(defaultItem.product)
+    onVersionSelectionChange(defaultJdkVersionItem)
+    onVendorSelectionChange(defaultJdkVersionItem?.items?.find { it.item.isDefaultItem } ?: defaultJdkVersionItem?.items?.firstOrNull())
   }
 
   override fun doValidate(): ValidationInfo? {
