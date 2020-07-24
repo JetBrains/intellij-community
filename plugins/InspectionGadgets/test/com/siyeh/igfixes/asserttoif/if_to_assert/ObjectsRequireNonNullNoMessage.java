@@ -15,11 +15,10 @@
  */
 package com.siyeh.ipp.asserttoif.if_to_assert;
 
-import java.util.Objects;
-
 class Parentheses {
   void s(String s) {
-      //keep me
-      Objects.requireNonNull(s, ("s"));
+    i<caret>f (s == null) {
+      throw (new NullPointerException());//keep me
+    }
   }
 }
