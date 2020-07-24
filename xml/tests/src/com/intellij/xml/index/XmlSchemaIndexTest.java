@@ -25,7 +25,9 @@ public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String NS = "http://java.jb.com/xml/ns/javaee";
 
   private static @NotNull Collection<String> computeTagNames(@NotNull VirtualFile file) throws IOException {
-    return XsdTagNameBuilder.computeTagNames(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+    List<String> tags = new ArrayList<>();
+    XmlTagNamesIndex.computeTagNames(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8), s -> tags.add(s));
+    return tags;
   }
 
   public void testBuilder() throws IOException {

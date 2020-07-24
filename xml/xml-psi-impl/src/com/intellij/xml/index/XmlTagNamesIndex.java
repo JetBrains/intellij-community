@@ -11,13 +11,19 @@ import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.xml.NanoXmlBuilder;
+import com.intellij.util.xml.NanoXmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * @author Dmitry Avdeev
@@ -51,11 +57,8 @@ public final class XmlTagNamesIndex extends XmlIndex<Void> {
           return Collections.emptyMap();
         }
 
-        Collection<String> tags = XsdTagNameBuilder.computeTagNames(CharArrayUtil.readerFromCharSequence(text));
-        Map<String, Void> map = new HashMap<>(tags.size());
-        for (String tag : tags) {
-          map.put(tag, null);
-        }
+        Map<String, Void> map = new HashMap<>();
+        computeTagNames(CharArrayUtil.readerFromCharSequence(text), tag -> map.put(tag, null));
         return map;
       }
     };
@@ -65,5 +68,33 @@ public final class XmlTagNamesIndex extends XmlIndex<Void> {
   @Override
   public DataExternalizer<Void> getValueExternalizer() {
     return VoidDataExternalizer.INSTANCE;
+  }
+
+  public static void computeTagNames(@NotNull Reader reader, @NotNull Consumer<String> consumer) {
+    try {
+      NanoXmlUtil.parse(reader, new NanoXmlBuilder() {
+        private boolean elementStarted;
+
+        @Override
+        public void startElement(@NonNls String name, @NonNls String nsPrefix, @NonNls String nsURI, String systemID, int lineNr) {
+          elementStarted = nsPrefix != null && nsURI.equals(XmlUtil.XML_SCHEMA_URI) && name.equals("element");
+        }
+
+        @Override
+        public void addAttribute(@NonNls String key, String nsPrefix, String nsURI, String value, String type) {
+          if (elementStarted && key.equals("name")) {
+            consumer.accept(value);
+            elementStarted = false;
+          }
+        }
+      });
+    }
+    finally {
+      try {
+        reader.close();
+      }
+      catch (IOException ignore) {
+      }
+    }
   }
 }
