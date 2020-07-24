@@ -400,18 +400,26 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * can be accessed for reading and writing. Valid elements can still correspond to
    * underlying documents whose text is different, when those documents have been changed
    * and not yet committed ({@link PsiDocumentManager#commitDocument(com.intellij.openapi.editor.Document)}).
-   * (In this case an attempt to change PSI will result in an exception).
+   * (In this case an attempt to change PSI will result in an exception).<br><br>
    *
-   * Any access to invalid elements results in {@link PsiInvalidElementAccessException}.
-   *
+   * Most method calls on invalid PSI result in {@link PsiInvalidElementAccessException}.
    * Once invalid, elements can't become valid again.
-   *
    * Elements become invalid in following cases:
    * <ul>
-   *   <li>They have been deleted via PSI operation ({@link #delete()})</li>
+   *   <li>They have been deleted via PSI operation (e.g. {@link #delete()})</li>
    *   <li>They have been deleted as a result of an incremental reparse (document commit)</li>
    *   <li>Their containing file has been changed externally, or renamed so that its PSI had to be rebuilt from scratch</li>
    * </ul>
+   *
+   * Note that calls to this method are expected to be rare and can even be considered a code smell. In general,
+   * when you're given some PSI, you should assume it's valid. If it turns out to be invalid, it's the responsibility
+   * of those who gave you this PSI, not yours, and they should be fixed, not your code.<br><br>
+   *
+   * The rare circumstances where {@code isValid} check makes sense
+   * are those where it's obvious from the surrounding code why the PSI could become invalid. For example, right after a PSI modification
+   * or at the start of a read action (because any write action could've invalidated the PSI between read actions,
+   * and you should never expect PSI to survive that). And even in these circumstances, please consider alternatives
+   * that support PSI restoration, e.g. {@link SmartPsiElementPointer}s.
    *
    * @return true if the element is valid, false otherwise.
    * @see com.intellij.psi.util.PsiUtilCore#ensureValid(PsiElement)
