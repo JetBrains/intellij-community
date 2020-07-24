@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.intellij.BundleBase;
@@ -31,11 +31,7 @@ import java.net.URL;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
-/**
- * Created by Denis Fokin
- */
-public class SheetController implements Disposable {
-
+public final class SheetController implements Disposable {
   private static final KeyStroke VK_ESC_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
 
   private static final Logger LOG = Logger.getInstance(SheetController.class);
@@ -208,15 +204,14 @@ public class SheetController implements Disposable {
     }
   }
 
-  void setResultAndStartClose(String result) {
+  private void setResultAndStartClose(String result) {
     if (result != null)
       myResult = result;
     mySheetMessage.startAnimation(false);
   }
 
-  JPanel getPanel(final JDialog w) {
-    w.getRootPane().setDefaultButton(myDefaultButton);
-
+  JPanel getPanel(@NotNull RootPaneContainer container) {
+    container.getRootPane().setDefaultButton(myDefaultButton);
 
     ActionListener actionListener = new ActionListener() {
       @Override
@@ -418,7 +413,6 @@ public class SheetController implements Disposable {
   }
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
-
     //int widestButtonWidth = 0;
     int buttonWidth = 0;
     SHEET_HEIGHT += GAP_BETWEEN_LINES;

@@ -29,6 +29,7 @@ public final class JBMacMessages extends MacMessagesEmulation {
     if (window == null) {
       window = getForemostWindow();
     }
+
     String defaultButtonCleaned = defaultButton.replace(BundleBase.MNEMONIC_STRING, "");
     String otherButtonCleaned = otherButton.replace(BundleBase.MNEMONIC_STRING, "");
     String alternateButtonCleaned = alternateButton.replace(BundleBase.MNEMONIC_STRING, "");
@@ -81,19 +82,15 @@ public final class JBMacMessages extends MacMessagesEmulation {
 
   @Override
   public void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText, @Nullable Window window) {
-    if (window == null) {
-      window = getForemostWindow();
-    }
-    new SheetMessage(window, title, message, UIUtil.getInformationIcon(), new String [] {okText}, null, okText, okText);
+    new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getInformationIcon(), new String [] {okText}, null, okText, okText);
   }
 
   @Override
   public void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText) {
-    final Window foremostWindow = getForemostWindow();
-    new SheetMessage(foremostWindow, title, message, UIUtil.getInformationIcon(), new String [] {okText},null, null, okText);
+    new SheetMessage(getForemostWindow(), title, message, UIUtil.getInformationIcon(), new String [] {okText}, null, null, okText);
   }
 
-  private static @Nullable Window getForemostWindow() {
+  private static @NotNull Window getForemostWindow() {
     Window window = null;
     IdeFocusManager ideFocusManager = IdeFocusManager.getGlobalInstance();
 
@@ -140,6 +137,12 @@ public final class JBMacMessages extends MacMessagesEmulation {
       window = window.getOwner();
     }
 
+    if (window == null) {
+      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+      if (window == null) {
+        throw new IllegalStateException("Cannot find any window");
+      }
+    }
     return window;
   }
 
@@ -149,10 +152,7 @@ public final class JBMacMessages extends MacMessagesEmulation {
                              @NotNull String yesButton,
                              @NotNull String noButton,
                              @Nullable Window window) {
-    if (window == null) {
-      window = getForemostWindow();
-    }
-    SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
+    SheetMessage sheetMessage = new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getQuestionIcon(),
                                                  new String [] {yesButton, noButton}, null, yesButton, noButton);
     return sheetMessage.getResult().equals(yesButton) ? Messages.YES : Messages.NO;
   }
@@ -164,10 +164,7 @@ public final class JBMacMessages extends MacMessagesEmulation {
                              @NotNull String noButton,
                              @Nullable Window window,
                              @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
-    if (window == null) {
-      window = getForemostWindow();
-    }
-    SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
+    SheetMessage sheetMessage = new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getQuestionIcon(),
                                                  new String [] {yesButton, noButton}, doNotAskDialogOption, yesButton, noButton);
     int result = sheetMessage.getResult().equals(yesButton) ? Messages.YES : Messages.NO;
     if (doNotAskDialogOption != null && (result == Messages.YES || doNotAskDialogOption.shouldSaveOptionsOnCancel())) {
@@ -178,9 +175,6 @@ public final class JBMacMessages extends MacMessagesEmulation {
 
   @Override
   public void showErrorDialog(@NotNull String title, String message, @NotNull String okButton, @Nullable Window window) {
-    if (window == null) {
-      window = getForemostWindow();
-    }
-    new SheetMessage(window, title, message, UIUtil.getErrorIcon(), new String [] {okButton}, null, null, okButton);
+    new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getErrorIcon(), new String [] {okButton}, null, null, okButton);
   }
 }
