@@ -652,6 +652,8 @@ public class HighlightUtil {
       PsiField fieldByName = aClass.findFieldByName(variable.getName(), false);
       if (fieldByName != null && fieldByName != field) {
         oldVariable = fieldByName;
+      } else {
+        oldVariable = ContainerUtil.find(aClass.getRecordComponents(), c -> c.getName().equals(field.getName()));
       }
     }
     else {
