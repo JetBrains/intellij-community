@@ -129,7 +129,7 @@ public final class JavaI18nUtil extends I18nUtil {
   }
 
   @NotNull
-  static UExpression getTopLevelExpression(@NotNull UExpression expression) {
+  static UExpression getTopLevelExpression(@NotNull UExpression expression, boolean stopAtCall) {
     while (expression.getUastParent() instanceof UExpression) {
       final UExpression parent = (UExpression)expression.getUastParent();
       if (parent instanceof UBlockExpression || parent instanceof UReturnExpression) {
@@ -141,7 +141,7 @@ public final class JavaI18nUtil extends I18nUtil {
       }
       expression = parent;
       if (UastExpressionUtils.isAssignment(expression)) break;
-      if (expression instanceof UCallExpression) {
+      if (expression instanceof UCallExpression && stopAtCall) {
         UastCallKind kind = ((UCallExpression)expression).getKind();
         if (kind == UastCallKind.METHOD_CALL) {
           if (expression.getUastParent() instanceof UQualifiedReferenceExpression) {

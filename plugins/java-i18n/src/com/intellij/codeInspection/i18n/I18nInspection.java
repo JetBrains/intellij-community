@@ -949,7 +949,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
   private boolean isPassedToNonNlsVariable(@NotNull UExpression expression,
                                            final Set<? super PsiModifierListOwner> nonNlsTargets) {
-    UExpression toplevel = JavaI18nUtil.getTopLevelExpression(expression);
+    UExpression toplevel = JavaI18nUtil.getTopLevelExpression(expression, false);
     PsiModifierListOwner var = null;
     if (UastExpressionUtils.isAssignment(toplevel)) {
       UExpression lExpression = ((UBinaryExpression)toplevel).getLeftOperand();
@@ -1030,7 +1030,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
   private static boolean isInNonNlsCall(@NotNull UExpression expression,
                                         final Set<? super PsiModifierListOwner> nonNlsTargets) {
-    UExpression parent = UastUtils.skipParenthesizedExprDown(JavaI18nUtil.getTopLevelExpression(expression));
+    UExpression parent = UastUtils.skipParenthesizedExprDown(JavaI18nUtil.getTopLevelExpression(expression, true));
     if (parent instanceof UQualifiedReferenceExpression) {
       return isNonNlsCall((UQualifiedReferenceExpression)parent, nonNlsTargets);
     }
