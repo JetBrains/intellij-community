@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
@@ -19,6 +20,9 @@ public interface MainVcsLogUi extends VcsLogUiEx {
 
   @NotNull
   JComponent getToolbar();
+
+  @NotNull
+  ChangesBrowserBase getChangesBrowser();
 
   @NotNull
   @Override

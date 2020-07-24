@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.Consumer;
@@ -168,6 +169,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @Override
   public VcsLogFilterUiEx getFilterUi() {
     return myMainFrame.getFilterUi();
+  }
+
+  @Override
+  public @NotNull ChangesBrowserBase getChangesBrowser() {
+    return myMainFrame.getChangesBrowser();
   }
 
   @Override
