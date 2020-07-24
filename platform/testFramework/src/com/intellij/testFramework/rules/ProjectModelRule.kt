@@ -166,6 +166,10 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
     runWriteActionAndWait { model.commit() }
   }
 
+  fun removeModule(module: Module) {
+    runWriteActionAndWait { moduleManager.disposeModule(module) }
+  }
+
   val sdkType: SdkTypeId
     get() = SimpleJavaSdkType.getInstance()
 

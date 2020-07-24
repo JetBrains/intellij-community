@@ -48,7 +48,7 @@ class SaveProjectTest {
     projectModel.createModule("foo")
     val module = projectModel.createModule("bar")
     saveProjectState()
-    runInEdtAndWait { projectModel.moduleManager.disposeModule(module) }
+    projectModel.removeModule(module)
     saveProjectState()
     projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("detached-module")))
   }
