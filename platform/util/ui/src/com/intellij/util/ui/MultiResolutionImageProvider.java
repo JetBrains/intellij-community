@@ -184,7 +184,7 @@ public final class MultiResolutionImageProvider {
     if (newImage == image) {
       return jbIcon;
     }
-    return new ImageIcon(image);
+    return new ImageIcon(newImage);
   }
 
   /**
