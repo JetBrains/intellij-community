@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -51,7 +52,9 @@ public final class JavaApplicationSettingsEditor extends RunConfigurationFragmen
     fragments.addAll(commonParameterFragments.getFragments());
     fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent));
 
-    SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(myProject);
+    SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment = createMainClass(classpathCombo);
+    DefaultJreSelector jreSelector = DefaultJreSelector.fromSourceRootsDependencies(classpathCombo, mainClassFragment.component());
+    SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(jreSelector);
     fragments.add(jrePath);
 
     String group = ExecutionBundle.message("group.java.options");
@@ -72,24 +75,6 @@ public final class JavaApplicationSettingsEditor extends RunConfigurationFragmen
     vmParameters.setEditorGetter(editor -> editor.getEditorField());
     fragments.add(vmParameters);
 
-    EditorTextField mainClass = ClassEditorField.createClassField(myProject, () -> classpathCombo.getSelectedModule());
-    mainClass.setShowPlaceholderWhenFocused(true);
-    UIUtil.setMonospaced(mainClass);
-    String placeholder = ExecutionBundle.message("application.configuration.main.class.placeholder");
-    mainClass.setPlaceholder(placeholder);
-    mainClass.getAccessibleContext().setAccessibleName(placeholder);
-    setMinimumWidth(mainClass, 300);
-    SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment =
-      new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClass, 20,
-                                   (configuration, component) -> component.setText(configuration.getMainClassName()),
-                                   (configuration, component) -> configuration.setMainClassName(component.getText()),
-                                   configuration -> true);
-    mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
-    mainClassFragment.setRemovable(false);
-    mainClassFragment.setEditorGetter(field -> {
-      Editor editor = field.getEditor();
-      return editor == null ? field : editor.getContentComponent();
-    });
     fragments.add(mainClassFragment);
     fragments.add(moduleClasspath);
 
@@ -108,5 +93,28 @@ public final class JavaApplicationSettingsEditor extends RunConfigurationFragmen
 
     fragments.add(new LogsFragment<>());
     return fragments;
+  }
+
+  @NotNull
+  private SettingsEditorFragment<ApplicationConfiguration, EditorTextField> createMainClass(ModuleClasspathCombo classpathCombo) {
+    EditorTextField mainClass = ClassEditorField.createClassField(myProject, () -> classpathCombo.getSelectedModule());
+    mainClass.setShowPlaceholderWhenFocused(true);
+    UIUtil.setMonospaced(mainClass);
+    String placeholder = ExecutionBundle.message("application.configuration.main.class.placeholder");
+    mainClass.setPlaceholder(placeholder);
+    mainClass.getAccessibleContext().setAccessibleName(placeholder);
+    setMinimumWidth(mainClass, 300);
+    SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment =
+      new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClass, 20,
+                                   (configuration, component) -> component.setText(configuration.getMainClassName()),
+                                   (configuration, component) -> configuration.setMainClassName(component.getText()),
+                                   configuration -> true);
+    mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
+    mainClassFragment.setRemovable(false);
+    mainClassFragment.setEditorGetter(field -> {
+      Editor editor = field.getEditor();
+      return editor == null ? field : editor.getContentComponent();
+    });
+    return mainClassFragment;
   }
 }

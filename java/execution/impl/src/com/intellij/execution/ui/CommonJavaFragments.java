@@ -8,9 +8,10 @@ import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -117,8 +118,10 @@ public final class CommonJavaFragments {
   }
 
   @NotNull
-  public static SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> createJrePath(Project project) {
+  public static SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> createJrePath(DefaultJreSelector defaultJreSelector) {
     JrePathEditor jrePathEditor = new JrePathEditor(false);
+    jrePathEditor.setDefaultJreSelector(defaultJreSelector);
+    //noinspection unchecked
     ComboBox<JrePathEditor.JreComboBoxItem> comboBox = jrePathEditor.getComponent();
     comboBox.setRenderer(new ColoredListCellRenderer<JrePathEditor.JreComboBoxItem>() {
       @Override
@@ -130,7 +133,16 @@ public final class CommonJavaFragments {
         if (value != null) {
           if (index == -1) {
             append("java ");
-            append("(" + value.getPresentableText() + ")");
+            if (value.getVersion() != null) {
+              JavaSdkVersion version = JavaSdkVersion.fromVersionString(value.getVersion());
+              if (version != null) {
+                append(version.getDescription());
+              }
+            }
+            String description = value.getDescription();
+            if (description != null) {
+              append(" " + description, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            }
           }
           else value.render(this, selected);
         }
@@ -138,10 +150,9 @@ public final class CommonJavaFragments {
     });
     UIUtil.setMonospaced(comboBox);
 
-    setMinimumWidth(jrePathEditor, 100);
+    setMinimumWidth(jrePathEditor, 200);
     jrePathEditor.getLabel().setVisible(false);
     jrePathEditor.getComponent().getAccessibleContext().setAccessibleName(jrePathEditor.getLabel().getText());
-    jrePathEditor.setDefaultJreSelector(DefaultJreSelector.projectSdk(project));
     SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath =
       new SettingsEditorFragment<>("jrePath", ExecutionBundle.message("run.configuration.jre.name"), null, jrePathEditor, 5,
                                    (configuration, editor) -> editor.setPathOrName(configuration.getAlternativeJrePath(),
