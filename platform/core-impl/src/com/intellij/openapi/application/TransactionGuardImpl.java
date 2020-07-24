@@ -195,7 +195,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       public void run() {
         if (isWriteSafeModality(modalityState)) {
           ApplicationManager.getApplication().assertIsWriteThread();
-          allowWritingInside(runnable);
+          runWithWritingAllowed(runnable);
         } else {
           runnable.run();
         }
@@ -208,7 +208,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     };
   }
 
-  private void allowWritingInside(@NotNull Runnable runnable) {
+  private void runWithWritingAllowed(@NotNull Runnable runnable) {
     final boolean prev = myWritingAllowed;
     myWritingAllowed = true;
     try {
