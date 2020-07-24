@@ -24,6 +24,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntities
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.mutableModuleMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -229,6 +230,10 @@ internal class ModifiableModuleModelBridge(
     for (moduleToDispose in myModulesToDispose.values) {
       val moduleEntity = storage.findModuleEntity(moduleToDispose)
                          ?: error("Could not find module to remove by $moduleToDispose")
+      val libraries = ModuleRootComponentBridge.getInstance(moduleToDispose).moduleLibraryTable.libraryEntities().toList()
+      libraries.forEach {
+        diff.removeEntity(it)
+      }
       diff.removeEntity(moduleEntity)
     }
 

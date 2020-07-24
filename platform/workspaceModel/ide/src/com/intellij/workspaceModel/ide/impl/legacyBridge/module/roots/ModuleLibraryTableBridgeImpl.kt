@@ -26,7 +26,7 @@ internal class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBrid
     libraryEntities().forEach { addLibrary(it, builder) }
   }
 
-  private fun libraryEntities(): Sequence<LibraryEntity> {
+  internal fun libraryEntities(): Sequence<LibraryEntity> {
     val moduleLibraryTableId = LibraryTableId.ModuleLibraryTableId(moduleBridge.moduleEntityId)
 
     return moduleBridge.entityStorage.current
