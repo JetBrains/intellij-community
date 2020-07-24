@@ -209,8 +209,9 @@ private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): P
   Logger.getInstance("#com.intellij.idea.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
   if (result.hasError) {
-    ApplicationManager.getApplication().invokeLater {
+    ApplicationManager.getApplication().invokeAndWait {
       result.showErrorIfFailed()
+      ApplicationManager.getApplication().exit(true, true, false)
     }
   }
   return result.project
