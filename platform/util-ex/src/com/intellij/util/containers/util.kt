@@ -36,6 +36,14 @@ fun <T> List<T>.tail(): List<T> {
 }
 
 /**
+ * @return all the elements of a non-empty list except the first one or empty list
+ */
+fun <T> List<T>.tailOrEmpty(): List<T> {
+  if (isEmpty()) return emptyList()
+  return subList(1, size)
+}
+
+/**
  * @return pair of the first element and the rest of a non-empty list
  */
 fun <T> List<T>.headTail(): Pair<T, List<T>> = Pair(first(), tail())
